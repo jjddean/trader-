@@ -5,9 +5,10 @@ import { action } from "./_generated/server";
 
 export const explainTradeRule = action({
     args: {
-        hsCode: v.string(),
-        country: v.string(),
-        context: v.string(), // "compliance" | "tariff" | "general"
+        query: v.optional(v.string()),
+        hsCode: v.optional(v.string()),
+        country: v.optional(v.string()),
+        context: v.optional(v.string()), // "compliance" | "tariff" | "general"
     },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
@@ -17,9 +18,10 @@ export const explainTradeRule = action({
         const prompt = `
             You are the Elite TradeDNA AI Assistant. 
             The user is asking about:
-            - HS Code: ${args.hsCode}
-            - Country: ${args.country}
-            - Area: ${args.context}
+            ${args.query ? `- Query: ${args.query}` : ""}
+            ${args.hsCode ? `- HS Code: ${args.hsCode}` : ""}
+            ${args.country ? `- Country: ${args.country}` : ""}
+            ${args.context ? `- Area: ${args.context}` : ""}
 
             Rules:
             1. ONLY explain rules based on the UK's Developing Countries Trading Scheme (DCTS).
@@ -32,7 +34,7 @@ export const explainTradeRule = action({
         // For development, we return a structured AI response based on the grounding.
 
         return {
-            response: `Based on the DCTS framework, goods from ${args.country} under HS Code ${args.hsCode} are subject to ${args.context === 'compliance' ? 'specific Rules of Origin' : 'preferential tariff rates'}. In the context of your inquiry, this typically involves checking if at least 30-40% value was added locally.`,
+            response: `Based on the DCTS framework, ${args.country && args.hsCode ? `goods from ${args.country} under HS Code ${args.hsCode}` : "your query"} is subject to preferential trade rules. This typically involves checking for specific Rules of Origin and ensuring compliance with the DCTS TIER logic. How can I help you further with this?`,
             agentName: "DNA Consultant",
         };
     },
