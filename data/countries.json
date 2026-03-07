@@ -1,0 +1,27 @@
+[
+  {
+    "name": "India",
+    "tier": "Standard",
+    "region": "South Asia"
+  },
+  {
+    "name": "Indonesia",
+    "tier": "Standard",
+    "region": "South East Asia"
+  },
+  {
+    "name": "Vietnam",
+    "tier": "Comprehensive",
+    "region": "South East Asia"
+  },
+  {
+    "name": "Ethiopia",
+    "tier": "Comprehensive",
+    "region": "Africa"
+  },
+  {
+    "name": "Nigeria",
+    "tier": "Standard",
+    "region": "Africa"
+  }
+]
