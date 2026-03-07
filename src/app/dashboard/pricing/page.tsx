@@ -62,7 +62,7 @@ export default function PricingPage() {
 
         try {
             const url = await createCheckout({ plan, priceId });
-            window.location.href = url;
+            if (url) window.location.href = url;
         } catch (error) {
             console.error("Checkout Error:", error);
         }
