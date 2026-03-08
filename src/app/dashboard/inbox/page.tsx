@@ -280,7 +280,7 @@ export default function InboxPage() {
                                     key={ch}
                                     onClick={() => setChannelFilter(ch)}
                                     className={cn(
-                                        "px-2 py-1 rounded text-[10px] font-medium transition-colors",
+                                        "px-2 py-1 rounded text-[0.625rem] font-medium transition-colors",
                                         channelFilter === ch
                                             ? "bg-gray-100 text-black border border-gray-200"
                                             : "text-gray-400 hover:text-gray-600"
@@ -335,7 +335,7 @@ export default function InboxPage() {
                                             </span>
                                             {/* Thread Status */}
                                             <span className={cn(
-                                                "text-[8px] uppercase tracking-wider font-bold px-1 py-0.5 rounded",
+                                                "text-[0.5rem] uppercase tracking-wider font-bold px-1 py-0.5 rounded",
                                                 conv.status === "open"
                                                     ? "bg-green-100 text-green-700"
                                                     : "bg-gray-100 text-gray-500"
@@ -343,15 +343,15 @@ export default function InboxPage() {
                                                 {conv.status}
                                             </span>
                                         </div>
-                                        <span className="text-[9px] text-gray-400">{conv.timestamp}</span>
+                                        <span className="text-[0.5625rem] text-gray-400">{conv.timestamp}</span>
                                     </div>
                                     <p className={cn(
-                                        "text-[11px] truncate",
+                                        "text-[0.6875rem] truncate",
                                         conv.unread ? "text-gray-600" : "text-gray-400"
                                     )}>
                                         {conv.lastMessage}
                                     </p>
-                                    <span className="text-[9px] text-gray-300 mt-0.5 block">{conv.channel} · {conv.country}</span>
+                                    <span className="text-[0.5625rem] text-gray-300 mt-0.5 block">{conv.channel} · {conv.country}</span>
                                 </button>
                             );
                         })}
@@ -372,7 +372,7 @@ export default function InboxPage() {
                                                 <div className="flex items-center gap-2">
                                                     <p className="text-xs font-medium text-black">{selected.name}</p>
                                                     <span className={cn(
-                                                        "text-[8px] uppercase tracking-wider font-bold px-1 py-0.5 rounded",
+                                                        "text-[0.5rem] uppercase tracking-wider font-bold px-1 py-0.5 rounded",
                                                         selected.status === "open"
                                                             ? "bg-green-100 text-green-700"
                                                             : "bg-gray-100 text-gray-500"
@@ -382,7 +382,7 @@ export default function InboxPage() {
                                                 </div>
                                                 <div className="flex items-center gap-1.5 mt-0.5">
                                                     {React.createElement(channelIcons[selected.channel], { className: "h-2.5 w-2.5 text-gray-400" })}
-                                                    <p className="text-[9px] text-gray-400">{selected.channel} · {selected.location}</p>
+                                                    <p className="text-[0.5625rem] text-gray-400">{selected.channel} · {selected.location}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -425,49 +425,49 @@ export default function InboxPage() {
                                                 {showActionMenu && (
                                                     <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-150">
                                                         {/* Thread Management */}
-                                                        <p className="px-3 py-1.5 text-[9px] font-semibold text-gray-400 uppercase tracking-widest">Thread Management</p>
+                                                        <p className="px-3 py-1.5 text-[0.5625rem] font-semibold text-gray-400 uppercase tracking-widest">Thread Management</p>
                                                         <button className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left">
                                                             <Archive className="h-3.5 w-3.5 text-green-500" />
                                                             <div>
                                                                 <p className="text-xs text-gray-700">Resolve & Archive</p>
-                                                                <p className="text-[9px] text-gray-400">Mark as completed</p>
+                                                                <p className="text-[0.5625rem] text-gray-400">Mark as completed</p>
                                                             </div>
                                                         </button>
                                                         <button className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left">
                                                             <Bell className="h-3.5 w-3.5 text-orange-500" />
                                                             <div>
                                                                 <p className="text-xs text-gray-700">Snooze Follow-up</p>
-                                                                <p className="text-[9px] text-gray-400">Remind me later</p>
+                                                                <p className="text-[0.5625rem] text-gray-400">Remind me later</p>
                                                             </div>
                                                         </button>
 
                                                         {/* Collaboration */}
                                                         <div className="border-t border-gray-100 mt-1 pt-1">
-                                                            <p className="px-3 py-1.5 text-[9px] font-semibold text-gray-400 uppercase tracking-widest">Collaboration</p>
+                                                            <p className="px-3 py-1.5 text-[0.5625rem] font-semibold text-gray-400 uppercase tracking-widest">Collaboration</p>
                                                             <button className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left">
                                                                 <UserPlus className="h-3.5 w-3.5 text-blue-500" />
                                                                 <div>
                                                                     <p className="text-xs text-gray-700">Assign to Agent</p>
-                                                                    <p className="text-[9px] text-gray-400">Designate team member</p>
+                                                                    <p className="text-[0.5625rem] text-gray-400">Designate team member</p>
                                                                 </div>
                                                             </button>
                                                         </div>
 
                                                         {/* Engine Bridge */}
                                                         <div className="border-t border-gray-100 mt-1 pt-1">
-                                                            <p className="px-3 py-1.5 text-[9px] font-semibold text-gray-400 uppercase tracking-widest">Engine Bridge</p>
+                                                            <p className="px-3 py-1.5 text-[0.5625rem] font-semibold text-gray-400 uppercase tracking-widest">Engine Bridge</p>
                                                             <button className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left">
                                                                 <ArrowRight className="h-3.5 w-3.5 text-purple-500" />
                                                                 <div>
                                                                     <p className="text-xs text-gray-700">Move to Lane</p>
-                                                                    <p className="text-[9px] text-gray-400">Direct lane activation</p>
+                                                                    <p className="text-[0.5625rem] text-gray-400">Direct lane activation</p>
                                                                 </div>
                                                             </button>
                                                             <button className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left">
                                                                 <ExternalLink className="h-3.5 w-3.5 text-indigo-500" />
                                                                 <div>
                                                                     <p className="text-xs text-gray-700">View Lead DNA</p>
-                                                                    <p className="text-[9px] text-gray-400">Full strategic profile</p>
+                                                                    <p className="text-[0.5625rem] text-gray-400">Full strategic profile</p>
                                                                 </div>
                                                             </button>
                                                         </div>
@@ -484,7 +484,7 @@ export default function InboxPage() {
                                         <div key={msg.id}>
                                             {/* Timestamp label */}
                                             <p className={cn(
-                                                "text-[9px] uppercase tracking-wider font-semibold mb-1.5",
+                                                "text-[0.5625rem] uppercase tracking-wider font-semibold mb-1.5",
                                                 msg.incoming ? "text-gray-400" : "text-gray-400"
                                             )}>
                                                 {msg.incoming ? msg.sender : "YOU"} · {msg.timestamp}
@@ -505,7 +505,7 @@ export default function InboxPage() {
                                                     {/* Message Status Badge */}
                                                     <div className="flex justify-end mt-1.5">
                                                         <span className={cn(
-                                                            "text-[8px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded",
+                                                            "text-[0.5rem] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded",
                                                             statusBadgeColors[msg.status].bg,
                                                             statusBadgeColors[msg.status].text
                                                         )}>

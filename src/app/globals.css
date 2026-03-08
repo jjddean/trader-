@@ -3,6 +3,16 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Typography Scale System — proportional scaling via one variable */
+:root {
+    --text-scale: 1.125;
+    /* Default preset */
+}
+
+html {
+    font-size: calc(16px * var(--text-scale));
+}
+
 /* Global scrollbar — visible and usable */
 *::-webkit-scrollbar {
     width: 8px;

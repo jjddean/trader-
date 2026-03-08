@@ -12,8 +12,10 @@ import {
     Shield,
     Bell,
     ExternalLink,
+    Monitor,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TextScaleToggle } from "@/components/text-scale-toggle";
 
 export default function SettingsPage() {
     const { user } = useUser();
@@ -54,17 +56,17 @@ export default function SettingsPage() {
                             <div className="p-6 space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Name</label>
+                                        <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Name</label>
                                         <p className="text-xs text-black">{user?.fullName || dbUser?.name || "—"}</p>
                                     </div>
                                     <div>
-                                        <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Email</label>
+                                        <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Email</label>
                                         <p className="text-xs text-black">{user?.primaryEmailAddress?.emailAddress || dbUser?.email || "—"}</p>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">User ID</label>
-                                    <p className="text-[11px] text-gray-500 font-mono">{userId || "—"}</p>
+                                    <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">User ID</label>
+                                    <p className="text-[0.6875rem] text-gray-500 font-mono">{userId || "—"}</p>
                                 </div>
                             </div>
                         </div>
@@ -80,16 +82,16 @@ export default function SettingsPage() {
                                     <div className="space-y-4">
                                         <div className="grid grid-cols-3 gap-4">
                                             <div>
-                                                <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Plan</label>
+                                                <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Plan</label>
                                                 <span className={cn(
-                                                    "text-[10px] font-medium px-2 py-1 rounded-md",
+                                                    "text-[0.625rem] font-medium px-2 py-1 rounded-md",
                                                     planColors[subscription.plan] || "bg-gray-100 text-gray-700"
                                                 )}>
                                                     {subscription.plan}
                                                 </span>
                                             </div>
                                             <div>
-                                                <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Status</label>
+                                                <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Status</label>
                                                 <div className="flex items-center gap-1.5">
                                                     <div className={cn(
                                                         "w-1.5 h-1.5 rounded-full",
@@ -100,7 +102,7 @@ export default function SettingsPage() {
                                                 </div>
                                             </div>
                                             <div>
-                                                <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Renews</label>
+                                                <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Renews</label>
                                                 <p className="text-xs text-gray-700">
                                                     {new Date(subscription.currentPeriodEnd).toLocaleDateString("en-GB", {
                                                         day: "numeric", month: "short", year: "numeric"
@@ -125,6 +127,23 @@ export default function SettingsPage() {
                             </div>
                         </div>
 
+                        {/* Display */}
+                        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                            <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+                                <Monitor className="h-4 w-4 text-gray-400" />
+                                <h3 className="text-sm font-medium text-black">Display</h3>
+                            </div>
+                            <div className="p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-xs text-gray-700 font-medium">Text Size</p>
+                                        <p className="text-[0.625rem] text-gray-400 mt-0.5">Adjust text size across the entire application</p>
+                                    </div>
+                                    <TextScaleToggle />
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Security & Notifications */}
                         <div className="grid grid-cols-2 gap-6">
                             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -134,16 +153,16 @@ export default function SettingsPage() {
                                 </div>
                                 <div className="p-6 space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[11px] text-gray-600">Two-Factor Auth</span>
-                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-green-100 text-green-700">Enabled</span>
+                                        <span className="text-[0.6875rem] text-gray-600">Two-Factor Auth</span>
+                                        <span className="text-[0.625rem] font-medium px-2 py-0.5 rounded bg-green-100 text-green-700">Enabled</span>
                                     </div>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[11px] text-gray-600">API Keys</span>
-                                        <button className="text-[10px] text-gray-400 hover:text-black transition-colors">Manage</button>
+                                        <span className="text-[0.6875rem] text-gray-600">API Keys</span>
+                                        <button className="text-[0.625rem] text-gray-400 hover:text-black transition-colors">Manage</button>
                                     </div>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[11px] text-gray-600">HMRC OAuth</span>
-                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-600">Not Connected</span>
+                                        <span className="text-[0.6875rem] text-gray-600">HMRC OAuth</span>
+                                        <span className="text-[0.625rem] font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-600">Not Connected</span>
                                     </div>
                                 </div>
                             </div>
@@ -155,16 +174,16 @@ export default function SettingsPage() {
                                 </div>
                                 <div className="p-6 space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[11px] text-gray-600">Compliance Alerts</span>
-                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-green-100 text-green-700">On</span>
+                                        <span className="text-[0.6875rem] text-gray-600">Compliance Alerts</span>
+                                        <span className="text-[0.625rem] font-medium px-2 py-0.5 rounded bg-green-100 text-green-700">On</span>
                                     </div>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[11px] text-gray-600">New Prospects</span>
-                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-green-100 text-green-700">On</span>
+                                        <span className="text-[0.6875rem] text-gray-600">New Prospects</span>
+                                        <span className="text-[0.625rem] font-medium px-2 py-0.5 rounded bg-green-100 text-green-700">On</span>
                                     </div>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[11px] text-gray-600">Policy Updates</span>
-                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-600">Off</span>
+                                        <span className="text-[0.6875rem] text-gray-600">Policy Updates</span>
+                                        <span className="text-[0.625rem] font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-600">Off</span>
                                     </div>
                                 </div>
                             </div>

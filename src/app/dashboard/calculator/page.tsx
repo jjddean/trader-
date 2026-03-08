@@ -75,7 +75,7 @@ export default function CalculatorPage() {
                 <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-6 z-20">
                     <div className="flex items-center gap-4">
                         <h1 className="text-sm font-normal text-black tracking-tight">Tariff Calculator</h1>
-                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-purple-50 text-purple-600 border border-purple-100 font-medium tracking-wide">
+                        <span className="px-1.5 py-0.5 rounded text-[0.5625rem] bg-purple-50 text-purple-600 border border-purple-100 font-medium tracking-wide">
                             LANDED COST
                         </span>
                     </div>
@@ -94,7 +94,7 @@ export default function CalculatorPage() {
                                 <div className="p-6 space-y-4">
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">HS Code</label>
+                                            <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">HS Code</label>
                                             <input
                                                 type="text"
                                                 placeholder="e.g. 6109"
@@ -104,7 +104,7 @@ export default function CalculatorPage() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Origin Country</label>
+                                            <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Origin Country</label>
                                             <Select value={form.originCountry || undefined} onValueChange={(val) => setForm(f => ({ ...f, originCountry: val }))}>
                                                 <SelectTrigger className="w-full h-9 bg-gray-50 border-gray-200 text-xs text-gray-700">
                                                     <SelectValue placeholder="Select..." />
@@ -120,7 +120,7 @@ export default function CalculatorPage() {
 
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Item Value (£)</label>
+                                            <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Item Value (£)</label>
                                             <input
                                                 type="number"
                                                 placeholder="0"
@@ -130,7 +130,7 @@ export default function CalculatorPage() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Shipping Cost (£)</label>
+                                            <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Shipping Cost (£)</label>
                                             <input
                                                 type="number"
                                                 placeholder="0"
@@ -143,7 +143,7 @@ export default function CalculatorPage() {
 
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Duty Rate (%)</label>
+                                            <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Duty Rate (%)</label>
                                             <input
                                                 type="number"
                                                 placeholder="0"
@@ -153,7 +153,7 @@ export default function CalculatorPage() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">VAT Rate (%)</label>
+                                            <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">VAT Rate (%)</label>
                                             <input
                                                 type="number"
                                                 placeholder="20"
@@ -175,14 +175,14 @@ export default function CalculatorPage() {
                                     {/* Result */}
                                     {result && (
                                         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3 mt-2">
-                                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Cost Breakdown</p>
+                                            <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Cost Breakdown</p>
                                             <div className="space-y-2">
                                                 {[
                                                     { label: "CIF Value", value: result.cifValue },
                                                     { label: "Duty Amount", value: result.dutyAmount },
                                                     { label: "VAT Amount", value: result.vatAmount },
                                                 ].map((item) => (
-                                                    <div key={item.label} className="flex justify-between text-[11px]">
+                                                    <div key={item.label} className="flex justify-between text-[0.6875rem]">
                                                         <span className="text-gray-500">{item.label}</span>
                                                         <span className="text-gray-700">£{item.value?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                     </div>
@@ -209,13 +209,13 @@ export default function CalculatorPage() {
                                             <div key={calc._id} className="px-6 py-3 hover:bg-gray-50/50 transition-colors">
                                                 <div className="flex items-center justify-between mb-1">
                                                     <span className="text-xs font-medium text-black font-mono">{calc.hsCode}</span>
-                                                    <span className="text-[10px] text-gray-400">{calc.originCountry}</span>
+                                                    <span className="text-[0.625rem] text-gray-400">{calc.originCountry}</span>
                                                 </div>
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-[10px] text-gray-400">£{calc.value?.toLocaleString()}</span>
+                                                    <span className="text-[0.625rem] text-gray-400">£{calc.value?.toLocaleString()}</span>
                                                     <div className="flex items-center gap-1">
                                                         <ArrowRight className="h-2.5 w-2.5 text-gray-300" />
-                                                        <span className="text-[11px] font-medium text-black">£{calc.totalLandedCost?.toLocaleString()}</span>
+                                                        <span className="text-[0.6875rem] font-medium text-black">£{calc.totalLandedCost?.toLocaleString()}</span>
                                                     </div>
                                                 </div>
                                             </div>

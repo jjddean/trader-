@@ -112,7 +112,7 @@ export default function CompliancePage() {
                         <h1 className="text-sm font-normal text-black tracking-tight flex items-center gap-2">
                             DCTS Compliance Engine
                         </h1>
-                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-green-50 text-green-600 border border-green-100 font-medium tracking-wide">
+                        <span className="px-1.5 py-0.5 rounded text-[0.5625rem] bg-green-50 text-green-600 border border-green-100 font-medium tracking-wide">
                             AUDIT & DOCS
                         </span>
                     </div>
@@ -139,34 +139,34 @@ export default function CompliancePage() {
                         {/* Metrics Row */}
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div className="bg-white border border-gray-200 rounded-xl p-5">
-                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Active Lanes</p>
+                                <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest mb-1">Active Lanes</p>
                                 <h2 className="text-2xl font-light text-black">{lanes?.length ?? "—"}</h2>
-                                <p className="text-[10px] text-gray-400 mt-1">Trade lanes under monitoring</p>
+                                <p className="text-[0.625rem] text-gray-400 mt-1">Trade lanes under monitoring</p>
                             </div>
                             <div className="bg-white border border-gray-200 rounded-xl p-5">
-                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Verified</p>
+                                <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest mb-1">Verified</p>
                                 <div className="flex items-baseline gap-2">
                                     <h2 className="text-2xl font-light text-black">
                                         {lanes?.filter(l => l.status === "Verified").length ?? "—"}
                                     </h2>
-                                    <span className="text-[10px] text-green-500 font-medium">Compliant</span>
+                                    <span className="text-[0.625rem] text-green-500 font-medium">Compliant</span>
                                 </div>
                             </div>
                             <div className="bg-white border border-gray-200 rounded-xl p-5">
-                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Under Review</p>
+                                <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest mb-1">Under Review</p>
                                 <div className="flex items-baseline gap-2">
                                     <h2 className="text-2xl font-light text-black">
                                         {lanes?.filter(l => l.status === "Review").length ?? "—"}
                                     </h2>
-                                    <span className="text-[10px] text-orange-500 font-medium">Needs Attention</span>
+                                    <span className="text-[0.625rem] text-orange-500 font-medium">Needs Attention</span>
                                 </div>
                             </div>
                             <div className="bg-white border border-gray-200 rounded-xl p-5">
-                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Est. Savings</p>
+                                <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest mb-1">Est. Savings</p>
                                 <h2 className="text-2xl font-light text-black">
                                     £{((lanes?.reduce((acc, l) => acc + (l.savingsEstimate || 0), 0) ?? 0) / 1000).toFixed(0)}k
                                 </h2>
-                                <p className="text-[10px] text-gray-400 mt-1">Across all DCTS lanes</p>
+                                <p className="text-[0.625rem] text-gray-400 mt-1">Across all DCTS lanes</p>
                             </div>
                         </div>
 
@@ -181,7 +181,7 @@ export default function CompliancePage() {
                                 </div>
                                 <div className="p-6 space-y-4">
                                     <div>
-                                        <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
+                                        <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
                                             Origin Country
                                         </label>
                                         <Select value={selectedCountry || undefined} onValueChange={setSelectedCountry}>
@@ -191,7 +191,7 @@ export default function CompliancePage() {
                                             <SelectContent className="max-h-60">
                                                 {Object.entries(DCTS_COUNTRIES).map(([tier, countries]) => (
                                                     <SelectGroup key={tier}>
-                                                        <SelectLabel className="text-[9px] uppercase tracking-widest text-gray-400 font-semibold">{tier}</SelectLabel>
+                                                        <SelectLabel className="text-[0.5625rem] uppercase tracking-widest text-gray-400 font-semibold">{tier}</SelectLabel>
                                                         {countries.sort().map((c) => (
                                                             <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
                                                         ))}
@@ -218,15 +218,15 @@ export default function CompliancePage() {
                                                 </span>
                                             </div>
                                             <div className="space-y-1.5">
-                                                <div className="flex justify-between text-[11px]">
+                                                <div className="flex justify-between text-[0.6875rem]">
                                                     <span className="text-gray-500">Tier</span>
                                                     <span className="font-medium text-black">{eligibility.tier}</span>
                                                 </div>
-                                                <div className="flex justify-between text-[11px]">
+                                                <div className="flex justify-between text-[0.6875rem]">
                                                     <span className="text-gray-500">Duty Rate</span>
                                                     <span className="font-medium text-black">{eligibility.duty}</span>
                                                 </div>
-                                                <div className="flex justify-between text-[11px]">
+                                                <div className="flex justify-between text-[0.6875rem]">
                                                     <span className="text-gray-500">Confidence</span>
                                                     <span className="font-medium text-black">{(eligibility.confidence * 100).toFixed(0)}%</span>
                                                 </div>
@@ -237,7 +237,7 @@ export default function CompliancePage() {
                                     {/* Document Generation */}
                                     {eligibility?.eligible && (
                                         <div className="space-y-2 pt-2">
-                                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Available Documents</p>
+                                            <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Available Documents</p>
                                             {[
                                                 { name: "Form A — Certificate of Origin", status: "ready" },
                                                 { name: "DCTS Preference Declaration", status: "ready" },
@@ -249,11 +249,11 @@ export default function CompliancePage() {
                                                 >
                                                     <div className="flex items-center gap-2">
                                                         <FileText className="h-3.5 w-3.5 text-gray-400" />
-                                                        <span className="text-[11px] text-gray-700">{doc.name}</span>
+                                                        <span className="text-[0.6875rem] text-gray-700">{doc.name}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         <span className={cn(
-                                                            "text-[9px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded",
+                                                            "text-[0.5625rem] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded",
                                                             doc.status === "ready" ? "bg-green-100 text-green-600" : "bg-orange-100 text-orange-600"
                                                         )}>
                                                             {doc.status}
@@ -276,7 +276,7 @@ export default function CompliancePage() {
                                 <div className="p-6 space-y-4">
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
+                                            <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
                                                 Origin Country
                                             </label>
                                             <Select value={rooForm.originCountry || undefined} onValueChange={(val) => setRooForm(f => ({ ...f, originCountry: val }))}>
@@ -286,7 +286,7 @@ export default function CompliancePage() {
                                                 <SelectContent className="max-h-60">
                                                     {Object.entries(DCTS_COUNTRIES).map(([tier, countries]) => (
                                                         <SelectGroup key={tier}>
-                                                            <SelectLabel className="text-[9px] uppercase tracking-widest text-gray-400 font-semibold">{tier}</SelectLabel>
+                                                            <SelectLabel className="text-[0.5625rem] uppercase tracking-widest text-gray-400 font-semibold">{tier}</SelectLabel>
                                                             {countries.sort().map((c) => (
                                                                 <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
                                                             ))}
@@ -296,7 +296,7 @@ export default function CompliancePage() {
                                             </Select>
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
+                                            <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
                                                 HS Code
                                             </label>
                                             <input
@@ -311,7 +311,7 @@ export default function CompliancePage() {
 
                                     <div className="grid grid-cols-3 gap-3">
                                         <div>
-                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
+                                            <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
                                                 Origin Value (£)
                                             </label>
                                             <input
@@ -323,7 +323,7 @@ export default function CompliancePage() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
+                                            <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
                                                 UK Value (£)
                                             </label>
                                             <input
@@ -335,7 +335,7 @@ export default function CompliancePage() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
+                                            <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
                                                 Third Party (£)
                                             </label>
                                             <input
@@ -376,7 +376,7 @@ export default function CompliancePage() {
 
                                             {/* Value Added Bar */}
                                             <div className="mb-3">
-                                                <div className="flex justify-between text-[10px] mb-1">
+                                                <div className="flex justify-between text-[0.625rem] mb-1">
                                                     <span className="text-gray-500">Value Added</span>
                                                     <span className="font-medium text-black">{rooResult.valueAddedPercent.toFixed(1)}%</span>
                                                 </div>
@@ -389,17 +389,17 @@ export default function CompliancePage() {
                                                         style={{ width: `${Math.min(rooResult.valueAddedPercent, 100)}%` }}
                                                     />
                                                 </div>
-                                                <div className="flex justify-between text-[9px] mt-0.5">
+                                                <div className="flex justify-between text-[0.5625rem] mt-0.5">
                                                     <span className="text-gray-300">0%</span>
                                                     <span className="text-gray-400 font-medium">Threshold: {rooResult.threshold}%</span>
                                                     <span className="text-gray-300">100%</span>
                                                 </div>
                                             </div>
 
-                                            <p className="text-[11px] text-gray-600 leading-relaxed">{rooResult.message}</p>
+                                            <p className="text-[0.6875rem] text-gray-600 leading-relaxed">{rooResult.message}</p>
 
                                             {rooResult.cumulationApplied && (
-                                                <div className="flex items-center gap-1.5 mt-2 text-[10px] text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100">
+                                                <div className="flex items-center gap-1.5 mt-2 text-[0.625rem] text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100">
                                                     <Info className="h-3 w-3" />
                                                     Regional cumulation rules applied
                                                 </div>
@@ -418,7 +418,7 @@ export default function CompliancePage() {
                                     <h3 className="text-sm font-medium text-black">Active Trade Lanes</h3>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] text-gray-400">{lanes?.length ?? 0} lanes</span>
+                                    <span className="text-[0.625rem] text-gray-400">{lanes?.length ?? 0} lanes</span>
                                 </div>
                             </div>
 
@@ -426,12 +426,12 @@ export default function CompliancePage() {
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="bg-gray-50/50">
-                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Origin</th>
-                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">HS Code</th>
-                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Description</th>
-                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">DCTS Tier</th>
-                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider text-right">Savings</th>
+                                            <th className="px-6 py-3 text-[0.625rem] font-semibold text-gray-400 uppercase tracking-wider">Origin</th>
+                                            <th className="px-6 py-3 text-[0.625rem] font-semibold text-gray-400 uppercase tracking-wider">HS Code</th>
+                                            <th className="px-6 py-3 text-[0.625rem] font-semibold text-gray-400 uppercase tracking-wider">Description</th>
+                                            <th className="px-6 py-3 text-[0.625rem] font-semibold text-gray-400 uppercase tracking-wider">DCTS Tier</th>
+                                            <th className="px-6 py-3 text-[0.625rem] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                                            <th className="px-6 py-3 text-[0.625rem] font-semibold text-gray-400 uppercase tracking-wider text-right">Savings</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50">
@@ -443,11 +443,11 @@ export default function CompliancePage() {
                                                         <span className="text-xs font-medium text-black">{lane.originCountry}</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 text-[11px] text-gray-600 font-mono">{lane.commodityCode}</td>
-                                                <td className="px-6 py-4 text-[11px] text-gray-600 truncate max-w-[200px]">{lane.description}</td>
+                                                <td className="px-6 py-4 text-[0.6875rem] text-gray-600 font-mono">{lane.commodityCode}</td>
+                                                <td className="px-6 py-4 text-[0.6875rem] text-gray-600 truncate max-w-[200px]">{lane.description}</td>
                                                 <td className="px-6 py-4">
                                                     <span className={cn(
-                                                        "text-[10px] font-medium px-2 py-0.5 rounded-md",
+                                                        "text-[0.625rem] font-medium px-2 py-0.5 rounded-md",
                                                         lane.tier === "Comprehensive" ? "bg-green-100 text-green-700" :
                                                             lane.tier === "Enhanced" ? "bg-blue-100 text-blue-700" :
                                                                 "bg-gray-100 text-gray-700"
@@ -463,11 +463,11 @@ export default function CompliancePage() {
                                                                 lane.status === "Review" ? "bg-orange-500 animate-pulse" :
                                                                     "bg-red-500"
                                                         )} />
-                                                        <span className="text-[11px] text-gray-600">{lane.status}</span>
+                                                        <span className="text-[0.6875rem] text-gray-600">{lane.status}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <span className="text-[11px] font-medium text-gray-500">
+                                                    <span className="text-[0.6875rem] font-medium text-gray-500">
                                                         {lane.savingsEstimate ? `£${lane.savingsEstimate.toLocaleString()}` : "—"}
                                                     </span>
                                                 </td>

@@ -45,7 +45,7 @@ export const DashboardSidebar = () => {
             </div>
 
             <div className="p-4 space-y-1">
-                <p className="px-3 text-[9px] font-normal text-gray-400 uppercase tracking-widest mb-2">
+                <p className="px-3 text-[0.5625rem] font-normal text-gray-400 uppercase tracking-widest mb-2">
                     Platform
                 </p>
                 {navItems.map((item) => {
@@ -107,10 +107,10 @@ export const DashboardSidebar = () => {
                 <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-md border border-gray-200">
                     <UserButton />
                     <div className="flex flex-col">
-                        <span className="text-[11px] font-normal text-gray-700 truncate max-w-[100px]">
+                        <span className="text-[0.6875rem] font-normal text-gray-700 truncate max-w-[100px]">
                             {user?.fullName || "User"}
                         </span>
-                        <span className="text-[9px] text-gray-400">Enterprise</span>
+                        <span className="text-[0.5625rem] text-gray-400">Enterprise</span>
                     </div>
                 </div>
             </div>

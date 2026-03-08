@@ -87,7 +87,7 @@ export default function AssistantPage() {
                 <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-6 z-20">
                     <div className="flex items-center gap-4">
                         <h1 className="text-sm font-normal text-black tracking-tight">AI Trade Advisor</h1>
-                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-purple-50 text-purple-600 border border-purple-100 font-medium tracking-wide flex items-center gap-1">
+                        <span className="px-1.5 py-0.5 rounded text-[0.5625rem] bg-purple-50 text-purple-600 border border-purple-100 font-medium tracking-wide flex items-center gap-1">
                             <Sparkles className="h-2.5 w-2.5" />
                             DNA CONSULTANT
                         </span>
@@ -148,7 +148,7 @@ export default function AssistantPage() {
                                             className="p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors text-left group"
                                         >
                                             <Icon className="h-4 w-4 text-gray-400 mb-2 group-hover:text-gray-600 transition-colors" />
-                                            <p className="text-[11px] text-gray-600 leading-relaxed">{q.text}</p>
+                                            <p className="text-[0.6875rem] text-gray-600 leading-relaxed">{q.text}</p>
                                         </button>
                                     );
                                 })}
