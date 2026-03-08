@@ -1,162 +1,243 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Globe, Zap, Mail, Phone, ExternalLink, RefreshCw } from "lucide-react";
+import React, { useState } from "react";
+import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import {
+    Users,
+    Search,
+    Filter,
+    Globe,
+    Star,
+    MoreHorizontal,
+    RefreshCw,
+    ArrowUpRight,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { dctsCountries } from "@/lib/data/stub-dcts";
+const STATUS_OPTIONS = ["New", "Contacted", "Proposal Sent", "Client"];
 
-export default function ProspectAcquisitionPage() {
-    const [searchHS, setSearchHS] = useState("");
-    const [selectedCountry, setSelectedCountry] = useState("All");
+export default function ProspectsPage() {
+    const [countryFilter, setCountryFilter] = useState("");
+    const [hsFilter, setHsFilter] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
 
     const leads = useQuery(api.leads.listLeads, {
-        hsCode: searchHS || undefined,
-        country: selectedCountry === "All" ? undefined : selectedCountry,
+        ...(countryFilter ? { country: countryFilter } : {}),
+        ...(hsFilter ? { hsCode: hsFilter } : {}),
     });
+    const savedCompanies = useQuery(api.saved_companies.getSavedCompanies);
 
+    const updateStatus = useMutation(api.leads.updateLeadStatus);
     const syncLeads = useMutation(api.leads.syncHMRCLeads);
-    const [isSyncing, setIsSyncing] = useState(false);
+    const saveCompany = useMutation(api.saved_companies.saveCompany);
+
+    const [syncing, setSyncing] = useState(false);
 
     const handleSync = async () => {
-        setIsSyncing(true);
-        try {
-            await syncLeads();
-        } finally {
-            setIsSyncing(false);
-        }
+        setSyncing(true);
+        await syncLeads({});
+        setSyncing(false);
+    };
+
+    const filteredLeads = leads?.filter((l: any) =>
+        !searchQuery || l.companyName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const statusCounts = {
+        New: leads?.filter((l: any) => l.status === "New").length ?? 0,
+        Contacted: leads?.filter((l: any) => l.status === "Contacted").length ?? 0,
+        "Proposal Sent": leads?.filter((l: any) => l.status === "Proposal Sent").length ?? 0,
+        Client: leads?.filter((l: any) => l.status === "Client").length ?? 0,
     };
 
     return (
-        <div className="p-8 space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Prospect Acquisition</h1>
-                    <p className="text-muted-foreground">Find exporters in DCTS countries based on live HMRC shipment data.</p>
-                </div>
-                <Button onClick={handleSync} disabled={isSyncing} className="rounded-full">
-                    <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                    Sync Live HMRC Data
-                </Button>
-            </div>
+        <div className="flex h-screen bg-white font-sans text-gray-600 overflow-hidden">
+            <DashboardSidebar />
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Filters</CardTitle>
-                    <CardDescription>Narrow down leads by HS code or Origin country.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-col md:flex-row gap-4">
-                        <div className="flex-1 relative">
-                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Filter by HS Code (e.g. 6109)"
-                                className="pl-8"
-                                value={searchHS}
-                                onChange={(e) => setSearchHS(e.target.value)}
+            <main className="flex-1 flex flex-col relative overflow-hidden bg-gray-50/50">
+                <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-6 z-20">
+                    <div className="flex items-center gap-4">
+                        <h1 className="text-sm font-normal text-black tracking-tight">Partner Discovery & Pipeline</h1>
+                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-blue-50 text-blue-600 border border-blue-100 font-medium tracking-wide">
+                            {leads?.length ?? 0} PROSPECTS
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search prospects..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="h-8 pl-8 pr-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 w-44 transition-colors"
                             />
                         </div>
-                        <select
-                            className="flex h-10 w-full md:w-[200px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            value={selectedCountry}
-                            onChange={(e) => setSelectedCountry(e.target.value)}
+                        <button
+                            onClick={handleSync}
+                            disabled={syncing}
+                            className="h-8 px-3 bg-black hover:bg-gray-800 text-white text-xs font-normal rounded-md transition-colors flex items-center gap-1.5 disabled:opacity-50"
                         >
-                            <option value="All">All Countries</option>
-                            {dctsCountries.map(c => (
-                                <option key={c.name} value={c.name}>{c.name}</option>
-                            ))}
-                        </select>
+                            <RefreshCw className={cn("h-3 w-3", syncing && "animate-spin")} />
+                            {syncing ? "Syncing..." : "Sync HMRC"}
+                        </button>
                     </div>
-                </CardContent>
-            </Card>
+                </header>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Prospective Exporters</CardTitle>
-                    <CardDescription>Live matches based on UK trade policy advantages.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Company</TableHead>
-                                <TableHead>Country / Tier</TableHead>
-                                <TableHead>Primary HS Code</TableHead>
-                                <TableHead>Reliability</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {leads?.map((lead) => (
-                                <TableRow
-                                    key={lead._id}
-                                    className="cursor-pointer hover:bg-muted/50 transition-colors"
-                                    onClick={() => window.location.href = `/dashboard/prospects/${lead._id}`}
-                                >
-                                    <TableCell className="font-bold text-primary">{lead.companyName}</TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col">
-                                            <span>{lead.country}</span>
-                                            <span className="text-[10px] uppercase font-bold text-muted-foreground">{lead.dctsTier} Framework</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded border border-border">{lead.primaryHS}</code>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-primary"
-                                                    style={{ width: `${lead.reliabilityScore * 100}%` }}
-                                                />
-                                            </div>
-                                            <span className="text-[10px] font-bold">{(lead.reliabilityScore * 100).toFixed(0)}%</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant={lead.status === "New" ? "default" : "secondary"} className="rounded-full px-3">
-                                            {lead.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                                            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full">
-                                                <Mail className="h-4 w-4" />
-                                            </Button>
-                                            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full">
-                                                <Zap className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="rounded-full text-xs"
-                                                onClick={() => window.location.href = `/dashboard/prospects/${lead._id}`}
-                                            >
-                                                View Profile
-                                            </Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
+                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                    <div className="max-w-6xl mx-auto space-y-6">
+
+                        {/* Pipeline Metrics */}
+                        <div className="grid grid-cols-4 gap-4">
+                            {STATUS_OPTIONS.map((status) => (
+                                <div key={status} className="bg-white border border-gray-200 rounded-xl p-5">
+                                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">{status}</p>
+                                    <h2 className="text-2xl font-light text-black">{statusCounts[status as keyof typeof statusCounts]}</h2>
+                                </div>
                             ))}
-                            {leads?.length === 0 && (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
-                                        No prospects found. Try syncing live HMRC data.
-                                    </TableCell>
-                                </TableRow>
+                        </div>
+
+                        {/* Prospects Table */}
+                        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <Users className="h-4 w-4 text-gray-400" />
+                                    <h3 className="text-sm font-medium text-black">All Prospects</h3>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Select value={countryFilter || "all"} onValueChange={(val) => setCountryFilter(val === "all" ? "" : val)}>
+                                        <SelectTrigger className="h-7 bg-gray-50 border-gray-100 text-[11px] text-gray-600 w-[140px]" size="sm">
+                                            <SelectValue placeholder="All Countries" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all" className="text-xs">All Countries</SelectItem>
+                                            <SelectItem value="Bangladesh" className="text-xs">Bangladesh</SelectItem>
+                                            <SelectItem value="Pakistan" className="text-xs">Pakistan</SelectItem>
+                                            <SelectItem value="Kenya" className="text-xs">Kenya</SelectItem>
+                                            <SelectItem value="Cambodia" className="text-xs">Cambodia</SelectItem>
+                                            <SelectItem value="Vietnam" className="text-xs">Vietnam</SelectItem>
+                                            <SelectItem value="India" className="text-xs">India</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            {filteredLeads && filteredLeads.length > 0 ? (
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-gray-50/50">
+                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Company</th>
+                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Country</th>
+                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">HS Code</th>
+                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">DCTS Tier</th>
+                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Reliability</th>
+                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {filteredLeads.map((lead: any) => (
+                                            <tr key={lead._id} className="hover:bg-gray-50/50 transition-colors group">
+                                                <td className="px-6 py-4">
+                                                    <div>
+                                                        <p className="text-xs font-medium text-black">{lead.companyName}</p>
+                                                        {lead.contactEmail && (
+                                                            <p className="text-[10px] text-gray-400">{lead.contactEmail}</p>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Globe className="h-3 w-3 text-gray-400" />
+                                                        <span className="text-[11px] text-gray-600">{lead.country}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-[11px] font-mono text-gray-600">{lead.primaryHS}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={cn(
+                                                        "text-[10px] font-medium px-2 py-0.5 rounded-md",
+                                                        lead.dctsTier === "Comprehensive" ? "bg-green-100 text-green-700" :
+                                                            lead.dctsTier === "Enhanced" ? "bg-blue-100 text-blue-700" :
+                                                                "bg-gray-100 text-gray-700"
+                                                    )}>
+                                                        {lead.dctsTier}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-16 bg-gray-100 rounded-full h-1.5">
+                                                            <div
+                                                                className="h-1.5 rounded-full bg-green-500"
+                                                                style={{ width: `${(lead.reliabilityScore * 100)}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className="text-[10px] text-gray-500">{(lead.reliabilityScore * 100).toFixed(0)}%</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <Select value={lead.status} onValueChange={(val) => updateStatus({ id: lead._id, status: val })}>
+                                                        <SelectTrigger
+                                                            className={cn(
+                                                                "h-7 text-[10px] font-medium px-2 rounded-md border-0 w-[120px]",
+                                                                lead.status === "New" ? "bg-blue-100 text-blue-700" :
+                                                                    lead.status === "Contacted" ? "bg-orange-100 text-orange-700" :
+                                                                        lead.status === "Proposal Sent" ? "bg-purple-100 text-purple-700" :
+                                                                            "bg-green-100 text-green-700"
+                                                            )}
+                                                            size="sm"
+                                                        >
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {STATUS_OPTIONS.map(s => (
+                                                                <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <button
+                                                        onClick={() => saveCompany({
+                                                            companyName: lead.companyName,
+                                                            country: lead.country,
+                                                            category: lead.dctsTier,
+                                                        })}
+                                                        className="p-1.5 hover:bg-gray-100 rounded transition-colors opacity-0 group-hover:opacity-100"
+                                                        title="Save company"
+                                                    >
+                                                        <Star className="h-3.5 w-3.5 text-gray-400" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="py-16 text-center">
+                                    <Users className="h-5 w-5 text-gray-300 mx-auto mb-2" />
+                                    <h3 className="text-gray-600 font-normal text-sm mb-1">No Prospects Found</h3>
+                                    <p className="text-gray-400 text-xs mb-4">Sync HMRC data to discover trade partners.</p>
+                                    <button
+                                        onClick={handleSync}
+                                        className="px-4 py-1.5 bg-black hover:bg-gray-800 text-white text-xs font-normal rounded-md transition-colors"
+                                    >
+                                        Sync HMRC Data
+                                    </button>
+                                </div>
                             )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
     );
 }

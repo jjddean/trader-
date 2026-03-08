@@ -11,6 +11,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1003.0",
     "@clerk/nextjs": "^7.0.1",
+    "@fontsource/inter": "^5.2.8",
     "@stripe/stripe-js": "^8.9.0",
     "@tabler/icons-react": "^3.39.0",
     "class-variance-authority": "^0.7.1",

@@ -1,19 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { ConvexClientProvider } from "@/components/providers/convex-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "TradeDNA | Global Trade Intelligence",
@@ -29,9 +21,8 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable}`}
     >
-      <body className="antialiased font-sans">
+      <body className={cn(inter.className, "antialiased min-h-screen bg-slate-50")} suppressHydrationWarning>
         <ConvexClientProvider>
           <TooltipProvider>
             {children}
@@ -41,3 +32,4 @@ export default function RootLayout({
     </html>
   );
 }
+

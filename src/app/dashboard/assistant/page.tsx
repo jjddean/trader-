@@ -1,179 +1,184 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useAction } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { MessageSquare, Send, Bot, User, Sparkles, Loader2, Link as LinkIcon, ShieldCheck } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+    Bot,
+    Send,
+    User,
+    Sparkles,
+    ShieldCheck,
+    Globe,
+    Package,
+    Loader2,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export default function AiAssistantPage() {
+interface Message {
+    id: string;
+    role: "user" | "assistant";
+    content: string;
+    timestamp: number;
+}
+
+const SUGGESTED_QUERIES = [
+    { icon: ShieldCheck, text: "What DCTS tier does Bangladesh fall under?" },
+    { icon: Globe, text: "Explain Rules of Origin for Vietnam textiles" },
+    { icon: Package, text: "What duty rate applies to HS 6109 from Cambodia?" },
+];
+
+export default function AssistantPage() {
+    const [messages, setMessages] = useState<Message[]>([
+        {
+            id: "welcome",
+            role: "assistant",
+            content: "Hello! I'm your TradeDNA AI consultant. I can help you with DCTS eligibility, Rules of Origin, tariff classifications, and trade compliance. What would you like to know?",
+            timestamp: Date.now(),
+        },
+    ]);
     const [input, setInput] = useState("");
-    const [messages, setMessages] = useState<any[]>([]);
-    const [isTyping, setIsTyping] = useState(false);
-    const [hmrcStatus, setHmrcStatus] = useState<{ connected: boolean; eori?: string; isExpired?: boolean } | null>(null);
+    const [loading, setLoading] = useState(false);
 
-    const explain = useAction(api.ai.explainTradeRule);
-    const getStatus = useAction(api.actions.hmrc.getHmrcStatus);
-    const getAuthUrl = useAction(api.actions.hmrc.getHmrcAuthUrl);
+    const explainTradeRule = useAction(api.ai.explainTradeRule);
 
-    useEffect(() => {
-        getStatus().then(setHmrcStatus);
-    }, [getStatus]);
+    const handleSend = async (text?: string) => {
+        const query = text || input;
+        if (!query.trim()) return;
 
-    const handleHmrcConnect = async () => {
-        try {
-            const url = await getAuthUrl();
-            window.location.href = url;
-        } catch (error) {
-            console.error("HMRC Auth Error:", error);
-        }
-    };
-
-    const handleSend = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!input.trim() || isTyping) return;
-
-        const userMessage = { role: "user", text: input };
-        setMessages(prev => [...prev, userMessage]);
+        const userMsg: Message = {
+            id: `u-${Date.now()}`,
+            role: "user",
+            content: query,
+            timestamp: Date.now(),
+        };
+        setMessages((prev) => [...prev, userMsg]);
         setInput("");
-        setIsTyping(true);
+        setLoading(true);
 
         try {
-            const res = await explain({ query: input });
-            setMessages(prev => [...prev, { role: "bot", text: res.response }]);
-        } catch (error) {
-            console.error("AI Error:", error);
+            const result = await explainTradeRule({ query });
+            const assistantMsg: Message = {
+                id: `a-${Date.now()}`,
+                role: "assistant",
+                content: result.response,
+                timestamp: Date.now(),
+            };
+            setMessages((prev) => [...prev, assistantMsg]);
+        } catch (err) {
+            const errorMsg: Message = {
+                id: `e-${Date.now()}`,
+                role: "assistant",
+                content: "I'm having trouble connecting right now. Please ensure you're authenticated and try again.",
+                timestamp: Date.now(),
+            };
+            setMessages((prev) => [...prev, errorMsg]);
         } finally {
-            setIsTyping(false);
+            setLoading(false);
         }
     };
 
     return (
-        <div className="p-8 h-[calc(100vh-64px)] flex flex-col gap-6">
-            <div className="flex flex-col gap-1">
-                <h1 className="text-xl font-semibold tracking-tight">Intelligence Hub</h1>
-                <p className="text-sm text-muted-foreground">
-                    Consultative guidance for DCTS rules and trade compliance.
-                </p>
-            </div>
+        <div className="flex h-screen bg-white font-sans text-gray-600 overflow-hidden">
+            <DashboardSidebar />
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 flex-1 overflow-hidden">
-                {/* Insights Sidebar */}
-                <div className="lg:col-span-1 space-y-4 hidden lg:block">
-                    <Card className="bg-primary/5 border-primary/20">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                                <Sparkles className="h-3 w-3" /> Live Integration
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="text-xs space-y-4 pt-0">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">HMRC Gateway</span>
-                                {hmrcStatus?.connected ? (
-                                    <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-[#c3fae8] bg-[#e6fcf5] text-[#087f5b] font-bold text-[9px] tracking-wide">
-                                        <span className="h-1.5 w-1.5 rounded-full bg-[#20c997] animate-pulse" />
-                                        CONNECTED
+            <main className="flex-1 flex flex-col relative overflow-hidden">
+                <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-6 z-20">
+                    <div className="flex items-center gap-4">
+                        <h1 className="text-sm font-normal text-black tracking-tight">AI Trade Advisor</h1>
+                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-purple-50 text-purple-600 border border-purple-100 font-medium tracking-wide flex items-center gap-1">
+                            <Sparkles className="h-2.5 w-2.5" />
+                            DNA CONSULTANT
+                        </span>
+                    </div>
+                </header>
+
+                {/* Chat Area */}
+                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                    <div className="max-w-3xl mx-auto space-y-4">
+                        {messages.map((msg) => (
+                            <div key={msg.id} className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
+                                {msg.role === "assistant" && (
+                                    <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 mt-1">
+                                        <Bot className="h-4 w-4 text-gray-500" />
                                     </div>
-                                ) : (
-                                    <Badge variant="secondary" className="text-[8px] h-4 px-1.5 uppercase font-bold">OFFLINE</Badge>
+                                )}
+                                <div className={cn(
+                                    "max-w-[75%] rounded-xl px-4 py-3",
+                                    msg.role === "user"
+                                        ? "bg-black text-white"
+                                        : "bg-white border border-gray-200"
+                                )}>
+                                    <p className={cn(
+                                        "text-xs leading-relaxed whitespace-pre-wrap",
+                                        msg.role === "user" ? "text-white" : "text-gray-700"
+                                    )}>
+                                        {msg.content}
+                                    </p>
+                                </div>
+                                {msg.role === "user" && (
+                                    <div className="w-7 h-7 rounded-lg bg-black flex items-center justify-center flex-shrink-0 mt-1">
+                                        <User className="h-4 w-4 text-white" />
+                                    </div>
                                 )}
                             </div>
+                        ))}
 
-                            {hmrcStatus?.connected ? (
-                                <div className="flex items-center justify-between pt-1 border-t border-primary/5">
-                                    <div className="space-y-0.5">
-                                        <p className="text-[8px] text-muted-foreground uppercase opacity-70">Linked EORI</p>
-                                        <p className="font-mono text-[10px] font-bold">{hmrcStatus.eori}</p>
-                                    </div>
-                                    <button
-                                        onClick={handleHmrcConnect}
-                                        className="text-[9px] text-muted-foreground hover:text-primary underline underline-offset-2 transition-colors font-medium"
-                                    >
-                                        Reconnect
-                                    </button>
+                        {loading && (
+                            <div className="flex gap-3">
+                                <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                    <Bot className="h-4 w-4 text-gray-500" />
                                 </div>
-                            ) : (
-                                <Button
-                                    size="sm"
-                                    className="w-full text-[10px] h-7 bg-[#00897b] hover:bg-[#00796b] text-white shadow-sm border-0 gap-1.5 rounded-md transition-all active:scale-[0.98] font-bold uppercase tracking-wider"
-                                    onClick={handleHmrcConnect}
-                                >
-                                    <LinkIcon className="h-3 w-3" />
-                                    Connect HMRC Portal
-                                </Button>
-                            )}
-                            <p className="opacity-60 leading-relaxed text-[10px] italic">Linking Gateway enables DCTS logic & live tracking.</p>
-                        </CardContent>
-                    </Card>
+                                <div className="bg-white border border-gray-200 rounded-xl px-4 py-3">
+                                    <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Suggested Queries (only show at start) */}
+                        {messages.length <= 1 && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-6">
+                                {SUGGESTED_QUERIES.map((q) => {
+                                    const Icon = q.icon;
+                                    return (
+                                        <button
+                                            key={q.text}
+                                            onClick={() => handleSend(q.text)}
+                                            className="p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors text-left group"
+                                        >
+                                            <Icon className="h-4 w-4 text-gray-400 mb-2 group-hover:text-gray-600 transition-colors" />
+                                            <p className="text-[11px] text-gray-600 leading-relaxed">{q.text}</p>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {/* Chat Container */}
-                <Card className="lg:col-span-3 flex flex-col overflow-hidden">
-                    <CardHeader className="border-b bg-muted/30 pb-3">
-                        <div className="flex items-center gap-2">
-                            <Bot className="h-5 w-5 text-primary" />
-                            <div>
-                                <CardTitle className="text-sm">TradeDNA Consultant</CardTitle>
-                                <p className="text-[10px] text-muted-foreground">Online • Policy Expert</p>
-                            </div>
-                        </div>
-                    </CardHeader>
-
-                    <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-muted">
-                        {messages.length === 0 && (
-                            <div className="h-full flex flex-col items-center justify-center text-center opacity-40 space-y-3">
-                                <Bot className="h-10 w-10" />
-                                <p className="text-sm">Ask anything about UK DCTS trade policy.</p>
-                            </div>
-                        )}
-                        {messages.map((msg, i) => (
-                            <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                                <div className={`max-w-[80%] p-3 rounded-2xl text-xs leading-relaxed ${msg.role === "user"
-                                    ? "bg-primary text-primary-foreground rounded-tr-none"
-                                    : "bg-muted rounded-tl-none"
-                                    }`}>
-                                    <div className="flex items-center gap-2 mb-1 opacity-70">
-                                        {msg.role === "user" ? <User className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
-                                        <span className="font-bold uppercase tracking-tighter text-[9px]">
-                                            {msg.role === "user" ? "You" : "Consultant"}
-                                        </span>
-                                    </div>
-                                    {msg.text}
-                                </div>
-                            </div>
-                        ))}
-                        {isTyping && (
-                            <div className="flex justify-start">
-                                <div className="bg-muted p-3 rounded-2xl rounded-tl-none">
-                                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                                </div>
-                            </div>
-                        )}
-                    </CardContent>
-
-                    <div className="p-4 bg-muted/30 border-t">
-                        <form onSubmit={handleSend} className="flex gap-2 relative">
-                            <Input
-                                placeholder="Type your trade policy question..."
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                className="pr-12 text-xs h-10 rounded-xl border-muted-foreground/20 focus-visible:ring-primary/20"
-                            />
-                            <Button
-                                type="submit"
-                                size="icon"
-                                className="absolute right-1 top-1 h-8 w-8 rounded-lg shadow-lg"
-                                disabled={!input.trim() || isTyping}
-                            >
-                                <Send className="h-4 w-4" />
-                            </Button>
-                        </form>
+                {/* Input Bar */}
+                <div className="p-4 border-t border-gray-200 bg-white">
+                    <div className="max-w-3xl mx-auto flex items-center gap-2">
+                        <input
+                            type="text"
+                            placeholder="Ask about DCTS, tariffs, Rules of Origin..."
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+                            className="flex-1 h-9 px-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 transition-colors"
+                        />
+                        <button
+                            onClick={() => handleSend()}
+                            disabled={!input.trim() || loading}
+                            className="h-9 px-4 bg-black hover:bg-gray-800 text-white text-xs font-normal rounded-md transition-colors disabled:opacity-40 flex items-center gap-1.5"
+                        >
+                            <Send className="h-3 w-3" />
+                            Send
+                        </button>
                     </div>
-                </Card>
-            </div>
+                </div>
+            </main>
         </div>
     );
 }

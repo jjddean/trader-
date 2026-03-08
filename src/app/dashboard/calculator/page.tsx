@@ -1,199 +1,237 @@
 "use client";
 
-import { useState } from "react";
-import { useMutation, useQuery } from "convex/react";
+import React, { useState } from "react";
+import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { Calculator, Euro, PoundSterling, Ship, Info, History, ArrowRight, ShieldCheck } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useReferenceData } from "@/hooks/useReferenceData";
+import {
+    Calculator,
+    ArrowRight,
+    Clock,
+    Info,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
-interface TariffData {
-    hs_code: string;
-    rate: number;
-    vat: number;
-    measure: string;
-}
+const DCTS_COUNTRIES = [
+    "Afghanistan", "Algeria", "Angola", "Armenia", "Bangladesh", "Benin", "Bhutan",
+    "Bolivia", "Burkina Faso", "Burundi", "Cambodia", "Cameroon", "Cape Verde",
+    "Central African Republic", "Chad", "Comoros", "Congo", "Cook Islands",
+    "Democratic Republic of Congo", "Djibouti", "Eritrea", "Ethiopia",
+    "Gambia", "Guinea", "Guinea-Bissau", "Haiti", "India", "Indonesia",
+    "Kenya", "Kiribati", "Kyrgyzstan", "Laos", "Lesotho", "Liberia",
+    "Madagascar", "Malawi", "Mali", "Mauritania", "Micronesia", "Mongolia",
+    "Mozambique", "Myanmar", "Nepal", "Niger", "Nigeria", "Niue",
+    "Pakistan", "Philippines", "Rwanda", "Samoa", "Senegal", "Sierra Leone",
+    "Solomon Islands", "Somalia", "South Sudan", "Sri Lanka", "Sudan", "Syria",
+    "Tajikistan", "Tanzania", "Timor-Leste", "Togo", "Tuvalu", "Uganda",
+    "Uzbekistan", "Vanuatu", "Vietnam", "Yemen", "Zambia",
+].sort();
 
-export default function TariffCalculatorPage() {
-    const [hsCode, setHsCode] = useState("");
-    const [itemValue, setItemValue] = useState<number>(0);
-    const [shippingCost, setShippingCost] = useState<number>(0);
-    const [calculatedResults, setCalculatedResults] = useState<any>(null);
-    const [isCalculating, setIsCalculating] = useState(false);
+export default function CalculatorPage() {
+    const [form, setForm] = useState({
+        hsCode: "",
+        originCountry: "",
+        itemValue: "",
+        shippingCost: "",
+        dutyRate: "",
+        vatRate: "20",
+    });
+    const [result, setResult] = useState<any>(null);
+    const [calculating, setCalculating] = useState(false);
 
-    // Fetch Tariff reference data for auto-lookup
-    const { data: globalTariffs } = useReferenceData<TariffData[]>("tariffs");
-    const calculate = useMutation(api.calculator.calculateLandedCost);
+    const calculateLandedCost = useMutation(api.calculator.calculateLandedCost);
     const history = useQuery(api.calculator.getHistory);
 
-    const handleCalculate = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        // Find matching tariff or use defaults
-        const matched = globalTariffs?.find(t => t.hs_code === hsCode);
-        const dutyRate = matched ? matched.rate : 0;
-        const vatRate = matched ? matched.vat : 20;
-
-        setIsCalculating(true);
+    const handleCalculate = async () => {
+        if (!form.hsCode || !form.originCountry || !form.itemValue) return;
+        setCalculating(true);
         try {
-            const results = await calculate({
-                hsCode,
-                originCountry: "TBD", // Expand with country selector later
-                itemValue,
-                shippingCost,
-                dutyRate,
-                vatRate
+            const res = await calculateLandedCost({
+                hsCode: form.hsCode,
+                originCountry: form.originCountry,
+                itemValue: parseFloat(form.itemValue) || 0,
+                shippingCost: parseFloat(form.shippingCost) || 0,
+                dutyRate: parseFloat(form.dutyRate) || 0,
+                vatRate: parseFloat(form.vatRate) || 20,
             });
-            setCalculatedResults({ ...results, dutyRate, vatRate });
-        } catch (err) {
-            console.error("Calculation failed:", err);
+            setResult(res);
         } finally {
-            setIsCalculating(false);
+            setCalculating(false);
         }
     };
 
     return (
-        <div className="p-8 space-y-8">
-            <div className="flex flex-col gap-1">
-                <h1 className="text-xl font-semibold tracking-tight">Tariff Calculator</h1>
-                <p className="text-sm text-muted-foreground">
-                    Landed cost calculations for UK imports under DCTS framework.
-                </p>
-            </div>
+        <div className="flex h-screen bg-white font-sans text-gray-600 overflow-hidden">
+            <DashboardSidebar />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Calculator Form */}
-                <Card className="lg:col-span-2 bg-card">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Calculator className="h-5 w-5 text-primary" /> Goods Details
-                        </CardTitle>
-                        <CardDescription>Enter the value and classification of your shipment.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleCalculate} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">HS Code</label>
-                                    <Input
-                                        placeholder="e.g., 610910"
-                                        value={hsCode}
-                                        onChange={(e) => setHsCode(e.target.value)}
-                                        className="h-11"
-                                    />
-                                    <p className="text-[10px] text-muted-foreground italic">
-                                        Tip: We'll auto-apply UK Trade Tariff rates if matched.
-                                    </p>
+            <main className="flex-1 flex flex-col relative overflow-hidden bg-gray-50/50">
+                <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-6 z-20">
+                    <div className="flex items-center gap-4">
+                        <h1 className="text-sm font-normal text-black tracking-tight">Tariff Calculator</h1>
+                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-purple-50 text-purple-600 border border-purple-100 font-medium tracking-wide">
+                            LANDED COST
+                        </span>
+                    </div>
+                </header>
+
+                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                    <div className="max-w-5xl mx-auto space-y-6">
+
+                        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                            {/* Calculator Form */}
+                            <div className="lg:col-span-3 bg-white border border-gray-200 rounded-xl overflow-hidden">
+                                <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+                                    <Calculator className="h-4 w-4 text-gray-400" />
+                                    <h3 className="text-sm font-medium text-black">Calculate Landed Cost</h3>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Exporting Country</label>
-                                    <Input placeholder="e.g., Vietnam" className="h-11" />
+                                <div className="p-6 space-y-4">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">HS Code</label>
+                                            <input
+                                                type="text"
+                                                placeholder="e.g. 6109"
+                                                value={form.hsCode}
+                                                onChange={(e) => setForm(f => ({ ...f, hsCode: e.target.value }))}
+                                                className="w-full h-9 px-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 transition-colors"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Origin Country</label>
+                                            <Select value={form.originCountry || undefined} onValueChange={(val) => setForm(f => ({ ...f, originCountry: val }))}>
+                                                <SelectTrigger className="w-full h-9 bg-gray-50 border-gray-200 text-xs text-gray-700">
+                                                    <SelectValue placeholder="Select..." />
+                                                </SelectTrigger>
+                                                <SelectContent className="max-h-60">
+                                                    {DCTS_COUNTRIES.map(c => (
+                                                        <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Item Value (£)</label>
+                                            <input
+                                                type="number"
+                                                placeholder="0"
+                                                value={form.itemValue}
+                                                onChange={(e) => setForm(f => ({ ...f, itemValue: e.target.value }))}
+                                                className="w-full h-9 px-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 transition-colors"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Shipping Cost (£)</label>
+                                            <input
+                                                type="number"
+                                                placeholder="0"
+                                                value={form.shippingCost}
+                                                onChange={(e) => setForm(f => ({ ...f, shippingCost: e.target.value }))}
+                                                className="w-full h-9 px-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 transition-colors"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Duty Rate (%)</label>
+                                            <input
+                                                type="number"
+                                                placeholder="0"
+                                                value={form.dutyRate}
+                                                onChange={(e) => setForm(f => ({ ...f, dutyRate: e.target.value }))}
+                                                className="w-full h-9 px-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 transition-colors"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">VAT Rate (%)</label>
+                                            <input
+                                                type="number"
+                                                placeholder="20"
+                                                value={form.vatRate}
+                                                onChange={(e) => setForm(f => ({ ...f, vatRate: e.target.value }))}
+                                                className="w-full h-9 px-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 transition-colors"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={handleCalculate}
+                                        disabled={!form.hsCode || !form.originCountry || !form.itemValue || calculating}
+                                        className="h-8 px-4 bg-black hover:bg-gray-800 text-white text-xs font-normal rounded-md transition-colors disabled:opacity-40"
+                                    >
+                                        {calculating ? "Calculating..." : "Calculate Landed Cost"}
+                                    </button>
+
+                                    {/* Result */}
+                                    {result && (
+                                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3 mt-2">
+                                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Cost Breakdown</p>
+                                            <div className="space-y-2">
+                                                {[
+                                                    { label: "CIF Value", value: result.cifValue },
+                                                    { label: "Duty Amount", value: result.dutyAmount },
+                                                    { label: "VAT Amount", value: result.vatAmount },
+                                                ].map((item) => (
+                                                    <div key={item.label} className="flex justify-between text-[11px]">
+                                                        <span className="text-gray-500">{item.label}</span>
+                                                        <span className="text-gray-700">£{item.value?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                    </div>
+                                                ))}
+                                                <div className="border-t border-gray-200 pt-2 flex justify-between text-xs">
+                                                    <span className="font-medium text-black">Total Landed Cost</span>
+                                                    <span className="font-semibold text-black">£{result.totalLandedCost?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-lg bg-muted/30">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase text-muted-foreground">Goods Value (£)</label>
-                                    <div className="relative">
-                                        <PoundSterling className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            type="number"
-                                            value={itemValue}
-                                            onChange={(e) => setItemValue(Number(e.target.value))}
-                                            className="pl-10 h-11"
-                                        />
-                                    </div>
+                            {/* Calculation History */}
+                            <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl overflow-hidden">
+                                <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+                                    <Clock className="h-4 w-4 text-gray-400" />
+                                    <h3 className="text-sm font-medium text-black">History</h3>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase text-muted-foreground">Shipping & Insurance (£)</label>
-                                    <div className="relative">
-                                        <Ship className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            type="number"
-                                            value={shippingCost}
-                                            onChange={(e) => setShippingCost(Number(e.target.value))}
-                                            className="pl-10 h-11"
-                                        />
+                                {history && history.length > 0 ? (
+                                    <div className="divide-y divide-gray-50">
+                                        {history.map((calc: any) => (
+                                            <div key={calc._id} className="px-6 py-3 hover:bg-gray-50/50 transition-colors">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="text-xs font-medium text-black font-mono">{calc.hsCode}</span>
+                                                    <span className="text-[10px] text-gray-400">{calc.originCountry}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[10px] text-gray-400">£{calc.value?.toLocaleString()}</span>
+                                                    <div className="flex items-center gap-1">
+                                                        <ArrowRight className="h-2.5 w-2.5 text-gray-300" />
+                                                        <span className="text-[11px] font-medium text-black">£{calc.totalLandedCost?.toLocaleString()}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="py-12 text-center">
+                                        <Calculator className="h-5 w-5 text-gray-300 mx-auto mb-2" />
+                                        <p className="text-xs text-gray-400">No calculations yet</p>
+                                    </div>
+                                )}
                             </div>
-
-                            <Button type="submit" size="lg" className="w-full font-bold" disabled={isCalculating}>
-                                {isCalculating ? "Calculating..." : "Compute Landed Cost"}
-                                <ArrowRight className="ml-2 h-4 w-4" />
-                            </Button>
-                        </form>
-
-                        {calculatedResults && (
-                            <div className="mt-8 space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                                <h3 className="text-lg font-bold">Calculation Result</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                                        <p className="text-xs font-bold text-primary uppercase">Estimated Duty ({calculatedResults.dutyRate}%)</p>
-                                        <p className="text-2xl font-black">£{calculatedResults.dutyAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                                    </div>
-                                    <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                                        <p className="text-xs font-bold text-primary uppercase">Calculated VAT ({calculatedResults.vatRate}%)</p>
-                                        <p className="text-2xl font-black">£{calculatedResults.vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                                    </div>
-                                </div>
-                                <div className="p-6 rounded-xl bg-primary text-primary-foreground">
-                                    <p className="text-sm font-medium opacity-80 uppercase tracking-wider text-center">Total Landed Cost</p>
-                                    <p className="text-5xl font-black text-center mt-2 tracking-tight">
-                                        £{calculatedResults.totalLandedCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                    </p>
-                                    <div className="mt-4 flex justify-between text-xs opacity-70 border-t border-white/20 pt-4">
-                                        <span>Goods + Shipping: £{(itemValue + shippingCost).toLocaleString()}</span>
-                                        <span>All Taxes Includes</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-
-                {/* History & Insights */}
-                <div className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-sm flex items-center gap-2">
-                                <History className="h-4 w-4" /> Recent Checks
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {history?.map((entry: any) => (
-                                <div key={entry._id} className="text-sm border-b pb-2 flex justify-between items-center">
-                                    <div>
-                                        <p className="font-semibold">{entry.hsCode}</p>
-                                        <p className="text-[10px] text-muted-foreground">{new Date(entry.timestamp).toLocaleDateString()}</p>
-                                    </div>
-                                    <p className="font-bold">£{entry.totalLandedCost.toLocaleString()}</p>
-                                </div>
-                            ))}
-                            {history?.length === 0 && (
-                                <p className="text-xs text-muted-foreground italic text-center py-4">No calculation history yet.</p>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-muted/50 border-dashed">
-                        <CardContent className="p-6 space-y-4">
-                            <div className="flex items-center gap-2 text-primary">
-                                <ShieldCheck className="h-5 w-5" />
-                                <h4 className="font-bold text-sm">AI Verification</h4>
-                            </div>
-                            <p className="text-xs text-muted-foreground leading-relaxed">
-                                Calculations are deterministic and based on official DCTS schedules. Our AI Assistant can explain the "Rules of Origin" logic for this HS Code.
-                            </p>
-                            <Button variant="outline" size="sm" className="w-full text-xs">
-                                Ask AI Explainer
-                            </Button>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }

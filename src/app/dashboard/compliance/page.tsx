@@ -1,154 +1,497 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery } from "convex/react";
+import React, { useState } from "react";
+import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { ShieldCheck, Info, Globe, AlertTriangle, CheckCircle2, Search, ArrowRight, BookOpen } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { dctsCountries } from "@/lib/data/stub-dcts";
+import { useUser } from "@clerk/nextjs";
+import {
+    ShieldCheck,
+    Search,
+    FileCheck,
+    AlertTriangle,
+    CheckCircle2,
+    XCircle,
+    ChevronRight,
+    FileText,
+    Download,
+    Clock,
+    Globe,
+    Package,
+    Info,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
-export default function DctsEligibilityPage() {
-    const [searchCountry, setSearchCountry] = useState("");
-    const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+// DCTS Countries for the dropdown
+const DCTS_COUNTRIES: Record<string, string[]> = {
+    Comprehensive: [
+        "Afghanistan", "Angola", "Bangladesh", "Benin", "Bhutan", "Burkina Faso", "Burundi",
+        "Cambodia", "Central African Republic", "Chad", "Comoros", "Democratic Republic of Congo",
+        "Djibouti", "Eritrea", "Ethiopia", "Gambia", "Guinea", "Guinea-Bissau", "Haiti",
+        "Kiribati", "Laos", "Lesotho", "Liberia", "Madagascar", "Malawi", "Mali",
+        "Mauritania", "Mozambique", "Myanmar", "Nepal", "Niger", "Rwanda",
+        "Senegal", "Sierra Leone", "Solomon Islands", "Somalia", "South Sudan", "Sudan",
+        "Tanzania", "Timor-Leste", "Togo", "Tuvalu", "Uganda", "Vanuatu", "Yemen", "Zambia"
+    ],
+    Enhanced: [
+        "Armenia", "Bolivia", "Cape Verde", "Kyrgyzstan", "Mongolia", "Pakistan",
+        "Philippines", "Sri Lanka", "Tajikistan", "Uzbekistan", "Vietnam"
+    ],
+    Standard: [
+        "Algeria", "Congo", "Cook Islands", "India", "Indonesia", "Micronesia",
+        "Nigeria", "Niue", "Samoa", "Syria"
+    ],
+};
 
-    const eligibility = useQuery(api.compliance.checkEligibility,
+const ALL_COUNTRIES = [
+    ...DCTS_COUNTRIES.Comprehensive,
+    ...DCTS_COUNTRIES.Enhanced,
+    ...DCTS_COUNTRIES.Standard,
+].sort();
+
+export default function CompliancePage() {
+    const { user } = useUser();
+    const userId = user?.id || "";
+
+    // Convex queries
+    const lanes = useQuery(api.trade_lanes.getLanes, userId ? { userId } : "skip");
+
+    // Eligibility Check state
+    const [selectedCountry, setSelectedCountry] = useState("");
+    const eligibility = useQuery(
+        api.compliance.checkEligibility,
         selectedCountry ? { originCountry: selectedCountry } : "skip"
     );
 
-    const filteredCountries = dctsCountries.filter(c =>
-        c.name.toLowerCase().includes(searchCountry.toLowerCase())
-    ).slice(0, 5);
+    // RoO Simulation state
+    const simulateRoO = useMutation(api.compliance.simulateRoO);
+    const [rooForm, setRooForm] = useState({
+        originCountry: "",
+        commodityCode: "",
+        valueOrigin: "",
+        valueUK: "",
+        valueThirdParty: "",
+    });
+    const [rooResult, setRooResult] = useState<any>(null);
+    const [simulating, setSimulating] = useState(false);
+
+    const handleSimulate = async () => {
+        if (!rooForm.originCountry || !rooForm.commodityCode) return;
+        setSimulating(true);
+        try {
+            const result = await simulateRoO({
+                originCountry: rooForm.originCountry,
+                commodityCode: rooForm.commodityCode,
+                valueOrigin: parseFloat(rooForm.valueOrigin) || 0,
+                valueUK: parseFloat(rooForm.valueUK) || 0,
+                valueThirdParty: parseFloat(rooForm.valueThirdParty) || 0,
+            });
+            setRooResult(result);
+        } finally {
+            setSimulating(false);
+        }
+    };
 
     return (
-        <div className="p-8 space-y-8">
-            <div className="flex flex-col gap-1">
-                <h1 className="text-xl font-semibold tracking-tight">Eligibility Engine</h1>
-                <p className="text-sm text-muted-foreground">
-                    Verify country eligibility and duty-free access under the Developing Countries Trading Scheme.
-                </p>
-            </div>
+        <div className="flex h-screen bg-white font-sans text-gray-600 overflow-hidden">
+            <DashboardSidebar />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Search & Selector */}
-                <div className="lg:col-span-1 space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-sm flex items-center gap-2">
-                                <Search className="h-4 w-4" /> Find Country
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <Input
-                                placeholder="Search country..."
-                                value={searchCountry}
-                                onChange={(e) => setSearchCountry(e.target.value)}
+            <main className="flex-1 flex flex-col relative overflow-hidden bg-gray-50/50">
+                {/* Header */}
+                <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-6 z-20">
+                    <div className="flex items-center gap-4">
+                        <h1 className="text-sm font-normal text-black tracking-tight flex items-center gap-2">
+                            DCTS Compliance Engine
+                        </h1>
+                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-green-50 text-green-600 border border-green-100 font-medium tracking-wide">
+                            AUDIT & DOCS
+                        </span>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search checks..."
+                                className="h-8 pl-8 pr-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 w-44 transition-colors"
                             />
-                            <div className="space-y-1">
-                                {filteredCountries.map((c) => (
-                                    <Button
-                                        key={c.name}
-                                        variant={selectedCountry === c.name ? "default" : "ghost"}
-                                        className="w-full justify-start text-sm"
-                                        onClick={() => setSelectedCountry(c.name)}
-                                    >
-                                        <Globe className="mr-2 h-4 w-4" />
-                                        {c.name}
-                                    </Button>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-primary/5 border-primary/20">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm flex items-center gap-2">
-                                <BookOpen className="h-4 w-4" /> Program Guide
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="text-xs space-y-3">
-                            <p><strong>Comprehensive</strong>: 0% duty on 99% of goods lines.</p>
-                            <p><strong>Enhanced</strong>: 0% duty on 2/3 of goods lines.</p>
-                            <p><strong>Standard</strong>: Reduced duties on over 80% of lines.</p>
-                            <Button variant="link" className="p-0 h-auto text-[10px]" asChild>
-                                <a href="https://www.gov.uk/government/publications/developing-countries-trading-scheme-dcts-guidance" target="_blank">View Official HMRC Guidance</a>
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Eligibility Result */}
-                <div className="lg:col-span-2 space-y-6">
-                    {!selectedCountry ? (
-                        <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed rounded-xl text-muted-foreground bg-muted/20">
-                            <Globe className="h-12 w-12 mb-4 opacity-50" />
-                            <p>Select a country to verify DCTS status.</p>
                         </div>
-                    ) : (
-                        <Card className="border-2 border-primary/10 overflow-hidden">
-                            <div className={`h-2 w-full ${eligibility?.eligible ? 'bg-green-500' : 'bg-muted'}`} />
-                            <CardHeader className="flex flex-row items-start justify-between">
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <h2 className="text-lg font-semibold tracking-tight">{selectedCountry}</h2>
-                                        {eligibility?.eligible ? (
-                                            <Badge className="bg-green-500 hover:bg-green-600 text-[10px] h-5">Eligible</Badge>
-                                        ) : (
-                                            <Badge variant="secondary" className="text-[10px] h-5">Check Needed</Badge>
-                                        )}
-                                    </div>
-                                    <CardDescription className="text-xs">Compliance Audit Profile</CardDescription>
-                                </div>
-                                <ShieldCheck className={`h-10 w-10 ${eligibility?.eligible ? 'text-primary' : 'text-muted-foreground'}`} />
-                            </CardHeader>
-                            <CardContent className="space-y-8">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="p-4 rounded-lg bg-muted/50 text-center">
-                                        <p className="text-[10px] font-bold uppercase text-muted-foreground">Framework Tier</p>
-                                        <p className="text-lg font-black text-primary">{eligibility?.tier || "Detecting..."}</p>
-                                    </div>
-                                    <div className="p-4 rounded-lg bg-muted/50 text-center">
-                                        <p className="text-[10px] font-bold uppercase text-muted-foreground">Duty Benefit</p>
-                                        <p className="text-lg font-black text-primary">{eligibility?.duty || "Standard"}</p>
-                                    </div>
-                                    <div className="p-4 rounded-lg bg-muted/50 text-center">
-                                        <p className="text-[10px] font-bold uppercase text-muted-foreground">Data Confidence</p>
-                                        <p className="text-lg font-black text-primary">{(eligibility?.confidence ? eligibility.confidence * 100 : 0)}%</p>
-                                    </div>
-                                </div>
+                        <button className="h-8 px-3 bg-black hover:bg-gray-800 text-white text-xs font-normal rounded-md transition-colors">
+                            + New Check
+                        </button>
+                    </div>
+                </header>
 
-                                <div className="space-y-4">
-                                    <h3 className="text-sm font-bold flex items-center gap-2 underline decoration-primary decoration-2 underline-offset-4">
-                                        Verification Checklist
-                                    </h3>
-                                    <div className="space-y-2">
-                                        <div className="flex items-center gap-3 p-3 rounded-md bg-green-500/10 border border-green-500/20 text-sm">
-                                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                            <span>Country is a confirmed participant in the {eligibility?.tier} Tier.</span>
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+                    <div className="max-w-6xl mx-auto space-y-6">
+
+                        {/* Metrics Row */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="bg-white border border-gray-200 rounded-xl p-5">
+                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Active Lanes</p>
+                                <h2 className="text-2xl font-light text-black">{lanes?.length ?? "—"}</h2>
+                                <p className="text-[10px] text-gray-400 mt-1">Trade lanes under monitoring</p>
+                            </div>
+                            <div className="bg-white border border-gray-200 rounded-xl p-5">
+                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Verified</p>
+                                <div className="flex items-baseline gap-2">
+                                    <h2 className="text-2xl font-light text-black">
+                                        {lanes?.filter(l => l.status === "Verified").length ?? "—"}
+                                    </h2>
+                                    <span className="text-[10px] text-green-500 font-medium">Compliant</span>
+                                </div>
+                            </div>
+                            <div className="bg-white border border-gray-200 rounded-xl p-5">
+                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Under Review</p>
+                                <div className="flex items-baseline gap-2">
+                                    <h2 className="text-2xl font-light text-black">
+                                        {lanes?.filter(l => l.status === "Review").length ?? "—"}
+                                    </h2>
+                                    <span className="text-[10px] text-orange-500 font-medium">Needs Attention</span>
+                                </div>
+                            </div>
+                            <div className="bg-white border border-gray-200 rounded-xl p-5">
+                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Est. Savings</p>
+                                <h2 className="text-2xl font-light text-black">
+                                    £{((lanes?.reduce((acc, l) => acc + (l.savingsEstimate || 0), 0) ?? 0) / 1000).toFixed(0)}k
+                                </h2>
+                                <p className="text-[10px] text-gray-400 mt-1">Across all DCTS lanes</p>
+                            </div>
+                        </div>
+
+                        {/* Two-Column: Eligibility Check + RoO Simulator */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                            {/* Left: DCTS Eligibility Checker */}
+                            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                                <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3 bg-white">
+                                    <Globe className="h-4 w-4 text-gray-400" />
+                                    <h3 className="text-sm font-medium text-black">DCTS Eligibility Check</h3>
+                                </div>
+                                <div className="p-6 space-y-4">
+                                    <div>
+                                        <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
+                                            Origin Country
+                                        </label>
+                                        <Select value={selectedCountry || undefined} onValueChange={setSelectedCountry}>
+                                            <SelectTrigger className="w-full h-9 bg-gray-50 border-gray-200 text-xs text-gray-700">
+                                                <SelectValue placeholder="Select a country..." />
+                                            </SelectTrigger>
+                                            <SelectContent className="max-h-60">
+                                                {Object.entries(DCTS_COUNTRIES).map(([tier, countries]) => (
+                                                    <SelectGroup key={tier}>
+                                                        <SelectLabel className="text-[9px] uppercase tracking-widest text-gray-400 font-semibold">{tier}</SelectLabel>
+                                                        {countries.sort().map((c) => (
+                                                            <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
+                                                        ))}
+                                                    </SelectGroup>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    {eligibility && (
+                                        <div className={cn(
+                                            "p-4 rounded-lg border",
+                                            eligibility.eligible ? "bg-green-50/50 border-green-200" : "bg-red-50/50 border-red-200"
+                                        )}>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                {eligibility.eligible
+                                                    ? <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                                    : <XCircle className="h-4 w-4 text-red-600" />}
+                                                <span className={cn(
+                                                    "text-xs font-semibold",
+                                                    eligibility.eligible ? "text-green-700" : "text-red-700"
+                                                )}>
+                                                    {eligibility.eligible ? "DCTS Eligible" : "Not Eligible"}
+                                                </span>
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <div className="flex justify-between text-[11px]">
+                                                    <span className="text-gray-500">Tier</span>
+                                                    <span className="font-medium text-black">{eligibility.tier}</span>
+                                                </div>
+                                                <div className="flex justify-between text-[11px]">
+                                                    <span className="text-gray-500">Duty Rate</span>
+                                                    <span className="font-medium text-black">{eligibility.duty}</span>
+                                                </div>
+                                                <div className="flex justify-between text-[11px]">
+                                                    <span className="text-gray-500">Confidence</span>
+                                                    <span className="font-medium text-black">{(eligibility.confidence * 100).toFixed(0)}%</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-3 p-3 rounded-md bg-yellow-500/10 border border-yellow-500/20 text-sm">
-                                            <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                                            <span>Rules of Origin (RoO) check required for specific HS Code classification.</span>
+                                    )}
+
+                                    {/* Document Generation */}
+                                    {eligibility?.eligible && (
+                                        <div className="space-y-2 pt-2">
+                                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Available Documents</p>
+                                            {[
+                                                { name: "Form A — Certificate of Origin", status: "ready" },
+                                                { name: "DCTS Preference Declaration", status: "ready" },
+                                                { name: "Rules of Origin Statement", status: "pending" },
+                                            ].map((doc) => (
+                                                <button
+                                                    key={doc.name}
+                                                    className="w-full flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-lg hover:bg-gray-100 transition-colors group"
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <FileText className="h-3.5 w-3.5 text-gray-400" />
+                                                        <span className="text-[11px] text-gray-700">{doc.name}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={cn(
+                                                            "text-[9px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded",
+                                                            doc.status === "ready" ? "bg-green-100 text-green-600" : "bg-orange-100 text-orange-600"
+                                                        )}>
+                                                            {doc.status}
+                                                        </span>
+                                                        <Download className="h-3 w-3 text-gray-300 group-hover:text-gray-500 transition-colors" />
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Right: Rules of Origin Simulator */}
+                            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                                <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3 bg-white">
+                                    <Package className="h-4 w-4 text-gray-400" />
+                                    <h3 className="text-sm font-medium text-black">Rules of Origin Simulator</h3>
+                                </div>
+                                <div className="p-6 space-y-4">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
+                                                Origin Country
+                                            </label>
+                                            <Select value={rooForm.originCountry || undefined} onValueChange={(val) => setRooForm(f => ({ ...f, originCountry: val }))}>
+                                                <SelectTrigger className="w-full h-9 bg-gray-50 border-gray-200 text-xs text-gray-700">
+                                                    <SelectValue placeholder="Select..." />
+                                                </SelectTrigger>
+                                                <SelectContent className="max-h-60">
+                                                    {Object.entries(DCTS_COUNTRIES).map(([tier, countries]) => (
+                                                        <SelectGroup key={tier}>
+                                                            <SelectLabel className="text-[9px] uppercase tracking-widest text-gray-400 font-semibold">{tier}</SelectLabel>
+                                                            {countries.sort().map((c) => (
+                                                                <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
+                                                            ))}
+                                                        </SelectGroup>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
+                                                HS Code
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="e.g. 6109"
+                                                value={rooForm.commodityCode}
+                                                onChange={(e) => setRooForm(f => ({ ...f, commodityCode: e.target.value }))}
+                                                className="w-full h-9 px-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 transition-colors"
+                                            />
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="flex gap-4">
-                                    <Button className="flex-1 font-bold" variant="outline" onClick={() => window.location.href = '/dashboard/calculator'}>
-                                        Calculate Tariffs
-                                    </Button>
-                                    <Button className="flex-1 font-bold" onClick={() => window.location.href = '/dashboard/user'}>
-                                        Run RoO Simulator
-                                        <ArrowRight className="ml-2 h-4 w-4" />
-                                    </Button>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div>
+                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
+                                                Origin Value (£)
+                                            </label>
+                                            <input
+                                                type="number"
+                                                placeholder="0"
+                                                value={rooForm.valueOrigin}
+                                                onChange={(e) => setRooForm(f => ({ ...f, valueOrigin: e.target.value }))}
+                                                className="w-full h-9 px-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 transition-colors"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
+                                                UK Value (£)
+                                            </label>
+                                            <input
+                                                type="number"
+                                                placeholder="0"
+                                                value={rooForm.valueUK}
+                                                onChange={(e) => setRooForm(f => ({ ...f, valueUK: e.target.value }))}
+                                                className="w-full h-9 px-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 transition-colors"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
+                                                Third Party (£)
+                                            </label>
+                                            <input
+                                                type="number"
+                                                placeholder="0"
+                                                value={rooForm.valueThirdParty}
+                                                onChange={(e) => setRooForm(f => ({ ...f, valueThirdParty: e.target.value }))}
+                                                className="w-full h-9 px-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 transition-colors"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={handleSimulate}
+                                        disabled={!rooForm.originCountry || !rooForm.commodityCode || simulating}
+                                        className="h-8 px-4 bg-black hover:bg-gray-800 text-white text-xs font-normal rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        {simulating ? "Simulating..." : "Run RoO Simulation"}
+                                    </button>
+
+                                    {/* Simulation Result */}
+                                    {rooResult && (
+                                        <div className={cn(
+                                            "p-4 rounded-lg border",
+                                            rooResult.isCompliant ? "bg-green-50/50 border-green-200" : "bg-red-50/50 border-red-200"
+                                        )}>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                {rooResult.isCompliant
+                                                    ? <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                                    : <AlertTriangle className="h-4 w-4 text-red-600" />}
+                                                <span className={cn(
+                                                    "text-xs font-semibold",
+                                                    rooResult.isCompliant ? "text-green-700" : "text-red-700"
+                                                )}>
+                                                    {rooResult.isCompliant ? "COMPLIANT" : "NON-COMPLIANT"}
+                                                </span>
+                                            </div>
+
+                                            {/* Value Added Bar */}
+                                            <div className="mb-3">
+                                                <div className="flex justify-between text-[10px] mb-1">
+                                                    <span className="text-gray-500">Value Added</span>
+                                                    <span className="font-medium text-black">{rooResult.valueAddedPercent.toFixed(1)}%</span>
+                                                </div>
+                                                <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                                    <div
+                                                        className={cn(
+                                                            "h-1.5 rounded-full transition-all",
+                                                            rooResult.isCompliant ? "bg-green-500" : "bg-red-500"
+                                                        )}
+                                                        style={{ width: `${Math.min(rooResult.valueAddedPercent, 100)}%` }}
+                                                    />
+                                                </div>
+                                                <div className="flex justify-between text-[9px] mt-0.5">
+                                                    <span className="text-gray-300">0%</span>
+                                                    <span className="text-gray-400 font-medium">Threshold: {rooResult.threshold}%</span>
+                                                    <span className="text-gray-300">100%</span>
+                                                </div>
+                                            </div>
+
+                                            <p className="text-[11px] text-gray-600 leading-relaxed">{rooResult.message}</p>
+
+                                            {rooResult.cumulationApplied && (
+                                                <div className="flex items-center gap-1.5 mt-2 text-[10px] text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100">
+                                                    <Info className="h-3 w-3" />
+                                                    Regional cumulation rules applied
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
-                            </CardContent>
-                        </Card>
-                    )}
+                            </div>
+                        </div>
+
+                        {/* Trade Lanes Table */}
+                        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white">
+                                <div className="flex items-center gap-3">
+                                    <ShieldCheck className="h-4 w-4 text-gray-400" />
+                                    <h3 className="text-sm font-medium text-black">Active Trade Lanes</h3>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-gray-400">{lanes?.length ?? 0} lanes</span>
+                                </div>
+                            </div>
+
+                            {lanes && lanes.length > 0 ? (
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-gray-50/50">
+                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Origin</th>
+                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">HS Code</th>
+                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Description</th>
+                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">DCTS Tier</th>
+                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+                                            <th className="px-6 py-3 text-[10px] font-semibold text-gray-400 uppercase tracking-wider text-right">Savings</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {lanes.map((lane) => (
+                                            <tr key={lane._id} className="hover:bg-gray-50/50 transition-colors group">
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <Globe className="h-3.5 w-3.5 text-gray-400" />
+                                                        <span className="text-xs font-medium text-black">{lane.originCountry}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-[11px] text-gray-600 font-mono">{lane.commodityCode}</td>
+                                                <td className="px-6 py-4 text-[11px] text-gray-600 truncate max-w-[200px]">{lane.description}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={cn(
+                                                        "text-[10px] font-medium px-2 py-0.5 rounded-md",
+                                                        lane.tier === "Comprehensive" ? "bg-green-100 text-green-700" :
+                                                            lane.tier === "Enhanced" ? "bg-blue-100 text-blue-700" :
+                                                                "bg-gray-100 text-gray-700"
+                                                    )}>
+                                                        {lane.tier}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={cn(
+                                                            "w-1.5 h-1.5 rounded-full",
+                                                            lane.status === "Verified" ? "bg-green-500" :
+                                                                lane.status === "Review" ? "bg-orange-500 animate-pulse" :
+                                                                    "bg-red-500"
+                                                        )} />
+                                                        <span className="text-[11px] text-gray-600">{lane.status}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <span className="text-[11px] font-medium text-gray-500">
+                                                        {lane.savingsEstimate ? `£${lane.savingsEstimate.toLocaleString()}` : "—"}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="py-16 text-center">
+                                    <div className="mx-auto w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3 border border-gray-200">
+                                        <ShieldCheck className="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <h3 className="text-gray-600 font-normal text-sm mb-1">No Active Trade Lanes</h3>
+                                    <p className="text-gray-400 text-xs mb-4">Create your first trade lane to begin compliance monitoring.</p>
+                                    <button className="px-4 py-1.5 bg-black hover:bg-gray-800 text-white text-xs font-normal rounded-md transition-colors">
+                                        Create Trade Lane
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                    </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }
