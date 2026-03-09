@@ -1,30 +1,23 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import {
     Inbox,
-    Search,
     Mail,
     MessageCircle,
     Phone,
     Send,
     Paperclip,
     Star,
-    Clock,
     Reply,
     Sparkles,
     Plus,
     MoreVertical,
-    CheckCheck,
-    AlertCircle,
     Archive,
     Bell,
     UserPlus,
     ArrowRight,
     ExternalLink,
-    CircleDot,
-    X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -237,7 +230,6 @@ export default function InboxPage() {
         : CONVERSATIONS.filter((c) => c.channel === channelFilter);
 
     const selected = CONVERSATIONS.find((c) => c.id === selectedId);
-    const unreadCount = CONVERSATIONS.filter((c) => c.unread).length;
 
     // Close action menu on outside click
     useEffect(() => {
@@ -265,291 +257,250 @@ export default function InboxPage() {
     };
 
     return (
-        <div className="flex h-screen bg-white font-sans text-gray-600 overflow-hidden">
-            <DashboardSidebar />
+        <div className="flex-1 flex flex-col min-h-0 h-full overflow-hidden">
 
-            <main className="flex-1 flex flex-col relative overflow-hidden">
-                {/* Header */}
-                <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-6 z-20">
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-sm font-normal text-black tracking-tight">Inbox</h1>
-                        {/* Channel Filters */}
-                        <div className="flex items-center gap-1">
-                            {(["all", "email", "whatsapp", "sms"] as const).map((ch) => (
-                                <button
-                                    key={ch}
-                                    onClick={() => setChannelFilter(ch)}
-                                    className={cn(
-                                        "px-2 py-1 rounded text-[0.625rem] font-medium transition-colors",
-                                        channelFilter === ch
-                                            ? "bg-gray-100 text-black border border-gray-200"
-                                            : "text-gray-400 hover:text-gray-600"
-                                    )}
-                                >
-                                    {ch === "all" ? "All" : ch === "whatsapp" ? "WhatsApp" : ch === "sms" ? "SMS" : "Email"}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="relative">
-                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Search messages..."
-                                className="h-8 pl-8 pr-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 w-44 transition-colors"
-                            />
-                        </div>
-                        <button className="h-8 px-3 bg-black hover:bg-gray-800 text-white text-xs font-normal rounded-md transition-colors flex items-center gap-1.5">
-                            <Plus className="h-3 w-3" />
-                            Compose
-                        </button>
-                    </div>
-                </header>
-
-                {/* Two-pane layout */}
-                <div className="flex-1 flex overflow-hidden">
-                    {/* Conversation List */}
-                    <div className="w-80 border-r border-gray-200 bg-white overflow-y-auto custom-scrollbar">
-                        {filtered.map((conv) => {
-                            const Icon = channelIcons[conv.channel];
-                            return (
-                                <button
-                                    key={conv.id}
-                                    onClick={() => setSelectedId(conv.id)}
-                                    className={cn(
-                                        "w-full px-4 py-3 text-left border-b border-gray-50 transition-colors",
-                                        selectedId === conv.id ? "bg-gray-50" : "hover:bg-gray-50/50"
-                                    )}
-                                >
-                                    <div className="flex items-center justify-between mb-1">
-                                        <div className="flex items-center gap-2">
-                                            <div className={cn("w-5 h-5 rounded flex items-center justify-center", channelColors[conv.channel])}>
-                                                <Icon className="h-3 w-3" />
-                                            </div>
-                                            <span className={cn(
-                                                "text-xs truncate max-w-[140px]",
-                                                conv.unread ? "font-medium text-black" : "font-normal text-gray-700"
-                                            )}>
-                                                {conv.name}
-                                            </span>
-                                            {/* Thread Status */}
-                                            <span className={cn(
-                                                "text-[0.5rem] uppercase tracking-wider font-bold px-1 py-0.5 rounded",
-                                                conv.status === "open"
-                                                    ? "bg-green-100 text-green-700"
-                                                    : "bg-gray-100 text-gray-500"
-                                            )}>
-                                                {conv.status}
-                                            </span>
-                                        </div>
-                                        <span className="text-[0.5625rem] text-gray-400">{conv.timestamp}</span>
-                                    </div>
-                                    <p className={cn(
-                                        "text-[0.6875rem] truncate",
-                                        conv.unread ? "text-gray-600" : "text-gray-400"
-                                    )}>
-                                        {conv.lastMessage}
-                                    </p>
-                                    <span className="text-[0.5625rem] text-gray-300 mt-0.5 block">{conv.channel} · {conv.country}</span>
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {/* Message View */}
-                    <div className="flex-1 flex flex-col bg-gray-50/50">
-                        {selected ? (
-                            <>
-                                {/* Chat Header with Action Bar */}
-                                <div className="px-6 py-3 border-b border-gray-200 bg-white">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-sm font-semibold", channelColors[selected.channel])}>
-                                                {selected.name.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <p className="text-xs font-medium text-black">{selected.name}</p>
-                                                    <span className={cn(
-                                                        "text-[0.5rem] uppercase tracking-wider font-bold px-1 py-0.5 rounded",
-                                                        selected.status === "open"
-                                                            ? "bg-green-100 text-green-700"
-                                                            : "bg-gray-100 text-gray-500"
-                                                    )}>
-                                                        {selected.status}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-1.5 mt-0.5">
-                                                    {React.createElement(channelIcons[selected.channel], { className: "h-2.5 w-2.5 text-gray-400" })}
-                                                    <p className="text-[0.5625rem] text-gray-400">{selected.channel} · {selected.location}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Action Buttons — all inline text-style */}
-                                        <div className="flex items-center gap-4">
-                                            <button className="text-xs text-gray-500 hover:text-black transition-colors inline-flex items-center gap-1">
-                                                <Reply className="h-3.5 w-3.5" />
-                                                Reply
-                                            </button>
-                                            <button className="text-xs text-gray-500 hover:text-black transition-colors inline-flex items-center gap-1">
-                                                <Sparkles className="h-3.5 w-3.5" />
-                                                AI Assistant
-                                            </button>
-                                            <button className="text-xs text-gray-500 hover:text-black transition-colors inline-flex items-center gap-1">
-                                                AI Draft
-                                            </button>
-                                            <button className="text-gray-400 hover:text-black transition-colors inline-flex items-center">
-                                                <Plus className="h-4 w-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => toggleStar(selected.id)}
-                                                className="hover:text-black transition-colors inline-flex items-center"
-                                            >
-                                                <Star className={cn(
-                                                    "h-4 w-4",
-                                                    starred.has(selected.id) ? "text-amber-400 fill-amber-400" : "text-gray-400"
-                                                )} />
-                                            </button>
-
-                                            {/* Kebab Menu */}
-                                            <div className="relative inline-flex items-center" ref={actionMenuRef}>
-                                                <button
-                                                    onClick={() => setShowActionMenu(!showActionMenu)}
-                                                    className="text-gray-400 hover:text-black transition-colors inline-flex items-center"
-                                                >
-                                                    <MoreVertical className="h-4 w-4" />
-                                                </button>
-
-                                                {showActionMenu && (
-                                                    <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-150">
-                                                        {/* Thread Management */}
-                                                        <p className="px-3 py-1.5 text-[0.5625rem] font-semibold text-gray-400 uppercase tracking-widest">Thread Management</p>
-                                                        <button className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left">
-                                                            <Archive className="h-3.5 w-3.5 text-green-500" />
-                                                            <div>
-                                                                <p className="text-xs text-gray-700">Resolve & Archive</p>
-                                                                <p className="text-[0.5625rem] text-gray-400">Mark as completed</p>
-                                                            </div>
-                                                        </button>
-                                                        <button className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left">
-                                                            <Bell className="h-3.5 w-3.5 text-orange-500" />
-                                                            <div>
-                                                                <p className="text-xs text-gray-700">Snooze Follow-up</p>
-                                                                <p className="text-[0.5625rem] text-gray-400">Remind me later</p>
-                                                            </div>
-                                                        </button>
-
-                                                        {/* Collaboration */}
-                                                        <div className="border-t border-gray-100 mt-1 pt-1">
-                                                            <p className="px-3 py-1.5 text-[0.5625rem] font-semibold text-gray-400 uppercase tracking-widest">Collaboration</p>
-                                                            <button className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left">
-                                                                <UserPlus className="h-3.5 w-3.5 text-blue-500" />
-                                                                <div>
-                                                                    <p className="text-xs text-gray-700">Assign to Agent</p>
-                                                                    <p className="text-[0.5625rem] text-gray-400">Designate team member</p>
-                                                                </div>
-                                                            </button>
-                                                        </div>
-
-                                                        {/* Engine Bridge */}
-                                                        <div className="border-t border-gray-100 mt-1 pt-1">
-                                                            <p className="px-3 py-1.5 text-[0.5625rem] font-semibold text-gray-400 uppercase tracking-widest">Engine Bridge</p>
-                                                            <button className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left">
-                                                                <ArrowRight className="h-3.5 w-3.5 text-purple-500" />
-                                                                <div>
-                                                                    <p className="text-xs text-gray-700">Move to Lane</p>
-                                                                    <p className="text-[0.5625rem] text-gray-400">Direct lane activation</p>
-                                                                </div>
-                                                            </button>
-                                                            <button className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left">
-                                                                <ExternalLink className="h-3.5 w-3.5 text-indigo-500" />
-                                                                <div>
-                                                                    <p className="text-xs text-gray-700">View Lead DNA</p>
-                                                                    <p className="text-[0.5625rem] text-gray-400">Full strategic profile</p>
-                                                                </div>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Messages */}
-                                <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-                                    {selected.messages.map((msg) => (
-                                        <div key={msg.id}>
-                                            {/* Timestamp label */}
-                                            <p className={cn(
-                                                "text-[0.5625rem] uppercase tracking-wider font-semibold mb-1.5",
-                                                msg.incoming ? "text-gray-400" : "text-gray-400"
-                                            )}>
-                                                {msg.incoming ? msg.sender : "YOU"} · {msg.timestamp}
-                                            </p>
-                                            <div className={cn("flex", msg.incoming ? "justify-start" : "justify-start")}>
-                                                <div className={cn(
-                                                    "max-w-[75%] rounded-xl px-4 py-3 relative",
-                                                    msg.incoming
-                                                        ? "bg-white border border-gray-200"
-                                                        : "bg-blue-50 border border-blue-100"
-                                                )}>
-                                                    <p className={cn(
-                                                        "text-xs leading-relaxed",
-                                                        msg.incoming ? "text-gray-700" : "text-gray-800"
-                                                    )}>
-                                                        {msg.content}
-                                                    </p>
-                                                    {/* Message Status Badge */}
-                                                    <div className="flex justify-end mt-1.5">
-                                                        <span className={cn(
-                                                            "text-[0.5rem] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded",
-                                                            statusBadgeColors[msg.status].bg,
-                                                            statusBadgeColors[msg.status].text
-                                                        )}>
-                                                            {statusBadgeColors[msg.status].label}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    <div ref={messagesEndRef} />
-                                </div>
-
-                                {/* Message Input */}
-                                <div className="px-4 py-3 border-t border-gray-200 bg-white">
+            {/* Two-pane layout */}
+            <div className="flex-1 flex overflow-hidden">
+                {/* Conversation List */}
+                <div className="w-80 border-r border-gray-200 bg-white overflow-y-auto">
+                    {filtered.map((conv) => {
+                        const Icon = channelIcons[conv.channel];
+                        return (
+                            <button
+                                key={conv.id}
+                                onClick={() => setSelectedId(conv.id)}
+                                className={cn(
+                                    "w-full px-4 py-3 text-left border-b border-gray-50 transition-colors",
+                                    selectedId === conv.id ? "bg-gray-50" : "hover:bg-gray-50/50"
+                                )}
+                            >
+                                <div className="flex items-center justify-between mb-1">
                                     <div className="flex items-center gap-2">
-                                        <button className="p-2 hover:bg-gray-100 rounded-md transition-colors">
-                                            <Paperclip className="h-4 w-4 text-gray-400" />
-                                        </button>
-                                        <input
-                                            type="text"
-                                            placeholder="Type a message..."
-                                            value={messageInput}
-                                            onChange={(e) => setMessageInput(e.target.value)}
-                                            className="flex-1 h-9 px-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 transition-colors"
-                                        />
-                                        <button className="h-9 px-4 bg-black hover:bg-gray-800 text-white text-xs font-normal rounded-md transition-colors flex items-center gap-1.5">
-                                            <Send className="h-3 w-3" />
-                                            Send
-                                        </button>
+                                        <div className={cn("w-5 h-5 rounded flex items-center justify-center", channelColors[conv.channel])}>
+                                            <Icon className="h-3 w-3" />
+                                        </div>
+                                        <span className={cn(
+                                            "text-xs truncate max-w-[140px]",
+                                            conv.unread ? "font-medium text-black" : "font-normal text-gray-700"
+                                        )}>
+                                            {conv.name}
+                                        </span>
+                                        {/* Thread Status */}
+                                        <span className={cn(
+                                            "text-[0.5rem] uppercase tracking-wider font-bold px-1 py-0.5 rounded",
+                                            conv.status === "open"
+                                                ? "bg-green-100 text-green-700"
+                                                : "bg-gray-100 text-gray-500"
+                                        )}>
+                                            {conv.status}
+                                        </span>
                                     </div>
+                                    <span className="text-[0.5625rem] text-gray-400">{conv.timestamp}</span>
                                 </div>
-                            </>
-                        ) : (
-                            <div className="flex-1 flex items-center justify-center">
-                                <div className="text-center">
-                                    <Inbox className="h-8 w-8 text-gray-300 mx-auto mb-3" />
-                                    <p className="text-sm text-gray-500">Select a conversation</p>
+                                <p className={cn(
+                                    "text-[0.6875rem] truncate",
+                                    conv.unread ? "text-gray-600" : "text-gray-400"
+                                )}>
+                                    {conv.lastMessage}
+                                </p>
+                                <span className="text-[0.5625rem] text-gray-300 mt-0.5 block">{conv.channel} · {conv.country}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Message View */}
+                <div className="flex-1 flex flex-col bg-gray-50/50">
+                    {selected ? (
+                        <>
+                            {/* Chat Header with Action Bar */}
+                            <div className="px-6 py-3 border-b border-gray-200 bg-white">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-sm font-semibold", channelColors[selected.channel])}>
+                                            {selected.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-xs font-medium text-black">{selected.name}</p>
+                                                <span className={cn(
+                                                    "text-[0.5rem] uppercase tracking-wider font-bold px-1 py-0.5 rounded",
+                                                    selected.status === "open"
+                                                        ? "bg-green-100 text-green-700"
+                                                        : "bg-gray-100 text-gray-500"
+                                                )}>
+                                                    {selected.status}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 mt-0.5">
+                                                {React.createElement(channelIcons[selected.channel], { className: "h-2.5 w-2.5 text-gray-400" })}
+                                                <p className="text-[0.5625rem] text-gray-400">{selected.channel} · {selected.location}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Action Buttons — all inline text-style */}
+                                    <div className="flex items-center gap-4">
+                                        <button className="text-xs text-gray-500 hover:text-black transition-colors inline-flex items-center gap-1">
+                                            <Reply className="h-3.5 w-3.5" />
+                                            Reply
+                                        </button>
+                                        <button className="text-xs text-gray-500 hover:text-black transition-colors inline-flex items-center gap-1">
+                                            <Sparkles className="h-3.5 w-3.5" />
+                                            AI Assistant
+                                        </button>
+                                        <button className="text-xs text-gray-500 hover:text-black transition-colors inline-flex items-center gap-1">
+                                            AI Draft
+                                        </button>
+                                        <button className="text-gray-400 hover:text-black transition-colors inline-flex items-center">
+                                            <Plus className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => toggleStar(selected.id)}
+                                            className="hover:text-black transition-colors inline-flex items-center"
+                                        >
+                                            <Star className={cn(
+                                                "h-4 w-4",
+                                                starred.has(selected.id) ? "text-amber-400 fill-amber-400" : "text-gray-400"
+                                            )} />
+                                        </button>
+
+                                        {/* Kebab Menu */}
+                                        <div className="relative inline-flex items-center" ref={actionMenuRef}>
+                                            <button
+                                                onClick={() => setShowActionMenu(!showActionMenu)}
+                                                className="text-gray-400 hover:text-black transition-colors inline-flex items-center"
+                                            >
+                                                <MoreVertical className="h-4 w-4" />
+                                            </button>
+
+                                            {showActionMenu && (
+                                                <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-150">
+                                                    {/* Thread Management */}
+                                                    <p className="px-3 py-1.5 text-[0.5625rem] font-semibold text-gray-400 uppercase tracking-widest">Thread Management</p>
+                                                    <button className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left">
+                                                        <Archive className="h-3.5 w-3.5 text-green-500" />
+                                                        <div>
+                                                            <p className="text-xs text-gray-700">Resolve & Archive</p>
+                                                            <p className="text-[0.5625rem] text-gray-400">Mark as completed</p>
+                                                        </div>
+                                                    </button>
+                                                    <button className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left">
+                                                        <Bell className="h-3.5 w-3.5 text-orange-500" />
+                                                        <div>
+                                                            <p className="text-xs text-gray-700">Snooze Follow-up</p>
+                                                            <p className="text-[0.5625rem] text-gray-400">Remind me later</p>
+                                                        </div>
+                                                    </button>
+
+                                                    {/* Collaboration */}
+                                                    <div className="border-t border-gray-100 mt-1 pt-1">
+                                                        <p className="px-3 py-1.5 text-[0.5625rem] font-semibold text-gray-400 uppercase tracking-widest">Collaboration</p>
+                                                        <button className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left">
+                                                            <UserPlus className="h-3.5 w-3.5 text-blue-500" />
+                                                            <div>
+                                                                <p className="text-xs text-gray-700">Assign to Agent</p>
+                                                                <p className="text-[0.5625rem] text-gray-400">Designate team member</p>
+                                                            </div>
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Engine Bridge */}
+                                                    <div className="border-t border-gray-100 mt-1 pt-1">
+                                                        <p className="px-3 py-1.5 text-[0.5625rem] font-semibold text-gray-400 uppercase tracking-widest">Engine Bridge</p>
+                                                        <button className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left">
+                                                            <ArrowRight className="h-3.5 w-3.5 text-purple-500" />
+                                                            <div>
+                                                                <p className="text-xs text-gray-700">Move to Lane</p>
+                                                                <p className="text-[0.5625rem] text-gray-400">Direct lane activation</p>
+                                                            </div>
+                                                        </button>
+                                                        <button className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 transition-colors text-left">
+                                                            <ExternalLink className="h-3.5 w-3.5 text-indigo-500" />
+                                                            <div>
+                                                                <p className="text-xs text-gray-700">View Lead DNA</p>
+                                                                <p className="text-[0.5625rem] text-gray-400">Full strategic profile</p>
+                                                            </div>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        )}
-                    </div>
+
+                            {/* Messages */}
+                            <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                                {selected.messages.map((msg) => (
+                                    <div key={msg.id}>
+                                        {/* Timestamp label */}
+                                        <p className={cn(
+                                            "text-[0.5625rem] uppercase tracking-wider font-semibold mb-1.5",
+                                            msg.incoming ? "text-gray-400" : "text-gray-400"
+                                        )}>
+                                            {msg.incoming ? msg.sender : "YOU"} · {msg.timestamp}
+                                        </p>
+                                        <div className={cn("flex", msg.incoming ? "justify-start" : "justify-start")}>
+                                            <div className={cn(
+                                                "max-w-[75%] rounded-xl px-4 py-3 relative",
+                                                msg.incoming
+                                                    ? "bg-white border border-gray-200"
+                                                    : "bg-blue-50 border border-blue-100"
+                                            )}>
+                                                <p className={cn(
+                                                    "text-xs leading-relaxed",
+                                                    msg.incoming ? "text-gray-700" : "text-gray-800"
+                                                )}>
+                                                    {msg.content}
+                                                </p>
+                                                {/* Message Status Badge */}
+                                                <div className="flex justify-end mt-1.5">
+                                                    <span className={cn(
+                                                        "text-[0.5rem] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded",
+                                                        statusBadgeColors[msg.status].bg,
+                                                        statusBadgeColors[msg.status].text
+                                                    )}>
+                                                        {statusBadgeColors[msg.status].label}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                <div ref={messagesEndRef} />
+                            </div>
+
+                            {/* Message Input */}
+                            <div className="px-4 py-3 border-t border-gray-200 bg-white">
+                                <div className="flex items-center gap-2">
+                                    <button className="p-2 hover:bg-gray-100 rounded-md transition-colors">
+                                        <Paperclip className="h-4 w-4 text-gray-400" />
+                                    </button>
+                                    <input
+                                        type="text"
+                                        placeholder="Type a message..."
+                                        value={messageInput}
+                                        onChange={(e) => setMessageInput(e.target.value)}
+                                        className="flex-1 h-9 px-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 transition-colors"
+                                    />
+                                    <button className="h-9 px-4 bg-black hover:bg-gray-800 text-white text-xs font-normal rounded-md transition-colors flex items-center gap-1.5">
+                                        <Send className="h-3 w-3" />
+                                        Send
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex-1 flex items-center justify-center">
+                            <div className="text-center">
+                                <Inbox className="h-8 w-8 text-gray-300 mx-auto mb-3" />
+                                <p className="text-sm text-gray-500">Select a conversation</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
-            </main>
+            </div>
         </div>
     );
 }

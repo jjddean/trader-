@@ -3,31 +3,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Typography Scale System — proportional scaling via one variable */
-:root {
-    --text-scale: 1.125;
-    /* Default preset */
+@theme {
+    --font-sans: var(--font-sans, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
 }
 
-html {
-    font-size: calc(16px * var(--text-scale));
+
+/* Custom scrollbar for better aesthetics */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
 }
 
-/* Global scrollbar — visible and usable */
-*::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-*::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-*::-webkit-scrollbar-thumb {
-    background: #b0b5bd;
-    border-radius: 4px;
-}
-
-*::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
-}
+/* Global scrollbar removed */

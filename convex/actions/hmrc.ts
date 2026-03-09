@@ -77,24 +77,30 @@ export const handleHmrcCallback = action({
     },
 });
 
+type HmrcStatus = {
+    connected: boolean;
+    isExpired?: boolean;
+    eori?: string;
+};
+
 export const getHmrcStatus = action({
     args: {},
-    handler: async (ctx) => {
+    handler: async (ctx): Promise<HmrcStatus> => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) return { connected: false };
 
-        const tokens: any = await ctx.runQuery(internal.hmrc_internal.getTokens, {
+        const tokens: { expiresAt: number; eori?: string } | null = await ctx.runQuery(internal.hmrc_internal.getTokens, {
             userId: identity.subject,
         });
 
         if (!tokens) return { connected: false };
 
-        const isExpired: boolean = Date.now() > (tokens.expiresAt as number);
+        const isExpired: boolean = Date.now() > (tokens.expiresAt ?? 0);
 
         return {
             connected: true,
             isExpired,
-            eori: tokens.eori as string | undefined,
+            eori: tokens.eori,
         };
     },
 });

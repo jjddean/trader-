@@ -5,7 +5,14 @@ import { ConvexClientProvider } from "@/components/providers/convex-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal"],
+  display: "swap",
+  variable: "--font-sans",
+});
+
 
 export const metadata: Metadata = {
   title: "TradeDNA | Global Trade Intelligence",
@@ -22,7 +29,7 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
     >
-      <body className={cn(inter.className, "antialiased min-h-screen bg-slate-50")} suppressHydrationWarning>
+      <body className={cn(inter.variable, inter.className, "min-h-screen bg-slate-50 font-sans")} suppressHydrationWarning>
         <ConvexClientProvider>
           <TooltipProvider>
             {children}

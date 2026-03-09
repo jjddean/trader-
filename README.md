@@ -34,3 +34,10 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Typography Notes
+
+- The application uses Inter as the primary sans-serif family, loaded via `next/font/google` with weights 300, 400, 500, 600, and 700, and `display: swap`.  
+- The font is bound to the CSS variable `--font-sans` and applied globally on the `<body>` as part of the `inter.className` and `font-sans` classes.  
+- Component libraries are expected to inherit `font-sans`. Only code-like fields (e.g., HS codes) intentionally use `font-mono`.  
+- To change typography, edit the configuration in `src/app/layout.tsx`. This approach prevents dependency updates from silently changing the font.

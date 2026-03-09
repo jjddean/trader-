@@ -15,7 +15,7 @@ export const explainTradeRule = action({
         if (!identity) throw new Error("Unauthenticated");
 
         // Grounding Prompt using deterministic data principles
-        const prompt = `
+        const _prompt = `
             You are the Elite TradeDNA AI Assistant. 
             The user is asking about:
             ${args.query ? `- Query: ${args.query}` : ""}

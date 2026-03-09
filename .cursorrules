@@ -1,0 +1,19 @@
+# TradeDNA Coding Agent Safety Rules
+
+These 15 rules are mandatory for any AI agent working on this codebase.
+
+1.  **No Large Datasets in Convex**: Never store datasets larger than 1,000 rows in Convex. Use Cloudflare R2 pointers.
+2.  **Deterministic Calculations**: All tariff/VAT logic must be hardcoded TS, never AI-generated.
+3.  **AI as Explainer Only**: AI must never invent or override calculated compliance values.
+4.  **Least Privilege Access**: Only access files explicitly required for the task.
+5.  **Human Review Loop**: Present every code modification for review.
+6.  **No Hardcoded Secrets**: Use `.env.local` or Convex Secrets only.
+7.  **Versioned Object Storage**: Use versioned paths (e.g., `v2026-03.json`) for R2 data.
+8.  **Edge-First Fetching**: Large dataset lookups must be <100ms via CDN/Edge.
+9.  **Search via Typesense**: Use Typesense for high-volume searches, not Convex filters.
+10. **Environment Variable Guard**: Do not modify sensitive keys in `.env.local`.
+11. **Sanitize AI Inputs**: Validate and sanitize inputs before feeding into AI prompts.
+12. **Audit Logic**: Update test cases for any tax or compliance logic changes.
+13. **Zero-Trust AI Code**: Treat all AI-suggested code as unverified.
+14. **Document AI Context**: Document system prompts for AI features.
+15. **Architecture Protection**: Flag requests that contradict the core architecture (e.g., JSON in components).

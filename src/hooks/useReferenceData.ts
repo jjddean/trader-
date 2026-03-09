@@ -14,7 +14,7 @@ export function useReferenceData<T>(datasetName: string) {
         if (datasetInfo) {
             const url = datasetInfo.storageUrl || `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}${datasetInfo.storagePath}`;
 
-            setIsLoading(true);
+            
             fetch(url)
                 .then(res => {
                     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);

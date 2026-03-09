@@ -7,7 +7,7 @@ import { useEffect, useRef } from "react";
 
 export function UserSync() {
     const { user, isLoaded: isClerkLoaded } = useUser();
-    const { isAuthenticated, isLoading: isConvexLoading } = useConvexAuth();
+    const { isAuthenticated } = useConvexAuth();
     const syncUser = useMutation(api.users.syncUser);
     const hasSynced = useRef(false);
 

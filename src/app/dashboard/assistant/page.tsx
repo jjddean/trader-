@@ -1,14 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useAction } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import {
     Bot,
     Send,
     User,
-    Sparkles,
     ShieldCheck,
     Globe,
     Package,
@@ -66,7 +64,7 @@ export default function AssistantPage() {
                 timestamp: Date.now(),
             };
             setMessages((prev) => [...prev, assistantMsg]);
-        } catch (err) {
+        } catch (_err) {
             const errorMsg: Message = {
                 id: `e-${Date.now()}`,
                 role: "assistant",
@@ -80,105 +78,91 @@ export default function AssistantPage() {
     };
 
     return (
-        <div className="flex h-screen bg-white font-sans text-gray-600 overflow-hidden">
-            <DashboardSidebar />
-
-            <main className="flex-1 flex flex-col relative overflow-hidden">
-                <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-6 z-20">
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-sm font-normal text-black tracking-tight">AI Trade Advisor</h1>
-                        <span className="px-1.5 py-0.5 rounded text-[0.5625rem] bg-purple-50 text-purple-600 border border-purple-100 font-medium tracking-wide flex items-center gap-1">
-                            <Sparkles className="h-2.5 w-2.5" />
-                            DNA CONSULTANT
-                        </span>
-                    </div>
-                </header>
-
-                {/* Chat Area */}
-                <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                    <div className="max-w-3xl mx-auto space-y-4">
-                        {messages.map((msg) => (
-                            <div key={msg.id} className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
-                                {msg.role === "assistant" && (
-                                    <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 mt-1">
-                                        <Bot className="h-4 w-4 text-gray-500" />
-                                    </div>
-                                )}
-                                <div className={cn(
-                                    "max-w-[75%] rounded-xl px-4 py-3",
-                                    msg.role === "user"
-                                        ? "bg-black text-white"
-                                        : "bg-white border border-gray-200"
-                                )}>
-                                    <p className={cn(
-                                        "text-xs leading-relaxed whitespace-pre-wrap",
-                                        msg.role === "user" ? "text-white" : "text-gray-700"
-                                    )}>
-                                        {msg.content}
-                                    </p>
-                                </div>
-                                {msg.role === "user" && (
-                                    <div className="w-7 h-7 rounded-lg bg-black flex items-center justify-center flex-shrink-0 mt-1">
-                                        <User className="h-4 w-4 text-white" />
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-
-                        {loading && (
-                            <div className="flex gap-3">
-                                <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+        <div className="flex-1 flex flex-col h-full overflow-hidden">
+            {/* Chat Area */}
+            <div className="flex-1 overflow-y-auto p-6">
+                <div className="max-w-3xl mx-auto space-y-4">
+                    {messages.map((msg) => (
+                        <div key={msg.id} className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
+                            {msg.role === "assistant" && (
+                                <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 mt-1">
                                     <Bot className="h-4 w-4 text-gray-500" />
                                 </div>
-                                <div className="bg-white border border-gray-200 rounded-xl px-4 py-3">
-                                    <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
+                            )}
+                            <div className={cn(
+                                "max-w-[75%] rounded-xl px-4 py-3",
+                                msg.role === "user"
+                                    ? "bg-black text-white"
+                                    : "bg-white border border-gray-200"
+                            )}>
+                                <p className={cn(
+                                    "text-xs leading-relaxed whitespace-pre-wrap",
+                                    msg.role === "user" ? "text-white" : "text-gray-700"
+                                )}>
+                                    {msg.content}
+                                </p>
+                            </div>
+                            {msg.role === "user" && (
+                                <div className="w-7 h-7 rounded-lg bg-black flex items-center justify-center flex-shrink-0 mt-1">
+                                    <User className="h-4 w-4 text-white" />
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
+                    ))}
 
-                        {/* Suggested Queries (only show at start) */}
-                        {messages.length <= 1 && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-6">
-                                {SUGGESTED_QUERIES.map((q) => {
-                                    const Icon = q.icon;
-                                    return (
-                                        <button
-                                            key={q.text}
-                                            onClick={() => handleSend(q.text)}
-                                            className="p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors text-left group"
-                                        >
-                                            <Icon className="h-4 w-4 text-gray-400 mb-2 group-hover:text-gray-600 transition-colors" />
-                                            <p className="text-[0.6875rem] text-gray-600 leading-relaxed">{q.text}</p>
-                                        </button>
-                                    );
-                                })}
+                    {loading && (
+                        <div className="flex gap-3">
+                            <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                <Bot className="h-4 w-4 text-gray-500" />
                             </div>
-                        )}
-                    </div>
-                </div>
+                            <div className="bg-white border border-gray-200 rounded-xl px-4 py-3">
+                                <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
+                            </div>
+                        </div>
+                    )}
 
-                {/* Input Bar */}
-                <div className="p-4 border-t border-gray-200 bg-white">
-                    <div className="max-w-3xl mx-auto flex items-center gap-2">
-                        <input
-                            type="text"
-                            placeholder="Ask about DCTS, tariffs, Rules of Origin..."
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-                            className="flex-1 h-9 px-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 transition-colors"
-                        />
-                        <button
-                            onClick={() => handleSend()}
-                            disabled={!input.trim() || loading}
-                            className="h-9 px-4 bg-black hover:bg-gray-800 text-white text-xs font-normal rounded-md transition-colors disabled:opacity-40 flex items-center gap-1.5"
-                        >
-                            <Send className="h-3 w-3" />
-                            Send
-                        </button>
-                    </div>
+                    {/* Suggested Queries (only show at start) */}
+                    {messages.length <= 1 && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-6">
+                            {SUGGESTED_QUERIES.map((q) => {
+                                const Icon = q.icon;
+                                return (
+                                    <button
+                                        key={q.text}
+                                        onClick={() => handleSend(q.text)}
+                                        className="p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors text-left group"
+                                    >
+                                        <Icon className="h-4 w-4 text-gray-400 mb-2 group-hover:text-gray-600 transition-colors" />
+                                        <p className="text-xs text-gray-600 leading-relaxed">{q.text}</p>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
-            </main>
+            </div>
+
+            {/* Input Bar */}
+            <div className="p-4 border-t border-gray-200 bg-white shrink-0">
+                <div className="max-w-3xl mx-auto flex items-center gap-2">
+                    <input
+                        type="text"
+                        placeholder="Ask about DCTS, tariffs, Rules of Origin..."
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+                        className="flex-1 h-9 px-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 transition-colors"
+                    />
+                    <button
+                        onClick={() => handleSend()}
+                        disabled={!input.trim() || loading}
+                        className="h-9 px-4 bg-black hover:bg-gray-800 text-white text-xs font-normal rounded-md transition-colors disabled:opacity-40 flex items-center gap-1.5"
+                    >
+                        <Send className="h-3 w-3" />
+                        Send
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }

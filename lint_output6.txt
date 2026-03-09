@@ -1,0 +1,37 @@
+
+> tradedna@0.1.0 lint
+> eslint
+
+
+C:\Users\jason\trader-app\convex\_generated\api.js
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+C:\Users\jason\trader-app\convex\_generated\dataModel.d.ts
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+C:\Users\jason\trader-app\convex\_generated\server.d.ts
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+C:\Users\jason\trader-app\convex\_generated\server.js
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+C:\Users\jason\trader-app\convex\ai.ts
+  18:15  warning  '_prompt' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\jason\trader-app\scripts\index-companies.mjs
+  34:14  warning  '_err' is defined but never used  @typescript-eslint/no-unused-vars
+  34:14  warning  '_err' is defined but never used  unused-imports/no-unused-vars
+
+C:\Users\jason\trader-app\src\app\dashboard\assistant\page.tsx
+  68:18  warning  '_err' is defined but never used  @typescript-eslint/no-unused-vars
+  68:18  warning  '_err' is defined but never used  unused-imports/no-unused-vars
+
+C:\Users\jason\trader-app\src\components\text-scale-toggle.tsx
+  22:17  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+
+C:\Users\jason\trader-app\src\hooks\useReferenceData.ts
+  17:13  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+
+Ô£û 11 problems (0 errors, 11 warnings)
+  0 errors and 6 warnings potentially fixable with the `--fix` option.
+

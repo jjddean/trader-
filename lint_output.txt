@@ -1,0 +1,307 @@
+
+> tradedna@0.1.0 lint
+> eslint
+
+
+C:\Users\jason\trader-app\convex\_generated\api.js
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+C:\Users\jason\trader-app\convex\actions\companies.ts
+   3:1   error    Run autofix to sort these imports!                                                   simple-import-sort/imports
+  19:15  warning  'userId' is assigned a value but never used                                          @typescript-eslint/no-unused-vars
+  19:15  warning  'userId' is assigned a value but never used. Allowed unused vars must match /^_/u    unused-imports/no-unused-vars
+  20:15  warning  'userName' is assigned a value but never used                                        @typescript-eslint/no-unused-vars
+  20:15  warning  'userName' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+  39:18  warning  'e' is defined but never used                                                        @typescript-eslint/no-unused-vars
+  39:18  warning  'e' is defined but never used                                                        unused-imports/no-unused-vars
+  51:39  error    Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+  57:33  error    Unexpected any. Specify a different type                                             @typescript-eslint/no-explicit-any
+
+C:\Users\jason\trader-app\convex\actions\currency.ts
+  3:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\convex\actions\hmrc.ts
+   3:1   error  Run autofix to sort these imports!        simple-import-sort/imports
+  86:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\jason\trader-app\convex\actions\stripe.ts
+   3:1   error    Run autofix to sort these imports!        simple-import-sort/imports
+   5:10  warning  'internal' is defined but never used      @typescript-eslint/no-unused-vars
+   5:10  error    'internal' is defined but never used      unused-imports/no-unused-imports
+  12:37  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\jason\trader-app\convex\ai.ts
+   3:1   error    Run autofix to sort these imports!                                                 simple-import-sort/imports
+  18:15  warning  'prompt' is assigned a value but never used                                        @typescript-eslint/no-unused-vars
+  18:15  warning  'prompt' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+C:\Users\jason\trader-app\convex\auth.config.ts
+  1:1  warning  Assign object to a variable before exporting as module default  import/no-anonymous-default-export
+
+C:\Users\jason\trader-app\convex\calculator.ts
+  1:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\convex\compliance.ts
+  1:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\convex\crons.ts
+  1:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\convex\history.ts
+  1:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\convex\hmrc_internal.ts
+  1:1   error    Run autofix to sort these imports!    simple-import-sort/imports
+  2:10  warning  'mutation' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  error    'mutation' is defined but never used  unused-imports/no-unused-imports
+  2:20  warning  'query' is defined but never used     @typescript-eslint/no-unused-vars
+  2:20  error    'query' is defined but never used     unused-imports/no-unused-imports
+
+C:\Users\jason\trader-app\convex\leads.ts
+  1:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\convex\reference_data.ts
+  1:1   error    Run autofix to sort these imports!    simple-import-sort/imports
+  2:10  warning  'mutation' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  error    'mutation' is defined but never used  unused-imports/no-unused-imports
+
+C:\Users\jason\trader-app\convex\saved_companies.ts
+  1:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\convex\stripe_webhooks.ts
+  1:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\convex\subscriptions.ts
+   1:1   error  Run autofix to sort these imports!        simple-import-sort/imports
+  29:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\jason\trader-app\convex\trade_lanes.ts
+  1:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\convex\users.ts
+  1:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\eslint.config.mjs
+  1:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\scripts\index-companies.mjs
+   1:1   error    Run autofix to sort these imports!  simple-import-sort/imports
+  34:14  warning  'err' is defined but never used     @typescript-eslint/no-unused-vars
+  34:14  warning  'err' is defined but never used     unused-imports/no-unused-vars
+
+C:\Users\jason\trader-app\scripts\update-currency.mjs
+  1:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\src\app\dashboard\assistant\page.tsx
+   3:1   error    Run autofix to sort these imports!  simple-import-sort/imports
+  68:18  warning  'err' is defined but never used     @typescript-eslint/no-unused-vars
+  68:18  warning  'err' is defined but never used     unused-imports/no-unused-vars
+
+C:\Users\jason\trader-app\src\app\dashboard\calculator\page.tsx
+    3:1   error    Run autofix to sort these imports!        simple-import-sort/imports
+   10:5   warning  'Info' is defined but never used          @typescript-eslint/no-unused-vars
+   10:5   error    'Info' is defined but never used          unused-imports/no-unused-imports
+   12:10  warning  'cn' is defined but never used            @typescript-eslint/no-unused-vars
+   12:10  error    'cn' is defined but never used            unused-imports/no-unused-imports
+   45:42  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  204:57  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\jason\trader-app\src\app\dashboard\compliance\page.tsx
+    3:1   error    Run autofix to sort these imports!                                                        simple-import-sort/imports
+   10:5   warning  'FileCheck' is defined but never used                                                     @typescript-eslint/no-unused-vars
+   10:5   error    'FileCheck' is defined but never used                                                     unused-imports/no-unused-imports
+   14:5   warning  'ChevronRight' is defined but never used                                                  @typescript-eslint/no-unused-vars
+   14:5   error    'ChevronRight' is defined but never used                                                  unused-imports/no-unused-imports
+   17:5   warning  'Clock' is defined but never used                                                         @typescript-eslint/no-unused-vars
+   17:5   error    'Clock' is defined but never used                                                         unused-imports/no-unused-imports
+   54:7   warning  'ALL_COUNTRIES' is assigned a value but never used                                        @typescript-eslint/no-unused-vars
+   54:7   warning  'ALL_COUNTRIES' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+   83:48  error    Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+  163:68  error    Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+  434:55  error    Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+
+C:\Users\jason\trader-app\src\app\dashboard\inbox\page.tsx
+    3:1   error    Run autofix to sort these imports!                                                      simple-import-sort/imports
+   13:5   warning  'Clock' is defined but never used                                                       @typescript-eslint/no-unused-vars
+   13:5   error    'Clock' is defined but never used                                                       unused-imports/no-unused-imports
+   18:5   warning  'CheckCheck' is defined but never used                                                  @typescript-eslint/no-unused-vars
+   18:5   error    'CheckCheck' is defined but never used                                                  unused-imports/no-unused-imports
+   19:5   warning  'AlertCircle' is defined but never used                                                 @typescript-eslint/no-unused-vars
+   19:5   error    'AlertCircle' is defined but never used                                                 unused-imports/no-unused-imports
+   25:5   warning  'CircleDot' is defined but never used                                                   @typescript-eslint/no-unused-vars
+   25:5   error    'CircleDot' is defined but never used                                                   unused-imports/no-unused-imports
+   26:5   warning  'X' is defined but never used                                                           @typescript-eslint/no-unused-vars
+   26:5   error    'X' is defined but never used                                                           unused-imports/no-unused-imports
+  239:11  warning  'unreadCount' is assigned a value but never used                                        @typescript-eslint/no-unused-vars
+  239:11  warning  'unreadCount' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+C:\Users\jason\trader-app\src\app\dashboard\layout.tsx
+  1:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\src\app\dashboard\page.tsx
+    3:1   error    Run autofix to sort these imports!                                                      simple-import-sort/imports
+    9:5   warning  'TrendingUp' is defined but never used                                                  @typescript-eslint/no-unused-vars
+    9:5   error    'TrendingUp' is defined but never used                                                  unused-imports/no-unused-imports
+   14:5   warning  'ArrowDownRight' is defined but never used                                              @typescript-eslint/no-unused-vars
+   14:5   error    'ArrowDownRight' is defined but never used                                              unused-imports/no-unused-imports
+   16:5   warning  'Clock' is defined but never used                                                       @typescript-eslint/no-unused-vars
+   16:5   error    'Clock' is defined but never used                                                       unused-imports/no-unused-imports
+   17:5   warning  'Activity' is defined but never used                                                    @typescript-eslint/no-unused-vars
+   17:5   error    'Activity' is defined but never used                                                    unused-imports/no-unused-imports
+   29:45  error    Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+   30:11  warning  'reviewLanes' is assigned a value but never used                                        @typescript-eslint/no-unused-vars
+   30:11  warning  'reviewLanes' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+   30:43  error    Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+   31:57  error    Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+   32:40  error    Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+   96:67  error    Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  135:67  error    Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+  181:73  error    Unexpected any. Specify a different type                                                @typescript-eslint/no-explicit-any
+
+C:\Users\jason\trader-app\src\app\dashboard\prospects\page.tsx
+    3:1   error    Run autofix to sort these imports!        simple-import-sort/imports
+   10:5   warning  'ArrowUpRight' is defined but never used  @typescript-eslint/no-unused-vars
+   10:5   error    'ArrowUpRight' is defined but never used  unused-imports/no-unused-imports
+   11:5   warning  'Building2' is defined but never used     @typescript-eslint/no-unused-vars
+   11:5   error    'Building2' is defined but never used     unused-imports/no-unused-imports
+   13:5   warning  'Mail' is defined but never used          @typescript-eslint/no-unused-vars
+   13:5   error    'Mail' is defined but never used          unused-imports/no-unused-imports
+   14:5   warning  'Phone' is defined but never used         @typescript-eslint/no-unused-vars
+   14:5   error    'Phone' is defined but never used         unused-imports/no-unused-imports
+   16:5   warning  'MoreVertical' is defined but never used  @typescript-eslint/no-unused-vars
+   16:5   error    'MoreVertical' is defined but never used  unused-imports/no-unused-imports
+   17:5   warning  'CheckCircle2' is defined but never used  @typescript-eslint/no-unused-vars
+   17:5   error    'CheckCircle2' is defined but never used  unused-imports/no-unused-imports
+   19:5   warning  'AlertCircle' is defined but never used   @typescript-eslint/no-unused-vars
+   19:5   error    'AlertCircle' is defined but never used   unused-imports/no-unused-imports
+  132:63  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\jason\trader-app\src\app\dashboard\settings\page.tsx
+  3:1  error    Run autofix to sort these imports!    simple-import-sort/imports
+  8:5  warning  'Settings' is defined but never used  @typescript-eslint/no-unused-vars
+  8:5  error    'Settings' is defined but never used  unused-imports/no-unused-imports
+
+C:\Users\jason\trader-app\src\app\layout.tsx
+  1:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\src\components\app-sidebar.tsx
+  3:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\src\components\auth\user-sync.tsx
+   3:1   error    Run autofix to sort these imports!                                                          simple-import-sort/imports
+  10:41  warning  'isConvexLoading' is assigned a value but never used                                        @typescript-eslint/no-unused-vars
+  10:41  warning  'isConvexLoading' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+C:\Users\jason\trader-app\src\components\dashboard-header.tsx
+  3:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\src\components\dashboard-sidebar.tsx
+  3:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\src\components\providers\convex-provider.tsx
+  3:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\src\components\text-scale-toggle.tsx
+   3:1   error  Run autofix to sort these imports!                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          simple-import-sort/imports
+  22:17  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\jason\trader-app\src\components\text-scale-toggle.tsx:22:17
+  20 |             const idx = SCALES.findIndex((s) => s.value === parseFloat(stored));
+  21 |             if (idx !== -1) {
+> 22 |                 setActiveIndex(idx);
+     |                 ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  23 |                 document.documentElement.style.setProperty("--text-scale", stored);
+  24 |             }
+  25 |         }  react-hooks/set-state-in-effect
+
+C:\Users\jason\trader-app\src\components\ui\avatar.tsx
+    3:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+  102:1  error  Run autofix to sort these exports!  simple-import-sort/exports
+
+C:\Users\jason\trader-app\src\components\ui\badge.tsx
+  1:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\src\components\ui\button.tsx
+  1:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\src\components\ui\card.tsx
+  84:1  error  Run autofix to sort these exports!  simple-import-sort/exports
+
+C:\Users\jason\trader-app\src\components\ui\collapsible.tsx
+  33:1  error  Run autofix to sort these exports!  simple-import-sort/exports
+
+C:\Users\jason\trader-app\src\components\ui\dialog.tsx
+  3:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\src\components\ui\dropdown-menu.tsx
+    3:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+  241:1  error  Run autofix to sort these exports!  simple-import-sort/exports
+
+C:\Users\jason\trader-app\src\components\ui\select.tsx
+  3:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\src\components\ui\separator.tsx
+  3:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+C:\Users\jason\trader-app\src\components\ui\sheet.tsx
+    3:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+  134:1  error  Run autofix to sort these exports!  simple-import-sort/exports
+
+C:\Users\jason\trader-app\src\components\ui\sidebar.tsx
+    3:1   error  Run autofix to sort these imports!                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               simple-import-sort/imports
+  611:26  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\jason\trader-app\src\components\ui\sidebar.tsx:611:26
+  609 |   // Random width between 50 to 90%.
+  610 |   const width = React.useMemo(() => {
+> 611 |     return `${Math.floor(Math.random() * 40) + 50}%`
+      |                          ^^^^^^^^^^^^^ Cannot call impure function
+  612 |   }, [])
+  613 |
+  614 |   return (  react-hooks/purity
+
+C:\Users\jason\trader-app\src\components\ui\table.tsx
+  107:1  error  Run autofix to sort these exports!  simple-import-sort/exports
+
+C:\Users\jason\trader-app\src\components\ui\tabs.tsx
+   3:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+  91:1  error  Run autofix to sort these exports!  simple-import-sort/exports
+
+C:\Users\jason\trader-app\src\components\ui\tooltip.tsx
+   3:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+  57:1  error  Run autofix to sort these exports!  simple-import-sort/exports
+
+C:\Users\jason\trader-app\src\hooks\useReferenceData.ts
+   3:1   error  Run autofix to sort these imports!                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  simple-import-sort/imports
+  17:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\jason\trader-app\src\hooks\useReferenceData.ts:17:13
+  15 |             const url = datasetInfo.storageUrl || `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}${datasetInfo.storagePath}`;
+  16 |
+> 17 |             setIsLoading(true);
+     |             ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  18 |             fetch(url)
+  19 |                 .then(res => {
+  20 |                     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);  react-hooks/set-state-in-effect
+
+C:\Users\jason\trader-app\src\lib\utils.ts
+  1:1  error  Run autofix to sort these imports!  simple-import-sort/imports
+
+Ô£û 152 problems (104 errors, 48 warnings)
+  82 errors and 1 warning potentially fixable with the `--fix` option.
+

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Minus, Plus } from "lucide-react";
 
 const SCALES = [
@@ -12,18 +12,18 @@ const SCALES = [
 const STORAGE_KEY = "tradedna-text-scale";
 
 export function TextScaleToggle() {
-    const [activeIndex, setActiveIndex] = useState(1); // Default
-
-    useEffect(() => {
+    const [activeIndex, setActiveIndex] = useState(() => {
+        if (typeof window === "undefined") return 1;
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
             const idx = SCALES.findIndex((s) => s.value === parseFloat(stored));
             if (idx !== -1) {
-                setActiveIndex(idx);
                 document.documentElement.style.setProperty("--text-scale", stored);
+                return idx;
             }
         }
-    }, []);
+        return 1;
+    });
 
     const setScale = (index: number) => {
         const scale = SCALES[index];
@@ -48,8 +48,8 @@ export function TextScaleToggle() {
                         key={scale.label}
                         onClick={() => setScale(i)}
                         className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${activeIndex === i
-                                ? "bg-white text-gray-900 shadow-sm"
-                                : "text-gray-500 hover:text-gray-700"
+                            ? "bg-white text-gray-900 shadow-sm"
+                            : "text-gray-500 hover:text-gray-700"
                             }`}
                     >
                         {scale.label}

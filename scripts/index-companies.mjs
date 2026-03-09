@@ -31,7 +31,7 @@ async function setupIndex() {
         await client.collections("companies").retrieve();
         console.log("Collection exists. Deleting...");
         await client.collections("companies").delete();
-    } catch (err) {
+    } catch (_err) {
         // Collection doesn't exist
     }
 

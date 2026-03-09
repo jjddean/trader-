@@ -16,8 +16,8 @@ export const searchCompanies = action({
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) throw new Error("Unauthenticated");
 
-        const userId = identity.subject;
-        const userName = identity.name;
+        // const userId = identity.subject;
+        // const userName = identity.name;
 
         const typesenseUrl = process.env.TYPESENSE_NODES;
         const typesenseKey = process.env.TYPESENSE_API_KEY;
@@ -36,7 +36,7 @@ export const searchCompanies = action({
             host = url.hostname;
             port = parseInt(url.port) || (url.protocol === "https:" ? 443 : 80);
             protocol = url.protocol.replace(":", "");
-        } catch (e) {
+        } catch {
             // Fallback for simple host:port strings
             const parts = typesenseUrl.replace("https://", "").replace("http://", "").split(":");
             host = parts[0];
@@ -48,13 +48,13 @@ export const searchCompanies = action({
             nodes: [{
                 host,
                 port,
-                protocol: protocol as any
+                protocol: protocol as "http" | "https"
             }],
             apiKey: typesenseKey,
             connectionTimeoutSeconds: 5
         });
 
-        const searchParameters: any = {
+        const searchParameters: Record<string, string | number> = {
             'q': args.query,
             'query_by': 'name,category,country,hscode',
             'query_by_weights': '4,2,1,1', // Prioritize name matches
