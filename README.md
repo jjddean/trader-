@@ -37,7 +37,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Typography Notes
 
-- The application uses Inter as the primary sans-serif family, loaded via `next/font/google` with weights 300, 400, 500, 600, and 700, and `display: swap`.  
-- The font is bound to the CSS variable `--font-sans` and applied globally on the `<body>` as part of the `inter.className` and `font-sans` classes.  
-- Component libraries are expected to inherit `font-sans`. Only code-like fields (e.g., HS codes) intentionally use `font-mono`.  
-- To change typography, edit the configuration in `src/app/layout.tsx`. This approach prevents dependency updates from silently changing the font.
+- The application uses Geist Sans as the primary sans-serif family, loaded via `geist/font/sans` and bound to the CSS variable `--font-sans`.  
+- The font is applied globally on the `<body>` via the variable and the `font-sans` utility.  
+- Component libraries inherit `font-sans`. Only code-like fields (e.g., HS codes) intentionally use `font-mono`.  
+- To change typography, edit the configuration in `src/app/layout.tsx`. The setup prevents dependency updates from silently changing the font.

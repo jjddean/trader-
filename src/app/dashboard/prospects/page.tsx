@@ -7,12 +7,13 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 import { Users, Globe, Star } from "lucide-react";
 
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+    Combobox,
+    ComboboxContent,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxTrigger,
+    ComboboxValue,
+} from "@/components/ui/combobox";
 import { cn } from "@/lib/utils";
 
 const STATUS_OPTIONS = ["New", "Contacted", "Proposal Sent", "Client"];
@@ -76,20 +77,21 @@ export default function ProspectsPage() {
                         <h3 className="text-sm font-medium text-black">All Prospects</h3>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Select value={countryFilter || "all"} onValueChange={(val) => setCountryFilter(val === "all" ? "" : val)}>
-                            <SelectTrigger className="h-7 bg-gray-50 border-gray-100 text-[0.6875rem] text-gray-600 w-[140px]">
-                                <SelectValue placeholder="All Countries" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all" className="text-xs">All Countries</SelectItem>
-                                <SelectItem value="Bangladesh" className="text-xs">Bangladesh</SelectItem>
-                                <SelectItem value="Pakistan" className="text-xs">Pakistan</SelectItem>
-                                <SelectItem value="Kenya" className="text-xs">Kenya</SelectItem>
-                                <SelectItem value="Cambodia" className="text-xs">Cambodia</SelectItem>
-                                <SelectItem value="Vietnam" className="text-xs">Vietnam</SelectItem>
-                                <SelectItem value="India" className="text-xs">India</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <Combobox value={countryFilter || "all"} onValueChange={(val: unknown) => setCountryFilter((val as string) === "all" ? "" : (val as string))}>
+                            <ComboboxTrigger className="h-7 bg-gray-50 border-gray-100 text-[0.6875rem] text-gray-600 w-[160px]">
+                                <ComboboxValue placeholder="All Countries" />
+                            </ComboboxTrigger>
+                            <ComboboxContent>
+                                <ComboboxInput placeholder="Filter..." />
+                                <ComboboxItem value="all" className="text-xs">All Countries</ComboboxItem>
+                                <ComboboxItem value="Bangladesh" className="text-xs">Bangladesh</ComboboxItem>
+                                <ComboboxItem value="Pakistan" className="text-xs">Pakistan</ComboboxItem>
+                                <ComboboxItem value="Kenya" className="text-xs">Kenya</ComboboxItem>
+                                <ComboboxItem value="Cambodia" className="text-xs">Cambodia</ComboboxItem>
+                                <ComboboxItem value="Vietnam" className="text-xs">Vietnam</ComboboxItem>
+                                <ComboboxItem value="India" className="text-xs">India</ComboboxItem>
+                            </ComboboxContent>
+                        </Combobox>
                     </div>
                 </div>
 
@@ -146,8 +148,8 @@ export default function ProspectsPage() {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <Select value={lead.status} onValueChange={(val) => updateStatus({ id: lead._id, status: val })}>
-                                            <SelectTrigger
+                                        <Combobox value={lead.status} onValueChange={(val: unknown) => updateStatus({ id: lead._id, status: val as string })}>
+                                            <ComboboxTrigger
                                                 className={cn(
                                                     "h-7 text-[0.625rem] font-medium px-2 rounded-md border-0 w-[120px]",
                                                     lead.status === "New" ? "bg-blue-100 text-blue-700" :
@@ -156,14 +158,14 @@ export default function ProspectsPage() {
                                                                 "bg-green-100 text-green-700"
                                                 )}
                                             >
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
+                                                <ComboboxValue />
+                                            </ComboboxTrigger>
+                                            <ComboboxContent>
                                                 {STATUS_OPTIONS.map(s => (
-                                                    <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                                                    <ComboboxItem key={s} value={s} className="text-xs">{s}</ComboboxItem>
                                                 ))}
-                                            </SelectContent>
-                                        </Select>
+                                            </ComboboxContent>
+                                        </Combobox>
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <button

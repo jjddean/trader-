@@ -17,14 +17,13 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+    Combobox,
+    ComboboxContent,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxTrigger,
+    ComboboxValue,
+} from "@/components/ui/combobox";
 
 // DCTS Countries for the dropdown
 const DCTS_COUNTRIES: Record<string, string[]> = {
@@ -154,21 +153,19 @@ export default function CompliancePage() {
                             <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
                                 Origin Country
                             </label>
-                            <Select value={selectedCountry || undefined} onValueChange={setSelectedCountry}>
-                                <SelectTrigger className="w-full h-9 bg-gray-50 border-gray-200 text-xs text-gray-700">
-                                    <SelectValue placeholder="Select a country..." />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-60">
-                                    {Object.entries(DCTS_COUNTRIES).map(([tier, countries]) => (
-                                        <SelectGroup key={tier}>
-                                            <SelectLabel className="text-[0.5625rem] uppercase tracking-widest text-gray-400 font-semibold">{tier}</SelectLabel>
-                                            {countries.sort().map((c) => (
-                                                <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
-                                            ))}
-                                        </SelectGroup>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <Combobox value={selectedCountry || undefined} onValueChange={(val: unknown) => setSelectedCountry(val as string)}>
+                                <ComboboxTrigger className="w-full h-9 bg-gray-50 border-gray-200 text-xs text-gray-700">
+                                    <ComboboxValue placeholder="Select a country..." />
+                                </ComboboxTrigger>
+                                <ComboboxContent className="max-h-60">
+                                    <ComboboxInput placeholder="Search country..." />
+                                    {Object.entries(DCTS_COUNTRIES).flatMap(([tier, countries]) => [
+                                        ...countries.sort().map((c) => (
+                                            <ComboboxItem key={`${tier}-${c}`} value={c} className="text-xs">{c}</ComboboxItem>
+                                        )),
+                                    ])}
+                                </ComboboxContent>
+                            </Combobox>
                         </div>
 
                         {eligibility && (
@@ -249,21 +246,19 @@ export default function CompliancePage() {
                                 <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">
                                     Origin Country
                                 </label>
-                                <Select value={rooForm.originCountry || undefined} onValueChange={(val) => setRooForm(f => ({ ...f, originCountry: val }))}>
-                                    <SelectTrigger className="w-full h-9 bg-gray-50 border-gray-200 text-xs text-gray-700">
-                                        <SelectValue placeholder="Select..." />
-                                    </SelectTrigger>
-                                    <SelectContent className="max-h-60">
-                                        {Object.entries(DCTS_COUNTRIES).map(([tier, countries]) => (
-                                            <SelectGroup key={tier}>
-                                                <SelectLabel className="text-[0.5625rem] uppercase tracking-widest text-gray-400 font-semibold">{tier}</SelectLabel>
-                                                {countries.sort().map((c) => (
-                                                    <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
-                                                ))}
-                                            </SelectGroup>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <Combobox value={rooForm.originCountry || undefined} onValueChange={(val: unknown) => setRooForm(f => ({ ...f, originCountry: val as string }))}>
+                                    <ComboboxTrigger className="w-full h-9 bg-gray-50 border-gray-200 text-xs text-gray-700">
+                                        <ComboboxValue placeholder="Select..." />
+                                    </ComboboxTrigger>
+                                    <ComboboxContent className="max-h-60">
+                                        <ComboboxInput placeholder="Search country..." />
+                                        {Object.entries(DCTS_COUNTRIES).flatMap(([tier, countries]) => [
+                                            ...countries.sort().map((c) => (
+                                                <ComboboxItem key={`${tier}-${c}`} value={c} className="text-xs">{c}</ComboboxItem>
+                                            )),
+                                        ])}
+                                    </ComboboxContent>
+                                </Combobox>
                             </div>
                             <div>
                                 <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">

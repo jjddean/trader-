@@ -1,17 +1,11 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import { ConvexClientProvider } from "@/components/providers/convex-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  style: ["normal"],
-  display: "swap",
-  variable: "--font-sans",
-});
+const geistSans = GeistSans;
 
 
 export const metadata: Metadata = {
@@ -29,7 +23,7 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
     >
-      <body className={cn(inter.variable, inter.className, "min-h-screen bg-slate-50 font-sans")} suppressHydrationWarning>
+      <body className={cn(geistSans.variable, "min-h-screen bg-slate-50 font-sans")} suppressHydrationWarning>
         <ConvexClientProvider>
           <TooltipProvider>
             {children}

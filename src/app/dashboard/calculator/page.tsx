@@ -10,12 +10,13 @@ import {
     Clock,
 } from "lucide-react";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+    Combobox,
+    ComboboxContent,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxTrigger,
+    ComboboxValue,
+} from "@/components/ui/combobox";
 
 const DCTS_COUNTRIES = [
     "Afghanistan", "Algeria", "Angola", "Armenia", "Bangladesh", "Benin", "Bhutan",
@@ -89,16 +90,17 @@ export default function CalculatorPage() {
                             </div>
                             <div>
                                 <label className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest block mb-1.5">Origin Country</label>
-                                <Select value={form.originCountry || undefined} onValueChange={(val) => setForm(f => ({ ...f, originCountry: val }))}>
-                                    <SelectTrigger className="w-full h-9 bg-gray-50 border-gray-200 text-xs text-gray-700">
-                                        <SelectValue placeholder="Select..." />
-                                    </SelectTrigger>
-                                    <SelectContent className="max-h-60">
+                                <Combobox value={form.originCountry || undefined} onValueChange={(val: unknown) => setForm(f => ({ ...f, originCountry: val as string }))}>
+                                    <ComboboxTrigger className="w-full h-9 bg-gray-50 border-gray-200 text-xs text-gray-700">
+                                        <ComboboxValue placeholder="Select..." />
+                                    </ComboboxTrigger>
+                                    <ComboboxContent className="max-h-60">
+                                        <ComboboxInput placeholder="Search country..." />
                                         {DCTS_COUNTRIES.map(c => (
-                                            <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
+                                            <ComboboxItem key={c} value={c} className="text-xs">{c}</ComboboxItem>
                                         ))}
-                                    </SelectContent>
-                                </Select>
+                                    </ComboboxContent>
+                                </Combobox>
                             </div>
                         </div>
 
