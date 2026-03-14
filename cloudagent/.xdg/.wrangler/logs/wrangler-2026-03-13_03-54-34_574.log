@@ -1,0 +1,1346 @@
+
+--- 2026-03-13T03:54:34.829Z debug
+🪵  Writing logs to "c:\Users\jason\trader-app\cloudagent\.xdg\.wrangler\logs\wrangler-2026-03-13_03-54-34_574.log"
+---
+
+--- 2026-03-13T03:54:34.829Z debug
+.env file not found at "C:\Users\jason\trader-app\cloudagent\.env". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-03-13T03:54:34.831Z debug
+.env file not found at "C:\Users\jason\trader-app\cloudagent\.env.local". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-03-13T03:54:34.843Z log
+
+ ⛅️ wrangler 4.72.0
+───────────────────
+---
+
+--- 2026-03-13T03:54:34.848Z debug
+Metrics dispatcher: Posting data {"deviceId":"0c82d148-983c-49a4-b931-90466e8fd3cf","event":"wrangler command started","timestamp":1773374074848,"properties":{"amplitude_session_id":1773374074845,"amplitude_event_id":0,"wranglerVersion":"4.72.0","wranglerMajorVersion":4,"wranglerMinorVersion":72,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":null,"argsUsed":["local"],"argsCombination":"local","sanitizedCommand":"dev","sanitizedArgs":{}}}
+---
+
+--- 2026-03-13T03:54:34.925Z debug
+setting config
+---
+
+--- 2026-03-13T03:54:34.925Z debug
+Updating config... undefined undefined
+---
+
+--- 2026-03-13T03:54:34.973Z debug
+local dev variables file not found at ".dev.vars". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-03-13T03:54:34.974Z debug
+.env file not found at "C:\Users\jason\trader-app\cloudagent\.env". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-03-13T03:54:34.974Z debug
+.env file not found at "C:\Users\jason\trader-app\cloudagent\.env.local". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-03-13T03:54:34.976Z log
+Your Worker has access to the following bindings:
+---
+
+--- 2026-03-13T03:54:34.976Z log
+Binding                  Resource           Mode
+---
+
+--- 2026-03-13T03:54:34.977Z log
+env.ORCHESTRATOR         Durable Object     local
+  AgentOrchestrator
+---
+
+--- 2026-03-13T03:54:34.977Z log
+env.COMPLIANCE_AGENT     Durable Object     local
+  AgentCompliance
+---
+
+--- 2026-03-13T03:54:34.977Z log
+env.PRODUCT_AGENT        Durable Object     local
+  AgentProduct
+---
+
+--- 2026-03-13T03:54:34.978Z log
+env.TRADE_WORKFLOW       Durable Object     local
+  AgentWorkflow
+---
+
+--- 2026-03-13T03:54:34.978Z log
+env.DB                   D1 Database        local
+  companies-db
+---
+
+--- 2026-03-13T03:54:34.978Z log
+env.DCTS_VECTORIZE       Vectorize Index    not supported
+  dcts-rules-index
+---
+
+--- 2026-03-13T03:54:34.979Z log
+env.COMPANY_VECTORIZE    Vectorize Index    not supported
+  company-embeddings-index
+---
+
+--- 2026-03-13T03:54:34.979Z log
+env.AI                   AI                 not supported
+---
+
+--- 2026-03-13T03:54:34.979Z log
+
+---
+
+--- 2026-03-13T03:54:35.548Z debug
+RemoteRuntimeController teardown beginning...
+---
+
+--- 2026-03-13T03:54:35.549Z debug
+RemoteRuntimeController teardown complete
+---
+
+--- 2026-03-13T03:54:35.552Z log
+⎔ Starting local server...
+---
+
+--- 2026-03-13T03:54:35.572Z debug
+[InspectorProxyWorker] handleProxyControllerIncomingMessage {"type":"reloadStart"}
+---
+
+--- 2026-03-13T03:54:36.517Z debug
+[InspectorProxyWorker] handleProxyControllerIncomingMessage {"type":"reloadComplete","proxyData":{"userWorkerUrl":{"protocol":"http:","hostname":"127.0.0.1","port":"52675"},"userWorkerInspectorUrl":{"protocol":"ws:","hostname":"127.0.0.1","port":"52673","pathname":"/core:user:cloudagent"},"userWorkerInnerUrlOverrides":{"protocol":"http:"},"headers":{"MF-Proxy-Shared-Secret":"2475fa74-4456-4dcd-b13b-234532486c6e"},"liveReload":false,"proxyLogsToController":false}}
+---
+
+--- 2026-03-13T03:54:36.520Z debug
+[InspectorProxyWorker] NEW RUNTIME WEBSOCKET http://127.0.0.1:52673/core:user:cloudagent
+---
+
+--- 2026-03-13T03:54:36.523Z debug
+[InspectorProxyWorker] SEND TO DEVTOOLS {"method":"Runtime.executionContextsCleared"}
+---
+
+--- 2026-03-13T03:54:36.524Z debug
+[InspectorProxyWorker] reconnectRuntimeWebSocket
+---
+
+--- 2026-03-13T03:54:36.531Z debug
+[InspectorProxyWorker] RUNTIME WEBSOCKET OPENED
+---
+
+--- 2026-03-13T03:54:36.533Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.enable","id":100000001}
+---
+
+--- 2026-03-13T03:54:36.535Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Debugger.enable","id":100000002}
+---
+
+--- 2026-03-13T03:54:36.536Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Network.enable","id":100000003}
+---
+
+--- 2026-03-13T03:54:36.544Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Runtime.executionContextCreated',
+  params: {
+    context: {
+      id: 402171297,
+      origin: '',
+      name: 'Worker',
+      uniqueId: '-451450334120587201.8419385647843359529'
+    }
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.546Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000001, result: {} }
+---
+
+--- 2026-03-13T03:54:36.728Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '3',
+    url: 'file:///C:/Users/jason/trader-app/cloudagent/.wrangler/tmp/dev-NL8jRN/index.js',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 72199,
+    endColumn: 92,
+    executionContextId: 402171297,
+    hash: '711749dd5ffa952c791e3ce3be3907d4a4aa808e39e4bc3ca740ae71b51e328f',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: 'index.js.map',
+    hasSourceURL: true,
+    isModule: true,
+    length: 2618049,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'index.js'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.730Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '4',
+    url: 'cloudflare-internal:d1-api',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 523,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '9b457f6ed3d1859f35c80efa350891e6a725cd59bab78b083ce03d9c9bd347f1',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 22558,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'cloudflare-internal:d1-api'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.731Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '5',
+    url: 'cloudflare-internal:tracing-helpers',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 49,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '1a6d32c1907a06b8bea39ff544374e48e79ed4f65450212d5cdd816eb67b2cb9',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 1571,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'cloudflare-internal:tracing-helpers'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.732Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '6',
+    url: 'cloudflare-internal:ai-api',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 266,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: 'd1dafff372134cffa6f25e7ec9bb299b09be805a78d76c30ec160fdce5744361',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 10474,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'cloudflare-internal:ai-api'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.733Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '7',
+    url: 'cloudflare-internal:aig-api',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 147,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: 'fa7c9ff71f430904e4354b8a8c0b14319b5c43dbea95bfc0e671601fd9876d71',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 5534,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'cloudflare-internal:aig-api'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.734Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '8',
+    url: 'cloudflare-internal:autorag-api',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 107,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '346a531cff0a9318d6c8cbfe710729c96b0d9e65bff1937fa2006a88f0189df7',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 3613,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'cloudflare-internal:autorag-api'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.735Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '9',
+    url: 'cloudflare-internal:to-markdown-api',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 69,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '5616281193853cf011d2f7abf00c9fff9c2326c9661701cb5b75702c943ff0c0',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 2607,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'cloudflare-internal:to-markdown-api'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.736Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '10',
+    url: 'cloudflare-internal:vectorize-api',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 240,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '81e69a9b88ef324d60b2005e0563d5a3ac0d21e40ab656588e6a23c06457c542',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 9531,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'cloudflare-internal:vectorize-api'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.737Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '11',
+    url: 'node:stream',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 54,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '7995265439e0e5172a3d2cd1a0a8d8b0ae53c6917b05789013c32ab27913a465',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 2962,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node:stream'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.738Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '12',
+    url: 'node:events',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 6,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: 'a65a3cd6cc39ee3536ce5eb0ad88d6947a2c69b7b96ed288248a2d28cc5de598',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 257,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node:events'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.740Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '13',
+    url: 'node:path',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 9,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '3b9dc3fa72b13b1acc080da3057b60e6ce21dae20d7e9e8f5c7b966b554d87f4',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 662,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node:path'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.741Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '14',
+    url: 'node:async_hooks',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 53,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: 'cada46be506bedf1eaca988c291e16bc60d2f7dea0a3f4209975ed5615f4251d',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 1803,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node:async_hooks'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.742Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '15',
+    url: 'cloudflare:workers',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 115,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: 'd0ea70e85c6a1aa3940af3fd4245169e2dbefafd1eec3def353b87948f13b7e3',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 4150,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'cloudflare:workers'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.743Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '16',
+    url: 'node:diagnostics_channel',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 221,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: 'baf66d79da30703abd90b0e215982b97ed75d2db3d900c3944a3d5a1e8e7f4d0',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 8392,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node:diagnostics_channel'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.745Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '23',
+    url: 'node-internal:streams_state',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 62,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: 'f9320e66b219c109cfa90769f65af677672209f44c11a5201fda43323fb3baa4',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 2654,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:streams_state'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.745Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '24',
+    url: 'node-internal:streams_compose',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 189,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '723b2b8a16540e938b196c72f9ac88950d52fc5e21997ed2d5766f5e7673e7dd',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 5318,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:streams_compose'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.746Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '25',
+    url: 'node-internal:streams_legacy',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 111,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '72ea9bc9e799a5b533434e3483a1b4dc7a2bb5ebb27fa16bdbccb0405c62c794',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 3989,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:streams_legacy'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.747Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '26',
+    url: 'node-internal:streams_writable',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 1518,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '8f0e07112bc4bd227ca4d3b49479aefc88b747d2c20bc988eda2ec7c074dbb9a',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 45329,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:streams_writable'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.748Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '27',
+    url: 'node-internal:streams_readable',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 2504,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '0fc20c023a47de9f2a6e26dee8836651c33ca3aceb9af75175b4fefdfabed34b',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 72804,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:streams_readable'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.749Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '28',
+    url: 'node-internal:streams_duplex',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 929,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '24fdc28db606ffe043d048b7dd43297c9e769df7af4fc4543fd1b057cb8d4ba8',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 24408,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:streams_duplex'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.750Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '29',
+    url: 'node-internal:streams_transform',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 217,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '81f207dca24c3a5330fe1152875fc5c97c66506fc834000c65718f5b3c9996d7',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 8164,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:streams_transform'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.751Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '30',
+    url: 'node-internal:streams_promises',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 58,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '023fc7c2616f633dfdb7fa34b0eec09d392caf7a2ada786217f5d0777faba0d4',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 2263,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:streams_promises'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.751Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '31',
+    url: 'node-internal:internal_http_util',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 41,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: 'f17096b2c04940c1dcf08a59c131c5f8187d44d3f76e2a7c0a96e70c14c0cbc2',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 1686,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:internal_http_util'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.752Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '17',
+    url: 'cloudflare:email',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 6,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '12eeb320f99c88c20957c3a491a93393be31f724484ac8408b13896d7aa866ca',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 320,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'cloudflare:email'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.753Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '18',
+    url: 'node-internal:streams_pipeline',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 432,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: 'acbbdb12259520a0061494935d9dc1858b6e1af4d178be856d38dd8976a2f552',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 12342,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:streams_pipeline'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.754Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '19',
+    url: 'node-internal:streams_add_abort_signal',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 63,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: 'dfa1d6c940165047836c808bd1f4e00036cd21ba4bf0506ed99f1181f6954ca8',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 2952,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:streams_add_abort_signal'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.755Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '20',
+    url: 'node-internal:streams_end_of_stream',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 284,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: 'ad4c1e5091669d036f4013b9d7b77ab0d52dfea5ef093e52deb1e9d8f94789be',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 11041,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:streams_end_of_stream'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.756Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '21',
+    url: 'node-internal:streams_util',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 310,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: 'a16c5dab5571be419fa33bb814cc4316e3c8d5a98f54763bcc0994540919232f',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 11603,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:streams_util'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.757Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '22',
+    url: 'node-internal:streams_destroy',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 318,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '4e23167d1d08bd89e7ea20517065f701d74f51276dedde730bdb66b47bacc22d',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 10062,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:streams_destroy'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.758Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '32',
+    url: 'node-internal:internal_process',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 250,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '39703a39155a7041d8e2e527224e8f686bc470bb173a5ecdde6f8d7dde7a9f96',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 12088,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:internal_process'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.758Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '33',
+    url: 'node-internal:internal_errors',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 772,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: 'ec3fb644ecc9cbdd83c3ae1d7a6da554295d298562adab8c318e5fbbbe98e3be',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 26565,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:internal_errors'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.759Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '34',
+    url: 'node-internal:validators',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 274,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '51c71a69b7c08d3a0cb96309c2994e6f4cc872c761dcfda24be100cbaa6e348e',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 10694,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:validators'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.760Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '35',
+    url: 'node-internal:internal_zlib_constants',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 36,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '6d44191843c32486a3ee74ca6909073775ff1775d454d19cffc2faa106b0246c',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 1368,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:internal_zlib_constants'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.761Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '43',
+    url: 'node-internal:internal_assert',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 832,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '7efef557070bd6961a879eca01efa7501d7382b9543f52936bd73c85f9c4c4cc',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 27669,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:internal_assert'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.762Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '44',
+    url: 'node-internal:internal_assertionerror',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 467,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: 'c8ec9bae7e8a61e4a461ddd579e6d28e1b56a9814b54f85111d9929eb21d7fb1',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 20078,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:internal_assertionerror'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.763Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '45',
+    url: 'node-internal:internal_diffs',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 316,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '7776d45746451492cb0e50d7c92b2fa6f0d2c95fc181797c5691918f003b05da',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 10984,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:internal_diffs'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.763Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '46',
+    url: 'node-internal:internal_comparisons',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 522,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '28c414eba5fc3dc275b952cdf56dde62c57058db4e4d345bc2549e7d8c24ccc3',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 19181,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:internal_comparisons'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.764Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '47',
+    url: 'node-internal:internal_path',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 1379,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '58f306efd5d55f7f701c28aff416654e824250bbb6bc5e90a389de02fa914d19',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 53202,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:internal_path'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.765Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '48',
+    url: 'node-internal:constants',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 67,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: 'a22da1cc662fb38547e2e8635384ad8497ebc0b7703340dd0f67cbbd526098d9',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 3241,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:constants'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.766Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '49',
+    url: 'file:///C:/Users/jason/trader-app/cloudagent/node_modules/miniflare/dist/src/workers/email/email.worker.js',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 23,
+    endColumn: 120,
+    executionContextId: 402171297,
+    hash: 'd411ba9d6a744e73baf9b6da8e59bd7acf29af260624cd89505a2c6b2b1aa88a',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: 'email.worker.js.map',
+    hasSourceURL: true,
+    isModule: true,
+    length: 659,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'cloudflare-internal:email'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.767Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '50',
+    url: 'node-internal:legacy_process',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 26,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '07654154e7bffa2a8849b49dbfe0459166ebea63c51233ee7bd70c4f6f45e466',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 901,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:legacy_process'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.768Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  id: 100000002,
+  result: { debuggerId: '-5390316861551289250.-1899032791714968325' }
+}
+---
+
+--- 2026-03-13T03:54:36.769Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '36',
+    url: 'node-internal:internal_inspect',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 2504,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '0effc1ff24f3c7efac50b770f6702c7bd0136db129ac356251448942d1ef989d',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 95766,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:internal_inspect'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.770Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '37',
+    url: 'node-internal:internal_buffer',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 1802,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: 'db9109597241f29615fa4d303c469c0c52a925a355257f01cc61d2c6bdbc6ea1',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 62908,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:internal_buffer'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.771Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '38',
+    url: 'node-internal:internal_types',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 118,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '65cc7262d944441d3188f24d27e046aa7b782eac144463a59ba551a76f3ce4c4',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 5251,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:internal_types'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.772Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '39',
+    url: 'node-internal:internal_utils',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 331,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '5dfbf89400ed8af01085dffc6c88486f776ea2ff0d1fdb9417dda2a873a76d54',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 12677,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:internal_utils'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.772Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '40',
+    url: 'node-internal:crypto_util',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 95,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: 'd20ce67607af5a119cc33548fffb893ad489b3db6c8d05922590acf65036875a',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 4110,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:crypto_util'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.773Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '41',
+    url: 'node-internal:events',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 780,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '6862050030844728e171be7c17264bfcd300a1ff0ee0e00cd456a72cff18be1a',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 28229,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:events'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.774Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE {
+  method: 'Debugger.scriptParsed',
+  params: {
+    scriptId: '42',
+    url: 'node-internal:internal_stringdecoder',
+    startLine: 0,
+    startColumn: 0,
+    endLine: 128,
+    endColumn: 0,
+    executionContextId: 402171297,
+    hash: '37a9e6c3a32fe257422cfc8c94dc4a5ac3180eb81c740806b00e8772ffc1839c',
+    buildId: '',
+    isLiveEdit: false,
+    sourceMapURL: '',
+    hasSourceURL: false,
+    isModule: true,
+    length: 4707,
+    scriptLanguage: 'JavaScript',
+    embedderName: 'node-internal:internal_stringdecoder'
+  }
+}
+---
+
+--- 2026-03-13T03:54:36.774Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000003, method: 'Network.enable', result: {} }
+---
+
+--- 2026-03-13T03:54:46.528Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000004}
+---
+
+--- 2026-03-13T03:54:46.530Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000004, result: { id: '4a3f561a7eb20456' } }
+---
+
+--- 2026-03-13T03:54:56.531Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000005}
+---
+
+--- 2026-03-13T03:54:56.533Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000005, result: { id: '4a3f561a7eb20456' } }
+---
+
+--- 2026-03-13T03:55:06.534Z debug
+[InspectorProxyWorker] RUNTIME INCOMING MESSAGE { id: 100000006, result: { id: '4a3f561a7eb20456' } }
+---
+
+--- 2026-03-13T03:55:06.535Z debug
+[InspectorProxyWorker] SEND TO RUNTIME {"method":"Runtime.getIsolateId","id":100000006}
+---

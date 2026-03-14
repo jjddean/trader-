@@ -1,0 +1,1 @@
+INSERT INTO companies (id, name, country, category, hscode) VALUES ('c1', 'Global Textiles Ltd', 'India', 'Textiles', '610910'),('c2', 'Loom & Thread Co', 'Vietnam', 'Apparel', '610910'),('c3', 'Summit Footwear', 'Indonesia', 'Footwear', '640319'),('c4', 'Nile Cotton Corp', 'Ethiopia', 'Raw Materials', '520100'),('c5', 'TechParts Nigeria', 'Nigeria', 'Electronics', '851713');

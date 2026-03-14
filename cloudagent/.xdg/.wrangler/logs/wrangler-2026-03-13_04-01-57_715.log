@@ -1,0 +1,286 @@
+
+--- 2026-03-13T04:01:58.391Z debug
+🪵  Writing logs to "c:\Users\jason\trader-app\cloudagent\.xdg\.wrangler\logs\wrangler-2026-03-13_04-01-57_715.log"
+---
+
+--- 2026-03-13T04:01:58.391Z debug
+.env file not found at "C:\Users\jason\trader-app\cloudagent\.env". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-03-13T04:01:58.396Z debug
+.env file not found at "C:\Users\jason\trader-app\cloudagent\.env.local". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-03-13T04:01:58.435Z log
+
+ ⛅️ wrangler 4.72.0
+───────────────────
+---
+
+--- 2026-03-13T04:01:58.447Z debug
+Metrics dispatcher: Posting data {"deviceId":"0c82d148-983c-49a4-b931-90466e8fd3cf","event":"wrangler command started","timestamp":1773374518447,"properties":{"amplitude_session_id":1773374518440,"amplitude_event_id":0,"wranglerVersion":"4.72.0","wranglerMajorVersion":4,"wranglerMinorVersion":72,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":false,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":null,"argsUsed":["remote"],"argsCombination":"remote","sanitizedCommand":"dev","sanitizedArgs":{}}}
+---
+
+--- 2026-03-13T04:01:58.507Z log
+Support for remote bindings in `wrangler dev` is now available as a replacement for `wrangler dev --remote`. Try it out now by running `wrangler dev` with the `remote` option enabled on your resources and let us know how it goes!
+This gives you access to remote resources in development while retaining all the usual benefits of local dev: fast iteration speed, breakpoint debugging, and more.
+
+Refer to https://developers.cloudflare.com/workers/development-testing/#remote-bindings for more information.
+---
+
+--- 2026-03-13T04:01:58.642Z debug
+setting config
+---
+
+--- 2026-03-13T04:01:58.643Z debug
+Updating config... undefined undefined
+---
+
+--- 2026-03-13T04:01:58.729Z debug
+local dev variables file not found at ".dev.vars". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-03-13T04:01:58.730Z debug
+.env file not found at "C:\Users\jason\trader-app\cloudagent\.env". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-03-13T04:01:58.731Z debug
+.env file not found at "C:\Users\jason\trader-app\cloudagent\.env.local". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-03-13T04:01:58.737Z log
+Your Worker has access to the following bindings:
+---
+
+--- 2026-03-13T04:01:58.738Z log
+Binding                  Resource           
+---
+
+--- 2026-03-13T04:01:58.739Z log
+env.ORCHESTRATOR         Durable Object     
+  AgentOrchestrator
+---
+
+--- 2026-03-13T04:01:58.739Z log
+env.COMPLIANCE_AGENT     Durable Object     
+  AgentCompliance
+---
+
+--- 2026-03-13T04:01:58.740Z log
+env.PRODUCT_AGENT        Durable Object     
+  AgentProduct
+---
+
+--- 2026-03-13T04:01:58.741Z log
+env.TRADE_WORKFLOW       Durable Object     
+  AgentWorkflow
+---
+
+--- 2026-03-13T04:01:58.743Z log
+env.DB                   D1 Database        
+  companies-db
+---
+
+--- 2026-03-13T04:01:58.744Z log
+env.DCTS_VECTORIZE       Vectorize Index    
+  dcts-rules-index
+---
+
+--- 2026-03-13T04:01:58.745Z log
+env.COMPANY_VECTORIZE    Vectorize Index    
+  company-embeddings-index
+---
+
+--- 2026-03-13T04:01:58.745Z log
+env.AI                   AI                 
+---
+
+--- 2026-03-13T04:01:58.746Z log
+
+---
+
+--- 2026-03-13T04:01:58.754Z debug
+Retrieving cached values for account from node_modules\.cache\wrangler
+---
+
+--- 2026-03-13T04:01:58.932Z warn
+▲ [WARNING] SQLite in Durable Objects is only supported in local mode.
+
+
+---
+
+--- 2026-03-13T04:02:00.285Z log
+⎔ Starting remote preview...
+---
+
+--- 2026-03-13T04:02:00.286Z debug
+LocalRuntimeController teardown beginning...
+---
+
+--- 2026-03-13T04:02:00.287Z debug
+LocalRuntimeController teardown complete
+---
+
+--- 2026-03-13T04:02:00.292Z debug
+-- START CF API REQUEST: GET https://api.cloudflare.com/client/v4/accounts/555e307a91082ae8c8e69b0a5ff3b8c3/workers/subdomain/edge-preview
+---
+
+--- 2026-03-13T04:02:00.293Z debug
+QUERY STRING: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:00.294Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:00.294Z debug
+INIT: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:00.294Z debug
+-- END CF API REQUEST
+---
+
+--- 2026-03-13T04:02:01.848Z debug
+-- START CF API RESPONSE: OK 200
+---
+
+--- 2026-03-13T04:02:01.849Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:01.850Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:01.850Z debug
+-- END CF API RESPONSE
+---
+
+--- 2026-03-13T04:02:01.857Z debug
+Checking if domain has Access enabled: 8e7838a57adf42bea3ca1c0ab6d3f486.jkdproductivity.workers.dev
+---
+
+--- 2026-03-13T04:02:01.857Z debug
+Access switch not cached for: 8e7838a57adf42bea3ca1c0ab6d3f486.jkdproductivity.workers.dev
+---
+
+--- 2026-03-13T04:02:02.039Z debug
+Caching access switch for: 8e7838a57adf42bea3ca1c0ab6d3f486.jkdproductivity.workers.dev
+---
+
+--- 2026-03-13T04:02:02.040Z debug
+-- START EXCHANGE API REQUEST: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:02.040Z debug
+-- END EXCHANGE API REQUEST
+---
+
+--- 2026-03-13T04:02:02.179Z debug
+-- START EXCHANGE API RESPONSE: OK 200
+---
+
+--- 2026-03-13T04:02:02.179Z debug
+HEADERS: {}
+---
+
+--- 2026-03-13T04:02:02.179Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:02.179Z debug
+-- END EXCHANGE API RESPONSE
+---
+
+--- 2026-03-13T04:02:02.181Z debug
+-- START CF API REQUEST: GET https://api.cloudflare.com/client/v4/accounts/555e307a91082ae8c8e69b0a5ff3b8c3/workers/subdomain
+---
+
+--- 2026-03-13T04:02:02.181Z debug
+QUERY STRING: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:02.181Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:02.181Z debug
+INIT: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:02.181Z debug
+-- END CF API REQUEST
+---
+
+--- 2026-03-13T04:02:03.689Z debug
+-- START CF API RESPONSE: OK 200
+---
+
+--- 2026-03-13T04:02:03.690Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:03.690Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:03.690Z debug
+-- END CF API RESPONSE
+---
+
+--- 2026-03-13T04:02:03.898Z log
+Total Upload: 2555.80 KiB / gzip: 420.22 KiB
+---
+
+--- 2026-03-13T04:02:03.899Z debug
+-- START CF API REQUEST: POST https://api.cloudflare.com/client/v4/accounts/555e307a91082ae8c8e69b0a5ff3b8c3/workers/scripts/cloudagent/edge-preview
+---
+
+--- 2026-03-13T04:02:03.899Z debug
+QUERY STRING: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:03.900Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:03.900Z debug
+INIT: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:03.943Z debug
+BODY: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:03.943Z debug
+-- END CF API REQUEST
+---
+
+--- 2026-03-13T04:02:12.092Z debug
+-- START CF API RESPONSE: OK 200
+---
+
+--- 2026-03-13T04:02:12.092Z debug
+HEADERS: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:12.092Z debug
+RESPONSE: omitted; set WRANGLER_LOG_SANITIZE=false to include sanitized data
+---
+
+--- 2026-03-13T04:02:12.092Z debug
+-- END CF API RESPONSE
+---
+
+--- 2026-03-13T04:02:12.102Z debug
+Checking if domain has Access enabled: cloudagent.jkdproductivity.workers.dev
+---
+
+--- 2026-03-13T04:02:12.102Z debug
+Access switch not cached for: cloudagent.jkdproductivity.workers.dev
+---
+
+--- 2026-03-13T04:02:12.821Z debug
+Caching access switch for: cloudagent.jkdproductivity.workers.dev
+---

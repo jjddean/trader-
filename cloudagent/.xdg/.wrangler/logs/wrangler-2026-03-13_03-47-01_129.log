@@ -1,0 +1,113 @@
+
+--- 2026-03-13T03:47:01.794Z debug
+🪵  Writing logs to "C:\Users\jason\trader-app\cloudagent\.xdg\.wrangler\logs\wrangler-2026-03-13_03-47-01_129.log"
+---
+
+--- 2026-03-13T03:47:01.793Z debug
+.env file not found at "C:\Users\jason\trader-app\cloudagent\.env". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-03-13T03:47:01.797Z debug
+.env file not found at "C:\Users\jason\trader-app\cloudagent\.env.local". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-03-13T03:47:01.832Z log
+
+ ⛅️ wrangler 4.72.0
+───────────────────
+---
+
+--- 2026-03-13T03:47:01.854Z debug
+Metrics dispatcher: Posting data {"deviceId":"0c82d148-983c-49a4-b931-90466e8fd3cf","event":"wrangler command started","timestamp":1773373621854,"properties":{"amplitude_session_id":1773373621837,"amplitude_event_id":0,"wranglerVersion":"4.72.0","wranglerMajorVersion":4,"wranglerMinorVersion":72,"wranglerPatchVersion":0,"osPlatform":"Windows","osVersion":"Windows 11 Pro","nodeVersion":22,"packageManager":"npm","isFirstUsage":true,"configFileType":"none","isCI":false,"isPagesCI":false,"isWorkersCI":false,"isInteractive":true,"hasAssets":false,"agent":null,"argsUsed":[],"argsCombination":"","sanitizedCommand":"dev","sanitizedArgs":{}}}
+---
+
+--- 2026-03-13T03:47:02.058Z debug
+setting config
+---
+
+--- 2026-03-13T03:47:02.059Z debug
+Updating config... undefined undefined
+---
+
+--- 2026-03-13T03:47:02.218Z debug
+local dev variables file not found at ".dev.vars". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-03-13T03:47:02.219Z debug
+.env file not found at "C:\Users\jason\trader-app\cloudagent\.env". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-03-13T03:47:02.221Z debug
+.env file not found at "C:\Users\jason\trader-app\cloudagent\.env.local". Continuing... For more details, refer to https://developers.cloudflare.com/workers/wrangler/system-environment-variables/
+---
+
+--- 2026-03-13T03:47:02.227Z log
+Your Worker has access to the following bindings:
+---
+
+--- 2026-03-13T03:47:02.227Z log
+Binding                  Resource           Mode
+---
+
+--- 2026-03-13T03:47:02.228Z log
+env.ORCHESTRATOR         Durable Object     local
+  AgentOrchestrator
+---
+
+--- 2026-03-13T03:47:02.228Z log
+env.COMPLIANCE_AGENT     Durable Object     local
+  AgentCompliance
+---
+
+--- 2026-03-13T03:47:02.229Z log
+env.PRODUCT_AGENT        Durable Object     local
+  AgentProduct
+---
+
+--- 2026-03-13T03:47:02.230Z log
+env.TRADE_WORKFLOW       Durable Object     local
+  AgentWorkflow
+---
+
+--- 2026-03-13T03:47:02.230Z log
+env.DB                   D1 Database        remote
+  companies-db
+---
+
+--- 2026-03-13T03:47:02.231Z log
+env.DCTS_VECTORIZE       Vectorize Index    remote
+  dcts-rules-index
+---
+
+--- 2026-03-13T03:47:02.232Z log
+env.COMPANY_VECTORIZE    Vectorize Index    remote
+  company-embeddings-index
+---
+
+--- 2026-03-13T03:47:02.233Z log
+env.AI                   AI                 remote
+---
+
+--- 2026-03-13T03:47:02.233Z log
+
+---
+
+--- 2026-03-13T03:47:03.596Z debug
+RemoteRuntimeController teardown beginning...
+---
+
+--- 2026-03-13T03:47:03.596Z debug
+RemoteRuntimeController teardown complete
+---
+
+--- 2026-03-13T03:47:03.601Z log
+Attempting to login via OAuth...
+---
+
+--- 2026-03-13T03:47:03.612Z log
+Opening a link in your default browser: https://dash.cloudflare.com/oauth2/auth?response_type=code&client_id=54d11594-84e4-41aa-b438-e81b8fa78ee7&redirect_uri=http%3A%2F%2Flocalhost%3A8976%2Foauth%2Fcallback&scope=account%3Aread%20user%3Aread%20workers%3Awrite%20workers_kv%3Awrite%20workers_routes%3Awrite%20workers_scripts%3Awrite%20workers_tail%3Aread%20d1%3Awrite%20pages%3Awrite%20zone%3Aread%20ssl_certs%3Awrite%20ai%3Awrite%20ai-search%3Awrite%20ai-search%3Arun%20queues%3Awrite%20pipelines%3Awrite%20secrets_store%3Awrite%20containers%3Awrite%20cloudchamber%3Awrite%20connectivity%3Aadmin%20offline_access&state=CMA5eojBhclflihrW-ZQCd_K.IXmIbUT&code_challenge=AmWwxoi2sNdet9fGySeWRmtEpSGZ8KuNeBB4qIYqqac&code_challenge_method=S256
+---
+
+--- 2026-03-13T03:47:03.623Z debug
+[InspectorProxyWorker] handleProxyControllerIncomingMessage {"type":"reloadStart"}
+---

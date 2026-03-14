@@ -1,0 +1,36 @@
+name = "cloudagent"
+main = "src/index.ts"
+compatibility_date = "2024-10-22"
+compatibility_flags = [ "nodejs_compat" ]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "companies-db"
+database_id = "3afb31ce-83a9-4a12-ab5c-f85442ed10d1"
+remote = true
+
+[[vectorize]]
+binding = "DCTS_VECTORIZE"
+index_name = "dcts-rules-index"
+remote = true
+
+[[vectorize]]
+binding = "COMPANY_VECTORIZE"
+index_name = "company-embeddings-index"
+remote = true
+
+[durable_objects]
+bindings = [
+  { name = "ORCHESTRATOR", class_name = "AgentOrchestrator" },
+  { name = "COMPLIANCE_AGENT", class_name = "AgentCompliance" },
+  { name = "PRODUCT_AGENT", class_name = "AgentProduct" },
+  { name = "TRADE_WORKFLOW", class_name = "AgentWorkflow" }
+]
+
+[[migrations]]
+tag = "v6"
+new_sqlite_classes = ["AgentOrchestrator", "AgentCompliance", "AgentProduct", "AgentWorkflow"]
+
+[ai]
+binding = "AI"
+remote = true

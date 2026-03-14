@@ -1,0 +1,15 @@
+{
+    "name": "tradedna-agent",
+    "version": "1.0.0",
+    "devDependencies": {
+        "@cloudflare/workers-types": "^4.20240529.0",
+        "typescript": "^5.4.5",
+        "wrangler": "^4.72.0"
+    },
+    "dependencies": {
+        "@cloudflare/ai-chat": "latest",
+        "agents": "latest",
+        "ai": "latest",
+        "node-fetch": "^3.3.2"
+    }
+}

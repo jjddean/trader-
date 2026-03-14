@@ -1,8 +1,15 @@
 - [x] Explore project structure at `C:/Users/jason/trader-app` <!-- id: 0 -->
-- [/] Read `.agents/rules.md` for context <!-- id: 1 -->
+- [x] Read `.agents/rules.md` for context <!-- id: 1 -->
 - [x] Analyze sidebar architecture and components <!-- id: 2 -->
 - [x] Determine what the user wants to "add to root" <!-- id: 3 -->
-- [x] Execute Root Architecture Update <!-- id: 7 -->
-    - [x] Move sidebar/auth to root layout <!-- id: 8 -->
-    - [x] Create `.cursorrules` at root <!-- id: 9 -->
-    - [ ] Verify layout across pages <!-- id: 11 -->
+- [x] UI Consolidation & Stability <!-- id: 27 -->
+    - [x] Uninstall contaminated `radix-ui` library.
+    - [x] Migrate all UI components to modular `@radix-ui/react-*` primitives.
+    - [x] Fix runtime error by replacing `Slot.Root` with `Slot`.
+    - [x] Purge unrequested "suppress" styles (Sidebar, Header).
+    - [x] Remove HS suggested code logic from Lanes page.
+- [ ] Unify Prospects in Workspace <!-- id: 34 -->
+    - [/] Update implementation plan for Prospects wiring <!-- id: 35 -->
+    - [ ] Remove MOCK_LEADS and wire to real leads system <!-- id: 36 -->
+    - [ ] Add status management to Prospects tab <!-- id: 37 -->
+- [ ] Final Build & Verification.

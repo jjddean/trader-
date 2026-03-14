@@ -1,63 +1,137 @@
 "use client";
 
-import React, { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import React, { useState, useMemo } from "react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
-import { Users, Globe, Star } from "lucide-react";
+import { Users, Globe, Loader2, Trash2 } from "lucide-react";
 
 import {
-    Combobox,
-    ComboboxContent,
-    ComboboxInput,
-    ComboboxItem,
-    ComboboxTrigger,
-    ComboboxValue,
-} from "@/components/ui/combobox";
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 
 const STATUS_OPTIONS = ["New", "Contacted", "Proposal Sent", "Client"];
 
 type Lead = {
     _id: Id<"prospects">;
-    companyName: string;
-    country: string;
-    primaryHS: string;
-    dctsTier: string;
-    reliabilityScore: number;
-    status: "New" | "Contacted" | "Proposal Sent" | "Client" | string;
+    companyName?: string;
+    country?: string;
+    primaryHS?: string;
+    dctsTier?: string;
+    reliabilityScore?: number;
+    status?: string;
     contactEmail?: string;
+    businessCategory?: string;
 };
 
 export default function ProspectsPage() {
+    const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
+    const [isSyncing, setIsSyncing] = useState(false);
     const [countryFilter, setCountryFilter] = useState("");
 
     const leads = useQuery(api.leads.listLeads, {});
-    const updateStatus = useMutation(api.leads.updateLeadStatus);
-    const saveCompany = useMutation(api.saved_companies.saveCompany);
+    const discoverLeads = useAction(api.ai.discoverLeads);
+    const syncLeads = useMutation(api.leads.syncHMRCLeads);
+    const clearLeads = useMutation(api.leads.clearAllLeads);
 
-    const handleSync = () => {
-        // Placeholder for HMRC sync logic
-        console.log("Syncing HMRC data...");
+    const handleSync = async () => {
+        setIsSyncing(true);
+        try {
+            console.log("Starting AI-driven HMRC discovery...");
+            const discoveredLeads = await discoverLeads();
+            const result = await syncLeads({ leads: discoveredLeads });
+            
+            if (result.count === 0) {
+                alert("No new prospects found. Your database is already up to date with the latest HMRC discovery data.");
+            } else {
+                alert(`Discovery Complete! Successfully found and imported ${result.count} new trade partners.`);
+            }
+        } catch (error) {
+            console.error("Sync failed:", error);
+            alert("Discovery Failed: Ensure the Cloudflare Agent is running and accessible.");
+        } finally {
+            setIsSyncing(false);
+        }
     };
 
-    const statusCounts = {
-        New: leads?.filter((l: Lead) => l.status === "New").length ?? 0,
-        Contacted: leads?.filter((l: Lead) => l.status === "Contacted").length ?? 0,
-        "Proposal Sent": leads?.filter((l: Lead) => l.status === "Proposal Sent").length ?? 0,
-        Client: leads?.filter((l: Lead) => l.status === "Client").length ?? 0,
+    const handleClear = async () => {
+        if (confirm("Are you sure you want to clear all prospects? This will reset your pipeline.")) {
+            await clearLeads();
+        }
     };
 
-    const filteredLeads = leads?.filter((lead: Lead) => {
-        const matchesSearch = lead.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            lead.primaryHS?.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesCountry = !countryFilter || lead.country === countryFilter;
-        return matchesSearch && matchesCountry;
-    });
+    const statusCounts = useMemo(() => {
+        const counts = { New: 0, Contacted: 0, "Proposal Sent": 0, Client: 0 };
+        (leads as Lead[])?.forEach((l: Lead) => {
+            if (l.status && l.status in counts) {
+                counts[l.status as keyof typeof counts]++;
+            }
+        });
+        return counts;
+    }, [leads]);
+
+    const countries = useMemo(() => {
+        const uniqueCountries = new Set((leads as Lead[])?.map(l => l.country).filter(Boolean));
+        return Array.from(uniqueCountries).sort() as string[];
+    }, [leads]);
+
+    const filteredLeads = useMemo(() => {
+        return (leads as Lead[])?.filter((lead: Lead) => {
+            const matchesSearch = (lead.companyName ?? "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (lead.primaryHS ?? "").toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesCountry = !countryFilter || lead.country === countryFilter;
+            return matchesSearch && matchesCountry;
+        });
+    }, [leads, searchQuery, countryFilter]);
 
     return (
         <div className="p-6 max-w-6xl mx-auto space-y-6">
+
+            {/* HMRC Discovery Section */}
+            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-blue-500" />
+                        <h3 className="text-sm font-semibold text-black">HMRC Discovery</h3>
+                    </div>
+                </div>
+                <div className="flex gap-3">
+                    <div className="relative flex-1">
+                        <input
+                            type="text"
+                            placeholder="Search HMRC database for partners..."
+                            className="w-full h-10 pl-4 pr-10 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-black transition-all"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                    <button
+                        onClick={handleSync}
+                        disabled={isSyncing}
+                        className="px-6 h-10 bg-black hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50 flex items-center gap-2"
+                    >
+                        {isSyncing ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : null}
+                        {isSyncing ? "Syncing..." : "Sync HMRC Data"}
+                    </button>
+                    <button
+                        onClick={handleClear}
+                        className="h-10 px-3 hover:bg-red-50 text-gray-400 hover:text-red-500 border border-gray-200 rounded-lg transition-colors"
+                        title="Clear All Prospects"
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </button>
+                </div>
+            </div>
 
             {/* Pipeline Metrics */}
             <div className="grid grid-cols-4 gap-4">
@@ -70,28 +144,26 @@ export default function ProspectsPage() {
             </div>
 
             {/* Prospects Table */}
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/30">
                     <div className="flex items-center gap-3">
                         <Users className="h-4 w-4 text-gray-400" />
-                        <h3 className="text-sm font-medium text-black">All Prospects</h3>
+                        <h3 className="text-sm font-medium text-black">Active Pipeline</h3>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Combobox value={countryFilter || "all"} onValueChange={(val: unknown) => setCountryFilter((val as string) === "all" ? "" : (val as string))}>
-                            <ComboboxTrigger className="h-7 bg-gray-50 border-gray-100 text-[0.6875rem] text-gray-600 w-[160px]">
-                                <ComboboxValue placeholder="All Countries" />
-                            </ComboboxTrigger>
-                            <ComboboxContent>
-                                <ComboboxInput placeholder="Filter..." />
-                                <ComboboxItem value="all" className="text-xs">All Countries</ComboboxItem>
-                                <ComboboxItem value="Bangladesh" className="text-xs">Bangladesh</ComboboxItem>
-                                <ComboboxItem value="Pakistan" className="text-xs">Pakistan</ComboboxItem>
-                                <ComboboxItem value="Kenya" className="text-xs">Kenya</ComboboxItem>
-                                <ComboboxItem value="Cambodia" className="text-xs">Cambodia</ComboboxItem>
-                                <ComboboxItem value="Vietnam" className="text-xs">Vietnam</ComboboxItem>
-                                <ComboboxItem value="India" className="text-xs">India</ComboboxItem>
-                            </ComboboxContent>
-                        </Combobox>
+                    <div className="flex items-center gap-3">
+                        {countries.length > 0 && (
+                            <Select value={countryFilter || "all"} onValueChange={(val: string) => setCountryFilter(val === "all" ? "" : val)}>
+                                <SelectTrigger className="h-8 bg-white border-gray-200 text-xs text-gray-600 w-[160px]">
+                                    <SelectValue placeholder="All Countries" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all" className="text-xs">All Countries</SelectItem>
+                                    {countries.map((country: string) => (
+                                        <SelectItem key={country} value={country || "unknown"} className="text-xs">{country}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
                     </div>
                 </div>
 
@@ -102,18 +174,21 @@ export default function ProspectsPage() {
                                 <th className="px-6 py-3 text-[0.625rem] font-semibold text-gray-400 uppercase tracking-wider">Company</th>
                                 <th className="px-6 py-3 text-[0.625rem] font-semibold text-gray-400 uppercase tracking-wider">Country</th>
                                 <th className="px-6 py-3 text-[0.625rem] font-semibold text-gray-400 uppercase tracking-wider">HS Code</th>
-                                <th className="px-6 py-3 text-[0.625rem] font-semibold text-gray-400 uppercase tracking-wider">DCTS Tier</th>
+                                <th className="px-6 py-3 text-[0.625rem] font-semibold text-gray-400 uppercase tracking-wider">Category</th>
                                 <th className="px-6 py-3 text-[0.625rem] font-semibold text-gray-400 uppercase tracking-wider">Reliability</th>
-                                <th className="px-6 py-3 text-[0.625rem] font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-[0.625rem] font-semibold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+                                <th className="px-6 py-3 text-[0.625rem] font-semibold text-gray-400 uppercase tracking-wider text-right">Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                             {filteredLeads.map((lead: Lead) => (
-                                <tr key={lead._id} className="hover:bg-gray-50/50 transition-colors group">
+                                <tr 
+                                    key={lead._id} 
+                                    onClick={() => router.push(`/dashboard/prospects/${lead._id}`)}
+                                    className="hover:bg-gray-50 cursor-pointer transition-colors group"
+                                >
                                     <td className="px-6 py-4">
                                         <div>
-                                            <p className="text-xs font-medium text-black">{lead.companyName}</p>
+                                            <p className="text-xs font-semibold text-black">{lead.companyName}</p>
                                             {lead.contactEmail && (
                                                 <p className="text-[0.625rem] text-gray-400">{lead.contactEmail}</p>
                                             )}
@@ -127,77 +202,47 @@ export default function ProspectsPage() {
                                     </td>
                                     <td className="px-6 py-4 text-[0.6875rem] font-mono text-gray-600">{lead.primaryHS}</td>
                                     <td className="px-6 py-4">
-                                        <span className={cn(
-                                            "text-[0.625rem] font-medium px-2 py-0.5 rounded-md",
-                                            lead.dctsTier === "Comprehensive" ? "bg-green-100 text-green-700" :
-                                                lead.dctsTier === "Enhanced" ? "bg-blue-100 text-blue-700" :
-                                                    "bg-gray-100 text-gray-700"
-                                        )}>
-                                            {lead.dctsTier}
+                                        <span className="text-[0.625rem] font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-600 whitespace-nowrap">
+                                            {lead.businessCategory || "Trade Partner"}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-16 bg-gray-100 rounded-full h-1.5">
+                                            <div className="w-16 bg-gray-100 rounded-full h-1.5 flex-shrink-0">
                                                 <div
                                                     className="h-1.5 rounded-full bg-green-500"
-                                                    style={{ width: `${(lead.reliabilityScore * 100)}%` }}
+                                                    style={{ width: `${((lead.reliabilityScore ?? 0.85) * 100)}%` }}
                                                 />
                                             </div>
-                                            <span className="text-[0.625rem] text-gray-500">{(lead.reliabilityScore * 100).toFixed(0)}%</span>
+                                            <span className="text-[0.625rem] text-gray-500">{((lead.reliabilityScore ?? 0.85) * 100).toFixed(0)}%</span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <Combobox value={lead.status} onValueChange={(val: unknown) => updateStatus({ id: lead._id, status: val as string })}>
-                                            <ComboboxTrigger
-                                                className={cn(
-                                                    "h-7 text-[0.625rem] font-medium px-2 rounded-md border-0 w-[120px]",
-                                                    lead.status === "New" ? "bg-blue-100 text-blue-700" :
-                                                        lead.status === "Contacted" ? "bg-orange-100 text-orange-700" :
-                                                            lead.status === "Proposal Sent" ? "bg-purple-100 text-purple-700" :
-                                                                "bg-green-100 text-green-700"
-                                                )}
-                                            >
-                                                <ComboboxValue />
-                                            </ComboboxTrigger>
-                                            <ComboboxContent>
-                                                {STATUS_OPTIONS.map(s => (
-                                                    <ComboboxItem key={s} value={s} className="text-xs">{s}</ComboboxItem>
-                                                ))}
-                                            </ComboboxContent>
-                                        </Combobox>
-                                    </td>
                                     <td className="px-6 py-4 text-right">
-                                        <button
-                                            onClick={() => saveCompany({
-                                                companyName: lead.companyName,
-                                                country: lead.country,
-                                                category: lead.dctsTier,
-                                            })}
-                                            className="p-1.5 hover:bg-gray-100 rounded transition-colors opacity-0 group-hover:opacity-100"
-                                            title="Save company"
+                                        <span
+                                            className={cn(
+                                                "inline-flex items-center rounded-md px-2 py-0.5 text-[0.625rem] font-medium whitespace-nowrap",
+                                                lead.status === "New" ? "bg-blue-100 text-blue-700" :
+                                                    lead.status === "Contacted" ? "bg-orange-100 text-orange-700" :
+                                                        lead.status === "Proposal Sent" ? "bg-purple-100 text-purple-700" :
+                                                            "bg-green-100 text-green-700"
+                                            )}
                                         >
-                                            <Star className="h-3.5 w-3.5 text-gray-400" />
-                                        </button>
+                                            {lead.status}
+                                        </span>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 ) : (
-                    <div className="py-16 text-center">
-                        <Users className="h-5 w-5 text-gray-300 mx-auto mb-2" />
-                        <h3 className="text-gray-600 font-normal text-sm mb-1">No Prospects Found</h3>
-                        <p className="text-gray-400 text-xs mb-4">Sync HMRC data to discover trade partners.</p>
-                        <button
-                            onClick={handleSync}
-                            className="px-4 py-1.5 bg-black hover:bg-gray-800 text-white text-xs font-normal rounded-md transition-colors"
-                        >
-                            Sync HMRC Data
-                        </button>
+                    <div className="py-24 flex flex-col items-center justify-center text-center">
+                        <Users className="h-8 w-8 text-gray-200 mb-4" />
+                        <h3 className="text-gray-900 font-medium text-base mb-1">No Prospects Found</h3>
+                        <p className="text-gray-500 text-sm max-w-[280px]">Use the HMRC discovery search above to find and save verified trade partners to your pipeline.</p>
                     </div>
                 )}
             </div>
         </div>
     );
 }
+
