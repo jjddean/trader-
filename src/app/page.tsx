@@ -132,7 +132,7 @@ export default function LandingPage() {
             </h1>
 
             <p className="mx-auto mb-10 max-w-2xl text-[20px] leading-[28px] text-slate-500">
-              Access your HMRC declaration data instantly. freightcode&reg; connects directly to the Single Customs Platform so you can track compliance, execute immediate payments, and secure DCTS preference savings automatically.
+              Automate your customs declarations, reduce manual work, avoid costly errors, and ensure you never overpay duties.
             </p>
 
             <div className="flex flex-col items-center justify-center gap-[16px] sm:flex-row">
