@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Sparkle, Plus, Minus, Globe, ShieldCheck, Users } from "lucide-react";
+import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
+import { ArrowRight, Sparkle, Plus, Minus, Globe, ShieldCheck, Users, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -37,6 +38,7 @@ const faqs = [
 
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const { isSignedIn } = useAuth();
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-slate-900 selection:text-white">
@@ -50,7 +52,7 @@ export default function LandingPage() {
                   <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
                 </div>
               </div>
-              <span className="text-xl font-bold tracking-tighter text-[#020817]">TradeDNA</span>
+              <span className="text-xl font-bold tracking-tighter text-[#020817]">freightcode&reg;</span>
               <span className="ml-1 rounded border border-slate-100 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400">
                 Live
               </span>
@@ -70,21 +72,39 @@ export default function LandingPage() {
           </nav>
 
           <div className="flex items-center gap-[24px]">
-            <Link
-              href="/sign-in"
-              className="text-[14px] font-semibold text-[#6B7280] transition-colors hover:text-[#111827]"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/dashboard/documents"
-              className="h-[32px] rounded-md bg-slate-900 px-[12px] flex items-center text-[14px] font-medium text-white transition-all hover:bg-slate-900/90 shadow-sm"
-            >
-              Dashboard
-            </Link>
-            <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-gray-100 bg-[#E5E7EB]">
-              <div className="h-full w-full bg-gradient-to-br from-indigo-500 to-purple-500" />
-            </div>
+            {!isSignedIn ? (
+              <SignInButton mode="modal">
+                <button className="text-[14px] font-semibold text-[#6B7280] transition-colors hover:text-[#111827]">
+                  Sign In
+                </button>
+              </SignInButton>
+            ) : (
+              <Link
+                href="/dashboard/documents"
+                className="text-[14px] font-semibold text-[#6B7280] transition-colors hover:text-[#111827]"
+              >
+                Dashboard
+              </Link>
+            )}
+            {!isSignedIn ? (
+              <SignInButton mode="modal">
+                <button className="h-[32px] rounded-md bg-slate-900 px-[12px] flex items-center text-[14px] font-medium text-white transition-all hover:bg-slate-900/90 shadow-sm">
+                  Dashboard
+                </button>
+              </SignInButton>
+            ) : null}
+            {isSignedIn ? (
+              <UserButton />
+            ) : (
+              <SignInButton mode="modal">
+                <button
+                  aria-label="Open sign in"
+                  className="flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-[#6B7280] transition-colors hover:border-gray-300 hover:text-[#111827]"
+                >
+                  <User className="h-3.5 w-3.5" />
+                </button>
+              </SignInButton>
+            )}
           </div>
         </div>
       </header>
@@ -101,30 +121,35 @@ export default function LandingPage() {
                 />
               </div>
               <span className="text-[16px] font-medium tracking-normal text-[#020817]">
-                UK DCTS Trade Development Platform
+                UK Customs & Trade Development Platform
               </span>
             </div>
 
             <h1 className="mb-6 text-[48px] leading-[48px] font-bold tracking-tight text-[#020817]">
-              Turn UK trade policy
+              Total CDS visibility.
               <br />
-              into your pipeline.
+              Instant customs payments.
             </h1>
 
             <p className="mx-auto mb-10 max-w-2xl text-[20px] leading-[28px] text-slate-500">
-              Elite is the first trade development platform built for the UK&apos;s Developing
-              Countries Trading Scheme (DCTS). We help freight forwarders and DCTS-eligible
-              exporters discover high-value trade opportunities, verify compliance, and connect with
-              the right partners automatically.
+              Access your HMRC declaration data instantly. freightcode&reg; connects directly to the Single Customs Platform so you can track compliance, execute immediate payments, and secure DCTS preference savings automatically.
             </p>
 
             <div className="flex flex-col items-center justify-center gap-[16px] sm:flex-row">
-              <Link
-                href="/dashboard/documents"
-                className="h-[40px] min-w-[140px] rounded-md bg-[#0f172a] px-[24px] flex items-center justify-center text-[14px] font-medium text-white transition-all hover:bg-slate-800 shadow-sm"
-              >
-                Open Dashboard
-              </Link>
+              {isSignedIn ? (
+                <Link
+                  href="/dashboard/documents"
+                  className="h-[40px] min-w-[140px] rounded-md bg-[#0f172a] px-[24px] flex items-center justify-center text-[14px] font-medium text-white transition-all hover:bg-slate-800 shadow-sm"
+                >
+                  Open Dashboard
+                </Link>
+              ) : (
+                <SignInButton mode="modal">
+                  <button className="h-[40px] min-w-[140px] rounded-md bg-[#0f172a] px-[24px] flex items-center justify-center text-[14px] font-medium text-white transition-all hover:bg-slate-800 shadow-sm">
+                    Open Dashboard
+                  </button>
+                </SignInButton>
+              )}
               <Link
                 href="#how-it-works"
                 className="h-[40px] min-w-[140px] rounded-md border border-slate-200 bg-white px-[24px] flex items-center justify-center text-[14px] font-medium text-[#020817] transition-all hover:bg-slate-50 shadow-sm"
@@ -299,12 +324,20 @@ export default function LandingPage() {
               Start your 14-day free trial today.
             </p>
             <div className="flex flex-col items-center gap-4">
-              <Link
-                href="/dashboard/documents"
-                className="rounded bg-white px-12 py-4 h-11 flex items-center text-[15px] font-medium text-slate-900 transition-all hover:bg-slate-100"
-              >
-                Open Dashboard
-              </Link>
+              {isSignedIn ? (
+                <Link
+                  href="/dashboard/documents"
+                  className="rounded bg-white px-12 py-4 h-11 flex items-center text-[15px] font-medium text-slate-900 transition-all hover:bg-slate-100"
+                >
+                  Open Dashboard
+                </Link>
+              ) : (
+                <SignInButton mode="modal">
+                  <button className="rounded bg-white px-12 py-4 h-11 flex items-center text-[15px] font-medium text-slate-900 transition-all hover:bg-slate-100">
+                    Open Dashboard
+                  </button>
+                </SignInButton>
+              )}
               <p className="mt-2 text-[12px] font-bold tracking-widest text-gray-500 uppercase">
                 NO CREDIT CARD REQUIRED
               </p>
@@ -314,66 +347,116 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-100 py-[80px]">
-        <div className="mx-auto grid max-w-[1280px] gap-[48px] px-[24px] md:grid-cols-4">
-          <div className="col-span-2">
-            <Link href="/" className="mb-6 flex items-center gap-2">
-              <div className="flex items-center justify-center rounded bg-[#DFEAF9] p-1.5">
-                <div className="flex h-5 w-5 items-center justify-center rounded-sm bg-[#2563EB]">
-                  <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
+      <footer className="py-12 px-6 bg-white border-t border-gray-200">
+            <div className="max-w-6xl mx-auto">
+                <div className="grid grid-cols-2 md:grid-cols-7 gap-6 mb-10">
+                    {/* Logo / About */}
+                    <div className="col-span-2 md:col-span-1 -mt-1">
+                        <div className="mb-4">
+                            <div className="flex items-baseline whitespace-nowrap text-[#003057] leading-none">
+                                <span className="font-bold tracking-tight text-[22px]">freight</span>
+                                <span className="font-normal tracking-tight text-[22px]">code</span>
+                                <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px]">®</span>
+                            </div>
+                        </div>
+                        <p className="text-gray-500 text-xs leading-relaxed">
+                            Freight operations software for<br />complex trade lanes.
+                        </p>
+                        <p className="text-gray-400 text-xs mt-3">
+                            London, UK
+                            <br />
+                            info@freightcode.co.uk
+                        </p>
+                    </div>
+
+                    {/* Product */}
+                    <div>
+                        <h4 className="text-[#003057] font-medium text-xs mb-4">Product</h4>
+                        <ul className="text-gray-500 text-xs space-y-2">
+                            <li><a href="#features" className="hover:text-[#003057]">Features</a></li>
+                            <li><a href="#" className="hover:text-[#003057]">Pricing</a></li>
+                        </ul>
+                    </div>
+
+                    {/* Company */}
+                    <div>
+                        <h4 className="text-[#003057] font-medium text-xs mb-4">Company</h4>
+                        <ul className="text-gray-500 text-xs space-y-2">
+                            <li><a href="#" className="hover:text-[#003057]">About</a></li>
+                            <li><a href="#" className="hover:text-[#003057]">Blog</a></li>
+                            <li><a href="#" className="hover:text-[#003057]">Contact</a></li>
+                        </ul>
+                    </div>
+
+                    {/* Legal */}
+                    <div>
+                        <h4 className="text-[#003057] font-medium text-xs mb-4">Legal</h4>
+                        <ul className="text-gray-500 text-xs space-y-2">
+                            <li><Link href="/privacy" className="hover:text-[#003057]">Privacy</Link></li>
+                            <li><Link href="/terms" className="hover:text-[#003057]">Terms</Link></li>
+                        </ul>
+                    </div>
+
+                    {/* Socials */}
+                    <div>
+                        <h4 className="text-[#003057] font-medium text-xs mb-4">Socials</h4>
+                        <ul className="text-gray-500 text-xs space-y-2">
+                            <li><a href="https://x.com/freightcode" className="hover:text-[#003057]">X</a></li>
+                            <li><a href="https://linkedin.com/company/freightcode" className="hover:text-[#003057]">LinkedIn</a></li>
+                            <li><a href="https://youtube.com/@freightcode" className="hover:text-[#003057]">YouTube</a></li>
+                        </ul>
+                    </div>
+
+                    {/* Security & Trust */}
+                    <div>
+                        <h4 className="text-[#003057] font-medium text-xs mb-4">Security & Trust</h4>
+                        <ul className="text-gray-500 text-xs space-y-2">
+                            <li>Secure billing via Stripe</li>
+                            <li>Enterprise authentication</li>
+                            <li>Encrypted data</li>
+                            <li>Activity logging</li>
+                            <li>Role-based access</li>
+                        </ul>
+                    </div>
+
+                    {/* Trusted Infrastructure */}
+                    <div>
+                        <h4 className="text-[#003057] font-medium text-xs mb-4">Trusted Infrastructure</h4>
+                        <ul className="text-gray-500 text-xs space-y-2">
+                            <li className="flex items-center gap-2 group">
+                                <a href="https://stripe.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#003057]">Stripe</a>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src="https://cdn.brandfetch.io/stripe.com?c=1idbnvbXCRylLLzZ6DP&type=symbol" alt="Stripe" className="w-3 h-3 object-contain opacity-40 group-hover:opacity-100 transition-opacity" />
+                            </li>
+                            <li className="flex items-center gap-2 group">
+                                <a href="https://clerk.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#003057]">Clerk</a>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src="https://cdn.brandfetch.io/clerk.com?c=1idbnvbXCRylLLzZ6DP&type=symbol" alt="Clerk" className="w-3 h-3 object-contain opacity-40 group-hover:opacity-100 transition-opacity" />
+                            </li>
+                            <li className="flex items-center gap-2 group">
+                                <a href="https://convex.dev" target="_blank" rel="noopener noreferrer" className="hover:text-[#003057]">Convex</a>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src="https://cdn.brandfetch.io/convex.dev?c=1idbnvbXCRylLLzZ6DP&type=symbol" alt="Convex" className="w-3 h-3 object-contain opacity-40 group-hover:opacity-100 transition-opacity" />
+                            </li>
+                            <li className="flex items-center gap-2 group">
+                                <a href="https://docusignimpact.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#003057]">DocuSign</a>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src="https://cdn.brandfetch.io/idRJZsiuYV/w/57/h/57/theme/dark/logo.png?c=1bxid64Mup7aczewSAYMX&t=1759225919166" alt="DocuSign" className="w-3.5 h-3.5 object-contain opacity-50 group-hover:opacity-100 transition-opacity" />
+                            </li>
+                            <li className="flex items-center gap-2 group">
+                                <a href="https://www.gov.uk/government/organisations/hm-revenue-customs" target="_blank" rel="noopener noreferrer" className="hover:text-[#003057]">HMRC</a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-              </div>
-              <span className="text-xl font-bold tracking-tight text-slate-900">TradeDNA</span>
-            </Link>
-            <p className="max-w-sm text-[16px] leading-relaxed text-slate-500">
-              Pioneering trade development intelligence for the DCTS era.
-            </p>
-          </div>
-          <div>
-            <p className="mb-6 text-[12px] font-bold tracking-widest text-slate-400 uppercase">
-              Product
-            </p>
-            <ul className="space-y-4 text-[14px] font-medium text-slate-500">
-              <li>
-                <Link href="#features" className="hover:text-slate-900">
-                  Features
-                </Link>
-              </li>
-              <li>
-                <Link href="/dashboard/documents" className="hover:text-slate-900">
-                  Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-slate-900">
-                  Resources
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <p className="mb-6 text-[12px] font-bold tracking-widest text-slate-400 uppercase">
-              Connect
-            </p>
-            <ul className="space-y-4 text-[14px] font-medium text-slate-500">
-              <li>
-                <a href="mailto:hello@tradedna.pro" className="underline hover:text-slate-900">
-                  hello@tradedna.pro
-                </a>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-slate-900">
-                  LinkedIn
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div className="mx-auto mt-[40px] max-w-[1280px] border-t border-slate-50 px-[24px] pt-[40px]">
-          <p className="text-[12px] font-bold tracking-widest text-slate-400 uppercase italic">
-            © 2026 TRADEDNA PRO.
-          </p>
-        </div>
+
+                {/* Bottom bar */}
+                <div className="pt-6 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <p className="text-gray-400 text-xs">
+                        © {new Date().getFullYear()} Freightcode. All rights reserved.
+                    </p>
+                </div>
+            </div>
       </footer>
     </div>
   );
