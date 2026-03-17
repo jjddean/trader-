@@ -158,7 +158,7 @@ export const TariffCalculator = () => {
                                 </div>
                                 <Switch
                                     checked={inputs.isVatRegistered}
-                                    onCheckedChange={(v) => setInputs({ ...inputs, isVatRegistered: v })}
+                                    onCheckedChange={(v: boolean) => setInputs({ ...inputs, isVatRegistered: v })}
                                 />
                             </div>
                             <div className="flex items-center justify-between">
@@ -168,7 +168,7 @@ export const TariffCalculator = () => {
                                 </div>
                                 <Switch
                                     checked={inputs.hasPreference}
-                                    onCheckedChange={(v) => setInputs({ ...inputs, hasPreference: v })}
+                                    onCheckedChange={(v: boolean) => setInputs({ ...inputs, hasPreference: v })}
                                 />
                             </div>
                         </div>
