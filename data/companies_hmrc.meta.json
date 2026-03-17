@@ -1,0 +1,11 @@
+{
+  "dataset": "companies_hmrc",
+  "source": "HMRC bulk importers/exporters files",
+  "sourceUrls": [
+    "https://www.uktradeinfo.com/media/liraiahk/importers2512.zip",
+    "https://www.uktradeinfo.com/media/bjllr0og/exporters2512.zip"
+  ],
+  "recordCount": 124726,
+  "asOf": "2026-03-14T17:03:55.461Z",
+  "outputFile": "data/companies_hmrc.json"
+}

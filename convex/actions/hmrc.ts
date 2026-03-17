@@ -109,3 +109,12 @@ export const getHmrcStatus = action({
     };
   },
 });
+
+export const syncAllUsersHMRC = action({
+  args: { secret: v.string() },
+  handler: async (ctx, args) => {
+    // Placeholder for global sync
+    console.log("Global sync triggered");
+    return { success: true };
+  },
+});

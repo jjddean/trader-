@@ -1,227 +1,264 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
-import { ShieldCheck, Users, Calculator, ArrowUpRight, Globe } from "lucide-react";
+import { AlertCircle, TrendingDown, CheckCircle2, Factory, FileSpreadsheet, Scale, RefreshCw, UploadCloud, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-// no skeletons; use fixed-width number boxes instead
-
-type Lane = {
-  _id: string;
-  originCountry: string;
-  commodityCode: string;
-  tier: string;
-  status: string;
-  savingsEstimate?: number;
-};
-type Lead = {
-  _id: string;
-  companyName: string;
-  country: string;
-  primaryHS: string;
-  status: string;
-};
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function DashboardPage() {
   const { user } = useUser();
   const userId = user?.id || "";
 
-  const lanes = useQuery(api.trade_lanes.getLanes, userId ? { userId } : "skip");
-  const leads = useQuery(api.leads.listLeads, {});
+  // The backend function is fully intact
+  const analyticsData = useQuery(api.analytics.getDashboardAnalytics, userId ? { userId } : "skip");
+  const loadMockData = useMutation(api.analytics.loadMockData);
+  const [loadingDemodata, setLoadingDemoData] = useState(false);
 
-  const lanesLoaded = Array.isArray(lanes);
-  const leadsLoaded = Array.isArray(leads);
+  const handleLoadDemoData = async () => {
+    if (!userId) return;
+    setLoadingDemoData(true);
+    try {
+      await loadMockData({ userId });
+    } finally {
+      setLoadingDemoData(false);
+    }
+  };
 
-  const dLanes = lanesLoaded ? (lanes as unknown as Lane[]) : [];
-  const dLeads = leadsLoaded ? (leads as unknown as Lead[]) : [];
+  if (!analyticsData) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+           <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground/60" />
+           <p className="text-sm font-medium text-muted-foreground">Loading HMRC Analytics...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const lanesLoading = lanes === undefined;
-  const leadsLoading = leads === undefined;
-  const isLoadingMetrics = lanesLoading || leadsLoading;
+  const { kpis, alerts, brokerAccuracy } = analyticsData;
 
-  const verifiedLanes = dLanes.filter((l: Lane) => l.status === "Verified").length ?? 0;
-  const totalSavings =
-    dLanes.reduce((acc: number, l: Lane) => acc + (l.savingsEstimate || 0), 0) ?? 0;
-  const newLeads = dLeads.filter((l: Lead) => l.status === "New").length ?? 0;
+  // Render Empty State if no records
+  if (kpis.totalRecords === 0) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-16 text-center">
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-muted shadow-inner">
+          <UploadCloud className="h-10 w-10 text-muted-foreground" />
+        </div>
+        <h2 className="mb-4 text-2xl font-medium tracking-tight text-foreground">
+          No Historical Declarations Found
+        </h2>
+        <p className="mx-auto mb-8 max-w-lg text-muted-foreground leading-relaxed">
+          Connect your HMRC Government Gateway account or upload a historic CSV export to begin uncovering missed duty savings and running compliance audits.
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <Button className="h-11 px-8">Connect HMRC Account</Button>
+          <Button 
+            variant="outline" 
+            className="h-11 px-8"
+            onClick={handleLoadDemoData}
+            disabled={loadingDemodata}
+          >
+            {loadingDemodata ? "Loading..." : "Inject Demo Data"}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6">
-      {/* Top Metrics */}
+    <div className="space-y-8 p-8">
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight">Customs Analytics & Audit</h1>
+        <p className="text-sm text-gray-500">Historical HMRC data analysis and compliance scoring.</p>
+      </div>
+
+      {/* Top Main KPIs */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
-            Trade Lanes
-          </p>
-          <div className="flex items-baseline gap-2">
-            <h2 className="text-2xl font-normal text-black tabular-nums">
-              <span style={{ display: "inline-block", width: "4ch" }}>
-                {isLoadingMetrics && dLanes.length === 0 ? "" : dLanes.length}
-              </span>
-            </h2>
-            <span className="flex items-center text-[0.625rem] font-medium text-green-500">
-              <span className="tabular-nums" style={{ display: "inline-block", width: "3ch" }}>
-                {isLoadingMetrics && dLanes.length === 0 ? "" : verifiedLanes}
-              </span>{" "}
-              verified <ArrowUpRight className="h-3 w-3" />
-            </span>
+        {/* Compliance Score */}
+        <div className="flex flex-col justify-between rounded-xl border border-[#e9e9e7] bg-white p-6 shadow-none">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-500">
+              Compliance Health
+            </h3>
+            <CheckCircle2 className={cn("h-4 w-4", Number(kpis.complianceScore) > 90 ? "text-green-500" : "text-amber-500")} />
           </div>
-          <p className="mt-1 text-[0.625rem] text-gray-400">Active DCTS corridors</p>
-        </div>
-
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
-            Prospects
-          </p>
-          <div className="flex items-baseline gap-2">
-            <h2 className="text-2xl font-normal text-black tabular-nums">
-              <span style={{ display: "inline-block", width: "4ch" }}>
-                {isLoadingMetrics && dLeads.length === 0 ? "" : dLeads.length}
-              </span>
+          <div className="mt-4">
+            <h2 className="text-2xl font-medium tracking-tight text-gray-900">
+              {kpis.complianceScore}%
             </h2>
-            <span className="text-[0.625rem] font-medium text-blue-500">
-              <span className="tabular-nums" style={{ display: "inline-block", width: "3ch" }}>
-                {isLoadingMetrics && dLeads.length === 0 ? "" : newLeads}
-              </span>{" "}
-              new
-            </span>
+            <p className="mt-1 text-xs text-gray-500">
+              {kpis.anomaliesCount} anomalies detected across {kpis.totalRecords} records
+            </p>
           </div>
-          <p className="mt-1 text-[0.625rem] text-gray-400">Partner pipeline</p>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
-            Est. Savings
-          </p>
-          <h2 className="text-2xl font-normal text-black tabular-nums">
-            <span style={{ display: "inline-block", width: "6ch" }}>
-              {isLoadingMetrics && dLanes.length === 0
-                ? ""
-                : `£${(totalSavings / 1000).toFixed(0)}k`}
-            </span>
-          </h2>
-          <p className="mt-1 text-[0.625rem] text-gray-400">DCTS duty relief</p>
+        {/* Missed Duty Savings */}
+        <div className="flex flex-col justify-between rounded-xl border border-[#e9e9e7] bg-white p-6 shadow-none">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-500">
+              Identified Missed Savings
+            </h3>
+            <TrendingDown className="h-4 w-4 text-gray-400" />
+          </div>
+          <div className="mt-4">
+            <h2 className="text-2xl font-medium tracking-tight text-gray-900">
+              £{kpis.totalMissedSavings.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </h2>
+            <p className="mt-1 text-xs text-gray-500">
+              Capital tied up in unclaimed trade preferences
+            </p>
+          </div>
         </div>
 
+        {/* Total Duty Paid */}
+        <div className="flex flex-col justify-between rounded-xl border border-[#e9e9e7] bg-white p-6 shadow-none">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-500">
+              Total Duty Paid (Historical)
+            </h3>
+            <Scale className="h-4 w-4 text-gray-400" />
+          </div>
+          <div className="mt-4">
+            <h2 className="text-2xl font-medium tracking-tight text-gray-900">
+              £{(kpis.totalDutyPaid / 1000).toFixed(1)}k
+            </h2>
+            <p className="mt-1 text-xs text-gray-500">
+              Across {kpis.totalRecords} imported records
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Two Columns: Recent Lanes + Recent Prospects */}
+      {/* Alert Cards Row */}
+      <h3 className="text-base font-semibold text-foreground">Actionable Audits</h3>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Recent Trade Lanes */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="h-4 w-4 text-gray-400" />
-              <h3 className="text-sm font-medium text-black">Recent Trade Lanes</h3>
-            </div>
-            <span
-              className="text-[0.625rem] text-gray-400 tabular-nums"
-              style={{ display: "inline-block", width: "6ch", textAlign: "right" }}
-            >
-              {lanesLoading ? "" : `${dLanes.length} total`}
+        
+        {/* Preference Alert */}
+        <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
+          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-[#fbfbfa] px-5 py-3">
+            <AlertCircle className="h-4 w-4 text-amber-500" />
+            <h3 className="text-sm font-normal text-gray-500">Missed DCTS/EU Preference</h3>
+            <span className="ml-auto rounded-[4px] bg-[#f7f7f5] px-2 py-0.5 text-[0.625rem] font-semibold text-muted-foreground border border-[#e9e9e7]">
+              {alerts.missedPreferences.length} FLAGS
             </span>
           </div>
-          <div className="min-h-[240px]">
-            {dLanes.length > 0 ? (
-              <div className="divide-y divide-gray-50">
-                {dLanes.slice(0, 5).map((lane: Lane) => (
-                  <div
-                    key={lane._id}
-                    className="flex items-center justify-between px-6 py-3 transition-colors hover:bg-gray-50/50"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Globe className="h-3.5 w-3.5 text-gray-400" />
-                      <div>
-                        <p className="text-xs font-medium text-black">{lane.originCountry}</p>
-                        <p className="text-[0.625rem] text-gray-400">
-                          {lane.commodityCode} · {lane.tier}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={cn(
-                          "h-1.5 w-1.5 rounded-full",
-                          lane.status === "Verified"
-                            ? "bg-green-500"
-                            : lane.status === "Review"
-                              ? "bg-orange-500"
-                              : "bg-red-500",
-                        )}
-                      />
-                      <span className="text-[0.625rem] text-gray-500">{lane.status}</span>
-                    </div>
+          <div className="flex-1 p-5">
+            {alerts.missedPreferences.length > 0 ? (
+              <div className="space-y-4">
+                {alerts.missedPreferences.slice(0, 3).map((alert: any) => (
+                  <div key={alert.entryIdentifierMrn} className="flex justify-between items-center text-sm">
+                     <div>
+                       <p className="font-semibold text-foreground">{alert.entryIdentifierMrn}</p>
+                       <p className="text-xs text-muted-foreground">Origin: {alert.countryOfOriginCode} · Pref Code: {alert.preferenceCode || 'None'}</p>
+                     </div>
+                     <span className="text-sm font-semibold text-red-600">
+                      +£{(alert.taxLineTotalAmount || 0).toFixed(2)}
+                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="py-12 text-center">
-                <ShieldCheck className="mx-auto mb-2 h-5 w-5 text-gray-300" />
-                <p className="text-xs text-gray-400">
-                  {lanesLoading ? "Loading trade lanes..." : "No trade lanes yet"}
-                </p>
-              </div>
+               <p className="text-sm text-muted-foreground">No missed preference opportunities detected.</p>
             )}
           </div>
         </div>
 
-        {/* Recent Prospects */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-            <div className="flex items-center gap-3">
-              <Users className="h-4 w-4 text-gray-400" />
-              <h3 className="text-sm font-medium text-black">Recent Prospects</h3>
-            </div>
-            <span
-              className="text-[0.625rem] text-gray-400 tabular-nums"
-              style={{ display: "inline-block", width: "6ch", textAlign: "right" }}
-            >
-              {leadsLoading ? "" : `${dLeads.length} total`}
+        {/* Anti-Dumping Alert */}
+        <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
+          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-[#fbfbfa] px-5 py-3">
+            <TrendingDown className="h-4 w-4 text-red-500" />
+            <h3 className="text-sm font-normal text-gray-500">Anti-Dumping & High Tax Types</h3>
+            <span className="ml-auto rounded-[4px] bg-[#f7f7f5] px-2 py-0.5 text-[0.625rem] font-semibold text-muted-foreground border border-[#e9e9e7]">
+              {alerts.antiDumpingPenalties.length} FLAGS
             </span>
           </div>
-          <div className="min-h-[240px]">
-            {dLeads.length > 0 ? (
-              <div className="divide-y divide-gray-50">
-                {dLeads.slice(0, 5).map((lead: Lead) => (
-                  <div
-                    key={lead._id}
-                    className="flex items-center justify-between px-6 py-3 transition-colors hover:bg-gray-50/50"
-                  >
-                    <div>
-                      <p className="text-xs font-medium text-black">{lead.companyName}</p>
-                      <p className="text-[0.625rem] text-gray-400">
-                        {lead.country} · HS {lead.primaryHS}
-                      </p>
+          <div className="flex-1 p-5">
+            {alerts.antiDumpingPenalties.length > 0 ? (
+              <div className="space-y-4">
+                {alerts.antiDumpingPenalties.map((alert: any, idx: number) => (
+                  <div key={idx} className="flex flex-col border-b border-[#e9e9e7] pb-4 last:border-0 last:pb-0">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-sm text-foreground">
+                        {alert.entryIdentifierMrn || alert.mrn}
+                      </span>
+                      <span className="text-sm font-semibold text-red-600">
+                        +£{(alert.taxLineTotalAmount || alert.value || 0).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
                     </div>
-                    <span
-                      className={cn(
-                        "rounded px-1.5 py-0.5 text-[0.5625rem] font-medium tracking-wider uppercase",
-                        lead.status === "New"
-                          ? "bg-blue-100 text-blue-600"
-                          : lead.status === "Contacted"
-                            ? "bg-orange-100 text-orange-600"
-                            : lead.status === "Client"
-                              ? "bg-green-100 text-green-600"
-                              : "bg-gray-100 text-gray-600",
-                      )}
-                    >
-                      {lead.status}
-                    </span>
+                    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                       <p className="text-xs text-muted-foreground">Type: {alert.taxType} · Broker: {alert.declarantEori}</p>
+                    </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="py-12 text-center">
-                <Users className="mx-auto mb-2 h-5 w-5 text-gray-300" />
-                <p className="text-xs text-gray-400">
-                  {leadsLoading ? "Loading prospects..." : "No prospects yet"}
-                </p>
-              </div>
+               <p className="text-sm text-muted-foreground">No penalty tax types detected.</p>
             )}
           </div>
         </div>
+
+        {/* PVA Alert */}
+        <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
+          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-[#fbfbfa] px-5 py-3">
+            <FileSpreadsheet className="h-4 w-4 text-blue-500" />
+            <h3 className="text-sm font-normal text-gray-500">Postponed VAT Accounting (PVA)</h3>
+            <span className="ml-auto rounded-[4px] bg-[#f7f7f5] px-2 py-0.5 text-[0.625rem] font-semibold text-muted-foreground border border-[#e9e9e7]">
+              {alerts.pvaChecks.length} FLAGS
+            </span>
+          </div>
+          <div className="flex-1 p-5">
+             <p className="text-sm text-muted-foreground mb-4">
+               {alerts.pvaChecks.length} imports flagged with Method of Payment &quot;G&quot;. Ensure these figures are accurately logged on your next VAT return to prevent HMRC audits.
+             </p>
+             <Button variant="outline" size="sm" className="w-full text-xs h-8">Download PVA Reconciliation Report</Button>
+          </div>
+        </div>
+
+        {/* Broker Accuracy Table */}
+        <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
+          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-[#fbfbfa] px-5 py-3">
+            <Users className="h-4 w-4 text-indigo-500" />
+            <h3 className="text-sm font-normal text-gray-500">Broker Accuracy Benchmarks</h3>
+          </div>
+          <div className="flex-1 p-0">
+            {brokerAccuracy.length > 0 ? (
+              <table className="w-full border-collapse text-left">
+                <thead>
+                  <tr className="bg-[#fbfbfa] border-b border-[#e9e9e7]">
+                    <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Declarant EORI</th>
+                    <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase text-right">Accuracy Rate</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#e9e9e7]">
+                   {brokerAccuracy.map((b: any) => (
+                     <tr key={b.eori} className="group transition-colors hover:bg-[#f7f7f5]">
+                       <td className="px-6 py-4 font-mono text-[0.6875rem] text-gray-600">{b.eori}</td>
+                       <td className="px-6 py-4 text-right">
+                         <span className={cn(
+                           "font-medium text-xs rounded-md px-2 py-0.5",
+                           b.accuracy > 95 ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                         )}>
+                           {b.accuracy.toFixed(1)}%
+                         </span>
+                         <span className="block text-[0.625rem] text-gray-400 mt-1">{b.totalDeclarations} records</span>
+                       </td>
+                     </tr>
+                   ))}
+                </tbody>
+              </table>
+            ) : (
+               <div className="p-5">
+                 <p className="text-sm text-muted-foreground">Not enough data to benchmark brokers.</p>
+               </div>
+            )}
+          </div>
+        </div>
+
       </div>
-
     </div>
   );
 }

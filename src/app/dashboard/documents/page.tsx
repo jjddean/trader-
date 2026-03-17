@@ -203,26 +203,30 @@ export default function DocumentsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6">
+    <div className="space-y-8 p-8">
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight">Smart Upload & DCTS Tools</h1>
+        <p className="text-sm text-gray-500">Validate eligibility, simulate Rules of Origin, and estimate landed costs.</p>
+      </div>
       {/* Metrics Row */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+        <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
+          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
             Active Lanes
           </p>
-          <h2 className="text-2xl font-normal text-black tabular-nums">
+          <h2 className="text-2xl font-medium tracking-tight text-foreground tabular-nums">
             <span style={{ display: "inline-block", width: "4ch" }}>
               {isLoading && dLanes.length === 0 ? "" : dLanes.length}
             </span>
           </h2>
-          <p className="mt-1 text-[0.625rem] text-gray-400">Trade lanes under monitoring</p>
+          <p className="mt-1 text-[0.625rem] text-gray-500">Trade lanes under monitoring</p>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+        <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
+          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
             Verified
           </p>
           <div className="flex items-baseline gap-2">
-            <h2 className="text-2xl font-normal text-black tabular-nums">
+            <h2 className="text-2xl font-medium tracking-tight text-foreground tabular-nums">
               <span style={{ display: "inline-block", width: "4ch" }}>
                 {isLoading && dLanes.length === 0
                   ? ""
@@ -232,12 +236,12 @@ export default function DocumentsPage() {
             <span className="text-[0.625rem] font-medium text-green-500">Compliant</span>
           </div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+        <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
+          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
             Under Review
           </p>
           <div className="flex items-baseline gap-2">
-            <h2 className="text-2xl font-normal text-black tabular-nums">
+            <h2 className="text-2xl font-medium tracking-tight text-foreground tabular-nums">
               <span style={{ display: "inline-block", width: "4ch" }}>
                 {isLoading && dLanes.length === 0
                   ? ""
@@ -247,26 +251,26 @@ export default function DocumentsPage() {
             <span className="text-[0.625rem] font-medium text-orange-500">Needs Attention</span>
           </div>
         </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+        <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
+          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
             Est. Savings
           </p>
-          <h2 className="text-2xl font-normal text-black tabular-nums">
+          <h2 className="text-2xl font-medium tracking-tight text-foreground tabular-nums">
             <span style={{ display: "inline-block", width: "6ch" }}>
               {isLoading && dLanes.length === 0
                 ? ""
                 : `£${(dLanes.reduce((acc, l) => acc + (l.savingsEstimate || 0), 0) / 1000).toFixed(0)}k`}
             </span>
           </h2>
-          <p className="mt-1 text-[0.625rem] text-gray-400">Across all DCTS lanes</p>
+          <p className="mt-1 text-[0.625rem] text-gray-500">Across all DCTS lanes</p>
         </div>
       </div>
 
       {/* Two-Column: Eligibility Check + RoO Simulator */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Left: DCTS Eligibility Checker */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <div className="flex items-center gap-3 border-b border-gray-100 bg-white px-6 py-4">
+        <div className="overflow-hidden rounded-xl border border-[#e9e9e7] bg-white">
+          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-[#fbfbfa] px-6 py-4">
             <Globe className="h-4 w-4 text-gray-400" />
             <h3 className="text-sm font-medium text-black">DCTS Eligibility Check</h3>
           </div>
@@ -377,8 +381,8 @@ export default function DocumentsPage() {
         </div>
 
         {/* Right: Rules of Origin Simulator */}
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <div className="flex items-center gap-3 border-b border-gray-100 bg-white px-6 py-4">
+        <div className="overflow-hidden rounded-xl border border-[#e9e9e7] bg-white">
+          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-[#fbfbfa] px-6 py-4">
             <Package className="h-4 w-4 text-gray-400" />
             <h3 className="text-sm font-medium text-black">Rules of Origin Simulator</h3>
           </div>
@@ -535,8 +539,8 @@ export default function DocumentsPage() {
     </div>
 
       {/* Full-width Bottom: Landed Cost Calculator */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <div className="flex items-center gap-3 border-b border-gray-100 bg-white px-6 py-4">
+      <div className="overflow-hidden rounded-xl border border-[#e9e9e7] bg-white">
+        <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-[#fbfbfa] px-6 py-4">
           <Calculator className="h-4 w-4 text-gray-400" />
           <h3 className="text-sm font-medium text-black">Landed Cost Calculator</h3>
         </div>
@@ -651,19 +655,19 @@ export default function DocumentsPage() {
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <div className="space-y-1">
                       <p className="text-[0.625rem] text-gray-400">CIF Value</p>
-                      <p className="text-lg font-normal text-black">
+                      <p className="text-2xl font-medium tracking-tight text-foreground">
                         £{(calcResult.cifValue || 0).toLocaleString()}
                       </p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-[0.625rem] text-gray-400">Total Duty</p>
-                      <p className="text-lg font-normal text-black">
+                      <p className="text-2xl font-medium tracking-tight text-foreground">
                         £{(calcResult.dutyAmount || 0).toLocaleString()}
                       </p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-[0.625rem] text-gray-400">Total VAT</p>
-                      <p className="text-lg font-normal text-black">
+                      <p className="text-2xl font-medium tracking-tight text-foreground">
                         £{(calcResult.vatAmount || 0).toLocaleString()}
                       </p>
                     </div>
@@ -672,7 +676,7 @@ export default function DocumentsPage() {
                     <p className="text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
                       Final Landed Price
                     </p>
-                    <p className="text-3xl font-normal text-black">
+                    <p className="text-2xl font-medium tracking-tight text-foreground">
                       £{(calcResult.totalLandedCost || 0).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,

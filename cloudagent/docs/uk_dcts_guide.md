@@ -450,7 +450,7 @@ Using materials from multiple DCTS countries counts as originating.
 
 Published by **Elite**, the UK's first digital platform purpose-built for DCTS.
 
-- Eligibility Engine, Origin Simulator, Tariff Calculator, Partner Matching, Compliance Tools.
+- Eligibility Engine, Origin Simulator, Tariff Calculator, Compliance Tools.
 - **URL:** [elite.freightcode.co.uk](http://elite.freightcode.co.uk)
 
 **Legal Disclaimer:** This guide provides general information and does not constitute legal or professional advice. Rules and rates change. Consult experts.

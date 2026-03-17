@@ -1,0 +1,50 @@
+{
+    "categories": [
+        {
+            "id": "electronics",
+            "name": "Electronics (Computers, Phones)",
+            "rate": 0.0
+        },
+        {
+            "id": "clothing",
+            "name": "Clothing & Apparel",
+            "rate": 0.12
+        },
+        {
+            "id": "footwear",
+            "name": "Footwear",
+            "rate": 0.08
+        },
+        {
+            "id": "furniture",
+            "name": "Furniture",
+            "rate": 0.0
+        },
+        {
+            "id": "toys",
+            "name": "Toys & Games",
+            "rate": 0.047
+        },
+        {
+            "id": "tools",
+            "name": "Hand Tools",
+            "rate": 0.017
+        },
+        {
+            "id": "auto",
+            "name": "Automotive Parts",
+            "rate": 0.035
+        },
+        {
+            "id": "general",
+            "name": "General Merchandise",
+            "rate": 0.025
+        }
+    ],
+    "hs_overrides": {
+        "6403": 0.08,
+        "6109": 0.12,
+        "8471": 0.0,
+        "9503": 0.047
+    }
+}

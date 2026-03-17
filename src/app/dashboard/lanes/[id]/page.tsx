@@ -101,24 +101,13 @@ export default function LaneWorkspacePage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6">
-      <div className="no-scrollbar flex items-center justify-between gap-6 overflow-x-auto pb-2">
-        <div className="flex shrink-0 items-center gap-3">
-          <Globe className="h-4 w-4 text-gray-400" />
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight whitespace-nowrap text-black">
-              Trade Lane Workspace
-            </h1>
-            <p className="text-muted-foreground text-sm whitespace-nowrap">
-              {lane.description}
-            </p>
-          </div>
-        </div>
-
+    <div className="space-y-8 p-8">
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight">Declaration Workspace</h1>
+        <p className="text-sm text-gray-500">Review compliance, prospects, and messages for this declaration.</p>
       </div>
-
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="border border-gray-200 bg-white">
+        <TabsList className="border border-[#e9e9e7] bg-white">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="compliance">Compliance</TabsTrigger>
           <TabsTrigger value="prospects">Prospects</TabsTrigger>
@@ -127,26 +116,26 @@ export default function LaneWorkspacePage() {
 
         <TabsContent value="overview" className="mt-4">
           <div className="space-y-4">
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
+            <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div>
-                  <p className="mb-1 text-[0.625rem] tracking-widest text-gray-400 uppercase">
+                  <p className="mb-1 text-[0.625rem] tracking-widest text-gray-500 uppercase">
                     Origin
                   </p>
                   <p className="text-xs text-black">{lane.originCountry}</p>
                 </div>
                 <div>
-                  <p className="mb-1 text-[0.625rem] tracking-widest text-gray-400 uppercase">
+                  <p className="mb-1 text-[0.625rem] tracking-widest text-gray-500 uppercase">
                     HS Code
                   </p>
                   <p className="font-mono text-xs text-gray-700">{lane.commodityCode}</p>
                 </div>
                 <div>
-                  <p className="mb-1 text-[0.625rem] tracking-widest text-gray-400 uppercase">Tier</p>
+                  <p className="mb-1 text-[0.625rem] tracking-widest text-gray-500 uppercase">Tier</p>
                   <p className="text-xs text-gray-700">{lane.tier}</p>
                 </div>
                 <div>
-                  <p className="mb-1 text-[0.625rem] tracking-widest text-gray-400 uppercase">
+                  <p className="mb-1 text-[0.625rem] tracking-widest text-gray-500 uppercase">
                     Status
                   </p>
                   <p className="text-xs text-gray-700">{lane.status}</p>
@@ -155,8 +144,8 @@ export default function LaneWorkspacePage() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="mb-4 text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+              <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
+                <p className="mb-4 text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
                   Duty Savings Analysis
                 </p>
                 <div className="flex items-baseline gap-2">
@@ -169,14 +158,14 @@ export default function LaneWorkspacePage() {
                 </div>
                 <div className="mt-4 space-y-2">
                   <div className="flex justify-between text-[0.625rem]">
-                    <span className="text-gray-400">Standard Tariff</span>
+                    <span className="text-gray-500">Standard Tariff</span>
                     <span className="text-gray-600">12.0%</span>
                   </div>
                   <div className="flex justify-between text-[0.625rem]">
-                    <span className="text-gray-400">DCTS Preference</span>
+                    <span className="text-gray-500">DCTS Preference</span>
                     <span className="text-green-600">0.0%</span>
                   </div>
-                  <div className="h-px bg-gray-50" />
+                  <div className="h-px bg-[#e9e9e7]" />
                   <div className="flex justify-between text-[0.625rem] font-medium">
                     <span className="text-gray-900">Net Relief</span>
                     <span className="text-green-600">12.0%</span>
@@ -184,8 +173,8 @@ export default function LaneWorkspacePage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="mb-4 text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+              <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
+                <p className="mb-4 text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
                   Market Context
                 </p>
                 <div className="space-y-3">
@@ -209,7 +198,7 @@ export default function LaneWorkspacePage() {
 
         <TabsContent value="compliance" className="mt-4">
           <div className="space-y-4">
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
+            <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-gray-400" />
@@ -220,22 +209,22 @@ export default function LaneWorkspacePage() {
                 </Badge>
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
-                  <p className="mb-1 text-[0.625rem] tracking-widest text-gray-400 uppercase">
+                <div className="rounded-lg border border-[#e9e9e7] bg-[#fbfbfa] p-4">
+                  <p className="mb-1 text-[0.625rem] tracking-widest text-gray-500 uppercase">
                     Eligible
                   </p>
                   <p className="text-xs font-medium text-green-700">Yes</p>
                 </div>
-                <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
-                  <p className="mb-1 text-[0.625rem] tracking-widest text-gray-400 uppercase">
+                <div className="rounded-lg border border-[#e9e9e7] bg-[#fbfbfa] p-4">
+                  <p className="mb-1 text-[0.625rem] tracking-widest text-gray-500 uppercase">
                     Scheme
                   </p>
                   <p className="text-xs font-medium text-gray-700">
                     {eligibility?.scheme || lane.tier}
                   </p>
                 </div>
-                <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
-                  <p className="mb-1 text-[0.625rem] tracking-widest text-gray-400 uppercase">
+                <div className="rounded-lg border border-[#e9e9e7] bg-[#fbfbfa] p-4">
+                  <p className="mb-1 text-[0.625rem] tracking-widest text-gray-500 uppercase">
                     Tariff Rate
                   </p>
                   <p className="text-xs font-medium text-gray-700">
@@ -250,7 +239,7 @@ export default function LaneWorkspacePage() {
         </TabsContent>
 
         <TabsContent value="prospects" className="mt-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-gray-400" />
@@ -285,7 +274,7 @@ export default function LaneWorkspacePage() {
                     <input
                       type="text"
                       placeholder="Search global database by company or HS code..."
-                      className="h-9 w-full rounded-md border border-gray-200 bg-gray-50/50 pl-9 pr-3 text-xs outline-none focus:border-gray-300"
+                      className="h-9 w-full rounded-md border border-[#e9e9e7] bg-white pl-9 pr-3 text-xs outline-none focus:border-gray-400"
                       value={discoveryQuery}
                       onChange={(e) => setDiscoveryQuery(e.target.value)}
                       onKeyDown={async (e) => {
@@ -326,26 +315,26 @@ export default function LaneWorkspacePage() {
                   {discoveryResults.length > 0 ? (
                     <table className="w-full border-collapse text-left">
                       <thead>
-                        <tr className="bg-gray-50/50">
-                          <th className="px-4 py-2 text-[0.625rem] font-semibold tracking-wider text-gray-400 uppercase">
+                        <tr className="bg-[#fbfbfa]">
+                          <th className="px-4 py-2 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">
                             Company
                           </th>
-                          <th className="px-4 py-2 text-[0.625rem] font-semibold tracking-wider text-gray-400 uppercase">
+                          <th className="px-4 py-2 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">
                             Country
                           </th>
-                          <th className="px-4 py-2 text-[0.625rem] font-semibold tracking-wider text-gray-400 uppercase">
+                          <th className="px-4 py-2 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">
                             Category
                           </th>
-                          <th className="px-4 py-2 text-right text-[0.625rem] font-semibold tracking-wider text-gray-400 uppercase">
+                          <th className="px-4 py-2 text-right text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">
                             Action
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-50">
+                      <tbody className="divide-y divide-[#e9e9e7]">
                         {discoveryResults.map((hit) => (
                           <tr
                             key={hit.document.id}
-                            className="bg-white transition-colors hover:bg-gray-50/50"
+                            className="bg-white transition-colors hover:bg-[#f7f7f5]"
                           >
                             <td className="px-4 py-3">
                               <p className="text-xs font-medium text-black">
@@ -378,7 +367,7 @@ export default function LaneWorkspacePage() {
                                   });
                                   setIsDiscoveryMode(false);
                                 }}
-                                className="h-7 items-center rounded border border-gray-200 bg-white px-2.5 text-[0.625rem] font-medium text-black transition-colors hover:border-gray-400"
+                                className="h-7 items-center rounded border border-[#e9e9e7] bg-white px-2.5 text-[0.625rem] font-medium text-black transition-colors hover:border-gray-400"
                               >
                                 Save to Pipeline
                               </button>
@@ -401,29 +390,29 @@ export default function LaneWorkspacePage() {
             ) : leads && leads.length > 0 ? (
               <table className="w-full border-collapse text-left">
                 <thead>
-                  <tr className="bg-gray-50/50">
-                    <th className="px-4 py-2 text-[0.625rem] font-semibold tracking-wider text-gray-400 uppercase">
+                  <tr className="bg-[#fbfbfa]">
+                    <th className="px-4 py-2 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">
                       Company
                     </th>
-                    <th className="px-4 py-2 text-[0.625rem] font-semibold tracking-wider text-gray-400 uppercase">
+                    <th className="px-4 py-2 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">
                       Country
                     </th>
-                    <th className="px-4 py-2 text-[0.625rem] font-semibold tracking-wider text-gray-400 uppercase">
+                    <th className="px-4 py-2 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">
                       HS
                     </th>
-                    <th className="px-4 py-2 text-[0.625rem] font-semibold tracking-wider text-gray-400 uppercase">
+                    <th className="px-4 py-2 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">
                       Tier
                     </th>
-                    <th className="px-4 py-2 text-right text-[0.625rem] font-semibold tracking-wider text-gray-400 uppercase">
+                    <th className="px-4 py-2 text-right text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-[#e9e9e7]">
                   {leads.map((p) => (
                     <tr 
                       key={p._id} 
-                      className="cursor-pointer transition-colors hover:bg-gray-50/50"
+                      className="cursor-pointer transition-colors hover:bg-[#f7f7f5]"
                       onClick={() => router.push(`/dashboard/prospects/${p._id}`)}
                     >
                       <td className="px-4 py-2">
@@ -458,7 +447,7 @@ export default function LaneWorkspacePage() {
                             setSelectedProspect(p);
                             setActiveTab("messages");
                           }}
-                          className="h-7 rounded border border-gray-200 bg-white px-2.5 text-[0.625rem] font-medium text-black transition-colors hover:border-gray-400"
+                          className="h-7 rounded border border-[#e9e9e7] bg-white px-2.5 text-[0.625rem] font-medium text-black transition-colors hover:border-gray-400"
                         >
                           Contact
                         </button>
@@ -476,8 +465,8 @@ export default function LaneWorkspacePage() {
         </TabsContent>
 
         <TabsContent value="messages" className="mt-4">
-          <div className="flex flex-col md:flex-row rounded-xl border border-gray-200 bg-white overflow-hidden min-h-[500px] shadow-sm">
-            <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-gray-100 bg-gray-50/30 p-5">
+          <div className="flex flex-col md:flex-row rounded-xl border border-[#e9e9e7] bg-white overflow-hidden min-h-[500px] shadow-sm">
+            <div className="w-full md:w-80 border-b md:border-b-0 md:border-r border-[#e9e9e7] bg-[#fbfbfa] p-5">
               <div className="mb-6 flex items-center gap-2">
                 <MessageSquareText className="h-4 w-4 text-gray-400" />
                 <p className="text-[13px] font-semibold text-black uppercase tracking-wider">Conversations</p>
@@ -504,7 +493,7 @@ export default function LaneWorkspacePage() {
             <div className="flex-1 p-6 bg-white overflow-y-auto">
               <div className="w-full max-w-2xl mx-auto space-y-6">
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between pb-4 border-b border-gray-50">
+                  <div className="flex items-center justify-between pb-4 border-b border-[#e9e9e7]">
                   <div className="flex items-center gap-2">
                     <Send className="h-4 w-4 text-gray-400" />
                     <p className="text-sm font-medium text-black">New Message</p>
@@ -518,7 +507,7 @@ export default function LaneWorkspacePage() {
                           "h-6 rounded border px-2.5 text-[0.625rem] font-medium capitalize transition-colors",
                           channel === ch
                             ? "border-black bg-black text-white"
-                            : "border-gray-200 bg-white text-gray-500 hover:border-gray-400",
+                            : "border-[#e9e9e7] bg-white text-gray-500 hover:border-gray-400",
                         )}
                       >
                         {ch}
@@ -550,7 +539,7 @@ export default function LaneWorkspacePage() {
                             if (error) setError(null);
                           }}
                           rows={4}
-                          className="w-full rounded-md border border-gray-200 p-3 text-[14px] transition-colors outline-none focus:border-gray-400"
+                          className="w-full rounded-md border border-[#e9e9e7] p-3 text-[14px] transition-colors outline-none focus:border-gray-400"
                           placeholder={`Draft your ${channel} message...`}
                         />
                         <button
@@ -610,7 +599,7 @@ export default function LaneWorkspacePage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-3 text-center">
+                    <div className="rounded-lg border border-dashed border-[#e9e9e7] bg-[#fbfbfa] p-3 text-center">
                       <p className="text-[0.6875rem] text-gray-500">
                         Select a prospect from the **Prospects** tab to start a conversation.
                       </p>
@@ -618,15 +607,15 @@ export default function LaneWorkspacePage() {
                   )}
 
                   {convMessages && convMessages.length > 0 && (
-                    <div className="mt-4 border-t border-gray-100 pt-4">
-                      <p className="mb-3 text-[0.625rem] tracking-widest text-gray-400 uppercase">
+                    <div className="mt-4 border-t border-[#e9e9e7] pt-4">
+                      <p className="mb-3 text-[0.625rem] tracking-widest text-gray-500 uppercase">
                         Message History
                       </p>
                       <ul className="space-y-3">
                         {convMessages.map((m) => (
                           <li
                             key={m._id}
-                            className="rounded-lg border border-gray-100 bg-white p-3"
+                            className="rounded-lg border border-[#e9e9e7] bg-white p-3"
                           >
                             <div className="mb-1 flex items-center justify-between">
                               <span className="text-[0.625rem] font-medium text-black">

@@ -80,49 +80,49 @@ export default function LanesPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Globe className="h-4 w-4 text-gray-400" />
-          <h3 className="text-sm font-medium text-black">Trade Lanes</h3>
+    <div className="space-y-8 p-8">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">Declarations</h1>
+          <p className="text-sm text-gray-500">Create, review, and track HMRC CDS submissions.</p>
         </div>
         <Button onClick={() => setOpen(true)} className="h-8">
           <Plus className="mr-1 h-4 w-4" />
-          Create Lane
+          Create Declaration
         </Button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <div className="border-b border-gray-100 px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-400 uppercase">
-          Your Lanes
+      <div className="overflow-hidden rounded-xl border border-[#e9e9e7] bg-white">
+        <div className="border-b border-[#e9e9e7] bg-[#fbfbfa] px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">
+          Your Declarations
         </div>
 
         {lanes && lanes.length > 0 ? (
           <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="bg-gray-50/50">
-                <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-400 uppercase">
+              <tr className="bg-[#fbfbfa]">
+                <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">
                   Description
                 </th>
-                <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-400 uppercase">
+                <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">
                   Origin
                 </th>
-                <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-400 uppercase">
+                <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">
                   HS
                 </th>
-                <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-400 uppercase">
+                <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">
                   Tier
                 </th>
-                <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-400 uppercase">
+                <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">
                   Status
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-[#e9e9e7]">
               {lanes.map((lane) => (
                 <tr
                   key={lane._id}
-                  className="group cursor-pointer transition-colors hover:bg-gray-50/50"
+                  className="group cursor-pointer transition-colors hover:bg-[#f7f7f5]"
                   onClick={() => router.push(`/dashboard/lanes/${lane._id}`)}
                 >
                   <td className="px-6 py-4">
@@ -169,11 +169,11 @@ export default function LanesPage() {
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-gray-50">
               <Globe className="h-5 w-5 text-gray-400" />
             </div>
-            <h3 className="mb-1 text-sm font-normal text-gray-600">No Trade Lanes</h3>
-            <p className="mb-4 text-xs text-gray-400">Create your first trade lane to begin.</p>
+            <h3 className="mb-1 text-sm font-normal text-gray-600">No Declarations</h3>
+            <p className="mb-4 text-xs text-gray-400">Create your first declaration to begin.</p>
             <Button onClick={() => setOpen(true)} className="h-8">
               <Plus className="mr-1 h-4 w-4" />
-              Create Lane
+              Create Declaration
             </Button>
           </div>
         )}
@@ -182,7 +182,7 @@ export default function LanesPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="border border-gray-200 bg-white shadow-lg">
           <DialogHeader>
-            <DialogTitle>Create Trade Lane</DialogTitle>
+            <DialogTitle>Create Declaration</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
@@ -237,7 +237,7 @@ export default function LanesPage() {
                 onClick={onCreate}
                 disabled={submitting || !userId || !form.originCountry || !form.description}
               >
-                {submitting ? "Creating..." : "Create Lane"}
+                {submitting ? "Creating..." : "Create Declaration"}
               </Button>
             </div>
           </div>

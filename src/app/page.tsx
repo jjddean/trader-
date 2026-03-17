@@ -5,6 +5,8 @@ import Link from "next/link";
 import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { ArrowRight, Sparkle, Plus, Minus, Globe, ShieldCheck, Users, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { WaitlistForm } from "@/components/waitlist-form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 
 const navigation = [
   { name: "Features", href: "#features" },
@@ -15,24 +17,24 @@ const navigation = [
 
 const faqs = [
   {
-    question: "What does the free trial include?",
+    question: "What does the beta program include?",
     answer:
-      "The free trial gives you full access to our DCTS Intelligence database, three automated compliance checks, and the ability to export one potential trade partner lead.",
+      "Beta participants receive full capabilities to securely sync their HMRC data, run automated compliance checks across historical filings, and access our smart duty pre-fill engine.",
   },
   {
     question: "Do you provide legal or customs advice?",
     answer:
-      "We provide data-driven insights and automated compliance checks based on HMRC DCTS rules. For complex legal interpretations, we recommend consulting with a certified customs practitioner.",
+      "We provide data-driven insights and automated reporting based on official HMRC rules. While our platform highlights anomalies and potential savings, we recommend consulting with a certified customs practitioner for complex legal interpretations.",
   },
   {
-    question: "Can we upgrade plans later?",
+    question: "Is my HMRC data secure?",
     answer:
-      "Yes, you can upgrade or downgrade your plan at any time through your account settings. Changes are applied immediately.",
+      "Absolutely. We use direct Government Gateway OAuth connections, meaning we never see or store your HMRC login credentials. All declaration data is end-to-end encrypted both in transit and at rest.",
   },
   {
     question: "Who is this platform built for?",
     answer:
-      "Elite is built for freight forwarders, trade consultants, and DCTS-eligible exporters looking to leverage UK trade preferences.",
+      "freightcode is built for UK freight forwarders, customs brokers, and high-volume importers who want to mitigate CDS compliance risks and optimize their duty spend.",
   },
 ];
 
@@ -52,9 +54,12 @@ export default function LandingPage() {
                   <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
                 </div>
               </div>
-              <span className="text-xl font-bold tracking-tighter text-[#020817]">freightcode&reg;</span>
+              <span className="text-xl font-bold tracking-tighter text-[#020817] flex items-baseline leading-none">
+                freight<span className="text-slate-400">code</span>
+                <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px] text-slate-400">®</span>
+              </span>
               <span className="ml-1 rounded border border-slate-100 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400">
-                Live
+                Beta
               </span>
             </Link>
           </div>
@@ -73,37 +78,24 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-[24px]">
             {!isSignedIn ? (
-              <SignInButton mode="modal">
-                <button className="text-[14px] font-semibold text-[#6B7280] transition-colors hover:text-[#111827]">
-                  Sign In
-                </button>
-              </SignInButton>
-            ) : (
-              <Link
-                href="/dashboard/documents"
-                className="text-[14px] font-semibold text-[#6B7280] transition-colors hover:text-[#111827]"
-              >
-                Dashboard
-              </Link>
-            )}
-            {!isSignedIn ? (
-              <SignInButton mode="modal">
-                <button className="h-[32px] rounded-md bg-slate-900 px-[12px] flex items-center text-[14px] font-medium text-white transition-all hover:bg-slate-900/90 shadow-sm">
-                  Dashboard
-                </button>
-              </SignInButton>
-            ) : null}
-            {isSignedIn ? (
-              <UserButton />
-            ) : (
-              <SignInButton mode="modal">
-                <button
-                  aria-label="Open sign in"
-                  className="flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-[#6B7280] transition-colors hover:border-gray-300 hover:text-[#111827]"
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => document.getElementById('waitlist-form')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="h-[32px] rounded border border-transparent bg-[#111827] px-[16px] flex items-center text-[14px] font-medium text-white transition-all hover:bg-[#374151] shadow-none"
                 >
-                  <User className="h-3.5 w-3.5" />
+                  Request Access
                 </button>
-              </SignInButton>
+              </div>
+            ) : (
+              <div className="flex items-center gap-4">
+                <Link
+                  href="/dashboard"
+                  className="h-[32px] rounded border border-transparent bg-[#2383e2] px-[12px] flex items-center text-[14px] font-medium text-white transition-all hover:bg-[#1d6fc0] shadow-none"
+                >
+                  Dashboard <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                </Link>
+                <UserButton />
+              </div>
             )}
           </div>
         </div>
@@ -115,151 +107,194 @@ export default function LandingPage() {
           <div className="mx-auto max-w-4xl text-center">
             <div className="mb-[48px] flex items-center justify-center gap-[8px]">
               <div className="flex h-5 w-5 items-center justify-center rounded bg-[#020817] text-white shadow-md shadow-black/20 ring-1 ring-[#020817]/10">
-                <Sparkle 
-                  className="h-3 w-3 fill-white" 
-                  style={{ filter: "drop-shadow(0px 1px 2px rgba(255, 255, 255, 0.2)) drop-shadow(0px 1px 1px rgba(255, 255, 255, 0.1))" }}
-                />
+                <ArrowRight className="h-3 w-3 text-white" />
               </div>
               <span className="text-[16px] font-medium tracking-normal text-[#020817]">
-                UK Customs & Trade Development Platform
+                UK Customs Declaration Services
               </span>
             </div>
 
             <h1 className="mb-6 text-[48px] leading-[48px] font-bold tracking-tight text-[#020817]">
-              Total CDS visibility.
+              Complete CDS visibility.
               <br />
-              Instant customs payments.
+              Seamless customs clearance.
             </h1>
 
             <p className="mx-auto mb-10 max-w-2xl text-[20px] leading-[28px] text-slate-500">
               Automate your customs declarations, reduce manual work, avoid costly errors, and ensure you never overpay duties.
             </p>
 
-            <div className="flex flex-col items-center justify-center gap-[16px] sm:flex-row">
+            <div id="waitlist-form" className="flex flex-col items-center justify-center gap-[16px] sm:flex-row">
               {isSignedIn ? (
                 <Link
-                  href="/dashboard/documents"
-                  className="h-[40px] min-w-[140px] rounded-md bg-[#0f172a] px-[24px] flex items-center justify-center text-[14px] font-medium text-white transition-all hover:bg-slate-800 shadow-sm"
+                  href="/dashboard"
+                  className="h-[42px] min-w-[140px] rounded border border-transparent bg-[#2383e2] px-[24px] flex items-center justify-center text-[14px] font-medium text-white transition-all hover:bg-[#1d6fc0] shadow-sm"
                 >
-                  Open Dashboard
+                  Open Dashboard <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Link>
               ) : (
-                <SignInButton mode="modal">
-                  <button className="h-[40px] min-w-[140px] rounded-md bg-[#0f172a] px-[24px] flex items-center justify-center text-[14px] font-medium text-white transition-all hover:bg-slate-800 shadow-sm">
-                    Open Dashboard
-                  </button>
-                </SignInButton>
+                <WaitlistForm />
               )}
-              <Link
-                href="#how-it-works"
-                className="h-[40px] min-w-[140px] rounded-md border border-slate-200 bg-white px-[24px] flex items-center justify-center text-[14px] font-medium text-[#020817] transition-all hover:bg-slate-50 shadow-sm"
-              >
-                See How It Works
-              </Link>
             </div>
           </div>
         </section>
 
-        {/* Features Section */}
-        <section id="features" className="bg-gray-50/30 py-[96px]">
-          <div className="mx-auto max-w-[1280px] px-[24px]">
-            <div className="grid items-center gap-[64px] lg:grid-cols-2">
-              <div>
-                <span className="mb-4 block text-[14px] font-bold tracking-widest text-[#2563EB] uppercase">
-                  The Opportunity
-                </span>
-                <h2 className="mb-6 text-[32px] leading-tight font-bold tracking-tight text-slate-900 md:text-[36px]">
-                  £ Billions in tariff savings <br /> waiting to be claimed.
-                </h2>
-                <p className="mb-8 text-[18px] leading-[1.6] text-slate-500">
-                  The UK&apos;s DCTS offers unprecedented trade advantages to 65 nations. Yet most
-                  exporters don&apos;t know they qualify, and most importers don&apos;t know where
-                  to look.
-                </p>
-                <div className="space-y-4">
-                  {[
-                    "Preferential access to 65 developing countries",
-                    "Automated origin verification & compliance",
-                    "Real-time HMRC customs data integration",
-                    "Direct bridge between exporters and importers",
-                  ].map((feature) => (
-                    <div key={feature} className="flex items-center gap-3">
-                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#111827]">
-                        <ArrowRight className="h-3 w-3 text-white" />
-                      </div>
-                      <span className="text-[17px] font-medium text-[#374151]">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="rounded-2xl border border-gray-100 bg-white p-[32px] shadow-xl">
-                <div className="mb-8 flex items-center justify-between border-b border-gray-100 pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EFF6FF] text-[#2563EB]">
-                      <Globe className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-bold tracking-wider text-[#6B7280] uppercase">
-                        Origin Verification
-                      </p>
-                      <p className="text-[16px] font-bold">Bangladesh → UK</p>
-                    </div>
-                  </div>
-                  <span className="rounded bg-[#F0FDF4] px-2 py-1 text-[12px] font-bold text-[#16A34A] uppercase">
-                    DCTS Eligible
-                  </span>
-                </div>
-                <div className="space-y-4">
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-                    <div className="h-full w-3/4 rounded-full bg-[#2563EB]" />
-                  </div>
-                  <div className="flex justify-between text-[13px] font-bold">
-                    <span className="text-[#6B7280]">SAVINGS POTENTIAL</span>
-                    <span className="text-[#111827]">£24,500 / shipment</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* How It Works */}
+        {/* How It Works Section */}
         <section id="how-it-works" className="py-[96px]">
           <div className="mx-auto max-w-[1280px] px-[24px]">
             <div className="mb-[64px] text-center">
-              <h2 className="mb-4 text-[36px] font-bold tracking-tight text-slate-900 md:text-[42px]">
+              <h2 className="mb-4 text-[36px] font-bold tracking-tight text-[#020817] md:text-[42px]">
                 How It Works
               </h2>
-              <p className="text-[20px] text-slate-500">
-                Stop chasing rates. Start securing partnerships with data-backed intelligence.
+              <p className="mx-auto max-w-2xl text-[20px] text-slate-500">
+                A simple three-step process to optimize your UK customs strategy and ensure total compliance.
               </p>
             </div>
 
-            <div className="grid gap-[32px] md:grid-cols-2">
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-[40px]">
-                <div className="mb-8 flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm">
-                  <Users className="h-6 w-6 text-slate-900" />
+            <div className="grid gap-[32px] md:grid-cols-3">
+              {/* Step 1 */}
+              <div className="relative text-center px-[16px]">
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-[24px] font-bold text-[#2383e2]">
+                  1
                 </div>
-                <h3 className="mb-4 text-[18px] font-bold text-slate-900">
-                  For Freight Forwarders
-                </h3>
-                <p className="mb-6 text-[17px] leading-[1.6] text-slate-500">
-                  You know the UK market. You know the customs landscape. Now find reliable DCTS
-                  exporters who actually need your expertise, verified by real trade data.
+                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Connect & Sync</h3>
+                <p className="text-[16px] leading-[1.6] text-slate-500">
+                  Securely authorize access to your HMRC Government Gateway account. We instantly import and organize your historical CDS declarations.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-[40px]">
-                <div className="mb-8 flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm">
-                  <ShieldCheck className="h-6 w-6 text-slate-900" />
+              {/* Step 2 */}
+              <div className="relative text-center px-[16px]">
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-[24px] font-bold text-[#2383e2]">
+                  2
                 </div>
-                <h3 className="mb-4 text-[18px] font-bold text-slate-900">For DCTS Exporters</h3>
-                <p className="mb-6 text-[15px] leading-[1.6] text-slate-500">
-                  Your goods qualify for preference. Does your UK partner know? We manufacture
-                  quality products and enjoy preferential UK tariffs.
+                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Analyze & Optimize</h3>
+                <p className="text-[16px] leading-[1.6] text-slate-500">
+                  Our intelligence engine scans every line item, identifying overpaid duties, highlighting missing preference codes, and flagging compliance risks.
+                </p>
+              </div>
+
+              {/* Step 3 */}
+              <div className="relative text-center px-[16px]">
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-[24px] font-bold text-[#2383e2]">
+                  3
+                </div>
+                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Execute & Report</h3>
+                <p className="text-[16px] leading-[1.6] text-slate-500">
+                  Generate optimized declarations, reclaim historical overpayments, and monitor your entire customs portfolio through real-time, shareable dashboards.
                 </p>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Core Capabilities Grid Section */}
+        <section id="features" className="bg-gray-50/30 py-[96px]">
+          <div className="mx-auto max-w-[1280px] px-[24px]">
+            <div className="mb-[64px] text-center">
+              <h2 className="mb-4 text-[36px] font-bold tracking-tight text-[#020817] md:text-[42px]">
+                Core Capabilities
+              </h2>
+              <p className="mx-auto max-w-2xl text-[20px] text-slate-500">
+                Transform your HMRC data into actionable intelligence. We provide end-to-end oversight of your UK customs obligations.
+              </p>
+            </div>
+
+            <div className="grid gap-[24px] md:grid-cols-2 lg:grid-cols-3">
+              {[
+                { 
+                  id: 'historical', 
+                  label: 'Historical Data Analysis',
+                  benefit: 'Ingest and parse years of historical HMRC declarations instantly to identify patterns and track your overall customs performance.',
+                  how: 'You forward your HMRC "Report Ready" secure CSVs to your dedicated inbox. Our parsing engine automatically standardizes the raw line items and securely structures your trade history into your private database, saving hours of manual spreadsheet work.'
+                },
+                { 
+                  id: 'savings', 
+                  label: 'Automated Savings Detection',
+                  benefit: 'Stop leaving money on the table. We identify explicit financial losses and reclamation opportunities across your supply chain.',
+                  how: 'Our analytics engine constantly scans your data against global trade agreements. It flags exact instances where a shipment was eligible for a 0% duty preference code, but standard duty was paid instead, calculating exactly how much you can reclaim.'
+                },
+                { 
+                  id: 'prefill', 
+                  label: 'Smart Duty Pre-Fill',
+                  benefit: 'Draft new declarations in seconds. Remove the guesswork of finding the correct HS Commodity Codes for repetitive shipments.',
+                  how: "When you create a new draft, our system analyzes your company's highest-frequency historical shipments. By looking at successful past clearances for that specific origin country, it seamlessly suggests the most accurate, compliant commodity codes and preferences."
+                },
+                { 
+                  id: 'scoring', 
+                  label: 'Compliance Health Scoring',
+                  benefit: 'Monitor the performance of your appointed brokers and freight forwarders across all your UK ports.',
+                  how: 'We generate an immediate, comparative health score by analyzing the ratio of perfect clearances against flagged anomalies. You get a transparent leaderboard showing exactly which external agents are making the most compliance errors on your behalf.'
+                },
+                { 
+                  id: 'hmrc', 
+                  label: 'HMRC Data Sync',
+                  benefit: 'Maintain a direct, secure, and perpetual connection to your HMRC Government Gateway account.',
+                  how: 'Without ever asking for your passwords, we utilize official HMRC OAuth flows to securely link your workspace and EORI number. Our system handles token refreshing automatically, ensuring your dashboard is always synced with your latest Trade Reporting and Extracting (TRE) data.'
+                },
+                { 
+                  id: 'storage', 
+                  label: 'Secure Document Vault',
+                  benefit: 'Centralize your commercial invoices, packing lists, and clearance evidence in one HMRC-compliant repository.',
+                  how: 'Upload and attach critical trade documents directly to your declaration records. We maintain encrypted, redundant cloud storage organized by MRN, making it effortless to retrieve evidence during an unexpected HMRC post-clearance audit.'
+                },
+              ].map((item) => (
+                <Dialog key={item.id}>
+                  <div 
+                    className="group relative overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-sm transition-all hover:shadow-md flex flex-col p-[24px] h-full"
+                  >
+                    <h3 className="mb-2 text-[18px] font-bold text-[#37352f]">{item.label}</h3>
+                    <p className="text-[14.5px] leading-[1.6] text-[#787774] flex-grow">
+                      {item.benefit}
+                    </p>
+                    <div className="mt-4 pt-4 border-t border-slate-100">
+                      <DialogTrigger asChild>
+                        <button 
+                          className="text-[14px] font-semibold text-blue-600 hover:text-blue-800 flex items-center transition-colors mt-auto"
+                        >
+                          More info
+                        </button>
+                      </DialogTrigger>
+                    </div>
+                  </div>
+
+                  <DialogContent className="sm:max-w-[500px] bg-white border-slate-200 shadow-xl p-8">
+                    <DialogHeader className="sr-only">
+                      <DialogTitle>{item.label}</DialogTitle>
+                      <DialogDescription>{item.benefit}</DialogDescription>
+                    </DialogHeader>
+                    <div>
+                      <p className="text-[17px] leading-[1.7] text-slate-800">
+                        {item.how}
+                      </p>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Free Calculators Promotion section */}
+        <section id="resources" className="py-[96px]">
+          <div className="mx-auto max-w-[1280px] px-[24px]">
+             <div className="rounded-2xl border border-slate-100 bg-[#0f172a] p-[48px] md:p-[64px] relative overflow-hidden flex flex-col items-center text-center">
+                {/* Decorative background elements */}
+                <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl"></div>
+                <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl"></div>
+                
+                <h2 className="mb-6 text-[32px] leading-tight font-bold tracking-tight text-white md:text-[36px] relative z-10">
+                  Try our Free Customs Tooling
+                </h2>
+                <p className="mb-8 text-[18px] leading-[1.6] text-slate-300 max-w-2xl relative z-10">
+                   As we are currently in beta, use our suite of standalone intelligent calculators to estimate UK Import Duty, Anti-Dumping tariffs, and Postponed VAT Accounting completely free of charge.
+                </p>
+                <div className="flex gap-4 relative z-10">
+                   <Link href="/tools" className="h-[42px] px-6 rounded-md bg-white text-slate-900 font-medium flex items-center justify-center hover:bg-slate-100 transition-colors">
+                      Open Calculators
+                   </Link>
+                </div>
+             </div>
           </div>
         </section>
 
@@ -271,7 +306,7 @@ export default function LandingPage() {
                 Frequently Asked Questions
               </h2>
               <p className="text-[17px] text-slate-500">
-                Answers about DCTS workflows and compliance checks.
+                Answers about CDS workflows and platform security.
               </p>
             </div>
 
@@ -315,32 +350,27 @@ export default function LandingPage() {
 
         {/* CTA Section */}
         <section className="px-[24px] py-[96px]">
-          <div className="relative mx-auto max-w-[1024px] overflow-hidden rounded-3xl bg-slate-900 p-[48px] text-center md:p-[80px]">
-            <h2 className="mb-6 text-[40px] leading-tight font-bold text-white md:text-[52px] tracking-[-1px]">
-              Ready to grow your trade lane?
+          <div className="relative mx-auto max-w-[1024px] overflow-hidden rounded-3xl border border-slate-200 bg-white p-[48px] text-center shadow-lg md:p-[80px]">
+            <h2 className="mb-6 text-[40px] leading-tight font-bold text-[#020817] md:text-[52px] tracking-[-1px]">
+              Take control of your customs data
             </h2>
-            <p className="mx-auto mb-10 max-w-xl text-[18px] text-slate-400">
-              Join freight forwarders and exporters who are turning DCTS preferences into profit.
-              Start your 14-day free trial today.
+            <p className="mx-auto mb-10 max-w-xl text-[18px] text-slate-500">
+              Automate your declarations, uncover hidden savings, and ensure total HMRC compliance. 
+              Request early access to our platform today.
             </p>
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center justify-center gap-6">
               {isSignedIn ? (
                 <Link
                   href="/dashboard/documents"
-                  className="rounded bg-white px-12 py-4 h-11 flex items-center text-[15px] font-medium text-slate-900 transition-all hover:bg-slate-100"
+                  className="h-[42px] min-w-[140px] rounded border border-transparent bg-[#2383e2] px-[24px] flex items-center justify-center text-[14px] font-medium text-white transition-all hover:bg-[#1d6fc0] shadow-sm"
                 >
-                  Open Dashboard
+                  Open Dashboard <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Link>
               ) : (
-                <SignInButton mode="modal">
-                  <button className="rounded bg-white px-12 py-4 h-11 flex items-center text-[15px] font-medium text-slate-900 transition-all hover:bg-slate-100">
-                    Open Dashboard
-                  </button>
-                </SignInButton>
+                <div className="relative flex w-full justify-center">
+                  <WaitlistForm />
+                </div>
               )}
-              <p className="mt-2 text-[12px] font-bold tracking-widest text-gray-500 uppercase">
-                NO CREDIT CARD REQUIRED
-              </p>
             </div>
           </div>
         </section>
@@ -355,8 +385,8 @@ export default function LandingPage() {
                         <div className="mb-4">
                             <div className="flex items-baseline whitespace-nowrap text-[#003057] leading-none">
                                 <span className="font-bold tracking-tight text-[22px]">freight</span>
-                                <span className="font-normal tracking-tight text-[22px]">code</span>
-                                <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px]">®</span>
+                                <span className="font-bold tracking-tight text-[22px] text-slate-400">code</span>
+                                <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px] text-slate-400">®</span>
                             </div>
                         </div>
                         <p className="text-gray-500 text-xs leading-relaxed">

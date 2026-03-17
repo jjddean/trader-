@@ -5,16 +5,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Globe,
-  Inbox,
   FileText,
   Settings,
   Compass,
-  Bot,
-  Calculator,
+  FileSpreadsheet,
+  Scale,
   ShieldCheck,
-  Users,
-  CreditCard,
 } from "lucide-react";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
@@ -35,11 +31,11 @@ import {
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/lanes", label: "Trade Lanes", icon: Globe },
-  { href: "/dashboard/prospects", label: "Prospects", icon: Users },
-  { href: "/dashboard/inbox", label: "Inbox", icon: Inbox },
-  { href: "/dashboard/documents", label: "Documents", icon: FileText },
-  { href: "/dashboard/assistant", label: "Assistant", icon: Bot },
+  { href: "/dashboard/documents", label: "Smart Upload", icon: FileText },
+  { href: "/dashboard/lanes", label: "Declarations", icon: Compass },
+  { href: "/dashboard/audit", label: "Compliance Audit", icon: ShieldCheck },
+  { href: "/dashboard/reports", label: "Customs Reports", icon: FileSpreadsheet },
+  { href: "/dashboard/records", label: "Financial Records", icon: Scale },
 ] as const;
 
 export function AppSidebar() {
@@ -63,9 +59,11 @@ export function AppSidebar() {
           href="/"
           className="flex w-full items-center gap-2 text-black transition-opacity hover:opacity-80"
         >
-          <Compass className="h-5 w-5 text-gray-700" />
+          <div className="flex h-5 w-5 items-center justify-center rounded bg-blue-600 text-white">
+            <span className="text-xs font-bold leading-none">f</span>
+          </div>
           <span className="text-sm font-medium tracking-tight text-gray-900">
-            TradeDNA <span className="font-bold text-black">Pro</span>
+            freight<span className="font-bold text-black">code®</span>
           </span>
         </Link>
       </SidebarHeader>
@@ -83,7 +81,7 @@ export function AppSidebar() {
                   pathname === item.href ||
                   (item.href !== "/dashboard" && pathname.startsWith(item.href));
 
-                const hasBadge = item.label === "Trade Lanes" && reviewCount > 0;
+                const hasBadge = item.label === "Declarations" && reviewCount > 0;
 
                 return (
                   <SidebarMenuItem key={item.label}>

@@ -13,22 +13,24 @@ const routeConfigs: Record<
   string,
   { title: string; badge: string; badgeVariant?: "default" | "success" | "blue" }
 > = {
-  "/dashboard": { title: "Trade Intelligence Overview", badge: "LIVE", badgeVariant: "default" },
+  "/dashboard": { title: "Customs Dashboard", badge: "LIVE", badgeVariant: "default" },
   "/dashboard/prospects": { title: "Partner Prospects", badge: "PIPELINE", badgeVariant: "blue" },
   "/dashboard/calculator": {
     title: "Landed Cost Calculator",
     badge: "TARIFFS",
     badgeVariant: "default",
   },
-  "/dashboard/assistant": { title: "TradeDNA Assistant", badge: "AI", badgeVariant: "success" },
+  "/dashboard/assistant": { title: "FreightCode Assistant", badge: "AI", badgeVariant: "success" },
   "/dashboard/inbox": { title: "Inbox", badge: "HUB", badgeVariant: "default" },
   "/dashboard/settings": {
     title: "Account Settings",
     badge: "PREFERENCES",
     badgeVariant: "default",
   },
-  "/dashboard/lanes": { title: "Trade Lanes", badge: "LANES", badgeVariant: "default" },
-  "/dashboard/documents": { title: "Documents", badge: "DOCS", badgeVariant: "default" },
+  "/dashboard/lanes": { title: "Declarations", badge: "CDS", badgeVariant: "default" },
+  "/dashboard/documents": { title: "Smart Upload", badge: "DOCS", badgeVariant: "success" },
+  "/dashboard/reports": { title: "Customs Audit Reports", badge: "REPORTS", badgeVariant: "default" },
+  "/dashboard/records": { title: "Financial Records", badge: "LEDGER", badgeVariant: "default" },
   "/dashboard/user": { title: "Account", badge: "PROFILE", badgeVariant: "default" },
   "/dashboard/user/billing": { title: "Billing", badge: "STRIPE", badgeVariant: "success" },
   "/dashboard/admin": { title: "Admin", badge: "INTERNAL", badgeVariant: "default" },
@@ -48,24 +50,24 @@ export default function DashboardLayout({
   // Fetch lane data to get the name
   const lane = useQuery(api.trade_lanes.getLane, laneId ? { id: laneId as any } : "skip");
 
-  let config = routeConfigs[pathname] || { title: "TradeDNA Pro", badge: "BETA" };
+  let config = routeConfigs[pathname] || { title: "FreightCode", badge: "BETA" };
   
   // Override title for lane workspaces
   if (laneId && lane) {
     config = { 
-        title: lane.description || "Trade Lane Workspace", 
+        title: lane.description || "Declaration Workspace", 
         badge: "WORKSPACE", 
         badgeVariant: "blue" 
     };
   } else if (laneId && !lane) {
-    config = { title: "Trade Lane Workspace", badge: "LOADING" };
+    config = { title: "Declaration Workspace", badge: "LOADING" };
   }
 
   return (
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
       <UserSync />
-      <SidebarInset className="flex min-h-screen flex-col overflow-hidden bg-gray-50/50">
+      <SidebarInset className="flex min-h-screen flex-col overflow-hidden bg-gray-50">
         {pathname !== "/dashboard/inbox" && (
           <DashboardHeader
             title={config.title}

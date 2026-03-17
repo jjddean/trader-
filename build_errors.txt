@@ -1,0 +1,23 @@
+
+> tradedna@0.1.0 build
+> next build
+
+Ôû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 6.6s
+  Running TypeScript ...
+Failed to compile.
+
+./convex/marketing.ts:10:14
+Type error: Argument of type '"early_access_emails"' is not assignable to parameter of type 'TableNamesInDataModel<{ tradeLanes: { document: { _id: Id<"tradeLanes">; _creationTime: number; userId?: any; originCountry?: any; commodityCode?: any; description?: any; tier?: any; status?: any; savingsEstimate?: any; lastVerified?: any; }; fieldPaths: ExtractFieldPaths<...> | "_id"; indexes: { ...; }; searchIndex...'.
+
+   8 |   handler: async (ctx, args) => {
+   9 |     const existing = await ctx.db
+> 10 |       .query("early_access_emails")
+     |              ^
+  11 |       .withIndex("by_email", (q) => q.eq("email", args.email))
+  12 |       .first();
+  13 |
+Next.js build worker exited with code: 1 and signal: null

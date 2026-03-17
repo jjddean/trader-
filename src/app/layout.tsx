@@ -8,9 +8,9 @@ import { cn } from "@/lib/utils";
 const geistSans = GeistSans;
 
 export const metadata: Metadata = {
-  title: "TradeDNA | Global Trade Intelligence",
+  title: "FreightCode | Instant Customs Clearance",
   description:
-    "UK ↔ DCTS-eligible country trade intelligence, compliance verification, and consultative AI guidance.",
+    "Automate your UK customs declarations, detect savings, and ensure compliance instantly.",
 };
 
 export default function RootLayout({
