@@ -13,10 +13,10 @@ export default function StatusTimelinePage() {
   
   const declaration = useQuery(api.declarations.getLane, id ? { id } : "skip");
   
-  // Fetch real-time webhook notifications for this specific MRN
+  // Fetch real-time webhook notifications using MRN or Conversation ID
   const notifications = useQuery(
-    api.notifications.getWebhooksForMrn, 
-    declaration?.mrn ? { mrn: declaration.mrn } : "skip"
+    api.notifications.getWebhooks, 
+    declaration ? { mrn: declaration.mrn, conversationId: declaration.conversationId } : "skip"
   );
 
   if (declaration === undefined) {
@@ -31,7 +31,7 @@ export default function StatusTimelinePage() {
     return null;
   }
 
-  const isSubmitted = declaration.status !== "Draft" && declaration.mrn;
+  const isSubmitted = declaration.status !== "Draft";
 
   return (
     <div className="space-y-6">
@@ -58,7 +58,7 @@ export default function StatusTimelinePage() {
                 <Activity className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Listening on {declaration.mrn}</p>
+                <p className="text-sm font-medium text-gray-900">Listening on {declaration.mrn || declaration.conversationId || "Polling"}</p>
                 <p className="text-xs text-gray-500">Webhook endpoint actively receiving push notifications.</p>
               </div>
               <div className="ml-auto flex items-center gap-2">
@@ -94,7 +94,7 @@ export default function StatusTimelinePage() {
                       notif.notificationType === 'REJECTED' ? 'bg-red-500' :
                       'bg-blue-500'
                     }`} />
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 mt-1">
                       <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                         {new Date(notif.timestamp).toLocaleString()}
                       </p>
@@ -110,7 +110,7 @@ export default function StatusTimelinePage() {
                       </div>
                       <details className="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded border border-gray-100 cursor-pointer">
                         <summary className="font-mono text-[10px] font-semibold hover:text-gray-900">View Raw XML Payload</summary>
-                        <pre className="mt-2 whitespace-pre-wrap overflow-x-auto p-2 bg-gray-800 text-green-400 rounded">
+                        <pre className="mt-2 overflow-x-auto p-2 bg-gray-900 text-green-400 rounded font-mono text-[10px] whitespace-pre-wrap max-h-96">
                           {notif.rawPayload}
                         </pre>
                       </details>

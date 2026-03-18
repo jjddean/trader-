@@ -16,15 +16,16 @@ export class AgentOrchestrator extends Agent<Env> {
             history.push({ role: "user", content: message });
 
             const intent = await this.classifyIntent(message, history);
-            const id = this.env.COMPLIANCE_AGENT.idFromName("global");
+            const validationId = this.env.VALIDATION_AGENT.idFromName("global");
+            const classifierId = this.env.CLASSIFIER_AGENT.idFromName("global");
 
             let response: string;
             switch (intent) {
-                case "compliance":
-                    response = await (this.env.COMPLIANCE_AGENT.get(id) as any).ask(message);
+                case "validation":
+                    response = await (this.env.VALIDATION_AGENT.get(validationId) as any).ask(message);
                     break;
-                case "product":
-                    response = await (this.env.PRODUCT_AGENT.get(id) as any).ask(message);
+                case "classification":
+                    response = await (this.env.CLASSIFIER_AGENT.get(classifierId) as any).ask(message);
                     break;
                 default:
                     response = await this.handleGeneralChat(message, history);
@@ -45,8 +46,8 @@ export class AgentOrchestrator extends Agent<Env> {
     private async classifyIntent(text: string, history: any[]): Promise<string> {
         const res = await this.env.AI.run('@cf/meta/llama-3-8b-instruct', {
             messages: [
-                { role: 'system', content: 'Classify as: compliance, product, or general. Use conversation history for context.' },
-                ...history.slice(-3), // Last 3 messages for context
+                { role: 'system', content: 'Classify the user intent into exactly one of these three categories: "validation" (if they are asking about an HMRC CDS error code like CDS40045, MALFORMED_XML, or a rejection), "classification" (if they are describing a product and need an HS/commodity code), or "general" (if it is a general question). Reply with ONLY the single word: validation, classification, or general.' },
+                ...history.slice(-3),
                 { role: 'user', content: text }
             ]
         });
@@ -56,7 +57,7 @@ export class AgentOrchestrator extends Agent<Env> {
     private async handleGeneralChat(text: string, history: any[]) {
         const res = await this.env.AI.run('@cf/meta/llama-3-8b-instruct', {
             messages: [
-                { role: 'system', content: 'You are the TradeDNA Orchestrator.' },
+                { role: 'system', content: 'You are the HMRC CDS Orchestrator Copilot. You help users clear their goods through customs.' },
                 ...history,
                 { role: 'user', content: text }
             ]
@@ -89,9 +90,6 @@ export class AgentOrchestrator extends Agent<Env> {
                     result = await this.ask(body[0]);
                 } else if (methodName === "clearHistory") {
                     result = await this.clearHistory();
-                } else if (methodName === "discover") {
-                    const id = this.env.PRODUCT_AGENT.idFromName("global");
-                    result = await (this.env.PRODUCT_AGENT.get(id) as any).discover();
                 } else {
                     return new Response("Method not found", { status: 404 });
                 }

@@ -23,7 +23,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: geometricprecision;
   font-synthesis: none;
-  font-size: calc(16px * var(--text-scale, 1.125));
 }
 
 /* Custom scrollbar for better aesthetics */

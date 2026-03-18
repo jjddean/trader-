@@ -27,7 +27,13 @@ export function mapToCDS_H1(declaration: any, items: any[]) {
           StatisticalValueAmount: {
             currencyID: item.valueCurrency || "GBP",
             value: item.valueAmount || 0
-          }
+          },
+          GovernmentProcedure: [
+            {
+              CurrentCode: (item.procedureCode?.replace(/\s+/g, '') || "4000000").substring(0, 4),
+              PreviousCode: (item.procedureCode?.replace(/\s+/g, '') || "4000000").substring(4, 7) || "000"
+            }
+          ]
         }))
       }
     }

@@ -22,14 +22,14 @@ remote = true
 [durable_objects]
 bindings = [
   { name = "ORCHESTRATOR", class_name = "AgentOrchestrator" },
-  { name = "COMPLIANCE_AGENT", class_name = "AgentCompliance" },
-  { name = "PRODUCT_AGENT", class_name = "AgentProduct" },
-  { name = "TRADE_WORKFLOW", class_name = "AgentWorkflow" }
+  { name = "VALIDATION_AGENT", class_name = "AgentValidationError" },
+  { name = "CLASSIFIER_AGENT", class_name = "AgentClassifier" }
 ]
 
 [[migrations]]
-tag = "v6"
-new_sqlite_classes = ["AgentOrchestrator", "AgentCompliance", "AgentProduct", "AgentWorkflow"]
+tag = "v7"
+deleted_classes = ["AgentCompliance", "COMPLIANCE_AGENT", "AgentProduct", "PRODUCT_AGENT", "AgentWorkflow", "TRADE_WORKFLOW"]
+new_sqlite_classes = ["AgentValidationError", "AgentClassifier"]
 
 [ai]
 binding = "AI"

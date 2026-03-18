@@ -20,35 +20,58 @@ export const saveWebhook = mutation({
       processed: false,
     });
     
-    // 2. Try to find the linked declaration by MRN and update its status
-    if (args.mrn !== "UNKNOWN") {
-      const declaration = await ctx.db
+    // 2. Try to find the linked declaration by MRN or ConversationId
+    let declaration = null;
+    
+    if (args.mrn && args.mrn !== "UNKNOWN") {
+      declaration = await ctx.db
         .query("declarations")
         .withIndex("by_mrn", (q) => q.eq("mrn", args.mrn))
         .first();
+    }
+    
+    if (!declaration && args.conversationId && args.conversationId !== "UNKNOWN") {
+      declaration = await ctx.db
+        .query("declarations")
+        .filter((q) => q.eq(q.field("conversationId"), args.conversationId))
+        .first();
+    }
         
-      if (declaration) {
-        let newStatus = declaration.status;
-        if (args.notificationType === "CLEARED") newStatus = "Cleared";
-        if (args.notificationType === "REJECTED") newStatus = "Rejected";
-        if (args.notificationType === "ACCEPTED") newStatus = "Accepted";
+    // 3. Update its status based on the business-level async response from HMRC
+    if (declaration) {
+      let newStatus = declaration.status;
+      if (args.notificationType === "CLEARED") newStatus = "Cleared";
+      if (args.notificationType === "REJECTED") newStatus = "Rejected";
+      if (args.notificationType === "ACCEPTED") newStatus = "Accepted";
 
-        await ctx.db.patch(declaration._id, {
-          status: newStatus,
-          lastUpdated: Date.now()
-        });
-      }
+      await ctx.db.patch(declaration._id, {
+        status: newStatus,
+        lastUpdated: Date.now()
+      });
     }
   }
 });
 
-export const getWebhooksForMrn = query({
-  args: { mrn: v.string() },
+export const getWebhooks = query({
+  args: { mrn: v.optional(v.string()), conversationId: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    return await ctx.db
-      .query("notifications")
-      .withIndex("by_mrn", (q) => q.eq("mrn", args.mrn))
-      .order("desc")
-      .collect();
+    let results: any[] = [];
+    
+    if (args.mrn && args.mrn !== "UNKNOWN") {
+      results = await ctx.db
+        .query("notifications")
+        .withIndex("by_mrn", (q) => q.eq("mrn", args.mrn!))
+        .collect();
+    }
+    
+    if (results.length === 0 && args.conversationId) {
+      results = await ctx.db
+        .query("notifications")
+        .filter((q) => q.eq(q.field("conversationId"), args.conversationId))
+        .collect();
+    }
+    
+    // Sort descending by timestamp
+    return results.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   },
 });

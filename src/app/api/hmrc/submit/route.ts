@@ -87,15 +87,15 @@ export async function POST(request: Request) {
     const payloadInfo = mapToCDS_H1(lane, items);
 
     // Convert the JSON payload into the required HMRC XML Envelope
-    // Using a manual string builder for the envelope since it requires specific namespaces
+    // Using the exact canonical namespaces required by the HMRC Sandbox XSD
     const xmlPayload = `<?xml version="1.0" encoding="UTF-8"?>
-<md:MetaData xmlns:md="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2" xmlns="urn:wco:datamodel:WCO:DEC-DMS:2">
-  <md:WCODataModelVersionCode>3.6</md:WCODataModelVersionCode>
-  <md:WCOTypeName>DEC</md:WCOTypeName>
-  <md:ResponsibleCountryCode>GB</md:ResponsibleCountryCode>
-  <md:ResponsibleAgencyName>HMRC</md:ResponsibleAgencyName>
-  <md:AgencyAssignedCustomizationVersionCode>v2.1</md:AgencyAssignedCustomizationVersionCode>
-  <Declaration>
+<MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
+  <WCODataModelVersionCode>3.6</WCODataModelVersionCode>
+  <WCOTypeName>DEC</WCOTypeName>
+  <ResponsibleCountryCode>GB</ResponsibleCountryCode>
+  <ResponsibleAgencyName>HMRC</ResponsibleAgencyName>
+  <AgencyAssignedCustomizationVersionCode>v2.1</AgencyAssignedCustomizationVersionCode>
+  <Declaration xmlns="urn:wco:datamodel:WCO:DEC-DMS:2" xmlns:clm63055="urn:un:unece:uncefact:codelist:standard:UNECE:AgencyIdentificationCode:D12B" xmlns:ds="urn:wco:datamodel:WCO:MetaData_DS-DMS:2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2 ../DocumentMetaData_2_DMS.xsd ">
     <FunctionCode>${payloadInfo.Declaration.FunctionCode}</FunctionCode>
     <TypeCode>${payloadInfo.Declaration.TypeCode}</TypeCode>
     <Declarant>
@@ -105,17 +105,21 @@ export async function POST(request: Request) {
       ${payloadInfo.Declaration.GoodsShipment.GovernmentAgencyGoodsItem.map((item: any) => `
       <GovernmentAgencyGoodsItem>
         <SequenceNumeric>${item.SequenceNumeric}</SequenceNumeric>
+        <StatisticalValueAmount currencyID="${item.StatisticalValueAmount.currencyID}">${item.StatisticalValueAmount.value}</StatisticalValueAmount>
         <Commodity>
           <Classification>
             <ID>${item.Commodity.Classification[0].ID}</ID>
             <IdentificationTypeCode>${item.Commodity.Classification[0].IdentificationTypeCode}</IdentificationTypeCode>
           </Classification>
         </Commodity>
-        <StatisticalValueAmount currencyID="${item.StatisticalValueAmount.currencyID}">${item.StatisticalValueAmount.value}</StatisticalValueAmount>
+        <GovernmentProcedure>
+          <CurrentCode>${item.GovernmentProcedure[0].CurrentCode}</CurrentCode>
+          <PreviousCode>${item.GovernmentProcedure[0].PreviousCode}</PreviousCode>
+        </GovernmentProcedure>
       </GovernmentAgencyGoodsItem>`).join('')}
     </GoodsShipment>
   </Declaration>
-</md:MetaData>`;
+</MetaData>`;
 
     // 3. Fire the POST request to HMRC
     // HMRC uses Accept header for versioning, not the URL path
@@ -130,7 +134,7 @@ export async function POST(request: Request) {
     const hmrcResponse = await fetch(hmrcEndpoint, {
       method: "POST",
       headers: {
-        "Accept": "application/vnd.hmrc.1.0+xml",
+        "Accept": "application/vnd.hmrc.2.0+xml",
         "Content-Type": "application/xml; charset=UTF-8",
         "Authorization": authHeaderString,
         "X-Client-ID": process.env.HMRC_CLIENT_ID!

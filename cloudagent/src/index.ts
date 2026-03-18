@@ -1,8 +1,7 @@
 import { routeAgentRequest } from "agents";
 export { AgentOrchestrator, AgentOrchestrator as ORCHESTRATOR } from "./agents/orchestrator";
-export { AgentCompliance, AgentCompliance as COMPLIANCE_AGENT } from "./agents/compliance";
-export { AgentProduct, AgentProduct as PRODUCT_AGENT } from "./agents/product";
-export { AgentWorkflow, AgentWorkflow as TRADE_WORKFLOW } from "./agents/workflow";
+export { AgentValidationError, AgentValidationError as VALIDATION_AGENT } from "./agents/validation";
+export { AgentClassifier, AgentClassifier as CLASSIFIER_AGENT } from "./agents/classifier";
 
 export interface Env {
     AI: any;
@@ -10,9 +9,8 @@ export interface Env {
     TARIFF_VECTORIZE: any;
     DB: D1Database;
     ORCHESTRATOR: DurableObjectNamespace<import("./agents/orchestrator").AgentOrchestrator>;
-    COMPLIANCE_AGENT: DurableObjectNamespace<import("./agents/compliance").AgentCompliance>;
-    PRODUCT_AGENT: DurableObjectNamespace<import("./agents/product").AgentProduct>;
-    TRADE_WORKFLOW: DurableObjectNamespace<import("./agents/workflow").AgentWorkflow>;
+    VALIDATION_AGENT: DurableObjectNamespace<import("./agents/validation").AgentValidationError>;
+    CLASSIFIER_AGENT: DurableObjectNamespace<import("./agents/classifier").AgentClassifier>;
 }
 
 export default {
