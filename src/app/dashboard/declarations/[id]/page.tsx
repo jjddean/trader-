@@ -13,7 +13,7 @@ export default function CoreSchemaPage() {
   const id = params?.id as Id<"declarations">;
   
   const declaration = useQuery(api.declarations.getLane, id ? { id } : "skip");
-  const updateDeclaration = useMutation(api.declarations.updateDeclarationStatus); // Reusing for now, will expand backend later
+  const updateDeclaration = useMutation(api.declarations.updateDeclarationDetails);
 
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -34,10 +34,20 @@ export default function CoreSchemaPage() {
   }, [declaration]);
 
   const handleSave = async () => {
+    if (!formData.eori) return;
     setSaving(true);
-    // Note: We are using a generic update mutation here. In a real app we'd need a specific `updateCoreDetails` mutation.
-    // For now we will mock the save to show UI progress.
-    setTimeout(() => setSaving(false), 600);
+    try {
+      await updateDeclaration({
+        id,
+        eori: formData.eori,
+        declarationType: formData.declarationType,
+        route: formData.route,
+      });
+    } catch (e) {
+      console.error("Failed to save core schema", e);
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (!declaration) {

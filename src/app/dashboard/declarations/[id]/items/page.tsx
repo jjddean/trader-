@@ -6,6 +6,20 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { Plus, Trash2, UploadCloud, Loader2, Sparkles, AlertCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function GoodsItemsPage() {
   const params = useParams<{ id: string }>();
@@ -17,18 +31,36 @@ export default function GoodsItemsPage() {
 
   const [isUploading, setIsUploading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [showAddRowModal, setShowAddRowModal] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  
+  const [originCountry, setOriginCountry] = useState("");
+  const [hsCode, setHsCode] = useState("");
+  const [description, setDescription] = useState("");
 
   const handleManualAdd = async () => {
-    await addItem({
-      declarationId,
-      sequenceNumber: (items?.length || 0) + 1,
-      commodityCode: "",
-      description: "New Item",
-      originCountry: "GB",
-      procedureCode: "4000",
-      valueAmount: 0,
-      valueCurrency: "GBP",
-    });
+    setIsAdding(true);
+    try {
+      await addItem({
+        declarationId,
+        sequenceNumber: (items?.length || 0) + 1,
+        commodityCode: hsCode || "",
+        description: description || "New Item",
+        originCountry: originCountry || "GB",
+        procedureCode: "4000",
+        valueAmount: 0,
+        valueCurrency: "GBP",
+      });
+      setShowAddRowModal(false);
+      // Reset form
+      setHsCode("");
+      setDescription("");
+      setOriginCountry("");
+    } catch (err) {
+      console.error("Failed to add row:", err);
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   const handleAIUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,7 +149,7 @@ export default function GoodsItemsPage() {
           </div>
           
           <button
-            onClick={handleManualAdd}
+            onClick={() => setShowAddRowModal(true)}
             className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800"
           >
             <Plus className="h-4 w-4" />
@@ -216,6 +248,72 @@ export default function GoodsItemsPage() {
            </div>
         )}
       </div>
+
+      <Dialog open={showAddRowModal} onOpenChange={setShowAddRowModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add Goods Item</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label htmlFor="origin" className="text-xs font-medium text-gray-700">
+                ORIGIN COUNTRY
+              </label>
+              <Select value={originCountry} onValueChange={setOriginCountry}>
+                <SelectTrigger id="origin" className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                  <SelectValue placeholder="Select Origin Country" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="GB">United Kingdom (GB)</SelectItem>
+                  <SelectItem value="US">United States (US)</SelectItem>
+                  <SelectItem value="CN">China (CN)</SelectItem>
+                  <SelectItem value="BD">Bangladesh (BD)</SelectItem>
+                  <SelectItem value="DE">Germany (DE)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="hsCode" className="text-xs font-medium text-gray-700">
+                HS CODE (OPTIONAL)
+              </label>
+              <input
+                id="hsCode"
+                value={hsCode}
+                onChange={(e) => setHsCode(e.target.value)}
+                placeholder="e.g., 6109100010"
+                className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="description" className="text-xs font-medium text-gray-700">
+                DESCRIPTION
+              </label>
+              <Select value={description} onValueChange={setDescription}>
+                <SelectTrigger id="description" className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                  <SelectValue placeholder="Select Cargo Description" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Knitwear">Knitwear</SelectItem>
+                  <SelectItem value="Electronics">Electronics</SelectItem>
+                  <SelectItem value="Machinery">Machinery</SelectItem>
+                  <SelectItem value="Apparel">Apparel</SelectItem>
+                  <SelectItem value="Furniture">Furniture</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              disabled={isAdding || !originCountry || !description}
+              onClick={handleManualAdd}
+              className="flex h-9 w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800 disabled:opacity-50"
+            >
+              {isAdding && <Loader2 className="h-4 w-4 animate-spin" />}
+              Add Row
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

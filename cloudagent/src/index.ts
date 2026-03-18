@@ -6,8 +6,8 @@ export { AgentWorkflow, AgentWorkflow as TRADE_WORKFLOW } from "./agents/workflo
 
 export interface Env {
     AI: any;
-    DCTS_VECTORIZE: any;
-    COMPANY_VECTORIZE: any;
+    HMRC_ERRORS_VECTORIZE: any;
+    TARIFF_VECTORIZE: any;
     DB: D1Database;
     ORCHESTRATOR: DurableObjectNamespace<import("./agents/orchestrator").AgentOrchestrator>;
     COMPLIANCE_AGENT: DurableObjectNamespace<import("./agents/compliance").AgentCompliance>;
@@ -24,24 +24,6 @@ export default {
 		return (await routeAgentRequest(request, env)) ?? new Response("Not found", { status: 404 });
 	},
  
-    async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
-        // Scheduled task to embed unembedded companies
-        const unembedded = await env.DB.prepare(
-            "SELECT id, name, description, products, hs_codes FROM companies WHERE embedding_id IS NULL LIMIT 100"
-        ).all();
-
-        for (const company of unembedded.results) {
-            const text = `Company: ${company.name}. Products: ${company.products}. HS Codes: ${company.hs_codes}. Description: ${company.description}`;
-            const embedding = await env.AI.run('@cf/baai/bge-base-en-v1.5', { text: [text] });
-            const vectorId = `company_${company.id}`;
-
-            await (env.COMPANY_VECTORIZE as any).insert([{
-                id: vectorId,
-                values: embedding.data[0],
-                metadata: { companyId: company.id, name: company.name, country: (company as any).country_code }
-            }]);
-
-            await env.DB.prepare("UPDATE companies SET embedding_id = ? WHERE id = ?").bind(vectorId, company.id).run();
-        }
-    }
+    // The scheduled sync task for DCTS companies has been removed.
+    // We will add a new scheduled task for syncing HMRC Tariffs later if needed.
 };

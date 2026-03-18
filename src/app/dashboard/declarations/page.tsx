@@ -7,6 +7,33 @@ import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Filter, Loader2, ArrowRight, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const ALL_COUNTRIES = [
+  "Afghanistan", "Algeria", "Angola", "Armenia", "Bangladesh", "Benin", "Bhutan", 
+  "Bolivia", "Burkina Faso", "Burundi", "Cambodia", "Cape Verde", "Central African Republic", 
+  "Chad", "Comoros", "Congo", "Cook Islands", "Democratic Republic of Congo", "Djibouti", 
+  "Eritrea", "Ethiopia", "Gambia", "Guinea", "Guinea-Bissau", "Haiti", "India", 
+  "Indonesia", "Kiribati", "Kyrgyzstan", "Laos", "Lesotho", "Liberia", "Madagascar", 
+  "Malawi", "Mali", "Mauritania", "Micronesia", "Mongolia", "Mozambique", "Myanmar", 
+  "Nepal", "Niger", "Nigeria", "Niue", "Pakistan", "Philippines", "Rwanda", "Samoa", 
+  "Senegal", "Sierra Leone", "Solomon Islands", "Somalia", "South Sudan", "Sri Lanka", 
+  "Sudan", "Syria", "Tajikistan", "Tanzania", "Timor-Leste", "Togo", "Tuvalu", 
+  "Uganda", "Uzbekistan", "Vanuatu", "Vietnam", "Yemen", "Zambia"
+].sort();
 
 export default function DeclarationsPage() {
   const { user } = useUser();
@@ -18,16 +45,30 @@ export default function DeclarationsPage() {
 
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [originCountry, setOriginCountry] = useState("");
+  const [hsCode, setHsCode] = useState("");
+  const [description, setDescription] = useState("");
 
   const handleCreate = async () => {
     setIsCreating(true);
     try {
+      const initialItemInfo = originCountry || description || hsCode ? {
+        originCountry: originCountry || "GB",
+        hsCode: hsCode || "",
+        description: description || "New Item",
+      } : undefined;
+
       const newId = await createDeclaration({
         userId,
-        declarationType: "IMD", // Default standard import
+        declarationType: "H1", // Default standard import
         status: "Draft",
+        initialItem: initialItemInfo,
       });
-      router.push(`/dashboard/declarations/${newId}`);
+      
+      setShowCreateModal(false);
+      // Navigate straight to the items view to see the pre-filled row
+      router.push(`/dashboard/declarations/${newId}/items`);
     } catch (error) {
       console.error("Failed to create declaration:", error);
       setIsCreating(false);
@@ -53,7 +94,7 @@ export default function DeclarationsPage() {
           </p>
         </div>
         <button
-          onClick={handleCreate}
+          onClick={() => setShowCreateModal(true)}
           disabled={isCreating}
           className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800 disabled:opacity-50"
         >
@@ -149,6 +190,66 @@ export default function DeclarationsPage() {
         )}
       </div>
 
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create Declaration</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label htmlFor="origin" className="text-xs font-medium text-gray-700 uppercase tracking-widest">
+                Origin Country
+              </label>
+              <Select value={originCountry} onValueChange={setOriginCountry}>
+                <SelectTrigger id="origin" className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                  <SelectValue placeholder="e.g., Bangladesh" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="max-h-[300px]">
+                  {ALL_COUNTRIES.map((c) => (
+                    <SelectItem key={c} value={c} className="text-xs">
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="hsCode" className="text-xs font-medium text-gray-700 uppercase tracking-widest">
+                HS Code (Optional)
+              </label>
+              <input
+                id="hsCode"
+                value={hsCode}
+                onChange={(e) => setHsCode(e.target.value)}
+                placeholder="e.g., 6109"
+                className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="description" className="text-xs font-medium text-gray-700 uppercase tracking-widest">
+                Description
+              </label>
+              <input
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g., Knitwear to UK under DCTS"
+                className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+          <DialogFooter className="sm:justify-end">
+            <button
+              disabled={isCreating}
+              onClick={handleCreate}
+              className="flex h-9 items-center justify-center gap-2 rounded-md bg-transparent px-4 text-sm font-medium text-gray-900 transition-opacity hover:bg-gray-100 disabled:opacity-50"
+            >
+              {isCreating && <Loader2 className="h-4 w-4 animate-spin" />}
+              Create Declaration
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

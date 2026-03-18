@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
-import { ShieldCheck, Send, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, Send, Loader2, AlertTriangle, CheckCircle2, Code2 } from "lucide-react";
+import { mapToCDS_H1 } from "@/lib/wco-mapper";
 
 export default function SubmitPage() {
   const params = useParams<{ id: string }>();
@@ -28,6 +29,9 @@ export default function SubmitPage() {
   const missingHS = items?.some((i: any) => !i.commodityCode);
   
   const isReady = !missingEori && !noItems && !missingHS;
+  
+  // Generate the WCO payload for preview
+  const wcoPayloadPreview = isReady ? mapToCDS_H1(declaration, items) : null;
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -55,7 +59,10 @@ export default function SubmitPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "HMRC API rejected the submission payload.");
+        const errorMessage = data.details 
+          ? `${data.error}\n\n${data.details}`
+          : (data.error || "HMRC API rejected the submission payload.");
+        throw new Error(errorMessage);
       }
 
       // 3. Automatically advance the user to the Status timeline page where they await the MRN webhook
@@ -130,6 +137,23 @@ export default function SubmitPage() {
             <div className="rounded-md border border-red-200 bg-red-50 p-4">
                <h4 className="text-xs font-bold text-red-800 uppercase tracking-widest mb-1">HMRC API Error</h4>
                <p className="text-sm text-red-700 font-mono whitespace-pre-wrap">{error}</p>
+            </div>
+          )}
+
+          {wcoPayloadPreview && (
+            <div className="mt-8 border-t border-gray-100 pt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Code2 className="h-5 w-5 text-blue-500" />
+                <h3 className="text-sm font-semibold text-gray-900">WCO 3.6 Payload Preview</h3>
+              </div>
+              <p className="text-xs text-gray-500 mb-4">
+                This is the exact JSON structure that will be transmitted to the HMRC Customs Declarations API.
+              </p>
+              <div className="rounded-md bg-gray-900 p-4 max-h-96 overflow-y-auto w-full">
+                <pre className="text-[10px] text-green-400 font-mono whitespace-pre-wrap break-all">
+                  {JSON.stringify(wcoPayloadPreview, null, 2)}
+                </pre>
+              </div>
             </div>
           )}
 

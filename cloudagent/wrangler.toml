@@ -10,13 +10,13 @@ database_id = "3afb31ce-83a9-4a12-ab5c-f85442ed10d1"
 remote = true
 
 [[vectorize]]
-binding = "DCTS_VECTORIZE"
-index_name = "dcts-rules-index"
+binding = "HMRC_ERRORS_VECTORIZE"
+index_name = "hmrc-cds-errors"
 remote = true
 
 [[vectorize]]
-binding = "COMPANY_VECTORIZE"
-index_name = "company-embeddings-index"
+binding = "TARIFF_VECTORIZE"
+index_name = "uk-global-tariff"
 remote = true
 
 [durable_objects]

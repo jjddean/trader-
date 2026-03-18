@@ -19,6 +19,7 @@ import type * as compliance from "../compliance.js";
 import type * as crons from "../crons.js";
 import type * as declarations from "../declarations.js";
 import type * as documents from "../documents.js";
+import type * as getFirstLane from "../getFirstLane.js";
 import type * as goods_items from "../goods_items.js";
 import type * as hmrc from "../hmrc.js";
 import type * as hmrc_internal from "../hmrc_internal.js";
@@ -56,6 +57,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   declarations: typeof declarations;
   documents: typeof documents;
+  getFirstLane: typeof getFirstLane;
   goods_items: typeof goods_items;
   hmrc: typeof hmrc;
   hmrc_internal: typeof hmrc_internal;

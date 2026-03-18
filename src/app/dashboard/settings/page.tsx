@@ -13,6 +13,7 @@ export default function SettingsPage() {
 
   const subscription = useQuery(api.subscriptions.getSubscription, userId ? { userId } : "skip");
   const dbUser = useQuery(api.users.current);
+  const hmrcToken = useQuery(api.hmrc.getToken, userId ? { userId } : "skip");
 
   const planColors: Record<string, string> = {
     Starter: "bg-gray-100 text-gray-700",
@@ -147,9 +148,32 @@ export default function SettingsPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-[0.6875rem] text-gray-600">HMRC OAuth</span>
-              <span className="rounded bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-600">
-                Not Connected
-              </span>
+              {hmrcToken !== undefined ? (
+                hmrcToken ? (
+                  <div className="flex items-center gap-2">
+                    <span className="rounded bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
+                      Connected
+                    </span>
+                    <a
+                      href="/api/hmrc/auth"
+                      className="text-[0.625rem] text-gray-400 transition-colors hover:text-black underline"
+                    >
+                      Reconnect
+                    </a>
+                  </div>
+                ) : (
+                  <a
+                    href="/api/hmrc/auth"
+                    className="rounded bg-black px-2 py-1 text-[0.625rem] font-medium text-white transition-colors hover:bg-gray-800"
+                  >
+                    Connect HMRC
+                  </a>
+                )
+              ) : (
+                <span className="rounded bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-400">
+                  Loading...
+                </span>
+              )}
             </div>
           </div>
         </div>

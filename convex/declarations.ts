@@ -27,13 +27,32 @@ export const createDeclaration = mutation({
     route: v.optional(v.string()),
     declarationType: v.string(), // "H1", "B1" etc
     status: v.string(),
+    initialItem: v.optional(v.object({
+      originCountry: v.string(),
+      hsCode: v.string(),
+      description: v.string(),
+    })),
   },
   handler: async (ctx, args) => {
+    const { initialItem, ...declarationArgs } = args;
     const declarationId = await ctx.db.insert("declarations", {
-      ...args,
+      ...declarationArgs,
       created: Date.now(),
       lastUpdated: Date.now(),
     });
+
+    if (initialItem) {
+      await ctx.db.insert("goods_items", {
+        declarationId: declarationId,
+        sequenceNumber: 1,
+        commodityCode: initialItem.hsCode,
+        description: initialItem.description,
+        originCountry: initialItem.originCountry,
+        procedureCode: "4000",
+        valueAmount: 0,
+        valueCurrency: "GBP",
+      });
+    }
 
     return declarationId;
   },
@@ -53,6 +72,23 @@ export const updateDeclarationStatus = mutation({
     if (args.conversationId) patchObj.conversationId = args.conversationId;
 
     await ctx.db.patch(args.id, patchObj);
+  },
+});
+
+export const updateDeclarationDetails = mutation({
+  args: {
+    id: v.id("declarations"),
+    eori: v.string(),
+    declarationType: v.string(),
+    route: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      eori: args.eori,
+      declarationType: args.declarationType,
+      route: args.route,
+      lastUpdated: Date.now(),
+    });
   },
 });
 
@@ -87,4 +123,11 @@ export const populateDemoData = mutation({
       });
     }
   },
+});
+
+export const getAllDecls = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("declarations").collect();
+  }
 });
