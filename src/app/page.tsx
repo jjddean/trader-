@@ -485,6 +485,15 @@ export default function LandingPage() {
                     <p className="text-gray-400 text-xs">
                         © {new Date().getFullYear()} Freightcode. All rights reserved.
                     </p>
+                    <div className="opacity-0 hover:opacity-100 transition-opacity flex items-center">
+                      {!isSignedIn && (
+                        <SignInButton mode="modal">
+                          <button className="text-[10px] text-gray-400 hover:text-gray-600 uppercase tracking-widest cursor-pointer">
+                            Admin Login
+                          </button>
+                        </SignInButton>
+                      )}
+                    </div>
                 </div>
             </div>
       </footer>
