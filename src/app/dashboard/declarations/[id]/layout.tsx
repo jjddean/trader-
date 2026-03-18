@@ -1,0 +1,129 @@
+"use client";
+
+import React from "react";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import { useQuery } from "convex/react";
+import { api } from "../../../../../convex/_generated/api";
+import { Id } from "../../../../../convex/_generated/dataModel";
+import { FileText, ListChecks, UploadCloud, Activity, Send, Loader2, ArrowLeft } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export default function DeclarationWorkspaceLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const params = useParams<{ id: string }>();
+  const pathname = usePathname();
+  const router = useRouter();
+  
+  const declarationId = params?.id as Id<"declarations">;
+  const declaration = useQuery(api.declarations.getLane, declarationId ? { id: declarationId } : "skip");
+
+  const steps = [
+    { id: "overview", name: "1. Core Schema", icon: FileText, path: `/dashboard/declarations/${declarationId}` },
+    { id: "items", name: "2. Goods Items", icon: ListChecks, path: `/dashboard/declarations/${declarationId}/items` },
+    { id: "submit", name: "3. Validate & Submit", icon: Send, path: `/dashboard/declarations/${declarationId}/submit` },
+    { id: "status", name: "4. HMRC Status", icon: Activity, path: `/dashboard/declarations/${declarationId}/status` },
+    { id: "documents", name: "5. Secure Upload", icon: UploadCloud, path: `/dashboard/declarations/${declarationId}/documents`, disabled: !declaration?.mrn },
+  ];
+
+  if (declaration === undefined) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (!declaration) {
+    return (
+      <div className="flex h-[400px] flex-col items-center justify-center space-y-4">
+        <p className="text-sm text-gray-500">Declaration not found.</p>
+        <button onClick={() => router.push("/dashboard/declarations")} className="text-xs text-blue-600 hover:underline">
+          Return to List
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col bg-gray-50">
+      {/* Workspace Header */}
+      <div className="sticky top-0 z-10 border-b border-gray-200 bg-white px-8 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => router.push("/dashboard/declarations")}
+              className="group flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 transition-colors hover:bg-gray-50"
+            >
+              <ArrowLeft className="h-4 w-4 text-gray-400 group-hover:text-gray-900" />
+            </button>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-semibold tracking-tight text-gray-900">
+                  {declaration.mrn || "Draft CDS Entry"}
+                </h1>
+                <span className={cn(
+                  "rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide border",
+                  declaration.status === "Cleared" ? "border-green-200 bg-green-50 text-green-700" :
+                  declaration.status === "Rejected" ? "border-red-200 bg-red-50 text-red-700" :
+                  declaration.status === "Accepted" ? "border-blue-200 bg-blue-50 text-blue-700" :
+                  "border-gray-200 bg-gray-100 text-gray-600"
+                )}>
+                  {declaration.status.toUpperCase()}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">
+                EORI: {declaration.eori || "Not set"} • Route: {declaration.route || "Unknown"}
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+             <div className="text-right">
+                <p className="text-[10px] uppercase tracking-widest text-gray-400 font-medium">HMRC Environment</p>
+                <div className="flex items-center gap-1.5 justify-end mt-0.5">
+                  <div className="h-1.5 w-1.5 rounded-full bg-blue-500"></div>
+                  <span className="text-xs font-mono text-gray-600">Sandbox</span>
+                </div>
+             </div>
+          </div>
+        </div>
+
+        {/* Stepper Navigation */}
+        <nav className="mt-6 flex gap-1 rounded-lg bg-gray-100/50 p-1">
+          {steps.map((step) => {
+            const isActive = pathname === step.path;
+            const Icon = step.icon;
+            
+            return (
+              <button
+                key={step.id}
+                onClick={() => !step.disabled && router.push(step.path)}
+                disabled={step.disabled}
+                className={cn(
+                  "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all",
+                  isActive 
+                    ? "bg-white text-black shadow-sm" 
+                    : "text-gray-500 hover:text-gray-900 hover:bg-gray-200/50",
+                  step.disabled && "opacity-50 cursor-not-allowed hover:bg-transparent"
+                )}
+              >
+                <Icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-600" : "text-gray-400")} />
+                {step.name}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 p-8">
+        <div className="mx-auto max-w-5xl">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}

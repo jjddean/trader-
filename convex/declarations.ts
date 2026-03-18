@@ -24,6 +24,7 @@ export const createDeclaration = mutation({
     userId: v.string(),
     workspaceId: v.optional(v.id("workspaces")),
     eori: v.optional(v.string()),
+    route: v.optional(v.string()),
     declarationType: v.string(), // "H1", "B1" etc
     status: v.string(),
   },

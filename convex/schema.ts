@@ -188,5 +188,5 @@ export default defineSchema({
     notificationType: v.optional(v.any()),
     rawPayload: v.optional(v.any()),
     processed: v.optional(v.any()),
-  }),
+  }).index("by_mrn", ["mrn"]),
 });

@@ -27,7 +27,7 @@ const routeConfigs: Record<
     badge: "PREFERENCES",
     badgeVariant: "default",
   },
-  "/dashboard/lanes": { title: "Declarations", badge: "CDS", badgeVariant: "default" },
+  "/dashboard/declarations": { title: "Declarations", badge: "CDS", badgeVariant: "default" },
   "/dashboard/documents": { title: "Smart Upload", badge: "DOCS", badgeVariant: "success" },
   "/dashboard/reports": { title: "Customs Audit Reports", badge: "REPORTS", badgeVariant: "default" },
   "/dashboard/records": { title: "Financial Records", badge: "LEDGER", badgeVariant: "default" },
@@ -43,23 +43,23 @@ export default function DashboardLayout({
 }>) {
   const pathname = usePathname();
   
-  // Extract lane ID if in a lane workspace
-  const laneIdMatch = pathname.match(/\/dashboard\/lanes\/([^\/]+)/);
-  const laneId = laneIdMatch ? laneIdMatch[1] : null;
+  // Extract declaration ID if in a declaration workspace
+  const declarationIdMatch = pathname.match(/\/dashboard\/declarations\/([^\/]+)/);
+  const declarationId = declarationIdMatch ? declarationIdMatch[1] : null;
   
-  // Fetch lane data to get the name
-  const lane = useQuery(api.trade_lanes.getLane, laneId ? { id: laneId as any } : "skip");
+  // Fetch declaration data to get the name
+  const declaration = useQuery(api.declarations.getLane, declarationId ? { id: declarationId as any } : "skip");
 
   let config = routeConfigs[pathname] || { title: "FreightCode", badge: "BETA" };
   
-  // Override title for lane workspaces
-  if (laneId && lane) {
+  // Override title for declaration workspaces
+  if (declarationId && declaration) {
     config = { 
-        title: lane.description || "Declaration Workspace", 
+        title: declaration.mrn || "Draft Declaration", 
         badge: "WORKSPACE", 
         badgeVariant: "blue" 
     };
-  } else if (laneId && !lane) {
+  } else if (declarationId && !declaration) {
     config = { title: "Declaration Workspace", badge: "LOADING" };
   }
 

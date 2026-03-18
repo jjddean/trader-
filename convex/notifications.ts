@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 
 export const saveWebhook = mutation({
   args: {
@@ -40,4 +40,15 @@ export const saveWebhook = mutation({
       }
     }
   }
+});
+
+export const getWebhooksForMrn = query({
+  args: { mrn: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("notifications")
+      .withIndex("by_mrn", (q) => q.eq("mrn", args.mrn))
+      .order("desc")
+      .collect();
+  },
 });
