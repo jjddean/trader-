@@ -166,7 +166,7 @@ export default function SubmitPage() {
           <button
             onClick={handleSubmit}
             disabled={!isReady || isSubmitting}
-            className="flex h-12 w-full max-w-sm items-center justify-center gap-2 rounded-lg bg-black px-6 text-sm font-medium text-white transition-all hover:bg-gray-800 disabled:opacity-50 hover:shadow-md"
+            className="flex w-full h-8 rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
           >
             {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-4 w-4 text-green-400" />}
             {isSubmitting ? "Transmitting to HMRC..." : "Submit to Customs Declarations API"}

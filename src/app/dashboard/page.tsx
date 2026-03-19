@@ -73,7 +73,7 @@ export default function DashboardPage() {
     <div className="space-y-8 p-8">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Customs Analytics & Audit</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Dashboard</h1>
           <p className="mt-1 text-sm text-gray-500">
             Historical HMRC data analysis and compliance scoring.
           </p>

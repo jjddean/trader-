@@ -48,7 +48,7 @@ export default function ReportsPage() {
     <div className="space-y-8 p-8">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Customs Audit Reports</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Customs Reports</h1>
           <p className="mt-1 text-sm text-gray-500">
             Historical declaration batches and compliance scoring.
           </p>

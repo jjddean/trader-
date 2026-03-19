@@ -251,7 +251,7 @@ export default function ComplyAuditConsole() {
 
                 <div className="flex w-full">
                   <button
-                    className="flex w-full h-8 rounded-md bg-[#8A2BE2] px-4 text-xs font-normal text-white transition-colors hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
+                    className="flex w-full h-8 rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
                     onClick={() => handleAudit()}
                     disabled={loading || !rawText.trim()}
                   >
