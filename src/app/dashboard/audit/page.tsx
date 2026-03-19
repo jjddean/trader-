@@ -137,8 +137,10 @@ export default function ComplyAuditConsole() {
   return (
     <div className="space-y-8 p-8">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Compliance Audit</h1>
-        <p className="text-sm text-gray-500">Review documents for customs compliance risks before submission.</p>
+        <h1 className="text-xl font-semibold tracking-tight text-gray-900">Compliance Audit</h1>
+        <p className="mt-1 text-sm text-gray-500 max-w-2xl">
+          Review documents for customs compliance risks before submission.
+        </p>
       </div>
       
       {/* Main Container */}
