@@ -100,6 +100,8 @@ export async function POST(request: Request) {
     <FunctionalReferenceID>${payloadInfo.Declaration.FunctionalReferenceID}</FunctionalReferenceID>
     <TypeCode>${payloadInfo.Declaration.TypeCode}</TypeCode>
     <InvoiceAmount currencyID="${payloadInfo.Declaration.InvoiceAmount.currencyID}">${payloadInfo.Declaration.InvoiceAmount.value}</InvoiceAmount>
+    <TotalGrossMassMeasure>${payloadInfo.Declaration.TotalGrossMassMeasure}</TotalGrossMassMeasure>
+    <TotalPackageQuantity>${payloadInfo.Declaration.TotalPackageQuantity}</TotalPackageQuantity>
     <CurrencyExchange>
       <CurrencyTypeCode>${payloadInfo.Declaration.CurrencyExchange.CurrencyTypeCode}</CurrencyTypeCode>
     </CurrencyExchange>
@@ -110,6 +112,18 @@ export async function POST(request: Request) {
       <ID>${payloadInfo.Declaration.Exporter.ID}</ID>
     </Exporter>
     <GoodsShipment>
+      <Consignment>
+        <GoodsLocation>
+          <Name>${payloadInfo.Declaration.GoodsShipment.Consignment.GoodsLocation.Name}</Name>
+          <ID>${payloadInfo.Declaration.GoodsShipment.Consignment.GoodsLocation.ID}</ID>
+        </GoodsLocation>
+      </Consignment>
+      <Destination>
+        <CountryCode>${payloadInfo.Declaration.GoodsShipment.Destination.CountryCode}</CountryCode>
+      </Destination>
+      <ExportCountry>
+        <ID>${payloadInfo.Declaration.GoodsShipment.ExportCountry.ID}</ID>
+      </ExportCountry>
       ${payloadInfo.Declaration.GoodsShipment.GovernmentAgencyGoodsItem.map((item: any) => `
       <GovernmentAgencyGoodsItem>
         <SequenceNumeric>${item.SequenceNumeric}</SequenceNumeric>
@@ -119,11 +133,21 @@ export async function POST(request: Request) {
             <ID>${item.Commodity.Classification[0].ID}</ID>
             <IdentificationTypeCode>${item.Commodity.Classification[0].IdentificationTypeCode}</IdentificationTypeCode>
           </Classification>
+          <GoodsMeasure>
+            <GrossMassMeasure>${item.Commodity.GoodsMeasure.GrossMassMeasure}</GrossMassMeasure>
+            <NetNetWeightMeasure>${item.Commodity.GoodsMeasure.NetNetWeightMeasure}</NetNetWeightMeasure>
+          </GoodsMeasure>
         </Commodity>
         <GovernmentProcedure>
           <CurrentCode>${item.GovernmentProcedure[0].CurrentCode}</CurrentCode>
           <PreviousCode>${item.GovernmentProcedure[0].PreviousCode}</PreviousCode>
         </GovernmentProcedure>
+        <Packaging>
+          <SequenceNumeric>${item.Packaging[0].SequenceNumeric}</SequenceNumeric>
+          <MarksNumbersID>${item.Packaging[0].MarksNumbersID}</MarksNumbersID>
+          <QuantityQuantity>${item.Packaging[0].QuantityQuantity}</QuantityQuantity>
+          <TypeCode>${item.Packaging[0].TypeCode}</TypeCode>
+        </Packaging>
       </GovernmentAgencyGoodsItem>`).join('')}
       <Importer>
         <ID>${payloadInfo.Declaration.GoodsShipment.Importer.ID}</ID>

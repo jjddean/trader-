@@ -15,6 +15,7 @@ export function mapToCDS_H1(declaration: any, items: any[]) {
       TypeCode: "H1",    
       FunctionalReferenceID: declaration.lrn || `FC-${declaration._id}`,
       TotalGrossMassMeasure: declaration.totalGrossWeight || totalGrossWeight,
+      TotalPackageQuantity: items.reduce((acc: number, item: any) => acc + (parseInt(item.packageCount) || 1), 0),
       InvoiceAmount: {
         currencyID: declaration.invoiceCurrency || "GBP",
         value: declaration.invoiceTotal || invoiceTotal
