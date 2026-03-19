@@ -27,9 +27,9 @@ export default function AdminDashboard() {
     <div className="space-y-8 p-8">
       {/* Header */}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold tracking-tight">Admin Console</h1>
-          <p className="text-muted-foreground text-sm">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Admin Console</h1>
+          <p className="mt-1 text-sm text-gray-500">
             Platform-wide overview and compliance monitoring.
           </p>
         </div>

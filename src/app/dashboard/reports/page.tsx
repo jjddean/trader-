@@ -46,25 +46,25 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-8 p-8">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Customs Audit Reports</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Customs Audit Reports</h1>
+          <p className="mt-1 text-sm text-gray-500">
             Historical declaration batches and compliance scoring.
           </p>
         </div>
       </div>
 
       {/* Control Bar */}
-      <div className="flex items-center justify-between border-b border-[#e9e9e7] pb-4">
-        <div className="relative w-72">
-          <Search className="absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+      <div className="flex flex-col gap-4 md:flex-row md:items-center justify-between border-b border-[#e9e9e7] pb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Search by MRN or Broker..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="focus:border-ring focus:ring-ring/50 h-[32px] w-full rounded-md border border-gray-200 bg-gray-50 pr-3 pl-8 text-xs text-gray-700 placeholder:text-gray-400 transition-[color,box-shadow] outline-none focus:ring-[2px]"
+            className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none transition-colors focus:border-gray-400 md:max-w-md"
           />
         </div>
         <Button variant="ghost" className="h-9 px-3 text-foreground">
@@ -79,7 +79,7 @@ export default function ReportsPage() {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <thead>
-                <tr className="bg-[#fbfbfa] border-b border-[#e9e9e7]">
+                <tr className="bg-gray-50 border-b border-[#e9e9e7]">
                   <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Entry No (MRN)</th>
                   <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Date of Entry</th>
                   <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Clearing Broker</th>
@@ -91,7 +91,7 @@ export default function ReportsPage() {
                 {MOCK_REPORTS.map((report) => (
                   <tr
                     key={report.id}
-                    className="group cursor-pointer transition-colors hover:bg-[#f7f7f5]"
+                    className="group cursor-pointer transition-colors hover:bg-gray-50"
                   >
                     <td className="px-6 py-4">
                       <span className="text-xs font-semibold text-black group-hover:text-black transition-colors">

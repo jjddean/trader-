@@ -71,65 +71,63 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 p-8">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Customs Analytics & Audit</h1>
-        <p className="text-sm text-gray-500">Historical HMRC data analysis and compliance scoring.</p>
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Customs Analytics & Audit</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Historical HMRC data analysis and compliance scoring.
+          </p>
+        </div>
       </div>
 
       {/* Top Main KPIs */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {/* Compliance Score */}
-        <div className="flex flex-col justify-between rounded-xl border border-[#e9e9e7] bg-white p-6 shadow-none">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-500">
+        <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
               Compliance Health
-            </h3>
+            </p>
             <CheckCircle2 className={cn("h-4 w-4", Number(kpis.complianceScore) > 90 ? "text-green-500" : "text-amber-500")} />
           </div>
-          <div className="mt-4">
-            <h2 className="text-2xl font-medium tracking-tight text-gray-900">
-              {kpis.complianceScore}%
-            </h2>
-            <p className="mt-1 text-xs text-gray-500">
-              {kpis.anomaliesCount} anomalies detected across {kpis.totalRecords} records
-            </p>
-          </div>
+          <h2 className="text-2xl font-medium tracking-tight text-foreground tabular-nums">
+            {kpis.complianceScore}%
+          </h2>
+          <p className="mt-1 text-[0.625rem] text-gray-500">
+            {kpis.anomaliesCount} anomalies detected across {kpis.totalRecords} records
+          </p>
         </div>
 
         {/* Missed Duty Savings */}
-        <div className="flex flex-col justify-between rounded-xl border border-[#e9e9e7] bg-white p-6 shadow-none">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-500">
+        <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
               Identified Missed Savings
-            </h3>
+            </p>
             <TrendingDown className="h-4 w-4 text-gray-400" />
           </div>
-          <div className="mt-4">
-            <h2 className="text-2xl font-medium tracking-tight text-gray-900">
-              £{kpis.totalMissedSavings.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </h2>
-            <p className="mt-1 text-xs text-gray-500">
-              Capital tied up in unclaimed trade preferences
-            </p>
-          </div>
+          <h2 className="text-2xl font-medium tracking-tight text-foreground tabular-nums">
+            £{kpis.totalMissedSavings.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </h2>
+          <p className="mt-1 text-[0.625rem] text-gray-500">
+            Capital tied up in unclaimed trade preferences
+          </p>
         </div>
 
         {/* Total Duty Paid */}
-        <div className="flex flex-col justify-between rounded-xl border border-[#e9e9e7] bg-white p-6 shadow-none">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-500">
+        <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
               Total Duty Paid (Historical)
-            </h3>
+            </p>
             <Scale className="h-4 w-4 text-gray-400" />
           </div>
-          <div className="mt-4">
-            <h2 className="text-2xl font-medium tracking-tight text-gray-900">
-              £{(kpis.totalDutyPaid / 1000).toFixed(1)}k
-            </h2>
-            <p className="mt-1 text-xs text-gray-500">
-              Across {kpis.totalRecords} imported records
-            </p>
-          </div>
+          <h2 className="text-2xl font-medium tracking-tight text-foreground tabular-nums">
+            £{(kpis.totalDutyPaid / 1000).toFixed(1)}k
+          </h2>
+          <p className="mt-1 text-[0.625rem] text-gray-500">
+            Across {kpis.totalRecords} imported records
+          </p>
         </div>
       </div>
 
@@ -139,10 +137,10 @@ export default function DashboardPage() {
         
         {/* Preference Alert */}
         <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
-          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-[#fbfbfa] px-5 py-3">
-            <AlertCircle className="h-4 w-4 text-amber-500" />
-            <h3 className="text-sm font-normal text-gray-500">Missed DCTS/EU Preference</h3>
-            <span className="ml-auto rounded-[4px] bg-[#f7f7f5] px-2 py-0.5 text-[0.625rem] font-semibold text-muted-foreground border border-[#e9e9e7]">
+          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-5 py-3">
+            <AlertCircle className="h-4 w-4 text-gray-400" />
+            <h3 className="text-sm font-medium text-black">Missed DCTS/EU Preference</h3>
+            <span className="ml-auto rounded-[4px] bg-gray-50 px-2 py-0.5 text-[0.625rem] font-semibold text-muted-foreground border border-[#e9e9e7]">
               {alerts.missedPreferences.length} FLAGS
             </span>
           </div>
@@ -169,10 +167,10 @@ export default function DashboardPage() {
 
         {/* Anti-Dumping Alert */}
         <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
-          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-[#fbfbfa] px-5 py-3">
-            <TrendingDown className="h-4 w-4 text-red-500" />
-            <h3 className="text-sm font-normal text-gray-500">Anti-Dumping & High Tax Types</h3>
-            <span className="ml-auto rounded-[4px] bg-[#f7f7f5] px-2 py-0.5 text-[0.625rem] font-semibold text-muted-foreground border border-[#e9e9e7]">
+          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-5 py-3">
+            <TrendingDown className="h-4 w-4 text-gray-400" />
+            <h3 className="text-sm font-medium text-black">Anti-Dumping & High Tax Types</h3>
+            <span className="ml-auto rounded-[4px] bg-gray-50 px-2 py-0.5 text-[0.625rem] font-semibold text-muted-foreground border border-[#e9e9e7]">
               {alerts.antiDumpingPenalties.length} FLAGS
             </span>
           </div>
@@ -203,10 +201,10 @@ export default function DashboardPage() {
 
         {/* PVA Alert */}
         <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
-          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-[#fbfbfa] px-5 py-3">
-            <FileSpreadsheet className="h-4 w-4 text-blue-500" />
-            <h3 className="text-sm font-normal text-gray-500">Postponed VAT Accounting (PVA)</h3>
-            <span className="ml-auto rounded-[4px] bg-[#f7f7f5] px-2 py-0.5 text-[0.625rem] font-semibold text-muted-foreground border border-[#e9e9e7]">
+          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-5 py-3">
+            <FileSpreadsheet className="h-4 w-4 text-gray-400" />
+            <h3 className="text-sm font-medium text-black">Postponed VAT Accounting (PVA)</h3>
+            <span className="ml-auto rounded-[4px] bg-gray-50 px-2 py-0.5 text-[0.625rem] font-semibold text-muted-foreground border border-[#e9e9e7]">
               {alerts.pvaChecks.length} FLAGS
             </span>
           </div>
@@ -220,22 +218,22 @@ export default function DashboardPage() {
 
         {/* Broker Accuracy Table */}
         <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
-          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-[#fbfbfa] px-5 py-3">
-            <Users className="h-4 w-4 text-indigo-500" />
-            <h3 className="text-sm font-normal text-gray-500">Broker Accuracy Benchmarks</h3>
+          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-5 py-3">
+            <Users className="h-4 w-4 text-gray-400" />
+            <h3 className="text-sm font-medium text-black">Broker Accuracy Benchmarks</h3>
           </div>
           <div className="flex-1 p-0">
             {brokerAccuracy.length > 0 ? (
               <table className="w-full border-collapse text-left">
                 <thead>
-                  <tr className="bg-[#fbfbfa] border-b border-[#e9e9e7]">
+                  <tr className="bg-gray-50 border-b border-[#e9e9e7]">
                     <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Declarant EORI</th>
                     <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase text-right">Accuracy Rate</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#e9e9e7]">
                    {brokerAccuracy.map((b: any) => (
-                     <tr key={b.eori} className="group transition-colors hover:bg-[#f7f7f5]">
+                     <tr key={b.eori} className="group transition-colors hover:bg-gray-50">
                        <td className="px-6 py-4 font-mono text-[0.6875rem] text-gray-600">{b.eori}</td>
                        <td className="px-6 py-4 text-right">
                          <span className={cn(

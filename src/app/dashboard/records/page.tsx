@@ -38,62 +38,60 @@ export default function RecordsPage() {
 
   return (
     <div className="space-y-8 p-8">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Financial Records</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Financial Records</h1>
+          <p className="mt-1 text-sm text-gray-500">
             VAT and Duty ledgers generated from your historic HMRC declarations.
           </p>
         </div>
-        <Button variant="outline" className="h-9 px-4">
-          <Download className="mr-2 h-4 w-4" />
+        <button className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800">
+          <Download className="h-4 w-4" />
           Export to CSV
-        </Button>
+        </button>
       </div>
 
       {/* Top Tax Summary Blocks */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="flex flex-col justify-between rounded-xl border border-[#e9e9e7] bg-white p-6 shadow-none">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-500">
+        <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
               Total Duty Paid
-            </h3>
+            </p>
             <Landmark className="h-4 w-4 text-gray-400" />
           </div>
-          <div className="mt-4">
-            <h2 className="text-2xl font-medium tracking-tight text-gray-900">
-              £{totalDuty.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </h2>
-            <p className="mt-1 text-xs text-gray-500">Historical duty calculated from ledgers</p>
-          </div>
+          <h2 className="text-2xl font-medium tracking-tight text-foreground tabular-nums">
+            £{totalDuty.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </h2>
+          <p className="mt-1 text-[0.625rem] text-gray-500">Historical duty calculated from ledgers</p>
         </div>
 
-        <div className="flex flex-col justify-between rounded-xl border border-[#e9e9e7] bg-white p-6 shadow-none">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-500">
+        <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
               Postponed VAT (PVA)
-            </h3>
+            </p>
             <Building2 className="h-4 w-4 text-gray-400" />
           </div>
-          <div className="mt-4">
-            <h2 className="text-2xl font-medium tracking-tight text-gray-900">
-              £{totalPVA.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </h2>
-            <p className="mt-1 text-xs text-gray-500">Total deferred import VAT payments</p>
-          </div>
+          <h2 className="text-2xl font-medium tracking-tight text-foreground tabular-nums">
+            £{totalPVA.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </h2>
+          <p className="mt-1 text-[0.625rem] text-gray-500">Total deferred import VAT payments</p>
         </div>
       </div>
 
-      {/* Ledger Table */}
-      <div className="relative w-72">
-        <Search className="absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search ledger by MRN..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="focus:border-ring focus:ring-ring/50 h-[32px] w-full rounded-md border border-gray-200 bg-gray-50 pr-3 pl-8 text-xs text-gray-700 placeholder:text-gray-400 transition-[color,box-shadow] outline-none focus:ring-[2px]"
-        />
+      {/* Ledger Table Section */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 pb-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search ledger by MRN..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none transition-colors focus:border-gray-400"
+          />
+        </div>
       </div>
 
       <Card className="bg-white shadow-none border-[#e9e9e7]">
@@ -101,7 +99,7 @@ export default function RecordsPage() {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <thead>
-                <tr className="bg-[#fbfbfa] border-b border-[#e9e9e7]">
+                <tr className="bg-gray-50 border-b border-[#e9e9e7]">
                   <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Declaration MRN</th>
                   <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Date</th>
                   <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Tax Type</th>
@@ -113,7 +111,7 @@ export default function RecordsPage() {
                 {MOCK_RECORDS.map((record, idx) => (
                   <tr
                     key={idx}
-                    className="group transition-colors hover:bg-[#f7f7f5]"
+                    className="group transition-colors hover:bg-gray-50"
                   >
                     <td className="px-6 py-4">
                       <span className="text-xs font-semibold text-black">

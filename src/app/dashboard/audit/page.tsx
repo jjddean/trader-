@@ -142,11 +142,11 @@ export default function ComplyAuditConsole() {
       </div>
       
       {/* Main Container */}
-      <div className="mx-auto w-full max-w-3xl space-y-6">
+      <div className="w-full space-y-6">
         <div className="overflow-hidden rounded-xl border border-[#e9e9e7] bg-white">
           
           {/* Card Header */}
-          <div className="flex items-center justify-between border-b border-[#e9e9e7] bg-[#fbfbfa] px-6 py-4">
+          <div className="flex items-center justify-between border-b border-[#e9e9e7] bg-gray-50 px-6 py-4">
             <div className="flex items-center gap-3">
               <ShieldCheck className="h-4 w-4 text-gray-400" />
               <h3 className="text-sm font-medium text-black">Compliance Audit</h3>
@@ -160,7 +160,7 @@ export default function ComplyAuditConsole() {
         <div className="space-y-4 p-6">
           
           {/* Tabs */}
-          <div className="flex max-w-sm rounded-md border border-gray-200 bg-gray-50 p-1 mb-6">
+          <div className="flex w-full rounded-md border border-gray-200 bg-gray-50 p-1 mb-6">
             <button
               onClick={() => setActiveTab("manual")}
               className={`flex-1 rounded py-1.5 text-xs font-medium transition-all ${
@@ -247,16 +247,16 @@ export default function ComplyAuditConsole() {
                   />
                 </div>
 
-                <div className="flex">
+                <div className="flex w-full">
                   <button
-                    className="flex h-8 rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
+                    className="flex w-full h-8 rounded-md bg-[#8A2BE2] px-4 text-xs font-normal text-white transition-colors hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
                     onClick={() => handleAudit()}
                     disabled={loading || !rawText.trim()}
                   >
                     {loading ? (
                       <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Running...</>
                     ) : (
-                      <><Sparkles className="h-3.5 w-3.5" /> Run Compliance Audit</>
+                      <><Wand2 className="h-3.5 w-3.5" /> Run Compliance Audit</>
                     )}
                   </button>
                 </div>
@@ -315,7 +315,7 @@ export default function ComplyAuditConsole() {
 
       {/* Results Section */}
       {result && (
-        <div className="mx-auto w-full max-w-4xl space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="w-full space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
           
           <div className={cn(
              "rounded-lg border p-4",

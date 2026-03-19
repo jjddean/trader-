@@ -204,9 +204,13 @@ export default function DocumentsPage() {
 
   return (
     <div className="space-y-8 p-8">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Smart Upload & DCTS Tools</h1>
-        <p className="text-sm text-gray-500">Validate eligibility, simulate Rules of Origin, and estimate landed costs.</p>
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Smart Upload & DCTS Tools</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Validate eligibility, simulate Rules of Origin, and estimate landed costs.
+          </p>
+        </div>
       </div>
       {/* Metrics Row */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
@@ -270,7 +274,7 @@ export default function DocumentsPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Left: DCTS Eligibility Checker */}
         <div className="overflow-hidden rounded-xl border border-[#e9e9e7] bg-white">
-          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-[#fbfbfa] px-6 py-4">
+          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-6 py-4">
             <Globe className="h-4 w-4 text-gray-400" />
             <h3 className="text-sm font-medium text-black">DCTS Eligibility Check</h3>
           </div>
@@ -382,7 +386,7 @@ export default function DocumentsPage() {
 
         {/* Right: Rules of Origin Simulator */}
         <div className="overflow-hidden rounded-xl border border-[#e9e9e7] bg-white">
-          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-[#fbfbfa] px-6 py-4">
+          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-6 py-4">
             <Package className="h-4 w-4 text-gray-400" />
             <h3 className="text-sm font-medium text-black">Rules of Origin Simulator</h3>
           </div>
@@ -540,7 +544,7 @@ export default function DocumentsPage() {
 
       {/* Full-width Bottom: Landed Cost Calculator */}
       <div className="overflow-hidden rounded-xl border border-[#e9e9e7] bg-white">
-        <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-[#fbfbfa] px-6 py-4">
+        <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-6 py-4">
           <Calculator className="h-4 w-4 text-gray-400" />
           <h3 className="text-sm font-medium text-black">Landed Cost Calculator</h3>
         </div>

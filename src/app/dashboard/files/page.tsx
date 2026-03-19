@@ -59,14 +59,14 @@ export default function FilesPage() {
             placeholder="Search files or MRNs..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-[4px] bg-[#f7f7f5] hover:bg-[#efefed] border-transparent focus:bg-white focus:border-[#2383e2] focus:ring-1 focus:ring-[#2383e2] py-1.5 pl-9 pr-3 text-sm text-[#37352f] placeholder:text-[#787774] outline-none transition-all"
+            className="w-full rounded-[4px] bg-gray-50 hover:bg-[#efefed] border-transparent focus:bg-white focus:border-[#2383e2] focus:ring-1 focus:ring-[#2383e2] py-1.5 pl-9 pr-3 text-sm text-[#37352f] placeholder:text-[#787774] outline-none transition-all"
           />
         </div>
       </div>
 
       {/* File Table */}
       <div className="flex flex-col overflow-hidden rounded-[4px] border border-[#e9e9e7] bg-white shadow-none">
-        <div className="grid grid-cols-12 gap-4 border-b border-[#e9e9e7] bg-[#fbfbfa] px-5 py-3 text-[0.625rem] font-semibold text-[#787774] tracking-wider uppercase">
+        <div className="grid grid-cols-12 gap-4 border-b border-[#e9e9e7] bg-gray-50 px-5 py-3 text-[0.625rem] font-semibold text-[#787774] tracking-wider uppercase">
           <div className="col-span-5">File Name</div>
           <div className="col-span-2">Date Uploaded</div>
           <div className="col-span-2">Associated MRN</div>
@@ -78,7 +78,7 @@ export default function FilesPage() {
           {MOCK_FILES.map((file) => (
             <div
               key={file.id}
-              className="grid grid-cols-12 items-center gap-4 border-b border-[#e9e9e7] px-5 py-3 hover:bg-[#f7f7f5] transition-colors last:border-0"
+              className="grid grid-cols-12 items-center gap-4 border-b border-[#e9e9e7] px-5 py-3 hover:bg-gray-50 transition-colors last:border-0"
             >
               <div className="col-span-5 flex items-center gap-3">
                 <FileText className="h-4 w-4 text-[#787774]" />

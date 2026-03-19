@@ -26,7 +26,7 @@ export default function AssistantPage() {
     <div className="mx-auto flex h-[calc(100vh-80px)] max-w-[800px] flex-col px-8 py-12">
       {/* Header Info */}
       <div className="mb-12 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#fbfbfa] border border-[#e9e9e7]">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-50 border border-[#e9e9e7]">
           <Bot className="h-6 w-6 text-[#37352f]" />
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-[#37352f] mb-2">Compliance Assistant</h1>
@@ -41,7 +41,7 @@ export default function AssistantPage() {
             {STARTER_PROMPTS.map((prompt, idx) => (
               <button
                 key={idx}
-                className="flex flex-col items-start gap-2 rounded-[4px] border border-[#e9e9e7] bg-white p-4 text-left shadow-none hover:bg-[#fbfbfa] transition-colors"
+                className="flex flex-col items-start gap-2 rounded-[4px] border border-[#e9e9e7] bg-white p-4 text-left shadow-none hover:bg-gray-50 transition-colors"
                 onClick={() => setInputValue(prompt.text)}
               >
                 <div className="text-[#787774]">{prompt.icon}</div>
