@@ -99,6 +99,10 @@ export async function POST(request: Request) {
     <FunctionCode>${payloadInfo.Declaration.FunctionCode}</FunctionCode>
     <FunctionalReferenceID>${payloadInfo.Declaration.FunctionalReferenceID}</FunctionalReferenceID>
     <TypeCode>${payloadInfo.Declaration.TypeCode}</TypeCode>
+    <InvoiceAmount currencyID="${payloadInfo.Declaration.InvoiceAmount.currencyID}">${payloadInfo.Declaration.InvoiceAmount.value}</InvoiceAmount>
+    <CurrencyExchange>
+      <CurrencyTypeCode>${payloadInfo.Declaration.CurrencyExchange.CurrencyTypeCode}</CurrencyTypeCode>
+    </CurrencyExchange>
     <Declarant>
       <ID>${payloadInfo.Declaration.Declarant.ID}</ID>
     </Declarant>
@@ -124,6 +128,10 @@ export async function POST(request: Request) {
       <Importer>
         <ID>${payloadInfo.Declaration.GoodsShipment.Importer.ID}</ID>
       </Importer>
+      <TradeTerms>
+        <ConditionCode>${payloadInfo.Declaration.GoodsShipment.TradeTerms.ConditionCode}</ConditionCode>
+        <LocationID>${payloadInfo.Declaration.GoodsShipment.TradeTerms.LocationID}</LocationID>
+      </TradeTerms>
       <UCR>
         <TraderAssignedReferenceID>${payloadInfo.Declaration.UCR.TraderAssignedReferenceID}</TraderAssignedReferenceID>
       </UCR>
