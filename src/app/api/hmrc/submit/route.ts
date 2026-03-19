@@ -99,8 +99,10 @@ export async function POST(request: Request) {
     <FunctionCode>${payloadInfo.Declaration.FunctionCode}</FunctionCode>
     <FunctionalReferenceID>${payloadInfo.Declaration.FunctionalReferenceID}</FunctionalReferenceID>
     <TypeCode>${payloadInfo.Declaration.TypeCode}</TypeCode>
+    <GoodsItemQuantity>${payloadInfo.Declaration.GoodsItemQuantity}</GoodsItemQuantity>
+    <DeclarationOfficeID>${payloadInfo.Declaration.DeclarationOfficeID}</DeclarationOfficeID>
     <InvoiceAmount currencyID="${payloadInfo.Declaration.InvoiceAmount.currencyID}">${payloadInfo.Declaration.InvoiceAmount.value}</InvoiceAmount>
-    <TotalGrossMassMeasure>${payloadInfo.Declaration.TotalGrossMassMeasure}</TotalGrossMassMeasure>
+    <TotalGrossMassMeasure unitCode="KGM">${payloadInfo.Declaration.TotalGrossMassMeasure}</TotalGrossMassMeasure>
     <TotalPackageQuantity>${payloadInfo.Declaration.TotalPackageQuantity}</TotalPackageQuantity>
     <CurrencyExchange>
       <CurrencyTypeCode>${payloadInfo.Declaration.CurrencyExchange.CurrencyTypeCode}</CurrencyTypeCode>
@@ -113,6 +115,12 @@ export async function POST(request: Request) {
     </Exporter>
     <GoodsShipment>
       <Consignment>
+        <ContainerCode>${payloadInfo.Declaration.GoodsShipment.Consignment.ContainerCode}</ContainerCode>
+        <ArrivalTransportMeans>
+          <ID>${payloadInfo.Declaration.GoodsShipment.Consignment.BorderTransportMeans.ID}</ID>
+          <IdentificationTypeCode>${payloadInfo.Declaration.GoodsShipment.Consignment.BorderTransportMeans.IdentificationTypeCode}</IdentificationTypeCode>
+          <ModeCode>${payloadInfo.Declaration.GoodsShipment.Consignment.BorderTransportMeans.ModeCode}</ModeCode>
+        </ArrivalTransportMeans>
         <GoodsLocation>
           <Name>${payloadInfo.Declaration.GoodsShipment.Consignment.GoodsLocation.Name}</Name>
           <ID>${payloadInfo.Declaration.GoodsShipment.Consignment.GoodsLocation.ID}</ID>
@@ -128,20 +136,27 @@ export async function POST(request: Request) {
       <GovernmentAgencyGoodsItem>
         <SequenceNumeric>${item.SequenceNumeric}</SequenceNumeric>
         <StatisticalValueAmount currencyID="${item.StatisticalValueAmount.currencyID}">${item.StatisticalValueAmount.value}</StatisticalValueAmount>
+        <AdditionalDocument>
+          <CategoryCode>${item.AdditionalDocument[0].CategoryCode}</CategoryCode>
+          <ID>${item.AdditionalDocument[0].ID}</ID>
+          <TypeCode>${item.AdditionalDocument[0].TypeCode}</TypeCode>
+        </AdditionalDocument>
         <Commodity>
+          <Description>${item.Commodity.Description}</Description>
           <Classification>
             <ID>${item.Commodity.Classification[0].ID}</ID>
             <IdentificationTypeCode>${item.Commodity.Classification[0].IdentificationTypeCode}</IdentificationTypeCode>
           </Classification>
           <GoodsMeasure>
-            <GrossMassMeasure>${item.Commodity.GoodsMeasure.GrossMassMeasure}</GrossMassMeasure>
-            <NetNetWeightMeasure>${item.Commodity.GoodsMeasure.NetNetWeightMeasure}</NetNetWeightMeasure>
+            <GrossMassMeasure unitCode="KGM">${item.Commodity.GoodsMeasure.GrossMassMeasure}</GrossMassMeasure>
+            <NetNetWeightMeasure unitCode="KGM">${item.Commodity.GoodsMeasure.NetNetWeightMeasure}</NetNetWeightMeasure>
           </GoodsMeasure>
         </Commodity>
+        ${item.GovernmentProcedure.map((proc: any) => `
         <GovernmentProcedure>
-          <CurrentCode>${item.GovernmentProcedure[0].CurrentCode}</CurrentCode>
-          <PreviousCode>${item.GovernmentProcedure[0].PreviousCode}</PreviousCode>
-        </GovernmentProcedure>
+          <CurrentCode>${proc.CurrentCode}</CurrentCode>
+          ${proc.PreviousCode ? `<PreviousCode>${proc.PreviousCode}</PreviousCode>` : ''}
+        </GovernmentProcedure>`).join('')}
         <Packaging>
           <SequenceNumeric>${item.Packaging[0].SequenceNumeric}</SequenceNumeric>
           <MarksNumbersID>${item.Packaging[0].MarksNumbersID}</MarksNumbersID>

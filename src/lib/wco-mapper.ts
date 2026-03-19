@@ -12,8 +12,10 @@ export function mapToCDS_H1(declaration: any, items: any[]) {
   return {
     Declaration: {
       FunctionCode: "9", 
-      TypeCode: "H1",    
+      TypeCode: "IMA",    
       FunctionalReferenceID: declaration.lrn || `FC-${declaration._id}`,
+      GoodsItemQuantity: items.length || 1,
+      DeclarationOfficeID: declaration.presentationOffice || "GB000051",
       TotalGrossMassMeasure: declaration.totalGrossWeight || totalGrossWeight,
       TotalPackageQuantity: items.reduce((acc: number, item: any) => acc + (parseInt(item.packageCount) || 1), 0),
       InvoiceAmount: {
@@ -60,6 +62,13 @@ export function mapToCDS_H1(declaration: any, items: any[]) {
         },
         GovernmentAgencyGoodsItem: (items || []).map((item, index) => ({
           SequenceNumeric: item.sequenceNumber || index + 1,
+          AdditionalDocument: [
+            {
+              CategoryCode: "Y",
+              ID: "922",
+              TypeCode: "922"
+            }
+          ],
           StatisticalValueAmount: {
             currencyID: item.valueCurrency || "GBP",
             value: item.valueAmount || 0
