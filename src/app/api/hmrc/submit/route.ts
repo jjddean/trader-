@@ -97,10 +97,14 @@ export async function POST(request: Request) {
   <AgencyAssignedCustomizationVersionCode>v2.1</AgencyAssignedCustomizationVersionCode>
   <Declaration xmlns="urn:wco:datamodel:WCO:DEC-DMS:2" xmlns:clm63055="urn:un:unece:uncefact:codelist:standard:UNECE:AgencyIdentificationCode:D12B" xmlns:ds="urn:wco:datamodel:WCO:MetaData_DS-DMS:2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2 ../DocumentMetaData_2_DMS.xsd ">
     <FunctionCode>${payloadInfo.Declaration.FunctionCode}</FunctionCode>
+    <FunctionalReferenceID>${payloadInfo.Declaration.FunctionalReferenceID}</FunctionalReferenceID>
     <TypeCode>${payloadInfo.Declaration.TypeCode}</TypeCode>
     <Declarant>
       <ID>${payloadInfo.Declaration.Declarant.ID}</ID>
     </Declarant>
+    <Exporter>
+      <ID>${payloadInfo.Declaration.Exporter.ID}</ID>
+    </Exporter>
     <GoodsShipment>
       ${payloadInfo.Declaration.GoodsShipment.GovernmentAgencyGoodsItem.map((item: any) => `
       <GovernmentAgencyGoodsItem>
@@ -117,6 +121,12 @@ export async function POST(request: Request) {
           <PreviousCode>${item.GovernmentProcedure[0].PreviousCode}</PreviousCode>
         </GovernmentProcedure>
       </GovernmentAgencyGoodsItem>`).join('')}
+      <Importer>
+        <ID>${payloadInfo.Declaration.GoodsShipment.Importer.ID}</ID>
+      </Importer>
+      <UCR>
+        <TraderAssignedReferenceID>${payloadInfo.Declaration.UCR.TraderAssignedReferenceID}</TraderAssignedReferenceID>
+      </UCR>
     </GoodsShipment>
   </Declaration>
 </MetaData>`;
