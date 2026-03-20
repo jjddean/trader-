@@ -62,9 +62,11 @@ export function AppSidebar() {
           <div className="flex h-5 w-5 items-center justify-center rounded bg-blue-600 text-white">
             <span className="text-xs font-bold leading-none">f</span>
           </div>
-          <span className="text-sm font-medium tracking-tight text-gray-900">
-            freight<span className="font-bold text-black">code®</span>
-          </span>
+          <div className="flex items-baseline whitespace-nowrap text-gray-900 leading-none">
+            <span className="text-sm font-medium tracking-tight">freight</span>
+            <span className="text-sm font-bold tracking-tight text-black">code</span>
+            <span className="font-normal text-[10px] -translate-y-[2px] ml-[1px] text-black">®</span>
+          </div>
         </Link>
       </SidebarHeader>
 

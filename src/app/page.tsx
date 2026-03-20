@@ -54,10 +54,11 @@ export default function LandingPage() {
                   <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
                 </div>
               </div>
-              <span className="text-xl font-bold tracking-tighter text-[#020817] flex items-baseline leading-none">
-                freight<span className="text-slate-400">code</span>
+              <div className="flex items-baseline whitespace-nowrap text-[#020817] leading-none">
+                <span className="text-xl font-bold tracking-tight">freight</span>
+                <span className="text-xl font-bold tracking-tight text-slate-400">code</span>
                 <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px] text-slate-400">®</span>
-              </span>
+              </div>
               <span className="ml-1 rounded border border-slate-100 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400">
                 Beta
               </span>
@@ -383,7 +384,7 @@ export default function LandingPage() {
                     {/* Logo / About */}
                     <div className="col-span-2 md:col-span-1 -mt-1">
                         <div className="mb-4">
-                            <div className="flex items-baseline whitespace-nowrap text-[#003057] leading-none">
+                            <div className="flex items-baseline whitespace-nowrap text-[#020817] leading-none">
                                 <span className="font-bold tracking-tight text-[22px]">freight</span>
                                 <span className="font-bold tracking-tight text-[22px] text-slate-400">code</span>
                                 <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px] text-slate-400">®</span>
@@ -401,45 +402,45 @@ export default function LandingPage() {
 
                     {/* Product */}
                     <div>
-                        <h4 className="text-[#003057] font-medium text-xs mb-4">Product</h4>
+                        <h4 className="text-[#020817] font-medium text-xs mb-4">Product</h4>
                         <ul className="text-gray-500 text-xs space-y-2">
-                            <li><a href="#features" className="hover:text-[#003057]">Features</a></li>
-                            <li><a href="#" className="hover:text-[#003057]">Pricing</a></li>
+                            <li><a href="#features" className="hover:text-[#020817]">Features</a></li>
+                            <li><a href="#" className="hover:text-[#020817]">Pricing</a></li>
                         </ul>
                     </div>
 
                     {/* Company */}
                     <div>
-                        <h4 className="text-[#003057] font-medium text-xs mb-4">Company</h4>
+                        <h4 className="text-[#020817] font-medium text-xs mb-4">Company</h4>
                         <ul className="text-gray-500 text-xs space-y-2">
-                            <li><a href="#" className="hover:text-[#003057]">About</a></li>
-                            <li><a href="#" className="hover:text-[#003057]">Blog</a></li>
-                            <li><a href="#" className="hover:text-[#003057]">Contact</a></li>
+                            <li><a href="#" className="hover:text-[#020817]">About</a></li>
+                            <li><a href="#" className="hover:text-[#020817]">Blog</a></li>
+                            <li><a href="#" className="hover:text-[#020817]">Contact</a></li>
                         </ul>
                     </div>
 
                     {/* Legal */}
                     <div>
-                        <h4 className="text-[#003057] font-medium text-xs mb-4">Legal</h4>
+                        <h4 className="text-[#020817] font-medium text-xs mb-4">Legal</h4>
                         <ul className="text-gray-500 text-xs space-y-2">
-                            <li><Link href="/privacy" className="hover:text-[#003057]">Privacy</Link></li>
-                            <li><Link href="/terms" className="hover:text-[#003057]">Terms</Link></li>
+                            <li><Link href="/privacy" className="hover:text-[#020817]">Privacy</Link></li>
+                            <li><Link href="/terms" className="hover:text-[#020817]">Terms</Link></li>
                         </ul>
                     </div>
 
                     {/* Socials */}
                     <div>
-                        <h4 className="text-[#003057] font-medium text-xs mb-4">Socials</h4>
+                        <h4 className="text-[#020817] font-medium text-xs mb-4">Socials</h4>
                         <ul className="text-gray-500 text-xs space-y-2">
-                            <li><a href="https://x.com/freightcode" className="hover:text-[#003057]">X</a></li>
-                            <li><a href="https://linkedin.com/company/freightcode" className="hover:text-[#003057]">LinkedIn</a></li>
-                            <li><a href="https://youtube.com/@freightcode" className="hover:text-[#003057]">YouTube</a></li>
+                            <li><a href="https://x.com/freightcode" className="hover:text-[#020817]">X</a></li>
+                            <li><a href="https://linkedin.com/company/freightcode" className="hover:text-[#020817]">LinkedIn</a></li>
+                            <li><a href="https://youtube.com/@freightcode" className="hover:text-[#020817]">YouTube</a></li>
                         </ul>
                     </div>
 
                     {/* Security & Trust */}
                     <div>
-                        <h4 className="text-[#003057] font-medium text-xs mb-4">Security & Trust</h4>
+                        <h4 className="text-[#020817] font-medium text-xs mb-4">Security & Trust</h4>
                         <ul className="text-gray-500 text-xs space-y-2">
                             <li>Secure billing via Stripe</li>
                             <li>Enterprise authentication</li>
@@ -451,30 +452,22 @@ export default function LandingPage() {
 
                     {/* Trusted Infrastructure */}
                     <div>
-                        <h4 className="text-[#003057] font-medium text-xs mb-4">Trusted Infrastructure</h4>
+                        <h4 className="text-[#020817] font-medium text-xs mb-4">Trusted Infrastructure</h4>
                         <ul className="text-gray-500 text-xs space-y-2">
                             <li className="flex items-center gap-2 group">
-                                <a href="https://stripe.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#003057]">Stripe</a>
+                                <a href="https://stripe.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#020817]">Stripe</a>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src="https://cdn.brandfetch.io/stripe.com?c=1idbnvbXCRylLLzZ6DP&type=symbol" alt="Stripe" className="w-3 h-3 object-contain opacity-40 group-hover:opacity-100 transition-opacity" />
                             </li>
                             <li className="flex items-center gap-2 group">
-                                <a href="https://clerk.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#003057]">Clerk</a>
+                                <a href="https://clerk.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#020817]">Clerk</a>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src="https://cdn.brandfetch.io/clerk.com?c=1idbnvbXCRylLLzZ6DP&type=symbol" alt="Clerk" className="w-3 h-3 object-contain opacity-40 group-hover:opacity-100 transition-opacity" />
                             </li>
                             <li className="flex items-center gap-2 group">
-                                <a href="https://convex.dev" target="_blank" rel="noopener noreferrer" className="hover:text-[#003057]">Convex</a>
+                                <a href="https://convex.dev" target="_blank" rel="noopener noreferrer" className="hover:text-[#020817]">Convex</a>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src="https://cdn.brandfetch.io/convex.dev?c=1idbnvbXCRylLLzZ6DP&type=symbol" alt="Convex" className="w-3 h-3 object-contain opacity-40 group-hover:opacity-100 transition-opacity" />
-                            </li>
-                            <li className="flex items-center gap-2 group">
-                                <a href="https://docusignimpact.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#003057]">DocuSign</a>
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src="https://cdn.brandfetch.io/idRJZsiuYV/w/57/h/57/theme/dark/logo.png?c=1bxid64Mup7aczewSAYMX&t=1759225919166" alt="DocuSign" className="w-3.5 h-3.5 object-contain opacity-50 group-hover:opacity-100 transition-opacity" />
-                            </li>
-                            <li className="flex items-center gap-2 group">
-                                <a href="https://www.gov.uk/government/organisations/hm-revenue-customs" target="_blank" rel="noopener noreferrer" className="hover:text-[#003057]">HMRC</a>
                             </li>
                         </ul>
                     </div>
