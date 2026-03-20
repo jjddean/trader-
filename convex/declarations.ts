@@ -131,3 +131,75 @@ export const getAllDecls = query({
     return await ctx.db.query("declarations").collect();
   }
 });
+
+export const getDashboardStats = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const decls = await ctx.db
+      .query("declarations")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .collect();
+
+    let totalDuty = 0;
+    let importValue = 0;
+    
+    // Group duty by HS Code
+    const hsCodeDutyMap: Record<string, number> = {};
+    
+    // Enrich top 7 recent declarations
+    const recentDeclarations = [];
+
+    for (const decl of decls) {
+      const items = await ctx.db
+        .query("goods_items")
+        .withIndex("by_declaration", (q) => q.eq("declarationId", decl._id))
+        .collect();
+
+      let declValue = 0;
+      let declDuty = 0;
+
+      for (const item of items) {
+        const val = item.valueAmount || 0;
+        const duty = val * 0.1; // Flat 10% duty estimate for Dashboard
+        
+        declValue += val;
+        declDuty += duty;
+        totalDuty += duty;
+        importValue += val;
+
+        if (item.commodityCode) {
+          const code = item.commodityCode.substring(0, 4);
+          hsCodeDutyMap[code] = (hsCodeDutyMap[code] || 0) + duty;
+        }
+      }
+
+      if (recentDeclarations.length < 7) {
+        recentDeclarations.push({
+          id: decl._id,
+          date: new Date(decl.created || Date.now()).toLocaleDateString("en-GB", { day: 'numeric', month: 'short' }),
+          mrn: decl.mrn || "Draft",
+          status: decl.status || "Draft",
+          value: declValue,
+          duty: declDuty,
+        });
+      }
+    }
+
+    const chartData = Object.entries(hsCodeDutyMap)
+      .map(([code, duty]) => ({ code, duty }))
+      .sort((a, b) => b.duty - a.duty)
+      .slice(0, 6);
+
+    return {
+      kpis: {
+        totalDuty,
+        importValue,
+        declarationsCount: decls.length,
+        avgDuty: decls.length > 0 ? totalDuty / decls.length : 0,
+      },
+      chartData,
+      recentDeclarations,
+    };
+  },
+});

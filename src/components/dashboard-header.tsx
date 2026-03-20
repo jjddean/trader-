@@ -1,7 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, Bell, Zap, ShieldAlert, CheckCircle2 } from "lucide-react";
+import { Search, Bell, Zap, ShieldAlert, CheckCircle2, FileText, Package, XCircle, Clock } from "lucide-react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
+
+function timeAgo(dateString: string) {
+  if (!dateString) return "just now";
+  const date = new Date(dateString);
+  const diffMs = new Date().getTime() - date.getTime();
+  const diffMins = Math.round(diffMs / 60000);
+  if (diffMins < 60) return `${Math.max(1, diffMins)} mins ago`;
+  const diffHours = Math.round(diffMins / 60);
+  if (diffHours < 24) return `${diffHours} hours ago`;
+  return `${Math.round(diffHours / 24)} days ago`;
+}
 import { cn } from "@/lib/utils";
 import { GlobalSearchOverlay } from "./global-search-overlay";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -52,6 +66,11 @@ export const DashboardHeader = ({
   const [internalValue, setInternalValue] = React.useState(searchValue);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  const { user } = useUser();
+  const userId = user?.id;
+  const notifications = useQuery(api.notifications.getUserNotifications, userId ? { userId } : "skip");
+  const unreadCount = notifications?.filter(n => !n.processed).length || 0;
 
   React.useEffect(() => {
     if (!isControlled) setInternalValue(searchValue);
@@ -128,59 +147,61 @@ export const DashboardHeader = ({
         {mounted ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex h-[32px] w-[32px] items-center justify-center rounded-md border border-gray-200 bg-white transition-colors hover:bg-gray-50 active:scale-95">
+              <button className="relative flex h-[32px] w-[32px] items-center justify-center rounded-md border border-gray-200 bg-white transition-colors hover:bg-gray-50 active:scale-95">
                 <Bell className="h-3.5 w-3.5 text-gray-400 stroke-[1.5]" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+                )}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 rounded-xl border-gray-200 bg-white p-0 shadow-xl overflow-hidden">
-              <div className="bg-gray-50/50 p-3 border-b border-gray-100">
+              <div className="bg-gray-50/50 p-3 border-b border-gray-100 flex items-center justify-between">
                 <DropdownMenuLabel className="p-0 text-[10px] font-semibold tracking-widest text-gray-400 uppercase">
                   Notifications
                 </DropdownMenuLabel>
+                {unreadCount > 0 && <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">{unreadCount} New</span>}
               </div>
               <div className="max-h-[320px] overflow-y-auto">
-                <DropdownMenuItem className="flex items-start gap-3 p-3 focus:bg-gray-50 cursor-pointer transition-colors">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50">
-                    <Zap className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    <p className="text-[13px] font-semibold text-black leading-tight">New Prospect Found</p>
-                    <p className="text-[11px] leading-relaxed text-gray-500">
-                      Bangladesh Garments Ltd matches your <span className="font-medium text-gray-700">HS 6109</span> lane filters.
-                    </p>
-                    <span className="mt-1 text-[10px] text-gray-400">2 mins ago</span>
-                  </div>
-                </DropdownMenuItem>
-                
-                <DropdownMenuSeparator className="m-0" />
-                
-                <DropdownMenuItem className="flex items-start gap-3 p-3 focus:bg-gray-50 cursor-pointer transition-colors">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-50">
-                    <ShieldAlert className="h-4 w-4 text-amber-600" />
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    <p className="text-[13px] font-semibold text-black leading-tight">Compliance Alert</p>
-                    <p className="text-[11px] leading-relaxed text-gray-500">
-                      New DCTS rules for <span className="font-medium text-gray-700">Vietnam</span> will be effective next month.
-                    </p>
-                    <span className="mt-1 text-[10px] text-gray-400">1 hour ago</span>
-                  </div>
-                </DropdownMenuItem>
-                
-                <DropdownMenuSeparator className="m-0" />
-                
-                <DropdownMenuItem className="flex items-start gap-3 p-3 focus:bg-gray-50 cursor-pointer transition-colors">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-50">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    <p className="text-[13px] font-semibold text-black leading-tight">Verification Complete</p>
-                    <p className="text-[11px] leading-relaxed text-gray-500">
-                      Your trade lane to <span className="font-medium text-gray-700">Cambodia</span> has been successfully verified.
-                    </p>
-                    <span className="mt-1 text-[10px] text-gray-400">3 hours ago</span>
-                  </div>
-                </DropdownMenuItem>
+                {notifications === undefined ? (
+                  <div className="p-4 text-center text-[11px] text-gray-400">Loading notifications...</div>
+                ) : notifications.length === 0 ? (
+                  <div className="p-4 text-center text-[11px] text-gray-400">You're all caught up!</div>
+                ) : (
+                  notifications.map((n: any, idx: number) => {
+                    let Icon = Zap;
+                    let bgColor = "bg-blue-50";
+                    let iconColor = "text-blue-600";
+                    let title = n.notificationType;
+
+                    if (title === "CLEARED") { Icon = CheckCircle2; bgColor = "bg-green-50"; iconColor = "text-green-600"; title = "Clearance Received"; }
+                    if (title === "ACCEPTED") { Icon = CheckCircle2; bgColor = "bg-green-50"; iconColor = "text-green-600"; title = "Declaration Accepted"; }
+                    if (title === "REJECTED") { Icon = XCircle; bgColor = "bg-red-50"; iconColor = "text-red-600"; title = "Declaration Rejected"; }
+                    if (title === "HELD") { Icon = Clock; bgColor = "bg-amber-50"; iconColor = "text-amber-600"; title = "Goods Held"; }
+                    if (title === "GOODS_ARRIVED") { Icon = Package; bgColor = "bg-blue-50"; iconColor = "text-blue-600"; title = "Goods Arrived"; }
+                    if (title === "DOCUMENTS_REQUIRED") { Icon = FileText; bgColor = "bg-amber-50"; iconColor = "text-amber-600"; title = "Documents Required"; }
+
+                    return (
+                      <React.Fragment key={n._id}>
+                        {idx > 0 && <DropdownMenuSeparator className="m-0" />}
+                        <DropdownMenuItem className="flex items-start gap-3 p-3 focus:bg-gray-50 cursor-pointer transition-colors relative">
+                          {!n.processed && <div className="absolute left-1.5 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-blue-500" />}
+                          <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full mt-0.5", bgColor)}>
+                            <Icon className={cn("h-4 w-4", iconColor)} />
+                          </div>
+                          <div className="flex flex-col gap-0.5 w-full">
+                            <div className="flex justify-between items-start w-full gap-2">
+                              <p className="text-[13px] font-semibold text-black leading-tight line-clamp-1">{title}</p>
+                              <span className="text-[9px] text-gray-400 whitespace-nowrap mt-0.5">{timeAgo(n.timestamp)}</span>
+                            </div>
+                            <p className="text-[11px] leading-relaxed text-gray-500">
+                              MRN: <span className="font-medium text-gray-700">{n.mrn || "Pending"}</span>
+                            </p>
+                          </div>
+                        </DropdownMenuItem>
+                      </React.Fragment>
+                    );
+                  })
+                )}
               </div>
               <div className="border-t border-gray-100 bg-gray-50/50 p-2">
                 <button className="w-full rounded-md py-1 text-center text-[10px] font-medium text-gray-500 hover:text-black transition-colors">

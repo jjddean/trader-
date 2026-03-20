@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { dctsCountries } from "@/lib/data/stub-dcts";
 
 export default function GoodsItemsPage() {
   const params = useParams<{ id: string }>();
@@ -255,49 +256,49 @@ export default function GoodsItemsPage() {
             <DialogTitle>Add Goods Item</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <label htmlFor="origin" className="text-xs font-medium text-gray-700">
-                ORIGIN COUNTRY
+            <div>
+              <label htmlFor="origin" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+                Origin Country
               </label>
               <Select value={originCountry} onValueChange={setOriginCountry}>
-                <SelectTrigger id="origin" className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                <SelectTrigger id="origin" className="h-9 w-full rounded-md border-gray-200 bg-gray-50 text-xs text-gray-700">
                   <SelectValue placeholder="Select Origin Country" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="GB">United Kingdom (GB)</SelectItem>
-                  <SelectItem value="US">United States (US)</SelectItem>
-                  <SelectItem value="CN">China (CN)</SelectItem>
-                  <SelectItem value="BD">Bangladesh (BD)</SelectItem>
-                  <SelectItem value="DE">Germany (DE)</SelectItem>
+                <SelectContent position="popper" className="max-h-[300px]">
+                  {dctsCountries.map((country) => (
+                    <SelectItem key={country.name} value={country.name} className="text-xs">
+                      {country.name} ({country.tier})
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
-              <label htmlFor="hsCode" className="text-xs font-medium text-gray-700">
-                HS CODE (OPTIONAL)
+            <div>
+              <label htmlFor="hsCode" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+                HS Code (Optional)
               </label>
               <input
                 id="hsCode"
                 value={hsCode}
                 onChange={(e) => setHsCode(e.target.value)}
-                placeholder="e.g., 6109100010"
-                className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="e.g. 6109100010"
+                className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none"
               />
             </div>
-            <div className="grid gap-2">
-              <label htmlFor="description" className="text-xs font-medium text-gray-700">
-                DESCRIPTION
+            <div>
+              <label htmlFor="description" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+                Description
               </label>
               <Select value={description} onValueChange={setDescription}>
-                <SelectTrigger id="description" className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                <SelectTrigger id="description" className="h-9 w-full rounded-md border-gray-200 bg-gray-50 text-xs text-gray-700">
                   <SelectValue placeholder="Select Cargo Description" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Knitwear">Knitwear</SelectItem>
-                  <SelectItem value="Electronics">Electronics</SelectItem>
-                  <SelectItem value="Machinery">Machinery</SelectItem>
-                  <SelectItem value="Apparel">Apparel</SelectItem>
-                  <SelectItem value="Furniture">Furniture</SelectItem>
+                <SelectContent position="popper" className="max-h-[300px]">
+                  <SelectItem value="Knitwear" className="text-xs">Knitwear</SelectItem>
+                  <SelectItem value="Electronics" className="text-xs">Electronics</SelectItem>
+                  <SelectItem value="Machinery" className="text-xs">Machinery</SelectItem>
+                  <SelectItem value="Apparel" className="text-xs">Apparel</SelectItem>
+                  <SelectItem value="Furniture" className="text-xs">Furniture</SelectItem>
                 </SelectContent>
               </Select>
             </div>

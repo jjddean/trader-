@@ -206,7 +206,7 @@ export default function DocumentsPage() {
     <div className="space-y-8 p-8">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Smart Upload</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Documents</h1>
           <p className="mt-1 text-sm text-gray-500">
             Validate eligibility, simulate Rules of Origin, and estimate landed costs.
           </p>

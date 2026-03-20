@@ -83,7 +83,7 @@ export async function POST(request: Request) {
     }
 
     const extractedItems = parsedResponse.items || [];
-    return NextResponse.json({ items: extractedItems });
+    return NextResponse.json({ items: extractedItems, rawText });
 
   } catch (error: any) {
     console.error("AI Extractor Error:", error);

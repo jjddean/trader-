@@ -20,6 +20,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import * as Select from "@radix-ui/react-select";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
 
 const API_URL = process.env.NEXT_PUBLIC_AUDIT_API_URL || "http://localhost:9500";
 
@@ -46,6 +49,12 @@ export default function ComplyAuditConsole() {
   const [activeTab, setActiveTab] = useState<"manual" | "upload">("manual");
   const [dragActive, setDragActive] = useState(false);
   const [uploadStage, setUploadStage] = useState("");
+  const [selectedMrn, setSelectedMrn] = useState<string>("unlinked");
+
+  const { user } = useUser();
+  const declarations = useQuery(api.declarations.getAllDecls) || [];
+  const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
+  const saveDocument = useMutation(api.documents.saveDocument);
 
   const handleAudit = async (textToAudit?: string) => {
     const text = textToAudit || rawText;
@@ -78,30 +87,51 @@ export default function ComplyAuditConsole() {
 
   const handleFile = async (file: File) => {
     setLoading(true);
-    setUploadStage("Reading file...");
+    setUploadStage("Preparing Document Vault...");
     try {
-      let text = "";
+      // 1. Upload to Convex Storage Secure Vault
+      setUploadStage("Uploading to Secure Vault...");
+      const postUrl = await generateUploadUrl();
+      const uploadResult = await fetch(postUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      const { storageId } = await uploadResult.json();
 
-      if (file.name.endsWith(".txt") || file.type === "text/plain") {
-        text = await file.text();
-      } else if (file.name.endsWith(".pdf") || file.type === "application/pdf") {
-        const buffer = await file.arrayBuffer();
-        const bytes = new Uint8Array(buffer);
-        text = Array.from(bytes)
-          .map(b => (b >= 32 && b <= 126) ? String.fromCharCode(b) : " ")
-          .join("")
-          .replace(/\s{3,}/g, "\n")
-          .trim();
-        if (text.length < 50) {
-          throw new Error("Could not extract text from PDF. For scanned documents, use Manual Paste with OCR output.");
-        }
-      } else {
-        throw new Error("Image OCR requires a cloud service (Textract). Use Manual Paste and paste the OCR output text.");
+      // 2. OCR Extraction via AWS Textract
+      setUploadStage("Extracting text via AWS Textract OCR...");
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const extractRes = await fetch("/api/ai/extract", {
+        method: "POST",
+        body: formData,
+      });
+      
+      if (!extractRes.ok) {
+        throw new Error("AWS Textract failed to extract text from this document. Please check the file validity.");
       }
+      
+      const { items, rawText: extractedText } = await extractRes.json();
+      if (!extractedText) throw new Error("No readable text could be found by Textract.");
+      
+      setRawText(extractedText);
 
-      setRawText(text);
+      // 3. Save to database securely linked to the Declaration
+      setUploadStage("Saving metadata to database...");
+      await saveDocument({
+        storageId,
+        userId: user?.id || "unknown",
+        fileName: file.name,
+        mrn: selectedMrn === "unlinked" ? undefined : selectedMrn,
+        fileType: docType,
+        auditStatus: "pending"
+      });
+
+      // 4. Hit compliance audit using extracted AWS Textract OCR code
       setUploadStage("Running Compliance Audit...");
-      await handleAudit(text);
+      await handleAudit(extractedText);
     } catch (error: any) {
       setResult({
         status: "flagged",
@@ -182,44 +212,85 @@ export default function ComplyAuditConsole() {
           </div>
 
           <div className="space-y-5">
-            {/* Document Type Selector */}
-            <div className="w-full max-w-xs">
-              <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
-                Document Type
-              </label>
-              <Select.Root value={docType} onValueChange={setDocType}>
-                <Select.Trigger className="flex h-9 w-full items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none data-[placeholder]:text-gray-400">
-                  <Select.Value placeholder="Select type..." />
-                  <Select.Icon>
-                    <ChevronDown className="h-4 w-4 text-gray-400" />
-                  </Select.Icon>
-                </Select.Trigger>
-                <Select.Portal>
-                  <Select.Content className="z-50 min-w-[16rem] overflow-hidden rounded-lg border border-gray-100 bg-white shadow-lg" position="popper" sideOffset={4}>
-                    <Select.Viewport className="p-1">
-                      {[
-                        { value: "auto", label: "Auto-detect Type" },
-                        { value: "commercial_invoice", label: "Commercial Invoice" },
-                        { value: "packing_list", label: "Packing List" },
-                        { value: "bol", label: "Bill of Lading" },
-                        { value: "air_waybill", label: "Air Waybill" },
-                        { value: "certificate_of_origin", label: "Certificate of Origin" },
-                      ].map((item) => (
-                        <Select.Item
-                          key={item.value}
-                          value={item.value}
-                          className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50"
-                        >
+            <div className="grid grid-cols-2 gap-4 w-full">
+              {/* Document Type Selector */}
+              <div className="w-full flex-1">
+                <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+                  Document Type
+                </label>
+                <Select.Root value={docType} onValueChange={setDocType}>
+                  <Select.Trigger className="flex h-9 w-full items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none data-[placeholder]:text-gray-400">
+                    <Select.Value placeholder="Select type..." />
+                    <Select.Icon>
+                      <ChevronDown className="h-4 w-4 text-gray-400" />
+                    </Select.Icon>
+                  </Select.Trigger>
+                  <Select.Portal>
+                    <Select.Content className="z-50 min-w-[16rem] overflow-hidden rounded-lg border border-gray-100 bg-white shadow-lg" position="popper" sideOffset={4}>
+                      <Select.Viewport className="p-1">
+                        {[
+                          { value: "auto", label: "Auto-detect Type" },
+                          { value: "commercial_invoice", label: "Commercial Invoice" },
+                          { value: "packing_list", label: "Packing List" },
+                          { value: "bol", label: "Bill of Lading" },
+                          { value: "air_waybill", label: "Air Waybill" },
+                          { value: "certificate_of_origin", label: "Certificate of Origin" },
+                        ].map((item) => (
+                          <Select.Item
+                            key={item.value}
+                            value={item.value}
+                            className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50"
+                          >
+                            <Select.ItemIndicator className="absolute left-2 inline-flex items-center">
+                              <Check className="h-3.5 w-3.5 text-gray-500" />
+                            </Select.ItemIndicator>
+                            <Select.ItemText>{item.label}</Select.ItemText>
+                          </Select.Item>
+                        ))}
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select.Portal>
+                </Select.Root>
+              </div>
+
+              {/* MRN Selector */}
+              <div className="w-full flex-1">
+                <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+                  Link to Declaration (MRN)
+                </label>
+                <Select.Root value={selectedMrn} onValueChange={setSelectedMrn}>
+                  <Select.Trigger className="flex h-9 w-full items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none data-[placeholder]:text-gray-400">
+                    <Select.Value placeholder="Select MRN..." />
+                    <Select.Icon>
+                      <ChevronDown className="h-4 w-4 text-gray-400" />
+                    </Select.Icon>
+                  </Select.Trigger>
+                  <Select.Portal>
+                    <Select.Content className="z-50 min-w-[16rem] overflow-hidden rounded-lg border border-gray-100 bg-white shadow-lg" position="popper" sideOffset={4}>
+                      <Select.Viewport className="p-1">
+                        <Select.Item value="unlinked" className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50">
                           <Select.ItemIndicator className="absolute left-2 inline-flex items-center">
                             <Check className="h-3.5 w-3.5 text-gray-500" />
                           </Select.ItemIndicator>
-                          <Select.ItemText>{item.label}</Select.ItemText>
+                          <Select.ItemText>Do not link</Select.ItemText>
                         </Select.Item>
-                      ))}
-                    </Select.Viewport>
-                  </Select.Content>
-                </Select.Portal>
-              </Select.Root>
+                        {declarations?.filter((d: any) => d.mrn).map((d: any) => (
+                          <Select.Item
+                            key={d.mrn}
+                            value={d.mrn}
+                            className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50"
+                          >
+                            <Select.ItemIndicator className="absolute left-2 inline-flex items-center">
+                              <Check className="h-3.5 w-3.5 text-gray-500" />
+                            </Select.ItemIndicator>
+                            <Select.ItemText>{d.mrn}</Select.ItemText>
+                          </Select.Item>
+                        ))}
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select.Portal>
+                </Select.Root>
+              </div>
             </div>
 
             {/* Manual Paste Section */}

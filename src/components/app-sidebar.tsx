@@ -31,7 +31,7 @@ import {
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/documents", label: "Smart Upload", icon: FileText },
+  { href: "/dashboard/documents", label: "Documents", icon: FileText },
   { href: "/dashboard/declarations", label: "Declarations", icon: Compass },
   { href: "/dashboard/audit", label: "Compliance Audit", icon: ShieldCheck },
   { href: "/dashboard/reports", label: "Customs Reports", icon: FileSpreadsheet },

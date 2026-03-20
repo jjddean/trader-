@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Search, Building2, Landmark } from "lucide-react";
+import { Download, Search, Building2, Landmark, FileText, CheckCircle2, Copy, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import Link from "next/link";
 
 // Static mock data for UI review
 const MOCK_RECORDS = [
@@ -13,6 +15,11 @@ const MOCK_RECORDS = [
     amount: 12500.00,
     method: "Deferment Account (DAN)",
     date: "17 Mar 2026",
+    accountNumber: "DAN 8931234",
+    statementContext: "March 2026 Statement",
+    paymentLimit: "£1,200,000.00",
+    calculationMethod: "Customs Value £125,000.00 × 10%",
+    natureOfTransaction: "11 (Outright Purchase)",
   },
   {
     mrn: "MRN_8839201A",
@@ -20,6 +27,11 @@ const MOCK_RECORDS = [
     amount: 4200.50,
     method: "Postponed VAT Accounting",
     date: "17 Mar 2026",
+    accountNumber: "PVA Declared",
+    statementContext: "March 2026 PVA Statement",
+    paymentLimit: "N/A",
+    calculationMethod: "(Value £125k + Duty £12.5k) × 20%",
+    natureOfTransaction: "11 (Outright Purchase)",
   },
   {
     mrn: "MRN_9100223B",
@@ -27,11 +39,23 @@ const MOCK_RECORDS = [
     amount: 800.00,
     method: "Cash / Immediate Payment",
     date: "16 Mar 2026",
+    accountNumber: "FAS 9876543",
+    statementContext: "Instant Clearance: 16:45:00",
+    paymentLimit: "Available Balance: £1,200.00",
+    calculationMethod: "Customs Value £10,000.00 × 8%",
+    natureOfTransaction: "11 (Outright Purchase)",
   },
 ];
 
 export default function RecordsPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedRecord, setSelectedRecord] = useState<typeof MOCK_RECORDS[0] | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = () => {
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
 
   const totalDuty = MOCK_RECORDS.filter(r => r.type.includes("Duty")).reduce((acc, curr) => acc + curr.amount, 0);
   const totalPVA = MOCK_RECORDS.filter(r => r.type.includes("VAT")).reduce((acc, curr) => acc + curr.amount, 0);
@@ -111,7 +135,8 @@ export default function RecordsPage() {
                 {MOCK_RECORDS.map((record, idx) => (
                   <tr
                     key={idx}
-                    className="group transition-colors hover:bg-gray-50"
+                    onClick={() => setSelectedRecord(record)}
+                    className="group cursor-pointer transition-colors hover:bg-gray-50"
                   >
                     <td className="px-6 py-4">
                       <span className="text-xs font-semibold text-black">
@@ -141,6 +166,105 @@ export default function RecordsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Side Sheet for Financial Record Details */}
+      <Sheet open={!!selectedRecord} onOpenChange={(open) => !open && setSelectedRecord(null)}>
+        <SheetContent side="right" className="overflow-y-auto custom-scrollbar sm:max-w-none w-full p-0" style={{ maxWidth: '800px' }}>
+          {selectedRecord && (
+            <div className="flex flex-col min-h-full">
+              <SheetHeader className="px-6 sm:px-8 pt-6 pb-6 border-b border-gray-100 flex flex-row items-center justify-between shrink-0 sticky top-0 bg-white z-10">
+                <div>
+                  <SheetTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
+                    <Landmark className="h-4 w-4 text-gray-400" />
+                    Tax Line Record
+                  </SheetTitle>
+                  <SheetDescription className="mt-1 flex items-center gap-2 text-xs">
+                    <span>{selectedRecord.date}</span>
+                    <span className="h-1 w-1 rounded-full bg-gray-300" />
+                    <span>{selectedRecord.mrn}</span>
+                  </SheetDescription>
+                </div>
+                
+                {/* Minimal Action Buttons Matching Documents Page Style */}
+                <div className="flex items-center gap-2 mr-8">
+                  <button onClick={handleCopy} className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer">
+                    <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">
+                        {isCopied ? "COPIED" : "COPY"}
+                    </span>
+                    {isCopied ? (
+                        <CheckCircle2 className="h-3 w-3 text-green-500" />
+                    ) : (
+                        <Copy className="h-3 w-3 text-gray-300 transition-colors group-hover:text-gray-500" />
+                    )}
+                  </button>
+                  <button className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer">
+                    <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">DOWNLOAD</span>
+                    <Download className="h-3 w-3 text-gray-300 transition-colors group-hover:text-gray-500" />
+                  </button>
+                </div>
+              </SheetHeader>
+
+              {/* Populated Body Rendering Financial Tax Ledgers */}
+              <div className="pt-6 px-6 sm:px-8 pb-12 space-y-8">
+                {/* Transaction & Account Details Section */}
+                <section>
+                  <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-gray-500 border-b border-gray-100 pb-2">Transaction & Account Details</h3>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4">
+                    <div>
+                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Account Used</p>
+                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedRecord.method}</p>
+                      <p className="text-[0.6875rem] text-gray-500 mt-0.5">{selectedRecord.accountNumber}</p>
+                    </div>
+                    <div>
+                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Statement Context</p>
+                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedRecord.statementContext}</p>
+                    </div>
+                    <div>
+                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Payment Limits / Balance</p>
+                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedRecord.paymentLimit}</p>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Tax Line Breakdown Section */}
+                <section>
+                  <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-gray-500 border-b border-gray-100 pb-2">Tax Line Breakdown</h3>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4">
+                    <div>
+                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Specific Tax Type</p>
+                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedRecord.type}</p>
+                    </div>
+                    <div>
+                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Calculation Method</p>
+                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedRecord.calculationMethod}</p>
+                    </div>
+                    <div>
+                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Nature of Transaction</p>
+                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedRecord.natureOfTransaction}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-8 rounded-lg bg-gray-50 p-4 border border-gray-100 flex items-center justify-between">
+                     <div>
+                       <p className="text-xs font-semibold text-gray-900">Total Tax Amount</p>
+                       <p className="text-[0.625rem] text-gray-500 mt-0.5">Calculated value for this ledger line</p>
+                     </div>
+                     <p className="text-xl font-bold tracking-tight text-gray-900">
+                       £{selectedRecord.amount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                     </p>
+                  </div>
+                  
+                  <div className="mt-6 flex justify-end">
+                    <Link href="/dashboard/reports" className="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
+                      View Full Declaration Report <ChevronRight className="h-3 w-3" />
+                    </Link>
+                  </div>
+                </section>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

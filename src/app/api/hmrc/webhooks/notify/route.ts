@@ -38,13 +38,29 @@ export async function POST(request: Request) {
         notificationType = "CLEARED";
       } else if (payloadStr.includes("Accepted") || payloadStr.includes("02")) {
         notificationType = "ACCEPTED";
+      } else if (payloadStr.includes("Goods Arrived") || payloadStr.includes("06")) {
+        notificationType = "GOODS_ARRIVED";
+      } else if (payloadStr.includes("Held") || payloadStr.includes("Under Control") || payloadStr.includes("03")) {
+        notificationType = "HELD";
+      } else if (payloadStr.includes("Documents Required") || payloadStr.includes("AdditionalDocument") || payloadStr.includes("04") || payloadStr.includes("21")) {
+        notificationType = "DOCUMENTS_REQUIRED";
       }
     }
 
     let mrn = "UNKNOWN";
-    const mrnMatch = payloadStr.match(/<(?:.*?:)?MRN>(.*?)<\/(?:.*?:)?MRN>/);
-    if (mrnMatch && mrnMatch[1]) {
-      mrn = mrnMatch[1];
+    
+    // CDS WCO XML returns the MRN in <Declaration><ID>24GB...
+    // Or sometimes explicitly as <MovementReferenceNumber> depending on the notification type
+    const idMatch = payloadStr.match(/<(?:[^>]*:)?ID[^>]*>([0-9]{2}[A-Za-z]{2}[A-Za-z0-9]{14})<\/(?:[^>]*:)?ID>/i);
+    const mrnTagMatch = payloadStr.match(/<(?:[^>]*:)?MRN[^>]*>([a-zA-Z0-9]{18})<\/(?:[^>]*:)?MRN>/i);
+    const mRNMatch = payloadStr.match(/<(?:[^>]*:)?MovementReferenceNumber[^>]*>([a-zA-Z0-9]{18})<\/(?:[^>]*:)?MovementReferenceNumber>/i);
+
+    if (idMatch && idMatch[1]) {
+      mrn = idMatch[1];
+    } else if (mrnTagMatch && mrnTagMatch[1]) {
+      mrn = mrnTagMatch[1];
+    } else if (mRNMatch && mRNMatch[1]) {
+      mrn = mRNMatch[1];
     }
 
     await convex.mutation(api.notifications.saveWebhook, {

@@ -1,261 +1,241 @@
 "use client";
 
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
-import { AlertCircle, TrendingDown, CheckCircle2, Factory, FileSpreadsheet, Scale, RefreshCw, UploadCloud, Users } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { AlertCircle, PoundSterling, FileText, ArrowUpRight, TrendingUp, Archive, RefreshCw } from "lucide-react";
 
 export default function DashboardPage() {
   const { user } = useUser();
   const userId = user?.id || "";
 
-  // The backend function is fully intact
-  const analyticsData = useQuery(api.analytics.getDashboardAnalytics, userId ? { userId } : "skip");
-  const loadMockData = useMutation(api.analytics.loadMockData);
-  const [loadingDemodata, setLoadingDemoData] = useState(false);
+  const stats = useQuery(api.declarations.getDashboardStats, userId ? { userId } : "skip");
 
-  const handleLoadDemoData = async () => {
-    if (!userId) return;
-    setLoadingDemoData(true);
-    try {
-      await loadMockData({ userId });
-    } finally {
-      setLoadingDemoData(false);
-    }
-  };
-
-  if (!analyticsData) {
+  if (!stats) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
            <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground/60" />
-           <p className="text-sm font-medium text-muted-foreground">Loading HMRC Analytics...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const { kpis, alerts, brokerAccuracy } = analyticsData;
-
-  // Render Empty State if no records
-  if (kpis.totalRecords === 0) {
-    return (
-      <div className="mx-auto max-w-4xl px-4 py-16 text-center">
-        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-muted shadow-inner">
-          <UploadCloud className="h-10 w-10 text-muted-foreground" />
-        </div>
-        <h2 className="mb-4 text-2xl font-medium tracking-tight text-foreground">
-          No Historical Declarations Found
-        </h2>
-        <p className="mx-auto mb-8 max-w-lg text-muted-foreground leading-relaxed">
-          Connect your HMRC Government Gateway account or upload a historic CSV export to begin uncovering missed duty savings and running compliance audits.
-        </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button className="h-11 px-8">Connect HMRC Account</Button>
-          <Button 
-            variant="outline" 
-            className="h-11 px-8"
-            onClick={handleLoadDemoData}
-            disabled={loadingDemodata}
-          >
-            {loadingDemodata ? "Loading..." : "Inject Demo Data"}
-          </Button>
+           <p className="text-sm font-medium text-muted-foreground">Loading HMRC Live Data...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 p-8">
+    <div className="space-y-8 p-8 max-w-7xl mx-auto">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-gray-900">Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Historical HMRC data analysis and compliance scoring.
-          </p>
+          <p className="mt-1 text-sm text-gray-500">Welcome back, {user?.firstName || "Trader"}</p>
         </div>
       </div>
 
-      {/* Top Main KPIs */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {/* Compliance Score */}
-        <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
-              Compliance Health
-            </p>
-            <CheckCircle2 className={cn("h-4 w-4", Number(kpis.complianceScore) > 90 ? "text-green-500" : "text-amber-500")} />
-          </div>
-          <h2 className="text-2xl font-medium tracking-tight text-foreground tabular-nums">
-            {kpis.complianceScore}%
-          </h2>
-          <p className="mt-1 text-[0.625rem] text-gray-500">
-            {kpis.anomaliesCount} anomalies detected across {kpis.totalRecords} records
-          </p>
-        </div>
+      {/* 1. KPI ROW */}
+      <KpiRow kpis={stats.kpis} />
 
-        {/* Missed Duty Savings */}
-        <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
-              Identified Missed Savings
-            </p>
-            <TrendingDown className="h-4 w-4 text-gray-400" />
-          </div>
-          <h2 className="text-2xl font-medium tracking-tight text-foreground tabular-nums">
-            £{kpis.totalMissedSavings.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </h2>
-          <p className="mt-1 text-[0.625rem] text-gray-500">
-            Capital tied up in unclaimed trade preferences
-          </p>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+        {/* 2. CHART */}
+        <DutyByHsChart data={stats.chartData} />
 
-        {/* Total Duty Paid */}
-        <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
-          <div className="flex items-center justify-between mb-1">
-            <p className="text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
-              Total Duty Paid (Historical)
-            </p>
-            <Scale className="h-4 w-4 text-gray-400" />
-          </div>
-          <h2 className="text-2xl font-medium tracking-tight text-foreground tabular-nums">
-            £{(kpis.totalDutyPaid / 1000).toFixed(1)}k
-          </h2>
-          <p className="mt-1 text-[0.625rem] text-gray-500">
-            Across {kpis.totalRecords} imported records
-          </p>
-        </div>
+        {/* 4. AUDITS (STATIC UNTIL WIRING) */}
+        <ActionableAudits />
       </div>
 
-      {/* Alert Cards Row */}
-      <h3 className="text-base font-semibold text-foreground">Actionable Audits</h3>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        
-        {/* Preference Alert */}
-        <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
-          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-5 py-3">
-            <AlertCircle className="h-4 w-4 text-gray-400" />
-            <h3 className="text-sm font-medium text-black">Missed DCTS/EU Preference</h3>
-            <span className="ml-auto rounded-[4px] bg-gray-50 px-2 py-0.5 text-[0.625rem] font-semibold text-muted-foreground border border-[#e9e9e7]">
-              {alerts.missedPreferences.length} FLAGS
-            </span>
-          </div>
-          <div className="flex-1 p-5">
-            {alerts.missedPreferences.length > 0 ? (
-              <div className="space-y-4">
-                {alerts.missedPreferences.slice(0, 3).map((alert: any) => (
-                  <div key={alert.entryIdentifierMrn} className="flex justify-between items-center text-sm">
-                     <div>
-                       <p className="font-semibold text-foreground">{alert.entryIdentifierMrn}</p>
-                       <p className="text-xs text-muted-foreground">Origin: {alert.countryOfOriginCode} · Pref Code: {alert.preferenceCode || 'None'}</p>
-                     </div>
-                     <span className="text-sm font-semibold text-red-600">
-                      +£{(alert.taxLineTotalAmount || 0).toFixed(2)}
-                     </span>
-                  </div>
-                ))}
-              </div>
+      {/* 3. RECENT DECLARATIONS */}
+      <RecentDeclarations declarations={stats.recentDeclarations} />
+    </div>
+  );
+}
+
+// 1️⃣ KPI ROW
+function KpiRow({ kpis }: { kpis: any }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <KpiCard 
+        title="Total Duty (30d)" 
+        value={`£${kpis.totalDuty.toLocaleString("en-GB", { minimumFractionDigits: 2 })}`} 
+        subtitle="Duty assigned across active declarations" 
+        icon={<PoundSterling className="h-4 w-4 text-gray-400" />} 
+      />
+      <KpiCard 
+        title="Import Value" 
+        value={`£${kpis.importValue.toLocaleString("en-GB", { minimumFractionDigits: 2 })}`} 
+        subtitle="Total customs value of goods" 
+        icon={<TrendingUp className="h-4 w-4 text-gray-400" />} 
+      />
+      <KpiCard 
+        title="Declarations" 
+        value={`${kpis.declarationsCount}`} 
+        subtitle="Total declarations filed" 
+        icon={<FileText className="h-4 w-4 text-gray-400" />} 
+      />
+      <KpiCard 
+        title="Avg Duty" 
+        value={`£${kpis.avgDuty.toLocaleString("en-GB", { minimumFractionDigits: 2 })}`} 
+        subtitle="Average duty per declaration" 
+        icon={<ArrowUpRight className="h-4 w-4 text-gray-400" />} 
+      />
+    </div>
+  );
+}
+
+// KPI CARD
+function KpiCard({ title, value, subtitle, icon }: { title: string; value: string; subtitle?: string; icon: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
+          {title}
+        </p>
+        {icon}
+      </div>
+      <h2 className="text-2xl font-medium tracking-tight text-foreground tabular-nums">
+        {value}
+      </h2>
+      {subtitle && (
+        <p className="mt-1 text-[0.625rem] text-gray-500">{subtitle}</p>
+      )}
+    </div>
+  );
+}
+
+// 2️⃣ DUTY BY HS CODE CHART
+const CustomChartTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-lg border border-[#e9e9e7] bg-white px-4 py-3 shadow-sm min-w-[120px]">
+        <p className="text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase mb-1">
+          HS Code {label}
+        </p>
+        <p className="text-base font-semibold tracking-tight text-gray-900 tabular-nums">
+          £{payload[0].value.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+function DutyByHsChart({ data }: { data: any[] }) {
+  return (
+    <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none h-80">
+      <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-5 py-3">
+        <Archive className="h-4 w-4 text-gray-400" />
+        <h3 className="text-sm font-medium text-black">Duty by HS Code</h3>
+      </div>
+      <div className="flex-1 min-h-0 p-5 pt-8 pl-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
+            <XAxis 
+              dataKey="code" 
+              axisLine={false} 
+              tickLine={false} 
+              tick={{ fontSize: 11, fill: '#9ca3af', fontWeight: 500 }} 
+              dy={10} 
+            />
+            <YAxis 
+              axisLine={false} 
+              tickLine={false} 
+              tick={{ fontSize: 11, fill: '#9ca3af', fontWeight: 500 }} 
+              tickFormatter={(val) => `£${val}`} 
+            />
+            <Tooltip 
+              cursor={{ fill: '#f9fafb' }}
+              content={<CustomChartTooltip />}
+            />
+            <Bar 
+              dataKey="duty" 
+              fill="#000000" 
+              radius={[4, 4, 0, 0]} 
+              maxBarSize={48} 
+              animationDuration={1000}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+// 3️⃣ RECENT DECLARATIONS TABLE
+function RecentDeclarations({ declarations }: { declarations: any[] }) {
+  return (
+    <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
+      <div className="flex items-center justify-between border-b border-[#e9e9e7] bg-gray-50 px-5 py-3">
+        <div className="flex items-center gap-3">
+          <FileText className="h-4 w-4 text-gray-400" />
+          <h3 className="text-sm font-medium text-black">Recent Declarations</h3>
+        </div>
+        <button className="text-[0.6875rem] font-semibold tracking-widest text-blue-600 uppercase transition hover:text-blue-700">View All</button>
+      </div>
+
+      <div className="flex-1 p-0 overflow-x-auto">
+        <table className="w-full border-collapse text-left">
+          <thead>
+            <tr className="bg-white border-b border-[#e9e9e7]">
+              <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Date</th>
+              <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">MRN</th>
+              <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Status</th>
+              <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase text-right">Value</th>
+              <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase text-right">Duty</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#e9e9e7]">
+            {declarations.length > 0 ? (
+              declarations.map((decl: any) => (
+                <tr key={decl.id} className="group transition-colors hover:bg-gray-50">
+                  <td className="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">{decl.date}</td>
+                  <td className="px-6 py-4 font-mono text-[0.6875rem] text-gray-900 font-semibold">{decl.mrn}</td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-[4px] border border-gray-200 text-[0.625rem] font-semibold uppercase tracking-widest ${
+                      decl.status === 'Cleared' ? 'border-green-200 bg-green-50 text-green-700' : 
+                      decl.status === 'Rejected' ? 'border-red-200 bg-red-50 text-red-700' :
+                      'border-blue-200 bg-blue-50 text-blue-700'
+                    }`}>
+                      {decl.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right text-xs text-gray-600">
+                    £{decl.value.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
+                  </td>
+                  <td className="px-6 py-4 text-right text-xs font-semibold text-gray-900">
+                    £{decl.duty.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
+                  </td>
+                </tr>
+              ))
             ) : (
-               <p className="text-sm text-muted-foreground">No missed preference opportunities detected.</p>
+              <tr>
+                <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">
+                  No declarations found in your live data stream.
+                </td>
+              </tr>
             )}
-          </div>
-        </div>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
-        {/* Anti-Dumping Alert */}
-        <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
-          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-5 py-3">
-            <TrendingDown className="h-4 w-4 text-gray-400" />
-            <h3 className="text-sm font-medium text-black">Anti-Dumping & High Tax Types</h3>
-            <span className="ml-auto rounded-[4px] bg-gray-50 px-2 py-0.5 text-[0.625rem] font-semibold text-muted-foreground border border-[#e9e9e7]">
-              {alerts.antiDumpingPenalties.length} FLAGS
-            </span>
+// 4️⃣ ACTIONABLE AUDITS (SIMPLIFIED)
+function ActionableAudits() {
+  return (
+    <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none h-80">
+      <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-5 py-3">
+        <AlertCircle className="h-4 w-4 text-gray-400" />
+        <h3 className="text-sm font-medium text-black">Potential Overpayments</h3>
+      </div>
+      
+      <div className="flex-1 p-5 overflow-y-auto space-y-3">
+        <div className="border border-[#e9e9e7] rounded-lg p-4 flex justify-between items-center transition-all hover:bg-gray-50 cursor-pointer">
+          <div>
+            <p className="font-semibold text-sm text-foreground">Missed EU Preference</p>
+            <p className="text-xs text-muted-foreground mt-0.5">1 declaration affected</p>
           </div>
-          <div className="flex-1 p-5">
-            {alerts.antiDumpingPenalties.length > 0 ? (
-              <div className="space-y-4">
-                {alerts.antiDumpingPenalties.map((alert: any, idx: number) => (
-                  <div key={idx} className="flex flex-col border-b border-[#e9e9e7] pb-4 last:border-0 last:pb-0">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-sm text-foreground">
-                        {alert.entryIdentifierMrn || alert.mrn}
-                      </span>
-                      <span className="text-sm font-semibold text-red-600">
-                        +£{(alert.taxLineTotalAmount || alert.value || 0).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                       <p className="text-xs text-muted-foreground">Type: {alert.taxType} · Broker: {alert.declarantEori}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-               <p className="text-sm text-muted-foreground">No penalty tax types detected.</p>
-            )}
-          </div>
+          <p className="text-red-600 font-semibold text-sm">+£400</p>
         </div>
-
-        {/* PVA Alert */}
-        <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
-          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-5 py-3">
-            <FileSpreadsheet className="h-4 w-4 text-gray-400" />
-            <h3 className="text-sm font-medium text-black">Postponed VAT Accounting (PVA)</h3>
-            <span className="ml-auto rounded-[4px] bg-gray-50 px-2 py-0.5 text-[0.625rem] font-semibold text-muted-foreground border border-[#e9e9e7]">
-              {alerts.pvaChecks.length} FLAGS
-            </span>
-          </div>
-          <div className="flex-1 p-5">
-             <p className="text-sm text-muted-foreground mb-4">
-               {alerts.pvaChecks.length} imports flagged with Method of Payment &quot;G&quot;. Ensure these figures are accurately logged on your next VAT return to prevent HMRC audits.
-             </p>
-             <Button variant="outline" size="sm" className="w-full text-xs h-8">Download PVA Reconciliation Report</Button>
-          </div>
-        </div>
-
-        {/* Broker Accuracy Table */}
-        <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
-          <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-5 py-3">
-            <Users className="h-4 w-4 text-gray-400" />
-            <h3 className="text-sm font-medium text-black">Broker Accuracy Benchmarks</h3>
-          </div>
-          <div className="flex-1 p-0">
-            {brokerAccuracy.length > 0 ? (
-              <table className="w-full border-collapse text-left">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-[#e9e9e7]">
-                    <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Declarant EORI</th>
-                    <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase text-right">Accuracy Rate</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#e9e9e7]">
-                   {brokerAccuracy.map((b: any) => (
-                     <tr key={b.eori} className="group transition-colors hover:bg-gray-50">
-                       <td className="px-6 py-4 font-mono text-[0.6875rem] text-gray-600">{b.eori}</td>
-                       <td className="px-6 py-4 text-right">
-                         <span className={cn(
-                           "font-medium text-xs rounded-md px-2 py-0.5",
-                           b.accuracy > 95 ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
-                         )}>
-                           {b.accuracy.toFixed(1)}%
-                         </span>
-                         <span className="block text-[0.625rem] text-gray-400 mt-1">{b.totalDeclarations} records</span>
-                       </td>
-                     </tr>
-                   ))}
-                </tbody>
-              </table>
-            ) : (
-               <div className="p-5">
-                 <p className="text-sm text-muted-foreground">Not enough data to benchmark brokers.</p>
-               </div>
-            )}
-          </div>
-        </div>
-
       </div>
     </div>
   );

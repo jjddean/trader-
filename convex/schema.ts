@@ -159,7 +159,10 @@ export default defineSchema({
     fileName: v.optional(v.any()),
     status: v.optional(v.any()),
     uploadDate: v.optional(v.any()),
-  }).index("by_user", ["userId"]),
+    mrn: v.optional(v.any()),
+    declarationId: v.optional(v.any()),
+    auditStatus: v.optional(v.any()),
+  }).index("by_user", ["userId"]).index("by_mrn", ["mrn"]),
   
   workspaces: defineTable({
     name: v.optional(v.any()),
@@ -188,5 +191,7 @@ export default defineSchema({
     notificationType: v.optional(v.any()),
     rawPayload: v.optional(v.any()),
     processed: v.optional(v.any()),
-  }).index("by_mrn", ["mrn"]),
+    userId: v.optional(v.any()),
+    declarationId: v.optional(v.any()),
+  }).index("by_mrn", ["mrn"]).index("by_user", ["userId"]),
 });
