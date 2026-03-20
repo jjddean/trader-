@@ -12,16 +12,7 @@ export default function DashboardPage() {
 
   const stats = useQuery(api.declarations.getDashboardStats, userId ? { userId } : "skip");
 
-  if (!stats) {
-    return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-           <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground/60" />
-           <p className="text-sm font-medium text-muted-foreground">Loading HMRC Live Data...</p>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="space-y-8 p-8 max-w-7xl mx-auto">
@@ -32,19 +23,28 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 1. KPI ROW */}
-      <KpiRow kpis={stats.kpis} />
+      {!stats ? (
+        <div className="flex h-64 w-full flex-col items-center justify-center gap-4 pt-12">
+           <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
+           <p className="text-sm font-medium text-gray-500">Loading live database...</p>
+        </div>
+      ) : (
+        <>
+          {/* 1. KPI ROW */}
+          <KpiRow kpis={stats.kpis} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-        {/* 2. CHART */}
-        <DutyByHsChart data={stats.chartData} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+            {/* 2. CHART */}
+            <DutyByHsChart data={stats.chartData} />
 
-        {/* 4. AUDITS (STATIC UNTIL WIRING) */}
-        <ActionableAudits />
-      </div>
+            {/* 4. AUDITS (STATIC UNTIL WIRING) */}
+            <ActionableAudits />
+          </div>
 
-      {/* 3. RECENT DECLARATIONS */}
-      <RecentDeclarations declarations={stats.recentDeclarations} />
+          {/* 3. RECENT DECLARATIONS */}
+          <RecentDeclarations declarations={stats.recentDeclarations} />
+        </>
+      )}
     </div>
   );
 }

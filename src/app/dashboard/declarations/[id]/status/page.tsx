@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
-import { Activity, Clock, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Activity, Clock, CheckCircle2, XCircle, Loader2, ShieldCheck, ShieldAlert, FileText, AlertCircle } from "lucide-react";
 
 export default function StatusTimelinePage() {
   const params = useParams<{ id: string }>();
@@ -53,20 +53,52 @@ export default function StatusTimelinePage() {
           </div>
         ) : (
           <div className="space-y-8">
-            <div className="flex items-center gap-4 rounded-lg bg-gray-50 p-4 border border-gray-100">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                <Activity className="h-5 w-5" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="rounded-lg bg-gray-50 p-4 border border-gray-100">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">
+                  MRN
+                </p>
+                <p className="text-sm font-semibold text-gray-900 truncate">
+                  {declaration.mrn || "— pending"}
+                </p>
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">Listening on {declaration.mrn || declaration.conversationId || "Polling"}</p>
-                <p className="text-xs text-gray-500">Webhook endpoint actively receiving push notifications.</p>
+
+              <div className="rounded-lg bg-gray-50 p-4 border border-gray-100">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">
+                  CDS Status
+                </p>
+                <div>
+                  {declaration.status === "Cleared" || declaration.status === "Accepted" ? (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
+                      <ShieldCheck className="h-3 w-3" />
+                      {declaration.status === "Accepted" ? "Accepted (DMSACC)" : "Cleared (DMSCLE)"}
+                    </span>
+                  ) : declaration.status === "Rejected" || declaration.status === "Action Required" ? (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
+                      <ShieldAlert className="h-3 w-3" />
+                      {declaration.status === "Rejected" ? "Rejected (DMSREJ)" : declaration.status}
+                    </span>
+                  ) : declaration.status === "Draft" ? (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
+                      <FileText className="h-3 w-3" />
+                      {declaration.status}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700">
+                      <AlertCircle className="h-3 w-3" />
+                      {declaration.status}
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="ml-auto flex items-center gap-2">
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                </span>
-                <span className="text-[10px] font-bold tracking-widest uppercase text-green-600">Live</span>
+
+              <div className="rounded-lg bg-gray-50 p-4 border border-gray-100">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">
+                  Last Update
+                </p>
+                <p className="text-sm font-semibold text-gray-900 truncate">
+                   {new Date(declaration.lastUpdated || declaration._creationTime).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </p>
               </div>
             </div>
 
