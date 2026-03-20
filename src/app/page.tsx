@@ -9,10 +9,10 @@ import { WaitlistForm } from "@/components/waitlist-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 
 const navigation = [
-  { name: "Features", href: "#features" },
-  { name: "How It Works", href: "#how-it-works" },
-  { name: "Resources", href: "#resources" },
-  { name: "FAQ", href: "#faq" },
+  { name: "Solutions", href: "/solutions" },
+  { name: "Resources", href: "/resources" },
+  { name: "About", href: "/about" },
+  { name: "Contact", href: "/contact" },
 ];
 
 const faqs = [
@@ -240,37 +240,20 @@ export default function LandingPage() {
                   how: 'Upload and attach critical trade documents directly to your declaration records. We maintain encrypted, redundant cloud storage organized by MRN, making it effortless to retrieve evidence during an unexpected HMRC post-clearance audit.'
                 },
               ].map((item) => (
-                <Dialog key={item.id}>
-                  <div 
-                    className="group relative overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-sm transition-all hover:shadow-md flex flex-col p-[24px] h-full"
-                  >
-                    <h3 className="mb-2 text-[18px] font-bold text-[#37352f]">{item.label}</h3>
-                    <p className="text-[14.5px] leading-[1.6] text-[#787774] flex-grow">
-                      {item.benefit}
-                    </p>
-                    <div className="mt-4 pt-4 border-t border-slate-100">
-                      <DialogTrigger asChild>
-                        <button 
-                          className="text-[14px] font-semibold text-blue-600 hover:text-blue-800 flex items-center transition-colors mt-auto"
-                        >
-                          More info
-                        </button>
-                      </DialogTrigger>
-                    </div>
+                <div key={item.id} className="group relative overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-sm transition-all hover:shadow-md flex flex-col p-[24px] h-full">
+                  <h3 className="mb-2 text-[18px] font-bold text-[#37352f]">{item.label}</h3>
+                  <p className="text-[14.5px] leading-[1.6] text-[#787774] flex-grow">
+                    {item.benefit}
+                  </p>
+                  <div className="mt-4 pt-4 border-t border-slate-100">
+                    <Link 
+                      href={`/solutions#${item.id}`}
+                      className="text-[14px] font-semibold text-blue-600 hover:text-blue-800 flex items-center transition-colors mt-auto"
+                    >
+                      More info
+                    </Link>
                   </div>
-
-                  <DialogContent className="sm:max-w-[500px] bg-white border-slate-200 shadow-xl p-8">
-                    <DialogHeader className="sr-only">
-                      <DialogTitle>{item.label}</DialogTitle>
-                      <DialogDescription>{item.benefit}</DialogDescription>
-                    </DialogHeader>
-                    <div>
-                      <p className="text-[17px] leading-[1.7] text-slate-800">
-                        {item.how}
-                      </p>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                </div>
               ))}
             </div>
           </div>
@@ -391,7 +374,7 @@ export default function LandingPage() {
                             </div>
                         </div>
                         <p className="text-gray-500 text-xs leading-relaxed">
-                            Freight operations software for<br />complex trade lanes.
+                            Automate your declarations, uncover hidden savings,<br />and ensure total HMRC compliance.
                         </p>
                         <p className="text-gray-400 text-xs mt-3">
                             London, UK
@@ -404,8 +387,8 @@ export default function LandingPage() {
                     <div>
                         <h4 className="text-[#020817] font-medium text-xs mb-4">Product</h4>
                         <ul className="text-gray-500 text-xs space-y-2">
-                            <li><a href="#features" className="hover:text-[#020817]">Features</a></li>
-                            <li><a href="#" className="hover:text-[#020817]">Pricing</a></li>
+                            <li><Link href="/solutions" className="hover:text-[#020817]">Solutions</Link></li>
+                            <li><Link href="/resources" className="hover:text-[#020817]">Resources</Link></li>
                         </ul>
                     </div>
 
@@ -413,9 +396,8 @@ export default function LandingPage() {
                     <div>
                         <h4 className="text-[#020817] font-medium text-xs mb-4">Company</h4>
                         <ul className="text-gray-500 text-xs space-y-2">
-                            <li><a href="#" className="hover:text-[#020817]">About</a></li>
-                            <li><a href="#" className="hover:text-[#020817]">Blog</a></li>
-                            <li><a href="#" className="hover:text-[#020817]">Contact</a></li>
+                            <li><Link href="/about" className="hover:text-[#020817]">About</Link></li>
+                            <li><Link href="/contact" className="hover:text-[#020817]">Contact</Link></li>
                         </ul>
                     </div>
 
