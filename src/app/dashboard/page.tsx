@@ -4,7 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { AlertCircle, PoundSterling, FileText, ArrowUpRight, TrendingUp, Archive, RefreshCw } from "lucide-react";
+import { AlertCircle, PoundSterling, FileText, ArrowUpRight, TrendingUp, Archive, RefreshCw, ShieldCheck, ShieldAlert } from "lucide-react";
 
 export default function DashboardPage() {
   const { user } = useUser();
@@ -189,13 +189,27 @@ function RecentDeclarations({ declarations }: { declarations: any[] }) {
                   <td className="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">{decl.date}</td>
                   <td className="px-6 py-4 font-mono text-[0.6875rem] text-gray-900 font-semibold">{decl.mrn}</td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-[4px] border border-gray-200 text-[0.625rem] font-semibold uppercase tracking-widest ${
-                      decl.status === 'Cleared' ? 'border-green-200 bg-green-50 text-green-700' : 
-                      decl.status === 'Rejected' ? 'border-red-200 bg-red-50 text-red-700' :
-                      'border-blue-200 bg-blue-50 text-blue-700'
-                    }`}>
-                      {decl.status}
-                    </span>
+                    {decl.status === "Cleared" || decl.status === "Accepted" ? (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
+                        <ShieldCheck className="h-3 w-3" />
+                        {decl.status}
+                      </span>
+                    ) : decl.status === "Rejected" || decl.status === "Action Required" ? (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
+                        <ShieldAlert className="h-3 w-3" />
+                        {decl.status}
+                      </span>
+                    ) : decl.status === "Draft" ? (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
+                        <FileText className="h-3 w-3" />
+                        {decl.status}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700">
+                        <AlertCircle className="h-3 w-3" />
+                        {decl.status}
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-right text-xs text-gray-600">
                     £{decl.value.toLocaleString("en-GB", { minimumFractionDigits: 2 })}

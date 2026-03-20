@@ -5,7 +5,7 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
-import { FileText, ListChecks, UploadCloud, Activity, Send, Loader2, ArrowLeft } from "lucide-react";
+import { FileText, ListChecks, UploadCloud, Activity, Send, Loader2, ArrowLeft, ShieldCheck, ShieldAlert, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function DeclarationWorkspaceLayout({
@@ -64,15 +64,27 @@ export default function DeclarationWorkspaceLayout({
                 <h1 className="text-lg font-semibold tracking-tight text-gray-900">
                   {declaration.mrn || "Draft CDS Entry"}
                 </h1>
-                <span className={cn(
-                  "rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide border",
-                  declaration.status === "Cleared" ? "border-green-200 bg-green-50 text-green-700" :
-                  declaration.status === "Rejected" ? "border-red-200 bg-red-50 text-red-700" :
-                  declaration.status === "Accepted" ? "border-blue-200 bg-blue-50 text-blue-700" :
-                  "border-gray-200 bg-gray-100 text-gray-600"
-                )}>
-                  {declaration.status.toUpperCase()}
-                </span>
+                {declaration.status === "Cleared" || declaration.status === "Accepted" ? (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
+                    <ShieldCheck className="h-3 w-3" />
+                    {declaration.status}
+                  </span>
+                ) : declaration.status === "Rejected" || declaration.status === "Action Required" ? (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
+                    <ShieldAlert className="h-3 w-3" />
+                    {declaration.status}
+                  </span>
+                ) : declaration.status === "Draft" ? (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
+                    <FileText className="h-3 w-3" />
+                    {declaration.status}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700">
+                    <AlertCircle className="h-3 w-3" />
+                    {declaration.status}
+                  </span>
+                )}
               </div>
               <p className="text-xs text-gray-500">
                 EORI: {declaration.eori || "Not set"} • Route: {declaration.route || "Unknown"}

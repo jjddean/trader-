@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Filter, Loader2, ArrowRight, FileText } from "lucide-react";
+import { Plus, Search, Filter, Loader2, ArrowRight, FileText, ShieldCheck, ShieldAlert, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -155,20 +155,27 @@ export default function DeclarationsPage() {
                     {new Date(dec.lastUpdated || dec._creationTime).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4">
-                    <Badge
-                      variant="outline"
-                      className={
-                        dec.status === "Cleared"
-                          ? "border-green-200 bg-green-50 text-green-700"
-                          : dec.status === "Rejected"
-                          ? "border-red-200 bg-red-50 text-red-700"
-                          : dec.status === "Accepted"
-                          ? "border-blue-200 bg-blue-50 text-blue-700"
-                          : "border-gray-200 bg-gray-50 text-gray-700"
-                      }
-                    >
-                      {dec.status}
-                    </Badge>
+                    {dec.status === "Cleared" || dec.status === "Accepted" ? (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
+                        <ShieldCheck className="h-3 w-3" />
+                        {dec.status}
+                      </span>
+                    ) : dec.status === "Rejected" || dec.status === "Action Required" ? (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
+                        <ShieldAlert className="h-3 w-3" />
+                        {dec.status}
+                      </span>
+                    ) : dec.status === "Draft" ? (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
+                        <FileText className="h-3 w-3" />
+                        {dec.status}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700">
+                        <AlertCircle className="h-3 w-3" />
+                        {dec.status}
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end opacity-0 transition-opacity group-hover:opacity-100">
