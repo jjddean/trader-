@@ -6,50 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import Link from "next/link";
-
-// Static mock data for UI review
-const MOCK_RECORDS = [
-  {
-    mrn: "MRN_8839201A",
-    type: "Duty (A00)",
-    amount: 12500.00,
-    method: "Deferment Account (DAN)",
-    date: "17 Mar 2026",
-    accountNumber: "DAN 8931234",
-    statementContext: "March 2026 Statement",
-    paymentLimit: "£1,200,000.00",
-    calculationMethod: "Customs Value £125,000.00 × 10%",
-    natureOfTransaction: "11 (Outright Purchase)",
-  },
-  {
-    mrn: "MRN_8839201A",
-    type: "Postponed VAT (B00)",
-    amount: 4200.50,
-    method: "Postponed VAT Accounting",
-    date: "17 Mar 2026",
-    accountNumber: "PVA Declared",
-    statementContext: "March 2026 PVA Statement",
-    paymentLimit: "N/A",
-    calculationMethod: "(Value £125k + Duty £12.5k) × 20%",
-    natureOfTransaction: "11 (Outright Purchase)",
-  },
-  {
-    mrn: "MRN_9100223B",
-    type: "Duty (A00)",
-    amount: 800.00,
-    method: "Cash / Immediate Payment",
-    date: "16 Mar 2026",
-    accountNumber: "FAS 9876543",
-    statementContext: "Instant Clearance: 16:45:00",
-    paymentLimit: "Available Balance: £1,200.00",
-    calculationMethod: "Customs Value £10,000.00 × 8%",
-    natureOfTransaction: "11 (Outright Purchase)",
-  },
-];
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
+import { Loader2, RefreshCw } from "lucide-react";
 
 export default function RecordsPage() {
+  const { user } = useUser();
+  const userId = user?.id || "";
+  const liveRecords = useQuery(api.declarations.getFinancialRecords, userId ? { userId } : "skip");
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRecord, setSelectedRecord] = useState<typeof MOCK_RECORDS[0] | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<any | null>(null);
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = () => {
@@ -57,14 +25,18 @@ export default function RecordsPage() {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const totalDuty = MOCK_RECORDS.filter(r => r.type.includes("Duty")).reduce((acc, curr) => acc + curr.amount, 0);
-  const totalPVA = MOCK_RECORDS.filter(r => r.type.includes("VAT")).reduce((acc, curr) => acc + curr.amount, 0);
+  const recordsData = liveRecords || [];
+
+  const totalDuty = recordsData.filter((r: any) => r.type.includes("Duty")).reduce((acc: number, curr: any) => acc + curr.amount, 0);
+  const totalPVA = recordsData.filter((r: any) => r.type.includes("VAT")).reduce((acc: number, curr: any) => acc + curr.amount, 0);
 
   return (
     <div className="space-y-8 p-8">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Financial Records</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">
+            Financial Records
+          </h1>
           <p className="mt-1 text-sm text-gray-500">
             VAT and Duty ledgers generated from your historic HMRC declarations.
           </p>
@@ -120,8 +92,19 @@ export default function RecordsPage() {
 
       <Card className="bg-white shadow-none border-[#e9e9e7]">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
+          {liveRecords === undefined ? (
+            <div className="flex h-40 flex-col items-center justify-center gap-2">
+              <RefreshCw className="h-5 w-5 animate-spin text-gray-400" />
+              <p className="text-xs text-gray-400">Loading Financial Records...</p>
+            </div>
+          ) : recordsData.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Landmark className="mb-4 h-8 w-8 text-gray-300" />
+              <p className="text-sm font-medium text-gray-500">No financial ledgers generated yet.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="bg-gray-50 border-b border-[#e9e9e7]">
                   <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Declaration MRN</th>
@@ -132,9 +115,9 @@ export default function RecordsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#e9e9e7]">
-                {MOCK_RECORDS.map((record, idx) => (
+                {recordsData.map((record: any, idx: number) => (
                   <tr
-                    key={idx}
+                    key={record.id || idx}
                     onClick={() => setSelectedRecord(record)}
                     className="group cursor-pointer transition-colors hover:bg-gray-50"
                   >
@@ -164,6 +147,7 @@ export default function RecordsPage() {
               </tbody>
             </table>
           </div>
+          )}
         </CardContent>
       </Card>
 

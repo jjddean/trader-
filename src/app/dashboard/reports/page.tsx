@@ -5,117 +5,21 @@ import { Search, Filter, ShieldAlert, ShieldCheck, ChevronRight, Download, Copy,
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-
-// Detailed mock data replicating HMRC Import Header & Import Item data report structure
-const MOCK_REPORTS = [
-  {
-    id: "r_1",
-    mrn: "MRN_8839201A",
-    date: "17 Mar 2026",
-    broker: "GB_FREIGHT_FWD_1",
-    score: 100,
-    status: "Clean",
-    ducr: "1GB123456789000-01",
-    lrn: "LRN20260317001",
-    importer: "GB123456789000 (TechCorp Ltd)",
-    declarant: "GB987654321000 (Fast Freight)",
-    consignor: "US_SUPPLIER_INC",
-    dispatchCountry: "US",
-    originCountry: "US",
-    portCode: "GBSOU",
-    acceptanceDate: "17-03-2026 08:30:00",
-    clearanceDate: "17-03-2026 09:15:00",
-    totalInvoiceValue: "USD 32,000.00",
-    totalCustomsValue: "GBP 25,000.00",
-    totalDutyAndVat: "GBP 5,000.00",
-    items: [
-      {
-        sequence: 1,
-        commodityCode: "8517620000",
-        description: "Networking Equipment",
-        netMass: "150.5 kg",
-        cpc: "4000 000",
-        itemPrice: "USD 32,000.00",
-        customsValue: "GBP 25,000.00",
-        dutyPaid: "£0.00",
-        vatAmount: "£5,000.00",
-      }
-    ]
-  },
-  {
-    id: "r_2",
-    mrn: "MRN_9100223B",
-    date: "16 Mar 2026",
-    broker: "GB_EXPRESS_LOGISTICS",
-    score: 65,
-    status: "Action Required",
-    ducr: "1GB987654321000-05",
-    lrn: "LRN20260316044",
-    importer: "GB123456789000 (TechCorp Ltd)",
-    declarant: "GB112233445566 (Express Logs)",
-    consignor: "CN_MANUFACTURING",
-    dispatchCountry: "CN",
-    originCountry: "CN",
-    portCode: "GBFXT",
-    acceptanceDate: "16-03-2026 11:10:00",
-    clearanceDate: "Pending",
-    totalInvoiceValue: "CNY 150,000.00",
-    totalCustomsValue: "GBP 18,500.00",
-    totalDutyAndVat: "GBP 4,200.00",
-    items: [
-      {
-        sequence: 1,
-        commodityCode: "8544429090",
-        description: "Telecommunication Cables",
-        netMass: "800.0 kg",
-        cpc: "4000 000",
-        itemPrice: "CNY 150,000.00",
-        customsValue: "GBP 18,500.00",
-        dutyPaid: "£500.00",
-        vatAmount: "£3,700.00",
-      }
-    ]
-  },
-  {
-    id: "r_3",
-    mrn: "MRN_4431109C",
-    date: "12 Mar 2026",
-    broker: "GB_FREIGHT_FWD_1",
-    score: 85,
-    status: "Warning",
-    ducr: "1GB555444333222-02",
-    lrn: "LRN20260312019",
-    importer: "GB123456789000 (TechCorp Ltd)",
-    declarant: "GB987654321000 (Fast Freight)",
-    consignor: "FR_DISTRIBUTOR",
-    dispatchCountry: "FR",
-    originCountry: "FR",
-    portCode: "GBDOV",
-    acceptanceDate: "12-03-2026 14:00:00",
-    clearanceDate: "12-03-2026 14:45:00",
-    totalInvoiceValue: "EUR 10,000.00",
-    totalCustomsValue: "GBP 8,500.00",
-    totalDutyAndVat: "GBP 1,700.00",
-    items: [
-      {
-        sequence: 1,
-        commodityCode: "3926909790",
-        description: "Plastic Components",
-        netMass: "45.0 kg",
-        cpc: "4000 000",
-        itemPrice: "EUR 10,000.00",
-        customsValue: "GBP 8,500.00",
-        dutyPaid: "£0.00",
-        vatAmount: "£1,700.00",
-      }
-    ]
-  },
-];
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
+import { Loader2, RefreshCw } from "lucide-react";
 
 export default function ReportsPage() {
+  const { user } = useUser();
+  const userId = user?.id || "";
+  const liveReports = useQuery(api.declarations.getReports, userId ? { userId } : "skip");
+  
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedReport, setSelectedReport] = useState<typeof MOCK_REPORTS[0] | null>(null);
+  const [selectedReport, setSelectedReport] = useState<any | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+
+  const reportsData = liveReports || [];
 
   const handleCopy = () => {
     setIsCopied(true);
@@ -126,7 +30,9 @@ export default function ReportsPage() {
     <div className="space-y-8 p-8">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Customs Reports</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">
+            Customs Reports
+          </h1>
           <p className="mt-1 text-sm text-gray-500">
             Historical declaration batches and compliance scoring.
           </p>
@@ -151,11 +57,21 @@ export default function ReportsPage() {
         </Button>
       </div>
 
-      {/* Reports Table */}
       <Card className="bg-white shadow-none border-[#e9e9e7]">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
+          {liveReports === undefined ? (
+            <div className="flex h-40 flex-col items-center justify-center gap-2">
+              <RefreshCw className="h-5 w-5 animate-spin text-gray-400" />
+              <p className="text-xs text-gray-400">Loading Historical Reports...</p>
+            </div>
+          ) : reportsData.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <FileText className="mb-4 h-8 w-8 text-gray-300" />
+              <p className="text-sm font-medium text-gray-500">No historical reports generated yet.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="bg-gray-50 border-b border-[#e9e9e7]">
                   <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Entry No (MRN)</th>
@@ -166,7 +82,7 @@ export default function ReportsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#e9e9e7]">
-                {MOCK_REPORTS.map((report) => (
+                {reportsData.map((report: any) => (
                   <tr
                     key={report.id}
                     onClick={() => setSelectedReport(report)}
@@ -211,6 +127,11 @@ export default function ReportsPage() {
                           <ShieldAlert className="h-3 w-3" />
                           {report.status}
                         </span>
+                      ) : report.status === "Draft" ? (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
+                          <FileText className="h-3 w-3" />
+                          {report.status}
+                        </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
                           <ShieldAlert className="h-3 w-3" />
@@ -223,6 +144,7 @@ export default function ReportsPage() {
               </tbody>
             </table>
           </div>
+          )}
         </CardContent>
       </Card>
 
