@@ -121,7 +121,7 @@ export default function LandingPage() {
               Seamless customs clearance.
             </h1>
 
-            <p className="mx-auto mb-10 max-w-2xl text-[20px] leading-[28px] text-slate-600">
+            <p className="mx-auto mb-10 max-w-2xl text-[20px] leading-[28px] text-slate-700">
               Automate your customs declarations, reduce manual work, avoid costly errors, and ensure you never overpay duties.
             </p>
 
@@ -373,7 +373,7 @@ export default function LandingPage() {
                                 <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px] text-slate-600">®</span>
                             </div>
                         </div>
-                        <p className="text-gray-600 text-xs leading-relaxed">
+                        <p className="text-gray-700 text-xs leading-relaxed">
                             Automate your declarations, uncover hidden savings,<br />and ensure total HMRC compliance.
                         </p>
                         <p className="text-gray-600 text-xs mt-3">
