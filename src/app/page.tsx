@@ -121,7 +121,7 @@ export default function LandingPage() {
               Seamless customs clearance.
             </h1>
 
-            <p className="mx-auto mb-10 max-w-2xl text-[20px] leading-[28px] text-slate-500">
+            <p className="mx-auto mb-10 max-w-2xl text-[20px] leading-[28px] text-slate-600">
               Automate your customs declarations, reduce manual work, avoid costly errors, and ensure you never overpay duties.
             </p>
 
@@ -147,7 +147,7 @@ export default function LandingPage() {
               <h2 className="mb-4 text-[36px] font-bold tracking-tight text-[#020817] md:text-[42px]">
                 How It Works
               </h2>
-              <p className="mx-auto max-w-2xl text-[20px] text-slate-500">
+              <p className="mx-auto max-w-2xl text-[20px] text-slate-600">
                 A simple three-step process to optimize your UK customs strategy and ensure total compliance.
               </p>
             </div>
@@ -159,7 +159,7 @@ export default function LandingPage() {
                   1
                 </div>
                 <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Connect & Sync</h3>
-                <p className="text-[16px] leading-[1.6] text-slate-500">
+                <p className="text-[16px] leading-[1.6] text-slate-600">
                   Securely authorize access to your HMRC Government Gateway account. We instantly import and organize your historical CDS declarations.
                 </p>
               </div>
@@ -170,7 +170,7 @@ export default function LandingPage() {
                   2
                 </div>
                 <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Analyze & Optimize</h3>
-                <p className="text-[16px] leading-[1.6] text-slate-500">
+                <p className="text-[16px] leading-[1.6] text-slate-600">
                   Our intelligence engine scans every line item, identifying overpaid duties, highlighting missing preference codes, and flagging compliance risks.
                 </p>
               </div>
@@ -181,7 +181,7 @@ export default function LandingPage() {
                   3
                 </div>
                 <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Execute & Report</h3>
-                <p className="text-[16px] leading-[1.6] text-slate-500">
+                <p className="text-[16px] leading-[1.6] text-slate-600">
                   Generate optimized declarations, reclaim historical overpayments, and monitor your entire customs portfolio through real-time, shareable dashboards.
                 </p>
               </div>
@@ -196,7 +196,7 @@ export default function LandingPage() {
               <h2 className="mb-4 text-[36px] font-bold tracking-tight text-[#020817] md:text-[42px]">
                 Core Capabilities
               </h2>
-              <p className="mx-auto max-w-2xl text-[20px] text-slate-500">
+              <p className="mx-auto max-w-2xl text-[20px] text-slate-600">
                 Transform your HMRC data into actionable intelligence. We provide end-to-end oversight of your UK customs obligations.
               </p>
             </div>
@@ -242,7 +242,7 @@ export default function LandingPage() {
               ].map((item) => (
                 <div key={item.id} className="group relative overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-sm transition-all hover:shadow-md flex flex-col p-[24px] h-full">
                   <h3 className="mb-2 text-[18px] font-bold text-[#37352f]">{item.label}</h3>
-                  <p className="text-[14.5px] leading-[1.6] text-[#787774] flex-grow">
+                  <p className="text-[14.5px] leading-[1.6] text-[#5f5e58] flex-grow">
                     {item.benefit}
                   </p>
                   <div className="mt-4 pt-4 border-t border-slate-100">
@@ -289,7 +289,7 @@ export default function LandingPage() {
               <h2 className="mb-4 text-[36px] font-bold tracking-tight text-slate-900 md:text-[40px]">
                 Frequently Asked Questions
               </h2>
-              <p className="text-[17px] text-slate-500">
+              <p className="text-[17px] text-slate-600">
                 Answers about CDS workflows and platform security.
               </p>
             </div>
@@ -324,7 +324,7 @@ export default function LandingPage() {
                       openFaq === index ? "max-h-[200px] pb-[24px]" : "max-h-0",
                     )}
                   >
-                    <p className="text-[16px] leading-relaxed text-slate-500">{faq.answer}</p>
+                    <p className="text-[16px] leading-relaxed text-slate-600">{faq.answer}</p>
                   </div>
                 </div>
               ))}
@@ -338,7 +338,7 @@ export default function LandingPage() {
             <h2 className="mb-6 text-[40px] leading-tight font-bold text-[#020817] md:text-[52px] tracking-[-1px]">
               Take control of your customs data
             </h2>
-            <p className="mx-auto mb-10 max-w-xl text-[18px] text-slate-500">
+            <p className="mx-auto mb-10 max-w-xl text-[18px] text-slate-600">
               Automate your declarations, uncover hidden savings, and ensure total HMRC compliance. 
               Request early access to our platform today.
             </p>
@@ -373,10 +373,10 @@ export default function LandingPage() {
                                 <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px] text-slate-400">®</span>
                             </div>
                         </div>
-                        <p className="text-gray-500 text-xs leading-relaxed">
+                        <p className="text-gray-600 text-xs leading-relaxed">
                             Automate your declarations, uncover hidden savings,<br />and ensure total HMRC compliance.
                         </p>
-                        <p className="text-gray-400 text-xs mt-3">
+                        <p className="text-gray-600 text-xs mt-3">
                             London, UK
                             <br />
                             info@freightcode.co.uk
@@ -386,7 +386,7 @@ export default function LandingPage() {
                     {/* Product */}
                     <div>
                         <h4 className="text-[#020817] font-medium text-xs mb-4">Product</h4>
-                        <ul className="text-gray-500 text-xs space-y-2">
+                        <ul className="text-gray-600 text-xs space-y-2">
                             <li><Link href="/solutions" className="hover:text-[#020817]">Solutions</Link></li>
                             <li><Link href="/resources" className="hover:text-[#020817]">Resources</Link></li>
                         </ul>
@@ -395,7 +395,7 @@ export default function LandingPage() {
                     {/* Company */}
                     <div>
                         <h4 className="text-[#020817] font-medium text-xs mb-4">Company</h4>
-                        <ul className="text-gray-500 text-xs space-y-2">
+                        <ul className="text-gray-600 text-xs space-y-2">
                             <li><Link href="/about" className="hover:text-[#020817]">About</Link></li>
                             <li><Link href="/contact" className="hover:text-[#020817]">Contact</Link></li>
                         </ul>
@@ -404,7 +404,7 @@ export default function LandingPage() {
                     {/* Legal */}
                     <div>
                         <h4 className="text-[#020817] font-medium text-xs mb-4">Legal</h4>
-                        <ul className="text-gray-500 text-xs space-y-2">
+                        <ul className="text-gray-600 text-xs space-y-2">
                             <li><Link href="/privacy" className="hover:text-[#020817]">Privacy</Link></li>
                             <li><Link href="/terms" className="hover:text-[#020817]">Terms</Link></li>
                         </ul>
@@ -413,7 +413,7 @@ export default function LandingPage() {
                     {/* Socials */}
                     <div>
                         <h4 className="text-[#020817] font-medium text-xs mb-4">Socials</h4>
-                        <ul className="text-gray-500 text-xs space-y-2">
+                        <ul className="text-gray-600 text-xs space-y-2">
                             <li><a href="https://x.com/freightcode" className="hover:text-[#020817]">X</a></li>
                             <li><a href="https://linkedin.com/company/freightcode" className="hover:text-[#020817]">LinkedIn</a></li>
                             <li><a href="https://youtube.com/@freightcode" className="hover:text-[#020817]">YouTube</a></li>
@@ -423,7 +423,7 @@ export default function LandingPage() {
                     {/* Security & Trust */}
                     <div>
                         <h4 className="text-[#020817] font-medium text-xs mb-4">Security & Trust</h4>
-                        <ul className="text-gray-500 text-xs space-y-2">
+                        <ul className="text-gray-600 text-xs space-y-2">
                             <li>Secure billing via Stripe</li>
                             <li>Enterprise authentication</li>
                             <li>Encrypted data</li>
@@ -435,7 +435,7 @@ export default function LandingPage() {
                     {/* Trusted Infrastructure */}
                     <div>
                         <h4 className="text-[#020817] font-medium text-xs mb-4">Trusted Infrastructure</h4>
-                        <ul className="text-gray-500 text-xs space-y-2">
+                        <ul className="text-gray-600 text-xs space-y-2">
                             <li className="flex items-center gap-2 group">
                                 <a href="https://stripe.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#020817]">Stripe</a>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -457,7 +457,7 @@ export default function LandingPage() {
 
                 {/* Bottom bar */}
                 <div className="pt-6 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p className="text-gray-400 text-xs">
+                    <p className="text-gray-600 text-xs">
                         © {new Date().getFullYear()} Freightcode. All rights reserved.
                     </p>
                     <div className="opacity-0 hover:opacity-100 transition-opacity flex items-center">

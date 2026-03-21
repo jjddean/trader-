@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 
 export function WaitlistForm() {
+  const inputId = useId();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const joinWaitlist = useMutation(api.waitlist.join);
@@ -36,7 +37,11 @@ export function WaitlistForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex w-full max-w-sm items-center gap-2">
+      <label htmlFor={inputId} className="sr-only">
+        Work email
+      </label>
       <input
+        id={inputId}
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
