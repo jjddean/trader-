@@ -56,10 +56,10 @@ export default function LandingPage() {
               </div>
               <div className="flex items-baseline whitespace-nowrap text-[#020817] leading-none">
                 <span className="text-xl font-bold tracking-tight">freight</span>
-                <span className="text-xl font-bold tracking-tight text-slate-400">code</span>
-                <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px] text-slate-400">®</span>
+                <span className="text-xl font-bold tracking-tight text-slate-600">code</span>
+                <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px] text-slate-600">®</span>
               </div>
-              <span className="ml-1 rounded border border-slate-100 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400">
+              <span className="ml-1 rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
                 Beta
               </span>
             </Link>
@@ -308,7 +308,7 @@ export default function LandingPage() {
                     <div
                       className={cn(
                         "flex h-8 w-8 items-center justify-center rounded-full transition-all",
-                        openFaq === index ? "bg-slate-900 text-white" : "bg-slate-50 text-slate-400",
+                        openFaq === index ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600",
                       )}
                     >
                       {openFaq === index ? (
@@ -369,8 +369,8 @@ export default function LandingPage() {
                         <div className="mb-4">
                             <div className="flex items-baseline whitespace-nowrap text-[#020817] leading-none">
                                 <span className="font-bold tracking-tight text-[22px]">freight</span>
-                                <span className="font-bold tracking-tight text-[22px] text-slate-400">code</span>
-                                <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px] text-slate-400">®</span>
+                                <span className="font-bold tracking-tight text-[22px] text-slate-600">code</span>
+                                <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px] text-slate-600">®</span>
                             </div>
                         </div>
                         <p className="text-gray-600 text-xs leading-relaxed">
@@ -439,17 +439,17 @@ export default function LandingPage() {
                             <li className="flex items-center gap-2 group">
                                 <a href="https://stripe.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#020817]">Stripe</a>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src="https://cdn.brandfetch.io/stripe.com?c=1idbnvbXCRylLLzZ6DP&type=symbol" alt="Stripe" className="w-3 h-3 object-contain opacity-40 group-hover:opacity-100 transition-opacity" />
+                                <img src="https://cdn.brandfetch.io/stripe.com?c=1idbnvbXCRylLLzZ6DP&type=symbol" alt="Stripe" className="w-3 h-3 object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
                             </li>
                             <li className="flex items-center gap-2 group">
                                 <a href="https://clerk.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#020817]">Clerk</a>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src="https://cdn.brandfetch.io/clerk.com?c=1idbnvbXCRylLLzZ6DP&type=symbol" alt="Clerk" className="w-3 h-3 object-contain opacity-40 group-hover:opacity-100 transition-opacity" />
+                                <img src="https://cdn.brandfetch.io/clerk.com?c=1idbnvbXCRylLLzZ6DP&type=symbol" alt="Clerk" className="w-3 h-3 object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
                             </li>
                             <li className="flex items-center gap-2 group">
                                 <a href="https://convex.dev" target="_blank" rel="noopener noreferrer" className="hover:text-[#020817]">Convex</a>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src="https://cdn.brandfetch.io/convex.dev?c=1idbnvbXCRylLLzZ6DP&type=symbol" alt="Convex" className="w-3 h-3 object-contain opacity-40 group-hover:opacity-100 transition-opacity" />
+                                <img src="https://cdn.brandfetch.io/convex.dev?c=1idbnvbXCRylLLzZ6DP&type=symbol" alt="Convex" className="w-3 h-3 object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
                             </li>
                         </ul>
                     </div>
@@ -460,10 +460,10 @@ export default function LandingPage() {
                     <p className="text-gray-600 text-xs">
                         © {new Date().getFullYear()} Freightcode. All rights reserved.
                     </p>
-                    <div className="opacity-0 hover:opacity-100 transition-opacity flex items-center">
+                    <div className="opacity-100 transition-opacity flex items-center">
                       {!isSignedIn && (
                         <SignInButton mode="modal">
-                          <button className="text-[10px] text-gray-400 hover:text-gray-600 uppercase tracking-widest cursor-pointer">
+                          <button className="text-[10px] text-gray-600 hover:text-gray-700 uppercase tracking-widest cursor-pointer">
                             Admin Login
                           </button>
                         </SignInButton>
