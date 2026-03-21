@@ -245,14 +245,6 @@ export default function LandingPage() {
                   <p className="text-[14.5px] leading-[1.6] text-[#5f5e58] flex-grow">
                     {item.benefit}
                   </p>
-                  <div className="mt-4 pt-4 border-t border-slate-100">
-                    <Link 
-                      href={`/solutions#${item.id}`}
-                      className="text-[14px] font-semibold text-blue-600 hover:text-blue-800 flex items-center transition-colors mt-auto"
-                    >
-                      More info
-                    </Link>
-                  </div>
                 </div>
               ))}
             </div>

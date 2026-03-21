@@ -1,0 +1,91 @@
+<!-- timestamp: 2026-03-21T11:12:23.035Z | http_status: 0 | conversation_id: HAPPY_PATH -->
+<!-- request_accept: application/xml | request_content_type: application/xml | request_authorization: Bearer [REDACTED] | request_x_client_id: ZSoA1lpJi8FyuzSsncFrOZKpmrNe | request_gov_test_scenario: HAPPY_PATH -->
+<?xml version="1.0" encoding="UTF-8"?>
+<MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
+  <WCODataModelVersionCode>3.6</WCODataModelVersionCode>
+  <WCOTypeName>DEC</WCOTypeName>
+  <ResponsibleCountryCode>GB</ResponsibleCountryCode>
+  <ResponsibleAgencyName>HMRC</ResponsibleAgencyName>
+  <AgencyAssignedCustomizationVersionCode>v2.1</AgencyAssignedCustomizationVersionCode>
+  <Declaration xmlns="urn:wco:datamodel:WCO:DEC-DMS:2" xmlns:clm63055="urn:un:unece:uncefact:codelist:standard:UNECE:AgencyIdentificationCode:D12B" xmlns:ds="urn:wco:datamodel:WCO:MetaData_DS-DMS:2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2 ../DocumentMetaData_2_DMS.xsd ">
+    <FunctionCode>9</FunctionCode>
+    <FunctionalReferenceID>FC-kn7c5zwm5g3h7328xjmvnja9wn82y7xc</FunctionalReferenceID>
+    <TypeCode>IMA</TypeCode>
+    <GoodsItemQuantity>1</GoodsItemQuantity>
+    <DeclarationOfficeID>GB000051</DeclarationOfficeID>
+    <InvoiceAmount currencyID="GBP">4200</InvoiceAmount>
+    <TotalGrossMassMeasure unitCode="KGM">120</TotalGrossMassMeasure>
+    <TotalPackageQuantity>8</TotalPackageQuantity>
+    <CurrencyExchange>
+      <CurrencyTypeCode>GBP</CurrencyTypeCode>
+    </CurrencyExchange>
+    <Declarant>
+      <ID>GB853432453900</ID>
+    </Declarant>
+    <Exporter>
+      <ID>GB123456789000</ID>
+    </Exporter>
+    <GoodsShipment>
+      <Consignment>
+        <ContainerCode>0</ContainerCode>
+        <ArrivalTransportMeans>
+          <ID>CSCL GLOBE</ID>
+          <IdentificationTypeCode>11</IdentificationTypeCode>
+          <ModeCode>1</ModeCode>
+        </ArrivalTransportMeans>
+        <GoodsLocation>
+          <Name>GBWLAFXTFXTGW</Name>
+          <ID>GBAUFXTFXTGW</ID>
+        </GoodsLocation>
+      </Consignment>
+      <Destination>
+        <CountryCode>GB</CountryCode>
+      </Destination>
+      <ExportCountry>
+        <ID>US</ID>
+      </ExportCountry>
+      
+      <GovernmentAgencyGoodsItem>
+        <SequenceNumeric>1</SequenceNumeric>
+        <StatisticalValueAmount currencyID="GBP">4200</StatisticalValueAmount>
+        <AdditionalDocument>
+          <CategoryCode>Y</CategoryCode>
+          <ID>922</ID>
+          <TypeCode>922</TypeCode>
+        </AdditionalDocument>
+        <Commodity>
+          <Description>Men knitted cotton jumper</Description>
+          <Classification>
+            <ID>6110201000</ID>
+            <IdentificationTypeCode>TSP</IdentificationTypeCode>
+          </Classification>
+          <GoodsMeasure>
+            <GrossMassMeasure unitCode="KGM">120</GrossMassMeasure>
+            <NetNetWeightMeasure unitCode="KGM">118</NetNetWeightMeasure>
+          </GoodsMeasure>
+        </Commodity>
+        
+        <GovernmentProcedure>
+          <CurrentCode>4000</CurrentCode>
+          <PreviousCode>000</PreviousCode>
+        </GovernmentProcedure>
+        <Packaging>
+          <SequenceNumeric>1</SequenceNumeric>
+          <MarksNumbersID>N/A</MarksNumbersID>
+          <QuantityQuantity>8</QuantityQuantity>
+          <TypeCode>PK</TypeCode>
+        </Packaging>
+      </GovernmentAgencyGoodsItem>
+      <Importer>
+        <ID>GB853432453900</ID>
+      </Importer>
+      <TradeTerms>
+        <ConditionCode>FOB</ConditionCode>
+        <LocationID>GBFXT</LocationID>
+      </TradeTerms>
+      <UCR>
+        <TraderAssignedReferenceID>9GBGB853432453900-KN7C5Z</TraderAssignedReferenceID>
+      </UCR>
+    </GoodsShipment>
+  </Declaration>
+</MetaData>

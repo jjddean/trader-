@@ -2,8 +2,8 @@
   {
     "scenario": "scenario-1-happy-path",
     "header": "HAPPY_PATH",
-    "status": 403,
+    "status": 401,
     "conversationId": "",
-    "timestamp": "2026-03-21T09:53:10.572Z"
+    "timestamp": "2026-03-21T11:40:46.617Z"
   }
 ]

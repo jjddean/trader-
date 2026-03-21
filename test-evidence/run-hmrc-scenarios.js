@@ -253,7 +253,8 @@ async function submitXml(xmlPayload, scenario, token) {
     requestHeaders: {
       Accept: acceptHeader,
       "Content-Type": contentTypeHeader,
-      "X-Client-ID": Boolean(process.env.HMRC_CLIENT_ID),
+      Authorization: "Bearer [REDACTED]",
+      "X-Client-ID": process.env.HMRC_CLIENT_ID || "",
       "Gov-Test-Scenario": scenario,
     },
   };
@@ -342,14 +343,17 @@ async function run() {
     const xmlPayload = buildXml(payloadInfo);
     const response = await submitXml(xmlPayload, input.scenario, token);
 
-    const requestFileName = runSingleHappyPath && input.scenario === "HAPPY_PATH" ? "scenario-1-retry-request.xml" : `${input.key}-request.xml`;
-    const responseFileName = runSingleHappyPath && input.scenario === "HAPPY_PATH" ? "scenario-1-retry-response.xml" : `${input.key}-response.xml`;
+    const singleRunRequestFile = process.env.SINGLE_RUN_REQUEST_FILE || "scenario-1-retry-request.xml";
+    const singleRunResponseFile = process.env.SINGLE_RUN_RESPONSE_FILE || "scenario-1-retry-response.xml";
+    const requestFileName = runSingleHappyPath && input.scenario === "HAPPY_PATH" ? singleRunRequestFile : `${input.key}-request.xml`;
+    const responseFileName = runSingleHappyPath && input.scenario === "HAPPY_PATH" ? singleRunResponseFile : `${input.key}-response.xml`;
+    const requestWithHeaderMeta = `<!-- request_accept: ${response.requestHeaders.Accept} | request_content_type: ${response.requestHeaders["Content-Type"]} | request_authorization: ${response.requestHeaders.Authorization} | request_x_client_id: ${response.requestHeaders["X-Client-ID"]} | request_gov_test_scenario: ${response.requestHeaders["Gov-Test-Scenario"]} -->\n${xmlPayload}`;
     fs.writeFileSync(path.join(evidenceDir, requestFileName), withMetaComment({
       timestamp: new Date().toISOString(),
       status: 0,
       conversationId: input.scenario,
-    }, xmlPayload));
-    const responseWithHeaderMeta = `<!-- request_accept: ${response.requestHeaders.Accept} | request_content_type: ${response.requestHeaders["Content-Type"]} | request_x_client_id_present: ${response.requestHeaders["X-Client-ID"]} -->\n${response.body || "<empty/>"}`;
+    }, requestWithHeaderMeta));
+    const responseWithHeaderMeta = `<!-- request_accept: ${response.requestHeaders.Accept} | request_content_type: ${response.requestHeaders["Content-Type"]} | request_authorization: ${response.requestHeaders.Authorization} | request_x_client_id: ${response.requestHeaders["X-Client-ID"]} | request_gov_test_scenario: ${response.requestHeaders["Gov-Test-Scenario"]} -->\n${response.body || "<empty/>"}`;
     fs.writeFileSync(path.join(evidenceDir, responseFileName), withMetaComment(response, responseWithHeaderMeta));
 
     summary.push({
