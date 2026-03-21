@@ -3,9 +3,10 @@ import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
-import { mapToCDS_H1 } from "../../../../lib/wco-mapper";
+import { mapToCDS_H1, validateCdsFields } from "../../../../lib/wco-mapper";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function POST(request: Request) {
   try {
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
 
     // Check if token is expired or expiring within 5 minutes (300000 ms)
     if (tokenRecord.expiresAt && Date.now() + 300000 > tokenRecord.expiresAt) {
-      console.log(`[HMRC Submit] Token expired for user ${userId}, attempting refresh...`);
+      console.log("[redacted for security]");
       if (!tokenRecord.refreshToken) {
         return NextResponse.json({ error: "HMRC Token expired and no refresh token available. Please reconnect." }, { status: 403 });
       }
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
 
       if (!refreshResponse.ok) {
         const errorText = await refreshResponse.text();
-        console.error("HMRC Token Refresh Failed:", errorText);
+        console.log("[redacted for security]");
         return NextResponse.json({ error: "Failed to refresh HMRC token. Please reconnect.", details: errorText }, { status: 403 });
       }
 
@@ -80,11 +81,20 @@ export async function POST(request: Request) {
         expiresIn: data.expires_in || 14400,
         eori: tokenRecord.eori // Retain existing EORI
       });
-      console.log(`[HMRC Submit] Successfully refreshed token for user ${userId}`);
+      console.log("[redacted for security]");
     }
 
-    // 2. Map the data to HMRC WCO Data Model JSON structure using our dedicated mapper
     const payloadInfo = mapToCDS_H1(lane, items);
+    const validationErrors = validateCdsFields(lane, items, payloadInfo);
+    if (validationErrors.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Validation failed",
+          fields: validationErrors,
+        },
+        { status: 400 },
+      );
+    }
 
     // Convert the JSON payload into the required HMRC XML Envelope
     // Using the exact canonical namespaces required by the HMRC Sandbox XSD
@@ -185,19 +195,44 @@ export async function POST(request: Request) {
       : "https://api.service.hmrc.gov.uk/customs/declarations";
 
     const authHeaderString = `Bearer ${token}`;
-    console.log(`[HMRC Submit] Token exact length: ${token.length}, First 15 chars: ${token.substring(0, 15)}`);
-    console.log(`[HMRC Submit] Exact Auth Header: ${authHeaderString}`);
+    console.log("[redacted for security]");
+    console.log("[redacted for security]");
 
-    const hmrcResponse = await fetch(hmrcEndpoint, {
+    const testScenario = process.env.HMRC_TEST_SCENARIO;
+    const hmrcHeaders: Record<string, string> = {
+      Accept: "application/vnd.hmrc.2.0+xml",
+      "Content-Type": "application/xml; charset=UTF-8",
+      Authorization: authHeaderString,
+      "X-Client-ID": process.env.HMRC_CLIENT_ID!,
+    };
+    if (testScenario) {
+      hmrcHeaders["Gov-Test-Scenario"] = testScenario;
+    }
+
+    let hmrcResponse = await fetch(hmrcEndpoint, {
       method: "POST",
-      headers: {
-        "Accept": "application/vnd.hmrc.2.0+xml",
-        "Content-Type": "application/xml; charset=UTF-8",
-        "Authorization": authHeaderString,
-        "X-Client-ID": process.env.HMRC_CLIENT_ID!
-      },
-      body: xmlPayload
+      headers: hmrcHeaders,
+      body: xmlPayload,
     });
+    if (hmrcResponse.status === 429) {
+      await sleep(2000);
+      hmrcResponse = await fetch(hmrcEndpoint, {
+        method: "POST",
+        headers: hmrcHeaders,
+        body: xmlPayload,
+      });
+      if (hmrcResponse.status === 429) {
+        await sleep(5000);
+        hmrcResponse = await fetch(hmrcEndpoint, {
+          method: "POST",
+          headers: hmrcHeaders,
+          body: xmlPayload,
+        });
+      }
+    }
+    if (hmrcResponse.status === 429) {
+      return NextResponse.json({ error: "HMRC rate limit reached, please try again shortly" }, { status: 429 });
+    }
 
     if (!hmrcResponse.ok) {
       const errorText = await hmrcResponse.text();

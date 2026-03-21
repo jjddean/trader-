@@ -11,6 +11,7 @@ import {
   FileSpreadsheet,
   Scale,
   ShieldCheck,
+  Bot,
 } from "lucide-react";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
@@ -36,6 +37,7 @@ const navItems = [
   { href: "/dashboard/audit", label: "Compliance Audit", icon: ShieldCheck },
   { href: "/dashboard/reports", label: "Customs Reports", icon: FileSpreadsheet },
   { href: "/dashboard/records", label: "Financial Records", icon: Scale },
+  { href: "/dashboard/assistant", label: "Assistant", icon: Bot },
 ] as const;
 
 export function AppSidebar() {
@@ -49,8 +51,9 @@ export function AppSidebar() {
   }, []);
 
   // Dynamic issue counting for the badge
-  const lanes = useQuery(api.trade_lanes.getLanes, userId ? { userId } : "skip");
-  const reviewCount = (lanes as any)?.filter((l: any) => l.status === "Review").length ?? 0;
+  const allDeclarations = useQuery(api.declarations.getAllDecls);
+  const declarations = (allDeclarations as any[])?.filter((l: any) => l.userId === userId) ?? [];
+  const reviewCount = declarations.filter((l: any) => l.status === "Action Required" || l.status === "Rejected" || l.status === "Invalid").length ?? 0;
 
   return (
     <Sidebar className="border-r border-gray-200 bg-gray-50">

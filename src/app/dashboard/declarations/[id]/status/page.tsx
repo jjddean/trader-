@@ -32,6 +32,14 @@ export default function StatusTimelinePage() {
   }
 
   const isSubmitted = declaration.status !== "Draft";
+  const notificationMeta: Record<string, { title: string; color: string; icon: "success" | "warning" | "danger" | "info"; detail: string }> = {
+    DMSUB: { title: "Declaration received by HMRC", color: "bg-blue-500", icon: "info", detail: "Declaration has been received and queued by HMRC." },
+    DMSACC: { title: "Declaration accepted", color: "bg-green-500", icon: "success", detail: "Declaration passed initial controls and is accepted." },
+    DMSCLE: { title: "Goods cleared", color: "bg-green-500", icon: "success", detail: "Goods are cleared for release." },
+    DMSROG: { title: "Route to examine", color: "bg-amber-500", icon: "warning", detail: "HMRC routed this declaration for examination. Action required." },
+    DMSREJ: { title: "Declaration rejected", color: "bg-red-500", icon: "danger", detail: "HMRC rejected the declaration. Review error codes and amend." },
+    DMSINV: { title: "Declaration invalid", color: "bg-red-500", icon: "danger", detail: "HMRC returned field-level validation errors." },
+  };
 
   return (
     <div className="space-y-6">
@@ -68,15 +76,15 @@ export default function StatusTimelinePage() {
                   CDS Status
                 </p>
                 <div>
-                  {declaration.status === "Cleared" || declaration.status === "Accepted" ? (
+                  {Boolean(declaration.mrn && String(declaration.mrn).trim().length > 0) && (declaration.status === "Cleared" || declaration.status === "Accepted") ? (
                     <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
                       <ShieldCheck className="h-3 w-3" />
                       {declaration.status === "Accepted" ? "Accepted (DMSACC)" : "Cleared (DMSCLE)"}
                     </span>
-                  ) : declaration.status === "Rejected" || declaration.status === "Action Required" ? (
+                  ) : declaration.status === "Rejected" || declaration.status === "Action Required" || declaration.status === "Invalid" ? (
                     <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
                       <ShieldAlert className="h-3 w-3" />
-                      {declaration.status === "Rejected" ? "Rejected (DMSREJ)" : declaration.status}
+                      {declaration.status === "Rejected" ? "Rejected (DMSREJ)" : declaration.status === "Invalid" ? "Invalid (DMSINV)" : declaration.status}
                     </span>
                   ) : declaration.status === "Draft" ? (
                     <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
@@ -106,7 +114,6 @@ export default function StatusTimelinePage() {
               <div className="absolute left-[11px] top-2 h-full w-px bg-gray-200" />
               
               <div className="space-y-6">
-                {/* Initial Receipt Status (Mocked/Derived from DB creation) */}
                 <div className="relative">
                   <div className="absolute -left-6 top-1 h-3 w-3 rounded-full border-2 border-white bg-blue-500" />
                   <div className="flex flex-col gap-1">
@@ -118,13 +125,10 @@ export default function StatusTimelinePage() {
                   </div>
                 </div>
 
-                {/* Real-time Webhooks Array */}
                 {(notifications || []).map((notif: any) => (
                   <div key={notif._id} className="relative">
                     <div className={`absolute -left-6 top-1 h-3 w-3 rounded-full border-2 border-white ${
-                      notif.notificationType === 'CLEARED' ? 'bg-green-500' :
-                      notif.notificationType === 'REJECTED' ? 'bg-red-500' :
-                      'bg-blue-500'
+                      notificationMeta[notif.notificationType]?.color || "bg-blue-500"
                     }`} />
                     <div className="flex flex-col gap-1 mt-1">
                       <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -132,14 +136,29 @@ export default function StatusTimelinePage() {
                       </p>
                       <div className="flex items-center gap-2">
                          <p className="text-sm font-medium text-gray-900">
-                           {notif.notificationType === 'CLEARED' ? 'Goods Cleared (DMSCLE)' :
-                            notif.notificationType === 'REJECTED' ? 'Declaration Rejected (DMSREJ)' :
-                            notif.notificationType === 'ACCEPTED' ? 'Declaration Accepted (DMSACC)' :
-                            `Status Update (${notif.notificationType})`}
+                           {notificationMeta[notif.notificationType]?.title || `Status Update (${notif.notificationType})`}
                          </p>
-                         {notif.notificationType === 'CLEARED' && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                         {notif.notificationType === 'REJECTED' && <XCircle className="h-4 w-4 text-red-500" />}
+                         {notificationMeta[notif.notificationType]?.icon === "success" && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                         {notificationMeta[notif.notificationType]?.icon === "danger" && <XCircle className="h-4 w-4 text-red-500" />}
+                         {notificationMeta[notif.notificationType]?.icon === "warning" && <AlertCircle className="h-4 w-4 text-amber-500" />}
                       </div>
+                      <p className="text-xs text-gray-600">
+                        {notificationMeta[notif.notificationType]?.detail || "HMRC sent a status update."}
+                      </p>
+                      {(notif.notificationType === "DMSREJ" || notif.notificationType === "DMSINV") && Array.isArray(notif.fieldErrors) && notif.fieldErrors.length > 0 && (
+                        <div className="rounded border border-red-200 bg-red-50 p-2 text-xs text-red-800">
+                          {notif.fieldErrors.map((fieldError: { field: string; code?: string; reason: string }, idx: number) => (
+                            <p key={`${notif._id}-err-${idx}`} className="break-words">
+                              {fieldError.field}: {fieldError.reason}{fieldError.code ? ` (${fieldError.code})` : ""}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                      {(notif.notificationType === "DMSREJ" || notif.notificationType === "DMSINV") && (!Array.isArray(notif.fieldErrors) || notif.fieldErrors.length === 0) && Array.isArray(notif.errorCodes) && notif.errorCodes.length > 0 && (
+                        <p className="text-xs text-red-700 break-words">
+                          {notif.errorCodes.join(", ")}
+                        </p>
+                      )}
                       <details className="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded border border-gray-100 cursor-pointer">
                         <summary className="font-mono text-[10px] font-semibold hover:text-gray-900">View Raw XML Payload</summary>
                         <pre className="mt-2 overflow-x-auto p-2 bg-gray-900 text-green-400 rounded font-mono text-[10px] whitespace-pre-wrap max-h-96">

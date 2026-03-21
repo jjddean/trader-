@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
-import { UploadCloud, File, ShieldCheck, Loader2, CheckCircle2 } from "lucide-react";
+import { UploadCloud, File, ShieldCheck, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function DocumentsPage() {
   const params = useParams<{ id: string }>();
@@ -16,6 +16,7 @@ export default function DocumentsPage() {
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<{name: string, type: string, size: string}[]>([]);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   if (declaration === undefined) {
     return (
@@ -36,20 +37,54 @@ export default function DocumentsPage() {
     if (!file) return;
 
     setIsUploading(true);
+    setUploadError(null);
 
-    // Mocking the multi-step HMRC Upscan process:
-    // 1. Request signed URL from HMRC
-    // 2. POST file directly to S3
-    // 3. HMRC runs anti-virus scanning
-    // 4. HMRC webhooks us the result
-    
-    setTimeout(async () => {
+    try {
+      const initiateRes = await fetch("/api/hmrc/documents/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          declarationId: id,
+          fileName: file.name,
+          fileSize: file.size,
+        }),
+      });
+      if (initiateRes.status === 410) {
+        setUploadError("Upload URL expired. Please retry to generate a fresh HMRC upload session.");
+        return;
+      }
+      if (!initiateRes.ok) {
+        const initiateData = await initiateRes.json().catch(() => ({}));
+        setUploadError(initiateData?.error || "Unable to initiate secure upload with HMRC.");
+        return;
+      }
+
+      const uploadRes = await fetch("/api/hmrc/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          storageId: `local-${Date.now()}`,
+          mrn: declaration.mrn,
+          documentType: "Commercial_Invoice",
+        }),
+      });
+
+      if (uploadRes.status === 410) {
+        setUploadError("Upload URL expired (410 Gone). Please retry and upload again.");
+        return;
+      }
+      if (!uploadRes.ok) {
+        const uploadData = await uploadRes.json().catch(() => ({}));
+        setUploadError(uploadData?.error || "Secure upload failed.");
+        return;
+      }
+
       await trackUpload({
-         declarationId: id,
-         fileName: file.name,
-         fileSize: file.size,
-         documentType: "Commercial_Invoice",
-         uploadStatus: "Clean",
+        declarationId: id,
+        fileName: file.name,
+        fileSize: file.size,
+        documentType: "Commercial_Invoice",
+        uploadStatus: "Clean",
       });
 
       setUploadedFiles(prev => [...prev, {
@@ -57,8 +92,10 @@ export default function DocumentsPage() {
         type: "Commercial_Invoice",
         size: (file.size / 1024 / 1024).toFixed(2) + " MB"
       }]);
+    } finally {
       setIsUploading(false);
-    }, 1500);
+      if (e.target) e.target.value = "";
+    }
   };
 
   return (
@@ -66,7 +103,7 @@ export default function DocumentsPage() {
       <div>
         <h2 className="text-lg font-medium text-gray-900">Secure Document Upload</h2>
         <p className="mt-1 text-xs text-gray-500">
-          Upload supporting evidence directly to HMRC's secure Amazon S3 (Upscan) servers.
+          Upload supporting evidence directly to HMRC secure Amazon S3 (Upscan) servers.
         </p>
       </div>
 
@@ -76,6 +113,15 @@ export default function DocumentsPage() {
            <p className="mt-1 text-xs text-yellow-700">
              You cannot upload supporting documents until this declaration has been successfully submitted and issued an MRN (Movement Reference Number) by HMRC.
            </p>
+        </div>
+      )}
+
+      {uploadError && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-4">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="mt-0.5 h-4 w-4 text-red-600" />
+            <p className="text-xs text-red-700">{uploadError}</p>
+          </div>
         </div>
       )}
 

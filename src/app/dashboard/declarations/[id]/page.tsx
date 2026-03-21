@@ -18,7 +18,7 @@ export default function CoreSchemaPage() {
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     eori: "",
-    declarationType: "IMD",
+    declarationType: "H1",
     route: "Route 1",
   });
 
@@ -27,7 +27,7 @@ export default function CoreSchemaPage() {
     if (declaration) {
       setFormData({
         eori: declaration.eori || "",
-        declarationType: declaration.declarationType || "IMD",
+        declarationType: "H1",
         route: declaration.route || "Route 1",
       });
     }
@@ -105,10 +105,7 @@ export default function CoreSchemaPage() {
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="IMD">IMD (Standard Import)</SelectItem>
-                  <SelectItem value="EXD">EXD (Standard Export)</SelectItem>
                   <SelectItem value="H1">H1 (Release for Free Circulation)</SelectItem>
-                  <SelectItem value="I1">I1 (Simplified Import)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

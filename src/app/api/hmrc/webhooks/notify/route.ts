@@ -10,47 +10,50 @@ export async function POST(request: Request) {
     console.log("=========================================");
     console.log("🚨 HMRC ASYNC WEBHOOK NOTIFICATION RECEIVED 🚨");
     console.log("=========================================");
-    
-    // Parse HMRC Push Notification Envelope (usually JSON wrapping the XML details)
+
     let payloadStr = rawBody;
-    let notificationType = "UPDATE";
-    
+    let notificationType = "DMSUB";
+    let parsedJsonBody: any = null;
+
     try {
       const jsonBody = JSON.parse(rawBody);
+      parsedJsonBody = jsonBody;
       console.log("Parsed HMRC JSON Envelope:", Object.keys(jsonBody));
-      // HMRC Push Notifications usually contain eventType and the raw message
-      if (jsonBody.eventType) notificationType = jsonBody.eventType;
-      
-      // If the actual WCO XML is nested inside a property (like 'message' or 'notification')
+      const candidateType = String(
+        jsonBody.notificationType ||
+          jsonBody.eventType ||
+          jsonBody.messageType ||
+          jsonBody.type ||
+          "",
+      ).toUpperCase();
+      if (candidateType) {
+        if (candidateType.includes("DMSCLE") || candidateType.includes("CLEARED")) notificationType = "DMSCLE";
+        else if (candidateType.includes("DMSACC") || candidateType.includes("ACCEPTED")) notificationType = "DMSACC";
+        else if (candidateType.includes("DMSREJ") || candidateType.includes("REJECTED")) notificationType = "DMSREJ";
+        else if (candidateType.includes("DMSROG") || candidateType.includes("ROUTE")) notificationType = "DMSROG";
+        else if (candidateType.includes("DMSINV") || candidateType.includes("INVALID")) notificationType = "DMSINV";
+        else if (candidateType.includes("DMSUB") || candidateType.includes("SUBMITTED") || candidateType.includes("RECEIVED")) notificationType = "DMSUB";
+      }
+
       payloadStr = jsonBody.message || jsonBody.notification || rawBody;
     } catch {
-      // Fallback if HMRC sends raw XML directly
       console.log("HMRC payload is raw XML, skipping JSON parse.");
     }
-    
+
     const conversationId = request.headers.get("x-conversation-id") || "UNKNOWN";
-    
-    // Fallback status deduction from WCO XML traits if the JSON eventType isn't clear
-    if (notificationType === "UPDATE") {
-      if (payloadStr.includes("cvc-") || payloadStr.includes("Rejected") || payloadStr.includes("Errors")) {
-        notificationType = "REJECTED";
-      } else if (payloadStr.includes("Cleared") || payloadStr.includes("01")) {
-        notificationType = "CLEARED";
-      } else if (payloadStr.includes("Accepted") || payloadStr.includes("02")) {
-        notificationType = "ACCEPTED";
-      } else if (payloadStr.includes("Goods Arrived") || payloadStr.includes("06")) {
-        notificationType = "GOODS_ARRIVED";
-      } else if (payloadStr.includes("Held") || payloadStr.includes("Under Control") || payloadStr.includes("03")) {
-        notificationType = "HELD";
-      } else if (payloadStr.includes("Documents Required") || payloadStr.includes("AdditionalDocument") || payloadStr.includes("04") || payloadStr.includes("21")) {
-        notificationType = "DOCUMENTS_REQUIRED";
-      }
+
+    if (notificationType === "DMSUB") {
+      const upperPayload = payloadStr.toUpperCase();
+      if (upperPayload.includes("DMSCLE") || upperPayload.includes("CLEARED")) notificationType = "DMSCLE";
+      else if (upperPayload.includes("DMSACC") || upperPayload.includes("ACCEPTED")) notificationType = "DMSACC";
+      else if (upperPayload.includes("DMSREJ") || upperPayload.includes("REJECTED")) notificationType = "DMSREJ";
+      else if (upperPayload.includes("DMSROG") || upperPayload.includes("ROUTE TO EXAMINE")) notificationType = "DMSROG";
+      else if (upperPayload.includes("DMSINV") || upperPayload.includes("INVALID")) notificationType = "DMSINV";
+      else if (upperPayload.includes("DMSUB") || upperPayload.includes("SUBMITTED") || upperPayload.includes("RECEIVED")) notificationType = "DMSUB";
     }
 
     let mrn = "UNKNOWN";
-    
-    // CDS WCO XML returns the MRN in <Declaration><ID>24GB...
-    // Or sometimes explicitly as <MovementReferenceNumber> depending on the notification type
+
     const idMatch = payloadStr.match(/<(?:[^>]*:)?ID[^>]*>([0-9]{2}[A-Za-z]{2}[A-Za-z0-9]{14})<\/(?:[^>]*:)?ID>/i);
     const mrnTagMatch = payloadStr.match(/<(?:[^>]*:)?MRN[^>]*>([a-zA-Z0-9]{18})<\/(?:[^>]*:)?MRN>/i);
     const mRNMatch = payloadStr.match(/<(?:[^>]*:)?MovementReferenceNumber[^>]*>([a-zA-Z0-9]{18})<\/(?:[^>]*:)?MovementReferenceNumber>/i);
@@ -63,10 +66,15 @@ export async function POST(request: Request) {
       mrn = mRNMatch[1];
     }
 
+    const fieldErrors = extractFieldErrors(notificationType, payloadStr, parsedJsonBody);
+    const errorCodes = Array.from(new Set(fieldErrors.map((e) => e.code).filter(Boolean) as string[]));
+
     await convex.mutation(api.notifications.saveWebhook, {
       mrn,
       conversationId,
       notificationType,
+      fieldErrors,
+      errorCodes,
       rawPayload: payloadStr,
       timestamp: new Date().toISOString()
     });
@@ -76,4 +84,51 @@ export async function POST(request: Request) {
     console.error("Webhook processing error:", error);
     return NextResponse.json({ error: "Webhook Failure" }, { status: 500 });
   }
+}
+
+function extractFieldErrors(
+  notificationType: string,
+  payloadStr: string,
+  parsedJsonBody: any,
+): Array<{ field: string; code?: string; reason: string }> {
+  if (notificationType !== "DMSINV" && notificationType !== "DMSREJ") {
+    return [];
+  }
+
+  const errors: Array<{ field: string; code?: string; reason: string }> = [];
+
+  if (parsedJsonBody?.errors && Array.isArray(parsedJsonBody.errors)) {
+    for (const err of parsedJsonBody.errors) {
+      errors.push({
+        field: String(err.field || err.path || "unknown"),
+        code: err.code ? String(err.code) : undefined,
+        reason: String(err.message || err.reason || "Validation error"),
+      });
+    }
+  }
+
+  const xmlErrorRegex = /<(?:[^>]*:)?Error[^>]*>([\s\S]*?)<\/(?:[^>]*:)?Error>/gi;
+  let xmlMatch: RegExpExecArray | null;
+  while ((xmlMatch = xmlErrorRegex.exec(payloadStr)) !== null) {
+    const block = xmlMatch[1];
+    const code = block.match(/<(?:[^>]*:)?(?:Code|ErrorCode)[^>]*>(.*?)<\/(?:[^>]*:)?(?:Code|ErrorCode)>/i)?.[1]?.trim();
+    const field = block.match(/<(?:[^>]*:)?(?:Field|FieldName|Pointer|Element)[^>]*>(.*?)<\/(?:[^>]*:)?(?:Field|FieldName|Pointer|Element)>/i)?.[1]?.trim() || "unknown";
+    const reason = block.match(/<(?:[^>]*:)?(?:Message|Reason|Description)[^>]*>(.*?)<\/(?:[^>]*:)?(?:Message|Reason|Description)>/i)?.[1]?.trim() || "Validation error";
+    errors.push({ field, code, reason });
+  }
+
+  const cvcRegex = /(cvc-[a-z0-9.-]+)[^<\n\r]*/gi;
+  let cvcMatch: RegExpExecArray | null;
+  while ((cvcMatch = cvcRegex.exec(payloadStr)) !== null) {
+    errors.push({
+      field: "xmlSchema",
+      code: cvcMatch[1],
+      reason: cvcMatch[0],
+    });
+  }
+
+  return errors.filter((err, index, arr) => {
+    const key = `${err.field}|${err.code || ""}|${err.reason}`;
+    return arr.findIndex((x) => `${x.field}|${x.code || ""}|${x.reason}` === key) === index;
+  });
 }

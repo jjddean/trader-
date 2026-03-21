@@ -26,9 +26,40 @@ export default function RecordsPage() {
   };
 
   const recordsData = liveRecords || [];
+  const filteredRecords = recordsData.filter((record: any) =>
+    !searchQuery || record.mrn?.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   const totalDuty = recordsData.filter((r: any) => r.type.includes("Duty")).reduce((acc: number, curr: any) => acc + curr.amount, 0);
   const totalPVA = recordsData.filter((r: any) => r.type.includes("VAT")).reduce((acc: number, curr: any) => acc + curr.amount, 0);
+  const handleExportCsv = () => {
+    const grouped = filteredRecords.reduce((acc: Record<string, { mrn: string; date: string; dutyPaid: number; vat: number }>, record: any) => {
+      const key = `${record.mrn}__${record.date}`;
+      if (!acc[key]) {
+        acc[key] = { mrn: record.mrn, date: record.date, dutyPaid: 0, vat: 0 };
+      }
+      if (record.type?.includes("Duty")) acc[key].dutyPaid += Number(record.amount) || 0;
+      if (record.type?.includes("VAT")) acc[key].vat += Number(record.amount) || 0;
+      return acc;
+    }, {});
+
+    const csvRows = [
+      "MRN,date,duty paid,VAT,total",
+      ...Object.values(grouped).map((row) => {
+        const total = row.dutyPaid + row.vat;
+        return `${row.mrn},${row.date},${row.dutyPaid.toFixed(2)},${row.vat.toFixed(2)},${total.toFixed(2)}`;
+      }),
+    ];
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "financial-records.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-8 p-8">
@@ -41,7 +72,7 @@ export default function RecordsPage() {
             VAT and Duty ledgers generated from your historic HMRC declarations.
           </p>
         </div>
-        <button className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800">
+        <button onClick={handleExportCsv} className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800">
           <Download className="h-4 w-4" />
           Export to CSV
         </button>
@@ -97,7 +128,7 @@ export default function RecordsPage() {
               <RefreshCw className="h-5 w-5 animate-spin text-gray-400" />
               <p className="text-xs text-gray-400">Loading Financial Records...</p>
             </div>
-          ) : recordsData.length === 0 ? (
+          ) : filteredRecords.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <Landmark className="mb-4 h-8 w-8 text-gray-300" />
               <p className="text-sm font-medium text-gray-500">No financial ledgers generated yet.</p>
@@ -115,7 +146,7 @@ export default function RecordsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#e9e9e7]">
-                {recordsData.map((record: any, idx: number) => (
+                {filteredRecords.map((record: any, idx: number) => (
                   <tr
                     key={record.id || idx}
                     onClick={() => setSelectedRecord(record)}
@@ -130,7 +161,15 @@ export default function RecordsPage() {
                       {record.date}
                     </td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
+                      <span
+                        className={`inline-flex items-center rounded-md px-2 py-0.5 text-[0.625rem] font-medium ${
+                          record.type?.includes("Duty")
+                            ? "bg-amber-100 text-amber-700"
+                            : record.type?.includes("VAT")
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
                         {record.type}
                       </span>
                     </td>
@@ -153,7 +192,7 @@ export default function RecordsPage() {
 
       {/* Side Sheet for Financial Record Details */}
       <Sheet open={!!selectedRecord} onOpenChange={(open) => !open && setSelectedRecord(null)}>
-        <SheetContent side="right" className="overflow-y-auto custom-scrollbar sm:max-w-none w-full p-0" style={{ maxWidth: '800px' }}>
+        <SheetContent side="right" className="overflow-y-auto sm:max-w-none w-full p-0" style={{ maxWidth: '800px' }}>
           {selectedRecord && (
             <div className="flex flex-col min-h-full">
               <SheetHeader className="px-6 sm:px-8 pt-6 pb-6 border-b border-gray-100 flex flex-row items-center justify-between shrink-0 sticky top-0 bg-white z-10">

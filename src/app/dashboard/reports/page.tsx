@@ -18,8 +18,18 @@ export default function ReportsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedReport, setSelectedReport] = useState<any | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const reportsData = liveReports || [];
+  const filteredReports = reportsData.filter((report: any) => {
+    const matchesSearch =
+      !searchQuery ||
+      report.mrn?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      report.broker?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || report.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const handleCopy = () => {
     setIsCopied(true);
@@ -51,10 +61,46 @@ export default function ReportsPage() {
             className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none transition-colors focus:border-gray-400 md:max-w-md"
           />
         </div>
-        <Button variant="ghost" className="h-9 px-3 text-foreground">
+        <div className="relative">
+        <Button variant="ghost" className="h-9 px-3 text-foreground" onClick={() => setShowFilters((prev) => !prev)}>
           <Filter className="mr-2 h-4 w-4" />
           Filter
         </Button>
+          {showFilters && (
+            <div className="absolute right-0 top-10 z-10 w-44 rounded-md border border-gray-200 bg-white p-2 shadow-md">
+              <button
+                onClick={() => setStatusFilter("all")}
+                className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
+              >
+                All statuses
+              </button>
+              <button
+                onClick={() => setStatusFilter("Clean")}
+                className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
+              >
+                Clean
+              </button>
+              <button
+                onClick={() => setStatusFilter("Warning")}
+                className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
+              >
+                Warning
+              </button>
+              <button
+                onClick={() => setStatusFilter("Action Required")}
+                className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
+              >
+                Action Required
+              </button>
+              <button
+                onClick={() => setStatusFilter("Draft")}
+                className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
+              >
+                Draft
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <Card className="bg-white shadow-none border-[#e9e9e7]">
@@ -64,7 +110,7 @@ export default function ReportsPage() {
               <RefreshCw className="h-5 w-5 animate-spin text-gray-400" />
               <p className="text-xs text-gray-400">Loading Historical Reports...</p>
             </div>
-          ) : reportsData.length === 0 ? (
+          ) : filteredReports.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <FileText className="mb-4 h-8 w-8 text-gray-300" />
               <p className="text-sm font-medium text-gray-500">No historical reports generated yet.</p>
@@ -82,7 +128,7 @@ export default function ReportsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#e9e9e7]">
-                {reportsData.map((report: any) => (
+                {filteredReports.map((report: any) => (
                   <tr
                     key={report.id}
                     onClick={() => setSelectedReport(report)}
@@ -123,7 +169,7 @@ export default function ReportsPage() {
                           {report.status}
                         </span>
                       ) : report.status === "Warning" ? (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-orange-100 px-2 py-0.5 text-[0.625rem] font-medium text-orange-700">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-[0.625rem] font-medium text-amber-700">
                           <ShieldAlert className="h-3 w-3" />
                           {report.status}
                         </span>
@@ -150,7 +196,7 @@ export default function ReportsPage() {
 
       {/* Side Sheet for Report Details */}
       <Sheet open={!!selectedReport} onOpenChange={(open) => !open && setSelectedReport(null)}>
-        <SheetContent side="right" className="overflow-y-auto custom-scrollbar sm:max-w-none w-full p-0" style={{ maxWidth: '800px' }}>
+        <SheetContent side="right" className="overflow-y-auto sm:max-w-none w-full p-0" style={{ maxWidth: '800px' }}>
           {selectedReport && (
             <div className="flex flex-col min-h-full">
               <SheetHeader className="px-6 sm:px-8 pt-6 pb-6 border-b border-gray-100 flex flex-row items-center justify-between shrink-0 sticky top-0 bg-white z-10">

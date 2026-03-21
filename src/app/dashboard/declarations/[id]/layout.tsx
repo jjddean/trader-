@@ -46,6 +46,9 @@ export default function DeclarationWorkspaceLayout({
       </div>
     );
   }
+  const declarationTitle = declaration.mrn && String(declaration.mrn).trim().length > 0 ? declaration.mrn : "Draft CDS Entry";
+  const hasMrn = Boolean(declaration.mrn && String(declaration.mrn).trim().length > 0);
+  const isPositiveStatus = hasMrn && (declaration.status === "Cleared" || declaration.status === "Accepted");
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
@@ -62,17 +65,17 @@ export default function DeclarationWorkspaceLayout({
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-semibold tracking-tight text-gray-900">
-                  {declaration.mrn || "Draft CDS Entry"}
+                  {declarationTitle}
                 </h1>
-                {declaration.status === "Cleared" || declaration.status === "Accepted" ? (
+                {isPositiveStatus ? (
                   <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
                     <ShieldCheck className="h-3 w-3" />
                     {declaration.status}
                   </span>
-                ) : declaration.status === "Rejected" || declaration.status === "Action Required" ? (
+                ) : declaration.status === "Rejected" || declaration.status === "Action Required" || declaration.status === "Invalid" ? (
                   <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
                     <ShieldAlert className="h-3 w-3" />
-                    {declaration.status}
+                    {declaration.status === "Invalid" ? "Invalid (DMSINV)" : declaration.status}
                   </span>
                 ) : declaration.status === "Draft" ? (
                   <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">

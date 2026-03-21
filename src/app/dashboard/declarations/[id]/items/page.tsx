@@ -29,6 +29,7 @@ export default function GoodsItemsPage() {
   const items = useQuery(api.goods_items.getItems, declarationId ? { declarationId } : "skip");
   const addItem = useMutation(api.goods_items.addItem);
   const removeItem = useMutation(api.goods_items.removeItem);
+  const updateItem = useMutation(api.goods_items.updateItem);
 
   const [isUploading, setIsUploading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -39,15 +40,39 @@ export default function GoodsItemsPage() {
   const [hsCode, setHsCode] = useState("");
   const [description, setDescription] = useState("");
 
+  const handleItemFieldBlur = async (
+    itemId: Id<"goods_items">,
+    field: "description" | "commodityCode" | "originCountry" | "valueAmount",
+    value: string,
+  ) => {
+    try {
+      if (field === "valueAmount") {
+        await updateItem({ id: itemId, valueAmount: Number(value) || 0 });
+        return;
+      }
+      const sanitizedValue =
+        field === "originCountry"
+          ? value.trim().toUpperCase()
+          : value.trim();
+
+      await updateItem({
+        id: itemId,
+        [field]: sanitizedValue,
+      });
+    } catch (err) {
+      console.error("Failed to update item field:", err);
+    }
+  };
+
   const handleManualAdd = async () => {
     setIsAdding(true);
     try {
       await addItem({
         declarationId,
         sequenceNumber: (items?.length || 0) + 1,
-        commodityCode: hsCode || "",
-        description: description || "New Item",
-        originCountry: originCountry || "GB",
+        commodityCode: hsCode.trim() || "",
+        description: description.trim() || "New Item",
+        originCountry: originCountry.trim().toUpperCase() || "GB",
         procedureCode: "4000",
         valueAmount: 0,
         valueCurrency: "GBP",
@@ -94,9 +119,9 @@ export default function GoodsItemsPage() {
           await addItem({
             declarationId,
             sequenceNumber: (items?.length || 0) + i + 1,
-            commodityCode: item.commodityCode || "",
-            description: item.description || "Unknown Item",
-            originCountry: item.originCountry || "GB",
+            commodityCode: String(item.commodityCode || "").trim(),
+            description: String(item.description || "Unknown Item").trim(),
+            originCountry: String(item.originCountry || "GB").trim().toUpperCase(),
             procedureCode: "4000", // Default to home use
             valueAmount: Number(item.valueAmount) || 0,
             valueCurrency: item.valueCurrency || "GBP",
@@ -198,6 +223,7 @@ export default function GoodsItemsPage() {
                     <input 
                       type="text" 
                       defaultValue={item.description} 
+                      onBlur={(e) => handleItemFieldBlur(item._id, "description", e.target.value)}
                       className="w-full bg-transparent text-xs font-medium text-gray-900 outline-none" 
                     />
                   </td>
@@ -205,6 +231,7 @@ export default function GoodsItemsPage() {
                     <input 
                       type="text" 
                       defaultValue={item.commodityCode} 
+                      onBlur={(e) => handleItemFieldBlur(item._id, "commodityCode", e.target.value)}
                       placeholder="e.g. 6109100010"
                       className="w-28 rounded border border-transparent bg-transparent p-1 font-mono text-xs text-gray-700 outline-none hover:border-gray-200 focus:border-blue-500 focus:bg-white" 
                     />
@@ -213,6 +240,7 @@ export default function GoodsItemsPage() {
                     <input 
                       type="text" 
                       defaultValue={item.originCountry} 
+                      onBlur={(e) => handleItemFieldBlur(item._id, "originCountry", e.target.value)}
                       className="w-12 rounded border border-transparent bg-transparent p-1 font-mono text-xs text-gray-700 outline-none hover:border-gray-200 focus:border-blue-500 focus:bg-white" 
                     />
                   </td>
@@ -222,6 +250,7 @@ export default function GoodsItemsPage() {
                       <input 
                         type="number" 
                         defaultValue={item.valueAmount} 
+                        onBlur={(e) => handleItemFieldBlur(item._id, "valueAmount", e.target.value)}
                         className="w-20 rounded border border-transparent bg-transparent p-1 text-xs text-gray-700 outline-none hover:border-gray-200 focus:border-blue-500 focus:bg-white" 
                       />
                     </div>

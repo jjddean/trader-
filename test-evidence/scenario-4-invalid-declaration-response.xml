@@ -1,0 +1,21 @@
+<!-- timestamp: 2026-03-21T09:34:42.174Z | http_status: 400 | conversation_id: a86d6711-7cb8-4f73-ad05-cf3fe2c88b59 -->
+<?xml version='1.0' encoding='UTF-8'?>
+<errorResponse>
+      <code>BAD_REQUEST</code>
+      <message>Payload is not valid according to schema</message>
+      <errors>
+        <error>
+          <code>xml_validation_error</code>
+          <message>cvc-pattern-valid: Value '' is not facet-valid with respect to pattern '.*[^\s].*' for type '#AnonType_DeclarantIdentificationIDType'.</message>
+        </error><error>
+          <code>xml_validation_error</code>
+          <message>cvc-complex-type.2.2: Element 'ID' must have no element [children], and the value must be valid.</message>
+        </error><error>
+          <code>xml_validation_error</code>
+          <message>cvc-pattern-valid: Value '' is not facet-valid with respect to pattern '.*[^\s].*' for type '#AnonType_ImporterIdentificationIDType'.</message>
+        </error><error>
+          <code>xml_validation_error</code>
+          <message>cvc-complex-type.2.2: Element 'ID' must have no element [children], and the value must be valid.</message>
+        </error>
+      </errors>
+    </errorResponse>

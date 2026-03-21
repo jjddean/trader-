@@ -40,7 +40,8 @@ export default function DeclarationsPage() {
   const userId = user?.id || "";
   const router = useRouter();
 
-  const declarations = useQuery(api.declarations.getLanes, userId ? { userId } : "skip");
+  const allDeclarations = useQuery(api.declarations.getAllDecls);
+  const declarations = (allDeclarations || []).filter((dec: any) => dec.userId === userId);
   const createDeclaration = useMutation(api.declarations.createDeclaration);
 
   const [isCreating, setIsCreating] = useState(false);
@@ -155,15 +156,15 @@ export default function DeclarationsPage() {
                     {new Date(dec.lastUpdated || dec._creationTime).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4">
-                    {dec.status === "Cleared" || dec.status === "Accepted" ? (
+                    {Boolean(dec.mrn && String(dec.mrn).trim().length > 0) && (dec.status === "Cleared" || dec.status === "Accepted") ? (
                       <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
                         <ShieldCheck className="h-3 w-3" />
                         {dec.status}
                       </span>
-                    ) : dec.status === "Rejected" || dec.status === "Action Required" ? (
+                    ) : dec.status === "Rejected" || dec.status === "Action Required" || dec.status === "Invalid" ? (
                       <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
                         <ShieldAlert className="h-3 w-3" />
-                        {dec.status}
+                        {dec.status === "Invalid" ? "Invalid (DMSINV)" : dec.status}
                       </span>
                     ) : dec.status === "Draft" ? (
                       <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">

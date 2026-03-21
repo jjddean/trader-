@@ -59,8 +59,16 @@ export default function SubmitPage() {
       const data = await res.json();
 
       if (!res.ok) {
+        console.log("HMRC validation details:", data.details, data.fields);
+        const fieldErrors = Array.isArray(data.fields)
+          ? data.fields
+              .map((fieldErr: { field?: string; reason?: string }) => `${fieldErr.field || "unknown"}: ${fieldErr.reason || "Validation error"}`)
+              .join("\n")
+          : "";
         const errorMessage = data.details 
           ? `${data.error}\n\n${data.details}`
+          : fieldErrors
+            ? `${data.error || "Validation failed"}\n\n${fieldErrors}`
           : (data.error || "HMRC API rejected the submission payload.");
         throw new Error(errorMessage);
       }

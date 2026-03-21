@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
@@ -14,6 +14,19 @@ export default function SettingsPage() {
   const subscription = useQuery(api.subscriptions.getSubscription, userId ? { userId } : "skip");
   const dbUser = useQuery(api.users.current);
   const hmrcToken = useQuery(api.hmrc.getToken, userId ? { userId } : "skip");
+  const [now, setNow] = useState(() => Date.now());
+  const [activeTab, setActiveTab] = useState<"profile" | "subscription" | "security" | "notifications">("profile");
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+  const hmrcEnvironment = (process.env.NEXT_PUBLIC_HMRC_ENV || "sandbox").toLowerCase() === "live" ? "Live" : "Sandbox";
+  const tokenRemainingMs = hmrcToken?.expiresAt ? hmrcToken.expiresAt - now : null;
+  const tokenExpiryText = tokenRemainingMs === null
+    ? "—"
+    : tokenRemainingMs <= 0
+      ? "Expired"
+      : `Expires in ${Math.floor(tokenRemainingMs / 3600000)}h ${Math.floor((tokenRemainingMs % 3600000) / 60000)}m`;
 
   const planColors: Record<string, string> = {
     Starter: "bg-gray-100 text-gray-700",
@@ -23,7 +36,50 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
-      {/* Profile */}
+      <div className="flex flex-wrap gap-2 rounded-xl border border-gray-200 bg-white p-2">
+        <button
+          onClick={() => setActiveTab("profile")}
+          className={cn(
+            "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors",
+            activeTab === "profile" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100",
+          )}
+        >
+          <User className="h-3.5 w-3.5" />
+          Profile
+        </button>
+        <button
+          onClick={() => setActiveTab("subscription")}
+          className={cn(
+            "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors",
+            activeTab === "subscription" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100",
+          )}
+        >
+          <CreditCard className="h-3.5 w-3.5" />
+          Subscription
+        </button>
+        <button
+          onClick={() => setActiveTab("security")}
+          className={cn(
+            "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors",
+            activeTab === "security" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100",
+          )}
+        >
+          <Shield className="h-3.5 w-3.5" />
+          Security
+        </button>
+        <button
+          onClick={() => setActiveTab("notifications")}
+          className={cn(
+            "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors",
+            activeTab === "notifications" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100",
+          )}
+        >
+          <Bell className="h-3.5 w-3.5" />
+          Notifications
+        </button>
+      </div>
+
+      {activeTab === "profile" && (
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
         <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
           <User className="h-4 w-4 text-gray-400" />
@@ -54,8 +110,9 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+      )}
 
-      {/* Subscription */}
+      {activeTab === "subscription" && (
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
         <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
           <CreditCard className="h-4 w-4 text-gray-400" />
@@ -125,10 +182,10 @@ export default function SettingsPage() {
           )}
         </div>
       </div>
+      )}
 
-      {/* Security & Notifications */}
-      <div className="grid grid-cols-2 gap-6">
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+      {activeTab === "security" && (
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
           <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
             <Shield className="h-4 w-4 text-gray-400" />
             <h3 className="text-sm font-medium text-black">Security</h3>
@@ -148,9 +205,16 @@ export default function SettingsPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-[0.6875rem] text-gray-600">HMRC OAuth</span>
-              {hmrcToken !== undefined ? (
-                hmrcToken ? (
-                  <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="text-[0.625rem] text-gray-500">{hmrcEnvironment}</p>
+                  <p className={cn("text-[0.625rem]", tokenRemainingMs !== null && tokenRemainingMs <= 0 ? "text-red-600" : "text-gray-400")}>
+                    {tokenExpiryText}
+                  </p>
+                </div>
+                {hmrcToken !== undefined ? (
+                  hmrcToken ? (
+                    <div className="flex items-center gap-2">
                     <span className="rounded bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
                       Connected
                     </span>
@@ -160,25 +224,28 @@ export default function SettingsPage() {
                     >
                       Reconnect
                     </a>
-                  </div>
+                    </div>
+                  ) : (
+                    <a
+                      href="/api/hmrc/auth"
+                      className="rounded bg-black px-2 py-1 text-[0.625rem] font-medium text-white transition-colors hover:bg-gray-800"
+                    >
+                      Connect HMRC
+                    </a>
+                  )
                 ) : (
-                  <a
-                    href="/api/hmrc/auth"
-                    className="rounded bg-black px-2 py-1 text-[0.625rem] font-medium text-white transition-colors hover:bg-gray-800"
-                  >
-                    Connect HMRC
-                  </a>
-                )
-              ) : (
-                <span className="rounded bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-400">
-                  Loading...
-                </span>
-              )}
+                  <span className="rounded bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-400">
+                    Loading...
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+      </div>
+      )}
 
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+      {activeTab === "notifications" && (
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
           <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
             <Bell className="h-4 w-4 text-gray-400" />
             <h3 className="text-sm font-medium text-black">Notifications</h3>
@@ -191,7 +258,7 @@ export default function SettingsPage() {
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[0.6875rem] text-gray-600">New Prospects</span>
+              <span className="text-[0.6875rem] text-gray-600">Declaration Status Updates</span>
               <span className="rounded bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
                 On
               </span>
@@ -203,8 +270,8 @@ export default function SettingsPage() {
               </span>
             </div>
           </div>
-        </div>
       </div>
+      )}
     </div>
   );
 }

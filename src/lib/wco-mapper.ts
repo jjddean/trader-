@@ -1,5 +1,82 @@
 import { Id } from "../../convex/_generated/dataModel";
 
+const currencyValues =
+  typeof Intl.supportedValuesOf === "function" ? new Set(Intl.supportedValuesOf("currency")) : null;
+const regionName = new Intl.DisplayNames(["en"], { type: "region" });
+
+export function validateCdsFields(declaration: any, items: any[], payloadInfo: any) {
+  const errors: { field: string; reason: string }[] = [];
+  const eori = declaration?.eori || payloadInfo?.Declaration?.Declarant?.ID || "";
+  if (!/^GB\d{12}$/.test(String(eori))) {
+    errors.push({ field: "eori", reason: "EORI must match format GB followed by 12 digits" });
+  }
+
+  const invoiceCurrency = payloadInfo?.Declaration?.InvoiceAmount?.currencyID;
+  if (!isValidIsoCurrency(invoiceCurrency)) {
+    errors.push({ field: "invoiceCurrency", reason: "Currency must be a valid ISO 4217 code" });
+  }
+
+  const destinationCountry = payloadInfo?.Declaration?.GoodsShipment?.Destination?.CountryCode;
+  if (!isValidIsoCountryCode(destinationCountry)) {
+    errors.push({ field: "destinationCountry", reason: "Country code must be valid ISO 3166-1 alpha-2" });
+  }
+
+  const exportCountry = payloadInfo?.Declaration?.GoodsShipment?.ExportCountry?.ID;
+  if (!isValidIsoCountryCode(exportCountry)) {
+    errors.push({ field: "dispatchCountry", reason: "Country code must be valid ISO 3166-1 alpha-2" });
+  }
+
+  for (let i = 0; i < (items || []).length; i++) {
+    const item = items[i];
+    const commodityCode = String(item?.commodityCode || item?.hsCode || "");
+    if (!/^\d{10}$/.test(commodityCode)) {
+      errors.push({ field: `items[${i}].commodityCode`, reason: "Commodity code must be exactly 10 digits" });
+    }
+
+    const cpc = String((item?.procedureCode?.replace(/\s+/g, "") || "").substring(0, 4));
+    if (!/^\d{4}$/.test(cpc)) {
+      errors.push({ field: `items[${i}].procedureCode`, reason: "Procedure code must be a valid 4-digit CPC" });
+    }
+
+    const originCountry = String(item?.originCountry || "");
+    if (originCountry && !isValidIsoCountryCode(originCountry)) {
+      errors.push({ field: `items[${i}].originCountry`, reason: "Country code must be valid ISO 3166-1 alpha-2" });
+    }
+
+    const valueCurrency = String(item?.valueCurrency || invoiceCurrency || "");
+    if (valueCurrency && !isValidIsoCurrency(valueCurrency)) {
+      errors.push({ field: `items[${i}].valueCurrency`, reason: "Currency must be a valid ISO 4217 code" });
+    }
+  }
+
+  const dateFields = [
+    { key: "acceptanceDate", value: declaration?.acceptanceDate },
+    { key: "clearanceDate", value: declaration?.clearanceDate },
+    { key: "declarationDate", value: declaration?.declarationDate },
+  ];
+  for (const dateField of dateFields) {
+    if (dateField.value && !/^\d{8}$/.test(String(dateField.value))) {
+      errors.push({ field: dateField.key, reason: "Date must use YYYYMMDD format" });
+    }
+  }
+
+  return errors;
+}
+
+function isValidIsoCurrency(code: string) {
+  const normalized = String(code || "").trim().toUpperCase();
+  if (!normalized || !/^[A-Z]{3}$/.test(normalized)) return false;
+  if (!currencyValues) return true;
+  return currencyValues.has(normalized);
+}
+
+function isValidIsoCountryCode(code: string) {
+  const normalized = String(code || "").trim().toUpperCase();
+  if (!normalized || !/^[A-Z]{2}$/.test(normalized)) return false;
+  const resolved = regionName.of(normalized);
+  return !!resolved && resolved !== normalized;
+}
+
 export function mapToCDS_H1(declaration: any, items: any[]) {
   if (!declaration || typeof declaration !== "object") {
     throw new Error("Invalid declaration object provided to H1 mapper.");

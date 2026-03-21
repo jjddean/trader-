@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { Id } from "../../../convex/_generated/dataModel";
 
 const routeConfigs: Record<
   string,
@@ -48,14 +49,18 @@ export default function DashboardLayout({
   const declarationId = declarationIdMatch ? declarationIdMatch[1] : null;
   
   // Fetch declaration data to get the name
-  const declaration = useQuery(api.declarations.getLane, declarationId ? { id: declarationId as any } : "skip");
+  const declaration = useQuery(
+    api.declarations.getLane,
+    declarationId ? { id: declarationId as Id<"declarations"> } : "skip",
+  );
 
   let config = routeConfigs[pathname] || { title: "FreightCode", badge: "BETA" };
   
   // Override title for declaration workspaces
   if (declarationId && declaration) {
+    const declarationTitle = declaration.mrn && String(declaration.mrn).trim().length > 0 ? declaration.mrn : "Draft CDS Entry";
     config = { 
-        title: declaration.mrn || "Draft Declaration", 
+        title: declarationTitle, 
         badge: "WORKSPACE", 
         badgeVariant: "blue" 
     };

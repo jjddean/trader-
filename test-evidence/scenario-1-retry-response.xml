@@ -1,0 +1,3 @@
+<!-- timestamp: 2026-03-21T09:53:10.572Z | http_status: 403 | conversation_id: N/A -->
+<!-- request_accept: application/xml | request_content_type: application/xml | request_x_client_id_present: true -->
+{"code": "RESOURCE_FORBIDDEN", "message": "The application is not subscribed to the API which it is attempting to invoke"}

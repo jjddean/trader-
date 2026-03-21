@@ -1,0 +1,70 @@
+<RateLimitResults>
+  <RapidRequest index="1">
+    <Timestamp>2026-03-21T09:34:42.384Z</Timestamp>
+    <HttpStatus>403</HttpStatus>
+    <ConversationId>30d08af4-304f-442b-b30f-b84b9e704a1f</ConversationId>
+    <Body><![CDATA[<?xml version='1.0' encoding='UTF-8'?>
+<errorResponse>
+      <code>PAYLOAD_FORBIDDEN</code>
+      <message>A firewall rejected the request</message>
+      
+    </errorResponse>]]></Body>
+  </RapidRequest>
+  <RapidRequest index="2">
+    <Timestamp>2026-03-21T09:34:42.385Z</Timestamp>
+    <HttpStatus>403</HttpStatus>
+    <ConversationId>ca236ceb-3407-4a2b-bac0-231c1b311931</ConversationId>
+    <Body><![CDATA[<?xml version='1.0' encoding='UTF-8'?>
+<errorResponse>
+      <code>PAYLOAD_FORBIDDEN</code>
+      <message>A firewall rejected the request</message>
+      
+    </errorResponse>]]></Body>
+  </RapidRequest>
+  <RapidRequest index="3">
+    <Timestamp>2026-03-21T09:34:42.387Z</Timestamp>
+    <HttpStatus>403</HttpStatus>
+    <ConversationId>0169afe9-3c4f-41b2-bdb1-89a3522c239e</ConversationId>
+    <Body><![CDATA[<?xml version='1.0' encoding='UTF-8'?>
+<errorResponse>
+      <code>PAYLOAD_FORBIDDEN</code>
+      <message>A firewall rejected the request</message>
+      
+    </errorResponse>]]></Body>
+  </RapidRequest>
+  <RapidRequest index="4">
+    <Timestamp>2026-03-21T09:34:42.389Z</Timestamp>
+    <HttpStatus>403</HttpStatus>
+    <ConversationId>62bd7c60-fc27-4be6-87fe-0e61b72ef648</ConversationId>
+    <Body><![CDATA[<?xml version='1.0' encoding='UTF-8'?>
+<errorResponse>
+      <code>PAYLOAD_FORBIDDEN</code>
+      <message>A firewall rejected the request</message>
+      
+    </errorResponse>]]></Body>
+  </RapidRequest>
+  <RapidRequest index="5">
+    <Timestamp>2026-03-21T09:34:42.391Z</Timestamp>
+    <HttpStatus>403</HttpStatus>
+    <ConversationId>e935acd1-3680-4afe-a47c-86130623a8f0</ConversationId>
+    <Body><![CDATA[<?xml version='1.0' encoding='UTF-8'?>
+<errorResponse>
+      <code>PAYLOAD_FORBIDDEN</code>
+      <message>A firewall rejected the request</message>
+      
+    </errorResponse>]]></Body>
+  </RapidRequest>
+  <RetryFlow>
+    <Attempt index="1">
+      <Timestamp>2026-03-21T09:34:43.889Z</Timestamp>
+      <HttpStatus>403</HttpStatus>
+      <ConversationId>837f95d8-59b0-46f6-919d-c026b95a4a90</ConversationId>
+      <Body><![CDATA[<?xml version='1.0' encoding='UTF-8'?>
+<errorResponse>
+      <code>PAYLOAD_FORBIDDEN</code>
+      <message>A firewall rejected the request</message>
+      
+    </errorResponse>]]></Body>
+    </Attempt>
+  </RetryFlow>
+</RateLimitResults>

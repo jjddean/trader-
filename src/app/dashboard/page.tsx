@@ -38,7 +38,7 @@ export default function DashboardPage() {
             <DutyByHsChart data={stats.chartData} />
 
             {/* 4. AUDITS (STATIC UNTIL WIRING) */}
-            <ActionableAudits />
+            <ActionableAudits overpayments={stats.overpayments || []} />
           </div>
 
           {/* 3. RECENT DECLARATIONS */}
@@ -189,15 +189,15 @@ function RecentDeclarations({ declarations }: { declarations: any[] }) {
                   <td className="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">{decl.date}</td>
                   <td className="px-6 py-4 font-mono text-[0.6875rem] text-gray-900 font-semibold">{decl.mrn}</td>
                   <td className="px-6 py-4">
-                    {decl.status === "Cleared" || decl.status === "Accepted" ? (
+                    {Boolean(decl.mrn && String(decl.mrn).trim().length > 0) && (decl.status === "Cleared" || decl.status === "Accepted") ? (
                       <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
                         <ShieldCheck className="h-3 w-3" />
                         {decl.status}
                       </span>
-                    ) : decl.status === "Rejected" || decl.status === "Action Required" ? (
+                    ) : decl.status === "Rejected" || decl.status === "Action Required" || decl.status === "Invalid" ? (
                       <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
                         <ShieldAlert className="h-3 w-3" />
-                        {decl.status}
+                        {decl.status === "Invalid" ? "Invalid (DMSINV)" : decl.status}
                       </span>
                     ) : decl.status === "Draft" ? (
                       <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
@@ -234,7 +234,7 @@ function RecentDeclarations({ declarations }: { declarations: any[] }) {
 }
 
 // 4️⃣ ACTIONABLE AUDITS (SIMPLIFIED)
-function ActionableAudits() {
+function ActionableAudits({ overpayments }: { overpayments: Array<{ title: string; subtitle: string; amount: number }> }) {
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none h-80">
       <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-5 py-3">
@@ -243,13 +243,21 @@ function ActionableAudits() {
       </div>
       
       <div className="flex-1 p-5 overflow-y-auto space-y-3">
-        <div className="border border-[#e9e9e7] rounded-lg p-4 flex justify-between items-center transition-all hover:bg-gray-50 cursor-pointer">
-          <div>
-            <p className="font-semibold text-sm text-foreground">Missed EU Preference</p>
-            <p className="text-xs text-muted-foreground mt-0.5">1 declaration affected</p>
+        {overpayments.length > 0 ? (
+          overpayments.map((item, idx) => (
+            <div key={`${item.title}-${idx}`} className="border border-[#e9e9e7] rounded-lg p-4 flex justify-between items-center transition-all hover:bg-gray-50 cursor-pointer">
+              <div>
+                <p className="font-semibold text-sm text-foreground">{item.title}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{item.subtitle}</p>
+              </div>
+              <p className="text-red-600 font-semibold text-sm">+£{item.amount.toFixed(2)}</p>
+            </div>
+          ))
+        ) : (
+          <div className="border border-[#e9e9e7] rounded-lg p-4 text-xs text-gray-500">
+            No potential overpayments identified from current declarations.
           </div>
-          <p className="text-red-600 font-semibold text-sm">+£400</p>
-        </div>
+        )}
       </div>
     </div>
   );
