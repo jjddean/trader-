@@ -31,7 +31,10 @@ export async function GET(request: Request) {
     const clientSecret = process.env.HMRC_CLIENT_SECRET!;
     const redirectUri = process.env.HMRC_REDIRECT_URI!;
 
-    const tokenUrl = "https://test-api.service.hmrc.gov.uk/oauth/token";
+    const hmrcBase = process.env.HMRC_ENVIRONMENT === "sandbox"
+      ? "https://test-api.service.hmrc.gov.uk"
+      : "https://api.service.hmrc.gov.uk";
+    const tokenUrl = `${hmrcBase}/oauth/token`;
     console.log("EXCHANGING TOKEN WITH REDIRECT URI:", redirectUri);
     
     const body = new URLSearchParams({

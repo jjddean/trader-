@@ -1,19 +1,39 @@
-- [x] Explore project structure at `C:/Users/jason/trader-app` <!-- id: 0 -->
-- [x] Read `.agents/rules.md` for context <!-- id: 1 -->
-- [x] Analyze sidebar architecture and components <!-- id: 2 -->
-- [x] Determine what the user wants to "add to root" <!-- id: 3 -->
-- [x] UI Consolidation & Stability <!-- id: 27 -->
-    - [x] Uninstall contaminated `radix-ui` library.
-    - [x] Migrate all UI components to modular `@radix-ui/react-*` primitives.
-    - [x] Fix runtime error by replacing `Slot.Root` with `Slot`.
-    - [x] Purge unrequested "suppress" styles (Sidebar, Header).
-    - [x] Remove HS suggested code logic from Lanes page.
-- [ ] Unify Prospects in Workspace <!-- id: 34 -->
-    - [/] Update implementation plan for Prospects wiring <!-- id: 35 -->
-    - [ ] Remove MOCK_LEADS and wire to real leads system <!-- id: 36 -->
-    - [ ] Add status management to Prospects tab <!-- id: 37 -->
-- [ ] Final Build & Verification.
-![alt text](image.png)
-## Notes
-- 2026-03-17: Actionable Audits cards on `/dashboard` had heavy black borders/dividers and mismatched rounding vs KPI cards. Fixed by setting `rounded-xl`, switching borders/dividers to `#e9e9e7`, using muted header background `#fbfbfa`, and softer hover `#f7f7f5`. Applied matching muted-header + light-border styling to `reports` and `records` pages. Files: `src/app/dashboard/page.tsx`, `src/app/dashboard/reports/page.tsx`, `src/app/dashboard/records/page.tsx`.
-- 2026-03-17: Issue summary to fix: After a crash “today,” dashboard UI shows a mix of legacy Trade/Prospects pages and current customs‑declaration app. Sidebar contains legacy items and mismatched styling across sections. Observed pages: `/dashboard/admin`, `/dashboard/documents`, `/dashboard/records` (screenshots provided). Symptoms: inconsistent designs/features; sidebar includes legacy/irrelevant routes (e.g., Prospects, old assistant variants), suggesting multiple app versions surfaced together. Impact: confusing UX and broken IA; users see features not aligned with current customs‑declaration scope. Suspected cause: sidebar and routing not aligned to current product scope; legacy routes still present and linked.
+# Path to Production
+
+Ref: [HMRC Path to Production](https://developer.service.hmrc.gov.uk/guides/customs-declarations-end-to-end-service-guide/documentation/set-up-developers.html)
+
+## Stage 1: Sandbox (Trade Test) — ✅ DONE
+- [x] Register application on HMRC Developer Hub
+- [x] Subscribe to Customs Declarations API (v2.0)
+- [x] OAuth 2.0 auth code flow working
+- [x] Submit declarations — endpoint working
+- [x] Receive push notifications — all 8 types handled
+- [x] Document upload flow — endpoint working
+- [x] All 27/27 internal readiness tests passing
+
+## Stage 2: Trader Dress Rehearsal (TDR) — NEXT
+- [ ] Request TDR access from HMRC Software Developer Support (SDH)
+- [ ] Get application added to TDR allow list
+- [ ] Subscribe to Customs Declarations API **v1.0** (TDR version)
+- [ ] Switch `HMRC_ENVIRONMENT` from `sandbox` to TDR endpoint
+- [ ] Remove `HMRC_DECLARATIONS_ACCEPT` from `.env.local` (defaults to v1.0)
+- [ ] Submit test declarations against TDR (uses live trader data)
+- [ ] Test amend + cancel lifecycle against TDR
+- [ ] Test pull notifications against TDR
+- [ ] Verify all notification types received (DMSACC→DMSCLE flow)
+- [ ] Pass HMRC's TDR assurance review
+
+## Stage 3: Production Credentials
+- [ ] Request production credentials from HMRC
+- [ ] HMRC reviews application and approves
+- [ ] Receive production OAuth client ID + secret
+- [ ] Register push notification callback URL with HMRC for production
+- [ ] Set `HMRC_ENVIRONMENT=production` in production env
+- [ ] Update `HMRC_CLIENT_ID` and `HMRC_CLIENT_SECRET` to production values
+- [ ] Deploy to production hosting
+
+## Stage 4: Go Live
+- [ ] Submit first real declaration via production API
+- [ ] Confirm DMSACC notification received
+- [ ] Monitor for 24 hours — check error rates, latency
+- [ ] Confirm clearance flow end-to-end (DMSACC → DMSROG → DMSCLE)

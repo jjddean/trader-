@@ -4,6 +4,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import { mapToCDS_H1, validateCdsFields } from "../../../../lib/wco-mapper";
+import { xmlEscape } from "../../../../lib/xml-utils";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -47,7 +48,10 @@ export async function POST(request: Request) {
 
       const clientId = process.env.HMRC_CLIENT_ID!;
       const clientSecret = process.env.HMRC_CLIENT_SECRET!;
-      const tokenUrl = "https://test-api.service.hmrc.gov.uk/oauth/token";
+      const hmrcBase = process.env.HMRC_ENVIRONMENT === "sandbox"
+        ? "https://test-api.service.hmrc.gov.uk"
+        : "https://api.service.hmrc.gov.uk";
+      const tokenUrl = `${hmrcBase}/oauth/token`;
 
       const refreshBody = new URLSearchParams({
         client_secret: clientSecret,
@@ -98,6 +102,9 @@ export async function POST(request: Request) {
 
     // Convert the JSON payload into the required HMRC XML Envelope
     // Using the exact canonical namespaces required by the HMRC Sandbox XSD
+    // All user-supplied values are escaped via xmlEscape() to prevent XML injection
+    const d = payloadInfo.Declaration;
+    const gs = d.GoodsShipment;
     const xmlPayload = `<?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
   <WCODataModelVersionCode>3.6</WCODataModelVersionCode>
@@ -106,83 +113,83 @@ export async function POST(request: Request) {
   <ResponsibleAgencyName>HMRC</ResponsibleAgencyName>
   <AgencyAssignedCustomizationVersionCode>v2.1</AgencyAssignedCustomizationVersionCode>
   <Declaration xmlns="urn:wco:datamodel:WCO:DEC-DMS:2" xmlns:clm63055="urn:un:unece:uncefact:codelist:standard:UNECE:AgencyIdentificationCode:D12B" xmlns:ds="urn:wco:datamodel:WCO:MetaData_DS-DMS:2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2 ../DocumentMetaData_2_DMS.xsd ">
-    <FunctionCode>${payloadInfo.Declaration.FunctionCode}</FunctionCode>
-    <FunctionalReferenceID>${payloadInfo.Declaration.FunctionalReferenceID}</FunctionalReferenceID>
-    <TypeCode>${payloadInfo.Declaration.TypeCode}</TypeCode>
-    <GoodsItemQuantity>${payloadInfo.Declaration.GoodsItemQuantity}</GoodsItemQuantity>
-    <DeclarationOfficeID>${payloadInfo.Declaration.DeclarationOfficeID}</DeclarationOfficeID>
-    <InvoiceAmount currencyID="${payloadInfo.Declaration.InvoiceAmount.currencyID}">${payloadInfo.Declaration.InvoiceAmount.value}</InvoiceAmount>
-    <TotalGrossMassMeasure unitCode="KGM">${payloadInfo.Declaration.TotalGrossMassMeasure}</TotalGrossMassMeasure>
-    <TotalPackageQuantity>${payloadInfo.Declaration.TotalPackageQuantity}</TotalPackageQuantity>
+    <FunctionCode>${xmlEscape(d.FunctionCode)}</FunctionCode>
+    <FunctionalReferenceID>${xmlEscape(d.FunctionalReferenceID)}</FunctionalReferenceID>
+    <TypeCode>${xmlEscape(d.TypeCode)}</TypeCode>
+    <GoodsItemQuantity>${xmlEscape(d.GoodsItemQuantity)}</GoodsItemQuantity>
+    <DeclarationOfficeID>${xmlEscape(d.DeclarationOfficeID)}</DeclarationOfficeID>
+    <InvoiceAmount currencyID="${xmlEscape(d.InvoiceAmount.currencyID)}">${xmlEscape(d.InvoiceAmount.value)}</InvoiceAmount>
+    <TotalGrossMassMeasure unitCode="KGM">${xmlEscape(d.TotalGrossMassMeasure)}</TotalGrossMassMeasure>
+    <TotalPackageQuantity>${xmlEscape(d.TotalPackageQuantity)}</TotalPackageQuantity>
     <CurrencyExchange>
-      <CurrencyTypeCode>${payloadInfo.Declaration.CurrencyExchange.CurrencyTypeCode}</CurrencyTypeCode>
+      <CurrencyTypeCode>${xmlEscape(d.CurrencyExchange.CurrencyTypeCode)}</CurrencyTypeCode>
     </CurrencyExchange>
     <Declarant>
-      <ID>${payloadInfo.Declaration.Declarant.ID}</ID>
+      <ID>${xmlEscape(d.Declarant.ID)}</ID>
     </Declarant>
     <Exporter>
-      <ID>${payloadInfo.Declaration.Exporter.ID}</ID>
+      <ID>${xmlEscape(d.Exporter.ID)}</ID>
     </Exporter>
     <GoodsShipment>
       <Consignment>
-        <ContainerCode>${payloadInfo.Declaration.GoodsShipment.Consignment.ContainerCode}</ContainerCode>
+        <ContainerCode>${xmlEscape(gs.Consignment.ContainerCode)}</ContainerCode>
         <ArrivalTransportMeans>
-          <ID>${payloadInfo.Declaration.GoodsShipment.Consignment.BorderTransportMeans.ID}</ID>
-          <IdentificationTypeCode>${payloadInfo.Declaration.GoodsShipment.Consignment.BorderTransportMeans.IdentificationTypeCode}</IdentificationTypeCode>
-          <ModeCode>${payloadInfo.Declaration.GoodsShipment.Consignment.BorderTransportMeans.ModeCode}</ModeCode>
+          <ID>${xmlEscape(gs.Consignment.BorderTransportMeans.ID)}</ID>
+          <IdentificationTypeCode>${xmlEscape(gs.Consignment.BorderTransportMeans.IdentificationTypeCode)}</IdentificationTypeCode>
+          <ModeCode>${xmlEscape(gs.Consignment.BorderTransportMeans.ModeCode)}</ModeCode>
         </ArrivalTransportMeans>
         <GoodsLocation>
-          <Name>${payloadInfo.Declaration.GoodsShipment.Consignment.GoodsLocation.Name}</Name>
-          <ID>${payloadInfo.Declaration.GoodsShipment.Consignment.GoodsLocation.ID}</ID>
+          <Name>${xmlEscape(gs.Consignment.GoodsLocation.Name)}</Name>
+          <ID>${xmlEscape(gs.Consignment.GoodsLocation.ID)}</ID>
         </GoodsLocation>
       </Consignment>
       <Destination>
-        <CountryCode>${payloadInfo.Declaration.GoodsShipment.Destination.CountryCode}</CountryCode>
+        <CountryCode>${xmlEscape(gs.Destination.CountryCode)}</CountryCode>
       </Destination>
       <ExportCountry>
-        <ID>${payloadInfo.Declaration.GoodsShipment.ExportCountry.ID}</ID>
+        <ID>${xmlEscape(gs.ExportCountry.ID)}</ID>
       </ExportCountry>
-      ${payloadInfo.Declaration.GoodsShipment.GovernmentAgencyGoodsItem.map((item: any) => `
+      ${gs.GovernmentAgencyGoodsItem.map((item: any) => `
       <GovernmentAgencyGoodsItem>
-        <SequenceNumeric>${item.SequenceNumeric}</SequenceNumeric>
-        <StatisticalValueAmount currencyID="${item.StatisticalValueAmount.currencyID}">${item.StatisticalValueAmount.value}</StatisticalValueAmount>
+        <SequenceNumeric>${xmlEscape(item.SequenceNumeric)}</SequenceNumeric>
+        <StatisticalValueAmount currencyID="${xmlEscape(item.StatisticalValueAmount.currencyID)}">${xmlEscape(item.StatisticalValueAmount.value)}</StatisticalValueAmount>
         <AdditionalDocument>
-          <CategoryCode>${item.AdditionalDocument[0].CategoryCode}</CategoryCode>
-          <ID>${item.AdditionalDocument[0].ID}</ID>
-          <TypeCode>${item.AdditionalDocument[0].TypeCode}</TypeCode>
+          <CategoryCode>${xmlEscape(item.AdditionalDocument[0].CategoryCode)}</CategoryCode>
+          <ID>${xmlEscape(item.AdditionalDocument[0].ID)}</ID>
+          <TypeCode>${xmlEscape(item.AdditionalDocument[0].TypeCode)}</TypeCode>
         </AdditionalDocument>
         <Commodity>
-          <Description>${item.Commodity.Description}</Description>
+          <Description>${xmlEscape(item.Commodity.Description)}</Description>
           <Classification>
-            <ID>${item.Commodity.Classification[0].ID}</ID>
-            <IdentificationTypeCode>${item.Commodity.Classification[0].IdentificationTypeCode}</IdentificationTypeCode>
+            <ID>${xmlEscape(item.Commodity.Classification[0].ID)}</ID>
+            <IdentificationTypeCode>${xmlEscape(item.Commodity.Classification[0].IdentificationTypeCode)}</IdentificationTypeCode>
           </Classification>
           <GoodsMeasure>
-            <GrossMassMeasure unitCode="KGM">${item.Commodity.GoodsMeasure.GrossMassMeasure}</GrossMassMeasure>
-            <NetNetWeightMeasure unitCode="KGM">${item.Commodity.GoodsMeasure.NetNetWeightMeasure}</NetNetWeightMeasure>
+            <GrossMassMeasure unitCode="KGM">${xmlEscape(item.Commodity.GoodsMeasure.GrossMassMeasure)}</GrossMassMeasure>
+            <NetNetWeightMeasure unitCode="KGM">${xmlEscape(item.Commodity.GoodsMeasure.NetNetWeightMeasure)}</NetNetWeightMeasure>
           </GoodsMeasure>
         </Commodity>
         ${item.GovernmentProcedure.map((proc: any) => `
         <GovernmentProcedure>
-          <CurrentCode>${proc.CurrentCode}</CurrentCode>
-          ${proc.PreviousCode ? `<PreviousCode>${proc.PreviousCode}</PreviousCode>` : ''}
+          <CurrentCode>${xmlEscape(proc.CurrentCode)}</CurrentCode>
+          ${proc.PreviousCode ? `<PreviousCode>${xmlEscape(proc.PreviousCode)}</PreviousCode>` : ''}
         </GovernmentProcedure>`).join('')}
         <Packaging>
-          <SequenceNumeric>${item.Packaging[0].SequenceNumeric}</SequenceNumeric>
-          <MarksNumbersID>${item.Packaging[0].MarksNumbersID}</MarksNumbersID>
-          <QuantityQuantity>${item.Packaging[0].QuantityQuantity}</QuantityQuantity>
-          <TypeCode>${item.Packaging[0].TypeCode}</TypeCode>
+          <SequenceNumeric>${xmlEscape(item.Packaging[0].SequenceNumeric)}</SequenceNumeric>
+          <MarksNumbersID>${xmlEscape(item.Packaging[0].MarksNumbersID)}</MarksNumbersID>
+          <QuantityQuantity>${xmlEscape(item.Packaging[0].QuantityQuantity)}</QuantityQuantity>
+          <TypeCode>${xmlEscape(item.Packaging[0].TypeCode)}</TypeCode>
         </Packaging>
       </GovernmentAgencyGoodsItem>`).join('')}
       <Importer>
-        <ID>${payloadInfo.Declaration.GoodsShipment.Importer.ID}</ID>
+        <ID>${xmlEscape(gs.Importer.ID)}</ID>
       </Importer>
       <TradeTerms>
-        <ConditionCode>${payloadInfo.Declaration.GoodsShipment.TradeTerms.ConditionCode}</ConditionCode>
-        <LocationID>${payloadInfo.Declaration.GoodsShipment.TradeTerms.LocationID}</LocationID>
+        <ConditionCode>${xmlEscape(gs.TradeTerms.ConditionCode)}</ConditionCode>
+        <LocationID>${xmlEscape(gs.TradeTerms.LocationID)}</LocationID>
       </TradeTerms>
       <UCR>
-        <TraderAssignedReferenceID>${payloadInfo.Declaration.UCR.TraderAssignedReferenceID}</TraderAssignedReferenceID>
+        <TraderAssignedReferenceID>${xmlEscape(d.UCR.TraderAssignedReferenceID)}</TraderAssignedReferenceID>
       </UCR>
     </GoodsShipment>
   </Declaration>
@@ -200,7 +207,7 @@ export async function POST(request: Request) {
 
     const testScenario = process.env.HMRC_TEST_SCENARIO;
     const hmrcHeaders: Record<string, string> = {
-      Accept: "application/vnd.hmrc.2.0+xml",
+      Accept: process.env.HMRC_DECLARATIONS_ACCEPT || "application/vnd.hmrc.1.0+xml",
       "Content-Type": "application/xml; charset=UTF-8",
       Authorization: authHeaderString,
       "X-Client-ID": process.env.HMRC_CLIENT_ID!,

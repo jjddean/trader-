@@ -77,6 +77,21 @@ function isValidIsoCountryCode(code: string) {
   return !!resolved && resolved !== normalized;
 }
 
+/**
+ * Map declaration type letter + route to WCO TypeCode.
+ * Import types: IMA, IMB, IMC, IMD, IME, IMF, IMJ, IMK, IMY, IMZ
+ * Export types: EXA, EXB, etc.
+ * Defaults to IMA (standard frontier import) if unspecified.
+ */
+function mapDeclarationType(type?: string, route?: string): string {
+  const prefix = route === "export" ? "EX" : "IM";
+  const validTypes = ["A", "B", "C", "D", "E", "F", "J", "K", "Y", "Z"];
+  const suffix = validTypes.includes((type || "").toUpperCase()) 
+    ? (type || "A").toUpperCase() 
+    : "A";
+  return `${prefix}${suffix}`;
+}
+
 export function mapToCDS_H1(declaration: any, items: any[]) {
   if (!declaration || typeof declaration !== "object") {
     throw new Error("Invalid declaration object provided to H1 mapper.");
@@ -89,7 +104,7 @@ export function mapToCDS_H1(declaration: any, items: any[]) {
   return {
     Declaration: {
       FunctionCode: "9", 
-      TypeCode: "IMA",    
+      TypeCode: mapDeclarationType(declaration.declarationType, declaration.route),    
       FunctionalReferenceID: declaration.lrn || `FC-${declaration._id}`,
       GoodsItemQuantity: items.length || 1,
       DeclarationOfficeID: declaration.presentationOffice || "GB000051",
