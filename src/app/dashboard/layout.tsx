@@ -35,6 +35,7 @@ const routeConfigs: Record<
   "/dashboard/user": { title: "Account", badge: "PROFILE", badgeVariant: "default" },
   "/dashboard/user/billing": { title: "Billing", badge: "STRIPE", badgeVariant: "success" },
   "/dashboard/admin": { title: "Admin", badge: "INTERNAL", badgeVariant: "default" },
+  "/dashboard/tools/hscode-lookup": { title: "HS Code Lookup", badge: "TOOLS", badgeVariant: "default" },
 };
 
 export default function DashboardLayout({

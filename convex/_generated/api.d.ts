@@ -22,6 +22,7 @@ import type * as documents from "../documents.js";
 import type * as getFirstLane from "../getFirstLane.js";
 import type * as goods_items from "../goods_items.js";
 import type * as hmrc from "../hmrc.js";
+import type * as hmrc_actions from "../hmrc_actions.js";
 import type * as hmrc_internal from "../hmrc_internal.js";
 import type * as http from "../http.js";
 import type * as ingest from "../ingest.js";
@@ -55,6 +56,7 @@ declare const fullApi: ApiFromModules<{
   getFirstLane: typeof getFirstLane;
   goods_items: typeof goods_items;
   hmrc: typeof hmrc;
+  hmrc_actions: typeof hmrc_actions;
   hmrc_internal: typeof hmrc_internal;
   http: typeof http;
   ingest: typeof ingest;

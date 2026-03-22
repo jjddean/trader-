@@ -59,7 +59,7 @@ export default function LandingPage() {
                 <span className="text-xl font-bold tracking-tight text-slate-600">code</span>
                 <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px] text-slate-600">®</span>
               </div>
-              <span className="ml-1 rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+              <span className="ml-1.5 rounded border border-slate-200 bg-slate-100 px-2 py-0.5 text-[13px] font-semibold text-slate-600">
                 Beta
               </span>
             </Link>
@@ -91,7 +91,7 @@ export default function LandingPage() {
               <div className="flex items-center gap-4">
                 <Link
                   href="/dashboard"
-                  className="h-[32px] rounded border border-transparent bg-[#2383e2] px-[12px] flex items-center text-[14px] font-medium text-white transition-all hover:bg-[#1d6fc0] shadow-none"
+                  className="h-[32px] rounded border border-transparent bg-[#111827] px-[12px] flex items-center text-[14px] font-medium text-white transition-all hover:bg-[#374151] shadow-none"
                 >
                   Dashboard <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Link>
@@ -129,7 +129,7 @@ export default function LandingPage() {
               {isSignedIn ? (
                 <Link
                   href="/dashboard"
-                  className="h-[42px] min-w-[140px] rounded border border-transparent bg-[#2383e2] px-[24px] flex items-center justify-center text-[14px] font-medium text-white transition-all hover:bg-[#1d6fc0] shadow-sm"
+                  className="h-[42px] min-w-[140px] rounded border border-transparent bg-[#111827] px-[24px] flex items-center justify-center text-[14px] font-medium text-white transition-all hover:bg-[#374151] shadow-sm"
                 >
                   Open Dashboard <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Link>
@@ -155,7 +155,7 @@ export default function LandingPage() {
             <div className="grid gap-[32px] md:grid-cols-3">
               {/* Step 1 */}
               <div className="relative text-center px-[16px]">
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-[24px] font-bold text-[#2383e2]">
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-[24px] font-bold text-[#1d6fc0]">
                   1
                 </div>
                 <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Connect & Sync</h3>
@@ -166,7 +166,7 @@ export default function LandingPage() {
 
               {/* Step 2 */}
               <div className="relative text-center px-[16px]">
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-[24px] font-bold text-[#2383e2]">
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-[24px] font-bold text-[#1d6fc0]">
                   2
                 </div>
                 <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Analyze & Optimize</h3>
@@ -177,7 +177,7 @@ export default function LandingPage() {
 
               {/* Step 3 */}
               <div className="relative text-center px-[16px]">
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-[24px] font-bold text-[#2383e2]">
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-[24px] font-bold text-[#1d6fc0]">
                   3
                 </div>
                 <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Execute & Report</h3>
@@ -338,7 +338,7 @@ export default function LandingPage() {
               {isSignedIn ? (
                 <Link
                   href="/dashboard/documents"
-                  className="h-[42px] min-w-[140px] rounded border border-transparent bg-[#2383e2] px-[24px] flex items-center justify-center text-[14px] font-medium text-white transition-all hover:bg-[#1d6fc0] shadow-sm"
+                  className="h-[42px] min-w-[140px] rounded border border-transparent bg-[#111827] px-[24px] flex items-center justify-center text-[14px] font-medium text-white transition-all hover:bg-[#374151] shadow-sm"
                 >
                   Open Dashboard <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Link>

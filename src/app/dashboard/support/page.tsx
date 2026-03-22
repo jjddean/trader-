@@ -54,7 +54,7 @@ export default function AssistantPage() {
       </div>
 
       {/* Input Area */}
-      <div className="mt-auto relative w-full rounded-[4px] border border-[#e9e9e7] bg-white shadow-sm p-1 focus-within:border-[#2383e2] focus-within:ring-1 focus-within:ring-[#2383e2] transition-all flex items-end">
+      <div className="mt-auto relative w-full rounded-[4px] border border-[#e9e9e7] bg-white shadow-sm p-1 focus-within:border-[#111827] focus-within:ring-1 focus-within:ring-[#111827] transition-all flex items-end">
          <div className="p-2 text-[#787774]">
            <Sparkles className="h-5 w-5" />
          </div>
@@ -67,7 +67,7 @@ export default function AssistantPage() {
           />
           <Button 
             size="icon" 
-            className="mb-1 mr-1 h-8 w-8 rounded-[4px] bg-[#2383e2] hover:bg-[#1d6fc0] text-white shadow-none"
+            className="mb-1 mr-1 h-8 w-8 rounded-[4px] bg-[#111827] hover:bg-[#374151] text-white shadow-none"
             disabled={!inputValue.trim()}
           >
             <Send className="h-4 w-4" />

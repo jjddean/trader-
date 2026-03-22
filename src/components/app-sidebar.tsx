@@ -12,6 +12,7 @@ import {
   Scale,
   ShieldCheck,
   Bot,
+  BookOpen,
 } from "lucide-react";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
@@ -37,6 +38,7 @@ const navItems = [
   { href: "/dashboard/audit", label: "Compliance Audit", icon: ShieldCheck },
   { href: "/dashboard/reports", label: "Customs Reports", icon: FileSpreadsheet },
   { href: "/dashboard/records", label: "Financial Records", icon: Scale },
+  { href: "/dashboard/tools/hscode-lookup", label: "HS Code Lookup", icon: BookOpen },
   { href: "/dashboard/assistant", label: "Assistant", icon: Bot },
 ] as const;
 

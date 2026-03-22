@@ -30,7 +30,7 @@ export function SiteHeader() {
               <span className="text-xl font-bold tracking-tight text-slate-400">code</span>
               <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px] text-slate-400">®</span>
             </div>
-            <span className="ml-1 rounded border border-slate-100 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400">
+            <span className="ml-1.5 rounded border border-slate-100 bg-slate-50 px-2 py-0.5 text-[13px] font-semibold text-slate-600">
               Beta
             </span>
           </Link>
@@ -66,7 +66,7 @@ export function SiteHeader() {
             <div className="flex items-center gap-4">
               <Link
                 href="/dashboard"
-                className="h-[32px] rounded border border-transparent bg-[#2383e2] px-[12px] flex items-center text-[14px] font-medium text-white transition-all hover:bg-[#1d6fc0] shadow-none"
+                className="h-[32px] rounded border border-transparent bg-[#111827] px-[12px] flex items-center text-[14px] font-medium text-white transition-all hover:bg-[#374151] shadow-none"
               >
                 Dashboard <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
               </Link>

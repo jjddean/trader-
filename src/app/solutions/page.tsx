@@ -61,7 +61,7 @@ export default function SolutionsPage() {
             {capabilities.map((item, index) => (
               <div key={item.id} id={item.id} className="scroll-mt-[120px] rounded-2xl bg-white p-8 md:p-12 shadow-sm border border-slate-200">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-xl font-bold text-[#2383e2] shrink-0">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-xl font-bold text-[#1d6fc0] shrink-0">
                     {index + 1}
                   </div>
                   <h2 className="text-[28px] font-bold text-[#020817] tracking-tight">{item.label}</h2>
