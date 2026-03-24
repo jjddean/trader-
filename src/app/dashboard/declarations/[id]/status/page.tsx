@@ -276,7 +276,7 @@ export default function StatusTimelinePage() {
                       <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Which fields to fix</h4>
                       {notifications?.[0]?.fieldErrors?.length > 0 ? (
                          <ul className="text-sm text-gray-700 list-disc pl-4 space-y-1">
-                           {notifications[0]?.fieldErrors?.map((err: any, idx: number) => (
+                           {notifications?.[0]?.fieldErrors?.map((err: any, idx: number) => (
                              <li key={idx}><strong>{err.field}</strong>: {err.reason}</li>
                            ))}
                          </ul>

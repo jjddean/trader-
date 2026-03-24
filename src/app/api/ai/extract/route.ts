@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import Groq from "groq-sdk";
 import { TextractClient, DetectDocumentTextCommand } from "@aws-sdk/client-textract";
-// @ts-ignore
-const pdfParse = require("pdf-parse");
 
 export async function POST(request: Request) {
   try {
@@ -28,6 +26,7 @@ export async function POST(request: Request) {
     try {
       if (mimeType.includes("pdf") || file.name.toLowerCase().endsWith(".pdf")) {
         // PDF-parse handles digital PDFs natively and synchronously
+        const pdfParse = require("pdf-parse");
         const pdfResult = await pdfParse(buffer);
         rawText = pdfResult.text;
       } else {
