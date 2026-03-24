@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import Groq from "groq-sdk";
 import { TextractClient, DetectDocumentTextCommand } from "@aws-sdk/client-textract";
 // @ts-ignore
-import pdfParse from "pdf-parse";
+const pdfParse = require("pdf-parse");
 
 export async function POST(request: Request) {
   try {
