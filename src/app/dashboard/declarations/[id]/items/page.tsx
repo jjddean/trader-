@@ -33,6 +33,7 @@ export default function GoodsItemsPage() {
 
   const [isUploading, setIsUploading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [showAddRowModal, setShowAddRowModal] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   
@@ -42,19 +43,38 @@ export default function GoodsItemsPage() {
 
   const handleItemFieldBlur = async (
     itemId: Id<"goods_items">,
-    field: "description" | "commodityCode" | "originCountry" | "valueAmount",
+    field: "description" | "commodityCode" | "originCountry" | "valueAmount" | "procedureCode",
     value: string,
   ) => {
     try {
+      if (field === "commodityCode") {
+        const cleaned = value.trim();
+        if (cleaned.length !== 10 || !/^\d{10}$/.test(cleaned)) {
+          setFieldErrors(prev => ({ ...prev, [`${itemId}-commodityCode`]: "Must be exactly 10 digits" }));
+          return;
+        }
+        setFieldErrors(prev => ({ ...prev, [`${itemId}-commodityCode`]: "" }));
+        await updateItem({ id: itemId, commodityCode: cleaned });
+        return;
+      }
+      
+      if (field === "originCountry") {
+        const cleaned = value.trim().toUpperCase();
+        if (cleaned.length !== 2 || !/^[A-Z]{2}$/.test(cleaned)) {
+          setFieldErrors(prev => ({ ...prev, [`${itemId}-originCountry`]: "Must be exactly 2 letters" }));
+          return;
+        }
+        setFieldErrors(prev => ({ ...prev, [`${itemId}-originCountry`]: "" }));
+        await updateItem({ id: itemId, originCountry: cleaned });
+        return;
+      }
+
       if (field === "valueAmount") {
         await updateItem({ id: itemId, valueAmount: Number(value) || 0 });
         return;
       }
-      const sanitizedValue =
-        field === "originCountry"
-          ? value.trim().toUpperCase()
-          : value.trim();
-
+      
+      const sanitizedValue = field === "procedureCode" ? value.trim() : value.trim();
       await updateItem({
         id: itemId,
         [field]: sanitizedValue,
@@ -227,24 +247,31 @@ export default function GoodsItemsPage() {
                       className="w-full bg-transparent text-xs font-medium text-gray-900 outline-none" 
                     />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 align-top">
                     <input 
                       type="text" 
                       defaultValue={item.commodityCode} 
                       onBlur={(e) => handleItemFieldBlur(item._id, "commodityCode", e.target.value)}
                       placeholder="e.g. 6109100010"
-                      className="w-28 rounded border border-transparent bg-transparent p-1 font-mono text-xs text-gray-700 outline-none hover:border-gray-200 focus:border-blue-500 focus:bg-white" 
+                      className={`w-28 rounded border p-1 font-mono text-xs text-gray-700 outline-none focus:bg-white ${fieldErrors[`${item._id}-commodityCode`] ? 'border-red-500 bg-red-50 focus:border-red-500' : 'border-transparent bg-transparent hover:border-gray-200 focus:border-blue-500'}`} 
                     />
+                    {fieldErrors[`${item._id}-commodityCode`] && (
+                      <div className="mt-1 text-[10px] text-red-500 max-w-[120px] leading-tight">{fieldErrors[`${item._id}-commodityCode`]}</div>
+                    )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 align-top">
                     <input 
                       type="text" 
                       defaultValue={item.originCountry} 
                       onBlur={(e) => handleItemFieldBlur(item._id, "originCountry", e.target.value)}
-                      className="w-12 rounded border border-transparent bg-transparent p-1 font-mono text-xs text-gray-700 outline-none hover:border-gray-200 focus:border-blue-500 focus:bg-white" 
+                      placeholder="e.g. GB"
+                      className={`w-12 rounded border p-1 font-mono text-xs text-gray-700 outline-none focus:bg-white ${fieldErrors[`${item._id}-originCountry`] ? 'border-red-500 bg-red-50 focus:border-red-500' : 'border-transparent bg-transparent hover:border-gray-200 focus:border-blue-500'}`} 
                     />
+                    {fieldErrors[`${item._id}-originCountry`] && (
+                      <div className="mt-1 text-[10px] text-red-500 max-w-[80px] leading-tight">{fieldErrors[`${item._id}-originCountry`]}</div>
+                    )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 align-top">
                     <div className="flex items-center gap-1">
                       <span className="text-xs text-gray-400">{item.valueCurrency}</span>
                       <input 
@@ -255,7 +282,15 @@ export default function GoodsItemsPage() {
                       />
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-xs text-gray-600">{item.procedureCode}</td>
+                  <td className="px-4 py-3 align-top">
+                    <input
+                      type="text"
+                      defaultValue={item.procedureCode || "4000"}
+                      onBlur={(e) => handleItemFieldBlur(item._id, "procedureCode", e.target.value)}
+                      placeholder="e.g. 4000"
+                      className="w-16 rounded border border-transparent bg-transparent p-1 font-mono text-xs text-gray-700 outline-none hover:border-gray-200 focus:border-blue-500 focus:bg-white"
+                    />
+                  </td>
                   <td className="px-4 py-3 text-right">
                      <button
                         onClick={() => removeItem({ id: item._id })}

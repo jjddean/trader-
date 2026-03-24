@@ -44,6 +44,36 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-slate-900 selection:text-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Freightcode",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web",
+            "description": "Automate your UK customs declarations (HMRC CDS), detect savings, and ensure compliance instantly."
+          })
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": faqs.map(faq => ({
+              "@type": "Question",
+              "name": faq.question,
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": faq.answer
+              }
+            }))
+          })
+        }}
+      />
       {/* Header */}
       <header className="fixed top-0 z-50 w-full border-b border-slate-200/50 bg-white/70 backdrop-blur-md">
         <div className="mx-auto flex h-[64px] max-w-[1280px] items-center justify-between px-[24px] relative">
@@ -111,7 +141,7 @@ export default function LandingPage() {
                 <ArrowRight className="h-3 w-3 text-white" />
               </div>
               <span className="text-[16px] font-medium tracking-normal text-[#020817]">
-                UK Customs Declaration Services
+                UK Customs Declaration Software
               </span>
             </div>
 
@@ -137,6 +167,15 @@ export default function LandingPage() {
                 <WaitlistForm />
               )}
             </div>
+          </div>
+        </section>
+
+        {/* Visibility Hero Banner */}
+        <section className="bg-white py-[128px] md:py-[160px]">
+          <div className="mx-auto max-w-[1024px] px-[24px] text-center">
+             <h2 className="text-[48px] leading-[48px] font-bold tracking-tight text-[#020817] md:text-[52px]">
+               Full visibility and control over your customs declarations.
+             </h2>
           </div>
         </section>
 
@@ -251,6 +290,38 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* AI Guides Section */}
+        <section id="ai-guides" className="py-[96px] bg-white border-y border-slate-100">
+          <div className="mx-auto max-w-[1280px] px-[24px]">
+            <div className="mb-[64px] text-center">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-medium mb-4">
+                <Sparkle className="w-4 h-4" /> AI-Powered Search
+              </div>
+              <h2 className="mb-4 text-[36px] font-bold tracking-tight text-[#020817] md:text-[42px]">
+                Master Customs Compliance
+              </h2>
+              <p className="mx-auto max-w-2xl text-[20px] text-slate-600">
+                Stop digging through confusing HMRC manuals. Our intelligence engine can instantly answer your questions using our five definitive guides.
+              </p>
+            </div>
+
+            <div className="grid gap-[24px] md:grid-cols-2 lg:grid-cols-3 justify-center">
+              {[
+                { title: 'CDS Importer Guide', path: '/hmrc-cds-uk-importers-2026' },
+                { title: 'What is TRE?', path: '/what-is-tre-customs-data' },
+                { title: 'CDS Notifications', path: '/hmrc-cds-notifications-dmsacc-dmsrog-dmscle' },
+                { title: 'Reading TRE Exports', path: '/how-to-read-cds-csv-export-tre' },
+                { title: 'Commodity Codes', path: '/cds-commodity-codes-lookup' },
+              ].map((guide, i) => (
+                <Link key={i} href={`/guides${guide.path}`} className="group p-6 rounded-xl border border-slate-200 hover:border-blue-200 hover:shadow-md transition-all bg-white flex flex-col items-start hover:bg-slate-50">
+                  <h3 className="text-[18px] font-bold text-[#020817] mb-2 group-hover:text-blue-700 transition-colors">{guide.title}</h3>
+                  <span className="text-sm text-slate-500 flex items-center mt-auto font-medium">Read guide <ArrowRight className="w-4 h-4 ml-1 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" /></span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Free Calculators Promotion section */}
         <section id="resources" className="py-[96px]">
           <div className="mx-auto max-w-[1280px] px-[24px]">
@@ -353,9 +424,9 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="py-12 px-6 bg-white border-t border-gray-200">
+      <footer className="py-20 px-6 bg-white border-t border-gray-200">
             <div className="max-w-6xl mx-auto">
-                <div className="grid grid-cols-2 md:grid-cols-7 gap-6 mb-10">
+                <div className="grid grid-cols-2 md:grid-cols-7 gap-8 mb-16">
                     {/* Logo / About */}
                     <div className="col-span-2 md:col-span-1 -mt-1">
                         <div className="mb-4">
@@ -368,7 +439,7 @@ export default function LandingPage() {
                         <p className="text-gray-700 text-xs leading-relaxed">
                             Automate your declarations, uncover hidden savings,<br />and ensure total HMRC compliance.
                         </p>
-                        <p className="text-gray-600 text-xs mt-3">
+                        <p className="text-gray-600 text-xs mt-4">
                             London, UK
                             <br />
                             info@freightcode.co.uk
@@ -377,72 +448,80 @@ export default function LandingPage() {
 
                     {/* Product */}
                     <div>
-                        <h4 className="text-[#020817] font-medium text-xs mb-4">Product</h4>
-                        <ul className="text-gray-600 text-xs space-y-2">
-                            <li><Link href="/solutions" className="hover:text-[#020817]">Solutions</Link></li>
-                            <li><Link href="/resources" className="hover:text-[#020817]">Resources</Link></li>
+                        <h4 className="text-[#020817] font-medium text-xs mb-5">Product</h4>
+                        <ul className="text-gray-600 text-xs space-y-3">
+                            <li><Link href="/solutions" className="hover:text-[#020817] transition-colors">Solutions</Link></li>
+                            <li><Link href="/resources" className="hover:text-[#020817] transition-colors">Resources</Link></li>
                         </ul>
                     </div>
 
                     {/* Company */}
                     <div>
-                        <h4 className="text-[#020817] font-medium text-xs mb-4">Company</h4>
-                        <ul className="text-gray-600 text-xs space-y-2">
-                            <li><Link href="/about" className="hover:text-[#020817]">About</Link></li>
-                            <li><Link href="/contact" className="hover:text-[#020817]">Contact</Link></li>
+                        <h4 className="text-[#020817] font-medium text-xs mb-5">Company</h4>
+                        <ul className="text-gray-600 text-xs space-y-3">
+                            <li><Link href="/about" className="hover:text-[#020817] transition-colors">About</Link></li>
+                            <li><Link href="/contact" className="hover:text-[#020817] transition-colors">Contact</Link></li>
                         </ul>
                     </div>
 
                     {/* Legal */}
                     <div>
-                        <h4 className="text-[#020817] font-medium text-xs mb-4">Legal</h4>
-                        <ul className="text-gray-600 text-xs space-y-2">
-                            <li><Link href="/privacy" className="hover:text-[#020817]">Privacy</Link></li>
-                            <li><Link href="/terms" className="hover:text-[#020817]">Terms</Link></li>
+                        <h4 className="text-[#020817] font-medium text-xs mb-5">Legal</h4>
+                        <ul className="text-gray-600 text-xs space-y-3">
+                            <li><Link href="/privacy" className="hover:text-[#020817] transition-colors">Privacy</Link></li>
+                            <li><Link href="/terms" className="hover:text-[#020817] transition-colors">Terms</Link></li>
                         </ul>
                     </div>
 
                     {/* Socials */}
                     <div>
-                        <h4 className="text-[#020817] font-medium text-xs mb-4">Socials</h4>
-                        <ul className="text-gray-600 text-xs space-y-2">
-                            <li><a href="https://x.com/freightcode" className="hover:text-[#020817]">X</a></li>
-                            <li><a href="https://linkedin.com/company/freightcode" className="hover:text-[#020817]">LinkedIn</a></li>
-                            <li><a href="https://youtube.com/@freightcode" className="hover:text-[#020817]">YouTube</a></li>
+                        <h4 className="text-[#020817] font-medium text-xs mb-5">Socials</h4>
+                        <ul className="text-gray-600 text-xs space-y-3">
+                            <li><a href="https://x.com/freightcode" className="hover:text-[#020817] transition-colors">X</a></li>
+                            <li><a href="https://linkedin.com/company/freightcode" className="hover:text-[#020817] transition-colors">LinkedIn</a></li>
+                            <li><a href="https://youtube.com/@freightcode" className="hover:text-[#020817] transition-colors">YouTube</a></li>
                         </ul>
                     </div>
 
                     {/* Security & Trust */}
                     <div>
-                        <h4 className="text-[#020817] font-medium text-xs mb-4">Security & Trust</h4>
-                        <ul className="text-gray-600 text-xs space-y-2">
+                        <h4 className="text-[#020817] font-medium text-xs mb-5">Security & Trust</h4>
+                        <ul className="text-gray-600 text-xs space-y-3">
                             <li>Secure billing via Stripe</li>
                             <li>Enterprise authentication</li>
                             <li>Encrypted data</li>
                             <li>Activity logging</li>
-                            <li>Role-based access</li>
                         </ul>
                     </div>
 
-                    {/* Trusted Infrastructure */}
+                    {/* Trusted Infrastructure & Guides */}
                     <div>
-                        <h4 className="text-[#020817] font-medium text-xs mb-4">Trusted Infrastructure</h4>
-                        <ul className="text-gray-600 text-xs space-y-2">
+                        <h4 className="text-[#020817] font-medium text-xs mb-5">Trusted Infrastructure</h4>
+                        <ul className="text-gray-600 text-xs space-y-3 mb-20">
                             <li className="flex items-center gap-2 group">
-                                <a href="https://stripe.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#020817]">Stripe</a>
+                                <a href="https://stripe.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#020817] transition-colors">Stripe</a>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src="https://cdn.brandfetch.io/stripe.com?c=1idbnvbXCRylLLzZ6DP&type=symbol" alt="Stripe" className="w-3 h-3 object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
                             </li>
                             <li className="flex items-center gap-2 group">
-                                <a href="https://clerk.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#020817]">Clerk</a>
+                                <a href="https://clerk.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#020817] transition-colors">Clerk</a>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src="https://cdn.brandfetch.io/clerk.com?c=1idbnvbXCRylLLzZ6DP&type=symbol" alt="Clerk" className="w-3 h-3 object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
                             </li>
                             <li className="flex items-center gap-2 group">
-                                <a href="https://convex.dev" target="_blank" rel="noopener noreferrer" className="hover:text-[#020817]">Convex</a>
+                                <a href="https://convex.dev" target="_blank" rel="noopener noreferrer" className="hover:text-[#020817] transition-colors">Convex</a>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src="https://cdn.brandfetch.io/convex.dev?c=1idbnvbXCRylLLzZ6DP&type=symbol" alt="Convex" className="w-3 h-3 object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
                             </li>
+                        </ul>
+
+                        <h4 className="text-[#020817] font-medium text-xs mb-5">Guides</h4>
+                        <ul className="text-gray-600 text-xs space-y-3">
+                            <li><Link href="/guides/hmrc-cds-uk-importers-2026" className="hover:text-[#020817] transition-colors">CDS Importer Guide</Link></li>
+                            <li><Link href="/guides/what-is-tre-customs-data" className="hover:text-[#020817] transition-colors">What is TRE?</Link></li>
+                            <li><Link href="/guides/hmrc-cds-notifications-dmsacc-dmsrog-dmscle" className="hover:text-[#020817] transition-colors">CDS Notifications</Link></li>
+                            <li><Link href="/guides/how-to-read-cds-csv-export-tre" className="hover:text-[#020817] transition-colors">Reading TRE Exports</Link></li>
+                            <li><Link href="/guides/cds-commodity-codes-lookup" className="hover:text-[#020817] transition-colors">Commodity Codes</Link></li>
                         </ul>
                     </div>
                 </div>

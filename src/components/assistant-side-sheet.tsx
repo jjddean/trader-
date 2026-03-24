@@ -1,10 +1,18 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { useAction } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { useAction, useQuery } from "convex/react";
+import { useUser } from "@clerk/nextjs";
+import { api } from "../../convex/_generated/api";
 import { Bot, Send, User, ShieldCheck, Globe, Package, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface Message {
   id: string;
@@ -14,30 +22,39 @@ interface Message {
 }
 
 const SUGGESTED_QUERIES = [
-  { icon: ShieldCheck, text: "What DCTS tier does Bangladesh fall under?" },
-  { icon: Globe, text: "Explain Rules of Origin for Vietnam textiles" },
-  { icon: Package, text: "What duty rate applies to HS 6109 from Cambodia?" },
+  { icon: ShieldCheck, text: "Why did I receive error code CDS40045?" },
+  { icon: Package, text: "Classify 100% cotton t-shirts from Bangladesh" },
+  { icon: Globe, text: "Explain the CDS Rules of Origin for textiles" },
 ];
 
-export default function AssistantPage() {
+export function AssistantSideSheet({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       role: "assistant",
       content:
         "Hello! I'm your TradeDNA AI consultant. I can help you with DCTS eligibility, Rules of Origin, tariff classifications, and trade compliance. What would you like to know?",
-      timestamp: 0, // Fixed to prevent hydration mismatch
+      timestamp: 0,
     },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const { user } = useUser();
+  const userId = user?.id || "";
+
+  // Pre-fetch context arrays for the LLM
+  const reportsInfo = useQuery(api.declarations.getReports, userId ? { userId } : "skip");
+  const documentsInfo = useQuery(api.documents.getDocuments, userId ? { userId } : "skip");
+  const notificationsInfo = useQuery(api.notifications.getUserNotifications, userId ? { userId } : "skip");
 
   const explainTradeRule = useAction(api.ai.explainTradeRule);
   const askViaCloudAgent = async (query: string) => {
     const endpoints = [
-      "wss://7330-62-31-164-236.ngrok-free.app/agents/orchestrator/global", // Prefer public tunnel
+      "wss://7330-62-31-164-236.ngrok-free.app/agents/orchestrator/global", 
       "ws://localhost:8787/agents/orchestrator/global",
       "ws://localhost:8788/agents/orchestrator/global",
     ];
@@ -75,7 +92,7 @@ export default function AssistantPage() {
               id,
               method: "ask",
               args: [query],
-            }),
+            })
           );
         };
 
@@ -120,10 +137,13 @@ export default function AssistantPage() {
     throw lastError ?? new Error("No websocket endpoint available");
   };
 
-  // Auto-scroll when messages update
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+    if (isOpen) {
+      setTimeout(() => {
+        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  }, [messages, loading, isOpen]);
 
   const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
@@ -142,11 +162,26 @@ export default function AssistantPage() {
     setLoading(true);
 
     try {
+      // Build dynamic system context footprint
+      const openDecls = (reportsInfo || [])
+        .filter((r: any) => r.status && r.status !== "Clean" && r.status !== "Draft" && r.mrn)
+        .map((r: any) => ({ mrn: r.mrn, status: r.status }));
+      const recentDocs = (documentsInfo || [])
+        .slice(0, 5)
+        .map((d: any) => ({ name: d.fileName, status: d.status || d.auditStatus }));
+      const recentNotifs = (notificationsInfo || [])
+        .slice(0, 5)
+        .map((n: any) => ({ type: n.notificationType, time: new Date(n.timestamp).toLocaleString() }));
+
+      const systemPrompt = `You are a UK customs declaration assistant for FreightCode. The user has the following open declarations: ${JSON.stringify(openDecls)}. Recent documents: ${JSON.stringify(recentDocs)}. Recent notifications: ${JSON.stringify(recentNotifs)}.`;
+      
+      const payloadQuery = `[SYSTEM INSTRUCTION]\n${systemPrompt}\n\n[USER QUERY]\n${query}`;
+
       let assistantText = "";
       try {
-        assistantText = await askViaCloudAgent(query);
+        assistantText = await askViaCloudAgent(payloadQuery);
       } catch {
-        const result = await explainTradeRule({ query });
+        const result = await explainTradeRule({ query: payloadQuery });
         assistantText = result.response;
       }
       const assistantMsg: Message = {
@@ -171,55 +206,44 @@ export default function AssistantPage() {
   };
 
   return (
-    <div className="flex h-full flex-1 flex-col overflow-hidden">
-      {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="mx-auto max-w-3xl space-y-4">
-          {/* Suggestions first */}
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <SheetTrigger asChild>
+        {children}
+      </SheetTrigger>
+      
+      <SheetContent className="w-full sm:max-w-[480px] p-0 flex flex-col h-full right-0 bg-white border-l border-gray-200">
+        <SheetHeader className="px-6 py-4 border-b border-gray-100 bg-white shrink-0">
+          <SheetTitle className="text-sm font-semibold flex items-center gap-2 text-black">
+            <Bot className="h-4 w-4" />
+            AI Assistant
+          </SheetTitle>
+        </SheetHeader>
+        
+        {/* Chat Scroll Area */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4 bg-gray-50/30">
           {showSuggestions && (
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="flex flex-col gap-2">
               {SUGGESTED_QUERIES.map((q) => {
                 const Icon = q.icon;
                 return (
                   <button
                     key={q.text}
                     onClick={() => handleSend(q.text)}
-                    className="group rounded-lg border border-gray-200 bg-white p-3 text-left transition-colors hover:border-gray-300"
+                    className="group flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 text-left transition-colors hover:border-gray-300 shadow-sm"
                   >
-                    <Icon className="mb-2 h-4 w-4 text-gray-400 transition-colors group-hover:text-gray-600" />
+                    <Icon className="mt-0.5 h-4 w-4 text-gray-400 transition-colors group-hover:text-gray-600 shrink-0" />
                     <p className="text-xs leading-relaxed text-gray-600">{q.text}</p>
                   </button>
                 );
               })}
               <button
                 onClick={() => setShowSuggestions(false)}
-                className="rounded-lg border border-gray-200 bg-white p-3 text-left text-xs text-gray-500 transition-colors hover:border-gray-300"
-                title="Hide suggestions"
+                className="self-center mt-2 w-fit rounded-full bg-gray-100 px-3 py-1 text-[10px] font-medium text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 uppercase tracking-widest"
               >
                 Hide suggestions
               </button>
             </div>
           )}
-
-          {/* Input positioned just above messages, styled like a bubble */}
-          <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
-            <input
-              type="text"
-              placeholder="Ask about DCTS, tariffs, Rules of Origin..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-              className="h-10 flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none"
-            />
-            <button
-              onClick={() => handleSend()}
-              disabled={!input.trim() || loading}
-              className="flex h-9 items-center gap-1.5 rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-gray-800 disabled:opacity-40"
-            >
-              <Send className="h-3 w-3" />
-              Send
-            </button>
-          </div>
 
           {messages.map((msg) => (
             <div
@@ -227,13 +251,13 @@ export default function AssistantPage() {
               className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}
             >
               {msg.role === "assistant" && (
-                <div className="mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100">
-                  <Bot className="h-4 w-4 text-gray-500" />
+                <div className="mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-50 border border-indigo-100">
+                  <Bot className="h-4 w-4 text-indigo-600" />
                 </div>
               )}
               <div
                 className={cn(
-                  "max-w-[75%] rounded-xl px-4 py-3",
+                  "max-w-[85%] rounded-xl px-4 py-3 shadow-sm",
                   msg.role === "user" ? "bg-black text-white" : "border border-gray-200 bg-white",
                 )}
               >
@@ -255,18 +279,47 @@ export default function AssistantPage() {
           ))}
 
           {loading && (
-            <div className="flex gap-3">
-              <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100">
-                <Bot className="h-4 w-4 text-gray-500" />
+            <div className="flex gap-3 w-full">
+              <div className="mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-50 border border-indigo-100">
+                <Bot className="h-4 w-4 text-indigo-600" />
               </div>
-              <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+              <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
                 <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
               </div>
             </div>
           )}
-          <div ref={scrollRef} />
+          
+          <div ref={scrollRef} className="h-1 shrink-0" />
         </div>
-      </div>
-    </div>
+
+        {/* Fixed Input at bottom */}
+        <div className="p-4 border-t border-gray-100 bg-white shrink-0">
+          <div className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-gray-50/50 p-3 hover:border-gray-300 transition-colors focus-within:border-black focus-within:bg-white focus-within:ring-1 focus-within:ring-black">
+            <textarea
+              placeholder="Diagnose CDS errors, classify products, or ask HMRC rules..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              className="h-16 w-full resize-none bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
+            />
+            <div className="flex justify-end">
+              <button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || loading}
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-black text-white transition-all hover:bg-gray-800 disabled:opacity-30 disabled:hover:bg-black"
+                title="Send Message"
+              >
+                <Send className="h-4 w-4 -ml-0.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

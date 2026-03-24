@@ -69,30 +69,36 @@ export default function DocumentsPage() {
   const declarationById = Object.fromEntries(declarationOptions.map((decl) => [decl.id, decl]));
   const typeOptions = Array.from(new Set(mergedDocuments.map((doc) => doc.typeName).filter(Boolean)));
 
-  const handleUploadSubmit = () => {
+  const handleUploadSubmit = async () => {
+    if (!uploadForm.file) return;
     setIsUploading(true);
-    // Simulate AI Smart Upload logic
-    setTimeout(() => {
-      const isMissing = uploadForm.type.includes("C400"); // hardcode error mock mechanism
-      const newDoc = {
-        id: Date.now(),
-        declarationId: uploadForm.linkedMrn === "none" ? "" : uploadForm.linkedMrn,
-        name: uploadForm.file?.name || "New Document.pdf",
-        method: "Smart Upload",
-        date: "Just now",
-        type: uploadForm.type.split(' ')[0] || "N935",
-        typeName: uploadForm.type.split(' ').slice(1).join(' ') || "Commercial invoice",
-        mrn: uploadForm.linkedMrn === "none" ? "Unlinked" : (declarationById[uploadForm.linkedMrn]?.mrn || uploadForm.linkedMrn),
-        status: isMissing ? "review" : "verified",
-        de23: uploadForm.type.split(' ')[0] || "N935",
-        flag: isMissing ? "Verification failed on import reference matching" : ""
-      };
-      setDocuments((prev) => [newDoc, ...prev]);
-      setIsUploading(false);
+    
+    try {
+      const formData = new FormData();
+      formData.append("file", uploadForm.file);
+      formData.append("type", uploadForm.type);
+      formData.append("linkedMrn", uploadForm.linkedMrn);
+      formData.append("userId", userId);
+
+      const res = await fetch("/api/ai/smart-upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Smart upload pipeline failed");
+      }
+
       setIsUploadOpen(false);
       setUploadStep(1);
-      setUploadForm({ type: "", linkedMrn: "", file: null });
-    }, 2000);
+      setUploadForm({ type: "", linkedMrn: "", file: null as any });
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (

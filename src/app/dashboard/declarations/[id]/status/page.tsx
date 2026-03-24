@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { Activity, Clock, CheckCircle2, XCircle, Loader2, ShieldCheck, ShieldAlert, FileText, AlertCircle } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
 export default function StatusTimelinePage() {
   const params = useParams<{ id: string }>();
@@ -18,6 +19,8 @@ export default function StatusTimelinePage() {
     api.notifications.getWebhooks, 
     declaration ? { mrn: declaration.mrn, conversationId: declaration.conversationId } : "skip"
   );
+
+  const [nextStepsOpen, setNextStepsOpen] = useState(false);
 
   if (declaration === undefined) {
     return (
@@ -40,6 +43,8 @@ export default function StatusTimelinePage() {
     DMSREJ: { title: "Declaration rejected", color: "bg-red-500", icon: "danger", detail: "HMRC rejected the declaration. Review error codes and amend." },
     DMSINV: { title: "Declaration invalid", color: "bg-red-500", icon: "danger", detail: "HMRC returned field-level validation errors." },
   };
+
+  const latestNotificationType = notifications?.[0]?.notificationType || "DMSUB";
 
   return (
     <div className="space-y-6">
@@ -169,12 +174,12 @@ export default function StatusTimelinePage() {
                   </div>
                 ))}
                 
-                {(!notifications || notifications.length === 0) && (
-                   <div className="relative pt-2">
-                     <div className="absolute -left-6 top-3 h-3 w-3 rounded-full border-2 border-white bg-gray-200" />
-                     <div className="flex items-center gap-2 text-gray-400">
+                {declaration.status !== "Cleared" && (
+                   <div className="relative pt-4 cursor-pointer group" onClick={() => setNextStepsOpen(true)}>
+                     <div className="absolute -left-6 top-5 h-3 w-3 rounded-full border-2 border-white bg-indigo-200 group-hover:bg-indigo-400 transition-colors" />
+                     <div className="flex items-center gap-2 text-indigo-500 group-hover:text-indigo-700 transition-colors">
                         <Clock className="h-4 w-4" />
-                        <span className="text-sm italic">Awaiting further routing updates from HMRC...</span>
+                        <span className="text-sm font-medium underline underline-offset-4 decoration-indigo-200 group-hover:decoration-indigo-400">What happens next?</span>
                      </div>
                    </div>
                 )}
@@ -183,6 +188,131 @@ export default function StatusTimelinePage() {
           </div>
         )}
       </div>
+
+      <Sheet open={nextStepsOpen} onOpenChange={setNextStepsOpen}>
+        <SheetContent side="right" className="overflow-y-auto sm:max-w-md w-full p-0">
+          <div className="flex flex-col min-h-full">
+            <SheetHeader className="px-6 sm:px-8 pt-6 pb-6 border-b border-gray-100 bg-white sticky top-0 z-10">
+              <SheetTitle className="text-lg font-semibold text-gray-900">What happens next?</SheetTitle>
+              <SheetDescription className="mt-1 text-xs">
+                Expected events and required actions based on HMRC routing.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="p-6 sm:p-8 space-y-6">
+              {latestNotificationType === "DMSACC" && (
+                <>
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">Your declaration has been accepted and is awaiting customs clearance. Three outcomes are possible:</p>
+                    <div className="rounded-lg border border-green-100 bg-green-50 p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <h4 className="text-sm font-medium text-green-900">DMSCLE (Goods cleared)</h4>
+                      </div>
+                      <p className="text-xs text-green-800">No further action is needed. Goods will be released immediately.</p>
+                    </div>
+                    <div className="rounded-lg border border-amber-100 bg-amber-50 p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertCircle className="h-4 w-4 text-amber-600" />
+                        <h4 className="text-sm font-medium text-amber-900">DMSROG (Route to examine)</h4>
+                      </div>
+                      <p className="text-xs text-amber-800">HMRC may require additional documentation or physical examination of the goods. Action will be required.</p>
+                    </div>
+                    <div className="rounded-lg border border-red-100 bg-red-50 p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <XCircle className="h-4 w-4 text-red-600" />
+                        <h4 className="text-sm font-medium text-red-900">DMSREJ (Rejected)</h4>
+                      </div>
+                      <p className="text-xs text-red-800">The declaration has failed customs checks and must be amended and resubmitted.</p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {latestNotificationType === "DMSROG" && (
+                <>
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">HMRC has routed this declaration for further examination.</p>
+                    
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">What HMRC may request</h4>
+                      <ul className="text-sm text-gray-700 list-disc pl-4 space-y-1">
+                        <li>Commercial invoices</li>
+                        <li>Packing lists</li>
+                        <li>Certificates of origin</li>
+                        <li>Physical inspection at the port</li>
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">How to respond</h4>
+                      <p className="text-sm text-gray-700">
+                        Upload requested documents directly via the <strong>Secure Upload</strong> tab in your declaration toolbar. Include your MRN in all correspondence.
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Typical timeframe</h4>
+                      <p className="text-sm text-gray-700">
+                        Standard documentary checks (Route 1) are typically processed within <strong>2-4 hours</strong> of upload. Physical checks (Route 2) can take <strong>24-48 hours</strong>.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {(latestNotificationType === "DMSREJ" || latestNotificationType === "DMSINV") && (
+                <>
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">The declaration was rejected by HMRC validation.</p>
+                    
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Error codes received</h4>
+                      <p className="text-sm font-mono bg-red-50 text-red-700 p-2 rounded border border-red-100">
+                        {notifications?.[0]?.errorCodes?.join(", ") || notifications?.[0]?.fieldErrors?.map((e: any) => e.code || e.reason).join(", ") || "Unknown Error"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Which fields to fix</h4>
+                      {notifications?.[0]?.fieldErrors?.length > 0 ? (
+                         <ul className="text-sm text-gray-700 list-disc pl-4 space-y-1">
+                           {notifications[0]?.fieldErrors?.map((err: any, idx: number) => (
+                             <li key={idx}><strong>{err.field}</strong>: {err.reason}</li>
+                           ))}
+                         </ul>
+                      ) : (
+                         <p className="text-sm text-gray-700">Check the raw XML payload for specific validation failures against the WCO schema.</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">How to amend</h4>
+                      <p className="text-sm text-gray-700">
+                        Return to the <strong>Core Schema</strong> tab to correct the highlighted fields, then click <strong>Resubmit Declaration</strong>. The new payload will overwrite the rejected submission.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {latestNotificationType === "DMSUB" && (
+                <>
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-600">Your payload has been submitted to the HMRC Hub.</p>
+                    <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Activity className="h-4 w-4 text-blue-600" />
+                        <h4 className="text-sm font-medium text-blue-900">Awaiting Validations</h4>
+                      </div>
+                      <p className="text-xs text-blue-800">The Hub is performing schema validation. You will receive a DMSACC (Accepted) or DMSINV (Invalid) shortly.</p>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 import { xmlEscape } from "../../../../lib/xml-utils";
+import { fetchHmrc } from "../../../../lib/hmrc-fetch";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -86,22 +87,12 @@ export async function POST(request: Request) {
       : "https://api.service.hmrc.gov.uk";
     const hmrcEndpoint = `${hmrcBase}/customs/declarations`;
 
-    const hmrcHeaders: Record<string, string> = {
-      Accept: process.env.HMRC_DECLARATIONS_ACCEPT || "application/vnd.hmrc.1.0+xml",
-      "Content-Type": "application/xml; charset=UTF-8",
-      Authorization: `Bearer ${token}`,
-      "X-Client-ID": process.env.HMRC_CLIENT_ID!,
-    };
+    let hmrcResponse = await fetchHmrc(hmrcEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/xml; charset=UTF-8" },
+      body: xmlPayload,
+    }, request, token);
 
-    let hmrcResponse = await fetch(hmrcEndpoint, { method: "POST", headers: hmrcHeaders, body: xmlPayload });
-    if (hmrcResponse.status === 429) {
-      await sleep(2000);
-      hmrcResponse = await fetch(hmrcEndpoint, { method: "POST", headers: hmrcHeaders, body: xmlPayload });
-      if (hmrcResponse.status === 429) {
-        await sleep(5000);
-        hmrcResponse = await fetch(hmrcEndpoint, { method: "POST", headers: hmrcHeaders, body: xmlPayload });
-      }
-    }
     if (hmrcResponse.status === 429) {
       return NextResponse.json({ error: "HMRC rate limit reached" }, { status: 429 });
     }

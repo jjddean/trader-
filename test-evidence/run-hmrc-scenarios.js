@@ -241,6 +241,15 @@ async function submitXml(xmlPayload, scenario, token) {
       Authorization: `Bearer ${token}`,
       "X-Client-ID": process.env.HMRC_CLIENT_ID,
       "Gov-Test-Scenario": scenario,
+      "Gov-Client-Connection-Method": "WEB_APP_VIA_SERVER",
+      "Gov-Client-Public-IP": "127.0.0.1",
+      "Gov-Client-Timezone": "UTC+00:00",
+      "Gov-Client-Screens": "width=1920&height=1080&scaling-factor=1&colour-depth=24",
+      "Gov-Client-Window-Size": "width=1920&height=1080",
+      "Gov-Client-Browser-JS-User-Agent": "Mozilla/5.0",
+      "Gov-Client-Browser-Do-Not-Track": "false",
+      "Gov-Vendor-Version": "TradeDNA=1.0.0",
+      "Gov-Vendor-Product-Name": "TradeDNA"
     },
     body: xmlPayload,
   });

@@ -1,4 +1,5 @@
-<!-- timestamp: 2026-03-21T09:34:40.816Z | http_status: 0 | conversation_id: REJECTION -->
+<!-- timestamp: 2026-03-23T07:11:37.428Z | http_status: 0 | conversation_id: REJECTION -->
+<!-- request_accept: application/vnd.hmrc.2.0+xml | request_content_type: application/xml; charset=UTF-8 | request_authorization: Bearer [REDACTED] | request_x_client_id: ZSoA1lpJi8FyuzSsncFrOZKpmrNe | request_gov_test_scenario: REJECTION -->
 <?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
   <WCODataModelVersionCode>3.6</WCODataModelVersionCode>

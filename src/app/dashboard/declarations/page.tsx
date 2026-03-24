@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Filter, Loader2, ArrowRight, FileText, ShieldCheck, ShieldAlert, AlertCircle } from "lucide-react";
+import { Plus, Search, Filter, Loader2, ArrowRight, FileText, ShieldCheck, ShieldAlert, AlertCircle, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -50,6 +50,21 @@ export default function DeclarationsPage() {
   const [originCountry, setOriginCountry] = useState("");
   const [hsCode, setHsCode] = useState("");
   const [description, setDescription] = useState("");
+
+  const deleteDecl = useMutation(api.declarations.deleteDeclaration);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (e: React.MouseEvent, id: any) => {
+    e.stopPropagation();
+    if (confirm("Are you sure you want to delete this draft declaration? This will also delete all associated items.")) {
+      setDeletingId(id);
+      try {
+        await deleteDecl({ id });
+      } finally {
+        setDeletingId(null);
+      }
+    }
+  };
 
   const handleCreate = async () => {
     setIsCreating(true);
@@ -179,7 +194,16 @@ export default function DeclarationsPage() {
                     )}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                      {dec.status === "Draft" && (
+                        <button
+                          onClick={(e) => handleDelete(e, dec._id)}
+                          disabled={deletingId === dec._id}
+                          className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:outline-none"
+                        >
+                          {deletingId === dec._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        </button>
+                      )}
                        <ArrowRight className="h-4 w-4 text-gray-400" />
                     </div>
                   </td>
@@ -204,13 +228,13 @@ export default function DeclarationsPage() {
             <DialogTitle>Create Declaration</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <label htmlFor="origin" className="text-xs font-medium text-gray-700 uppercase tracking-widest">
+            <div>
+              <label htmlFor="origin" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
                 Origin Country
               </label>
               <Select value={originCountry} onValueChange={setOriginCountry}>
-                <SelectTrigger id="origin" className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                  <SelectValue placeholder="e.g., Bangladesh" />
+                <SelectTrigger id="origin" className="h-9 w-full rounded-md border-gray-200 bg-gray-50 text-xs text-gray-700">
+                  <SelectValue placeholder="Select Origin Country" />
                 </SelectTrigger>
                 <SelectContent position="popper" className="max-h-[300px]">
                   {ALL_COUNTRIES.map((c) => (
@@ -221,36 +245,41 @@ export default function DeclarationsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
-              <label htmlFor="hsCode" className="text-xs font-medium text-gray-700 uppercase tracking-widest">
+            <div>
+              <label htmlFor="hsCode" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
                 HS Code (Optional)
               </label>
               <input
                 id="hsCode"
                 value={hsCode}
                 onChange={(e) => setHsCode(e.target.value)}
-                placeholder="e.g., 6109"
-                className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="e.g. 6109100010"
+                className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none"
               />
             </div>
-            <div className="grid gap-2">
-              <label htmlFor="description" className="text-xs font-medium text-gray-700 uppercase tracking-widest">
+            <div>
+              <label htmlFor="description" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
                 Description
               </label>
-              <input
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="e.g., Knitwear to UK under DCTS"
-                className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
+              <Select value={description} onValueChange={setDescription}>
+                <SelectTrigger id="description" className="h-9 w-full rounded-md border-gray-200 bg-gray-50 text-xs text-gray-700">
+                  <SelectValue placeholder="Select Cargo Description" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="max-h-[300px]">
+                  <SelectItem value="Knitwear" className="text-xs">Knitwear</SelectItem>
+                  <SelectItem value="Electronics" className="text-xs">Electronics</SelectItem>
+                  <SelectItem value="Machinery" className="text-xs">Machinery</SelectItem>
+                  <SelectItem value="Apparel" className="text-xs">Apparel</SelectItem>
+                  <SelectItem value="Furniture" className="text-xs">Furniture</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-          <DialogFooter className="sm:justify-end">
+          <DialogFooter>
             <button
-              disabled={isCreating}
+              disabled={isCreating || !originCountry || !description}
               onClick={handleCreate}
-              className="flex h-9 items-center justify-center gap-2 rounded-md bg-transparent px-4 text-sm font-medium text-gray-900 transition-opacity hover:bg-gray-100 disabled:opacity-50"
+              className="flex h-9 w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800 disabled:opacity-50"
             >
               {isCreating && <Loader2 className="h-4 w-4 animate-spin" />}
               Create Declaration

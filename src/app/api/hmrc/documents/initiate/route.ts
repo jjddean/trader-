@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../../convex/_generated/api";
+import { fetchHmrc } from "../../../../../lib/hmrc-fetch";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -29,12 +30,10 @@ export async function POST(request: Request) {
       ? "https://test-api.service.hmrc.gov.uk/logistics/documents/initiate"
       : "https://api.service.hmrc.gov.uk/logistics/documents/initiate";
 
-    const hmrcResponse = await fetch(hmrcInitiateUrl, {
+    const hmrcResponse = await fetchHmrc(hmrcInitiateUrl, {
       method: "POST",
       headers: {
-        "Accept": "application/vnd.hmrc.1.0+json",
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${tokenRecord.accessToken}`,
       },
       body: JSON.stringify({
         "document": {
@@ -42,27 +41,16 @@ export async function POST(request: Request) {
           "fileSize": fileSize
         }
       })
-    });
+    }, request, tokenRecord.accessToken);
 
     if (!hmrcResponse.ok) {
       const errorText = await hmrcResponse.text();
-      console.warn("HMRC S3 initiate failed (expected in raw sandbox without whitelisted EORI):", errorText);
+      return NextResponse.json({ error: "HMRC Sandbox SDE Initiate Failed - Missing or Invalid Credentials", details: errorText }, { status: hmrcResponse.status });
     }
     
-    // In production, `parsedHMRC` would contain the real AWS destination URL
-    // const parsedHMRC = await hmrcResponse.json();
+    const parsedHMRC = await hmrcResponse.json();
 
-    // 1. Mocking the HMRC response for freightcode architecture
-    const mockHMRCUploadRequest = {
-      uploadUrl: "https://hmrc-sandbox-s3-bucket.s3.eu-west-2.amazonaws.com",
-      fields: {
-        "x-amz-meta-receipt-id": "mock-receipt-12345",
-        "policy": "mock-policy",
-        "x-amz-signature": "mock-sig"
-      }
-    };
-
-    // 2. Log intention to upload in our Convex database
+    // Log intention to upload in our Convex database
     await convex.mutation(api.documents.trackUpload, {
       declarationId,
       fileName,
@@ -71,10 +59,10 @@ export async function POST(request: Request) {
       uploadStatus: "pending"
     });
 
-    // 3. Return the payload to the frontend so it can perform the direct S3 POST
+    // Return the payload to the frontend so it can perform the direct S3 POST
     return NextResponse.json({ 
       success: true, 
-      uploadParameters: mockHMRCUploadRequest
+      uploadParameters: parsedHMRC.uploadRequest || parsedHMRC
     });
 
   } catch (error: any) {

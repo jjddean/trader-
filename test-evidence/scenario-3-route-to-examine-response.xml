@@ -1,4 +1,5 @@
-<!-- timestamp: 2026-03-21T09:34:40.818Z | http_status: 403 | conversation_id: 81adbf60-04b9-4747-ac4a-3793d810c52a -->
+<!-- timestamp: 2026-03-23T07:11:37.430Z | http_status: 403 | conversation_id: 05e18338-a3be-4b39-a3d6-1a6e920e20db -->
+<!-- request_accept: application/vnd.hmrc.2.0+xml | request_content_type: application/xml; charset=UTF-8 | request_authorization: Bearer [REDACTED] | request_x_client_id: ZSoA1lpJi8FyuzSsncFrOZKpmrNe | request_gov_test_scenario: ROUTE_TO_EXAMINE -->
 <?xml version='1.0' encoding='UTF-8'?>
 <errorResponse>
       <code>PAYLOAD_FORBIDDEN</code>

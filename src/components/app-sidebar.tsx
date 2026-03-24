@@ -13,6 +13,9 @@ import {
   ShieldCheck,
   Bot,
   BookOpen,
+  HelpCircle,
+  History,
+  Wrench,
 } from "lucide-react";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
@@ -38,8 +41,7 @@ const navItems = [
   { href: "/dashboard/audit", label: "Compliance Audit", icon: ShieldCheck },
   { href: "/dashboard/reports", label: "Customs Reports", icon: FileSpreadsheet },
   { href: "/dashboard/records", label: "Financial Records", icon: Scale },
-  { href: "/dashboard/tools/hscode-lookup", label: "HS Code Lookup", icon: BookOpen },
-  { href: "/dashboard/assistant", label: "Assistant", icon: Bot },
+  { href: "/dashboard/tools", label: "Tools & Utilities", icon: Wrench },
 ] as const;
 
 export function AppSidebar() {
@@ -48,17 +50,12 @@ export function AppSidebar() {
   const userId = user?.id || "";
   const [mounted, setMounted] = React.useState(false);
 
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Dynamic issue counting for the badge
   const allDeclarations = useQuery(api.declarations.getAllDecls);
   const declarations = (allDeclarations as any[])?.filter((l: any) => l.userId === userId) ?? [];
   const reviewCount = declarations.filter((l: any) => l.status === "Action Required" || l.status === "Rejected" || l.status === "Invalid").length ?? 0;
 
   return (
-    <Sidebar className="border-r border-gray-200 bg-gray-50">
+    <Sidebar className="border-r border-gray-200 bg-gray-50 !h-screen">
       <SidebarHeader className="flex h-[48px] flex-row items-center border-b border-gray-200 px-6">
         <Link
           href="/"
@@ -75,7 +72,7 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="flex flex-col p-4 pt-0">
+      <SidebarContent className="flex flex-col p-4 pt-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <SidebarGroup className="p-0">
           <SidebarGroupLabel className="mb-0.5 px-3 text-[10px] font-normal tracking-widest text-gray-400 uppercase">
             Platform
@@ -124,11 +121,20 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <div className="mt-auto" />
-
-        <SidebarGroup className="p-0">
+        <SidebarGroup className="p-0 mt-1">
+          <SidebarGroupLabel className="mb-0.5 px-3 text-[10px] font-normal tracking-widest text-gray-400 uppercase">
+            Help & Docs
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-0.5">
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === "/dashboard/support/guide"} className={cn("flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors", pathname === "/dashboard/support/guide" ? "bg-gray-100 text-black" : "text-gray-500 hover:bg-gray-100 hover:text-black")}>
+                  <Link href="/dashboard/support/guide" className="flex flex-1 items-center gap-2">
+                    <HelpCircle className={cn("h-3.5 w-3.5", pathname === "/dashboard/support/guide" ? "text-gray-700" : "text-gray-400")} />
+                    <span className="flex-1">User Guide</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild

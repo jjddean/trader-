@@ -63,31 +63,3 @@ If you are developing locally, ensure:
   },
 });
 
-export const discoverLeads = action({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-
-    const agentUrl = "https://7330-62-31-164-236.ngrok-free.app";
-    
-    try {
-      const response = await fetch(`${agentUrl.replace(/\/$/, "")}/agents/orchestrator/global/call/discover`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify([]),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Agent discovery error: ${response.status} ${response.statusText}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Discovery Action Error:", error);
-      throw error;
-    }
-  },
-});

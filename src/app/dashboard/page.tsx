@@ -1,26 +1,145 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { AlertCircle, PoundSterling, FileText, ArrowUpRight, TrendingUp, Archive, RefreshCw, ShieldCheck, ShieldAlert } from "lucide-react";
+import { AlertCircle, PoundSterling, FileText, ArrowUpRight, TrendingUp, Archive, RefreshCw, ShieldCheck, ShieldAlert, AlertTriangle, Plus } from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export default function DashboardPage() {
   const { user } = useUser();
   const userId = user?.id || "";
 
   const stats = useQuery(api.declarations.getDashboardStats, userId ? { userId } : "skip");
+  const hmrcToken = useQuery(api.hmrc.getToken, userId ? { userId } : "skip");
 
+  // Keep a live clock to trigger banner changes even if the user is idle
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  let bannerState: "none" | "danger-not-connected" | "danger-expired" | "warning-expiring" = "none";
+  if (hmrcToken === null) {
+    bannerState = "danger-not-connected";
+  } else if (hmrcToken) {
+    if (hmrcToken.expiresAt < now) {
+      bannerState = "danger-expired";
+    } else if (hmrcToken.expiresAt - now < 30 * 60 * 1000) {
+      bannerState = "warning-expiring";
+    }
+  }
+
+  const hmrcEnvironment = (process.env.NEXT_PUBLIC_HMRC_ENV || "sandbox").toLowerCase() === "live" ? "Live" : "Sandbox";
+  const tokenRemainingMs = hmrcToken?.expiresAt ? hmrcToken.expiresAt - now : null;
+  const tokenExpiryText = tokenRemainingMs === null
+    ? "—"
+    : tokenRemainingMs <= 0
+      ? "Expired"
+      : `Expires in ${Math.floor(tokenRemainingMs / 3600000)}h ${Math.floor((tokenRemainingMs % 3600000) / 60000)}m`;
 
 
   return (
     <div className="space-y-8 p-8 max-w-7xl mx-auto">
+      {bannerState === "danger-not-connected" && (
+        <div className="rounded-md bg-red-50 p-4 border border-red-200">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <ShieldAlert className="h-5 w-5 text-red-400" aria-hidden="true" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Not connected to HMRC</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>You must connect your Government Gateway account to submit declarations.</p>
+              </div>
+              <div className="mt-4">
+                <Link href="/dashboard/settings" className="text-sm font-medium text-red-800 hover:text-red-700">
+                  Connect Account <span aria-hidden="true">&rarr;</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {bannerState === "danger-expired" && (
+        <div className="rounded-md bg-red-50 p-4 border border-red-200">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">HMRC connection expired</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>Your OAuth token has expired. You must re-authenticate to continue submissions.</p>
+              </div>
+              <div className="mt-4">
+                <Link href="/dashboard/settings" className="text-sm font-medium text-red-800 hover:text-red-700">
+                  Reconnect now <span aria-hidden="true">&rarr;</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {bannerState === "warning-expiring" && (
+        <div className="rounded-md bg-amber-50 p-4 border border-amber-200">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-amber-500" aria-hidden="true" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-amber-800">HMRC connection expiring soon</h3>
+              <div className="mt-2 text-sm text-amber-700">
+                <p>Your token will expire in less than 30 minutes. Please re-authenticate to prevent disruption.</p>
+              </div>
+              <div className="mt-4">
+                <Link href="/dashboard/settings" className="text-sm font-medium text-amber-800 hover:text-amber-700">
+                  Refresh connection <span aria-hidden="true">&rarr;</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Dashboard</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-semibold tracking-tight text-gray-900">Dashboard</h1>
+          </div>
           <p className="mt-1 text-sm text-gray-500">Welcome back, {user?.firstName || "Trader"}</p>
         </div>
+        
+        {hmrcToken !== undefined && (
+          hmrcToken ? (
+            <div className="flex items-center gap-3">
+              <span className={cn("text-xs font-medium", tokenRemainingMs !== null && tokenRemainingMs <= 0 ? "text-red-600" : "text-gray-500")}>
+                {tokenExpiryText}
+              </span>
+              <a
+                href="/api/hmrc/auth"
+                className={cn("flex h-9 items-center gap-2 rounded-md px-4 text-xs font-medium transition-opacity hover:opacity-90", tokenRemainingMs !== null && tokenRemainingMs <= 0 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700")}
+              >
+                <ShieldCheck className="h-4 w-4" />
+                {tokenRemainingMs !== null && tokenRemainingMs <= 0 ? "HMRC Expired - Reconnect" : `HMRC Connected (${hmrcEnvironment})`}
+              </a>
+            </div>
+          ) : (
+            <a
+              href="/api/hmrc/auth"
+              className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800"
+            >
+              <Plus className="h-4 w-4" />
+              Connect HMRC
+            </a>
+          )
+        )}
       </div>
 
       {!stats ? (

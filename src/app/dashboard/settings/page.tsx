@@ -13,20 +13,8 @@ export default function SettingsPage() {
 
   const subscription = useQuery(api.subscriptions.getSubscription, userId ? { userId } : "skip");
   const dbUser = useQuery(api.users.current);
-  const hmrcToken = useQuery(api.hmrc.getToken, userId ? { userId } : "skip");
-  const [now, setNow] = useState(() => Date.now());
   const [activeTab, setActiveTab] = useState<"profile" | "subscription" | "security" | "notifications">("profile");
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 60000);
-    return () => clearInterval(timer);
-  }, []);
-  const hmrcEnvironment = (process.env.NEXT_PUBLIC_HMRC_ENV || "sandbox").toLowerCase() === "live" ? "Live" : "Sandbox";
-  const tokenRemainingMs = hmrcToken?.expiresAt ? hmrcToken.expiresAt - now : null;
-  const tokenExpiryText = tokenRemainingMs === null
-    ? "—"
-    : tokenRemainingMs <= 0
-      ? "Expired"
-      : `Expires in ${Math.floor(tokenRemainingMs / 3600000)}h ${Math.floor((tokenRemainingMs % 3600000) / 60000)}m`;
+  const [stripeLoading, setStripeLoading] = useState(false);
 
   const planColors: Record<string, string> = {
     Starter: "bg-gray-100 text-gray-700",
@@ -77,6 +65,13 @@ export default function SettingsPage() {
           <Bell className="h-3.5 w-3.5" />
           Notifications
         </button>
+        <a
+          href="/dashboard/support/changelog"
+          className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors text-gray-600 hover:bg-gray-100"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-history"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+          Changelog
+        </a>
       </div>
 
       {activeTab === "profile" && (
@@ -202,43 +197,6 @@ export default function SettingsPage() {
               <button className="text-[0.625rem] text-gray-400 transition-colors hover:text-black">
                 Manage
               </button>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[0.6875rem] text-gray-600">HMRC OAuth</span>
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-[0.625rem] text-gray-500">{hmrcEnvironment}</p>
-                  <p className={cn("text-[0.625rem]", tokenRemainingMs !== null && tokenRemainingMs <= 0 ? "text-red-600" : "text-gray-400")}>
-                    {tokenExpiryText}
-                  </p>
-                </div>
-                {hmrcToken !== undefined ? (
-                  hmrcToken ? (
-                    <div className="flex items-center gap-2">
-                    <span className="rounded bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
-                      Connected
-                    </span>
-                    <a
-                      href="/api/hmrc/auth"
-                      className="text-[0.625rem] text-gray-400 transition-colors hover:text-black underline"
-                    >
-                      Reconnect
-                    </a>
-                    </div>
-                  ) : (
-                    <a
-                      href="/api/hmrc/auth"
-                      className="rounded bg-black px-2 py-1 text-[0.625rem] font-medium text-white transition-colors hover:bg-gray-800"
-                    >
-                      Connect HMRC
-                    </a>
-                  )
-                ) : (
-                  <span className="rounded bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-400">
-                    Loading...
-                  </span>
-                )}
-              </div>
             </div>
           </div>
       </div>

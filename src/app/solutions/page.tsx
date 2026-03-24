@@ -8,82 +8,77 @@ import { useAuth } from "@clerk/nextjs";
 const capabilities = [
   { 
     id: 'historical', 
-    label: 'Historical Data Analysis',
-    benefit: 'Ingest and parse years of historical HMRC declarations instantly to identify patterns and track your overall customs performance.',
-    how: 'You forward your HMRC "Report Ready" secure CSVs to your dedicated inbox. Our parsing engine automatically standardizes the raw line items and securely structures your trade history into your private database, saving hours of manual spreadsheet work.'
+    label: 'Historical Data Architecture',
+    benefit: 'Ingest and parse vast datasets of historical HMRC declarations to model compliance patterns and audit supply chain fidelity.',
+    how: 'Organizations provision HMRC "Report Ready" CSV extracts to our secure ingestion points. The analytical engine normalizes raw data structures and writes exact historical trade records into an isolated, encrypted database.'
   },
   { 
     id: 'savings', 
-    label: 'Automated Savings Detection',
-    benefit: 'Stop leaving money on the table. We identify explicit financial losses and reclamation opportunities across your supply chain.',
-    how: 'Our analytics engine constantly scans your data against global trade agreements. It flags exact instances where a shipment was eligible for a 0% duty preference code, but standard duty was paid instead, calculating exactly how much you can reclaim.'
+    label: 'Precision Financial Reclamation',
+    benefit: 'Maximize financial efficiency. We identify precise monetary discrepancies and explicit reclamation opportunities across international shipments.',
+    how: 'The platform cross-references declaration records against live global trade agreements, systematically flagging instances where preferential 0% duty margins were bypassed. It programmatically calculates the exact reclaimable duty variance.'
   },
   { 
     id: 'prefill', 
-    label: 'Smart Duty Pre-Fill',
-    benefit: 'Draft new declarations in seconds. Remove the guesswork of finding the correct HS Commodity Codes for repetitive shipments.',
-    how: "When you create a new draft, our system analyzes your company's highest-frequency historical shipments. By looking at successful past clearances for that specific origin country, it seamlessly suggests the most accurate, compliant commodity codes and preferences."
+    label: 'Intelligent Duty Profiling',
+    benefit: 'Architect new draft declarations instantaneously. Eliminate the operational friction of sourcing compliant HS Commodity Codes.',
+    how: "When initiating a declaration, the system parses the organization's highest-frequency historical routes. Analyzing previously cleared shipments for specific regions, it dynamically recommends the mathematically most compliant commodity codes."
   },
   { 
     id: 'scoring', 
-    label: 'Compliance Health Scoring',
-    benefit: 'Monitor the performance of your appointed brokers and freight forwarders across all your UK ports.',
-    how: 'We generate an immediate, comparative health score by analyzing the ratio of perfect clearances against flagged anomalies. You get a transparent leaderboard showing exactly which external agents are making the most compliance errors on your behalf.'
+    label: 'Broker Compliance Benchmarking',
+    benefit: 'Standardize and monitor the technical performance of appointed freight forwarders and customs brokers.',
+    how: 'The platform generates benchmark health indicators by contrasting flawless clearances against anomalous filings. Supply chain leaders gain a transparent leaderboard revealing exact compliance error rates aggregated by representation.'
   },
   { 
     id: 'hmrc', 
-    label: 'HMRC Data Sync',
-    benefit: 'Maintain a direct, secure, and perpetual connection to your HMRC Government Gateway account.',
-    how: 'Without ever asking for your passwords, we utilize official HMRC OAuth flows to securely link your workspace and EORI number. Our system handles token refreshing automatically, ensuring your dashboard is always synced with your latest Trade Reporting and Extracting (TRE) data.'
+    label: 'Government Gateway Synchronization',
+    benefit: 'Establish a resilient, perpetual OAuth ledger with the structural HMRC Government Gateway.',
+    how: 'Utilizing official HMRC standards, we securely federate workspace identities with corresponding EORI registries. The architecture autonomously renegotiates access tokens, guaranteeing uninterrupted synchronization with Trade Reporting and Extracting (TRE) APIs.'
   },
   { 
     id: 'storage', 
-    label: 'Secure Document Vault',
-    benefit: 'Centralize your commercial invoices, packing lists, and clearance evidence in one HMRC-compliant repository.',
-    how: 'Upload and attach critical trade documents directly to your declaration records. We maintain encrypted, redundant cloud storage organized by MRN, making it effortless to retrieve evidence during an unexpected HMRC post-clearance audit.'
+    label: 'Encrypted Auditable Repository',
+    benefit: 'Centralize commercial invoices, routing logs, and statutory clearance evidence in an HMRC-compliant digital vault.',
+    how: 'Stakeholders attach critical trade verification directly to their movement reference records (MRNs). We manage multi-region, redundant object storage, ensuring immediate evidence retrieval during formal post-clearance audits.'
   },
 ];
 
 export default function SolutionsPage() {
   const { isSignedIn } = useAuth();
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex flex-col">
       <SiteHeader />
-      <main className="pt-[140px] pb-24">
-        <div className="mx-auto max-w-[1024px] px-[24px]">
-          <h1 className="mb-4 text-[42px] font-bold tracking-tight text-[#020817] md:text-[52px] text-center">
-            Our Solutions
+      <main className="pt-[140px] pb-24 flex-grow w-full bg-white">
+        <article className="max-w-3xl mx-auto px-6">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 mb-6 leading-snug">
+            Automated Customs Solutions
           </h1>
-          <p className="mx-auto mb-16 max-w-2xl text-[20px] text-slate-500 text-center">
-            Comprehensive customs intelligence designed to automate compliance, uncover hidden savings, and eliminate manual data entry.
+          <p className="text-[16px] text-slate-600 leading-relaxed mb-12">
+            Comprehensive enterprise customs intelligence engineered to automate compliance frameworks, uncover exact financial reclamation opportunities, and eliminate manual data reconciliation.
           </p>
-          <div className="space-y-16">
+
+          <div className="space-y-12 mt-12">
             {capabilities.map((item, index) => (
-              <div key={item.id} id={item.id} className="scroll-mt-[120px] rounded-2xl bg-white p-8 md:p-12 shadow-sm border border-slate-200">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-xl font-bold text-[#1d6fc0] shrink-0">
+              <div key={item.id} id={item.id} className="scroll-mt-[120px]">
+                <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mb-4 flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-[14px] font-bold text-blue-600 shrink-0">
                     {index + 1}
-                  </div>
-                  <h2 className="text-[28px] font-bold text-[#020817] tracking-tight">{item.label}</h2>
-                </div>
-                <div className="grid md:grid-cols-2 gap-12">
-                  <div>
-                    <h3 className="text-[14px] uppercase tracking-widest font-semibold text-slate-400 mb-3">The Benefit</h3>
-                    <p className="text-[18px] leading-[1.6] text-slate-700 font-medium">
-                      {item.benefit}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-[14px] uppercase tracking-widest font-semibold text-slate-400 mb-3">How it Works</h3>
-                    <p className="text-[16px] leading-[1.7] text-slate-600">
-                      {item.how}
-                    </p>
-                  </div>
+                  </span>
+                  {item.label}
+                </h2>
+                <div className="pl-11 space-y-4">
+                  <p className="text-[15px] font-semibold text-slate-800 leading-relaxed">
+                    {item.benefit}
+                  </p>
+                  <p className="text-[15px] text-slate-700 leading-relaxed">
+                    {item.how}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </article>
       </main>
       <SiteFooter isSignedIn={isSignedIn} />
     </div>

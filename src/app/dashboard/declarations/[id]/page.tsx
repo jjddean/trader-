@@ -63,7 +63,7 @@ export default function CoreSchemaPage() {
       <div>
         <h2 className="text-lg font-medium text-gray-900">Core Declaration Details</h2>
         <p className="mt-1 text-xs text-gray-500">
-          Configure the base WCO 3.6 Header requirements for this submission.
+          Enter the core details for this CDS import declaration.
         </p>
       </div>
 

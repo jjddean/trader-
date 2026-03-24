@@ -58,24 +58,56 @@ export default function DocumentsPage() {
         setUploadError(initiateData?.error || "Unable to initiate secure upload with HMRC.");
         return;
       }
+      
+      const initiateData = await initiateRes.json();
+      const params = initiateData.uploadParameters || {};
+      const s3Url = params.href || params.uploadUrl;
+      const s3Fields = params.fields || {};
+
+      const s3FormData = new FormData();
+      Object.keys(s3Fields).forEach(key => s3FormData.append(key, s3Fields[key]));
+      s3FormData.append("file", file);
+
+      let s3Res;
+      try {
+        s3Res = await fetch(s3Url, {
+          method: "POST",
+          body: s3FormData
+        });
+      } catch (err: any) {
+        setUploadError(`Failed S3 POST blocked by missing CORS or network error: ${err.message}`);
+        return;
+      }
+
+      if (s3Res.status === 410) {
+        setUploadError("Upload URL expired (410 Gone). Please request new one.");
+        return;
+      }
+
+      if (s3Res.status !== 201 && s3Res.status !== 204 && !s3Res.ok) {
+        setUploadError(`HMRC S3 Upload Failed (Status: ${s3Res.status})`);
+        return;
+      }
+
+      const storageId = s3Fields["x-amz-meta-receipt-id"] || `amz-${Date.now()}`;
 
       const uploadRes = await fetch("/api/hmrc/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          storageId: `local-${Date.now()}`,
+          storageId: storageId,
           mrn: declaration.mrn,
           documentType: "Commercial_Invoice",
         }),
       });
 
       if (uploadRes.status === 410) {
-        setUploadError("Upload URL expired (410 Gone). Please retry and upload again.");
+        setUploadError("XML mapping URL expired. Please retry.");
         return;
       }
       if (!uploadRes.ok) {
         const uploadData = await uploadRes.json().catch(() => ({}));
-        setUploadError(uploadData?.error || "Secure upload failed.");
+        setUploadError(uploadData?.error || "Secure mapping sync failed.");
         return;
       }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, Bell, Zap, ShieldAlert, CheckCircle2, FileText, Package, XCircle, Clock } from "lucide-react";
+import { Search, Bell, Zap, ShieldAlert, CheckCircle2, FileText, Package, XCircle, Clock, Bot } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
@@ -19,6 +19,7 @@ function timeAgo(dateString: string) {
 import { cn } from "@/lib/utils";
 import { GlobalSearchOverlay } from "./global-search-overlay";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { AssistantSideSheet } from "@/components/assistant-side-sheet";
 import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
@@ -44,6 +45,60 @@ interface DashboardHeaderProps {
   buttonIcon?: React.ReactNode;
   className?: string;
   children?: React.ReactNode;
+}
+
+function HmrcStatusPill() {
+  const { user } = useUser();
+  const userId = user?.id;
+  const hmrcToken = useQuery(api.hmrc.getToken, userId ? { userId } : "skip");
+  const [now, setNow] = React.useState(Date.now());
+
+  React.useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  if (hmrcToken === undefined) return null;
+
+  let status = "not-connected";
+  if (hmrcToken) {
+    if (hmrcToken.expiresAt < now) status = "expired";
+    else if (hmrcToken.expiresAt - now < 30 * 60 * 1000) status = "expiring";
+    else status = "valid";
+  }
+
+  if (status === "valid") {
+    return (
+      <div className="flex h-[32px] items-center justify-center px-1" title="HMRC Connected">
+        <div className="h-2 w-2 rounded-full bg-green-500"></div>
+      </div>
+    );
+  }
+
+  if (status === "expiring") {
+    return (
+      <a href="/api/hmrc/auth" className="flex h-[24px] items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 text-[10px] font-medium text-amber-600 hover:bg-amber-100 transition-colors">
+        <div className="h-1.5 w-1.5 rounded-full bg-amber-500"></div>
+        Token expiring
+      </a>
+    );
+  }
+
+  if (status === "expired") {
+    return (
+      <a href="/api/hmrc/auth" className="flex h-[24px] items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 text-[10px] font-medium text-red-600 hover:bg-red-100 transition-colors">
+        <div className="h-1.5 w-1.5 rounded-full bg-red-500"></div>
+        Re-authenticate
+      </a>
+    );
+  }
+
+  return (
+    <a href="/api/hmrc/auth" className="flex h-[24px] items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 text-[10px] font-medium text-red-600 hover:bg-red-100 transition-colors">
+      <div className="h-1.5 w-1.5 rounded-full bg-red-500"></div>
+      Connect HMRC
+    </a>
+  );
 }
 
 export const DashboardHeader = ({
@@ -144,16 +199,27 @@ export const DashboardHeader = ({
             {buttonLabel}
           </button>
         )}
+        
+        <AssistantSideSheet>
+          <button className="flex h-[32px] items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 text-xs font-medium whitespace-nowrap text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:text-black">
+            <Bot className="h-4 w-4 text-indigo-600" />
+            <span className="hidden sm:inline-block">Help</span>
+          </button>
+        </AssistantSideSheet>
+
         {mounted ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="relative flex h-[32px] w-[32px] items-center justify-center rounded-md border border-gray-200 bg-white transition-colors hover:bg-gray-50 active:scale-95">
-                <Bell className="h-3.5 w-3.5 text-gray-400 stroke-[1.5]" />
-                {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
-                )}
-              </button>
-            </DropdownMenuTrigger>
+          <div className="flex items-center gap-3">
+            <HmrcStatusPill />
+            <div className="h-4 w-px bg-gray-200" />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="relative flex h-[32px] w-[32px] items-center justify-center rounded-md border border-gray-200 bg-white transition-colors hover:bg-gray-50 active:scale-95">
+                  <Bell className="h-3.5 w-3.5 text-gray-400 stroke-[1.5]" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+                  )}
+                </button>
+              </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 rounded-xl border-gray-200 bg-white p-0 shadow-xl overflow-hidden">
               <div className="bg-gray-50/50 p-3 border-b border-gray-100 flex items-center justify-between">
                 <DropdownMenuLabel className="p-0 text-[10px] font-semibold tracking-widest text-gray-400 uppercase">
@@ -210,6 +276,7 @@ export const DashboardHeader = ({
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         ) : (
           <button className="flex h-[32px] w-[32px] items-center justify-center rounded-md border border-gray-200 bg-white">
             <Bell className="h-3.5 w-3.5 text-gray-400 stroke-[1.5]" />

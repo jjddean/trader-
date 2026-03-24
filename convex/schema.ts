@@ -66,8 +66,6 @@ export default defineSchema({
     conversationId: v.optional(v.any()),
     declarationType: v.optional(v.any()),
     route: v.optional(v.any()),
-    
-    // Legacy fields that might exist on old records migrated from tradeLanes
     commodityCode: v.optional(v.any()),
     description: v.optional(v.any()),
     lastVerified: v.optional(v.any()),
@@ -127,4 +125,12 @@ export default defineSchema({
     userId: v.optional(v.any()),
     declarationId: v.optional(v.any()),
   }).index("by_mrn", ["mrn"]).index("by_user", ["userId"]),
+  
+  auditLogs: defineTable({
+    userId: v.optional(v.any()),
+    action: v.optional(v.any()),
+    details: v.optional(v.any()),
+    timestamp: v.optional(v.any()),
+    archived: v.optional(v.any()),
+  }).index("by_timestamp", ["timestamp"]),
 });

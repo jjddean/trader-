@@ -74,16 +74,17 @@ function hmrcStatusForDeclaration(decl: any, notifications: any[]) {
   if (decl?.status === "Draft") return { score: 0, status: "Draft" };
   const latestType = notifications[0]?.notificationType;
   if (latestType === "DMSCLE") return { score: 100, status: "Clean" };
-  if (latestType === "DMSACC") return { score: 90, status: "Warning" };
-  if (latestType === "DMSROG") return { score: 55, status: "Action Required" };
-  if (latestType === "DMSREJ") return { score: 20, status: "Action Required" };
-  if (latestType === "DMSINV") return { score: 15, status: "Action Required" };
-  if (latestType === "DMSUB") return { score: 75, status: "Warning" };
+  if (latestType === "DMSACC") return { score: 85, status: "Warning" };
+  if (latestType === "DMSROG") return { score: 60, status: "Action Required" };
+  if (latestType === "DMSREJ") return { score: 0, status: "Action Required" };
+  if (latestType === "DMSINV") return { score: 0, status: "Action Required" };
+  if (latestType === "DMSUB") return { score: 50, status: "Warning" };
 
   if (decl.status === "Cleared") return { score: 100, status: "Clean" };
-  if (decl.status === "Accepted") return { score: 90, status: "Warning" };
-  if (decl.status === "Rejected" || decl.status === "Invalid" || decl.status === "Action Required") return { score: 20, status: "Action Required" };
-  return { score: 70, status: "Warning" };
+  if (decl.status === "Accepted") return { score: 85, status: "Warning" };
+  if (decl.status === "Rejected" || decl.status === "Invalid" || decl.status === "Action Required") return { score: 0, status: "Action Required" };
+  if (decl.status === "Submitted") return { score: 50, status: "Warning" };
+  return { score: 0, status: "Warning" };
 }
 
 export const getLane = query({
@@ -129,6 +130,22 @@ export const createDeclaration = mutation({
     }
 
     return declarationId;
+  },
+});
+
+export const deleteDeclaration = mutation({
+  args: { id: v.id("declarations") },
+  handler: async (ctx, args) => {
+    // 1. Delete associated goods items
+    const items = await ctx.db
+      .query("goods_items")
+      .withIndex("by_declaration", (q) => q.eq("declarationId", args.id))
+      .collect();
+    for (const item of items) {
+      await ctx.db.delete(item._id);
+    }
+    // 2. Delete the declaration itself
+    await ctx.db.delete(args.id);
   },
 });
 

@@ -8,9 +8,15 @@ import { cn } from "@/lib/utils";
 const geistSans = GeistSans;
 
 export const metadata: Metadata = {
-  title: "FreightCode | Instant Customs Clearance",
-  description:
-    "Automate your UK customs declarations, detect savings, and ensure compliance instantly.",
+  title: "FreightCode | Instant UK Customs Clearance Software",
+  description: "Automate your UK customs declarations (HMRC CDS), detect savings, and ensure compliance instantly with FreightCode. Search our 5 AI-powered guides for CDS, TRE, and Commodity Codes.",
+  keywords: "HMRC, CDS, UK Customs, Import Duty, Declarations, TRE, FreightCode, AI Customs Agent",
+  openGraph: {
+    title: "FreightCode | Instant UK Customs Clearance Software",
+    description: "Automate your UK customs declarations (HMRC CDS), detect savings, and ensure compliance instantly with FreightCode. Search our 5 AI-powered guides for CDS, TRE, and Commodity Codes.",
+    type: "website",
+    url: "https://freightcode.co.uk",
+  }
 };
 
 export default function RootLayout({

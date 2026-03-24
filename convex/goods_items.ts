@@ -44,8 +44,11 @@ export const updateItem = mutation({
     commodityCode: v.optional(v.string()),
     description: v.optional(v.string()),
     originCountry: v.optional(v.string()),
+    procedureCode: v.optional(v.string()),
     valueAmount: v.optional(v.number()),
     valueCurrency: v.optional(v.string()),
+    grossWeightKg: v.optional(v.number()),
+    netWeightKg: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;

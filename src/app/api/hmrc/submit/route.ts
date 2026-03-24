@@ -5,7 +5,7 @@ import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import { mapToCDS_H1, validateCdsFields } from "../../../../lib/wco-mapper";
 import { xmlEscape } from "../../../../lib/xml-utils";
-
+import { fetchHmrc } from "../../../../lib/hmrc-fetch";
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -205,38 +205,15 @@ export async function POST(request: Request) {
     console.log("[redacted for security]");
     console.log("[redacted for security]");
 
-    const testScenario = process.env.HMRC_TEST_SCENARIO;
-    const hmrcHeaders: Record<string, string> = {
-      Accept: process.env.HMRC_DECLARATIONS_ACCEPT || "application/vnd.hmrc.1.0+xml",
+    const hmrcHeaders = {
       "Content-Type": "application/xml; charset=UTF-8",
-      Authorization: authHeaderString,
-      "X-Client-ID": process.env.HMRC_CLIENT_ID!,
     };
-    if (testScenario) {
-      hmrcHeaders["Gov-Test-Scenario"] = testScenario;
-    }
 
-    let hmrcResponse = await fetch(hmrcEndpoint, {
+    let hmrcResponse = await fetchHmrc(hmrcEndpoint, {
       method: "POST",
       headers: hmrcHeaders,
       body: xmlPayload,
-    });
-    if (hmrcResponse.status === 429) {
-      await sleep(2000);
-      hmrcResponse = await fetch(hmrcEndpoint, {
-        method: "POST",
-        headers: hmrcHeaders,
-        body: xmlPayload,
-      });
-      if (hmrcResponse.status === 429) {
-        await sleep(5000);
-        hmrcResponse = await fetch(hmrcEndpoint, {
-          method: "POST",
-          headers: hmrcHeaders,
-          body: xmlPayload,
-        });
-      }
-    }
+    }, request, token);
     if (hmrcResponse.status === 429) {
       return NextResponse.json({ error: "HMRC rate limit reached, please try again shortly" }, { status: 429 });
     }

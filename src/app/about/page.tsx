@@ -9,33 +9,36 @@ export default function AboutPage() {
   const { isSignedIn } = useAuth();
   
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex flex-col">
       <SiteHeader />
-      <main className="pt-[140px] pb-24">
-        <div className="mx-auto max-w-[800px] px-[24px]">
-          <h1 className="mb-8 text-[42px] font-bold tracking-tight text-[#020817] md:text-[52px]">
-            About Freightcode
+      <main className="pt-[140px] pb-24 flex-grow w-full bg-white">
+        <article className="max-w-3xl mx-auto px-6">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 mb-6 leading-snug">
+            Enterprise Customs Intelligence
           </h1>
           
-          <div className="prose prose-lg prose-slate max-w-none bg-white p-8 md:p-12 rounded-2xl border border-slate-200 shadow-sm text-slate-600 space-y-6">
-            <p className="text-xl text-slate-800 font-medium">
-              We're building the intelligence layer for global trade, starting with the UK.
+          <div className="space-y-6 mt-12 pb-12 border-b border-slate-100">
+            <p className="text-[18px] font-semibold text-slate-900 leading-relaxed mb-8">
+              FreightCode is architecting the foundational intelligence layer for global trade data, beginning directly with the UK border.
             </p>
-            <p>
-              Freightcode is an intelligent B2B SaaS platform designed to modernize UK customs clearances. Our services include historical data analytics, AI-assisted commercial invoice extraction, smart duty pre-fill capabilities, and direct seamless integrations with HMRC's Customs Declaration Service (CDS).
+            <p className="text-[15px] text-slate-700 leading-relaxed">
+              We operate as an intelligent B2B SaaS infrastructure designed to formalize and automate UK customs clearances. Our core architecture provides enterprise-grade historical data analytics, deterministic commercial invoice extraction, algorithmic duty validation, and resilient integrations with HMRC's Customs Declaration Service (CDS).
             </p>
-            <p>
-              We believe that international trade should not be bottle-necked by opaque compliance rules, manual spreadsheet data entry, and preventable human errors. High-volume importers and forwarders lose millions annually in overpaid duties and compliance penalties simply due to a lack of actionable visibility.
+            <p className="text-[15px] text-slate-700 leading-relaxed">
+              We operate on the premise that international trade velocity should not be handicapped by opaque regulatory logic, inefficient human data entry, and preventable misclassification errors. High-volume enterprises and freight forwarders historically lose millions in operational capital through overpaid duties and compliance penalties caused exclusively by a lack of actionable supply chain visibility.
             </p>
-            <p>
-              By leveraging direct government API connections and an advanced automated classification engine, we give control back to supply chain operators—ensuring fast, compliant, and cost-optimized clearance through the frontier.
-            </p>
-            <h3 className="text-2xl font-bold text-slate-900 pt-8 border-t border-slate-100 mt-8">Our Mission</h3>
-            <p>
-              To democratize customs data, eliminate compliance friction, and unlock borderless supply chain velocity for modern enterprises.
+            <p className="text-[15px] text-slate-700 leading-relaxed">
+              By leveraging secure institutional API connections and an advanced automated classification ledger, FreightCode restores systemic control to supply chain operators—guaranteeing rapid, compliant, and continuously optimized frontier clearance.
             </p>
           </div>
-        </div>
+
+          <div className="mt-12">
+            <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mb-6">Our Core Objective</h2>
+            <p className="text-[15px] text-slate-700 leading-relaxed">
+              To systematically democratize customs intelligence, eliminate regulatory friction points, and establish borderless supply chain velocity for the modern enterprise.
+            </p>
+          </div>
+        </article>
       </main>
       <SiteFooter isSignedIn={isSignedIn} />
     </div>

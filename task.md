@@ -12,6 +12,7 @@ Ref: [HMRC Path to Production](https://developer.service.hmrc.gov.uk/guides/cust
 - [x] All 27/27 internal readiness tests passing
 
 ## Stage 2: Trader Dress Rehearsal (TDR) — NEXT
+- [x] Refactored 5 HMRC API routes to use `fetchHmrc` wrapper (Fraud Prevention Headers)
 - [ ] Request TDR access from HMRC Software Developer Support (SDH)
 - [ ] Get application added to TDR allow list
 - [ ] Subscribe to Customs Declarations API **v1.0** (TDR version)

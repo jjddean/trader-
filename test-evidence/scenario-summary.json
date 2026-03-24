@@ -2,8 +2,44 @@
   {
     "scenario": "scenario-1-happy-path",
     "header": "HAPPY_PATH",
-    "status": 401,
-    "conversationId": "",
-    "timestamp": "2026-03-21T11:40:46.617Z"
+    "status": 403,
+    "conversationId": "a909f1d7-4335-4465-8934-540661f30115",
+    "timestamp": "2026-03-23T07:11:36.932Z"
+  },
+  {
+    "scenario": "scenario-2-rejection",
+    "header": "REJECTION",
+    "status": 403,
+    "conversationId": "3187f0d2-35e5-43ac-8814-d3a97584ca1f",
+    "timestamp": "2026-03-23T07:11:37.186Z"
+  },
+  {
+    "scenario": "scenario-3-route-to-examine",
+    "header": "ROUTE_TO_EXAMINE",
+    "status": 403,
+    "conversationId": "05e18338-a3be-4b39-a3d6-1a6e920e20db",
+    "timestamp": "2026-03-23T07:11:37.430Z"
+  },
+  {
+    "scenario": "scenario-4-invalid-declaration",
+    "header": "INVALID_DECLARATION",
+    "status": 400,
+    "conversationId": "1c8492ea-5e32-43ff-978d-9e3915d8c2ca",
+    "timestamp": "2026-03-23T07:11:37.660Z"
+  },
+  {
+    "scenario": "scenario-5-rate-limit",
+    "header": "RATE_LIMIT",
+    "rapidStatuses": [
+      403,
+      403,
+      403,
+      403,
+      403
+    ],
+    "retryStatuses": [
+      403
+    ],
+    "timestamp": "2026-03-23T07:11:39.656Z"
   }
 ]

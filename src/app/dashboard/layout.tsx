@@ -10,34 +10,6 @@ import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 
-const routeConfigs: Record<
-  string,
-  { title: string; badge: string; badgeVariant?: "default" | "success" | "blue" }
-> = {
-  "/dashboard": { title: "Customs Dashboard", badge: "LIVE", badgeVariant: "default" },
-  "/dashboard/prospects": { title: "Partner Prospects", badge: "PIPELINE", badgeVariant: "blue" },
-  "/dashboard/calculator": {
-    title: "Landed Cost Calculator",
-    badge: "TARIFFS",
-    badgeVariant: "default",
-  },
-  "/dashboard/assistant": { title: "FreightCode Assistant", badge: "AI", badgeVariant: "success" },
-  "/dashboard/inbox": { title: "Inbox", badge: "HUB", badgeVariant: "default" },
-  "/dashboard/settings": {
-    title: "Account Settings",
-    badge: "PREFERENCES",
-    badgeVariant: "default",
-  },
-  "/dashboard/declarations": { title: "Declarations", badge: "CDS", badgeVariant: "default" },
-  "/dashboard/documents": { title: "Smart Upload", badge: "DOCS", badgeVariant: "success" },
-  "/dashboard/reports": { title: "Customs Audit Reports", badge: "REPORTS", badgeVariant: "default" },
-  "/dashboard/records": { title: "Financial Records", badge: "LEDGER", badgeVariant: "default" },
-  "/dashboard/user": { title: "Account", badge: "PROFILE", badgeVariant: "default" },
-  "/dashboard/user/billing": { title: "Billing", badge: "STRIPE", badgeVariant: "success" },
-  "/dashboard/admin": { title: "Admin", badge: "INTERNAL", badgeVariant: "default" },
-  "/dashboard/tools/hscode-lookup": { title: "HS Code Lookup", badge: "TOOLS", badgeVariant: "default" },
-};
-
 export default function DashboardLayout({
   children,
 }: Readonly<{
@@ -45,6 +17,29 @@ export default function DashboardLayout({
 }>) {
   const pathname = usePathname();
   
+  const hmrcEnv = process.env.NEXT_PUBLIC_HMRC_ENV || "sandbox";
+  const dashboardBadge = hmrcEnv === "production" ? "LIVE" : "SANDBOX";
+  const dashboardBadgeVariant = hmrcEnv === "production" ? "default" : "default";
+
+  const routeConfigs: Record<
+    string,
+    { title: string; badge: string; badgeVariant?: "default" | "success" | "blue" }
+  > = {
+    "/dashboard": { title: "Customs Dashboard", badge: dashboardBadge, badgeVariant: (dashboardBadgeVariant as "default") },
+    "/dashboard/prospects": { title: "Partner Prospects", badge: "PIPELINE", badgeVariant: "blue" },
+    "/dashboard/calculator": { title: "Landed Cost Calculator", badge: "TARIFFS", badgeVariant: "default" },
+    "/dashboard/assistant": { title: "FreightCode Assistant", badge: "AI", badgeVariant: "success" },
+    "/dashboard/inbox": { title: "Inbox", badge: "HUB", badgeVariant: "default" },
+    "/dashboard/settings": { title: "Account Settings", badge: "PREFERENCES", badgeVariant: "default" },
+    "/dashboard/declarations": { title: "Declarations", badge: "CDS", badgeVariant: "default" },
+    "/dashboard/documents": { title: "Smart Upload", badge: "DOCS", badgeVariant: "success" },
+    "/dashboard/reports": { title: "Customs Audit Reports", badge: "REPORTS", badgeVariant: "default" },
+    "/dashboard/records": { title: "Financial Records", badge: "LEDGER", badgeVariant: "default" },
+    "/dashboard/user": { title: "Account", badge: "PROFILE", badgeVariant: "default" },
+    "/dashboard/user/billing": { title: "Billing", badge: "STRIPE", badgeVariant: "success" },
+    "/dashboard/tools/hscode-lookup": { title: "HS Code Lookup", badge: "TOOLS", badgeVariant: "default" },
+  };
+
   // Extract declaration ID if in a declaration workspace
   const declarationIdMatch = pathname.match(/\/dashboard\/declarations\/([^\/]+)/);
   const declarationId = declarationIdMatch ? declarationIdMatch[1] : null;
