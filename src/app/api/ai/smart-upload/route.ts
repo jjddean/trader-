@@ -106,7 +106,7 @@ export async function POST(request: Request) {
     const storageRes = await fetch(postUrl, {
       method: "POST",
       headers: { "Content-Type": mimeType },
-      body: buffer,
+      body: new Uint8Array(buffer),
     });
     
     if (!storageRes.ok) {

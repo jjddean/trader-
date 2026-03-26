@@ -1,0 +1,22 @@
+{
+  "name": "FreightCode | Instant UK Customs Clearance Software",
+  "short_name": "FreightCode",
+  "description": "Automate your UK customs declarations (HMRC CDS), detect savings, and ensure compliance instantly with FreightCode.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

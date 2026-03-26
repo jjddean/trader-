@@ -11,6 +11,17 @@ export const metadata: Metadata = {
   title: "FreightCode | Instant UK Customs Clearance Software",
   description: "Automate your UK customs declarations (HMRC CDS), detect savings, and ensure compliance instantly with FreightCode. Search our 5 AI-powered guides for CDS, TRE, and Commodity Codes.",
   keywords: "HMRC, CDS, UK Customs, Import Duty, Declarations, TRE, FreightCode, AI Customs Agent",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/favicon.ico",
+    apple: "/icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "FreightCode",
+  },
   openGraph: {
     title: "FreightCode | Instant UK Customs Clearance Software",
     description: "Automate your UK customs declarations (HMRC CDS), detect savings, and ensure compliance instantly with FreightCode. Search our 5 AI-powered guides for CDS, TRE, and Commodity Codes.",
