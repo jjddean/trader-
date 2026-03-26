@@ -14,7 +14,7 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
   if (!convexUrl || !publishableKey || !convex) return <>{children}</>;
 
   return (
-    <ClerkProvider publishableKey={publishableKey}>
+    <ClerkProvider publishableKey={publishableKey} waitlistUrl="/">
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
         {children}
       </ConvexProviderWithClerk>

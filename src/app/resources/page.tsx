@@ -19,7 +19,7 @@ export default function ResourcesPage() {
             Technical Resources
           </h1>
           <p className="text-[16px] text-slate-600 leading-relaxed mb-12">
-            Authoritative documentation, compliance utilities, and integration guides to establish robust UK customs governance within your organization.
+            Guides, tools, and integration documentation to help you manage UK customs compliance efficiently.
           </p>
 
           <div className="space-y-8 mt-12">

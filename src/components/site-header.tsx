@@ -2,22 +2,20 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown } from "lucide-react";
-import { useAuth, UserButton } from "@clerk/nextjs";
+import { ArrowRight } from "lucide-react";
+import { useAuth, UserButton, Waitlist } from "@clerk/nextjs";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export const navigation = [
   { name: "Solutions", href: "/solutions" },
-  { 
-    name: "Resources", 
-    href: "/resources",
-    submenu: [
-      { name: "HMRC CDS for Importers (2026)", href: "/guides/hmrc-cds-complete-guide-uk-importers-2026" },
-      { name: "What is TRE Customs Data?", href: "/guides/what-is-tre-hmrc-trade-data" },
-      { name: "Understanding CDS Notifications", href: "/guides/dmsacc-dmsrog-dmscle-hmrc-cds-notifications" },
-      { name: "Reading CDS CSV Export (TRE)", href: "/guides/how-to-read-cds-csv-export-tre" },
-      { name: "Commodity Codes Lookup", href: "/guides/cds-commodity-codes-how-to-find" },
-    ]
-  },
+  { name: "Resources", href: "/resources" },
   { name: "About", href: "/about" },
   { name: "Contact", href: "/contact" },
 ];
@@ -37,8 +35,8 @@ export function SiteHeader() {
             </div>
             <div className="flex items-baseline whitespace-nowrap text-[#020817] leading-none">
               <span className="text-xl font-bold tracking-tight">freight</span>
-              <span className="text-xl font-bold tracking-tight text-slate-400">code</span>
-              <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px] text-slate-400">®</span>
+              <span className="text-xl font-bold tracking-tight text-slate-600">code</span>
+              <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px] text-slate-600">®</span>
             </div>
             <span className="ml-1.5 rounded border border-slate-100 bg-slate-50 px-2 py-0.5 text-[13px] font-semibold text-slate-600">
               Beta
@@ -54,24 +52,7 @@ export function SiteHeader() {
                 className="text-[14px] font-medium text-[#6B7280] transition-colors hover:text-[#111827] flex items-center gap-1.5 cursor-pointer h-full"
               >
                 {item.name}
-                {item.submenu && <ChevronDown className="h-3.5 w-3.5 opacity-50 group-hover:opacity-100 group-hover:rotate-180 transition-all duration-200" />}
               </Link>
-              
-              {item.submenu && (
-                <div className="absolute top-[64px] left-1/2 -translate-x-1/2 pt-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                  <div className="w-[320px] rounded-xl border border-slate-200/80 bg-white/95 backdrop-blur-lg p-2.5 shadow-xl ring-1 ring-black/5">
-                    {item.submenu.map((sub) => (
-                      <Link
-                        key={sub.name}
-                        href={sub.href}
-                        className="block rounded-lg px-4 py-3 text-[14px] font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
-                      >
-                        {sub.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           ))}
         </nav>
@@ -79,16 +60,29 @@ export function SiteHeader() {
         <div className="flex items-center gap-[24px]">
           {!isSignedIn ? (
             <div className="flex items-center gap-4">
-              <button 
-                onClick={() => {
-                  const el = document.getElementById('waitlist-form');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  else window.location.href = '/#waitlist-form';
-                }}
-                className="h-[32px] rounded border border-transparent bg-[#111827] px-[16px] flex items-center text-[14px] font-medium text-white transition-all hover:bg-[#374151] shadow-none"
-              >
-                Request Access
-              </button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button
+                      className="h-[32px] rounded-md border border-transparent bg-[#111827] px-[16px] text-[13px] font-medium text-white transition-colors hover:bg-slate-800 flex items-center justify-center whitespace-nowrap shadow-sm cursor-pointer"
+                  >
+                      Gain Access
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[440px] p-0 border-none bg-transparent shadow-none [&>button]:text-white [&>button]:bg-black/20 [&>button]:hover:bg-black/40 [&>button]:rounded-full [&>button]:top-2 [&>button]:right-2">
+                  <DialogHeader className="sr-only">
+                    <DialogTitle>Join Waitlist</DialogTitle>
+                  </DialogHeader>
+                  <Waitlist />
+                  <div className="pb-6 px-8 text-center">
+                    <p className="text-[12px] text-slate-500">
+                      Need help? Contact us at{" "}
+                      <a href="mailto:info@freightcode.co.uk" className="text-slate-900 font-medium hover:underline">
+                        info@freightcode.co.uk
+                      </a>
+                    </p>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           ) : (
             <div className="flex items-center gap-4">

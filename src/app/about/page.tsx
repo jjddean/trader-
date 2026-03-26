@@ -14,28 +14,28 @@ export default function AboutPage() {
       <main className="pt-[140px] pb-24 flex-grow w-full bg-white">
         <article className="max-w-3xl mx-auto px-6">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 mb-6 leading-snug">
-            Enterprise Customs Intelligence
+            About FreightCode
           </h1>
           
           <div className="space-y-6 mt-12 pb-12 border-b border-slate-100">
             <p className="text-[18px] font-semibold text-slate-900 leading-relaxed mb-8">
-              FreightCode is architecting the foundational intelligence layer for global trade data, beginning directly with the UK border.
+              FreightCode is building the technology to simplify global trade data, starting with the UK border.
             </p>
             <p className="text-[15px] text-slate-700 leading-relaxed">
-              We operate as an intelligent B2B SaaS infrastructure designed to formalize and automate UK customs clearances. Our core architecture provides enterprise-grade historical data analytics, deterministic commercial invoice extraction, algorithmic duty validation, and resilient integrations with HMRC's Customs Declaration Service (CDS).
+              We provide a software platform that automates UK customs clearances. Our system offers historical data analytics, accurate data extraction from invoices, automated duty calculation, and direct connections with HMRC's Customs Declaration Service (CDS).
             </p>
             <p className="text-[15px] text-slate-700 leading-relaxed">
-              We operate on the premise that international trade velocity should not be handicapped by opaque regulatory logic, inefficient human data entry, and preventable misclassification errors. High-volume enterprises and freight forwarders historically lose millions in operational capital through overpaid duties and compliance penalties caused exclusively by a lack of actionable supply chain visibility.
+              We believe that international trade should not be slowed down by complex rules, manual data entry, or preventable errors. High-volume businesses and freight forwarders often lose money through overpaid duties and penalties caused by a lack of clear visibility into their supply chain.
             </p>
             <p className="text-[15px] text-slate-700 leading-relaxed">
-              By leveraging secure institutional API connections and an advanced automated classification ledger, FreightCode restores systemic control to supply chain operators—guaranteeing rapid, compliant, and continuously optimized frontier clearance.
+              By using secure direct connections and smart classification tools, FreightCode gives control back to supply chain operators—ensuring fast, compliant, and optimized customs clearance.
             </p>
           </div>
-
+ 
           <div className="mt-12">
-            <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mb-6">Our Core Objective</h2>
+            <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mb-6">Our Goal</h2>
             <p className="text-[15px] text-slate-700 leading-relaxed">
-              To systematically democratize customs intelligence, eliminate regulatory friction points, and establish borderless supply chain velocity for the modern enterprise.
+              To make customs data easy to use, eliminate shipping delays, and ensure smooth trade for every business.
             </p>
           </div>
         </article>

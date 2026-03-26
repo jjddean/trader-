@@ -112,13 +112,13 @@ export default function DocumentsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="h-9 text-xs">
-            <ClipboardPaste className="mr-2 h-4 w-4" />
-            Manual paste
-          </Button>
-          <Button className="h-9 text-xs" onClick={() => setIsUploadOpen(true)}>
+          <Button variant="ghost" className="h-9 text-xs" onClick={() => setIsUploadOpen(true)}>
             <Upload className="mr-2 h-4 w-4" />
             Upload document
+          </Button>
+          <Button className="h-9 text-xs bg-black text-white hover:bg-gray-800">
+            <ClipboardPaste className="mr-2 h-4 w-4" />
+            Manual paste
           </Button>
         </div>
       </div>
@@ -319,34 +319,34 @@ export default function DocumentsPage() {
 
               <div className="pt-6 px-6 sm:px-8 pb-12 space-y-8">
                 {/* Header Summary Section */}
-                <section>
-                  <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-gray-500 border-b border-gray-100 pb-2">Document Summary</h3>
+                <section className="bg-gray-50/80 rounded-xl p-6 border border-gray-100/80 shadow-sm">
+                  <h3 className="mb-6 text-sm font-semibold text-gray-900 border-b border-gray-200 pb-3">Document Summary</h3>
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4">
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Type</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedDocument.typeName} ({selectedDocument.type})</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Type</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedDocument.typeName} ({selectedDocument.type})</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Linked MRN</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900 font-mono">{selectedDocument.mrn}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Linked MRN</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950 font-mono">{selectedDocument.mrn}</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">DE 2/3 Reference</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900 font-mono">{selectedDocument.de23}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">DE 2/3 Reference</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950 font-mono">{selectedDocument.de23}</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Uploaded By</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedDocument.method}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Uploaded By</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedDocument.method}</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Upload Date</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedDocument.date}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Upload Date</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedDocument.date}</p>
                     </div>
                   </div>
                 </section>
 
                 <section>
-                  <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-gray-500 border-b border-gray-100 pb-2">AI Compliance Analysis</h3>
+                  <h3 className="mb-4 text-sm font-semibold text-gray-900 border-b border-gray-100 pb-3">AI Compliance Analysis</h3>
                   {selectedDocument.status === 'verified' ? (
                     <div className="rounded-lg border border-green-100 bg-green-50/50 p-4">
                       <div className="flex items-start gap-3">
@@ -409,7 +409,7 @@ export default function DocumentsPage() {
 
                 {/* Line Items Section Equivalent */}
                 <section>
-                  <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-gray-500 border-b border-gray-100 pb-2">Document Preview</h3>
+                  <h3 className="mb-4 text-sm font-semibold text-gray-900 border-b border-gray-100 pb-3">Document Preview</h3>
                   <div className="overflow-hidden rounded-lg border border-gray-200 shadow-xs">
                     <div className="flex flex-col items-center justify-center p-12 text-center bg-gray-50/50">
                       <FileText className="h-10 w-10 text-gray-300 mb-4" />

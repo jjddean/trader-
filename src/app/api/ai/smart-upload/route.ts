@@ -9,17 +9,14 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const file = formData.get("file") as File;
+    const file = formData.get("file") as File | null;
+    const pasteText = formData.get("pasteText") as string | null;
     const type = formData.get("type") as string;
     const linkedMrn = formData.get("linkedMrn") as string;
     const userId = formData.get("userId") as string;
 
-    if (!file) {
-      return NextResponse.json({ error: "No document file uploaded" }, { status: 400 });
-    }
-
-    if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
-      return NextResponse.json({ error: "AWS Textract is not configured on this environment." }, { status: 500 });
+    if (!file && !pasteText) {
+      return NextResponse.json({ error: "No document file or pasted text provided" }, { status: 400 });
     }
 
     const groqApiKey = process.env.GROQ_API_KEY;
@@ -27,31 +24,49 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Cloudagent endpoint (Groq) is not reachable or configured." }, { status: 500 });
     }
 
-    // 1. AWS Textract
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    
     let rawText = "";
-    try {
-      const client = new TextractClient({
-        region: process.env.AWS_REGION || "eu-west-2",
-        credentials: {
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-        }
-      });
-      const command = new DetectDocumentTextCommand({ Document: { Bytes: buffer } });
-      const response = await client.send(command);
-      if (response.Blocks) {
-        rawText = response.Blocks.filter(b => b.BlockType === "LINE").map(b => b.Text).join("\n");
+    let buffer: Buffer = Buffer.from([]);
+    let fileName: string = "";
+    let mimeType: string = "";
+
+    if (pasteText) {
+      // Bypass Textract and use the pasted text directly
+      rawText = pasteText;
+      buffer = Buffer.from(pasteText, 'utf-8');
+      fileName = `pasted_document_${Date.now()}.txt`;
+      mimeType = "text/plain";
+    } else if (file) {
+      if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+        return NextResponse.json({ error: "AWS Textract is not configured on this environment." }, { status: 500 });
       }
-    } catch (parseError: any) {
-      console.error("AWS Textract Error:", parseError);
-      return NextResponse.json({ error: "Failed to parse PDF document using Textract.", details: parseError.message }, { status: 400 });
+
+      // 1. AWS Textract
+      const arrayBuffer = await file.arrayBuffer();
+      buffer = Buffer.from(arrayBuffer);
+      fileName = file.name;
+      mimeType = file.type;
+      
+      try {
+        const client = new TextractClient({
+          region: process.env.AWS_REGION || "eu-west-2",
+          credentials: {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+          }
+        });
+        const command = new DetectDocumentTextCommand({ Document: { Bytes: buffer } });
+        const response = await client.send(command);
+        if (response.Blocks) {
+          rawText = response.Blocks.filter(b => b.BlockType === "LINE").map(b => b.Text).join("\n");
+        }
+      } catch (parseError: any) {
+        console.error("AWS Textract Error:", parseError);
+        return NextResponse.json({ error: "Failed to parse document using Textract.", details: parseError.message }, { status: 400 });
+      }
     }
 
     if (!rawText || rawText.trim() === "") {
-      return NextResponse.json({ error: "No readable text found via Textract" }, { status: 400 });
+      return NextResponse.json({ error: "No readable text found" }, { status: 400 });
     }
 
     // 2. Cloudagent AI Classifier
@@ -87,9 +102,10 @@ export async function POST(request: Request) {
     // 3. Save to Convex
     // Upload actual file to Convex storage to get storageId
     const postUrl = await convex.mutation(api.documents.generateUploadUrl);
+    
     const storageRes = await fetch(postUrl, {
       method: "POST",
-      headers: { "Content-Type": file.type },
+      headers: { "Content-Type": mimeType },
       body: buffer,
     });
     
@@ -101,7 +117,7 @@ export async function POST(request: Request) {
     const newDocId = await convex.mutation(api.documents.saveDocument, {
       storageId,
       userId: userId || "system",
-      fileName: file.name,
+      fileName: fileName,
       mrn: linkedMrn !== "none" ? linkedMrn : undefined,
       auditStatus: parsedResponse.status.toLowerCase(),
       fileType: parsedResponse.documentType,

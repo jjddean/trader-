@@ -32,7 +32,7 @@ export default function DashboardLayout({
     "/dashboard/inbox": { title: "Inbox", badge: "HUB", badgeVariant: "default" },
     "/dashboard/settings": { title: "Account Settings", badge: "PREFERENCES", badgeVariant: "default" },
     "/dashboard/declarations": { title: "Declarations", badge: "CDS", badgeVariant: "default" },
-    "/dashboard/documents": { title: "Smart Upload", badge: "DOCS", badgeVariant: "success" },
+    "/dashboard/documents": { title: "Documents", badge: "DOCS", badgeVariant: "success" },
     "/dashboard/reports": { title: "Customs Audit Reports", badge: "REPORTS", badgeVariant: "default" },
     "/dashboard/records": { title: "Financial Records", badge: "LEDGER", badgeVariant: "default" },
     "/dashboard/user": { title: "Account", badge: "PROFILE", badgeVariant: "default" },

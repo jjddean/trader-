@@ -8,39 +8,39 @@ import { useAuth } from "@clerk/nextjs";
 const capabilities = [
   { 
     id: 'historical', 
-    label: 'Historical Data Architecture',
-    benefit: 'Ingest and parse vast datasets of historical HMRC declarations to model compliance patterns and audit supply chain fidelity.',
-    how: 'Organizations provision HMRC "Report Ready" CSV extracts to our secure ingestion points. The analytical engine normalizes raw data structures and writes exact historical trade records into an isolated, encrypted database.'
+    label: 'Historical Data Analysis',
+    benefit: 'Import and analyze your past HMRC declarations to find trends and ensure your records are accurate.',
+    how: 'Upload your HMRC CSV reports directly to our platform. Our system automatically organizes the data into secure historical trade records, saving you hours of manual spreadsheet work.'
   },
   { 
     id: 'savings', 
-    label: 'Precision Financial Reclamation',
-    benefit: 'Maximize financial efficiency. We identify precise monetary discrepancies and explicit reclamation opportunities across international shipments.',
-    how: 'The platform cross-references declaration records against live global trade agreements, systematically flagging instances where preferential 0% duty margins were bypassed. It programmatically calculates the exact reclaimable duty variance.'
+    label: 'Duty Refund Detection',
+    benefit: 'Identify errors and refund opportunities across your international shipments.',
+    how: 'The platform checks your records against trade agreements, flagging instances where you could have paid 0% duty but didn\'t. It calculates exactly how much you can reclaim.'
   },
   { 
     id: 'prefill', 
-    label: 'Intelligent Duty Profiling',
-    benefit: 'Architect new draft declarations instantaneously. Eliminate the operational friction of sourcing compliant HS Commodity Codes.',
-    how: "When initiating a declaration, the system parses the organization's highest-frequency historical routes. Analyzing previously cleared shipments for specific regions, it dynamically recommends the mathematically most compliant commodity codes."
+    label: 'Smart Declaration Drafting',
+    benefit: 'Create new draft declarations instantly and save time finding the correct HS Commodity Codes.',
+    how: "As you start a declaration, the system looks at your most frequent shipping routes and past successful filings to recommend the most accurate commodity codes."
   },
   { 
     id: 'scoring', 
-    label: 'Broker Compliance Benchmarking',
-    benefit: 'Standardize and monitor the technical performance of appointed freight forwarders and customs brokers.',
-    how: 'The platform generates benchmark health indicators by contrasting flawless clearances against anomalous filings. Supply chain leaders gain a transparent leaderboard revealing exact compliance error rates aggregated by representation.'
+    label: 'Broker Performance Monitoring',
+    benefit: 'Track how well your freight forwarders and customs brokers are performing.',
+    how: 'We compare successful filings against errors to give you a clear view of which agents are performing best and where improvements are needed.'
   },
   { 
     id: 'hmrc', 
-    label: 'Government Gateway Synchronization',
-    benefit: 'Establish a resilient, perpetual OAuth ledger with the structural HMRC Government Gateway.',
-    how: 'Utilizing official HMRC standards, we securely federate workspace identities with corresponding EORI registries. The architecture autonomously renegotiates access tokens, guaranteeing uninterrupted synchronization with Trade Reporting and Extracting (TRE) APIs.'
+    label: 'Direct HMRC Sync',
+    benefit: 'Connect securely to your HMRC account for real-time data synchronization.',
+    how: 'Using official HMRC standards, we link your account to your EORI number. The connection stays active and secure automatically, so your dashboard is always up to date.'
   },
   { 
     id: 'storage', 
-    label: 'Encrypted Auditable Repository',
-    benefit: 'Centralize commercial invoices, routing logs, and statutory clearance evidence in an HMRC-compliant digital vault.',
-    how: 'Stakeholders attach critical trade verification directly to their movement reference records (MRNs). We manage multi-region, redundant object storage, ensuring immediate evidence retrieval during formal post-clearance audits.'
+    label: 'Secure Document Storage',
+    benefit: 'Keep your invoices, packing lists, and customs documents in one secure, compliant place.',
+    how: 'Attach documents directly to your declaration records. We use secure cloud storage to ensure you can find what you need quickly during an HMRC audit.'
   },
 ];
 
@@ -52,10 +52,10 @@ export default function SolutionsPage() {
       <main className="pt-[140px] pb-24 flex-grow w-full bg-white">
         <article className="max-w-3xl mx-auto px-6">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 mb-6 leading-snug">
-            Automated Customs Solutions
+            Our Services
           </h1>
           <p className="text-[16px] text-slate-600 leading-relaxed mb-12">
-            Comprehensive enterprise customs intelligence engineered to automate compliance frameworks, uncover exact financial reclamation opportunities, and eliminate manual data reconciliation.
+            Our tools automate your customs compliance, identify duty refund opportunities, and remove the need for manual paperwork.
           </p>
 
           <div className="space-y-12 mt-12">

@@ -8,14 +8,14 @@ export function SiteFooter({ isSignedIn }: { isSignedIn?: boolean }) {
   return (
     <footer className="py-12 px-6 bg-white border-t border-gray-200 mt-24">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-7 gap-6 mb-10">
+        <div className="grid grid-cols-2 lg:grid-cols-7 gap-12 mb-10">
           {/* Logo / About */}
           <div className="col-span-2 md:col-span-1 -mt-1">
             <div className="mb-4">
               <div className="flex items-baseline whitespace-nowrap text-[#020817] leading-none">
                 <span className="font-bold tracking-tight text-[22px]">freight</span>
-                <span className="font-bold tracking-tight text-[22px] text-slate-400">code</span>
-                <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px] text-slate-400">®</span>
+                <span className="font-bold tracking-tight text-[22px] text-slate-600">code</span>
+                <span className="font-normal text-[13px] -translate-y-[5px] ml-[-1px] text-slate-600">®</span>
               </div>
             </div>
             <p className="text-gray-500 text-xs leading-relaxed">
@@ -24,16 +24,17 @@ export function SiteFooter({ isSignedIn }: { isSignedIn?: boolean }) {
             <p className="text-gray-400 text-xs mt-3">
               London, UK
               <br />
-              info@freightcode.co.uk
+              <a href="mailto:info@freightcode.co.uk" className="hover:text-gray-600 transition-colors">info@freightcode.co.uk</a>
             </p>
           </div>
 
-          {/* Product */}
+          {/* Socials */}
           <div>
-            <h4 className="text-[#020817] font-medium text-xs mb-4">Product</h4>
+            <h4 className="text-[#020817] font-medium text-xs mb-4">Socials</h4>
             <ul className="text-gray-500 text-xs space-y-2">
-              <li><Link href="/solutions" className="hover:text-[#020817]">Solutions</Link></li>
-              <li><Link href="/resources" className="hover:text-[#020817]">Resources</Link></li>
+              <li><a href="https://x.com/freightcode" className="hover:text-[#020817]">X</a></li>
+              <li><a href="https://linkedin.com/company/freightcode" className="hover:text-[#020817]">LinkedIn</a></li>
+              <li><a href="https://youtube.com/@freightcode" className="hover:text-[#020817]">YouTube</a></li>
             </ul>
           </div>
 
@@ -55,13 +56,17 @@ export function SiteFooter({ isSignedIn }: { isSignedIn?: boolean }) {
             </ul>
           </div>
 
-          {/* Socials */}
+          {/* Product */}
           <div>
-            <h4 className="text-[#020817] font-medium text-xs mb-4">Socials</h4>
+            <h4 className="text-[#020817] font-medium text-xs mb-4">Product</h4>
             <ul className="text-gray-500 text-xs space-y-2">
-              <li><a href="https://x.com/freightcode" className="hover:text-[#020817]">X</a></li>
-              <li><a href="https://linkedin.com/company/freightcode" className="hover:text-[#020817]">LinkedIn</a></li>
-              <li><a href="https://youtube.com/@freightcode" className="hover:text-[#020817]">YouTube</a></li>
+              <li><Link href="/solutions" className="hover:text-[#020817]">Solutions</Link></li>
+              <li><Link href="/resources" className="hover:text-[#020817]">Resources</Link></li>
+              <li><Link href="/guides/hmrc-cds-complete-guide-uk-importers-2026" className="hover:text-[#020817]">CDS Importers</Link></li>
+              <li><Link href="/guides/what-is-tre-hmrc-trade-data" className="hover:text-[#020817]">What is TRE?</Link></li>
+              <li><Link href="/guides/dmsacc-dmsrog-dmscle-hmrc-cds-notifications" className="hover:text-[#020817]">CDS Status</Link></li>
+              <li><Link href="/guides/how-to-read-cds-csv-export-tre" className="hover:text-[#020817]">TRE Exports</Link></li>
+              <li><Link href="/guides/cds-commodity-codes-how-to-find" className="hover:text-[#020817]">HS Codes</Link></li>
             </ul>
           </div>
 
@@ -102,13 +107,13 @@ export function SiteFooter({ isSignedIn }: { isSignedIn?: boolean }) {
 
         {/* Bottom bar */}
         <div className="pt-6 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-400 text-xs">
+          <p className="text-gray-600 text-xs">
             © {new Date().getFullYear()} Freightcode. All rights reserved.
           </p>
-          <div className="opacity-0 hover:opacity-100 transition-opacity flex items-center">
+          <div className="opacity-100 transition-opacity flex items-center">
             {!isSignedIn && (
               <SignInButton mode="modal">
-                <button className="text-[10px] text-gray-400 hover:text-gray-600 uppercase tracking-widest cursor-pointer">
+                <button className="text-[10px] text-gray-600 hover:text-gray-700 uppercase tracking-widest cursor-pointer">
                   Admin Login
                 </button>
               </SignInButton>

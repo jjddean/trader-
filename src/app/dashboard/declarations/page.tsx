@@ -93,11 +93,13 @@ export default function DeclarationsPage() {
 
   const filteredDeclarations = declarations?.filter((dec: any) => {
     const term = searchQuery.toLowerCase();
-    return (
-      dec.mrn?.toLowerCase().includes(term) ||
-      dec.eori?.toLowerCase().includes(term) ||
-      dec.status?.toLowerCase().includes(term)
-    );
+    if (!term) return true;
+
+    const mrnMatch = (dec.mrn || dec.mrn || "Pending CDS").toLowerCase().includes(term);
+    const eoriMatch = (dec.eori || "Not set").toLowerCase().includes(term);
+    const statusMatch = (dec.status || "").toLowerCase().includes(term);
+
+    return mrnMatch || eoriMatch || statusMatch;
   });
 
   return (

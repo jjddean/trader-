@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { WaitlistForm } from "@/components/waitlist-form";
 
 export const metadata: Metadata = {
   title: "CDS Commodity Codes: How to Find the Right One for Your Goods | FreightCode",
@@ -103,6 +104,9 @@ export default function Guide5Page() {
         <p className="text-[14px] leading-relaxed text-slate-300">
           FreightCode tracks the commodity codes used across all your declarations and flags cases where the same goods appear under different codes, or where a code has changed in the annual tariff update. It won't classify your goods for you — that requires professional judgement — but it will make sure inconsistencies don't go unnoticed.
         </p>
+        <div className="mt-8 max-w-sm">
+          <WaitlistForm variant="light" />
+        </div>
         <p className="text-sm text-slate-400 mt-6 pt-6 border-t border-slate-700/50">
           These guides are produced by FreightCode. FreightCode is a platform for UK importers and customs agents that connects directly to HMRC's Customs Declaration Service, providing real-time declaration tracking, notification monitoring, and data analytics.
         </p>

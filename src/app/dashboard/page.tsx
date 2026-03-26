@@ -23,16 +23,7 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
-  let bannerState: "none" | "danger-not-connected" | "danger-expired" | "warning-expiring" = "none";
-  if (hmrcToken === null) {
-    bannerState = "danger-not-connected";
-  } else if (hmrcToken) {
-    if (hmrcToken.expiresAt < now) {
-      bannerState = "danger-expired";
-    } else if (hmrcToken.expiresAt - now < 30 * 60 * 1000) {
-      bannerState = "warning-expiring";
-    }
-  }
+
 
   const hmrcEnvironment = (process.env.NEXT_PUBLIC_HMRC_ENV || "sandbox").toLowerCase() === "live" ? "Live" : "Sandbox";
   const tokenRemainingMs = hmrcToken?.expiresAt ? hmrcToken.expiresAt - now : null;
@@ -45,68 +36,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 p-8 max-w-7xl mx-auto">
-      {bannerState === "danger-not-connected" && (
-        <div className="rounded-md bg-red-50 p-4 border border-red-200">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <ShieldAlert className="h-5 w-5 text-red-400" aria-hidden="true" />
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Not connected to HMRC</h3>
-              <div className="mt-2 text-sm text-red-700">
-                <p>You must connect your Government Gateway account to submit declarations.</p>
-              </div>
-              <div className="mt-4">
-                <Link href="/dashboard/settings" className="text-sm font-medium text-red-800 hover:text-red-700">
-                  Connect Account <span aria-hidden="true">&rarr;</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {bannerState === "danger-expired" && (
-        <div className="rounded-md bg-red-50 p-4 border border-red-200">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">HMRC connection expired</h3>
-              <div className="mt-2 text-sm text-red-700">
-                <p>Your OAuth token has expired. You must re-authenticate to continue submissions.</p>
-              </div>
-              <div className="mt-4">
-                <Link href="/dashboard/settings" className="text-sm font-medium text-red-800 hover:text-red-700">
-                  Reconnect now <span aria-hidden="true">&rarr;</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {bannerState === "warning-expiring" && (
-        <div className="rounded-md bg-amber-50 p-4 border border-amber-200">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <AlertTriangle className="h-5 w-5 text-amber-500" aria-hidden="true" />
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-amber-800">HMRC connection expiring soon</h3>
-              <div className="mt-2 text-sm text-amber-700">
-                <p>Your token will expire in less than 30 minutes. Please re-authenticate to prevent disruption.</p>
-              </div>
-              <div className="mt-4">
-                <Link href="/dashboard/settings" className="text-sm font-medium text-amber-800 hover:text-amber-700">
-                  Refresh connection <span aria-hidden="true">&rarr;</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>

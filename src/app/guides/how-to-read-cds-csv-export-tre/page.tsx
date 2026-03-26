@@ -1,11 +1,12 @@
 import { Metadata } from "next";
+import { WaitlistForm } from "@/components/waitlist-form";
 
 export const metadata: Metadata = {
   title: "How to Read Your CDS CSV Export from TRE | FreightCode",
-  description: "A practical column-by-column guide to reading your CDS CSV export from HMRC's Trade Reference Extract — what each field means and how to use the data.",
+  description: "A practical column-by-column guide to reading your CDS CSV export from HMRC's Trade Reporting and Extracting (TRE) service — what each field means and how to use the data.",
   openGraph: {
     title: "How to Read Your CDS CSV Export from TRE",
-    description: "A practical column-by-column guide to reading your CDS CSV export from HMRC's Trade Reference Extract — what each field means and how to use the data.",
+    description: "A practical column-by-column guide to reading your CDS CSV export from HMRC's Trade Reporting and Extracting (TRE) service — what each field means and how to use the data.",
     type: "article",
   }
 };
@@ -18,7 +19,7 @@ export default function Guide4Page() {
       </h1>
       
       <p className="text-[16px] text-slate-600 leading-relaxed mb-8">
-        A practical column-by-column guide to reading your CDS CSV export from HMRC's Trade Reference Extract — what each field means and how to use the data.
+        A practical column-by-column guide to reading your CDS CSV export from HMRC's <strong>Trade Reporting and Extracting (TRE)</strong> service — what each field means and how to use the data.
       </p>
 
       <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">Why the CSV is hard to read</h2>
@@ -139,10 +140,13 @@ export default function Guide4Page() {
       </ol>
 
       <div className="mt-12 p-8 bg-[#0f172a] rounded-2xl text-white">
-        <h2 className="text-[18px] font-semibold mb-3">FreightCode makes this automatic</h2>
-        <p className="text-[14px] leading-relaxed text-slate-300">
-          FreightCode reads your CDS data and surfaces these audit flags automatically. You don't need to work through raw CSV columns — the platform identifies potential misclassifications, missed preference claims, and value anomalies across all your declarations, and presents them in a clear dashboard.
+        <h2 className="text-[18px] font-semibold mb-3">Automate this with FreightCode</h2>
+        <p className="text-[14px] leading-relaxed text-slate-300 mb-6">
+          FreightCode reads your TRE data and surfaces these audit flags automatically. Instead of manually filtering thousands of rows in Excel, the platform identifies potential misclassifications, missed preference claims, and value anomalies instantly, presenting them in a professional dashboard.
         </p>
+        <div className="max-w-sm">
+          <WaitlistForm variant="light" />
+        </div>
       </div>
     </article>
   );

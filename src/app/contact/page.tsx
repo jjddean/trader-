@@ -15,22 +15,22 @@ export default function ContactPage() {
       <main className="pt-[140px] pb-24 flex-grow w-full bg-white">
         <article className="max-w-3xl mx-auto px-6">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 mb-6 leading-snug">
-            Corporate Inquiries
+            Contact Us
           </h1>
           <p className="text-[16px] text-slate-600 leading-relaxed mb-12">
-            Inquire about enterprise deployments, infrastructural capabilities, or strategic partnerships. Our specialized team is available to assist your organization.
+            Get in touch for custom solutions, partnership opportunities, or support. We're here to help your business succeed.
           </p>
 
           <div className="grid md:grid-cols-2 gap-12 mt-12 bg-white">
             <div className="space-y-10">
-              <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mb-6 border-b border-slate-100 pb-4">Contact Directories</h2>
+              <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mb-6 border-b border-slate-100 pb-4">Contact Information</h2>
               
               <div className="flex items-start gap-4">
                 <div className="mt-1 h-10 w-10 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 shrink-0 border border-slate-200">
                   <Mail className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-[16px] font-semibold text-slate-900 mb-1">Direct Support & Partnerships</h3>
+                  <h3 className="text-[16px] font-semibold text-slate-900 mb-1">Support & Partnerships</h3>
                   <a href="mailto:info@freightcode.co.uk" className="text-[15px] text-blue-600 font-medium hover:underline">
                     info@freightcode.co.uk
                   </a>
@@ -49,22 +49,22 @@ export default function ContactPage() {
             </div>
 
             <div className="bg-slate-50 p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
-              <h2 className="text-[18px] font-bold text-slate-900 mb-6">Submit an Inquiry</h2>
+              <h2 className="text-[18px] font-bold text-slate-900 mb-6">Send an Enquiry</h2>
               <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); alert('Inquiry successfully recorded. A representative will be in touch shortly.'); }}>
                 <div>
-                  <label htmlFor="name" className="block text-[14px] font-semibold text-slate-800 mb-2">Representative Name</label>
+                  <label htmlFor="name" className="block text-[14px] font-semibold text-slate-800 mb-2">Full Name</label>
                   <input type="text" id="name" className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. Jane Doe" required />
                 </div>
                 <div>
-                  <label htmlFor="email" className="block text-[14px] font-semibold text-slate-800 mb-2">Corporate Email</label>
-                  <input type="email" id="email" className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="jane@enterprise.com" required />
+                  <label htmlFor="email" className="block text-[14px] font-semibold text-slate-800 mb-2">Work Email</label>
+                  <input type="email" id="email" className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="jane@company.com" required />
                 </div>
                 <div>
-                  <label htmlFor="message" className="block text-[14px] font-semibold text-slate-800 mb-2">Inquiry Details</label>
-                  <textarea id="message" rows={4} className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Please articulate your requirements..." required></textarea>
+                  <label htmlFor="message" className="block text-[14px] font-semibold text-slate-800 mb-2">Enquiry Details</label>
+                  <textarea id="message" rows={4} className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-[15px] focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="How can we help?" required></textarea>
                 </div>
                 <button type="submit" className="w-full bg-[#0f172a] text-white text-[15px] font-semibold py-3 rounded-lg hover:bg-slate-800 transition-colors shadow-sm">
-                  Transmit Request
+                  Send Message
                 </button>
               </form>
             </div>

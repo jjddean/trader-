@@ -13,8 +13,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { useAction } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import {
-  fetchHSCode,
   fetchTradeData,
   calculateUKImportCosts,
 } from "@/lib/trade-data";
@@ -35,11 +36,18 @@ export const FullModeSimulator = () => {
   const [results, setResults] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const searchHMRC = useAction(api.hmrc_actions.searchHSCode);
+
   const handleHsSearch = async (val: string) => {
     setData({ ...data, hs: val });
     if (val.length >= 4) {
-      const info = await fetchHSCode(val);
-      setHsInfo(info);
+      const results = await searchHMRC({ query: val });
+      if (results && results.length > 0) {
+        setHsInfo({ 
+          code: results[0].code, 
+          desc: results[0].description 
+        });
+      }
     } else {
       setHsInfo(null);
     }
@@ -71,10 +79,10 @@ export const FullModeSimulator = () => {
   };
 
   return (
-    <Card className="max-w-2xl mx-auto bg-white border-slate-200 shadow-xl shadow-slate-200/50 rounded-2xl overflow-hidden">
+    <Card className="max-w-2xl mx-auto bg-white border-slate-200 shadow-xl shadow-slate-200/50 rounded-md overflow-hidden">
       <CardHeader className="bg-slate-50/50 text-slate-900 py-8 px-10 relative border-b border-slate-100">
         <div className="flex items-center gap-5">
-          <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center border border-blue-100 relative">
+          <div className="w-12 h-12 bg-blue-50 rounded-md flex items-center justify-center border border-blue-100 relative">
             <Shield className="h-6 w-6 text-blue-600" />
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-600 rounded-full animate-pulse" />
           </div>
@@ -102,7 +110,7 @@ export const FullModeSimulator = () => {
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                     <Input
                       placeholder="e.g. 6403 91"
-                      className="bg-white border-slate-200 text-slate-900 h-14 pl-12 rounded-xl focus:ring-blue-500 font-mono tracking-wider"
+                      className="bg-white border-slate-200 text-slate-900 h-14 pl-12 rounded-md focus:ring-blue-500 font-mono tracking-wider"
                       value={data.hs}
                       onChange={(e) => handleHsSearch(e.target.value)}
                     />
@@ -120,7 +128,7 @@ export const FullModeSimulator = () => {
                   </Label>
                   <Input
                     placeholder="CHINA (CN)"
-                    className="bg-white border-slate-200 text-slate-900 h-14 rounded-xl focus:ring-blue-500"
+                    className="bg-white border-slate-200 text-slate-900 h-14 rounded-md focus:ring-blue-500"
                     value={data.origin}
                     onChange={(e) =>
                       setData({ ...data, origin: e.target.value })
@@ -141,7 +149,7 @@ export const FullModeSimulator = () => {
                     <Input
                       type="number"
                       placeholder="0.00"
-                      className="bg-white border-slate-200 text-slate-900 h-14 pl-10 rounded-xl font-bold text-lg focus:ring-blue-500"
+                      className="bg-white border-slate-200 text-slate-900 h-14 pl-10 rounded-md font-bold text-lg focus:ring-blue-500"
                       value={data.value}
                       onChange={(e) =>
                         setData({ ...data, value: e.target.value })
@@ -183,7 +191,7 @@ export const FullModeSimulator = () => {
               </div>
             </div>
 
-            <div className="p-6 bg-blue-50/50 border border-blue-100 shadow-inner rounded-2xl flex gap-4 items-center">
+            <div className="p-6 bg-blue-50/50 border border-blue-100 shadow-inner rounded-md flex gap-4 items-center">
               <Info className="h-5 w-5 text-blue-600 flex-shrink-0" />
               <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
                 The Simulator verifies customs valuation methods according to UK
@@ -195,7 +203,7 @@ export const FullModeSimulator = () => {
             <Button
               onClick={handleAudit}
               disabled={!data.hs || !data.value || isLoading}
-              className="w-full h-16 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-2xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
+              className="w-full h-16 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-md shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
             >
               {isLoading ? (
                 <span className="flex items-center gap-3">
@@ -216,7 +224,7 @@ export const FullModeSimulator = () => {
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
             <div className="flex flex-col md:flex-row gap-6">
               <div className="flex-1 space-y-4">
-                <div className="p-6 bg-slate-50 border border-slate-100 rounded-2xl space-y-4">
+                <div className="p-6 bg-slate-50 border border-slate-100 rounded-md space-y-4">
                   <h4 className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">
                     Audit Summary
                   </h4>
@@ -241,7 +249,7 @@ export const FullModeSimulator = () => {
                 </div>
               </div>
 
-              <div className="flex-1 p-6 bg-emerald-50 border border-emerald-100 rounded-2xl text-center flex flex-col justify-center">
+              <div className="flex-1 p-6 bg-emerald-50 border border-emerald-100 rounded-md text-center flex flex-col justify-center">
                 <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-2">
                   Total Estimated Tax Liability
                 </p>

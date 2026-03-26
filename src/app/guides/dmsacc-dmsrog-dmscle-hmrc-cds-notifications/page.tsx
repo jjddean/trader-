@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { WaitlistForm } from "@/components/waitlist-form";
 
 export const metadata: Metadata = {
   title: "DMSACC, DMSROG, DMSCLE — What Do HMRC CDS Notifications Mean? | FreightCode",
@@ -82,6 +83,9 @@ export default function Guide3Page() {
         <p className="text-[14px] leading-relaxed text-slate-300">
           FreightCode monitors your CDS notifications and surfaces them in a single dashboard, with plain-English explanations of each status. Instead of waiting for your agent to forward notifications, you see every DMSACC, DMSROG, DMSCLE and DMSREJ the moment it arrives — so you can act immediately when something needs attention.
         </p>
+        <div className="mt-8 max-w-sm">
+          <WaitlistForm variant="light" />
+        </div>
       </div>
     </article>
   );

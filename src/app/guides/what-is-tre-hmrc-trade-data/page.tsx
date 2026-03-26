@@ -1,11 +1,12 @@
 import { Metadata } from "next";
+import { WaitlistForm } from "@/components/waitlist-form";
 
 export const metadata: Metadata = {
   title: "What is TRE and How to Use Your HMRC Trade Data | FreightCode",
-  description: "A plain-English guide to HMRC's Tariff Rate Extracts (TRE) — what the data contains, how to access it, and how to use it to understand your import costs and patterns.",
+  description: "A plain-English guide to HMRC's Trade Reporting and Extracting (TRE) — what the data contains, how to access it for free, and how to use it to understand your import costs and patterns.",
   openGraph: {
     title: "What is TRE and How to Use Your HMRC Trade Data",
-    description: "A plain-English guide to HMRC's Tariff Rate Extracts (TRE) — what the data contains, how to access it, and how to use it to understand your import costs and patterns.",
+    description: "A plain-English guide to HMRC's Trade Reporting and Extracting (TRE) — what the data contains, how to access it for free, and how to use it to understand your import costs and patterns.",
     type: "article",
   }
 };
@@ -18,12 +19,12 @@ export default function Guide2Page() {
       </h1>
       
       <p className="text-[16px] text-slate-600 leading-relaxed mb-8">
-        A plain-English guide to HMRC's Tariff Rate Extracts (TRE) — what the data contains, how to access it, and how to use it to understand your import costs and patterns.
+        A plain-English guide to HMRC's Trade Reporting and Extracting (TRE) service — what the data contains, how to access it for free, and how to use it to understand your import costs and patterns.
       </p>
 
       <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">What is TRE?</h2>
       <p className="text-[15px] text-slate-700 leading-relaxed mb-4">
-        TRE stands for Tariff Rate Extract. It is a data export that HMRC makes available to traders and their agents, containing a record of the customs declarations submitted against a specific EORI number.
+        TRE stands for <strong>Trade Reporting and Extracting</strong>. It is a new, free data service from HMRC that replaces the old paid MSS (Management Support System) and CDS report subscription models.
       </p>
       <p className="text-[15px] text-slate-700 leading-relaxed mb-4">
         In plain terms: it is your customs data. Every time a declaration is submitted through CDS (or previously CHIEF) against your EORI number, a record is created. TRE is how you get that data out in bulk.
@@ -53,14 +54,14 @@ export default function Guide2Page() {
       </p>
 
       <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">How to access your TRE data</h2>
-      <p className="text-[15px] text-slate-700 leading-relaxed mb-4">TRE data is accessible through HMRC's systems. Access routes include:</p>
+      <p className="text-[15px] text-slate-700 leading-relaxed mb-4">TRE data is free and accessible through HMRC's systems. Key features include:</p>
       <ul className="space-y-4 mb-6 text-[15px] text-slate-700">
-        <li><strong>Via your customs agent.</strong> Your agent can pull TRE data on your behalf and provide it to you as a CSV or spreadsheet export. This is the most common route for most importers.</li>
-        <li><strong>Direct access via the CDS dashboard.</strong> If you are subscribed to CDS, you can access certain declaration data directly through your HMRC online account, including your import duty certificates and monthly statements.</li>
-        <li><strong>Via HMRC's data services.</strong> Larger traders with direct system integration can access declaration data via API.</li>
+        <li><strong>Government Gateway Access.</strong> Businesses can now access their data directly through their existing Government Gateway account, eliminating the need for paid applications or long waiting periods.</li>
+        <li><strong>On-Demand Reports.</strong> Unlike the old fixed-schedule reports, TRE allows you to request and download data in CSV or Excel format whenever you need it (typically available within 48 hours).</li>
+        <li><strong>Consolidated Data.</strong> TRE provides a comprehensive view by consolidating data from both the modern CDS and the legacy CHIEF systems.</li>
       </ul>
       <p className="text-[15px] text-slate-700 leading-relaxed mb-6">
-        For most businesses, the practical starting point is asking your customs agent for a TRE extract covering a defined period — for example, the last 12 months — in CSV format.
+        HMRC has confirmed that old CDS reports will be fully phased out by <strong>31 March 2026</strong>, making TRE the essential method for accessing official customs data.
       </p>
 
       <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">How to use your TRE data</h2>
@@ -90,10 +91,42 @@ export default function Guide2Page() {
       </div>
 
       <div className="mt-12 p-8 bg-[#0f172a] rounded-2xl text-white">
-        <h2 className="text-[18px] font-semibold mb-3">How FreightCode uses your TRE data</h2>
-        <p className="text-[14px] leading-relaxed text-slate-300">
-          FreightCode ingests your TRE data and organises it into an analytics dashboard. Instead of working through raw CSV exports, you see your duty spend by commodity, your declaration history by supplier, and flags for potential anomalies — all in one place.
-        </p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+          <div>
+            <h2 className="text-[18px] font-semibold mb-2 text-white">Enhance TRE with FreightCode</h2>
+            <p className="text-[14px] leading-relaxed text-slate-300">
+              While TRE provides access to raw customs data, it does not offer tools for interrogation or analysis. <strong>FreightCode</strong> fills this gap by transforming raw CSVs into actionable intelligence.
+            </p>
+          </div>
+          <div className="flex-shrink-0">
+            <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-500/20">
+              Professional Analytics
+            </span>
+          </div>
+        </div>
+        
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 text-[13.5px] text-slate-300">
+          <li className="flex items-start gap-2">
+            <span className="text-blue-400 mt-1">✓</span>
+            <span>Intelligent dashboards for duty exposure and commodity trends</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-blue-400 mt-1">✓</span>
+            <span>Anomaly detection for freight misallocation and currency errors</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-blue-400 mt-1">✓</span>
+            <span>Automated duty and VAT tracking with reclaim identification</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-blue-400 mt-1">✓</span>
+            <span>Audit-ready reports with built-in trails for declaration reviews</span>
+          </li>
+        </ul>
+
+        <div className="max-w-sm">
+          <WaitlistForm variant="light" />
+        </div>
       </div>
     </article>
   );

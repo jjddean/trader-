@@ -13,6 +13,13 @@ Ref: [HMRC Path to Production](https://developer.service.hmrc.gov.uk/guides/cust
 
 ## Stage 2: Trader Dress Rehearsal (TDR) — NEXT
 - [x] Refactored 5 HMRC API routes to use `fetchHmrc` wrapper (Fraud Prevention Headers)
+- [x] Refactor remaining HMRC routes to use `fetchHmrc` (Compliance)
+    - [x] `src/app/api/hmrc/status-query/route.ts`
+    - [x] `src/app/api/hmrc/notifications/pull/route.ts`
+- [x] Implement missing Customs Declarations Information (CDI) endpoints
+    - [x] `GET /api/hmrc/information/version` (Retrieve versions)
+    - [x] `GET /api/hmrc/information/full` (Retrieve full declaration)
+    - [x] `GET /api/hmrc/information/search` (Search declarations)
 - [ ] Request TDR access from HMRC Software Developer Support (SDH)
 - [ ] Get application added to TDR allow list
 - [ ] Subscribe to Customs Declarations API **v1.0** (TDR version)
@@ -37,4 +44,16 @@ Ref: [HMRC Path to Production](https://developer.service.hmrc.gov.uk/guides/cust
 - [ ] Submit first real declaration via production API
 - [ ] Confirm DMSACC notification received
 - [ ] Monitor for 24 hours — check error rates, latency
-- [ ] Confirm clearance flow end-to-end (DMSACC → DMSROG → DMSCLE)
+## Search & UI Enhancements
+- [x] Redesign HS Code Lookup page title and description (simplified & left-aligned)
+- [x] Redesign `HSCodeLookup` component search bar (make it **smaller** & compact)
+- [x] Remove redundant header from `HSCodeLookup` component
+## Public Page Copy Refinement
+- [x] Tone down jargon on `src/app/contact/page.tsx`
+- [x] Tone down jargon on `src/app/about/page.tsx`
+- [x] Tone down jargon on `src/app/solutions/page.tsx`
+- [x] Tone down jargon on `src/app/resources/page.tsx`
+## TRE Analysis Feature
+- [ ] Implement comprehensive `/tre` landing page with provided copy
+- [ ] Add lead-capture form ("Get Access") to TRE page
+- [ ] Add TRE link to site-header navigation

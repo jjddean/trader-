@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../../convex/_generated/api";
+import { fetchHmrc } from "../../../../../lib/hmrc-fetch";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -37,12 +38,16 @@ export async function GET(request: Request) {
 
     // Step 1: Get list of unpulled notification IDs for this conversation
     const listUrl = `${hmrcBase}/notifications/conversationId/${encodeURIComponent(conversationId)}/unpulled`;
-    const listResponse = await fetch(listUrl, {
-      headers: {
-        Accept: "application/vnd.hmrc.1.0+xml",
-        Authorization: `Bearer ${tokenRecord.accessToken}`,
+    const listResponse = await fetchHmrc(
+      listUrl,
+      {
+        headers: {
+          Accept: "application/vnd.hmrc.1.0+xml",
+        },
       },
-    });
+      request,
+      tokenRecord.accessToken
+    );
 
     if (!listResponse.ok) {
       const errorText = await listResponse.text();
@@ -75,12 +80,16 @@ export async function GET(request: Request) {
     const notifications: Array<{ id: string; body: string; status: number }> = [];
     for (const notifId of notificationIds) {
       const notifUrl = `${hmrcBase}/notifications/unpulled/${notifId}`;
-      const notifResponse = await fetch(notifUrl, {
-        headers: {
-          Accept: "application/vnd.hmrc.1.0+xml",
-          Authorization: `Bearer ${tokenRecord.accessToken}`,
+      const notifResponse = await fetchHmrc(
+        notifUrl,
+        {
+          headers: {
+            Accept: "application/vnd.hmrc.1.0+xml",
+          },
         },
-      });
+        request,
+        tokenRecord.accessToken
+      );
 
       const notifBody = await notifResponse.text();
       notifications.push({

@@ -53,10 +53,10 @@ export const TariffCalculator = () => {
     };
 
     return (
-        <Card className="max-w-md mx-auto bg-white border-slate-200 shadow-xl shadow-slate-200/50 rounded-2xl overflow-hidden">
+        <Card className="max-w-md mx-auto bg-white border-slate-200 shadow-xl shadow-slate-200/50 rounded-md overflow-hidden">
             <CardHeader className="bg-slate-50/50 text-slate-900 py-6 px-8 relative border-b border-slate-100">
                 <div className="flex items-center gap-4 mb-2">
-                    <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center border border-blue-100 flex-shrink-0">
+                    <div className="w-10 h-10 bg-blue-50 rounded-md flex items-center justify-center border border-blue-100 flex-shrink-0">
                         <Calculator className="h-5 w-5 text-blue-600" />
                     </div>
                     <CardTitle className="text-xl font-bold tracking-tight text-slate-900 m-0">
@@ -74,7 +74,7 @@ export const TariffCalculator = () => {
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Product Category</label>
                             <Select value={inputs.categoryId} onValueChange={(v: string) => setInputs({ ...inputs, categoryId: v })}>
-                                <SelectTrigger className="bg-white border-slate-200 text-slate-900 h-12 rounded-xl focus:ring-blue-500">
+                                <SelectTrigger className="bg-white border-slate-200 text-slate-900 h-12 rounded-md focus:ring-blue-500">
                                     <SelectValue placeholder="Select Category" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-white border-slate-200 text-slate-900 shadow-lg">
@@ -90,7 +90,7 @@ export const TariffCalculator = () => {
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Origin Country</label>
                                 <Input
                                     placeholder="e.g. China"
-                                    className="bg-white border-slate-200 text-slate-900 h-12 rounded-xl focus:ring-blue-500"
+                                    className="bg-white border-slate-200 text-slate-900 h-12 rounded-md focus:ring-blue-500"
                                     value={inputs.origin}
                                     onChange={(e) => setInputs({ ...inputs, origin: e.target.value })}
                                 />
@@ -98,7 +98,7 @@ export const TariffCalculator = () => {
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Incoterm</label>
                                 <Select value={inputs.incoterm} onValueChange={(v: string) => setInputs({ ...inputs, incoterm: v })}>
-                                    <SelectTrigger className="bg-white border-slate-200 text-slate-900 h-12 rounded-xl focus:ring-blue-500">
+                                    <SelectTrigger className="bg-white border-slate-200 text-slate-900 h-12 rounded-md focus:ring-blue-500">
                                         <SelectValue placeholder="Select Incoterm" />
                                     </SelectTrigger>
                                     <SelectContent className="bg-white border-slate-200 text-slate-900 shadow-lg">
@@ -118,7 +118,7 @@ export const TariffCalculator = () => {
                                 <Input
                                     type="number"
                                     placeholder="0.00"
-                                    className="bg-white border-slate-200 text-slate-900 h-12 pl-10 rounded-xl font-bold focus:ring-blue-500"
+                                    className="bg-white border-slate-200 text-slate-900 h-12 pl-10 rounded-md font-bold focus:ring-blue-500"
                                     value={inputs.goodsValue}
                                     onChange={(e) => setInputs({ ...inputs, goodsValue: e.target.value })}
                                 />
@@ -132,7 +132,7 @@ export const TariffCalculator = () => {
                                     <Input
                                         type="number"
                                         placeholder="£"
-                                        className="bg-white border-slate-200 text-slate-900 h-12 rounded-xl focus:ring-blue-500"
+                                        className="bg-white border-slate-200 text-slate-900 h-12 rounded-md focus:ring-blue-500"
                                         value={inputs.freight}
                                         onChange={(e) => setInputs({ ...inputs, freight: e.target.value })}
                                     />
@@ -142,7 +142,7 @@ export const TariffCalculator = () => {
                                     <Input
                                         type="number"
                                         placeholder="£"
-                                        className="bg-white border-slate-200 text-slate-900 h-12 rounded-xl focus:ring-blue-500"
+                                        className="bg-white border-slate-200 text-slate-900 h-12 rounded-md focus:ring-blue-500"
                                         value={inputs.insurance}
                                         onChange={(e) => setInputs({ ...inputs, insurance: e.target.value })}
                                     />
@@ -175,7 +175,7 @@ export const TariffCalculator = () => {
 
                         <Button
                             onClick={handleCalculate}
-                            className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl mt-4 shadow-md shadow-blue-500/20"
+                            className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md mt-4 shadow-md shadow-blue-500/20"
                             disabled={!inputs.goodsValue}
                         >
                             Calculate UK Costs
@@ -228,7 +228,7 @@ export const TariffCalculator = () => {
                         <div className="flex flex-col gap-3">
                             <Button
                                 onClick={() => setStep('success')}
-                                className="w-full h-14 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 font-bold rounded-xl shadow-sm"
+                                className="w-full h-14 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 font-bold rounded-md shadow-sm"
                             >
                                 Start Import Profile Setup
                                 <ArrowRight className="ml-2 h-4 w-4 text-slate-400" />

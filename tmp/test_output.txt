@@ -1,0 +1,7 @@
+Starting Preference Logic Test...
+Test 1 (BD): Rate=0, Overpayment=120
+Ô£à Test 1 Passed: Correctly identified preference relief for BD.
+Test 2 (CN): Rate=0.12, Overpayment=0
+Ô£à Test 2 Passed: Correctly applied standard duty for CN.
+Test 3 (PK): Rate=0, Overpayment=175.00000000000003
+Ô£à Test 3 Passed: Correctly identified preference relief for PK.

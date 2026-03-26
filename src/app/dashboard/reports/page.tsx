@@ -234,62 +234,62 @@ export default function ReportsPage() {
               {/* Populated Body Rendering Header Info and Line Items */}
               <div className="pt-6 px-6 sm:px-8 pb-12 space-y-8">
                 {/* Header Summary Section */}
-                <section>
-                  <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-gray-500 border-b border-gray-100 pb-2">Header Info (Import Header)</h3>
+                <section className="bg-gray-50/80 rounded-xl p-6 border border-gray-100/80 shadow-sm">
+                  <h3 className="mb-6 text-sm font-semibold text-gray-900 border-b border-gray-200 pb-3">Declaration Summary</h3>
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4">
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">DUCR</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedReport.ducr || "N/A"}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">DUCR</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedReport.ducr || "N/A"}</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">LRN</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedReport.lrn || "N/A"}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">LRN</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedReport.lrn || "N/A"}</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Importer</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedReport.importer || "N/A"}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Importer</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedReport.importer || "N/A"}</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Declarant (Agent)</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedReport.declarant || "N/A"}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Declarant</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedReport.declarant || "N/A"}</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Acceptance Date</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedReport.acceptanceDate || "N/A"}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Acceptance Date</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedReport.acceptanceDate || "N/A"}</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Clearance Date</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedReport.clearanceDate || "N/A"}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Clearance Date</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedReport.clearanceDate || "N/A"}</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Routing</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Routing</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">
                         {selectedReport.originCountry} → {selectedReport.dispatchCountry} → {selectedReport.portCode}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Total Invoice Value</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedReport.totalInvoiceValue || "N/A"}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Total Invoice Value</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedReport.totalInvoiceValue || "N/A"}</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Total Duty & VAT</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedReport.totalDutyAndVat || "N/A"}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Total Duty & VAT</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedReport.totalDutyAndVat || "N/A"}</p>
                     </div>
                   </div>
                 </section>
 
                 {/* Line Items Section */}
                 <section>
-                  <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-gray-500 border-b border-gray-100 pb-2">Goods Items (Import Item)</h3>
+                  <h3 className="mb-4 text-sm font-semibold text-gray-900 border-b border-gray-100 pb-3">Line Items</h3>
                   {selectedReport.items && selectedReport.items.length > 0 ? (
                     <div className="overflow-hidden rounded-lg border border-gray-200 shadow-xs">
                       <table className="w-full text-left text-sm">
-                        <thead className="bg-gray-50/80 border-b border-gray-200">
+                        <thead className="bg-gray-100/50 border-b border-gray-200">
                           <tr>
-                            <th className="px-4 py-3 text-[0.625rem] font-semibold uppercase tracking-wider text-gray-500">Seq</th>
+                            <th className="px-4 py-3 text-[0.625rem] font-semibold uppercase tracking-wider text-gray-500">#</th>
                             <th className="px-4 py-3 text-[0.625rem] font-semibold uppercase tracking-wider text-gray-500">Classification</th>
-                            <th className="px-4 py-3 text-[0.625rem] font-semibold uppercase tracking-wider text-gray-500">Financials</th>
-                            <th className="px-4 py-3 text-[0.625rem] font-semibold uppercase tracking-wider text-gray-500 text-right">Tax Breakdown</th>
+                            <th className="px-4 py-3 text-[0.625rem] font-semibold uppercase tracking-wider text-gray-500">Values</th>
+                            <th className="px-4 py-3 text-[0.625rem] font-semibold uppercase tracking-wider text-gray-500 text-right">Taxes</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 bg-white">

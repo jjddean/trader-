@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
+import { fetchHmrc } from "../../../../lib/hmrc-fetch";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -47,14 +48,17 @@ export async function GET(request: Request) {
       queryPath = `/customs/declarations-information/ucr/${encodeURIComponent(ucr!)}/status`;
     }
 
-    const hmrcResponse = await fetch(`${hmrcBase}${queryPath}`, {
-      method: "GET",
-      headers: {
-        Accept: "application/vnd.hmrc.2.0+json",
-        Authorization: `Bearer ${tokenRecord.accessToken}`,
-        "X-Client-ID": process.env.HMRC_CLIENT_ID!,
+    const hmrcResponse = await fetchHmrc(
+      `${hmrcBase}${queryPath}`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/vnd.hmrc.2.0+json",
+        },
       },
-    });
+      request,
+      tokenRecord.accessToken
+    );
 
     if (!hmrcResponse.ok) {
       const errorText = await hmrcResponse.text();

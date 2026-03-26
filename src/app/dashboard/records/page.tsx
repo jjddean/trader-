@@ -230,40 +230,40 @@ export default function RecordsPage() {
               {/* Populated Body Rendering Financial Tax Ledgers */}
               <div className="pt-6 px-6 sm:px-8 pb-12 space-y-8">
                 {/* Transaction & Account Details Section */}
-                <section>
-                  <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-gray-500 border-b border-gray-100 pb-2">Transaction & Account Details</h3>
+                <section className="bg-gray-50/80 rounded-xl p-6 border border-gray-100/80 shadow-sm">
+                  <h3 className="mb-6 text-sm font-semibold text-gray-900 border-b border-gray-200 pb-3">Transaction & Account Details</h3>
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4">
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Account Used</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedRecord.method}</p>
-                      <p className="text-[0.6875rem] text-gray-500 mt-0.5">{selectedRecord.accountNumber}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Account Used</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedRecord.method}</p>
+                      <p className="text-[0.6875rem] text-gray-600 mt-1 font-mono">{selectedRecord.accountNumber}</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Statement Context</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedRecord.statementContext}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Statement Context</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedRecord.statementContext}</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Payment Limits / Balance</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedRecord.paymentLimit}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Payment Limits / Balance</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedRecord.paymentLimit}</p>
                     </div>
                   </div>
                 </section>
 
                 {/* Tax Line Breakdown Section */}
                 <section>
-                  <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-gray-500 border-b border-gray-100 pb-2">Tax Line Breakdown</h3>
+                  <h3 className="mb-4 text-sm font-semibold text-gray-900 border-b border-gray-100 pb-3">Tax Line Breakdown</h3>
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4">
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Specific Tax Type</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedRecord.type}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Specific Tax Type</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedRecord.type}</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Calculation Method</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedRecord.calculationMethod}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Calculation Method</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedRecord.calculationMethod}</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-400 uppercase tracking-widest">Nature of Transaction</p>
-                      <p className="mt-1 text-[0.8125rem] font-medium text-gray-900">{selectedRecord.natureOfTransaction}</p>
+                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Nature of Transaction</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedRecord.natureOfTransaction}</p>
                     </div>
                   </div>
                   

@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-03-26T07:30:53.464576Z",
+  "output_dir": "C:\\Users\\jason\\trader-app\\documentation\\hmrc_tdr_audit",
+  "files": [
+    "hmrc_tdr_master_requirements_document.pdf",
+    "hmrc_tdr_project_plan.xml",
+    "hmrc_tdr_rule_metadata.csv",
+    "hmrc_tdr_rules.json",
+    "hmrc_tdr_source_inventory.json",
+    "hmrc_tdr_traceable_test_checklist.xlsx"
+  ],
+  "rule_count": 3131,
+  "source_count": 25
+}
