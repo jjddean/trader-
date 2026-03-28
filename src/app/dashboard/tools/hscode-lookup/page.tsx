@@ -14,8 +14,12 @@ const HSCodePage = () => {
                 </div>
             </div>
 
-            <div className="max-w-4xl">
-                <HSCodeLookup />
+            {/* Control Bar Pattern matching Reports page */}
+            <div className="flex flex-col gap-4 md:flex-row md:items-center justify-between border-b border-[#e9e9e7] pb-4 mb-6">
+                <div className="max-w-md w-full">
+                    {/* The search input will be here (handled inside HSCodeLookup currently) */}
+                    <HSCodeLookup />
+                </div>
             </div>
         </div>
     );

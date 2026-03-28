@@ -196,8 +196,12 @@ function buildXml(payloadInfo) {
 }
 
 async function getToken(client, userId) {
+  if (process.env.HMRC_CDS_BEARER_TOKEN) {
+    return process.env.HMRC_CDS_BEARER_TOKEN;
+  }
   const token = await client.query(api.hmrc.getToken, { userId });
   if (!token || !token.accessToken) throw new Error(`No HMRC token found for user ${userId}`);
+
   if (token.expiresAt && Date.now() + 300000 > token.expiresAt && token.refreshToken) {
     const refreshBody = new URLSearchParams({
       client_secret: process.env.HMRC_CLIENT_SECRET,
@@ -205,7 +209,10 @@ async function getToken(client, userId) {
       grant_type: "refresh_token",
       refresh_token: token.refreshToken,
     });
-    const refreshResponse = await fetch("https://test-api.service.hmrc.gov.uk/oauth/token", {
+    const hmrcBase = process.env.HMRC_ENVIRONMENT === "sandbox"
+      ? "https://test-api.service.hmrc.gov.uk"
+      : "https://api.service.hmrc.gov.uk";
+    const refreshResponse = await fetch(`${hmrcBase}/oauth/token`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: refreshBody.toString(),
@@ -231,7 +238,7 @@ async function submitXml(xmlPayload, scenario, token) {
       ? "https://test-api.service.hmrc.gov.uk/customs/declarations"
       : "https://api.service.hmrc.gov.uk/customs/declarations";
   const now = new Date().toISOString();
-  const acceptHeader = process.env.HMRC_ACCEPT_HEADER || "application/vnd.hmrc.2.0+xml";
+  const acceptHeader = process.env.HMRC_DECLARATIONS_ACCEPT || "application/vnd.hmrc.2.0+xml";
   const contentTypeHeader = process.env.HMRC_CONTENT_TYPE_HEADER || "application/xml; charset=UTF-8";
   const response = await fetch(endpoint, {
     method: "POST",
@@ -242,13 +249,18 @@ async function submitXml(xmlPayload, scenario, token) {
       "X-Client-ID": process.env.HMRC_CLIENT_ID,
       "Gov-Test-Scenario": scenario,
       "Gov-Client-Connection-Method": "WEB_APP_VIA_SERVER",
-      "Gov-Client-Public-IP": "127.0.0.1",
+      "Gov-Client-Public-IP": "62.31.164.236",
+      "Gov-Client-Public-Port": "443",
+      "Gov-Client-Device-ID": "be360090-eb60-4927-a94f-cc8102d1359c",
+      "Gov-Client-User-ID": "test-trader-jason",
       "Gov-Client-Timezone": "UTC+00:00",
+      "Gov-Client-Local-IPs": "192.168.1.15",
       "Gov-Client-Screens": "width=1920&height=1080&scaling-factor=1&colour-depth=24",
       "Gov-Client-Window-Size": "width=1920&height=1080",
-      "Gov-Client-Browser-JS-User-Agent": "Mozilla/5.0",
+      "Gov-Client-Browser-JS-User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       "Gov-Client-Browser-Do-Not-Track": "false",
       "Gov-Vendor-Version": "TradeDNA=1.0.0",
+      "Gov-Vendor-Instance-ID": "i-0a2b3c4d5e6f7g8h9",
       "Gov-Vendor-Product-Name": "TradeDNA"
     },
     body: xmlPayload,
@@ -318,19 +330,19 @@ async function run() {
     {
       key: "scenario-1-happy-path",
       scenario: "HAPPY_PATH",
-      declaration: { ...baseDecl, declarationType: "H1", eori: "GB853432453900" },
+      declaration: { ...baseDecl, declarationType: "H1", eori: "GB553202734852" },
       item: { ...itemSeed, commodityCode: "6110201000" },
     },
     {
       key: "scenario-2-rejection",
       scenario: "REJECTION",
-      declaration: { ...baseDecl, declarationType: "H1", eori: "GB853432453900" },
+      declaration: { ...baseDecl, declarationType: "H1", eori: "GB553202734852" },
       item: { ...itemSeed, commodityCode: "9999999999" },
     },
     {
       key: "scenario-3-route-to-examine",
       scenario: "ROUTE_TO_EXAMINE",
-      declaration: { ...baseDecl, declarationType: "H1", eori: "GB853432453900" },
+      declaration: { ...baseDecl, declarationType: "H1", eori: "GB553202734852" },
       item: { ...itemSeed, commodityCode: "6110201000" },
     },
     {

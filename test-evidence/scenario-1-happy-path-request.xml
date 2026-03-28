@@ -1,5 +1,5 @@
-<!-- timestamp: 2026-03-23T07:11:37.185Z | http_status: 0 | conversation_id: HAPPY_PATH -->
-<!-- request_accept: application/vnd.hmrc.2.0+xml | request_content_type: application/xml; charset=UTF-8 | request_authorization: Bearer [REDACTED] | request_x_client_id: ZSoA1lpJi8FyuzSsncFrOZKpmrNe | request_gov_test_scenario: HAPPY_PATH -->
+<!-- timestamp: 2026-03-28T14:15:50.543Z | http_status: 0 | conversation_id: HAPPY_PATH -->
+<!-- request_accept: application/vnd.hmrc.1.0+xml | request_content_type: application/xml; charset=UTF-8 | request_authorization: Bearer [REDACTED] | request_x_client_id: ZSoA1lpJi8FyuzSsncFrOZKpmrNe | request_gov_test_scenario: HAPPY_PATH -->
 <?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
   <WCODataModelVersionCode>3.6</WCODataModelVersionCode>
@@ -20,7 +20,7 @@
       <CurrencyTypeCode>GBP</CurrencyTypeCode>
     </CurrencyExchange>
     <Declarant>
-      <ID>GB853432453900</ID>
+      <ID>GB553202734852</ID>
     </Declarant>
     <Exporter>
       <ID>GB123456789000</ID>
@@ -77,14 +77,14 @@
         </Packaging>
       </GovernmentAgencyGoodsItem>
       <Importer>
-        <ID>GB853432453900</ID>
+        <ID>GB553202734852</ID>
       </Importer>
       <TradeTerms>
         <ConditionCode>FOB</ConditionCode>
         <LocationID>GBFXT</LocationID>
       </TradeTerms>
       <UCR>
-        <TraderAssignedReferenceID>9GBGB853432453900-KN7C5Z</TraderAssignedReferenceID>
+        <TraderAssignedReferenceID>9GBGB553202734852-KN7C5Z</TraderAssignedReferenceID>
       </UCR>
     </GoodsShipment>
   </Declaration>

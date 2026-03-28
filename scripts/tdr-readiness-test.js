@@ -271,10 +271,17 @@ async function testXmlEscaping() {
 // ─── SOURCE CODE CHECKS (static but verified at runtime) ────────────
 
 async function testAcceptHeaderValue() {
-  // Read the submit route source and check the Accept header value
+  // Read the submit route source and hmrc-fetch to check the Accept header value
   const submitPath = path.join(process.cwd(), "src", "app", "api", "hmrc", "submit", "route.ts");
+  const hmrcFetchPath = path.join(process.cwd(), "src", "lib", "hmrc-fetch.ts");
   try {
-    const src = fs.readFileSync(submitPath, "utf-8");
+    let src = fs.readFileSync(submitPath, "utf-8");
+    // Also check hmrc-fetch.ts where the header is actually set
+    try {
+      const hmrcFetchSrc = fs.readFileSync(hmrcFetchPath, "utf-8");
+      src = src + "\n" + hmrcFetchSrc;
+    } catch {}
+    
     const match = src.match(/Accept["':\s]*(?:process\.env\.[A-Z_]+\s*\|\|\s*)?["']([^"']+)["']/)
       || src.match(/["']application\/vnd\.hmrc\.(\d+\.\d+)\+xml["']/);
     if (!match) {

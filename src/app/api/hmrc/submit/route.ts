@@ -23,7 +23,6 @@ export async function POST(request: Request) {
     }
 
     // 1. Fetch the Declaration, Items, and Auth Token from Convex
-    // We ideally would have a dedicated Convex action or query, but we can do parallel API calls for now.
     const lane = await convex.query(api.declarations.getLane, { id: declarationId });
     if (!lane || (lane.userId !== userId && process.env.HMRC_ENVIRONMENT !== "sandbox")) {
       return NextResponse.json({ error: "Declaration not found or unauthorized" }, { status: 404 });
@@ -41,7 +40,6 @@ export async function POST(request: Request) {
 
     // Check if token is expired or expiring within 5 minutes (300000 ms)
     if (tokenRecord.expiresAt && Date.now() + 300000 > tokenRecord.expiresAt) {
-      console.log("[redacted for security]");
       if (!tokenRecord.refreshToken) {
         return NextResponse.json({ error: "HMRC Token expired and no refresh token available. Please reconnect." }, { status: 403 });
       }
@@ -70,7 +68,6 @@ export async function POST(request: Request) {
 
       if (!refreshResponse.ok) {
         const errorText = await refreshResponse.text();
-        console.log("[redacted for security]");
         return NextResponse.json({ error: "Failed to refresh HMRC token. Please reconnect.", details: errorText }, { status: 403 });
       }
 
@@ -81,11 +78,10 @@ export async function POST(request: Request) {
       await convex.mutation(api.hmrc.saveToken, {
         userId,
         accessToken: data.access_token,
-        refreshToken: data.refresh_token, // might be a new refresh token
+        refreshToken: data.refresh_token,
         expiresIn: data.expires_in || 14400,
-        eori: tokenRecord.eori // Retain existing EORI
+        eori: tokenRecord.eori
       });
-      console.log("[redacted for security]");
     }
 
     const payloadInfo = mapToCDS_H1(lane, items);
@@ -101,8 +97,6 @@ export async function POST(request: Request) {
     }
 
     // Convert the JSON payload into the required HMRC XML Envelope
-    // Using the exact canonical namespaces required by the HMRC Sandbox XSD
-    // All user-supplied values are escaped via xmlEscape() to prevent XML injection
     const d = payloadInfo.Declaration;
     const gs = d.GoodsShipment;
     const xmlPayload = `<?xml version="1.0" encoding="UTF-8"?>
@@ -196,14 +190,9 @@ export async function POST(request: Request) {
 </MetaData>`;
 
     // 3. Fire the POST request to HMRC
-    // HMRC uses Accept header for versioning, not the URL path
     const hmrcEndpoint = process.env.HMRC_ENVIRONMENT === "sandbox" 
       ? "https://test-api.service.hmrc.gov.uk/customs/declarations" 
       : "https://api.service.hmrc.gov.uk/customs/declarations";
-
-    const authHeaderString = `Bearer ${token}`;
-    console.log("[redacted for security]");
-    console.log("[redacted for security]");
 
     const hmrcHeaders = {
       "Content-Type": "application/xml; charset=UTF-8",
@@ -214,6 +203,7 @@ export async function POST(request: Request) {
       headers: hmrcHeaders,
       body: xmlPayload,
     }, request, token);
+
     if (hmrcResponse.status === 429) {
       return NextResponse.json({ error: "HMRC rate limit reached, please try again shortly" }, { status: 429 });
     }
@@ -221,10 +211,6 @@ export async function POST(request: Request) {
     if (!hmrcResponse.ok) {
       const errorText = await hmrcResponse.text();
       console.error("HMRC API Submission Error:", hmrcResponse.status, errorText);
-      
-      // Sandbox fallback specifically for Stripe Connect demo approval
-      // Note: We are now actually testing the API, so we want the REAL validation errors to surface, 
-      // not a simulated success. Let's return the actual HMRC rejection code.
       return NextResponse.json({ error: "HMRC Sandbox Rejected Payload", details: errorText }, { status: hmrcResponse.status });
     }
 
@@ -238,6 +224,22 @@ export async function POST(request: Request) {
       conversationId: conversationId || undefined
     });
 
+    // 5. Audit Log Entry (non-critical, don't crash submission on failure)
+    try {
+      await convex.mutation(api.audit.logAction, {
+        userId,
+        action: "declaration_submitted",
+        metadata: {
+          declarationId: declarationId as any,
+          mrn: lane.mrn || "Draft",
+          environment: process.env.HMRC_ENVIRONMENT || "sandbox",
+          conversationId: conversationId || undefined
+        }
+      });
+    } catch (auditErr) {
+      console.warn("[AUDIT] Failed to log submission (non-critical):", auditErr);
+    }
+
     return NextResponse.json({ 
       success: true, 
       status: "Processing",
@@ -249,7 +251,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ 
       error: "Internal Server Error", 
       message: error.message,
-      stack: error.stack
     }, { status: 500 });
   }
 }

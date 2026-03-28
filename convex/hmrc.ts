@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { api } from "./_generated/api";
 
 export const saveToken = mutation({
   args: {
@@ -48,6 +49,16 @@ export const saveToken = mutation({
         hmrcTokensId: tokenId
       });
     }
+
+    // 3. Audit Log Entry
+    await ctx.runMutation(api.audit.logAction, {
+      userId: args.userId,
+      action: "hmrc_auth_linked",
+      metadata: {
+        eori: args.eori,
+        expiresAt: Date.now() + args.expiresIn * 1000
+      }
+    });
     
     return tokenId;
   },

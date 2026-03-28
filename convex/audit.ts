@@ -12,8 +12,10 @@ export const logAction = mutation({
     metadata: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
+    const { metadata, ...rest } = args;
     return await ctx.db.insert("auditLogs", {
-      ...args,
+      ...rest,
+      details: metadata,
       timestamp: Date.now(),
       archived: false,
     });

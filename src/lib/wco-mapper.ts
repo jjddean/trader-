@@ -121,10 +121,10 @@ export function mapToCDS_H1(declaration: any, items: any[]) {
         ID: declaration.eori || ""
       },
       Exporter: {
-        ID: declaration.exporterEori || "GB123456789000"
+        ID: declaration.exporterEori || declaration.eori || ""
       },
       UCR: {
-        TraderAssignedReferenceID: declaration.ducr || `9GB${declaration.eori || "123456789000"}-${declaration._id.substring(0,6).toUpperCase()}`
+        TraderAssignedReferenceID: declaration.ducr || `9${declaration.eori || "GB123456789000"}-${declaration._id.substring(0,6).toUpperCase()}`
       },
       GoodsShipment: {
         Consignment: {
@@ -166,6 +166,7 @@ export function mapToCDS_H1(declaration: any, items: any[]) {
             value: item.valueAmount || 0
           },
           Commodity: {
+            Description: item.description || "General goods",
             Classification: [
               {
                 ID: item.commodityCode || item.hsCode || "",

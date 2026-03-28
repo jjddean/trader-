@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#111827">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HS Code Screener">
+    
+    <title>HS Code Screener & Tracker | FreightCode</title>
+    <meta name="description" content="Validate, monitor, and optimize your commodity code classifications with AI-powered screening and real-time tracking.">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="#" id="manifest-placeholder">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" href="/icon.png">
+    <link rel="apple-touch-icon" href="/icon.png">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --color-slate-50: #f8fafc;
+            --color-slate-100: #f1f5f9;
+            --color-slate-200: #e2e8f0;
+            --color-slate-300: #cbd5e1;
+            --color-slate-400: #94a3b8;
+            --color-slate-500: #64748b;
+            --color-slate-600: #475569;
+            --color-slate-700: #334155;
+            --color-slate-800: #1e293b;
+            --color-slate-900: #0f172a;
+            --color-blue-50: #eff6ff;
+            --color-blue-500: #3b82f6;
+            --color-blue-600: #2563eb;
+            --color-blue-700: #1d4ed8;
+            --color-green-50: #f0fdf4;
+            --color-green-500: #22c55e;
+            --color-green-600: #16a34a;
+            --color-red-50: #fef2f2;
+            --color-red-500: #ef4444;
+            --color-red-600: #dc2626;
+            --color-yellow-50: #fefce8;
+            --color-yellow-500: #eab308;
+            --color-yellow-600: #ca8a04;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--color-slate-50);
+            color: #020817;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+
+        /* App Container */
+        .app-container {
+            max-width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .app-header {
+            background: white;
+            border-bottom: 1px solid var(--color-slate-200);
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .header-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #020817;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            font-size: 24px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #111827;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #374151;
+        }
+
+        .btn-secondary {
+            background: var(--color-slate-100);
+            color: var(--color-slate-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-slate-200);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 24px;
+            max-width: 1280px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 32px;
+            border-bottom: 1px solid var(--color-slate-200);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--color-slate-600);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            color: #020817;
+            border-bottom-color: #111827;
+        }
+
+        .tab-btn:hover {
+            color: #020817;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Screener Section */
+        .screener-container {
+            display: grid;
+            gap: 24px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid var(--color-slate-200);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-header {
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #020817;
+            margin-bottom: 4px;
+        }
+
+        .card-description {
+            font-size: 14px;
+            color: var(--color-slate-600);
+        }
+
+        /* Search Input */
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border: 1px solid var(--color-slate-200);
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--color-slate-400);
+            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--color-slate-400);
+        }
+
+        /* Form Group */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-slate-700);
+            margin-bottom: 8px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--color-slate-200);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--color-slate-400);
+        }
+
+        /* Results Grid */
+        .results-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .result-card {
+            background: white;
+            border: 1px solid var(--color-slate-100);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .result-card:hover {
+            border-color: var(--color-blue-200);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .hs-code {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--color-blue-600);
+            letter-spacing: -0.02em;
+        }
+
+        .confidence-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .confidence-high {
+            background: var(--color-green-50);
+            color: var(--color-green-600);
+        }
+
+        .confidence-medium {
+            background: var(--color-yellow-50);
+            color: var(--color-yellow-600);
+        }
+
+        .confidence-low {
+            background: var(--color-red-50);
+            color: var(--color-red-600);
+        }
+
+        .result-description {
+            font-size: 14px;
+            color: var(--color-slate-600);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .result-card:hover .result-actions {
+            opacity: 1;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            background: var(--color-slate-50);
+            border: none;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--color-slate-500);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .action-btn:hover {
+            background: var(--color-blue-50);
+            color: var(--color-blue-600);
+        }
+
+        /* Validation Results */
+        .validation-results {
+            margin-top: 24px;
+        }
+
+        .validation-item {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            background: var(--color-slate-50);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .validation-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .validation-pass {
+            background: var(--color-green-50);
+            color: var(--color-green-600);
+        }
+
+        .validation-warning {
+            background: var(--color-yellow-50);
+            color: var(--color-yellow-600);
+        }
+
+        .validation-fail {
+            background: var(--color-red-50);
+            color: var(--color-red-600);
+        }
+
+        .validation-content {
+            flex: 1;
+        }
+
+        .validation-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #020817;
+            margin-bottom: 4px;
+        }
+
+        .validation-message {
+            font-size: 13px;
+            color: var(--color-slate-600);
+            line-height: 1.5;
+        }
+
+        /* Tracker Dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--color-slate-200);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-slate-600);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #020817;
+            margin-bottom: 4px;
+        }
+
+        .stat-change {
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stat-change.positive {
+            color: var(--color-green-600);
+        }
+
+        .stat-change.negative {
+            color: var(--color-red-600);
+        }
+
+        /* Alerts */
+        .alerts-container {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .alert {
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+            border-radius: 12px;
+            border-left: 4px solid;
+        }
+
+        .alert-critical {
+            background: var(--color-red-50);
+            border-left-color: var(--color-red-500);
+        }
+
+        .alert-warning {
+            background: var(--color-yellow-50);
+            border-left-color: var(--color-yellow-500);
+        }
+
+        .alert-info {
+            background: var(--color-blue-50);
+            border-left-color: var(--color-blue-500);
+        }
+
+        .alert-icon {
+            flex-shrink: 0;
+            font-size: 20px;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #020817;
+            margin-bottom: 4px;
+        }
+
+        .alert-message {
+            font-size: 13px;
+            color: var(--color-slate-600);
+            margin-bottom: 8px;
+        }
+
+        .alert-action {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-blue-600);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .data-table th {
+            background: var(--color-slate-50);
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--color-slate-600);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .data-table td {
+            padding: 16px;
+            border-top: 1px solid var(--color-slate-100);
+            font-size: 14px;
+            color: var(--color-slate-700);
+        }
+
+        .data-table tr:hover {
+            background: var(--color-slate-50);
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .status-success {
+            background: var(--color-green-50);
+            color: var(--color-green-600);
+        }
+
+        .status-warning {
+            background: var(--color-yellow-50);
+            color: var(--color-yellow-600);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 64px 24px;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #020817;
+            margin-bottom: 8px;
+        }
+
+        .empty-description {
+            font-size: 14px;
+            color: var(--color-slate-600);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        /* Loading State */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 64px 24px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--color-slate-200);
+            border-top-color: var(--color-blue-600);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-slate-500);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 16px;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-nav {
+                gap: 4px;
+            }
+
+            .tab-btn {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+
+            .result-actions {
+                opacity: 1;
+            }
+        }
+
+        /* PWA Install Prompt */
+        .install-prompt {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            right: 24px;
+            background: white;
+            border: 1px solid var(--color-slate-200);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            display: none;
+            align-items: center;
+            gap: 16px;
+            z-index: 1000;
+        }
+
+        .install-prompt.show {
+            display: flex;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .install-content {
+            flex: 1;
+        }
+
+        .install-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #020817;
+            margin-bottom: 4px;
+        }
+
+        .install-description {
+            font-size: 13px;
+            color: var(--color-slate-600);
+        }
+
+        .install-actions {
+            display: flex;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <a href="/" class="logo">
+                    <span class="logo-icon">🛃</span>
+                    <span>FreightCode</span>
+                </a>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="window.print()">
+                        📄 Export
+                    </button>
+                    <a href="/dashboard" class="btn btn-primary">
+                        Dashboard →
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Tab Navigation -->
+            <nav class="tab-nav">
+                <button class="tab-btn active" data-tab="screener">
+                    🔍 Screener
+                </button>
+                <button class="tab-btn" data-tab="tracker">
+                    📊 Tracker
+                </button>
+                <button class="tab-btn" data-tab="opportunities">
+                    💰 Opportunities
+                </button>
+                <button class="tab-btn" data-tab="reports">
+                    📈 Reports
+                </button>
+            </nav>
+
+            <!-- Screener Tab -->
+            <div class="tab-content active" id="screener">
+                <div class="screener-container">
+                    <!-- Search Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">HS Code Screener</h2>
+                            <p class="card-description">Validate commodity codes before submission to prevent costly errors</p>
+                        </div>
+
+                        <div class="search-container">
+                            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                            <input 
+                                type="text" 
+                                class="search-input" 
+                                placeholder="Describe your product or enter HS code..."
+                                id="productSearch"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Origin Country</label>
+                            <select class="form-select" id="originCountry">
+                                <option value="">Select country...</option>
+                                <option value="BD">Bangladesh</option>
+                                <option value="CN">China</option>
+                                <option value="IN">India</option>
+                                <option value="VN">Vietnam</option>
+                                <option value="GB">United Kingdom</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn-primary" style="width: 100%;" onclick="runScreening()">
+                            🔍 Screen Classification
+                        </button>
+                    </div>
+
+                    <!-- Results Card -->
+                    <div class="card" id="resultsCard" style="display: none;">
+                        <div class="card-header">
+                            <h3 class="card-title">Suggested Classifications</h3>
+                            <p class="card-description">AI-powered suggestions with confidence scores</p>
+                        </div>
+
+                        <div class="results-grid" id="resultsGrid">
+                            <!-- Results will be inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Validation Card -->
+                    <div class="card" id="validationCard" style="display: none;">
+                        <div class="card-header">
+                            <h3 class="card-title">Validation Results</h3>
+                            <p class="card-description">Comprehensive checks performed on selected code</p>
+                        </div>
+
+                        <div class="validation-results" id="validationResults">
+                            <!-- Validation items will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tracker Tab -->
+            <div class="tab-content" id="tracker">
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Compliance Score</div>
+                        <div class="stat-value">94%</div>
+                        <div class="stat-change positive">
+                            ↑ 3% from last month
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Duty Optimization</div>
+                        <div class="stat-value">87%</div>
+                        <div class="stat-change negative">
+                            ↓ 2% from last month
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">DCTS Usage</div>
+                        <div class="stat-value">65%</div>
+                        <div class="stat-change positive">
+                            ↑ 12% from last month
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Avg Clearance</div>
+                        <div class="stat-value">4.2h</div>
+                        <div class="stat-change positive">
+                            ↓ 0.8h from last month
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alerts -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Active Alerts</h3>
+                        <p class="card-description">Issues requiring your attention</p>
+                    </div>
+
+                    <div class="alerts-container">
+                        <div class="alert alert-critical">
+                            <div class="alert-icon">🔴</div>
+                            <div class="alert-content">
+                                <div class="alert-title">CRITICAL: HMRC Query Received</div>
+                                <div class="alert-message">MRN 24GB123456789012 - HS Code 8518302000 requires review</div>
+                                <a href="#" class="alert-action">View Details →</a>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <div class="alert-icon">🟡</div>
+                            <div class="alert-content">
+                                <div class="alert-title">WARNING: Preference Not Claimed</div>
+                                <div class="alert-message">5 shipments eligible for DCTS - Potential savings: £2,450</div>
+                                <a href="#" class="alert-action">Review Opportunities →</a>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <div class="alert-icon">🟢</div>
+                            <div class="alert-content">
+                                <div class="alert-title">INFO: New DCTS Rules Effective</div>
+                                <div class="alert-message">Updated rules may affect your product classifications</div>
+                                <a href="#" class="alert-action">Learn More →</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top HS Codes -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Top HS Codes (Last 30 Days)</h3>
+                        <p class="card-description">Most frequently used classifications</p>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>HS Code</th>
+                                <th>Count</th>
+                                <th>Clear Rate</th>
+                                <th>Avg Duty</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>8518.30.20</strong></td>
+                                <td>45</td>
+                                <td>100%</td>
+                                <td>£110</td>
+                                <td><span class="status-badge status-success">✓ Good</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>6203.42.31</strong></td>
+                                <td>32</td>
+                                <td>97%</td>
+                                <td>£245</td>
+                                <td><span class="status-badge status-warning">⚠ Review</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>8471.30.00</strong></td>
+                                <td>28</td>
+                                <td>100%</td>
+                                <td>£0</td>
+                                <td><span class="status-badge status-success">✓ Good</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Opportunities Tab -->
+            <div class="tab-content" id="opportunities">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Savings Opportunities</h3>
+                        <p class="card-description">£12,450 in potential savings identified</p>
+                    </div>
+
+                    <div class="empty-state">
+                        <div class="empty-icon">💰</div>
+                        <h3 class="empty-title">Analyzing Your Data</h3>
+                        <p class="empty-description">
+                            Our AI is scanning your declarations to identify duty optimization opportunities. 
+                            Check back soon for personalized recommendations.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div class="tab-content" id="reports">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Compliance Reports</h3>
+                        <p class="card-description">Generate detailed analysis and audit-ready documentation</p>
+                    </div>
+
+                    <div class="empty-state">
+                        <div class="empty-icon">📈</div>
+                        <h3 class="empty-title">Reports Coming Soon</h3>
+                        <p class="empty-description">
+                            Advanced reporting features are currently in development. 
+                            You'll be able to generate classification audits, savings reports, and compliance summaries.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- PWA Install Prompt -->
+        <div class="install-prompt" id="installPrompt">
+            <div class="install-content">
+                <div class="install-title">Install HS Code Screener</div>
+                <div class="install-description">Add to your home screen for quick access</div>
+            </div>
+            <div class="install-actions">
+                <button class="btn btn-primary" id="installBtn">Install</button>
+                <button class="btn btn-secondary" id="dismissBtn">Not Now</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab Navigation
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.dataset.tab;
+                
+                // Update active tab button
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Update active tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Mock Screening Function
+        function runScreening() {
+            const productSearch = document.getElementById('productSearch').value;
+            const originCountry = document.getElementById('originCountry').value;
+
+            if (!productSearch) {
+                alert('Please enter a product description or HS code');
+                return;
+            }
+
+            // Show loading state
+            const resultsCard = document.getElementById('resultsCard');
+            const resultsGrid = document.getElementById('resultsGrid');
+            resultsCard.style.display = 'block';
+            resultsGrid.innerHTML = `
+                <div class="loading-container">
+                    <div class="spinner"></div>
+                    <div class="loading-text">Analyzing classification...</div>
+                </div>
+            `;
+
+            // Simulate API call
+            setTimeout(() => {
+                const mockResults = [
+                    {
+                        code: '8518.30.20',
+                        confidence: 95,
+                        description: 'Headphones and earphones, whether or not combined with a microphone, and sets consisting of a microphone and one or more loudspeakers',
+                        dutyRate: 2.2,
+                        dctsRate: 0.0,
+                        savings: 110
+                    },
+                    {
+                        code: '8518.30.95',
+                        confidence: 78,
+                        description: 'Other earphones and headphones, whether or not combined with a microphone',
+                        dutyRate: 2.2,
+                        dctsRate: 0.0,
+                        savings: 110
+                    }
+                ];
+
+                resultsGrid.innerHTML = mockResults.map(result => `
+                    <div class="result-card" onclick="showValidation('${result.code}')">
+                        <div class="result-header">
+                            <div class="hs-code">${result.code}</div>
+                            <div class="confidence-badge confidence-${result.confidence >= 90 ? 'high' : result.confidence >= 70 ? 'medium' : 'low'}">
+                                ${result.confidence}% Match
+                            </div>
+                        </div>
+                        <div class="result-description">${result.description}</div>
+                        <div class="result-actions">
+                            <button class="action-btn" onclick="event.stopPropagation(); copyCode('${result.code}')">
+                                📋 Copy
+                            </button>
+                            <button class="action-btn" onclick="event.stopPropagation(); openTariff('${result.code}')">
+                                🔗 Tariff
+                            </button>
+                            <button class="action-btn" onclick="event.stopPropagation(); selectCode('${result.code}')">
+                                ✓ Select
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }, 1500);
+        }
+
+        function showValidation(code) {
+            const validationCard = document.getElementById('validationCard');
+            const validationResults = document.getElementById('validationResults');
+            
+            validationCard.style.display = 'block';
+            validationResults.innerHTML = `
+                <div class="validation-item">
+                    <div class="validation-icon validation-pass">✓</div>
+                    <div class="validation-content">
+                        <div class="validation-title">Format Validation</div>
+                        <div class="validation-message">Valid 10-digit HS code structure</div>
+                    </div>
+                </div>
+                <div class="validation-item">
+                    <div class="validation-icon validation-pass">✓</div>
+                    <div class="validation-content">
+                        <div class="validation-title">Logical Consistency</div>
+                        <div class="validation-message">Code matches product description</div>
+                    </div>
+                </div>
+                <div class="validation-item">
+                    <div class="validation-icon validation-warning">⚠</div>
+                    <div class="validation-content">
+                        <div class="validation-title">DCTS Eligibility</div>
+                        <div class="validation-message">Bangladesh qualifies for DCTS - Potential saving: £110 per shipment. Ensure origin documentation is complete.</div>
+                    </div>
+                </div>
+                <div class="validation-item">
+                    <div class="validation-icon validation-pass">✓</div>
+                    <div class="validation-content">
+                        <div class="validation-title">Historical Pattern</div>
+                        <div class="validation-message">Consistent with previous classifications</div>
+                    </div>
+                </div>
+            `;
+
+            validationCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function copyCode(code) {
+            navigator.clipboard.writeText(code);
+            alert(`Code ${code} copied to clipboard`);
+        }
+
+        function openTariff(code) {
+            window.open(`https://www.trade-tariff.service.gov.uk/commodities/${code.replace(/\./g, '')}`, '_blank');
+        }
+
+        function selectCode(code) {
+            alert(`Selected HS Code: ${code}\n\nThis code will be added to your declaration.`);
+        }
+
+        // PWA Installation
+        let deferredPrompt;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installPrompt').classList.add('show');
+        });
+
+        document.getElementById('installBtn').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                document.getElementById('installPrompt').classList.remove('show');
+            }
+        });
+
+        document.getElementById('dismissBtn').addEventListener('click', () => {
+            document.getElementById('installPrompt').classList.remove('show');
+        });
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {
+                    console.log('Service Worker registration failed');
+                });
+            });
+        }
+
+        // Generate PWA Manifest
+        const manifest = {
+            name: "HS Code Screener & Tracker",
+            short_name: "HS Screener",
+            description: "Validate and track commodity code classifications",
+            start_url: "/",
+            display: "standalone",
+            background_color: "#ffffff",
+            theme_color: "#111827",
+            icons: [
+                {
+                    src: "/icon.png",
+                    sizes: "192x192",
+                    type: "image/png"
+                },
+                {
+                    src: "/icon.png",
+                    sizes: "512x512",
+                    type: "image/png"
+                }
+            ]
+        };
+
+        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        document.getElementById('manifest-placeholder').setAttribute('href', manifestURL);
+    </script>
+</body>
+</html>

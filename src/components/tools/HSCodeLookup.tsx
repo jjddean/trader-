@@ -123,23 +123,31 @@ export const HSCodeLookup = ({ variant = 'default', className }: HSCodeLookupPro
     return (
         <div className={cn("space-y-6", className)}>
 
-            {/* Search Input - Matching Screenshot Style, but smaller */}
-            <div className="flex w-full items-center gap-0 overflow-hidden rounded-lg border border-slate-200 bg-white focus-within:ring-2 focus-within:ring-blue-500/10 transition-all shadow-sm">
+            {/* Search Input - Matching Dashboard Style */}
+            <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
                     type="text"
                     placeholder="Search by product description or HS Code..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    className="flex-grow px-4 py-2.5 text-slate-700 outline-none placeholder:text-slate-400 text-sm"
+                    className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-16 text-sm outline-none transition-colors focus:border-gray-400"
                 />
-                <button
-                    onClick={handleSearch}
-                    disabled={loading || !searchTerm.trim()}
-                    className="flex aspect-square h-[42px] items-center justify-center text-slate-400 transition-colors hover:text-slate-600 disabled:opacity-50"
-                >
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                </button>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+                    {loading ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                    ) : (
+                        searchTerm.trim() && (
+                            <button 
+                                onClick={handleSearch}
+                                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-tight"
+                            >
+                                Search
+                            </button>
+                        )
+                    )}
+                </div>
             </div>
 
             {/* Results Section - List of Cards */}

@@ -4,7 +4,7 @@ export interface HmrcFraudHeaders {
   "Gov-Client-Screens": string;
   "Gov-Client-Browser-JS-User-Agent": string;
   "Gov-Client-Browser-Do-Not-Track": string;
-  "Gov-Client-Local-IPsTimestamp": string;
+  "Gov-Client-Local-IPs": string;
   [key: string]: string;
 }
 
@@ -24,6 +24,6 @@ export function generateClientFraudHeaders(): HmrcFraudHeaders {
     "Gov-Client-Screens": `width=${window.screen.width}&height=${window.screen.height}&scaling-factor=${window.devicePixelRatio}&colour-depth=${window.screen.colorDepth}`,
     "Gov-Client-Browser-JS-User-Agent": navigator.userAgent,
     "Gov-Client-Browser-Do-Not-Track": navigator.doNotTrack === "1" ? "true" : "false",
-    "Gov-Client-Local-IPsTimestamp": new Date().toISOString()
+    "Gov-Client-Local-IPs": ""
   };
 }

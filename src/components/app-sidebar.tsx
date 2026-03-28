@@ -16,6 +16,7 @@ import {
   HelpCircle,
   History,
   Wrench,
+  ChevronRight,
 } from "lucide-react";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
@@ -32,23 +33,42 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarGroupContent,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/documents", label: "Documents", icon: FileText },
   { href: "/dashboard/declarations", label: "Declarations", icon: Compass },
-  { href: "/dashboard/audit", label: "Compliance Audit", icon: ShieldCheck },
-  { href: "/dashboard/reports", label: "Customs Reports", icon: FileSpreadsheet },
-  { href: "/dashboard/records", label: "Financial Records", icon: Scale },
+  {
+    label: "Compliance",
+    icon: ShieldCheck,
+    items: [
+      { href: "/dashboard/audit", label: "Compliance Audit" },
+      { href: "/dashboard/audit-logs", label: "System Audit" },
+      { href: "/dashboard/reports", label: "Customs Reports" },
+      { href: "/dashboard/records", label: "Financial Records" },
+    ],
+  },
   { href: "/dashboard/tools", label: "Tools & Utilities", icon: Wrench },
-] as const;
+];
 
 export function AppSidebar() {
   const pathname = usePathname();
   const { user } = useUser();
   const userId = user?.id || "";
   const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const allDeclarations = useQuery(api.declarations.getAllDecls);
   const declarations = (allDeclarations as any[])?.filter((l: any) => l.userId === userId) ?? [];
@@ -81,9 +101,65 @@ export function AppSidebar() {
             <SidebarMenu className="space-y-0.5">
               {navItems.map((item) => {
                 const Icon = item.icon;
+                const hasItems = "items" in item && item.items && item.items.length > 0;
+                
+                if (hasItems) {
+                  const isAnyChildActive = item.items?.some(subItem => 
+                    pathname === subItem.href || (subItem.href !== "/dashboard" && pathname.startsWith(subItem.href))
+                  );
+
+                  return (
+                    <Collapsible
+                      key={item.label}
+                      asChild
+                      defaultOpen={isAnyChildActive}
+                      className="group/collapsible"
+                    >
+                      <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton 
+                            tooltip={item.label}
+                            className={cn(
+                              "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors",
+                              isAnyChildActive ? "text-black" : "text-gray-500 hover:bg-gray-100 hover:text-black"
+                            )}
+                          >
+                            <Icon className={cn("h-3.5 w-3.5", isAnyChildActive ? "text-gray-700" : "text-gray-400")} />
+                            <span className="flex-1">{item.label}</span>
+                            <ChevronRight className="ml-auto h-3 w-3 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <SidebarMenuSub className="ml-5 border-l border-gray-200 pl-2">
+                            {item.items?.map((subItem) => {
+                              const isSubActive = pathname === subItem.href || (subItem.href !== "/dashboard" && pathname.startsWith(subItem.href));
+                              return (
+                                <SidebarMenuSubItem key={subItem.label}>
+                                  <SidebarMenuSubButton 
+                                    asChild 
+                                    isActive={isSubActive}
+                                    className={cn(
+                                      "px-2 py-1 text-xs font-normal",
+                                      isSubActive ? "text-black font-medium" : "text-gray-500 hover:text-black"
+                                    )}
+                                  >
+                                    <Link href={subItem.href}>
+                                      <span>{subItem.label}</span>
+                                    </Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              );
+                            })}
+                          </SidebarMenuSub>
+                        </CollapsibleContent>
+                      </SidebarMenuItem>
+                    </Collapsible>
+                  );
+                }
+
                 const isActive =
-                  pathname === item.href ||
-                  (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                  pathname === (item as any).href ||
+                  ((item as any).href !== "/dashboard" && pathname.startsWith((item as any).href));
 
                 const hasBadge = item.label === "Declarations" && reviewCount > 0;
 
@@ -99,7 +175,7 @@ export function AppSidebar() {
                           : "text-gray-500 hover:bg-gray-100 hover:text-black",
                       )}
                     >
-                      <Link href={item.href} className="flex flex-1 items-center gap-2">
+                      <Link href={(item as any).href} className="flex flex-1 items-center gap-2">
                         <Icon
                           className={cn(
                             "h-3.5 w-3.5",

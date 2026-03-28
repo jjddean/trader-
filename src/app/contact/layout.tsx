@@ -1,8 +1,11 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Contact & Corporate Inquiries | FreightCode",
-  description: "Contact FreightCode for enterprise deployments, infrastructural capabilities, or strategic customs and global trade partnerships.",
+  title: "Contact Us | Enterprise Customs Inquiries | FreightCode",
+  description: "Contact FreightCode for enterprise HMRC CDS deployments, infrastructural capabilities, or strategic global trade partnerships.",
+  alternates: {
+    canonical: "/contact",
+  },
 };
 
 export default function ContactLayout({

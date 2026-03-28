@@ -25,7 +25,7 @@ export async function fetchHmrc(
     "Gov-Client-Screens",
     "Gov-Client-Browser-JS-User-Agent",
     "Gov-Client-Browser-Do-Not-Track",
-    "Gov-Client-Local-IPsTimestamp"
+    "Gov-Client-Local-IPs"
   ];
   
   for (const h of clientHeaders) {
@@ -43,6 +43,13 @@ export async function fetchHmrc(
     ...govHeaders,
     ...(options.headers as Record<string, string>),
   };
+
+  // DEBUG LOGGING
+  const maskedToken = (token || "").substring(0, 8) + "..." + (token || "").slice(-4);
+  console.log(`[HMRC REQUEST] ${options.method} ${endpoint}`);
+  console.log(`[HMRC HEADERS] X-Client-ID: ${hmrcHeaders["X-Client-ID"]}`);
+  console.log(`[HMRC HEADERS] Authorization: Bearer ${maskedToken}`);
+  console.log(`[HMRC HEADERS] Accept: ${hmrcHeaders["Accept"]}`);
 
   if (testScenario) {
     hmrcHeaders["Gov-Test-Scenario"] = testScenario;

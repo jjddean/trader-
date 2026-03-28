@@ -247,11 +247,11 @@ export default function LandingPage() {
                 <p className="mb-8 text-[18px] leading-[1.6] text-slate-300 max-w-2xl relative z-10">
                    As we are currently in beta, use our suite of standalone intelligent calculators to estimate UK Import Duty, Anti-Dumping tariffs, and Postponed VAT Accounting completely free of charge.
                 </p>
-                <div className="flex gap-4 relative z-10">
-                   <Link href="/hs-code-lookup" className="h-[42px] px-6 rounded-md bg-white text-slate-900 text-[14px] font-medium flex items-center justify-center hover:bg-slate-100 transition-colors">
+                <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full justify-center px-6 sm:px-0">
+                   <Link href="/hs-code-lookup" className="h-[42px] px-6 rounded-md bg-white text-slate-900 text-[14px] font-medium flex items-center justify-center hover:bg-slate-100 transition-colors w-full sm:w-auto">
                       Try HS Code Lookup
                    </Link>
-                   <Link href="/tools" className="h-[42px] px-6 rounded-md border border-white/20 text-white text-[14px] font-medium flex items-center justify-center hover:bg-white/10 transition-colors">
+                   <Link href="/tools" className="h-[42px] px-6 rounded-md border border-white/20 text-white text-[14px] font-medium flex items-center justify-center hover:bg-white/10 transition-colors w-full sm:w-auto">
                       Open Calculators
                    </Link>
                 </div>

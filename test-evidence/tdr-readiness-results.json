@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-03-22T03:30:41.898Z",
+  "timestamp": "2026-03-28T11:29:25.181Z",
   "total": 27,
   "pass": 27,
   "fail": 0,
@@ -11,189 +11,189 @@
       "name": "Submit endpoint exists",
       "status": "PASS",
       "detail": "Returned 401 (auth required) — endpoint alive",
-      "timestamp": "2026-03-22T03:30:30.232Z"
+      "timestamp": "2026-03-28T11:29:13.860Z"
     },
     {
       "id": "P3-02",
       "name": "Amend endpoint exists",
       "status": "PASS",
       "detail": "HTTP 401",
-      "timestamp": "2026-03-22T03:30:30.827Z"
+      "timestamp": "2026-03-28T11:29:14.429Z"
     },
     {
       "id": "P3-03",
       "name": "Cancel endpoint exists",
       "status": "PASS",
       "detail": "HTTP 401",
-      "timestamp": "2026-03-22T03:30:31.417Z"
+      "timestamp": "2026-03-28T11:29:14.987Z"
     },
     {
       "id": "P3-04",
       "name": "Status query endpoint exists",
       "status": "PASS",
       "detail": "HTTP 401",
-      "timestamp": "2026-03-22T03:30:31.994Z"
+      "timestamp": "2026-03-28T11:29:15.536Z"
     },
     {
       "id": "P3-05",
       "name": "Document initiate endpoint",
       "status": "PASS",
       "detail": "HTTP 401 — exists, auth required",
-      "timestamp": "2026-03-22T03:30:32.568Z"
+      "timestamp": "2026-03-28T11:29:16.075Z"
     },
     {
       "id": "P3-06",
       "name": "Document upload endpoint",
       "status": "PASS",
-      "detail": "HTTP 200",
-      "timestamp": "2026-03-22T03:30:33.156Z"
+      "detail": "HTTP 401",
+      "timestamp": "2026-03-28T11:29:16.623Z"
     },
     {
       "id": "P3-07",
       "name": "Pull notifications endpoint",
       "status": "PASS",
       "detail": "HTTP 401",
-      "timestamp": "2026-03-22T03:30:33.733Z"
+      "timestamp": "2026-03-28T11:29:17.185Z"
     },
     {
       "id": "P3-08",
       "name": "Webhook — DMSACC (accepted)",
       "status": "PASS",
       "detail": "HTTP 200, acknowledged. MRN parsed correctly.",
-      "timestamp": "2026-03-22T03:30:34.496Z"
+      "timestamp": "2026-03-28T11:29:17.986Z"
     },
     {
       "id": "P3-09",
       "name": "Webhook — DMSREJ (rejected)",
       "status": "PASS",
       "detail": "HTTP 200, acknowledged. MRN parsed correctly.",
-      "timestamp": "2026-03-22T03:30:35.155Z"
+      "timestamp": "2026-03-28T11:29:18.606Z"
     },
     {
       "id": "P3-10",
       "name": "Webhook — DMSROG (route)",
       "status": "PASS",
       "detail": "HTTP 200, acknowledged. MRN parsed correctly.",
-      "timestamp": "2026-03-22T03:30:35.810Z"
+      "timestamp": "2026-03-28T11:29:19.228Z"
     },
     {
       "id": "P3-11",
       "name": "Webhook — DMSCLE (cleared)",
       "status": "PASS",
       "detail": "HTTP 200, acknowledged. MRN parsed correctly.",
-      "timestamp": "2026-03-22T03:30:36.428Z"
+      "timestamp": "2026-03-28T11:29:19.845Z"
     },
     {
       "id": "P3-12",
       "name": "Webhook — DMSINV (invalid)",
       "status": "PASS",
       "detail": "HTTP 200, acknowledged. MRN parsed correctly.",
-      "timestamp": "2026-03-22T03:30:37.073Z"
+      "timestamp": "2026-03-28T11:29:20.447Z"
     },
     {
       "id": "P3-13",
       "name": "Webhook — DMSTAX (tax)",
       "status": "PASS",
       "detail": "HTTP 200, acknowledged. MRN parsed correctly.",
-      "timestamp": "2026-03-22T03:30:37.726Z"
+      "timestamp": "2026-03-28T11:29:21.063Z"
     },
     {
       "id": "P3-14",
       "name": "Webhook — DMSCTL (control)",
       "status": "PASS",
       "detail": "HTTP 200, acknowledged. MRN parsed correctly.",
-      "timestamp": "2026-03-22T03:30:38.376Z"
+      "timestamp": "2026-03-28T11:29:21.776Z"
     },
     {
       "id": "P3-15",
       "name": "Webhook — DMSRES (response)",
       "status": "PASS",
       "detail": "HTTP 200, acknowledged. MRN parsed correctly.",
-      "timestamp": "2026-03-22T03:30:39.067Z"
+      "timestamp": "2026-03-28T11:29:22.391Z"
     },
     {
       "id": "P3-16",
       "name": "Error — malformed body",
       "status": "PASS",
       "detail": "HTTP 401 — handled gracefully",
-      "timestamp": "2026-03-22T03:30:39.643Z"
+      "timestamp": "2026-03-28T11:29:22.939Z"
     },
     {
       "id": "P3-17",
       "name": "Error — no auth",
       "status": "PASS",
       "detail": "HTTP 401 — correctly rejected unauthenticated request",
-      "timestamp": "2026-03-22T03:30:40.213Z"
+      "timestamp": "2026-03-28T11:29:23.501Z"
     },
     {
       "id": "P3-18",
       "name": "XML injection resilience (webhook)",
       "status": "PASS",
       "detail": "HTTP 200 — handled hostile input without crash",
-      "timestamp": "2026-03-22T03:30:40.802Z"
+      "timestamp": "2026-03-28T11:29:24.120Z"
     },
     {
       "id": "P3-19",
       "name": "Accept header = vnd.hmrc.1.0+xml (TDR)",
       "status": "PASS",
       "detail": "Found: application/vnd.hmrc.1.0+xml",
-      "timestamp": "2026-03-22T03:30:41.307Z"
+      "timestamp": "2026-03-28T11:29:24.634Z"
     },
     {
       "id": "P3-20",
       "name": "XML input sanitisation in submit route",
       "status": "PASS",
       "detail": "Found escape/sanitise function usage",
-      "timestamp": "2026-03-22T03:30:41.308Z"
+      "timestamp": "2026-03-28T11:29:24.635Z"
     },
     {
       "id": "P3-21",
       "name": "OAuth token URL env-driven (not hardcoded)",
       "status": "PASS",
       "detail": "All files use env vars",
-      "timestamp": "2026-03-22T03:30:41.311Z"
+      "timestamp": "2026-03-28T11:29:24.636Z"
     },
     {
       "id": "P3-22",
       "name": "Proactive rate limiter (3 req/s)",
       "status": "PASS",
       "detail": "Rate limiting code found",
-      "timestamp": "2026-03-22T03:30:41.320Z"
+      "timestamp": "2026-03-28T11:29:24.642Z"
     },
     {
       "id": "P3-23",
       "name": "HTTP 500/503 retry logic",
       "status": "PASS",
       "detail": "Retry logic for server errors found",
-      "timestamp": "2026-03-22T03:30:41.322Z"
+      "timestamp": "2026-03-28T11:29:24.643Z"
     },
     {
       "id": "P3-24",
       "name": "All declaration types (A-Z)",
       "status": "PASS",
       "detail": "mapDeclarationType() handles all 10 types",
-      "timestamp": "2026-03-22T03:30:41.324Z"
+      "timestamp": "2026-03-28T11:29:24.644Z"
     },
     {
       "id": "P1-01",
       "name": "Runbook / support docs exist",
       "status": "PASS",
       "detail": "Documentation found",
-      "timestamp": "2026-03-22T03:30:41.325Z"
+      "timestamp": "2026-03-28T11:29:24.644Z"
     },
     {
       "id": "P4-01",
       "name": "Health check endpoint",
       "status": "PASS",
-      "detail": "HTTP 200: {\"status\":\"ok\",\"timestamp\":\"2026-03-22T03:30:41.372Z\",\"environment\":\"sandbox\",\"services\":{\"convex\":t",
-      "timestamp": "2026-03-22T03:30:41.380Z"
+      "detail": "HTTP 200: {\"status\":\"ok\",\"timestamp\":\"2026-03-28T11:29:24.676Z\",\"environment\":\"sandbox\",\"services\":{\"convex\":t",
+      "timestamp": "2026-03-28T11:29:24.676Z"
     },
     {
       "id": "P5-01",
       "name": "Env config switchable without deploy",
       "status": "PASS",
       "detail": "HMRC_ENVIRONMENT env var drives all URLs",
-      "timestamp": "2026-03-22T03:30:41.895Z"
+      "timestamp": "2026-03-28T11:29:25.180Z"
     }
   ]
 }

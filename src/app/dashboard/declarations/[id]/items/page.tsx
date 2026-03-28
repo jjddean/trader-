@@ -324,18 +324,14 @@ export default function GoodsItemsPage() {
               <label htmlFor="origin" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
                 Origin Country
               </label>
-              <Select value={originCountry} onValueChange={setOriginCountry}>
-                <SelectTrigger id="origin" className="h-9 w-full rounded-md border-gray-200 bg-gray-50 text-xs text-gray-700">
-                  <SelectValue placeholder="Select Origin Country" />
-                </SelectTrigger>
-                <SelectContent position="popper" className="max-h-[300px]">
-                  {dctsCountries.map((country) => (
-                    <SelectItem key={country.name} value={country.name} className="text-xs">
-                      {country.name} ({country.tier})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <input
+                id="origin"
+                value={originCountry}
+                onChange={(e) => setOriginCountry(e.target.value.toUpperCase().slice(0, 2))}
+                placeholder="e.g. BR, AR, TH, US"
+                maxLength={2}
+                className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 font-mono text-xs text-gray-700 uppercase transition-colors focus:border-gray-400 focus:outline-none"
+              />
             </div>
             <div>
               <label htmlFor="hsCode" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
@@ -353,18 +349,13 @@ export default function GoodsItemsPage() {
               <label htmlFor="description" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
                 Description
               </label>
-              <Select value={description} onValueChange={setDescription}>
-                <SelectTrigger id="description" className="h-9 w-full rounded-md border-gray-200 bg-gray-50 text-xs text-gray-700">
-                  <SelectValue placeholder="Select Cargo Description" />
-                </SelectTrigger>
-                <SelectContent position="popper" className="max-h-[300px]">
-                  <SelectItem value="Knitwear" className="text-xs">Knitwear</SelectItem>
-                  <SelectItem value="Electronics" className="text-xs">Electronics</SelectItem>
-                  <SelectItem value="Machinery" className="text-xs">Machinery</SelectItem>
-                  <SelectItem value="Apparel" className="text-xs">Apparel</SelectItem>
-                  <SelectItem value="Furniture" className="text-xs">Furniture</SelectItem>
-                </SelectContent>
-              </Select>
+              <input
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g. Frozen plucked chickens"
+                className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none"
+              />
             </div>
           </div>
           <DialogFooter>

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 const geistSans = GeistSans;
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.freightcode.co.uk"),
   title: "FreightCode | Instant UK Customs Clearance Software",
   description: "Automate your UK customs declarations (HMRC CDS), detect savings, and ensure compliance instantly with FreightCode. Search our 5 AI-powered guides for CDS, TRE, and Commodity Codes.",
   keywords: "HMRC, CDS, UK Customs, Import Duty, Declarations, TRE, FreightCode, AI Customs Agent",
@@ -16,6 +17,13 @@ export const metadata: Metadata = {
     icon: "/icon.png",
     shortcut: "/favicon.ico",
     apple: "/icon.png",
+  },
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
   appleWebApp: {
     capable: true,
@@ -26,8 +34,15 @@ export const metadata: Metadata = {
     title: "FreightCode | Instant UK Customs Clearance Software",
     description: "Automate your UK customs declarations (HMRC CDS), detect savings, and ensure compliance instantly with FreightCode. Search our 5 AI-powered guides for CDS, TRE, and Commodity Codes.",
     type: "website",
-    url: "https://freightcode.co.uk",
-  }
+    url: "https://www.freightcode.co.uk",
+    siteName: "FreightCode",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FreightCode | Instant UK Customs Clearance Software",
+    description: "Automate your UK customs declarations (HMRC CDS), detect savings, and ensure compliance instantly with FreightCode.",
+    creator: "@freightcode",
+  },
 };
 
 export default function RootLayout({
