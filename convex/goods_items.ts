@@ -4,6 +4,14 @@ import { mutation, query } from "./_generated/server";
 export const getItems = query({
   args: { declarationId: v.id("declarations") },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const declaration = await ctx.db.get(args.declarationId);
+    if (!declaration || (declaration as any).userId !== identity.subject) {
+      return []; // Return empty if not owned
+    }
+
     return await ctx.db
       .query("goods_items")
       .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId))
@@ -26,6 +34,14 @@ export const addItem = mutation({
     netWeightKg: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const declaration = await ctx.db.get(args.declarationId);
+    if (!declaration || (declaration as any).userId !== identity.subject) {
+      throw new Error("Unauthorized");
+    }
+
     const itemId = await ctx.db.insert("goods_items", args);
     return itemId;
   },
@@ -34,10 +50,18 @@ export const addItem = mutation({
 export const removeItem = mutation({
   args: { id: v.id("goods_items") },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
     const existing = await ctx.db.get(args.id);
-    if (existing !== null) {
-      await ctx.db.delete(args.id);
+    if (!existing) return;
+
+    const declaration = await ctx.db.get(existing.declarationId as any);
+    if (!declaration || (declaration as any).userId !== identity.subject) {
+      throw new Error("Unauthorized");
     }
+
+    await ctx.db.delete(args.id);
   },
 });
 
@@ -54,6 +78,17 @@ export const updateItem = mutation({
     netWeightKg: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const existing = await ctx.db.get(args.id);
+    if (!existing) throw new Error("Item not found");
+
+    const declaration = await ctx.db.get(existing.declarationId as any);
+    if (!declaration || (declaration as any).userId !== identity.subject) {
+      throw new Error("Unauthorized");
+    }
+
     const { id, ...updates } = args;
     await ctx.db.patch(id, updates);
   },

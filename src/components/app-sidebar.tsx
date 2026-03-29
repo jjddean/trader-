@@ -52,27 +52,42 @@ const navItems = [
     icon: ShieldCheck,
     items: [
       { href: "/dashboard/audit", label: "Compliance Audit" },
-      { href: "/dashboard/audit-logs", label: "System Audit" },
       { href: "/dashboard/reports", label: "Customs Reports" },
       { href: "/dashboard/records", label: "Financial Records" },
     ],
   },
+
   { href: "/dashboard/tools", label: "Tools & Utilities", icon: Wrench },
 ];
 
+const adminItems = [
+  {
+    label: "Admin",
+    icon: ShieldCheck,
+    items: [
+      { href: "/dashboard/admin/setup", label: "Set Up", icon: Settings },
+      { href: "/dashboard/admin/clerk", label: "Online Clerk", icon: Bot },
+      { href: "/dashboard/admin/audit", label: "System Audit", icon: History },
+    ],
+  },
+];
+
+
 export function AppSidebar() {
   const pathname = usePathname();
-  const { user } = useUser();
-  const userId = user?.id || "";
+  const { user: clerkUser } = useUser();
+  const userId = clerkUser?.id || "";
+  const userData = useQuery(api.users.current);
+  const isAdmin = userData?.role === "admin";
+
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
   }, []);
 
-  const allDeclarations = useQuery(api.declarations.getAllDecls);
-  const declarations = (allDeclarations as any[])?.filter((l: any) => l.userId === userId) ?? [];
-  const reviewCount = declarations.filter((l: any) => l.status === "Action Required" || l.status === "Rejected" || l.status === "Invalid").length ?? 0;
+  const declarations = useQuery(api.declarations.getMyDeclarations) ?? [];
+  const reviewCount = (declarations as any[]).filter((l: any) => l.status === "Action Required" || l.status === "Rejected" || l.status === "Invalid").length ?? 0;
 
   return (
     <Sidebar className="border-r border-gray-200 bg-gray-50 !h-screen">
@@ -95,12 +110,12 @@ export function AppSidebar() {
       <SidebarContent className="flex flex-col p-4 pt-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <SidebarGroup className="p-0">
           <SidebarGroupLabel className="mb-0.5 px-3 text-[10px] font-normal tracking-widest text-gray-400 uppercase">
-            Platform
+            {isAdmin ? "Control Plane" : "Platform"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
-              {navItems.map((item) => {
-                const Icon = item.icon;
+              {([...navItems, ...(isAdmin ? adminItems[0].items : [])]).map((item) => {
+                const Icon = (item as any).icon;
                 const hasItems = "items" in item && item.items && item.items.length > 0;
                 
                 if (hasItems) {
@@ -197,6 +212,9 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+
+
+
         <SidebarGroup className="p-0 mt-1">
           <SidebarGroupLabel className="mb-0.5 px-3 text-[10px] font-normal tracking-widest text-gray-400 uppercase">
             Help & Docs
@@ -244,11 +262,12 @@ export function AppSidebar() {
             <UserButton />
             <div className="flex flex-col">
               <span className="max-w-[100px] truncate text-xs font-normal text-gray-700">
-                {user?.fullName || "User"}
+                {clerkUser?.fullName || "User"}
               </span>
-              <span className="text-[10px] text-gray-400">Enterprise</span>
+              <span className="text-[10px] text-gray-400">{isAdmin ? "Admin" : "Enterprise"}</span>
             </div>
           </div>
+
         ) : (
           <div className="flex h-[42px] items-center gap-2 rounded-md border border-gray-200 bg-gray-100 px-3 py-2">
             <div className="h-6 w-6 animate-pulse rounded-full bg-gray-200" />

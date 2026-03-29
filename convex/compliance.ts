@@ -229,7 +229,7 @@ export const simulateRoO = mutation({
       args.valueUK +
       args.valueThirdParty +
       (args.materials?.reduce((acc, m) => acc + m.value, 0) || 0);
-    const valueAddedPercent = (qualifyingMaterialValue / totalValue) * 100;
+    const valueAddedPercent = totalValue > 0 ? (qualifyingMaterialValue / totalValue) * 100 : 0;
 
     const threshold = 30; // 30% local/applied value added requirement for DCTS
     const isCompliant = valueAddedPercent >= threshold;

@@ -157,7 +157,7 @@ export default function DocumentsPage() {
         </div>
       )}
 
-      <div className={`rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden transition-opacity ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}>
+      <div className={`rounded-xl border border-gray-200 bg-white overflow-hidden transition-opacity ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}>
         <div className="p-8">
            
            <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-lg p-12 bg-gray-50/50 hover:bg-gray-50 transition-colors relative">

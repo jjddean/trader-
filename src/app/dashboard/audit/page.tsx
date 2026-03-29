@@ -52,7 +52,7 @@ export default function ComplyAuditConsole() {
   const [selectedMrn, setSelectedMrn] = useState<string>("unlinked");
 
   const { user } = useUser();
-  const declarations = useQuery(api.declarations.getAllDecls) || [];
+  const declarations = useQuery(api.declarations.getMyDeclarations) || [];
   const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
   const saveDocument = useMutation(api.documents.saveDocument);
 

@@ -11,12 +11,15 @@ export const saveToken = mutation({
     eori: v.optional(v.string())
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
     const expiresAt = Date.now() + args.expiresIn * 1000;
     
     // Check if user already has a token record
     const existing = await ctx.db
       .query("hmrc_tokens")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .first();
       
     let tokenId;
@@ -30,7 +33,7 @@ export const saveToken = mutation({
       });
     } else {
       tokenId = await ctx.db.insert("hmrc_tokens", {
-        userId: args.userId,
+        userId: identity.subject,
         accessToken: args.accessToken,
         refreshToken: args.refreshToken,
         expiresAt,
@@ -41,7 +44,7 @@ export const saveToken = mutation({
     // Securely link this to the user's workspace if one exists
     const workspace = await ctx.db
       .query("workspaces")
-      .withIndex("by_owner", (q) => q.eq("ownerId", args.userId))
+      .withIndex("by_owner", (q) => q.eq("ownerId", identity.subject))
       .first();
       
     if (workspace) {
@@ -51,13 +54,14 @@ export const saveToken = mutation({
     }
 
     // 3. Audit Log Entry
-    await ctx.runMutation(api.audit.logAction, {
-      userId: args.userId,
+    await ctx.db.insert("auditLogs", {
+      userId: identity.subject,
       action: "hmrc_auth_linked",
-      metadata: {
+      details: JSON.stringify({
         eori: args.eori,
-        expiresAt: Date.now() + args.expiresIn * 1000
-      }
+        expiresAt: expiresAt
+      }),
+      timestamp: Date.now()
     });
     
     return tokenId;
@@ -65,11 +69,14 @@ export const saveToken = mutation({
 });
 
 export const getToken = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
+  args: { userId: v.optional(v.string()) },
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
     return await ctx.db
       .query("hmrc_tokens")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .first();
   },
 });

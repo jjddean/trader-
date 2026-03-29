@@ -138,11 +138,11 @@ export default function RecordsPage() {
               <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="bg-gray-50 border-b border-[#e9e9e7]">
-                  <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Declaration MRN</th>
-                  <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Tax Type</th>
-                  <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Payment Method</th>
-                  <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase text-right">Amount</th>
+                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">Declaration MRN</th>
+                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">Date</th>
+                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">Tax Type</th>
+                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">Payment Method</th>
+                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase text-right">Amount</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#e9e9e7]">

@@ -11,25 +11,8 @@ export default function ToolsHubPage() {
       description: "Search the official UK Global Tariff to find 6-10 digit commodity codes.",
       icon: <BookOpen className="h-5 w-5 text-[#787774]" />,
     },
-    {
-      title: "Landed Cost Calculator",
-      href: "/dashboard/tools/calculator",
-      description: "Estimate UK import duties, VAT, and freight costs before moving goods.",
-      icon: <Calculator className="h-5 w-5 text-[#787774]" />,
-    },
-    {
-      title: "DCTS Eligibility Checker",
-      href: "/dashboard/tools/dcts",
-      description: "Check if an origin country qualifies for the Developing Countries Trading Scheme.",
-      icon: <Globe className="h-5 w-5 text-[#787774]" />,
-    },
-    {
-      title: "Rules of Origin Simulator",
-      href: "/dashboard/tools/roo-simulator",
-      description: "Simulate complex origin rules to ensure compliance for preferential tariffs.",
-      icon: <RotateCcw className="h-5 w-5 text-[#787774]" />,
-    },
   ];
+
 
   return (
     <div className="mx-auto flex h-full max-w-[800px] flex-col px-8 py-12">

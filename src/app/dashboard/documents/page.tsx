@@ -2,12 +2,42 @@
 
 import React, { useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
-import { Upload, ClipboardPaste, Info, FileText, CheckCircle2, ShieldAlert, Download, Loader2, Trash2, Copy } from "lucide-react";
+import { useQuery, useMutation } from "convex/react";
+import * as SelectPrimitive from "@radix-ui/react-select";
+import { 
+  Upload, 
+  ClipboardPaste, 
+  Info, 
+  FileText, 
+  CheckCircle2, 
+  ShieldAlert, 
+  Download, 
+  Loader2, 
+  Trash2, 
+  Copy, 
+  Search, 
+  ShieldCheck, 
+  Globe, 
+  Package, 
+  Calculator, 
+  AlertTriangle, 
+  XCircle,
+  ChevronDown,
+  Check
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "../../../../convex/_generated/api";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { countries } from "@/lib/data/countries";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { 
+  DropdownMenu, 
+  DropdownMenuTrigger, 
+  DropdownMenuContent, 
+  DropdownMenuItem 
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -15,16 +45,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 // import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function DocumentsPage() {
   const { user } = useUser();
   const userId = user?.id || "";
   const dbDocuments = useQuery(api.documents.getDocuments, userId ? { userId } : "skip");
-  const allDeclarations = useQuery(api.declarations.getAllDecls);
-  const userDeclarations = (allDeclarations || []).filter((decl: any) => decl.userId === userId);
+  const allDeclarations = useQuery(api.declarations.getMyDeclarations);
+  const declarations = allDeclarations || [];
   const [documents, setDocuments] = useState<any[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -33,6 +62,23 @@ export default function DocumentsPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [declarationFilter, setDeclarationFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+
+  // COMPLIANCE TOOLS STATE
+  const [selectedCountry, setSelectedCountry] = useState("");
+  const eligibility = useQuery(api.compliance.checkEligibility, selectedCountry ? { originCountry: selectedCountry } : "skip");
+  
+  const simulateRoO = useMutation(api.compliance.simulateRoO);
+  const [rooForm, setRooForm] = useState({ originCountry: "", commodityCode: "", valueOrigin: "", valueUK: "", valueThirdParty: "" });
+  const [rooResult, setRooResult] = useState<any | null>(null);
+  const [simulating, setSimulating] = useState(false);
+
+  const calculateLandedCost = useMutation(api.calculator.calculateLandedCost);
+  const [calcForm, setCalcForm] = useState({ hsCode: "", originCountry: "", itemValue: "", shippingCost: "", dutyRate: "", vatRate: "20" });
+  const [calcResult, setCalcResult] = useState<any | null>(null);
+  const [calculating, setCalculating] = useState(false);
+
+  // MODAL STATE
+  const [activeTool, setActiveTool] = useState<string | null>(null);
 
   const liveDocuments = (dbDocuments || []).map((doc: any) => {
     const docTypeCode = inferDocTypeCode(doc.fileName || "");
@@ -62,12 +108,26 @@ export default function DocumentsPage() {
     const typeMatches = typeFilter === "all" || doc.typeName === typeFilter;
     return declarationMatches && typeMatches;
   });
-  const declarationOptions = userDeclarations.map((decl: any) => ({
+  const allDeclarationOptions = declarations.map((decl: any) => ({
     id: String(decl._id),
-    mrn: decl.mrn ? String(decl.mrn) : "— pending",
+    mrn: decl.mrn ? String(decl.mrn) : "Draft (Pending)",
   }));
-  const declarationById = Object.fromEntries(declarationOptions.map((decl) => [decl.id, decl]));
-  const typeOptions = Array.from(new Set(mergedDocuments.map((doc) => doc.typeName).filter(Boolean)));
+  const declarationById = Object.fromEntries(allDeclarationOptions.map((decl) => [decl.id, decl]));
+
+  const relevantDeclarationIds = new Set(mergedDocuments.map(doc => doc.declarationId).filter(Boolean));
+  const filteredDeclarationOptions = allDeclarationOptions.filter(opt => relevantDeclarationIds.has(opt.id));
+
+
+
+  const DOCUMENT_TYPES = [
+    { code: "N935", name: "Commercial invoice" },
+    { code: "N271", name: "Packing list" },
+    { code: "N864", name: "Certificate of origin" },
+    { code: "N703", name: "Bill of lading" },
+    { code: "C400", name: "Licence" },
+    { code: "ZZZ", name: "Other" },
+  ];
+
 
   const handleUploadSubmit = async () => {
     if (!uploadForm.file) return;
@@ -173,40 +233,106 @@ export default function DocumentsPage() {
       {/* FILTER BAR & TABLE AREA */}
       <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
         <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-5 py-4">
-          <Select value={declarationFilter} onValueChange={setDeclarationFilter}>
-            <SelectTrigger className="w-[180px] h-8 bg-white text-xs border-gray-200">
-              <SelectValue placeholder="All declarations" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs">All declarations</SelectItem>
-              {declarationOptions.map((decl) => (
-                <SelectItem key={decl.id} value={decl.id} className="text-xs font-mono">{decl.mrn}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[180px] h-8 bg-white text-xs border-gray-200">
-              <SelectValue placeholder="All types" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs">All types</SelectItem>
-              {typeOptions.map((typeName) => (
-                <SelectItem key={typeName} value={typeName} className="text-xs">{typeName}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SelectPrimitive.Root value={declarationFilter} onValueChange={setDeclarationFilter}>
+            <SelectPrimitive.Trigger className="flex h-9 w-[200px] items-center justify-between rounded-md border border-gray-200 bg-white px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none">
+              <SelectPrimitive.Value placeholder="All declarations" />
+              <SelectPrimitive.Icon>
+                <ChevronDown className="h-4 w-4 text-gray-400" />
+              </SelectPrimitive.Icon>
+            </SelectPrimitive.Trigger>
+            <SelectPrimitive.Portal>
+              <SelectPrimitive.Content className="z-[100] max-h-[300px] min-w-[12rem] overflow-hidden rounded-lg border border-gray-100 bg-white shadow-lg" position="popper" sideOffset={4}>
+                <SelectPrimitive.Viewport className="p-1 overflow-y-auto">
+                  <SelectPrimitive.Item value="all" className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50 font-medium">
+                    <SelectPrimitive.ItemIndicator className="absolute left-2 inline-flex items-center">
+                      <Check className="h-3.5 w-3.5 text-gray-500" />
+                    </SelectPrimitive.ItemIndicator>
+                    <SelectPrimitive.ItemText>All declarations</SelectPrimitive.ItemText>
+                  </SelectPrimitive.Item>
+                  {filteredDeclarationOptions.map((decl) => (
+                    <SelectPrimitive.Item key={decl.id} value={decl.id} className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50 font-mono">
+
+
+                      <SelectPrimitive.ItemIndicator className="absolute left-2 inline-flex items-center">
+                        <Check className="h-3.5 w-3.5 text-gray-500" />
+                      </SelectPrimitive.ItemIndicator>
+                      <SelectPrimitive.ItemText>{decl.mrn}</SelectPrimitive.ItemText>
+                    </SelectPrimitive.Item>
+                  ))}
+                </SelectPrimitive.Viewport>
+              </SelectPrimitive.Content>
+            </SelectPrimitive.Portal>
+          </SelectPrimitive.Root>
+
+          <SelectPrimitive.Root value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectPrimitive.Trigger className="flex h-9 w-[180px] items-center justify-between rounded-md border border-gray-200 bg-white px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none">
+              <SelectPrimitive.Value placeholder="All types" />
+              <SelectPrimitive.Icon>
+                <ChevronDown className="h-4 w-4 text-gray-400" />
+              </SelectPrimitive.Icon>
+            </SelectPrimitive.Trigger>
+            <SelectPrimitive.Portal>
+              <SelectPrimitive.Content className="z-[100] max-h-[300px] min-w-[12rem] overflow-hidden rounded-lg border border-gray-100 bg-white shadow-lg" position="popper" sideOffset={4}>
+                <SelectPrimitive.Viewport className="p-1 overflow-y-auto">
+                  <SelectPrimitive.Item value="all" className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50 font-medium">
+                    <SelectPrimitive.ItemIndicator className="absolute left-2 inline-flex items-center">
+                      <Check className="h-3.5 w-3.5 text-gray-500" />
+                    </SelectPrimitive.ItemIndicator>
+                    <SelectPrimitive.ItemText>All types</SelectPrimitive.ItemText>
+                  </SelectPrimitive.Item>
+                  {DOCUMENT_TYPES.map((type) => (
+                    <SelectPrimitive.Item key={type.code} value={type.name} className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50">
+                      <SelectPrimitive.ItemIndicator className="absolute left-2 inline-flex items-center">
+                        <Check className="h-3.5 w-3.5 text-gray-500" />
+                      </SelectPrimitive.ItemIndicator>
+                      <SelectPrimitive.ItemText>{type.name}</SelectPrimitive.ItemText>
+                    </SelectPrimitive.Item>
+                  ))}
+                </SelectPrimitive.Viewport>
+              </SelectPrimitive.Content>
+            </SelectPrimitive.Portal>
+
+          </SelectPrimitive.Root>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex h-9 w-[180px] items-center justify-between rounded-md border border-gray-200 bg-white px-3 text-xs text-gray-700 transition-colors hover:border-gray-400 focus:outline-none">
+              <span>Compliance Tools</span>
+              <ChevronDown className="h-4 w-4 text-gray-400" />
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent className="z-[100] min-w-[12rem] overflow-hidden rounded-lg border border-gray-100 bg-white shadow-lg" align="start">
+              <DropdownMenuItem 
+                onClick={() => setActiveTool("dcts")}
+                className="relative flex cursor-pointer select-none items-center rounded-md px-3 py-2 text-xs text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
+              >
+                DCTS Eligibility
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setActiveTool("roo")}
+                className="relative flex cursor-pointer select-none items-center rounded-md px-3 py-2 text-xs text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
+              >
+                Rules of Origin
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => setActiveTool("landed")}
+                className="relative flex cursor-pointer select-none items-center rounded-md px-3 py-2 text-xs text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
+              >
+                Landed Cost Calculator
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
         </div>
 
         <div className="w-full overflow-x-auto">
           <table className="w-full border-collapse text-left">
             <thead>
               <tr className="bg-gray-50 border-b border-[#e9e9e7]">
-                <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase w-[40%]">DOCUMENT</th>
-                <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">TYPE</th>
-                <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">LINKED MRN</th>
-                <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">STATUS</th>
-                <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase text-right w-[80px]">DE 2/3</th>
+                <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase w-[40%]">DOCUMENT</th>
+                <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">TYPE</th>
+                <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">LINKED MRN</th>
+                <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">STATUS</th>
+                <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase text-right w-[80px]">DE 2/3</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e9e9e7]">
@@ -442,35 +568,92 @@ export default function DocumentsPage() {
                   <label htmlFor="docType" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
                     Document Type
                   </label>
-                  <Select value={uploadForm.type} onValueChange={(val) => setUploadForm({...uploadForm, type: val})}>
-                    <SelectTrigger id="docType" className="h-9 w-full rounded-md border-gray-200 bg-gray-50 text-xs text-gray-700">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent position="popper" className="max-h-[300px]">
-                      <SelectItem value="N935 Commercial invoice" className="text-xs">Commercial invoice (N935)</SelectItem>
-                      <SelectItem value="N271 Packing list" className="text-xs">Packing list (N271)</SelectItem>
-                      <SelectItem value="N864 Certificate of origin" className="text-xs">Certificate of origin (N864)</SelectItem>
-                      <SelectItem value="N703 Bill of lading" className="text-xs">Bill of lading (N703)</SelectItem>
-                      <SelectItem value="C400 Import licence" className="text-xs">Import licence (C400)</SelectItem>
-                      <SelectItem value="ZZZ Other" className="text-xs">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <SelectPrimitive.Root value={uploadForm.type} onValueChange={(val) => setUploadForm({...uploadForm, type: val})}>
+                    <SelectPrimitive.Trigger id="docType" className="flex h-9 w-full items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none data-[placeholder]:text-gray-400">
+                      <SelectPrimitive.Value placeholder="Select type" />
+                      <SelectPrimitive.Icon>
+                        <ChevronDown className="h-4 w-4 text-gray-400" />
+                      </SelectPrimitive.Icon>
+                    </SelectPrimitive.Trigger>
+                    <SelectPrimitive.Portal>
+                      <SelectPrimitive.Content className="z-[100] min-w-[12rem] overflow-hidden rounded-lg border border-gray-100 bg-white shadow-lg" position="popper" sideOffset={4}>
+                        <SelectPrimitive.Viewport className="p-1">
+                          <SelectPrimitive.Item value="N935 Commercial invoice" className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50">
+                            <SelectPrimitive.ItemIndicator className="absolute left-2 inline-flex items-center">
+                              <Check className="h-3.5 w-3.5 text-gray-500" />
+                            </SelectPrimitive.ItemIndicator>
+                            <SelectPrimitive.ItemText>Commercial invoice (N935)</SelectPrimitive.ItemText>
+                          </SelectPrimitive.Item>
+                          <SelectPrimitive.Item value="N271 Packing list" className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50">
+                            <SelectPrimitive.ItemIndicator className="absolute left-2 inline-flex items-center">
+                              <Check className="h-3.5 w-3.5 text-gray-500" />
+                            </SelectPrimitive.ItemIndicator>
+                            <SelectPrimitive.ItemText>Packing list (N271)</SelectPrimitive.ItemText>
+                          </SelectPrimitive.Item>
+                          <SelectPrimitive.Item value="N864 Certificate of origin" className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50">
+                            <SelectPrimitive.ItemIndicator className="absolute left-2 inline-flex items-center">
+                              <Check className="h-3.5 w-3.5 text-gray-500" />
+                            </SelectPrimitive.ItemIndicator>
+                            <SelectPrimitive.ItemText>Certificate of origin (N864)</SelectPrimitive.ItemText>
+                          </SelectPrimitive.Item>
+                          <SelectPrimitive.Item value="N703 Bill of lading" className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50">
+                            <SelectPrimitive.ItemIndicator className="absolute left-2 inline-flex items-center">
+                              <Check className="h-3.5 w-3.5 text-gray-500" />
+                            </SelectPrimitive.ItemIndicator>
+                            <SelectPrimitive.ItemText>Bill of lading (N703)</SelectPrimitive.ItemText>
+                          </SelectPrimitive.Item>
+                          <SelectPrimitive.Item value="C400 Import licence" className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50">
+                            <SelectPrimitive.ItemIndicator className="absolute left-2 inline-flex items-center">
+                              <Check className="h-3.5 w-3.5 text-gray-500" />
+                            </SelectPrimitive.ItemIndicator>
+                            <SelectPrimitive.ItemText>Import licence (C400)</SelectPrimitive.ItemText>
+                          </SelectPrimitive.Item>
+                          <SelectPrimitive.Item value="ZZZ Other" className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50">
+                            <SelectPrimitive.ItemIndicator className="absolute left-2 inline-flex items-center">
+                              <Check className="h-3.5 w-3.5 text-gray-500" />
+                            </SelectPrimitive.ItemIndicator>
+                            <SelectPrimitive.ItemText>Other</SelectPrimitive.ItemText>
+                          </SelectPrimitive.Item>
+                        </SelectPrimitive.Viewport>
+                      </SelectPrimitive.Content>
+                    </SelectPrimitive.Portal>
+                  </SelectPrimitive.Root>
+
                 </div>
                 <div>
                   <label htmlFor="docLink" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
                     Link to Declaration
                   </label>
-                  <Select value={uploadForm.linkedMrn} onValueChange={(val) => setUploadForm({...uploadForm, linkedMrn: val})}>
-                    <SelectTrigger id="docLink" className="h-9 w-full rounded-md border-gray-200 bg-gray-50 text-xs text-gray-700">
-                      <SelectValue placeholder="Select declaration" />
-                    </SelectTrigger>
-                    <SelectContent position="popper" className="max-h-[300px]">
-                      {declarationOptions.map((decl) => (
-                        <SelectItem key={decl.id} value={decl.id} className="text-xs font-mono">{decl.mrn}</SelectItem>
-                      ))}
-                      <SelectItem value="none" className="text-xs">Do not link</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <SelectPrimitive.Root value={uploadForm.linkedMrn} onValueChange={(val) => setUploadForm({...uploadForm, linkedMrn: val})}>
+                    <SelectPrimitive.Trigger id="docLink" className="flex h-9 w-full items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none data-[placeholder]:text-gray-400">
+                      <SelectPrimitive.Value placeholder="Select declaration" />
+                      <SelectPrimitive.Icon>
+                        <ChevronDown className="h-4 w-4 text-gray-400" />
+                      </SelectPrimitive.Icon>
+                    </SelectPrimitive.Trigger>
+                    <SelectPrimitive.Portal>
+                      <SelectPrimitive.Content className="z-[100] min-w-[12rem] max-h-[300px] overflow-hidden rounded-lg border border-gray-100 bg-white shadow-lg" position="popper" sideOffset={4}>
+                        <SelectPrimitive.Viewport className="p-1">
+                          {allDeclarationOptions.map((decl: any) => (
+                            <SelectPrimitive.Item key={decl.id} value={decl.id} className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50 font-mono">
+
+                              <SelectPrimitive.ItemIndicator className="absolute left-2 inline-flex items-center">
+                                <Check className="h-3.5 w-3.5 text-gray-500" />
+                              </SelectPrimitive.ItemIndicator>
+                              <SelectPrimitive.ItemText>{decl.mrn}</SelectPrimitive.ItemText>
+                            </SelectPrimitive.Item>
+                          ))}
+                          <SelectPrimitive.Item value="none" className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50">
+                            <SelectPrimitive.ItemIndicator className="absolute left-2 inline-flex items-center">
+                              <Check className="h-3.5 w-3.5 text-gray-500" />
+                            </SelectPrimitive.ItemIndicator>
+                            <SelectPrimitive.ItemText>Do not link</SelectPrimitive.ItemText>
+                          </SelectPrimitive.Item>
+                        </SelectPrimitive.Viewport>
+                      </SelectPrimitive.Content>
+                    </SelectPrimitive.Portal>
+                  </SelectPrimitive.Root>
+
                 </div>
               </div>
               <DialogFooter>
@@ -535,6 +718,230 @@ export default function DocumentsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* DCTS ELIGIBILITY MODAL */}
+      <Dialog open={activeTool === 'dcts'} onOpenChange={(open) => !open && setActiveTool(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-blue-500" />
+              DCTS Eligibility Checker
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 pt-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                Country of Origin
+              </label>
+              <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+                <SelectTrigger className="h-9 w-full rounded-md border-gray-200 bg-gray-50 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none">
+                  <SelectValue placeholder="Choose a country..." />
+                </SelectTrigger>
+                <SelectContent position="popper" className="max-h-[300px] z-[110]">
+                  {countries.map((c) => (
+                    <SelectItem key={c.code} value={c.name} className="text-xs">
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+            </div>
+
+            {eligibility && selectedCountry && (
+              <div className={cn(
+                "p-5 rounded-lg border text-xs leading-relaxed transition-all",
+                eligibility.eligible ? "bg-green-50 border-green-100 text-green-900" : "bg-red-50 border-red-100 text-red-900"
+              )}>
+                <div className="flex items-center gap-2 font-bold mb-2 uppercase tracking-tight">
+                  {eligibility.eligible ? <CheckCircle2 className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
+                  {eligibility.eligible ? `${selectedCountry}: ${eligibility.tier}` : `${selectedCountry}: Not Eligible`}
+                </div>
+                <div className="space-y-1">
+                  <p>Import Duty Rate: <span className="font-bold">{eligibility.duty}</span></p>
+                  <p>Scheme Status: <span className="font-bold">{eligibility.eligible ? "Eligible for DCTS Preference" : "Standard MFN Rates Apply"}</span></p>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* RULES OF ORIGIN MODAL */}
+      <Dialog open={activeTool === 'roo'} onOpenChange={(open) => !open && setActiveTool(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-blue-500" />
+              Rules of Origin (RoO)
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 pt-4">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Origin Country</label>
+                <Select 
+                  value={rooForm.originCountry} 
+                  onValueChange={(val) => setRooForm({...rooForm, originCountry: val})}
+                >
+                  <SelectTrigger className="h-9 w-full rounded-md border-gray-200 bg-gray-50 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none">
+                    <SelectValue placeholder="Origin..." />
+                  </SelectTrigger>
+                  <SelectContent position="popper" className="max-h-[300px] z-[110]">
+                    {countries.map((c) => (
+                      <SelectItem key={c.code} value={c.name} className="text-xs">
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Value Origin (£)</label>
+                  <input 
+                    type="number"
+                    value={rooForm.valueOrigin}
+                    onChange={(e) => setRooForm({...rooForm, valueOrigin: e.target.value})}
+                    className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs outline-none focus:border-blue-500"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Value UK (£)</label>
+                  <input 
+                    type="number"
+                    value={rooForm.valueUK}
+                    onChange={(e) => setRooForm({...rooForm, valueUK: e.target.value})}
+                    className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs outline-none focus:border-blue-500"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">3rd Party Materials (£)</label>
+                <input 
+                  type="number"
+                  value={rooForm.valueThirdParty}
+                  onChange={(e) => setRooForm({...rooForm, valueThirdParty: e.target.value})}
+                  className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs outline-none focus:border-blue-500"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            <Button 
+              className="h-9 bg-black text-white hover:bg-gray-800 w-full"
+              disabled={simulating || !rooForm.originCountry}
+              onClick={async () => {
+                setSimulating(true);
+                try {
+                  const res = await simulateRoO({
+                    originCountry: rooForm.originCountry,
+                    commodityCode: "N/A",
+                    valueOrigin: Number(rooForm.valueOrigin),
+                    valueUK: Number(rooForm.valueUK),
+                    valueThirdParty: Number(rooForm.valueThirdParty),
+                  });
+                  setRooResult(res);
+                } finally {
+                  setSimulating(false);
+                }
+              }}
+            >
+              {simulating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Simulate Origin Eligibility"}
+            </Button>
+
+            {rooResult && (
+              <div className={cn(
+                "p-5 rounded-lg border text-xs leading-relaxed",
+                rooResult.isCompliant ? "bg-green-50 border-green-100 text-green-900" : "bg-red-50 border-red-100 text-red-900"
+              )}>
+                <div className="flex items-center gap-2 font-bold mb-2 uppercase tracking-tight">
+                  {rooResult.isCompliant ? <CheckCircle2 className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
+                  {rooResult.isCompliant ? "Compliant" : "Non-Compliant"}
+                </div>
+                {rooResult.message}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* LANDED COST MODAL */}
+      <Dialog open={activeTool === 'landed'} onOpenChange={(open) => !open && setActiveTool(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calculator className="h-5 w-5 text-blue-500" />
+              Landed Cost Calculator
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 pt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Value (£)</label>
+                <input type="number" value={calcForm.itemValue} onChange={(e) => setCalcForm({...calcForm, itemValue: e.target.value})} className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs" placeholder="0.00" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Shipping (£)</label>
+                <input type="number" value={calcForm.shippingCost} onChange={(e) => setCalcForm({...calcForm, shippingCost: e.target.value})} className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs" placeholder="0.00" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Duty Rate (%)</label>
+                <input type="number" value={calcForm.dutyRate} onChange={(e) => setCalcForm({...calcForm, dutyRate: e.target.value})} className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs" placeholder="0" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">VAT Rate (%)</label>
+                <input type="number" value={calcForm.vatRate} onChange={(e) => setCalcForm({...calcForm, vatRate: e.target.value})} className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs" placeholder="20" />
+              </div>
+            </div>
+
+            <Button 
+              className="h-9 bg-black text-white hover:bg-gray-800 w-full"
+              disabled={calculating || !calcForm.itemValue}
+              onClick={async () => {
+                setCalculating(true);
+                try {
+                  const res = await calculateLandedCost({
+                    hsCode: "N/A",
+                    originCountry: "N/A",
+                    itemValue: Number(calcForm.itemValue),
+                    shippingCost: Number(calcForm.shippingCost),
+                    dutyRate: Number(calcForm.dutyRate),
+                    vatRate: Number(calcForm.vatRate),
+                  });
+                  setCalcResult(res);
+                } finally {
+                  setCalculating(false);
+                }
+              }}
+            >
+              {calculating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Run Calculation"}
+            </Button>
+
+            {calcResult && (
+              <div className="space-y-4 p-5 rounded-lg bg-indigo-50 border border-indigo-100">
+                <div className="flex justify-between items-center pb-3 border-b border-indigo-100">
+                  <span className="text-[10px] font-bold text-indigo-900 uppercase tracking-widest">Total Duty</span>
+                  <span className="text-sm font-bold text-indigo-950">£{calcResult.dutyAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center pb-3 border-b border-indigo-100">
+                  <span className="text-[10px] font-bold text-indigo-900 uppercase tracking-widest">Total VAT</span>
+                  <span className="text-sm font-bold text-indigo-950">£{calcResult.vatAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center pt-1">
+                  <span className="text-[10px] font-bold text-indigo-900 uppercase tracking-widest">Landed Cost</span>
+                  <span className="text-lg font-bold text-indigo-950">£{calcResult.totalLandedCost.toFixed(2)}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+
 
       {/*
         ========================================================================

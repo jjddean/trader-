@@ -25,22 +25,50 @@ export async function POST(request: Request) {
     const conversationId = request.headers.get("X-Conversation-ID") || "UNKNOWN";
     
     console.log(`[HMRC-WEBHOOK] Received authorized notification for Conversation ID: ${conversationId}`);
+    console.log(`[HMRC-WEBHOOK] Payload preview: ${rawPayload.substring(0, 500)}`);
 
-    // Basic logic to determine notification type from XML
+    // Extract notification type from HMRC XML
+    // HMRC uses <FunctionCode>, <NameCode>, or the literal DMS codes
     let notificationType = "UNKNOWN";
     const upperBody = rawPayload.toUpperCase();
-    if (upperBody.includes("DMSCLE")) notificationType = "DMSCLE";
-    else if (upperBody.includes("DMSACC")) notificationType = "DMSACC";
-    else if (upperBody.includes("DMSREJ")) notificationType = "DMSREJ";
-    else if (upperBody.includes("DMSROG")) notificationType = "DMSROG";
-    else if (upperBody.includes("DMSINV")) notificationType = "DMSINV";
-    else if (upperBody.includes("DMSTAX")) notificationType = "DMSTAX";
-    else if (upperBody.includes("DMSCTL")) notificationType = "DMSCTL";
-    else if (upperBody.includes("DMSRES")) notificationType = "DMSRES";
+    
+    // Method 1: Check for literal DMS notification type codes
+    const dmsTypes = ["DMSCLE", "DMSACC", "DMSREJ", "DMSROG", "DMSINV", "DMSTAX", "DMSCTL", "DMSRES", "DMSRCV", "DMSREQ", "DMSQRY", "DMSDOC", "DMSNOTFN", "DMSSUB"];
+    for (const t of dmsTypes) {
+      if (upperBody.includes(t)) {
+        notificationType = t;
+        break;
+      }
+    }
+    
+    // Method 2: Check <NameCode> element (HMRC wraps type here sometimes)
+    if (notificationType === "UNKNOWN") {
+      const nameCodeMatch = rawPayload.match(/<(?:[^>]*:)?NameCode[^>]*>([^<]+)<\/(?:[^>]*:)?NameCode>/i);
+      if (nameCodeMatch?.[1]) notificationType = nameCodeMatch[1].trim().toUpperCase();
+    }
+    
+    // Method 3: Check <FunctionCode> — maps numeric codes to types
+    if (notificationType === "UNKNOWN") {
+      const funcCodeMatch = rawPayload.match(/<(?:[^>]*:)?FunctionCode[^>]*>(\d+)<\/(?:[^>]*:)?FunctionCode>/i);
+      if (funcCodeMatch?.[1]) {
+        const funcCode = funcCodeMatch[1];
+        const funcMap: Record<string, string> = { "01": "DMSACC", "03": "DMSREJ", "05": "DMSROG", "09": "DMSACC", "11": "DMSCLE", "13": "DMSREJ", "02": "DMSINV" };
+        notificationType = funcMap[funcCode] || `FUNC_${funcCode}`;
+      }
+    }
 
+    // Extract MRN - try multiple patterns
     let mrn = "UNKNOWN";
-    const mrnMatch = rawPayload.match(/<(?:[^>]*:)?ID[^>]*>([0-9]{2}[A-Za-z]{2}[A-Za-z0-9]{14})<\/(?:[^>]*:)?ID>/i);
+    // Pattern 1: Standard 18-char MRN format (e.g. 26GB3G1TKA3Z7KXA02)
+    const mrnMatch = rawPayload.match(/\b(\d{2}[A-Z]{2}[A-Z0-9]{14})\b/);
     if (mrnMatch?.[1]) mrn = mrnMatch[1];
+    // Pattern 2: Inside <ID> tags
+    if (mrn === "UNKNOWN") {
+      const idMatch = rawPayload.match(/<(?:[^>]*:)?ID[^>]*>([0-9]{2}[A-Za-z]{2}[A-Za-z0-9]{14})<\/(?:[^>]*:)?ID>/i);
+      if (idMatch?.[1]) mrn = idMatch[1];
+    }
+    
+    console.log(`[HMRC-WEBHOOK] Parsed: type=${notificationType}, mrn=${mrn}`);
 
     // Save to Convex for the dashboard to pick up
     await convex.mutation(api.notifications.saveWebhook, {

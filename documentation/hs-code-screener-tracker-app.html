@@ -3,25 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#111827">
+    <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="HS Code Screener">
     
     <title>HS Code Screener & Tracker | FreightCode</title>
-    <meta name="description" content="Validate, monitor, and optimize your commodity code classifications with AI-powered screening and real-time tracking.">
+    <meta name="description" content="Validate, monitor, and optimize your commodity code classifications">
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="#" id="manifest-placeholder">
-    
-    <!-- Icons -->
     <link rel="icon" type="image/png" href="/icon.png">
     <link rel="apple-touch-icon" href="/icon.png">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         * {
@@ -30,139 +28,48 @@
             box-sizing: border-box;
         }
 
-        :root {
-            --color-slate-50: #f8fafc;
-            --color-slate-100: #f1f5f9;
-            --color-slate-200: #e2e8f0;
-            --color-slate-300: #cbd5e1;
-            --color-slate-400: #94a3b8;
-            --color-slate-500: #64748b;
-            --color-slate-600: #475569;
-            --color-slate-700: #334155;
-            --color-slate-800: #1e293b;
-            --color-slate-900: #0f172a;
-            --color-blue-50: #eff6ff;
-            --color-blue-500: #3b82f6;
-            --color-blue-600: #2563eb;
-            --color-blue-700: #1d4ed8;
-            --color-green-50: #f0fdf4;
-            --color-green-500: #22c55e;
-            --color-green-600: #16a34a;
-            --color-red-50: #fef2f2;
-            --color-red-500: #ef4444;
-            --color-red-600: #dc2626;
-            --color-yellow-50: #fefce8;
-            --color-yellow-500: #eab308;
-            --color-yellow-600: #ca8a04;
-        }
-
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--color-slate-50);
-            color: #020817;
+            background: #f9fafb;
+            color: #111827;
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            overflow-x: hidden;
+            font-size: calc(16px * 1.125);
         }
 
-        /* App Container */
-        .app-container {
-            max-width: 100%;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Header */
-        .app-header {
-            background: white;
-            border-bottom: 1px solid var(--color-slate-200);
-            padding: 16px 24px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            backdrop-filter: blur(8px);
-            background: rgba(255, 255, 255, 0.95);
-        }
-
-        .header-content {
-            max-width: 1280px;
+        /* Main Container */
+        .container {
+            max-width: 1792px;
             margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            padding: 32px;
         }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 18px;
-            font-weight: 700;
-            color: #020817;
-            text-decoration: none;
+        /* Page Header */
+        .page-header {
+            margin-bottom: 24px;
         }
 
-        .logo-icon {
-            font-size: 24px;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 14px;
+        .page-header h1 {
+            font-size: 20px;
             font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            text-decoration: none;
+            letter-spacing: -0.025em;
+            color: #111827;
+            margin-bottom: 4px;
         }
 
-        .btn-primary {
-            background: #111827;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #374151;
-        }
-
-        .btn-secondary {
-            background: var(--color-slate-100);
-            color: var(--color-slate-700);
-        }
-
-        .btn-secondary:hover {
-            background: var(--color-slate-200);
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            padding: 24px;
-            max-width: 1280px;
-            margin: 0 auto;
-            width: 100%;
+        .page-header p {
+            font-size: 14px;
+            color: #6b7280;
         }
 
         /* Tab Navigation */
         .tab-nav {
             display: flex;
             gap: 8px;
-            margin-bottom: 32px;
-            border-bottom: 1px solid var(--color-slate-200);
+            margin-bottom: 24px;
+            border-bottom: 1px solid #e5e7eb;
             overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
         }
 
         .tab-btn {
@@ -170,21 +77,21 @@
             background: none;
             border: none;
             border-bottom: 2px solid transparent;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
-            color: var(--color-slate-600);
+            color: #6b7280;
             cursor: pointer;
             transition: all 0.2s;
             white-space: nowrap;
         }
 
         .tab-btn.active {
-            color: #020817;
-            border-bottom-color: #111827;
+            color: #111827;
+            border-bottom-color: #000000;
         }
 
         .tab-btn:hover {
-            color: #020817;
+            color: #111827;
         }
 
         /* Tab Content */
@@ -194,120 +101,158 @@
 
         .tab-content.active {
             display: block;
-            animation: fadeIn 0.3s ease-in;
+            animation: fadeIn 0.2s ease-in;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
-        /* Screener Section */
-        .screener-container {
-            display: grid;
-            gap: 24px;
-        }
-
+        /* Card */
         .card {
             background: white;
-            border: 1px solid var(--color-slate-200);
+            border: 1px solid #e9e9e7;
             border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            margin-bottom: 24px;
         }
 
         .card-header {
-            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            border-bottom: 1px solid #e9e9e7;
+            background: #f9fafb;
+        }
+
+        .card-header svg {
+            width: 16px;
+            height: 16px;
+            color: #9ca3af;
         }
 
         .card-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: #020817;
-            margin-bottom: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #000000;
         }
 
-        .card-description {
-            font-size: 14px;
-            color: var(--color-slate-600);
+        .card-body {
+            padding: 20px;
         }
 
         /* Search Input */
         .search-container {
             position: relative;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .search-input {
             width: 100%;
-            padding: 12px 16px 12px 44px;
-            border: 1px solid var(--color-slate-200);
-            border-radius: 8px;
-            font-size: 15px;
-            transition: all 0.2s;
+            height: 36px;
+            padding: 0 16px 0 40px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 14px;
             background: white;
+            transition: all 0.2s;
         }
 
         .search-input:focus {
             outline: none;
-            border-color: var(--color-slate-400);
-            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
+            border-color: #9ca3af;
         }
 
         .search-icon {
             position: absolute;
-            left: 16px;
+            left: 12px;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--color-slate-400);
+            width: 16px;
+            height: 16px;
+            color: #9ca3af;
         }
 
-        /* Form Group */
+        /* Form Elements */
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .form-label {
             display: block;
-            font-size: 14px;
+            font-size: 10px;
             font-weight: 600;
-            color: var(--color-slate-700);
-            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #9ca3af;
+            margin-bottom: 6px;
         }
 
-        .form-input, .form-select {
+        .form-select {
             width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--color-slate-200);
+            height: 36px;
+            padding: 0 12px;
+            border: 1px solid #e5e7eb;
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 12px;
+            background: #f9fafb;
+            color: #374151;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #9ca3af;
+        }
+
+        /* Button */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 36px;
+            padding: 0 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
             transition: all 0.2s;
         }
 
-        .form-input:focus, .form-select:focus {
-            outline: none;
-            border-color: var(--color-slate-400);
+        .btn-primary {
+            background: #000000;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1f2937;
+        }
+
+        .btn-full {
+            width: 100%;
         }
 
         /* Results Grid */
         .results-grid {
             display: grid;
-            gap: 16px;
+            gap: 12px;
         }
 
         .result-card {
             background: white;
-            border: 1px solid var(--color-slate-100);
+            border: 1px solid #e9e9e7;
             border-radius: 12px;
             padding: 20px;
             transition: all 0.2s;
             cursor: pointer;
-            position: relative;
         }
 
         .result-card:hover {
-            border-color: var(--color-blue-200);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         .result-header {
@@ -320,39 +265,34 @@
         .hs-code {
             font-size: 18px;
             font-weight: 700;
-            color: var(--color-blue-600);
+            color: #2563eb;
             letter-spacing: -0.02em;
         }
 
         .confidence-badge {
             padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
+            border-radius: 6px;
+            font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.02em;
+            letter-spacing: 0.05em;
         }
 
         .confidence-high {
-            background: var(--color-green-50);
-            color: var(--color-green-600);
+            background: #dcfce7;
+            color: #16a34a;
         }
 
         .confidence-medium {
-            background: var(--color-yellow-50);
-            color: var(--color-yellow-600);
-        }
-
-        .confidence-low {
-            background: var(--color-red-50);
-            color: var(--color-red-600);
+            background: #fef3c7;
+            color: #ca8a04;
         }
 
         .result-description {
-            font-size: 14px;
-            color: var(--color-slate-600);
+            font-size: 13px;
+            color: #6b7280;
             line-height: 1.6;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         .result-actions {
@@ -368,35 +308,28 @@
 
         .action-btn {
             padding: 6px 12px;
-            background: var(--color-slate-50);
+            background: #f9fafb;
             border: none;
             border-radius: 6px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
-            color: var(--color-slate-500);
+            color: #6b7280;
             cursor: pointer;
             transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 4px;
         }
 
         .action-btn:hover {
-            background: var(--color-blue-50);
-            color: var(--color-blue-600);
+            background: #eff6ff;
+            color: #2563eb;
         }
 
-        /* Validation Results */
-        .validation-results {
-            margin-top: 24px;
-        }
-
+        /* Validation Items */
         .validation-item {
             display: flex;
             gap: 12px;
             padding: 16px;
-            background: var(--color-slate-50);
+            background: #f9fafb;
             border-radius: 8px;
             margin-bottom: 12px;
         }
@@ -413,18 +346,13 @@
         }
 
         .validation-pass {
-            background: var(--color-green-50);
-            color: var(--color-green-600);
+            background: #dcfce7;
+            color: #16a34a;
         }
 
         .validation-warning {
-            background: var(--color-yellow-50);
-            color: var(--color-yellow-600);
-        }
-
-        .validation-fail {
-            background: var(--color-red-50);
-            color: var(--color-red-600);
+            background: #fef3c7;
+            color: #ca8a04;
         }
 
         .validation-content {
@@ -434,96 +362,89 @@
         .validation-title {
             font-size: 14px;
             font-weight: 600;
-            color: #020817;
+            color: #111827;
             margin-bottom: 4px;
         }
 
         .validation-message {
-            font-size: 13px;
-            color: var(--color-slate-600);
+            font-size: 12px;
+            color: #6b7280;
             line-height: 1.5;
         }
 
-        /* Tracker Dashboard */
+        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 16px;
-            margin-bottom: 32px;
+            margin-bottom: 24px;
         }
 
         .stat-card {
             background: white;
-            border: 1px solid var(--color-slate-200);
+            border: 1px solid #e9e9e7;
             border-radius: 12px;
             padding: 20px;
         }
 
         .stat-label {
-            font-size: 13px;
+            font-size: 10px;
             font-weight: 600;
-            color: var(--color-slate-600);
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            color: #6b7280;
             margin-bottom: 8px;
         }
 
         .stat-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: #020817;
+            font-size: 28px;
+            font-weight: 500;
+            color: #111827;
+            letter-spacing: -0.025em;
             margin-bottom: 4px;
         }
 
         .stat-change {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 4px;
         }
 
         .stat-change.positive {
-            color: var(--color-green-600);
+            color: #16a34a;
         }
 
         .stat-change.negative {
-            color: var(--color-red-600);
+            color: #dc2626;
         }
 
         /* Alerts */
-        .alerts-container {
-            display: grid;
-            gap: 12px;
-            margin-bottom: 32px;
-        }
-
         .alert {
             display: flex;
             gap: 16px;
             padding: 16px;
             border-radius: 12px;
             border-left: 4px solid;
+            margin-bottom: 12px;
         }
 
         .alert-critical {
-            background: var(--color-red-50);
-            border-left-color: var(--color-red-500);
+            background: #fef2f2;
+            border-left-color: #ef4444;
         }
 
         .alert-warning {
-            background: var(--color-yellow-50);
-            border-left-color: var(--color-yellow-500);
+            background: #fefce8;
+            border-left-color: #eab308;
         }
 
         .alert-info {
-            background: var(--color-blue-50);
-            border-left-color: var(--color-blue-500);
+            background: #eff6ff;
+            border-left-color: #3b82f6;
         }
 
         .alert-icon {
             flex-shrink: 0;
-            font-size: 20px;
+            font-size: 18px;
         }
 
         .alert-content {
@@ -533,103 +454,77 @@
         .alert-title {
             font-size: 14px;
             font-weight: 700;
-            color: #020817;
+            color: #111827;
             margin-bottom: 4px;
         }
 
         .alert-message {
-            font-size: 13px;
-            color: var(--color-slate-600);
+            font-size: 12px;
+            color: #6b7280;
             margin-bottom: 8px;
         }
 
         .alert-action {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
-            color: var(--color-blue-600);
+            color: #2563eb;
             text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
         }
 
         /* Table */
         .data-table {
             width: 100%;
             border-collapse: collapse;
+        }
+
+        .data-table thead {
             background: white;
-            border-radius: 12px;
-            overflow: hidden;
+            border-bottom: 1px solid #e9e9e7;
         }
 
         .data-table th {
-            background: var(--color-slate-50);
-            padding: 12px 16px;
+            padding: 12px 24px;
             text-align: left;
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--color-slate-600);
+            font-size: 10px;
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            color: #6b7280;
         }
 
         .data-table td {
-            padding: 16px;
-            border-top: 1px solid var(--color-slate-100);
-            font-size: 14px;
-            color: var(--color-slate-700);
+            padding: 16px 24px;
+            border-top: 1px solid #f3f4f6;
+            font-size: 12px;
+            color: #374151;
         }
 
-        .data-table tr:hover {
-            background: var(--color-slate-50);
+        .data-table tbody tr:hover {
+            background: #f9fafb;
         }
 
         .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
             padding: 4px 8px;
             border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
+            font-size: 10px;
+            font-weight: 500;
         }
 
         .status-success {
-            background: var(--color-green-50);
-            color: var(--color-green-600);
+            background: #dcfce7;
+            color: #16a34a;
         }
 
         .status-warning {
-            background: var(--color-yellow-50);
-            color: var(--color-yellow-600);
+            background: #fef3c7;
+            color: #ca8a04;
         }
 
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 64px 24px;
-        }
-
-        .empty-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            opacity: 0.3;
-        }
-
-        .empty-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #020817;
-            margin-bottom: 8px;
-        }
-
-        .empty-description {
-            font-size: 14px;
-            color: var(--color-slate-600);
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        /* Loading State */
-        .loading-container {
+        /* Loading */
+        .loading {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -638,10 +533,10 @@
         }
 
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid var(--color-slate-200);
-            border-top-color: var(--color-blue-600);
+            width: 24px;
+            height: 24px;
+            border: 2px solid #e5e7eb;
+            border-top-color: #2563eb;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
@@ -651,271 +546,213 @@
         }
 
         .loading-text {
-            margin-top: 16px;
+            margin-top: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 64px 24px;
+        }
+
+        .empty-icon {
+            font-size: 32px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-title {
             font-size: 14px;
             font-weight: 600;
-            color: var(--color-slate-500);
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .empty-description {
+            font-size: 12px;
+            color: #6b7280;
+            max-width: 400px;
+            margin: 0 auto;
         }
 
         /* Responsive */
         @media (max-width: 768px) {
-            .main-content {
+            .container {
                 padding: 16px;
             }
 
-            .card {
+            .card-body {
                 padding: 16px;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .tab-nav {
-                gap: 4px;
-            }
-
-            .tab-btn {
-                padding: 10px 16px;
-                font-size: 14px;
             }
 
             .result-actions {
                 opacity: 1;
             }
         }
-
-        /* PWA Install Prompt */
-        .install-prompt {
-            position: fixed;
-            bottom: 24px;
-            left: 24px;
-            right: 24px;
-            background: white;
-            border: 1px solid var(--color-slate-200);
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-            display: none;
-            align-items: center;
-            gap: 16px;
-            z-index: 1000;
-        }
-
-        .install-prompt.show {
-            display: flex;
-            animation: slideUp 0.3s ease-out;
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(100px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .install-content {
-            flex: 1;
-        }
-
-        .install-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: #020817;
-            margin-bottom: 4px;
-        }
-
-        .install-description {
-            font-size: 13px;
-            color: var(--color-slate-600);
-        }
-
-        .install-actions {
-            display: flex;
-            gap: 8px;
-        }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Header -->
-        <header class="app-header">
-            <div class="header-content">
-                <a href="/" class="logo">
-                    <span class="logo-icon">🛃</span>
-                    <span>FreightCode</span>
-                </a>
-                <div class="header-actions">
-                    <button class="btn btn-secondary" onclick="window.print()">
-                        📄 Export
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>HS Code Screener & Tracker</h1>
+            <p>Validate, monitor, and optimize your commodity code classifications</p>
+        </div>
+
+        <!-- Tab Navigation -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="screener">Screener</button>
+            <button class="tab-btn" data-tab="tracker">Tracker</button>
+            <button class="tab-btn" data-tab="opportunities">Opportunities</button>
+            <button class="tab-btn" data-tab="reports">Reports</button>
+        </nav>
+
+        <!-- Screener Tab -->
+        <div class="tab-content active" id="screener">
+            <!-- Search Card -->
+            <div class="card">
+                <div class="card-header">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <h3 class="card-title">HS Code Screener</h3>
+                </div>
+                <div class="card-body">
+                    <div class="search-container">
+                        <svg class="search-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                        <input 
+                            type="text" 
+                            class="search-input" 
+                            placeholder="Describe your product or enter HS code..."
+                            id="productSearch"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Origin Country</label>
+                        <select class="form-select" id="originCountry">
+                            <option value="">Select country...</option>
+                            <option value="BD">Bangladesh</option>
+                            <option value="CN">China</option>
+                            <option value="IN">India</option>
+                            <option value="VN">Vietnam</option>
+                            <option value="GB">United Kingdom</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary btn-full" onclick="runScreening()">
+                        Screen Classification
                     </button>
-                    <a href="/dashboard" class="btn btn-primary">
-                        Dashboard →
-                    </a>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Tab Navigation -->
-            <nav class="tab-nav">
-                <button class="tab-btn active" data-tab="screener">
-                    🔍 Screener
-                </button>
-                <button class="tab-btn" data-tab="tracker">
-                    📊 Tracker
-                </button>
-                <button class="tab-btn" data-tab="opportunities">
-                    💰 Opportunities
-                </button>
-                <button class="tab-btn" data-tab="reports">
-                    📈 Reports
-                </button>
-            </nav>
-
-            <!-- Screener Tab -->
-            <div class="tab-content active" id="screener">
-                <div class="screener-container">
-                    <!-- Search Card -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">HS Code Screener</h2>
-                            <p class="card-description">Validate commodity codes before submission to prevent costly errors</p>
-                        </div>
-
-                        <div class="search-container">
-                            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <path d="m21 21-4.35-4.35"></path>
-                            </svg>
-                            <input 
-                                type="text" 
-                                class="search-input" 
-                                placeholder="Describe your product or enter HS code..."
-                                id="productSearch"
-                            >
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Origin Country</label>
-                            <select class="form-select" id="originCountry">
-                                <option value="">Select country...</option>
-                                <option value="BD">Bangladesh</option>
-                                <option value="CN">China</option>
-                                <option value="IN">India</option>
-                                <option value="VN">Vietnam</option>
-                                <option value="GB">United Kingdom</option>
-                            </select>
-                        </div>
-
-                        <button class="btn btn-primary" style="width: 100%;" onclick="runScreening()">
-                            🔍 Screen Classification
-                        </button>
-                    </div>
-
-                    <!-- Results Card -->
-                    <div class="card" id="resultsCard" style="display: none;">
-                        <div class="card-header">
-                            <h3 class="card-title">Suggested Classifications</h3>
-                            <p class="card-description">AI-powered suggestions with confidence scores</p>
-                        </div>
-
-                        <div class="results-grid" id="resultsGrid">
-                            <!-- Results will be inserted here -->
-                        </div>
-                    </div>
-
-                    <!-- Validation Card -->
-                    <div class="card" id="validationCard" style="display: none;">
-                        <div class="card-header">
-                            <h3 class="card-title">Validation Results</h3>
-                            <p class="card-description">Comprehensive checks performed on selected code</p>
-                        </div>
-
-                        <div class="validation-results" id="validationResults">
-                            <!-- Validation items will be inserted here -->
-                        </div>
-                    </div>
                 </div>
             </div>
 
-            <!-- Tracker Tab -->
-            <div class="tab-content" id="tracker">
-                <!-- Stats Grid -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">Compliance Score</div>
-                        <div class="stat-value">94%</div>
-                        <div class="stat-change positive">
-                            ↑ 3% from last month
+            <!-- Results Card -->
+            <div class="card" id="resultsCard" style="display: none;">
+                <div class="card-header">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 class="card-title">Suggested Classifications</h3>
+                </div>
+                <div class="card-body">
+                    <div class="results-grid" id="resultsGrid"></div>
+                </div>
+            </div>
+
+            <!-- Validation Card -->
+            <div class="card" id="validationCard" style="display: none;">
+                <div class="card-header">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                    <h3 class="card-title">Validation Results</h3>
+                </div>
+                <div class="card-body">
+                    <div id="validationResults"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tracker Tab -->
+        <div class="tab-content" id="tracker">
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Compliance Score</div>
+                    <div class="stat-value">94%</div>
+                    <div class="stat-change positive">↑ 3% from last month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Duty Optimization</div>
+                    <div class="stat-value">87%</div>
+                    <div class="stat-change negative">↓ 2% from last month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">DCTS Usage</div>
+                    <div class="stat-value">65%</div>
+                    <div class="stat-change positive">↑ 12% from last month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Clearance</div>
+                    <div class="stat-value">4.2h</div>
+                    <div class="stat-change positive">↓ 0.8h from last month</div>
+                </div>
+            </div>
+
+            <!-- Alerts Card -->
+            <div class="card">
+                <div class="card-header">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <h3 class="card-title">Active Alerts</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-critical">
+                        <div class="alert-icon">🔴</div>
+                        <div class="alert-content">
+                            <div class="alert-title">CRITICAL: HMRC Query Received</div>
+                            <div class="alert-message">MRN 24GB123456789012 - HS Code 8518302000 requires review</div>
+                            <a href="#" class="alert-action">View Details →</a>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Duty Optimization</div>
-                        <div class="stat-value">87%</div>
-                        <div class="stat-change negative">
-                            ↓ 2% from last month
+
+                    <div class="alert alert-warning">
+                        <div class="alert-icon">🟡</div>
+                        <div class="alert-content">
+                            <div class="alert-title">WARNING: Preference Not Claimed</div>
+                            <div class="alert-message">5 shipments eligible for DCTS - Potential savings: £2,450</div>
+                            <a href="#" class="alert-action">Review Opportunities →</a>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-label">DCTS Usage</div>
-                        <div class="stat-value">65%</div>
-                        <div class="stat-change positive">
-                            ↑ 12% from last month
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Avg Clearance</div>
-                        <div class="stat-value">4.2h</div>
-                        <div class="stat-change positive">
-                            ↓ 0.8h from last month
+
+                    <div class="alert alert-info">
+                        <div class="alert-icon">🟢</div>
+                        <div class="alert-content">
+                            <div class="alert-title">INFO: New DCTS Rules Effective</div>
+                            <div class="alert-message">Updated rules may affect your product classifications</div>
+                            <a href="#" class="alert-action">Learn More →</a>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Alerts -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Active Alerts</h3>
-                        <p class="card-description">Issues requiring your attention</p>
-                    </div>
-
-                    <div class="alerts-container">
-                        <div class="alert alert-critical">
-                            <div class="alert-icon">🔴</div>
-                            <div class="alert-content">
-                                <div class="alert-title">CRITICAL: HMRC Query Received</div>
-                                <div class="alert-message">MRN 24GB123456789012 - HS Code 8518302000 requires review</div>
-                                <a href="#" class="alert-action">View Details →</a>
-                            </div>
-                        </div>
-
-                        <div class="alert alert-warning">
-                            <div class="alert-icon">🟡</div>
-                            <div class="alert-content">
-                                <div class="alert-title">WARNING: Preference Not Claimed</div>
-                                <div class="alert-message">5 shipments eligible for DCTS - Potential savings: £2,450</div>
-                                <a href="#" class="alert-action">Review Opportunities →</a>
-                            </div>
-                        </div>
-
-                        <div class="alert alert-info">
-                            <div class="alert-icon">🟢</div>
-                            <div class="alert-content">
-                                <div class="alert-title">INFO: New DCTS Rules Effective</div>
-                                <div class="alert-message">Updated rules may affect your product classifications</div>
-                                <a href="#" class="alert-action">Learn More →</a>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Top HS Codes Card -->
+            <div class="card">
+                <div class="card-header">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <h3 class="card-title">Top HS Codes (Last 30 Days)</h3>
                 </div>
-
-                <!-- Top HS Codes -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Top HS Codes (Last 30 Days)</h3>
-                        <p class="card-description">Most frequently used classifications</p>
-                    </div>
-
+                <div class="card-body" style="padding: 0;">
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -952,15 +789,18 @@
                     </table>
                 </div>
             </div>
+        </div>
 
-            <!-- Opportunities Tab -->
-            <div class="tab-content" id="opportunities">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Savings Opportunities</h3>
-                        <p class="card-description">£12,450 in potential savings identified</p>
-                    </div>
-
+        <!-- Opportunities Tab -->
+        <div class="tab-content" id="opportunities">
+            <div class="card">
+                <div class="card-header">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 class="card-title">Savings Opportunities</h3>
+                </div>
+                <div class="card-body">
                     <div class="empty-state">
                         <div class="empty-icon">💰</div>
                         <h3 class="empty-title">Analyzing Your Data</h3>
@@ -971,15 +811,18 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Reports Tab -->
-            <div class="tab-content" id="reports">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Compliance Reports</h3>
-                        <p class="card-description">Generate detailed analysis and audit-ready documentation</p>
-                    </div>
-
+        <!-- Reports Tab -->
+        <div class="tab-content" id="reports">
+            <div class="card">
+                <div class="card-header">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <h3 class="card-title">Compliance Reports</h3>
+                </div>
+                <div class="card-body">
                     <div class="empty-state">
                         <div class="empty-icon">📈</div>
                         <h3 class="empty-title">Reports Coming Soon</h3>
@@ -990,18 +833,6 @@
                     </div>
                 </div>
             </div>
-        </main>
-
-        <!-- PWA Install Prompt -->
-        <div class="install-prompt" id="installPrompt">
-            <div class="install-content">
-                <div class="install-title">Install HS Code Screener</div>
-                <div class="install-description">Add to your home screen for quick access</div>
-            </div>
-            <div class="install-actions">
-                <button class="btn btn-primary" id="installBtn">Install</button>
-                <button class="btn btn-secondary" id="dismissBtn">Not Now</button>
-            </div>
         </div>
     </div>
 
@@ -1011,11 +842,9 @@
             btn.addEventListener('click', () => {
                 const tabId = btn.dataset.tab;
                 
-                // Update active tab button
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 
-                // Update active tab content
                 document.querySelectorAll('.tab-content').forEach(content => {
                     content.classList.remove('active');
                 });
@@ -1023,7 +852,7 @@
             });
         });
 
-        // Mock Screening Function
+        // Screening Function
         function runScreening() {
             const productSearch = document.getElementById('productSearch').value;
             const originCountry = document.getElementById('originCountry').value;
@@ -1033,18 +862,16 @@
                 return;
             }
 
-            // Show loading state
             const resultsCard = document.getElementById('resultsCard');
             const resultsGrid = document.getElementById('resultsGrid');
             resultsCard.style.display = 'block';
             resultsGrid.innerHTML = `
-                <div class="loading-container">
+                <div class="loading">
                     <div class="spinner"></div>
                     <div class="loading-text">Analyzing classification...</div>
                 </div>
             `;
 
-            // Simulate API call
             setTimeout(() => {
                 const mockResults = [
                     {
@@ -1069,20 +896,20 @@
                     <div class="result-card" onclick="showValidation('${result.code}')">
                         <div class="result-header">
                             <div class="hs-code">${result.code}</div>
-                            <div class="confidence-badge confidence-${result.confidence >= 90 ? 'high' : result.confidence >= 70 ? 'medium' : 'low'}">
+                            <div class="confidence-badge confidence-${result.confidence >= 90 ? 'high' : 'medium'}">
                                 ${result.confidence}% Match
                             </div>
                         </div>
                         <div class="result-description">${result.description}</div>
                         <div class="result-actions">
                             <button class="action-btn" onclick="event.stopPropagation(); copyCode('${result.code}')">
-                                📋 Copy
+                                Copy
                             </button>
                             <button class="action-btn" onclick="event.stopPropagation(); openTariff('${result.code}')">
-                                🔗 Tariff
+                                Tariff
                             </button>
                             <button class="action-btn" onclick="event.stopPropagation(); selectCode('${result.code}')">
-                                ✓ Select
+                                Select
                             </button>
                         </div>
                     </div>
@@ -1142,38 +969,7 @@
             alert(`Selected HS Code: ${code}\n\nThis code will be added to your declaration.`);
         }
 
-        // PWA Installation
-        let deferredPrompt;
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('installPrompt').classList.add('show');
-        });
-
-        document.getElementById('installBtn').addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                deferredPrompt = null;
-                document.getElementById('installPrompt').classList.remove('show');
-            }
-        });
-
-        document.getElementById('dismissBtn').addEventListener('click', () => {
-            document.getElementById('installPrompt').classList.remove('show');
-        });
-
-        // Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch(() => {
-                    console.log('Service Worker registration failed');
-                });
-            });
-        }
-
-        // Generate PWA Manifest
+        // PWA Manifest
         const manifest = {
             name: "HS Code Screener & Tracker",
             short_name: "HS Screener",
@@ -1181,7 +977,7 @@
             start_url: "/",
             display: "standalone",
             background_color: "#ffffff",
-            theme_color: "#111827",
+            theme_color: "#000000",
             icons: [
                 {
                     src: "/icon.png",

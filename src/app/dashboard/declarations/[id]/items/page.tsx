@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { dctsCountries } from "@/lib/data/stub-dcts";
+import { countries } from "@/lib/data/countries";
 
 export default function GoodsItemsPage() {
   const params = useParams<{ id: string }>();
@@ -221,17 +221,17 @@ export default function GoodsItemsPage() {
          </div>
       )}
 
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
         {items.length > 0 ? (
           <table className="w-full text-left text-sm">
             <thead className="border-b border-gray-200 bg-gray-50/50">
               <tr>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[10px]">Seq</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[10px]">Description</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[10px]">HS Code</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[10px]">Origin</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[10px]">Value</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[10px]">CPC</th>
+                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Seq</th>
+                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Description</th>
+                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">HS Code</th>
+                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Origin</th>
+                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Value</th>
+                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">CPC</th>
                 <th className="px-4 py-3 text-right"></th>
               </tr>
             </thead>
@@ -324,14 +324,18 @@ export default function GoodsItemsPage() {
               <label htmlFor="origin" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
                 Origin Country
               </label>
-              <input
-                id="origin"
-                value={originCountry}
-                onChange={(e) => setOriginCountry(e.target.value.toUpperCase().slice(0, 2))}
-                placeholder="e.g. BR, AR, TH, US"
-                maxLength={2}
-                className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 font-mono text-xs text-gray-700 uppercase transition-colors focus:border-gray-400 focus:outline-none"
-              />
+              <Select value={originCountry} onValueChange={setOriginCountry}>
+                <SelectTrigger id="origin" className="h-9 w-full rounded-md border-gray-200 bg-gray-50 text-xs text-gray-700">
+                  <SelectValue placeholder="Select Origin Country" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="max-h-[300px]">
+                  {countries.map((c) => (
+                    <SelectItem key={c.code} value={c.code} className="text-xs">
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label htmlFor="hsCode" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">

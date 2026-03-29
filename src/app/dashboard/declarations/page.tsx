@@ -22,26 +22,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const ALL_COUNTRIES = [
-  "Afghanistan", "Algeria", "Angola", "Armenia", "Bangladesh", "Benin", "Bhutan", 
-  "Bolivia", "Burkina Faso", "Burundi", "Cambodia", "Cape Verde", "Central African Republic", 
-  "Chad", "Comoros", "Congo", "Cook Islands", "Democratic Republic of Congo", "Djibouti", 
-  "Eritrea", "Ethiopia", "Gambia", "Guinea", "Guinea-Bissau", "Haiti", "India", 
-  "Indonesia", "Kiribati", "Kyrgyzstan", "Laos", "Lesotho", "Liberia", "Madagascar", 
-  "Malawi", "Mali", "Mauritania", "Micronesia", "Mongolia", "Mozambique", "Myanmar", 
-  "Nepal", "Niger", "Nigeria", "Niue", "Pakistan", "Philippines", "Rwanda", "Samoa", 
-  "Senegal", "Sierra Leone", "Solomon Islands", "Somalia", "South Sudan", "Sri Lanka", 
-  "Sudan", "Syria", "Tajikistan", "Tanzania", "Timor-Leste", "Togo", "Tuvalu", 
-  "Uganda", "Uzbekistan", "Vanuatu", "Vietnam", "Yemen", "Zambia"
-].sort();
+import { countries } from "@/lib/data/countries";
 
 export default function DeclarationsPage() {
   const { user } = useUser();
   const userId = user?.id || "";
   const router = useRouter();
 
-  const allDeclarations = useQuery(api.declarations.getAllDecls);
-  const declarations = (allDeclarations || []).filter((dec: any) => dec.userId === userId);
+  const declarations = useQuery(api.declarations.getMyDeclarations) || [];
   const createDeclaration = useMutation(api.declarations.createDeclaration);
 
   const [isCreating, setIsCreating] = useState(false);
@@ -138,7 +126,7 @@ export default function DeclarationsPage() {
         </button>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
         {declarations === undefined ? (
           <div className="flex h-40 items-center justify-center">
             <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
@@ -147,12 +135,12 @@ export default function DeclarationsPage() {
           <table className="w-full text-left text-sm">
             <thead className="border-b border-gray-200 bg-gray-50/50">
               <tr>
-                <th className="px-6 py-3 font-medium text-gray-500 uppercase tracking-wider text-[10px]">MRN / LRN</th>
-                <th className="px-6 py-3 font-medium text-gray-500 uppercase tracking-wider text-[10px]">EORI</th>
-                <th className="px-6 py-3 font-medium text-gray-500 uppercase tracking-wider text-[10px]">Type</th>
-                <th className="px-6 py-3 font-medium text-gray-500 uppercase tracking-wider text-[10px]">Last Updated</th>
-                <th className="px-6 py-3 font-medium text-gray-500 uppercase tracking-wider text-[10px]">Status</th>
-                <th className="px-6 py-3 text-right font-medium text-gray-500 uppercase tracking-wider text-[10px]">Action</th>
+                <th className="px-6 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">MRN / LRN</th>
+                <th className="px-6 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">EORI</th>
+                <th className="px-6 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Type</th>
+                <th className="px-6 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Last Updated</th>
+                <th className="px-6 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Status</th>
+                <th className="px-6 py-3 text-right font-medium text-gray-500 uppercase tracking-wider text-[11px]">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -239,9 +227,9 @@ export default function DeclarationsPage() {
                   <SelectValue placeholder="Select Origin Country" />
                 </SelectTrigger>
                 <SelectContent position="popper" className="max-h-[300px]">
-                  {ALL_COUNTRIES.map((c) => (
-                    <SelectItem key={c} value={c} className="text-xs">
-                      {c}
+                  {countries.map((c) => (
+                    <SelectItem key={c.code} value={c.code} className="text-xs">
+                      {c.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -38,6 +38,13 @@ http.route({
       const toAddress = payload.To || payload.to || "";
       const match = toAddress.match(/data\+(.+)@ingest\.freightcode\.com/i);
       
+      const ingestSecret = request.headers.get("X-Ingest-Secret");
+      const expectedSecret = process.env.INGEST_SECRET || "default_ingest_secret";
+
+      if (ingestSecret !== expectedSecret) {
+        return new Response("Unauthorized Ingest", { status: 401 });
+      }
+
       if (!match) {
         return new Response("Invalid destination address", { status: 400 });
       }

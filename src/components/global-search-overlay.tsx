@@ -23,9 +23,8 @@ export function GlobalSearchOverlay({ isOpen, onClose }: GlobalSearchOverlayProp
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const allDeclarations = useQuery(api.declarations.getAllDecls);
+  const declarations = useQuery(api.declarations.getMyDeclarations) || [];
   const documents = useQuery(api.documents.getDocuments, userId ? { userId } : "skip");
-  const declarations = (allDeclarations || []).filter((decl: any) => decl.userId === userId);
 
   const handleSearch = async (val: string) => {
     setQuery(val);

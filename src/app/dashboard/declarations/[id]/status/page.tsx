@@ -55,7 +55,7 @@ export default function StatusTimelinePage() {
         </p>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
+      <div className="rounded-xl border border-gray-200 bg-white p-6">
         {!isSubmitted ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <Activity className="mb-4 h-8 w-8 text-gray-300" />

@@ -90,7 +90,14 @@ function hmrcStatusForDeclaration(decl: any, notifications: any[]) {
 export const getLane = query({
   args: { id: v.id("declarations") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    
+    const decorration = await ctx.db.get(args.id);
+    if (!decorration || decorration.userId !== identity.subject) {
+      throw new Error("Unauthorized: You do not own this declaration.");
+    }
+    return decorration;
   },
 });
 
@@ -109,9 +116,13 @@ export const createDeclaration = mutation({
     })),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
     const { initialItem, ...declarationArgs } = args;
     const declarationId = await ctx.db.insert("declarations", {
       ...declarationArgs,
+      userId: identity.subject, // Override argument with identity
       created: Date.now(),
       lastUpdated: Date.now(),
     });
@@ -136,6 +147,14 @@ export const createDeclaration = mutation({
 export const deleteDeclaration = mutation({
   args: { id: v.id("declarations") },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const existing = await ctx.db.get(args.id);
+    if (!existing || existing.userId !== identity.subject) {
+      throw new Error("Unauthorized: You do not own this declaration.");
+    }
+
     // 1. Delete associated goods items
     const items = await ctx.db
       .query("goods_items")
@@ -186,6 +205,14 @@ export const updateDeclarationDetails = mutation({
 export const populateDemoData = mutation({
   args: { id: v.id("declarations") },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const existing = await ctx.db.get(args.id);
+    if (!existing || existing.userId !== identity.subject) {
+      throw new Error("Unauthorized");
+    }
+
     // 1. Update header to satisfy validation
     await ctx.db.patch(args.id, {
       eori: "GB664653557000",
@@ -219,22 +246,42 @@ export const populateDemoData = mutation({
 export const getAllDecls = query({
   args: {},
   handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.role !== "admin") {
+      throw new Error("Unauthorized access to global declaration data.");
+    }
     return await ctx.db.query("declarations").collect();
   }
 });
 
+export const getMyDeclarations = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+    return await ctx.db
+      .query("declarations")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .order("desc")
+      .collect();
+  }
+});
+
 export const getDashboardStats = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
+  args: { userId: v.optional(v.string()) }, // userId is now optional and ignored in favor of identity
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
     const decls = await ctx.db
       .query("declarations")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .order("desc")
       .collect();
 
     let totalDuty = 0;
     let importValue = 0;
-    const historicalRates = await getHistoricalRateMap(ctx, args.userId);
+    const historicalRates = await getHistoricalRateMap(ctx, identity.subject);
     
     const hsCodeDutyMap: Record<string, number> = {};
     const recentDeclarations = [];
@@ -308,15 +355,18 @@ export const getDashboardStats = query({
 });
 
 export const getReports = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
+  args: { userId: v.optional(v.string()) },
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
     const decls = await ctx.db
       .query("declarations")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .order("desc")
       .collect();
 
-    const historicalRates = await getHistoricalRateMap(ctx, args.userId);
+    const historicalRates = await getHistoricalRateMap(ctx, identity.subject);
     const reports = [];
     for (const decl of decls) {
       const items = await ctx.db
@@ -382,15 +432,18 @@ export const getReports = query({
 });
 
 export const getFinancialRecords = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
+  args: { userId: v.optional(v.string()) },
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
     const decls = await ctx.db
       .query("declarations")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .order("desc")
       .collect();
 
-    const historicalRates = await getHistoricalRateMap(ctx, args.userId);
+    const historicalRates = await getHistoricalRateMap(ctx, identity.subject);
     const records = [];
     for (const decl of decls) {
       if (decl.status === "Draft" || !decl.mrn) continue;

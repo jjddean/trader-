@@ -188,8 +188,13 @@ export function mapToCDS_H1(declaration: any, items: any[]) {
           ],
           GovernmentProcedure: [
             {
-              CurrentCode: (item.procedureCode?.replace(/\s+/g, '') || "4000000").substring(0, 4),
-              PreviousCode: (item.procedureCode?.replace(/\s+/g, '') || "4000000").substring(4, 7) || "000"
+              // DE 1/10: Requested and Previous Procedure (e.g., 40 00)
+              CurrentCode: (item.procedureCode?.replace(/\s+/g, '') || "4000").substring(0, 2),
+              PreviousCode: (item.procedureCode?.replace(/\s+/g, '') || "4000").substring(2, 4) || "00"
+            },
+            {
+              // DE 1/11: Additional Procedure Code (e.g., 000)
+              CurrentCode: item.additionalProcedureCode || "000"
             }
           ]
         }))

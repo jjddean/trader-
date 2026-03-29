@@ -67,7 +67,7 @@ export default function CoreSchemaPage() {
         </p>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="rounded-xl border border-gray-200 bg-white">
         <div className="p-6 space-y-6">
           
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

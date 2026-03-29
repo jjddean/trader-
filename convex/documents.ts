@@ -10,7 +10,19 @@ export const trackUpload = mutation({
     uploadStatus: v.string(),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("documents", args);
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    
+    // Verify ownership of parent declaration
+    const declaration = await ctx.db.get(args.declarationId);
+    if (!declaration || declaration.userId !== identity.subject) {
+      throw new Error("Unauthorized");
+    }
+
+    return await ctx.db.insert("documents", {
+      ...args,
+      userId: identity.subject
+    });
   }
 });
 
@@ -29,9 +41,12 @@ export const saveDocument = mutation({
     fileType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
     return await ctx.db.insert("documents", {
       fileId: args.storageId,
-      userId: args.userId,
+      userId: identity.subject, // Enforce session ID
       fileName: args.fileName,
       mrn: args.mrn,
       declarationId: args.declarationId,
@@ -43,11 +58,14 @@ export const saveDocument = mutation({
 });
 
 export const getDocuments = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
+  args: { userId: v.optional(v.string()) },
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
     return await ctx.db
       .query("documents")
-      .withIndex("by_user", q => q.eq("userId", args.userId))
+      .withIndex("by_user", q => q.eq("userId", identity.subject))
       .order("desc")
       .collect();
   }

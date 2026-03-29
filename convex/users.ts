@@ -7,10 +7,16 @@ export const current = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
 
-    return await ctx.db
-      .query("users")
-      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
-      .unique();
+    return {
+
+
+      ...(await ctx.db
+        .query("users")
+        .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+        .unique()),
+      role: identity.role as string | undefined,
+    };
+
   },
 });
 

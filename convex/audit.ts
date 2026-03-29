@@ -24,6 +24,10 @@ export const logAction = mutation({
 
 export const getRecentLogs = query({
   handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.role !== "admin") {
+      throw new Error("Unauthorized access to system audit logs.");
+    }
     return await ctx.db.query("auditLogs")
       .withIndex("by_timestamp")
       .order("desc")
@@ -31,8 +35,13 @@ export const getRecentLogs = query({
   },
 });
 
+
 export const getOldLogs = query({
   handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.role !== "admin") {
+      throw new Error("Unauthorized access to system audit logs.");
+    }
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
     return await ctx.db.query("auditLogs")
       .withIndex("by_timestamp", q => q.lt("timestamp", thirtyDaysAgo))

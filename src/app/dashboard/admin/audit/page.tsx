@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { useRouter } from "next/navigation";
+
+import { api } from "../../../../../convex/_generated/api";
 import { 
   ShieldCheck, 
+  ShieldAlert,
   History, 
   Search, 
   Filter, 
@@ -20,8 +23,30 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function AuditLogsPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const userData = useQuery(api.users.current);
   const logs = useQuery(api.audit.getRecentLogs);
+
+  useEffect(() => {
+    if (userData && userData.role !== "admin") {
+      router.push("/dashboard");
+    }
+  }, [userData, router]);
+
+  if (!userData) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (userData.role !== "admin") {
+    return null;
+  }
+
+
 
   const filteredLogs = logs?.filter((log: any) => 
     !searchQuery || 
@@ -94,10 +119,10 @@ export default function AuditLogsPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="px-6 py-3 text-[10px] font-semibold tracking-widest text-gray-500 uppercase">Timestamp</th>
-                    <th className="px-6 py-3 text-[10px] font-semibold tracking-widest text-gray-500 uppercase">Action</th>
-                    <th className="px-6 py-3 text-[10px] font-semibold tracking-widest text-gray-500 uppercase">User</th>
-                    <th className="px-6 py-3 text-[10px] font-semibold tracking-widest text-gray-500 uppercase">Context</th>
+                    <th className="px-6 py-3 text-[11px] font-semibold tracking-widest text-gray-500 uppercase">Timestamp</th>
+                    <th className="px-6 py-3 text-[11px] font-semibold tracking-widest text-gray-500 uppercase">Action</th>
+                    <th className="px-6 py-3 text-[11px] font-semibold tracking-widest text-gray-500 uppercase">User</th>
+                    <th className="px-6 py-3 text-[11px] font-semibold tracking-widest text-gray-500 uppercase">Context</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -148,7 +173,7 @@ function StatsCard({ title, value, icon }: { title: string; value: string | numb
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5">
       <div className="flex items-center justify-between mb-1">
-        <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase">
+        <p className="text-[11px] font-semibold tracking-widest text-gray-400 uppercase">
           {title}
         </p>
         <div className="text-gray-300">{icon}</div>
