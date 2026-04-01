@@ -39,6 +39,7 @@ export const saveDocument = mutation({
     declarationId: v.optional(v.id("declarations")),
     auditStatus: v.optional(v.string()),
     fileType: v.optional(v.string()),
+    ocrText: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -52,6 +53,7 @@ export const saveDocument = mutation({
       declarationId: args.declarationId,
       status: "pending_hmrc",
       auditStatus: args.auditStatus || "pending",
+      ocrText: args.ocrText,
       uploadDate: new Date().toISOString()
     });
   }

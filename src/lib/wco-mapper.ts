@@ -1,4 +1,3 @@
-import { Id } from "../../convex/_generated/dataModel";
 
 const currencyValues =
   typeof Intl.supportedValuesOf === "function" ? new Set(Intl.supportedValuesOf("currency")) : null;

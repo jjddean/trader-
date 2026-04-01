@@ -8,6 +8,9 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "UK Customs Guides & Documentation | FreightCode",
   description: "Comprehensive guides on HMRC CDS, TRE data exports, customs notifications, and UK tariff commodity codes.",
+  alternates: {
+    canonical: "/guides",
+  },
 };
 
 export const guides = [

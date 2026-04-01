@@ -93,11 +93,11 @@ export const getLane = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
     
-    const decorration = await ctx.db.get(args.id);
-    if (!decorration || decorration.userId !== identity.subject) {
+    const declaration = await ctx.db.get(args.id);
+    if (!declaration || declaration.userId !== identity.subject) {
       throw new Error("Unauthorized: You do not own this declaration.");
     }
-    return decorration;
+    return declaration;
   },
 });
 
@@ -175,6 +175,14 @@ export const updateDeclarationStatus = mutation({
     conversationId: v.optional(v.string())
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const existing = await ctx.db.get(args.id);
+    if (!existing || existing.userId !== identity.subject) {
+      throw new Error("Unauthorized");
+    }
+
     const patchObj: any = {
       status: args.status,
       lastUpdated: Date.now(),
@@ -193,6 +201,14 @@ export const updateDeclarationDetails = mutation({
     route: v.string(),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const existing = await ctx.db.get(args.id);
+    if (!existing || existing.userId !== identity.subject) {
+      throw new Error("Unauthorized");
+    }
+
     await ctx.db.patch(args.id, {
       eori: args.eori,
       declarationType: args.declarationType,

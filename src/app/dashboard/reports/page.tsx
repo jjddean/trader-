@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Filter, ShieldAlert, ShieldCheck, ChevronRight, Download, Copy, FileText, CheckCircle2 } from "lucide-react";
+import { Search, Filter, ShieldAlert, ShieldCheck, Download, Copy, FileText, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
-import { Loader2, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 export default function ReportsPage() {
   const { user } = useUser();

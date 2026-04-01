@@ -1,5 +1,4 @@
 import fs from 'fs';
-import path from 'path';
 
 // This script is intended to be run locally to seed the Vectorize index
 // It uses the rules_summary.json and granular JSONs we generated earlier.

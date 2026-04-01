@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, Bell, Zap, ShieldAlert, CheckCircle2, FileText, Package, XCircle, Clock, Bot } from "lucide-react";
-import { useQuery, useMutation } from "convex/react";
+import { Search, Bell, Zap, CheckCircle2, FileText, Package, XCircle, Clock, Bot } from "lucide-react";
+import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 
@@ -20,7 +20,6 @@ import { cn } from "@/lib/utils";
 import { GlobalSearchOverlay } from "./global-search-overlay";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AssistantSideSheet } from "@/components/assistant-side-sheet";
-import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,

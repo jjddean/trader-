@@ -12,6 +12,7 @@ import type * as actions_companies from "../actions/companies.js";
 import type * as actions_currency from "../actions/currency.js";
 import type * as actions_hmrc from "../actions/hmrc.js";
 import type * as actions_stripe from "../actions/stripe.js";
+import type * as admin_subscriptions from "../admin_subscriptions.js";
 import type * as ai from "../ai.js";
 import type * as analytics from "../analytics.js";
 import type * as archive from "../archive.js";
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   "actions/currency": typeof actions_currency;
   "actions/hmrc": typeof actions_hmrc;
   "actions/stripe": typeof actions_stripe;
+  admin_subscriptions: typeof admin_subscriptions;
   ai: typeof ai;
   analytics: typeof analytics;
   archive: typeof archive;

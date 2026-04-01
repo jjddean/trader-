@@ -1,0 +1,17 @@
+{
+  "name": "FreightCode Admin Guide",
+  "short_name": "FC Admin",
+  "description": "System Administration and Architecture Guide for FreightCode",
+  "start_url": "./admin-app.html",
+  "display": "standalone",
+  "background_color": "#0a0b0f",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

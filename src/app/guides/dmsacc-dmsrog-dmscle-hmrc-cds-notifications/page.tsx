@@ -8,7 +8,10 @@ export const metadata: Metadata = {
     title: "DMSACC, DMSROG, DMSCLE — What Do HMRC CDS Notifications Mean?",
     description: "A plain-English guide to every CDS declaration notification — DMSACC, DMSROG, DMSCLE, DMSREJ, DMSCTL and more — and what action to take when you receive one.",
     type: "article",
-  }
+  },
+  alternates: {
+    canonical: "/guides/dmsacc-dmsrog-dmscle-hmrc-cds-notifications",
+  },
 };
 
 export default function Guide3Page() {

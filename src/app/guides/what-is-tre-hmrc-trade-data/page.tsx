@@ -8,7 +8,10 @@ export const metadata: Metadata = {
     title: "What is TRE and How to Use Your HMRC Trade Data",
     description: "A plain-English guide to HMRC's Trade Reporting and Extracting (TRE) — what the data contains, how to access it for free, and how to use it to understand your import costs and patterns.",
     type: "article",
-  }
+  },
+  alternates: {
+    canonical: "/guides/what-is-tre-hmrc-trade-data",
+  },
 };
 
 export default function Guide2Page() {

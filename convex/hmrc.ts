@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { api } from "./_generated/api";
 
 export const saveToken = mutation({
   args: {
@@ -12,14 +11,18 @@ export const saveToken = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    const effectiveUserId = identity?.subject || args.userId;
+
+    if (!effectiveUserId) {
+      throw new Error("Unauthenticated: No user identity or userId provided");
+    }
 
     const expiresAt = Date.now() + args.expiresIn * 1000;
     
     // Check if user already has a token record
     const existing = await ctx.db
       .query("hmrc_tokens")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .withIndex("by_user", (q) => q.eq("userId", effectiveUserId))
       .first();
       
     let tokenId;
@@ -33,7 +36,7 @@ export const saveToken = mutation({
       });
     } else {
       tokenId = await ctx.db.insert("hmrc_tokens", {
-        userId: identity.subject,
+        userId: effectiveUserId,
         accessToken: args.accessToken,
         refreshToken: args.refreshToken,
         expiresAt,
@@ -44,7 +47,7 @@ export const saveToken = mutation({
     // Securely link this to the user's workspace if one exists
     const workspace = await ctx.db
       .query("workspaces")
-      .withIndex("by_owner", (q) => q.eq("ownerId", identity.subject))
+      .withIndex("by_owner", (q) => q.eq("ownerId", effectiveUserId))
       .first();
       
     if (workspace) {
@@ -55,7 +58,7 @@ export const saveToken = mutation({
 
     // 3. Audit Log Entry
     await ctx.db.insert("auditLogs", {
-      userId: identity.subject,
+      userId: effectiveUserId,
       action: "hmrc_auth_linked",
       details: JSON.stringify({
         eori: args.eori,
@@ -70,13 +73,15 @@ export const saveToken = mutation({
 
 export const getToken = query({
   args: { userId: v.optional(v.string()) },
-  handler: async (ctx) => {
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
+    const effectiveUserId = identity?.subject || args.userId;
+    
+    if (!effectiveUserId) return null;
 
     return await ctx.db
       .query("hmrc_tokens")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .withIndex("by_user", (q) => q.eq("userId", effectiveUserId))
       .first();
   },
 });

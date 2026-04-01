@@ -1,4 +1,3 @@
-import { History, CheckCircle2, Orbit, ShieldAlert } from "lucide-react";
 
 export default function ChangelogPage() {
   const updates = [

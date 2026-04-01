@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing HMRC_CDS_BEARER_TOKEN credential for actual secure upload." }, { status: 401 });
     }
 
-    let hmrcRes = await fetchHmrc(hmrcUploadEndpoint, {
+    const hmrcRes = await fetchHmrc(hmrcUploadEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/xml",

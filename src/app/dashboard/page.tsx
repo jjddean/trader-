@@ -5,8 +5,7 @@ import { useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { AlertCircle, PoundSterling, FileText, ArrowUpRight, TrendingUp, Archive, RefreshCw, ShieldCheck, ShieldAlert, AlertTriangle, Plus } from "lucide-react";
-import Link from "next/link";
+import { AlertCircle, PoundSterling, FileText, ArrowUpRight, TrendingUp, Archive, RefreshCw, ShieldCheck, ShieldAlert, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function DashboardPage() {

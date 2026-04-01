@@ -11,8 +11,7 @@ import {
   Zap, 
   ShieldCheck, 
   Activity, 
-  Database, 
-  ExternalLink,
+  Database,
   Server
 } from "lucide-react";
 import { cn } from "@/lib/utils";

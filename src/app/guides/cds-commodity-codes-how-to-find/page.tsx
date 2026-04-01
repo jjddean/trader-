@@ -8,7 +8,10 @@ export const metadata: Metadata = {
     title: "CDS Commodity Codes: How to Find the Right One for Your Goods",
     description: "A practical guide to finding the correct 10-digit commodity code for your goods under the UK Global Tariff — with step-by-step lookup instructions and tips for avoiding common classification mistakes.",
     type: "article",
-  }
+  },
+  alternates: {
+    canonical: "/guides/cds-commodity-codes-how-to-find",
+  },
 };
 
 export default function Guide5Page() {

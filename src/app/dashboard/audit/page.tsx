@@ -1,20 +1,15 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import {
-  AlertCircle,
   CheckCircle2,
   ShieldCheck,
   FileText,
-  Play,
-  Trash2,
-  Clipboard,
   ChevronDown,
   ChevronUp,
   Loader2,
   Upload,
   Wand2,
-  Sparkles,
   Check,
   AlertTriangle,
 } from "lucide-react";

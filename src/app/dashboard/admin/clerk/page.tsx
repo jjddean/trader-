@@ -7,17 +7,13 @@ import {
   Search, 
   Filter, 
   Loader2, 
-  ArrowRight, 
   FileText, 
   ShieldCheck, 
   ShieldAlert, 
-  AlertCircle, 
   Bot,
   Activity,
   History
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 
 export default function OnlineClerkPage() {
   const [searchQuery, setSearchQuery] = useState("");

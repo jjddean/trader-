@@ -1,4 +1,4 @@
-				import worker, * as OTHER_EXPORTS from "C:\\Users\\jason\\trader-app\\cloudagent\\node_modules\\wrangler\\wrangler-dist\\ProxyServerWorker.js";
+				import worker from "C:\\Users\\jason\\trader-app\\cloudagent\\node_modules\\wrangler\\wrangler-dist\\ProxyServerWorker.js";
 				import * as __MIDDLEWARE_0__ from "C:\\Users\\jason\\trader-app\\cloudagent\\node_modules\\wrangler\\templates\\middleware\\middleware-ensure-req-body-drained.ts";
 
 				export * from "C:\\Users\\jason\\trader-app\\cloudagent\\node_modules\\wrangler\\wrangler-dist\\ProxyServerWorker.js";

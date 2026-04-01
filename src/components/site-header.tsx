@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { useAuth, UserButton, Waitlist } from "@clerk/nextjs";
 import { useState } from "react";
-import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,

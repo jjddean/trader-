@@ -121,9 +121,10 @@ export async function POST(request: Request) {
       mrn: linkedMrn !== "none" ? linkedMrn : undefined,
       auditStatus: parsedResponse.status.toLowerCase(),
       fileType: parsedResponse.documentType,
+      ocrText: rawText,
     });
 
-    return NextResponse.json({ success: true, documentId: newDocId, analysis: parsedResponse });
+    return NextResponse.json({ success: true, documentId: newDocId, analysis: parsedResponse, ocrText: rawText });
 
   } catch (error: any) {
     console.error("Smart Upload AI Error:", error);

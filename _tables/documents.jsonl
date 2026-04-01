@@ -1,0 +1,16 @@
+{"name":"auditLogs","id":10001}
+{"name":"shipments","id":10004}
+{"name":"calculator_history","id":10005}
+{"name":"referenceDatasets","id":10006}
+{"name":"search_history","id":10008}
+{"name":"subscriptions","id":10009}
+{"name":"users","id":10010}
+{"name":"hmrc_tokens","id":10011}
+{"name":"declarations","id":10013}
+{"name":"workspaceMembers","id":10014}
+{"name":"workspaces","id":10015}
+{"name":"documents","id":10016}
+{"name":"goods_items","id":10017}
+{"name":"notifications","id":10018}
+{"name":"historical_declarations","id":10019}
+{"name":"waitlist_leads","id":10020}

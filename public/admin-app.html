@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreightCode — Admin Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#6366f1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FC Admin">
+<link rel="manifest" href="/admin-manifest.json">
+<link rel="icon" type="image/png" href="/icon.png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0b0f;--sidebar:#12131a;--card:#161822;--card-hover:#1c1e2e;--border:#2a2d3e;--accent:#6366f1;--accent-glow:rgba(99,102,241,.15);--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--text:#e2e8f0;--text-dim:#94a3b8;--text-muted:#64748b}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden}
+
+/* Sidebar */
+.sidebar{width:260px;background:var(--sidebar);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:100}
+.sidebar-header{padding:24px 20px 16px;border-bottom:1px solid var(--border)}
+.sidebar-header h1{font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px}
+.sidebar-header h1 span{background:var(--accent);color:#fff;font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600}
+.sidebar-header p{font-size:12px;color:var(--text-muted);margin-top:4px}
+.sidebar-search{padding:12px 16px}
+.sidebar-search input{width:100%;background:#1a1b26;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;outline:none;transition:.2s}
+.sidebar-search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.sidebar-search input::placeholder{color:var(--text-muted)}
+.sidebar-nav{flex:1;overflow-y:auto;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;color:var(--text-dim);cursor:pointer;transition:.15s;border-left:3px solid transparent}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.nav-item.active{color:var(--accent);background:var(--accent-glow);border-left-color:var(--accent);font-weight:500}
+.nav-item .icon{width:18px;text-align:center;font-size:14px}
+.sidebar-footer{padding:16px 20px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted)}
+
+/* Main */
+main{margin-left:260px;flex:1;padding:32px 40px;max-width:1100px}
+section{display:none;animation:fadeIn .3s ease}
+section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+h2{font-size:24px;font-weight:700;margin-bottom:4px}
+.section-desc{color:var(--text-dim);font-size:14px;margin-bottom:24px}
+
+/* Cards */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:24px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;transition:.2s;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);opacity:0;transition:.2s}
+.card:hover{border-color:rgba(99,102,241,.3);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.card:hover::before{opacity:1}
+.card h3{font-size:14px;font-weight:600;margin-bottom:4px}
+.card p{font-size:12px;color:var(--text-dim);line-height:1.5}
+.card .tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600;margin-top:8px}
+
+/* Status dots */
+.status{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+.status.green{background:var(--green);box-shadow:0 0 6px var(--green)}
+.status.amber{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.status.red{background:var(--red);box-shadow:0 0 6px var(--red)}
+
+/* Tables */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#1a1b26;text-align:left;padding:12px 16px;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim)}
+td{padding:10px 16px;border-top:1px solid var(--border);vertical-align:top}
+tr:hover td{background:rgba(255,255,255,.02)}
+code{background:#1e1f2e;padding:2px 6px;border-radius:4px;font-size:12px;font-family:'Courier New',monospace;color:#a5b4fc}
+
+/* Method badges */
+.method{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;font-family:monospace;min-width:40px;text-align:center}
+.method.get{background:rgba(34,197,94,.15);color:var(--green)}
+.method.post{background:rgba(99,102,241,.15);color:var(--accent)}
+
+/* Collapsible */
+.collapsible{cursor:pointer;user-select:none}
+.collapsible::after{content:'▸';float:right;transition:.2s}
+.collapsible.open::after{transform:rotate(90deg)}
+.collapse-body{display:none;border-top:1px solid var(--border);padding:16px}
+.collapse-body.open{display:block;animation:fadeIn .2s}
+
+/* Copy button */
+.copy-btn{background:rgba(99,102,241,.15);color:var(--accent);border:none;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:.15s}
+.copy-btn:hover{background:rgba(99,102,241,.3)}
+.copy-btn.copied{background:rgba(34,197,94,.2);color:var(--green)}
+
+/* Env switcher */
+.env-track{display:flex;align-items:center;gap:0;margin:20px 0}
+.env-step{flex:1;text-align:center;padding:16px;border:1px solid var(--border);position:relative}
+.env-step:first-child{border-radius:10px 0 0 10px}
+.env-step:last-child{border-radius:0 10px 10px 0}
+.env-step.current{background:var(--accent-glow);border-color:var(--accent)}
+.env-step h4{font-size:13px;font-weight:600;margin-bottom:2px}
+.env-step p{font-size:11px;color:var(--text-muted)}
+.env-arrow{font-size:18px;color:var(--text-muted);margin:0 -8px;z-index:1}
+
+/* Notification cards */
+.notif-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:16px 0}
+.notif-card{padding:14px;border-radius:10px;border:1px solid var(--border);background:var(--card)}
+.notif-card h4{font-size:13px;font-weight:600;margin-bottom:2px}
+.notif-card p{font-size:11px;color:var(--text-dim)}
+.notif-card.accept{border-left:3px solid var(--green)}
+.notif-card.reject{border-left:3px solid var(--red)}
+.notif-card.info{border-left:3px solid var(--amber)}
+.notif-card.control{border-left:3px solid var(--accent)}
+
+/* Command block */
+.cmd{background:#0d0e14;border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-family:'Courier New',monospace;font-size:13px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cmd span{color:var(--green)}
+
+/* Checklist */
+.check-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.check-item:last-child{border:none}
+.check-icon{width:20px;height:20px;border-radius:6px;background:rgba(34,197,94,.15);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:12px}
+
+/* Links grid */
+.links-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:16px}
+.link-card{display:flex;align-items:center;gap:12px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:10px;text-decoration:none;color:var(--text);transition:.2s}
+.link-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.link-icon{width:36px;height:36px;border-radius:8px;background:var(--accent-glow);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:16px}
+.link-card h4{font-size:13px;font-weight:600}
+.link-card p{font-size:11px;color:var(--text-muted)}
+
+/* Search overlay */
+.search-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;justify-content:center;padding-top:20vh}
+.search-overlay.open{display:flex}
+.search-box{width:500px;background:var(--sidebar);border:1px solid var(--border);border-radius:12px;padding:0;overflow:hidden;max-height:400px}
+.search-box input{width:100%;padding:16px 20px;background:transparent;border:none;color:var(--text);font-size:15px;outline:none}
+.search-results{border-top:1px solid var(--border);max-height:300px;overflow-y:auto}
+.search-result{padding:12px 20px;cursor:pointer;font-size:13px;transition:.1s}
+.search-result:hover,.search-result.selected{background:var(--accent-glow);color:var(--accent)}
+
+/* Responsive */
+@media(max-width:768px){.sidebar{width:60px}.sidebar-header h1 span,.sidebar-header p,.nav-item span:not(.icon),.sidebar-search,.sidebar-footer{display:none}.nav-item{justify-content:center;padding:12px}.sidebar-header{padding:16px 0;text-align:center}main{margin-left:60px;padding:20px}.card-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <h1>📦 FreightCode <span>Admin</span></h1>
+    <p>System Administration Guide</p>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" placeholder="Search… (Ctrl+K)" id="sidebarSearch">
+  </div>
+  <style>
+    .nav-group { margin-bottom: 4px; }
+    .nav-group summary {
+      font-size: 11px; text-transform: uppercase; color: var(--text-dim);
+      margin: 16px 0 8px 12px; letter-spacing: 0.5px; font-weight: 600;
+      cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between;
+      padding-right: 12px; user-select: none; transition: color 0.15s;
+    }
+    .nav-group summary:hover { color: var(--text); }
+    .nav-group summary::-webkit-details-marker { display: none; }
+    .nav-group[open] summary .chevron { transform: rotate(180deg); opacity: 1; }
+    .nav-group .chevron { font-size: 8px; opacity: 0.5; transition: transform 0.2s, opacity 0.2s; }
+  </style>
+  <div class="sidebar-nav" id="sidebarNav">
+    <details class="nav-group" open>
+      <summary><span>🚀 Getting Started</span><span class="chevron">▼</span></summary>
+      <div class="nav-items-wrapper">
+    <div class="nav-item active" data-section="architecture"><span class="icon">🏗</span><span>Architecture</span></div>
+    <div class="nav-item" data-section="environment"><span class="icon">⚙️</span><span>Environment</span></div>
+    <div class="nav-item" data-section="pages"><span class="icon">📄</span><span>Dashboard Pages</span></div>
+    <div class="nav-item" data-section="onboarding"><span class="icon">🚀</span><span>Customer Onboarding</span></div>
+      </div>
+    </details>
+
+    <details class="nav-group" open>
+      <summary><span>📖 Technical Reference</span><span class="chevron">▼</span></summary>
+      <div class="nav-items-wrapper">
+    <div class="nav-item" data-section="database"><span class="icon">🗄</span><span>Database</span></div>
+    <div class="nav-item" data-section="api"><span class="icon">🔌</span><span>API Endpoints</span></div>
+    <div class="nav-item" data-section="hmrc"><span class="icon">🇬🇧</span><span>HMRC Integration</span></div>
+    <div class="nav-item" data-section="webhooks"><span class="icon">🪝</span><span>Webhook Config</span></div>
+    <div class="nav-item" data-section="rate-limits"><span class="icon">🚦</span><span>Rate Limits</span></div>
+      </div>
+    </details>
+
+    <details class="nav-group" open>
+      <summary><span>⚙️ Operations & Infra</span><span class="chevron">▼</span></summary>
+      <div class="nav-items-wrapper">
+    <div class="nav-item" data-section="deploy"><span class="icon">🚀</span><span>Deployment</span></div>
+    <div class="nav-item" data-section="monitoring"><span class="icon">📊</span><span>Monitoring</span></div>
+    <div class="nav-item" data-section="runbook"><span class="icon">📖</span><span>Runbook</span></div>
+    <div class="nav-item" data-section="incident-response"><span class="icon">🚨</span><span>Incident Response</span></div>
+    <div class="nav-item" data-section="offboarding"><span class="icon">👋</span><span>Customer Offboarding</span></div>
+      </div>
+    </details>
+
+    <details class="nav-group" open>
+      <summary><span>🛡️ Security & Compliance</span><span class="chevron">▼</span></summary>
+      <div class="nav-items-wrapper">
+    <div class="nav-item" data-section="security"><span class="icon">🔒</span><span>Security</span></div>
+    <div class="nav-item" data-section="gdpr"><span class="icon">🛡️</span><span>Data Processing & GDPR</span></div>
+    <div class="nav-item" data-section="audit-trail"><span class="icon">🔎</span><span>Audit Trail</span></div>
+    <div class="nav-item" data-section="agent-auth"><span class="icon">🤝</span><span>Agent Authorisation</span></div>
+    <div class="nav-item" data-section="data-retention"><span class="icon">💾</span><span>Data Retention</span></div>
+    <div class="nav-item" data-section="compliance-log"><span class="icon">📋</span><span>HMRC Compliance Log</span></div>
+      </div>
+    </details>
+
+    <details class="nav-group" open>
+      <summary><span>🏢 Business & Users</span><span class="chevron">▼</span></summary>
+      <div class="nav-items-wrapper">
+    <div class="nav-item" data-section="users"><span class="icon">👥</span><span>Users & Access</span></div>
+    <div class="nav-item" data-section="pricing"><span class="icon">💰</span><span>Pricing & Plans</span></div>
+    <div class="nav-item" data-section="support"><span class="icon">📞</span><span>Support & Escalation</span></div>
+      </div>
+    </details>
+
+    <details class="nav-group" open>
+      <summary><span>📚 Resources</span><span class="chevron">▼</span></summary>
+      <div class="nav-items-wrapper">
+    <div class="nav-item" data-section="hmrc-errors"><span class="icon">⚠️</span><span>HMRC Error Codes</span></div>
+    <div class="nav-item" data-section="limitations"><span class="icon">🚧</span><span>Known Limitations</span></div>
+    <div class="nav-item" data-section="release-notes"><span class="icon">📝</span><span>Release Notes</span></div>
+    <div class="nav-item" data-section="links"><span class="icon">🔗</span><span>Quick Links</span></div>
+      </div>
+    </details>
+  </div>
+  <div class="sidebar-footer">v0.1.0 — Last updated: March 2026</div>
+</nav>
+
+<!-- Search Overlay -->
+<div class="search-overlay" id="searchOverlay">
+  <div class="search-box">
+    <input type="text" placeholder="Search sections…" id="searchInput">
+    <div class="search-results" id="searchResults"></div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<main>
+
+  <!-- 1. Architecture -->
+  <section id="architecture" class="active">
+    <h2>Architecture Overview</h2>
+    <p class="section-desc">Full technology stack powering FreightCode</p>
+    <div class="card-grid">
+      <div class="card"><h3>⚡ Frontend</h3><p>Next.js 16 · React 19 · Tailwind CSS 4</p><div class="tag" style="background:rgba(34,197,94,.12);color:var(--green)">UI Layer</div></div>
+      <div class="card"><h3>🗄 Backend</h3><p>Convex (serverless) — database, mutations, queries, cron jobs</p><div class="tag" style="background:rgba(99,102,241,.12);color:var(--accent)">Data Layer</div></div>
+      <div class="card"><h3>🔐 Auth</h3><p>Clerk — SSO, 2FA, user management, session tokens</p><div class="tag" style="background:rgba(245,158,11,.12);color:var(--amber)">Security</div></div>
+      <div class="card"><h3>💳 Payments</h3><p>Stripe — Starter / Professional / Enterprise tiers</p><div class="tag" style="background:rgba(245,158,11,.12);color:var(--amber)">Billing</div></div>
+      <div class="card"><h3>🇬🇧 HMRC</h3><p>CDS API — OAuth 2.0, declarations, notifications</p><div class="tag" style="background:rgba(239,68,68,.12);color:var(--red)">Gov API</div></div>
+      <div class="card"><h3>📦 Storage</h3><p>Cloudflare R2 — documents, reference data files</p><div class="tag" style="background:rgba(34,197,94,.12);color:var(--green)">Files</div></div>
+      <div class="card"><h3>🔍 Search</h3><p>Typesense — HS code lookup, commodity search</p><div class="tag" style="background:rgba(99,102,241,.12);color:var(--accent)">Search</div></div>
+      <div class="card"><h3>🤖 AI</h3><p>Groq (Llama 3.3) + Ollama — assistant, compliance analysis</p><div class="tag" style="background:rgba(168,85,247,.12);color:#a855f7">Intelligence</div></div>
+      <div class="card"><h3>📋 OCR</h3><p>AWS Textract — document extraction and processing</p><div class="tag" style="background:rgba(34,197,94,.12);color:var(--green)">Extraction</div></div>
+      <div class="card"><h3>🗺 Maps</h3><p>Mapbox — trade route visualisation</p><div class="tag" style="background:rgba(99,102,241,.12);color:var(--accent)">Visual</div></div>
+    </div>
+  </section>
+
+  <!-- 2. Environment -->
+  <section id="environment">
+    <h2>Environment Configuration</h2>
+    <p class="section-desc">All config in <code>.env.local</code> — never committed to git</p>
+
+    <h3 style="margin:20px 0 8px;font-size:15px">Environment Switcher</h3>
+    <div class="env-track">
+      <div class="env-step current"><h4><span class="status green"></span>Sandbox</h4><p>Trade Test · v2.0</p></div>
+      <span class="env-arrow">→</span>
+      <div class="env-step"><h4>TDR</h4><p>Dress Rehearsal · v1.0</p></div>
+      <span class="env-arrow">→</span>
+      <div class="env-step"><h4>Production</h4><p>Live · v1.0</p></div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Variable</th><th>Purpose</th><th>Source</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><code>HMRC_ENVIRONMENT</code></td><td>Controls all HMRC URLs</td><td>Admin</td><td><button class="copy-btn" onclick="copyText('HMRC_ENVIRONMENT=sandbox')">Copy</button></td></tr>
+          <tr><td><code>HMRC_CLIENT_ID</code></td><td>HMRC OAuth app ID</td><td>HMRC Dev Hub</td><td><button class="copy-btn" onclick="copyText('HMRC_CLIENT_ID=')">Copy</button></td></tr>
+          <tr><td><code>HMRC_CLIENT_SECRET</code></td><td>HMRC OAuth secret</td><td>HMRC Dev Hub</td><td><button class="copy-btn" onclick="copyText('HMRC_CLIENT_SECRET=')">Copy</button></td></tr>
+          <tr><td><code>HMRC_REDIRECT_URI</code></td><td>OAuth callback URL</td><td>Must match deploy</td><td><button class="copy-btn" onclick="copyText('HMRC_REDIRECT_URI=http://localhost:3000/auth/hmrc/callback')">Copy</button></td></tr>
+          <tr><td><code>HMRC_DECLARATIONS_ACCEPT</code></td><td>API version header</td><td>v2.0 for sandbox, remove for prod</td><td><button class="copy-btn" onclick="copyText('HMRC_DECLARATIONS_ACCEPT=application/vnd.hmrc.2.0+xml')">Copy</button></td></tr>
+          <tr><td><code>NEXT_PUBLIC_CONVEX_URL</code></td><td>Convex endpoint</td><td>Convex Dashboard</td><td><button class="copy-btn" onclick="copyText('NEXT_PUBLIC_CONVEX_URL=')">Copy</button></td></tr>
+          <tr><td><code>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code></td><td>Clerk frontend</td><td>Clerk Dashboard</td><td></td></tr>
+          <tr><td><code>CLERK_SECRET_KEY</code></td><td>Clerk backend</td><td>Clerk Dashboard</td><td></td></tr>
+          <tr><td><code>GROQ_API_KEY</code></td><td>AI inference</td><td>Groq Console</td><td></td></tr>
+          <tr><td><code>CLOUDFLARE_R2_*</code></td><td>Document storage</td><td>Cloudflare Dashboard</td><td></td></tr>
+          <tr><td><code>TYPESENSE_API_KEY</code></td><td>Search engine</td><td>Typesense Cloud</td><td></td></tr>
+          <tr><td><code>AWS_ACCESS_KEY_ID</code></td><td>OCR (Textract)</td><td>AWS IAM</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">Detailed Environment Variables</h3>
+    <p class="section-desc" style="margin-bottom:12px">Extracted from <code>.env.local</code> covering Dev & Prod configs</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Variable</th><th>Purpose</th><th>Source</th><th>Type</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>NEXT_PUBLIC_CONVEX_URL</code></td>
+            <td>Convex Serverless DB Endpoint</td>
+            <td>Convex Dashboard</td>
+            <td>Both</td>
+          </tr>
+          <tr>
+            <td><code>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code></td>
+            <td>Clerk Frontend Auth Token</td>
+            <td>Clerk Dashboard</td>
+            <td>Both</td>
+          </tr>
+          <tr>
+            <td><code>CLERK_SECRET_KEY</code></td>
+            <td>Clerk Backend Auth Token</td>
+            <td>Clerk Dashboard</td>
+            <td>Both</td>
+          </tr>
+          <tr>
+            <td><code>HMRC_CLIENT_ID</code><br><code>HMRC_CLIENT_SECRET</code></td>
+            <td>HMRC API Credentials</td>
+            <td>HMRC Developer Hub</td>
+            <td>Both (Sandbox/Prod keys vary)</td>
+          </tr>
+          <tr>
+            <td><code>HMRC_ENVIRONMENT</code></td>
+            <td>HMRC API targeting ("sandbox" or "production")</td>
+            <td>Manual set</td>
+            <td>Both</td>
+          </tr>
+          <tr>
+            <td><code>HMRC_REDIRECT_URI</code></td>
+            <td>OAuth Callback match</td>
+            <td>App Vercel settings</td>
+            <td>Both</td>
+          </tr>
+          <tr>
+            <td><code>GROQ_API_KEY</code><br><code>GROQ_MODEL</code></td>
+            <td>Inference keys for AI extraction/classification</td>
+            <td>Groq Console</td>
+            <td>Both</td>
+          </tr>
+          <tr>
+            <td><code>AWS_ACCESS_KEY_ID</code><br><code>AWS_SECRET_ACCESS_KEY</code><br><code>AWS_REGION</code></td>
+            <td>AWS Textract OCR credentials</td>
+            <td>AWS IAM</td>
+            <td>Both</td>
+          </tr>
+          <tr>
+            <td><code>CLOUDFLARE_R2_ACCESS_KEY_ID</code><br><code>CLOUDFLARE_R2_SECRET_ACCESS_KEY</code><br><code>CLOUDFLARE_R2_ENDPOINT</code><br><code>CLOUDFLARE_R2_BUCKET_NAME</code></td>
+            <td>R2 storage backend details</td>
+            <td>Cloudflare Dash</td>
+            <td>Both</td>
+          </tr>
+          <tr>
+            <td><code>TYPESENSE_API_KEY</code><br><code>TYPESENSE_NODES</code></td>
+            <td>Search engine admin keys & URL</td>
+            <td>Typesense Cloud</td>
+            <td>Both</td>
+          </tr>
+          <tr>
+            <td><code>RESEND_API_KEY</code></td>
+            <td>Email sender API Key</td>
+            <td>Resend dashboard</td>
+            <td>Both</td>
+          </tr>
+          <tr>
+            <td><code>NEXT_PUBLIC_MAPBOX_TOKEN</code></td>
+            <td>Maps rendering</td>
+            <td>Mapbox account</td>
+            <td>Both</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 3. Database -->
+  <section id="database">
+    <h2>Database Schema</h2>
+    <p class="section-desc">Convex serverless database — <a href="https://dashboard.convex.dev" target="_blank" style="color:var(--accent)">dashboard.convex.dev</a></p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Table</th><th>Purpose</th><th>Indexes</th><th>Key Fields</th></tr></thead>
+        <tbody>
+          <tr><td><code>users</code></td><td>User profiles (synced from Clerk)</td><td>by_clerk</td><td>clerkId, email, name, orgId</td></tr>
+          <tr><td><code>subscriptions</code></td><td>Stripe subscription status</td><td>by_user</td><td>stripeCustomerId, status, plan</td></tr>
+          <tr><td><code>hmrc_tokens</code></td><td>HMRC OAuth tokens</td><td>by_user</td><td>accessToken, refreshToken, expiresAt, eori</td></tr>
+          <tr><td><code>declarations</code></td><td>Customs declarations</td><td>by_user, by_mrn</td><td>status, eori, mrn, conversationId, declarationType</td></tr>
+          <tr><td><code>goods_items</code></td><td>Line items in declarations</td><td>by_declaration</td><td>commodityCode, description, valueAmount, grossWeightKg</td></tr>
+          <tr><td><code>documents</code></td><td>Supporting documents</td><td>by_user, by_mrn</td><td>fileName, status, declarationId</td></tr>
+          <tr><td><code>notifications</code></td><td>HMRC DMS notifications</td><td>by_mrn, by_user</td><td>notificationType, errorCodes, rawPayload</td></tr>
+          <tr><td><code>workspaces</code></td><td>Multi-tenant workspaces</td><td>by_owner</td><td>name, ownerId, eoriNumber</td></tr>
+          <tr><td><code>workspaceMembers</code></td><td>Workspace access control</td><td>by_user</td><td>workspaceId, userId, role</td></tr>
+          <tr><td><code>historical_declarations</code></td><td>Imported legacy data</td><td>by_user</td><td>entryIdentifierMrn, commodityCode</td></tr>
+          <tr><td><code>referenceDatasets</code></td><td>HS codes, tariffs, currencies</td><td>by_name</td><td>name, version, storageUrl</td></tr>
+          <tr><td><code>waitlist_leads</code></td><td>Pre-launch waitlist</td><td>by_email</td><td>email, status</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">Detailed Definition of all Convex tables</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Table Name</th><th>Key Fields</th><th>Indexes</th><th>Usage</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>users</code></td>
+            <td>clerkId, email, name, orgId</td>
+            <td>by_clerk</td>
+            <td>User profiles synced from Clerk</td>
+          </tr>
+          <tr>
+            <td><code>subscriptions</code></td>
+            <td>userId, stripeCustomerId, status, plan</td>
+            <td>by_user</td>
+            <td>Tracks Stripe subscription tier and status</td>
+          </tr>
+          <tr>
+            <td><code>referenceDatasets</code></td>
+            <td>name, version, storageUrl</td>
+            <td>by_name</td>
+            <td>Reference datasets (HS codes, tariffs, currency)</td>
+          </tr>
+          <tr>
+            <td><code>hmrc_tokens</code></td>
+            <td>userId, accessToken, refreshToken, expiresAt, eori</td>
+            <td>by_user</td>
+            <td>OAuth 2.0 tokens for HMRC API calls</td>
+          </tr>
+          <tr>
+            <td><code>waitlist_leads</code></td>
+            <td>email, status, timestamp</td>
+            <td>by_email</td>
+            <td>Stores early-access waitlist signups</td>
+          </tr>
+          <tr>
+            <td><code>historical_declarations</code></td>
+            <td>userId, entryIdentifierMrn, declarantEori, commodityCode, etc.</td>
+            <td>by_user</td>
+            <td>Legacy declarations data migration/viewer</td>
+          </tr>
+          <tr>
+            <td><code>declarations</code></td>
+            <td>userId, workspaceId, status, eori, mrn, conversationId</td>
+            <td>by_user, by_mrn</td>
+            <td>Core customs declaration records tracking lifecycle</td>
+          </tr>
+          <tr>
+            <td><code>goods_items</code></td>
+            <td>declarationId, commodityCode, valueAmount, grossWeightKg, etc.</td>
+            <td>by_declaration</td>
+            <td>Line items belonging to a declaration</td>
+          </tr>
+          <tr>
+            <td><code>documents</code></td>
+            <td>userId, workspaceId, fileId, fileName, status, mrn, declarationId</td>
+            <td>by_user, by_mrn</td>
+            <td>Files uploaded to R2, linked to declarations</td>
+          </tr>
+          <tr>
+            <td><code>workspaces</code></td>
+            <td>name, ownerId, eoriNumber, hmrcTokensId</td>
+            <td>by_owner</td>
+            <td>Multi-tenant workspace contexts for organizations</td>
+          </tr>
+          <tr>
+            <td><code>workspaceMembers</code></td>
+            <td>workspaceId, userId, role</td>
+            <td>by_user</td>
+            <td>RBAC linking users to workspaces</td>
+          </tr>
+          <tr>
+            <td><code>notifications</code></td>
+            <td>mrn, conversationId, notificationType, errorCodes, fieldErrors, rawPayload</td>
+            <td>by_mrn, by_user</td>
+            <td>Webhook payloads received from HMRC DMS API</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 4. Dashboard Pages -->
+  <section id="pages">
+    <h2>Dashboard Pages</h2>
+    <p class="section-desc">All pages require authentication via Clerk</p>
+    <div class="card-grid">
+      <div class="card"><h3>📊 Dashboard</h3><p><code>/dashboard</code></p><p>Overview, KPIs, recent activity</p></div>
+      <div class="card"><h3>📋 Declarations</h3><p><code>/dashboard/declarations</code></p><p>Create, view, manage customs declarations</p></div>
+      <div class="card"><h3>📁 Documents</h3><p><code>/dashboard/documents</code></p><p>Upload and manage supporting docs</p></div>
+      <div class="card"><h3>📈 Reports</h3><p><code>/dashboard/reports</code></p><p>Customs reports and analytics</p></div>
+      <div class="card"><h3>✅ Compliance</h3><p><code>/dashboard/audit</code></p><p>Compliance checks and audit trail</p></div>
+      <div class="card"><h3>🗃 Records</h3><p><code>/dashboard/records</code></p><p>Historical declaration records</p></div>
+      <div class="card"><h3>🔍 HS Lookup</h3><p><code>/dashboard/tools</code></p><p>Commodity code search via Typesense</p></div>
+      <div class="card"><h3>🤖 Assistant</h3><p><code>/dashboard/assistant</code></p><p>AI-powered customs guidance</p></div>
+      <div class="card"><h3>⚙️ Settings</h3><p><code>/dashboard/settings</code></p><p>Profile, Subscription, Security, Notifications</p></div>
+      <div class="card"><h3>🛡 Admin</h3><p><code>/dashboard/admin</code></p><p>System administration panel</p></div>
+      <div class="card"><h3>📬 Inbox</h3><p><code>/dashboard/inbox</code></p><p>Notification inbox</p></div>
+      <div class="card"><h3>👤 Prospects</h3><p><code>/dashboard/prospects</code></p><p>CRM / lead tracking</p></div>
+    </div>
+  </section>
+
+  <!-- 5. API Endpoints -->
+  <section id="api">
+    <h2>API Endpoints</h2>
+    <p class="section-desc">HMRC integration and system routes</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Function</th></tr></thead>
+        <tbody>
+          <tr><td><span class="method post">POST</span></td><td><code>/api/hmrc/submit</code></td><td>Submit new declaration to HMRC</td></tr>
+          <tr><td><span class="method post">POST</span></td><td><code>/api/hmrc/amend</code></td><td>Amend existing declaration (FunctionCode 13)</td></tr>
+          <tr><td><span class="method post">POST</span></td><td><code>/api/hmrc/cancel</code></td><td>Cancel / invalidate declaration (TypeCode INV)</td></tr>
+          <tr><td><span class="method get">GET</span></td><td><code>/api/hmrc/status-query</code></td><td>Query declaration status by MRN / DUCR / UCR</td></tr>
+          <tr><td><span class="method post">POST</span></td><td><code>/api/hmrc/webhooks/notify</code></td><td>Receive push notifications from HMRC</td></tr>
+          <tr><td><span class="method get">GET</span></td><td><code>/api/hmrc/notifications/pull</code></td><td>Pull notifications by conversationId</td></tr>
+          <tr><td><span class="method post">POST</span></td><td><code>/api/hmrc/documents/initiate</code></td><td>Initiate document upload</td></tr>
+          <tr><td><span class="method post">POST</span></td><td><code>/api/hmrc/upload</code></td><td>Upload document to HMRC</td></tr>
+          <tr><td><span class="method get">GET</span></td><td><code>/api/health</code></td><td>Health check (service status)</td></tr>
+          <tr><td><span class="method get">GET</span></td><td><code>/auth/hmrc/callback</code></td><td>OAuth callback from HMRC</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">Detailed Internal API Routes and Schemas</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Headers / Body</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="method post">POST</span></td>
+            <td><code>/api/hmrc/submit</code></td>
+            <td>
+              <strong>Auth:</strong> Clerk<br>
+              <strong>Body:</strong> <code>{ "declarationId": "string" }</code><br>
+              <strong>Response:</strong> <code>{ "success": true, "status": "Processing", "conversationId": "string" }</code>
+            </td>
+            <td>Submits declaration to HMRC. Maps Convex data to WCO XML, applies OAuth token.<br>
+            <span class="status red"></span> <strong>Errors:</strong> 401 Unauthorized, 400 Validation, 403 Token missing/expired, 404 Not Found, 429 Rate limited.</td>
+          </tr>
+          <tr>
+            <td><span class="method post">POST</span></td>
+            <td><code>/api/hmrc/documents/initiate</code></td>
+            <td>
+              <strong>Auth:</strong> Clerk<br>
+              <strong>Body:</strong> <code>{ "declarationId": "string", "fileName": "string", "fileSize": number }</code><br>
+              <strong>Response:</strong> <code>{ "success": true, "uploadParameters": {...} }</code>
+            </td>
+            <td>Initiates HMRC AWS S3 document upload session. Logs intention in Convex.<br>
+            <span class="status red"></span> <strong>Errors:</strong> 401 Unauthorized, 400 Missing fields, 403 Token missing.</td>
+          </tr>
+          <tr>
+            <td><span class="method post">POST</span></td>
+            <td><code>/api/hmrc/upload</code></td>
+            <td>
+              <strong>Auth:</strong> API Keys or internal<br>
+              <strong>Body:</strong> <code>{ "storageId": "string", "mrn": "string", "documentType": "string" }</code><br>
+              <strong>Response:</strong> <code>{ "success": true, "message": "...", "mrn": "string" }</code>
+            </td>
+            <td>Notifies HMRC that a document has been uploaded for a specific MRN.<br>
+            <span class="status red"></span> <strong>Errors:</strong> 400 Missing fields, 429 Rate limited, 410 URL expired.</td>
+          </tr>
+          <tr>
+            <td><span class="method post">POST</span></td>
+            <td><code>/api/hmrc/webhooks/notify</code></td>
+            <td>
+              <strong>Headers:</strong> <code>X-Conversation-ID</code><br>
+              <strong>Body:</strong> Raw HMRC XML or JSON<br>
+              <strong>Response:</strong> <code>{ "success": true, "message": "Webhook acknowledged" }</code>
+            </td>
+            <td>Receives async push notifications handling DMS endpoints (DMSACC, DMSREJ, etc). Saves to Convex.<br>
+            <span class="status red"></span> <strong>Errors:</strong> 500 Webhook failure.</td>
+          </tr>
+          <tr>
+            <td><span class="method post">POST</span></td>
+            <td><code>/api/ai/classify</code></td>
+            <td>
+              <strong>Auth:</strong> None (internal route)<br>
+              <strong>Body:</strong> <code>{ "description": "string" }</code><br>
+              <strong>Response:</strong> <code>{ "suggestions": [{ "code": "...", "reason": "..." }] }</code>
+            </td>
+            <td>Uses Groq Llama model to classify a product description into top 3 HS codes.<br>
+            <span class="status red"></span> <strong>Errors:</strong> 400 Missing description, 500 AI Error.</td>
+          </tr>
+          <tr>
+            <td><span class="method post">POST</span></td>
+            <td><code>/api/ai/extract</code></td>
+            <td>
+              <strong>Auth:</strong> None (internal route)<br>
+              <strong>Body:</strong> FormData with <code>file</code> (PDF/Image)<br>
+              <strong>Response:</strong> <code>{ "items": [{...}], "rawText": "..." }</code>
+            </td>
+            <td>Extracts text via AWS Textract and parses invoice line items using Groq Llama.<br>
+            <span class="status red"></span> <strong>Errors:</strong> 400 No file/text, 500 Extraction error.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 6. HMRC Integration -->
+  <section id="hmrc">
+    <h2>HMRC Integration</h2>
+    <p class="section-desc">Customs Declaration Service (CDS) API integration</p>
+
+    <h3 style="font-size:15px;margin-bottom:16px">OAuth 2.0 Flow</h3>
+    <div class="card" style="margin-bottom:24px">
+      <p style="font-size:13px;line-height:2;font-family:monospace">
+        1️⃣ User clicks "Connect HMRC" → Settings → Security<br>
+        2️⃣ Redirected to HMRC Government Gateway login<br>
+        3️⃣ User authorises the application<br>
+        4️⃣ Callback at <code>/auth/hmrc/callback</code> exchanges code for tokens<br>
+        5️⃣ Tokens stored in <code>hmrc_tokens</code> table<br>
+        6️⃣ Auto-refresh before expiry (4 hour lifetime)
+      </p>
+    </div>
+
+    <h3 style="font-size:15px;margin-bottom:12px">Notification Types</h3>
+    <div class="notif-grid">
+      <div class="notif-card accept"><h4>✅ DMSACC</h4><p>Declaration accepted — MRN assigned</p></div>
+      <div class="notif-card reject"><h4>❌ DMSREJ</h4><p>Declaration rejected — error codes returned</p></div>
+      <div class="notif-card info"><h4>🔄 DMSROG</h4><p>Routed for examination</p></div>
+      <div class="notif-card accept"><h4>✅ DMSCLE</h4><p>Declaration cleared</p></div>
+      <div class="notif-card reject"><h4>⚠️ DMSINV</h4><p>Validation errors — field-level details</p></div>
+      <div class="notif-card info"><h4>💰 DMSTAX</h4><p>Tax calculated</p></div>
+      <div class="notif-card control"><h4>🛃 DMSCTL</h4><p>Customs control flagged</p></div>
+      <div class="notif-card control"><h4>📨 DMSRES</h4><p>Additional response data</p></div>
+    </div>
+
+    <h3 style="font-size:15px;margin:20px 0 8px">Rate Limiting</h3>
+    <div class="card">
+      <p style="font-size:13px"><span class="status amber"></span><strong>3 req/sec</strong> default (upgradable to 8 via SDH Support)</p>
+      <p style="font-size:12px;color:var(--text-dim);margin-top:6px">Proactive token-bucket limiter at <code>src/lib/rate-limiter.ts</code>. Reactive retry on HTTP 429 with 2s → 5s backoff.</p>
+    </div>
+  </section>
+
+  <!-- 7. Users -->
+  <section id="users">
+    <h2>Users & Access</h2>
+    <p class="section-desc">Authentication and workspace management</p>
+    <div class="card-grid">
+      <div class="card"><h3>🔐 Authentication</h3><p>Clerk — email, Google SSO, 2FA. Users self-register at <code>/sign-in</code>.</p></div>
+      <div class="card"><h3>🏢 Workspaces</h3><p>Multi-tenant. Each workspace has an owner, members, and an EORI number.</p></div>
+      <div class="card"><h3>👑 Roles</h3><p>Owner, member roles stored in <code>workspaceMembers</code> table.</p></div>
+      <div class="card"><h3>💎 Subscription Tiers</h3><p>Starter · Professional · Enterprise — managed via Stripe.</p></div>
+    </div>
+    <div class="table-wrap" style="margin-top:16px">
+      <table>
+        <thead><tr><th>Action</th><th>How</th></tr></thead>
+        <tbody>
+          <tr><td>Add user</td><td>User self-registers → Clerk syncs to Convex <code>users</code> table</td></tr>
+          <tr><td>Manage users</td><td><code>/dashboard/admin</code> or Clerk Dashboard</td></tr>
+          <tr><td>Enable 2FA</td><td>Settings → Security → Two-Factor Auth → Enable</td></tr>
+          <tr><td>Connect HMRC</td><td>Settings → Security → HMRC OAuth → Connect</td></tr>
+          <tr><td>Change subscription</td><td>Settings → Subscription → Manage</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 8. Deployment -->
+  <section id="deploy">
+    <h2>Deployment</h2>
+    <p class="section-desc">Local development and production deployment</p>
+
+    <h3 style="font-size:15px;margin-bottom:12px">Local Development</h3>
+    <div class="cmd"><span>$ npm install</span><button class="copy-btn" onclick="copyText('npm install')">Copy</button></div>
+    <div class="cmd"><span>$ npm run dev</span><button class="copy-btn" onclick="copyText('npm run dev')">Copy</button></div>
+    <div class="cmd"><span>$ npx convex dev</span><button class="copy-btn" onclick="copyText('npx convex dev')">Copy</button></div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">Production Deploy</h3>
+    <div class="cmd"><span>$ npm run build</span><button class="copy-btn" onclick="copyText('npm run build')">Copy</button></div>
+    <div class="cmd"><span>$ npx convex deploy</span><button class="copy-btn" onclick="copyText('npx convex deploy')">Copy</button></div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">Switching to TDR / Production</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Step</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Set <code>HMRC_ENVIRONMENT=production</code></td></tr>
+          <tr><td>2</td><td>Remove <code>HMRC_DECLARATIONS_ACCEPT</code> (defaults to v1.0)</td></tr>
+          <tr><td>3</td><td>Update <code>HMRC_CLIENT_ID</code> + <code>HMRC_CLIENT_SECRET</code></td></tr>
+          <tr><td>4</td><td>Update <code>HMRC_REDIRECT_URI</code> to production callback</td></tr>
+          <tr><td>5</td><td>Restart application</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:15px;margin-bottom:12px;margin-top:24px">Pre-deployment Checklist</h3>
+    <div class="card" style="margin-bottom:24px">
+      <div class="check-item"><div class="check-icon">✓</div>All tests passing in CI/CD pipeline</div>
+      <div class="check-item"><div class="check-icon">✓</div>Database schema changes reviewed and tested</div>
+      <div class="check-item"><div class="check-icon">✓</div>Required env vars are set in production</div>
+      <div class="check-item"><div class="check-icon">✓</div>Stakeholders notified for scheduled downtime</div>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">Environment Variables Required</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Variable</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>HMRC_ENVIRONMENT</code></td><td>Must be <code>production</code></td></tr>
+          <tr><td><code>HMRC_CLIENT_ID</code></td><td>Production OAuth Client ID</td></tr>
+          <tr><td><code>HMRC_CLIENT_SECRET</code></td><td>Production OAuth Client Secret</td></tr>
+          <tr><td><code>HMRC_REDIRECT_URI</code></td><td>Production callback URL</td></tr>
+          <tr><td><code>HMRC_DECLARATIONS_ACCEPT</code></td><td>Must be removed or match production version</td></tr>
+          <tr><td><code>NEXT_PUBLIC_CONVEX_URL</code></td><td>Production Convex endpoint</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">Post-deployment Verification</h3>
+    <div class="card" style="margin-bottom:24px">
+      <div class="check-item"><div class="check-icon">✓</div>Check <code>/api/health</code> endpoint for "ok" status</div>
+      <div class="check-item"><div class="check-icon">✓</div>Verify Convex dashboard error logs are clear</div>
+      <div class="check-item"><div class="check-icon">✓</div>Perform test login via Clerk</div>
+      <div class="check-item"><div class="check-icon">✓</div>Submit a test sandbox declaration (if applicable)</div>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">Rollback Procedure</h3>
+    <div class="card">
+      <p style="font-size:13px;line-height:2;font-family:monospace">
+        1️⃣ <strong>Frontend:</strong> Revert via Vercel dashboard ("Promote to Production" on previous deployment)<br>
+        2️⃣ <strong>Backend:</strong> Restore Convex snapshot from "Data" > "Snapshots" in Convex dashboard<br>
+        3️⃣ <strong>Verify:</strong> Confirm app is functioning on previous version
+      </p>
+    </div>
+  </section>
+
+  <!-- 9. Monitoring -->
+  <section id="monitoring">
+    <h2>Monitoring</h2>
+    <p class="section-desc">Health checks and troubleshooting</p>
+
+    <h3 style="font-size:15px;margin-bottom:12px">Health Check</h3>
+    <div class="cmd"><span>GET /api/health → { status: "ok", environment, services }</span></div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">Common Issues</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Problem</th><th>Cause</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td><span class="status red"></span>"Token not found"</td><td>User hasn't connected HMRC</td><td>Settings → Security → Connect</td></tr>
+          <tr><td><span class="status red"></span>"Failed to refresh"</td><td>Refresh token expired</td><td>User clicks Reconnect</td></tr>
+          <tr><td><span class="status amber"></span>HTTP 401 from HMRC</td><td>Token expired / invalid</td><td>Check <code>hmrc_tokens</code> table</td></tr>
+          <tr><td><span class="status amber"></span>HTTP 429</td><td>Rate limited</td><td>Auto-retry; reduce concurrency</td></tr>
+          <tr><td><span class="status amber"></span>HTTP 400</td><td>Invalid XML</td><td>Check notification errors</td></tr>
+          <tr><td><span class="status amber"></span>Stuck "Processing"</td><td>Missed notification</td><td>Use pull notifications fallback</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">Log Locations</h3>
+    <div class="card-grid">
+      <div class="card"><h3>Next.js</h3><p>Console output / Vercel Functions logs</p></div>
+      <div class="card"><h3>Convex</h3><p>Dashboard → Logs tab</p></div>
+      <div class="card"><h3>HMRC Notifications</h3><p><code>notifications</code> table with raw XML payloads</p></div>
+    </div>
+  </section>
+
+  <!-- 10. Security -->
+  <section id="security">
+    <h2>Security Checklist</h2>
+    <p class="section-desc">Current security posture</p>
+    <div class="check-item"><div class="check-icon">✓</div>All secrets in <code>.env.local</code>, gitignored</div>
+    <div class="check-item"><div class="check-icon">✓</div>HTTPS enforced (Vercel / Cloudflare)</div>
+    <div class="check-item"><div class="check-icon">✓</div>OAuth 2.0 for HMRC — no API keys client-side</div>
+    <div class="check-item"><div class="check-icon">✓</div>XML input sanitisation via <code>xmlEscape()</code></div>
+    <div class="check-item"><div class="check-icon">✓</div>Clerk handles auth, sessions, CSRF protection</div>
+    <div class="check-item"><div class="check-icon">✓</div>2FA available for all users</div>
+    <div class="check-item"><div class="check-icon">✓</div>Proactive rate limiting on HMRC API calls</div>
+    <div class="check-item"><div class="check-icon">✓</div>Webhook payloads stored for audit trail</div>
+    <div class="check-item"><div class="check-icon">✓</div>Error responses don't leak internal details</div>
+  </section>
+
+  <!-- 11. Quick Links -->
+  <section id="links">
+    <h2>Quick Links</h2>
+    <p class="section-desc">External dashboards and documentation</p>
+    <div class="links-grid">
+      <a href="https://dashboard.convex.dev" target="_blank" class="link-card"><div class="link-icon">🗄</div><div><h4>Convex Dashboard</h4><p>Database, logs, functions</p></div></a>
+      <a href="https://dashboard.clerk.com" target="_blank" class="link-card"><div class="link-icon">🔐</div><div><h4>Clerk Dashboard</h4><p>Users, sessions, auth config</p></div></a>
+      <a href="https://dashboard.stripe.com" target="_blank" class="link-card"><div class="link-icon">💳</div><div><h4>Stripe Dashboard</h4><p>Subscriptions, payments, invoices</p></div></a>
+      <a href="https://developer.service.hmrc.gov.uk" target="_blank" class="link-card"><div class="link-icon">🇬🇧</div><div><h4>HMRC Developer Hub</h4><p>APIs, applications, docs</p></div></a>
+      <a href="https://developer.service.hmrc.gov.uk/devhub-support" target="_blank" class="link-card"><div class="link-icon">🎫</div><div><h4>HMRC Support</h4><p>Submit support tickets</p></div></a>
+      <a href="https://api-platform-status.production.tax.service.gov.uk/" target="_blank" class="link-card"><div class="link-icon">📡</div><div><h4>HMRC API Status</h4><p>Service availability monitor</p></div></a>
+      <a href="https://dash.cloudflare.com" target="_blank" class="link-card"><div class="link-icon">☁️</div><div><h4>Cloudflare R2</h4><p>Document storage, CDN</p></div></a>
+      <a href="https://cloud.typesense.org" target="_blank" class="link-card"><div class="link-icon">🔍</div><div><h4>Typesense Cloud</h4><p>Search engine management</p></div></a>
+      <a href="https://console.groq.com" target="_blank" class="link-card"><div class="link-icon">🤖</div><div><h4>Groq Console</h4><p>AI API keys, usage</p></div></a>
+    </div>
+  </section>
+
+  <!-- Runbook -->
+  <section id="runbook">
+    <h2>Runbook</h2>
+    <p class="section-desc">Operational procedures for system outages and recovery</p>
+    <div class="card-grid">
+      <div class="card">
+        <h3>HMRC API Unavailable</h3>
+        <p><strong>Detect:</strong> HTTP 5xx errors from HMRC, or API Status page alerts.<br>
+        <strong>Action:</strong> Enable circuit breaker; queue declarations in <code>Processing</code>.<br>
+        <strong>Notify:</strong> Inform users via dashboard banner & email.<br>
+        <strong>Verify:</strong> Monitor HMRC API status; successfully process 1 test declaration.</p>
+        <div class="tag" style="background:rgba(239,68,68,.12);color:var(--red)">HMRC</div>
+      </div>
+      <div class="card">
+        <h3>Convex Outage</h3>
+        <p><strong>Detect:</strong> Convex dashboard alerts, unresponsive app.<br>
+        <strong>Action:</strong> Fallback to status page. Halt HMRC webhooks (they will retry).<br>
+        <strong>Notify:</strong> Emergency channels, tweet status, update status page.<br>
+        <strong>Verify:</strong> Convex resolves issue; check webhook queue drains.</p>
+        <div class="tag" style="background:rgba(99,102,241,.12);color:var(--accent)">Database</div>
+      </div>
+      <div class="card">
+        <h3>Clerk Auth Failure</h3>
+        <p><strong>Detect:</strong> Users report 401s, redirect loops, or Clerk status alerts.<br>
+        <strong>Action:</strong> Check Clerk status. No local mitigation (auth is fully delegated).<br>
+        <strong>Notify:</strong> Update status page with "Login issues".<br>
+        <strong>Verify:</strong> Clerk resolves issue; users can log in successfully.</p>
+        <div class="tag" style="background:rgba(245,158,11,.12);color:var(--amber)">Auth</div>
+      </div>
+      <div class="card">
+        <h3>Cloudflare R2 Storage Down</h3>
+        <p><strong>Detect:</strong> Document uploads fail, R2 API returns 5xx.<br>
+        <strong>Action:</strong> Disable document upload buttons. Allow declarations without documents if permitted.<br>
+        <strong>Notify:</strong> Users see "Document upload temporarily unavailable" inline.<br>
+        <strong>Verify:</strong> Test upload of 1 test document succeeds.</p>
+        <div class="tag" style="background:rgba(34,197,94,.12);color:var(--green)">Storage</div>
+      </div>
+      <div class="card">
+        <h3>Typesense Search Down</h3>
+        <p><strong>Detect:</strong> Search API times out or typesense cloud alerts.<br>
+        <strong>Action:</strong> Fallback to basic DB search (Convex) where possible, or disable typeahead.<br>
+        <strong>Notify:</strong> Users see "Advanced search disabled".<br>
+        <strong>Verify:</strong> Typesense reports green; perform a search query successfully.</p>
+        <div class="tag" style="background:rgba(99,102,241,.12);color:var(--accent)">Search</div>
+      </div>
+    </div>
+  </section>
+
+
+
+  <!-- HMRC Error Codes -->
+  <section id="hmrc-errors">
+    <h2>HMRC Error Codes</h2>
+    <p class="section-desc">Mapping DMS responses to FreightCode logic</p>
+    
+    <h3 style="font-size:15px;margin-bottom:12px">DMS Notification Types</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Notification Type</th><th>Meaning</th><th>FreightCode Action</th><th>User Sees</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="status amber"></span> <code>DMSUB</code></td>
+            <td>Declaration Submitted / Received by HMRC</td>
+            <td>Update status to 'Submitted'</td>
+            <td>"Submission Received" info card</td>
+          </tr>
+          <tr>
+            <td><span class="status green"></span> <code>DMSACC</code></td>
+            <td>Declaration Accepted, MRN generated</td>
+            <td>Update status to 'Accepted', store MRN</td>
+            <td>"Accepted ✅" with MRN</td>
+          </tr>
+          <tr>
+            <td><span class="status green"></span> <code>DMSCLE</code></td>
+            <td>Declaration Cleared</td>
+            <td>Update status to 'Cleared'</td>
+            <td>"Cleared 🟢"</td>
+          </tr>
+          <tr>
+            <td><span class="status amber"></span> <code>DMSROG</code></td>
+            <td>Routed for Examination</td>
+            <td>Update status to 'Action Required'</td>
+            <td>"Under Review ⏳"</td>
+          </tr>
+          <tr>
+            <td><span class="status red"></span> <code>DMSREJ</code></td>
+            <td>Declaration Rejected outright</td>
+            <td>Update status to 'Rejected', parse errors</td>
+            <td>"Rejected ❌" + Error Details</td>
+          </tr>
+          <tr>
+            <td><span class="status red"></span> <code>DMSINV</code></td>
+            <td>Invalid - Validation Errors</td>
+            <td>Update status to 'Invalid', parse field errors</td>
+            <td>"Validation Failed ⚠️" + Errors</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">HTTP Error Codes</h3>
+    <div class="card-grid">
+      <div class="card"><h3>400 Bad Request</h3><p>Malformed XML or JSON submission formatting error.</p></div>
+      <div class="card"><h3>401 Unauthorized</h3><p>OAuth Token invalid/expired. App automatically attempts refresh.</p></div>
+      <div class="card"><h3>403 Forbidden</h3><p>EORI not whitelisted, lacking scopes, or token revoked.</p></div>
+      <div class="card"><h3>404 Not Found</h3><p>Querying an MRN that HMRC does not recognize.</p></div>
+      <div class="card"><h3>422 Unprocessable</h3><p>Schema validation error caught before routing.</p></div>
+      <div class="card"><h3>429 Too Many Requests</h3><p>Rate limit exceeded (3 req/sec). App pauses and retries.</p></div>
+    </div>
+  </section>
+
+  <!-- Pricing & Plans -->
+  <section id="pricing">
+    <h2>Pricing & Plans</h2>
+    <p class="section-desc">Subscription tiers defined in Stripe</p>
+    <div class="card-grid">
+      <div class="card">
+        <h3>Starter</h3>
+        <p style="font-size:24px;color:var(--text);margin:8px 0;font-weight:700">£49<span style="font-size:12px;color:var(--text-dim);font-weight:400">/mo</span></p>
+        <p>Up to 20 declarations/month</p>
+        <div class="tag" style="background:rgba(245,158,11,.12);color:var(--amber)">£2.50 overage</div>
+      </div>
+      <div class="card">
+        <h3>Pro</h3>
+        <p style="font-size:24px;color:var(--text);margin:8px 0;font-weight:700">£149<span style="font-size:12px;color:var(--text-dim);font-weight:400">/mo</span></p>
+        <p>Up to 100 declarations/month</p>
+        <div class="tag" style="background:rgba(99,102,241,.12);color:var(--accent)">£2.50 overage</div>
+      </div>
+      <div class="card">
+        <h3>Enterprise</h3>
+        <p style="font-size:24px;color:var(--text);margin:8px 0;font-weight:700">£399<span style="font-size:12px;color:var(--text-dim);font-weight:400">/mo</span></p>
+        <p>Unlimited declarations</p>
+        <div class="tag" style="background:rgba(34,197,94,.12);color:var(--green)">Volume Scale</div>
+      </div>
+      <div class="card">
+        <h3>Pay As You Go</h3>
+        <p style="font-size:24px;color:var(--text);margin:8px 0;font-weight:700">£9.99<span style="font-size:12px;color:var(--text-dim);font-weight:400">/dec</span></p>
+        <p>No monthly commitment</p>
+        <div class="tag" style="background:rgba(255,255,255,.1);color:var(--text)">Flexible</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HMRC Compliance Log -->
+  <section id="compliance-log">
+    <h2>HMRC Compliance Log</h2>
+    <p class="section-desc">Status of HMRC approvals and Sandbox journey</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Activity</th><th>Status</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Jan 2026</td>
+            <td>Developer Hub registration</td>
+            <td><span class="status green"></span> Complete</td>
+            <td>API Keys generated</td>
+          </tr>
+          <tr>
+            <td>Mar 2026</td>
+            <td>Customs Declarations API 2.0 subscription</td>
+            <td><span class="status green"></span> Complete</td>
+            <td>Assigned to Application</td>
+          </tr>
+          <tr>
+            <td>Mar 2026</td>
+            <td>Sandbox trade test scenario 1</td>
+            <td><span class="status amber"></span> In progress</td>
+            <td>Handling test data</td>
+          </tr>
+          <tr>
+            <td>Mar 2026</td>
+            <td>GOV.UK software recognition form</td>
+            <td><span class="status amber"></span> Submitted</td>
+            <td>Pending HMRC review</td>
+          </tr>
+          <tr>
+            <td>TBD</td>
+            <td>ETS access</td>
+            <td><span class="status red"></span> Pending</td>
+            <td>Requires TDR phase completion</td>
+          </tr>
+          <tr>
+            <td>TBD</td>
+            <td>Vendor ID</td>
+            <td><span class="status red"></span> Pending</td>
+            <td>Awaiting software review</td>
+          </tr>
+          <tr>
+            <td>TBD</td>
+            <td>Production approval</td>
+            <td><span class="status red"></span> Pending</td>
+            <td>Cannot go live without this</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Incident Response -->
+  <section id="incident-response">
+    <h2>Incident Response</h2>
+    <p class="section-desc">Procedures for security and data incidents</p>
+    <div class="card-grid">
+      <div class="card">
+        <h3>Data Breach Procedure</h3>
+        <p>1. <strong>Notify:</strong> Internal team immediately.<br>
+        2. <strong>HMRC Notification:</strong> Contact HMRC Software Developer Support within 24h.<br>
+        3. <strong>ICO Reporting:</strong> Report to ICO if PIP / PII is exposed within 72h.<br>
+        4. <strong>User Notice:</strong> Alert affected workspaces via email.</p>
+      </div>
+      <div class="card">
+        <h3>Security Disclosure</h3>
+        <p>All security vulnerabilities should be immediately routed to:<br>
+        <code>security@freightcode.co.uk</code><br>
+        Expected initial response time: <strong>&lt; 4 hours</strong>.</p>
+      </div>
+      <div class="card">
+        <h3>Response Time SLAs</h3>
+        <p><strong>P1 (Critical Outage):</strong> 15 mins response, 2 hours mitigation.<br>
+        <strong>P2 (Partial Outage):</strong> 1 hour response, 4 hours mitigation.<br>
+        <strong>P3 (Bug):</strong> 24 hours response, Next Sprint fix.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Release Notes -->
+  <section id="release-notes">
+    <h2>Release Notes</h2>
+    <p class="section-desc">Version tracking and changelog</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Version</th><th>Date</th><th>Changes</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:bold;white-space:nowrap">v0.1.0</td>
+            <td style="white-space:nowrap">March 2026</td>
+            <td>
+              <ul style="list-style:inside;font-size:12px;color:var(--text-dim)">
+                <li>Initial beta release</li>
+                <li>H1 import declarations</li>
+                <li>HMRC CDS sandbox integration</li>
+                <li>AI document compliance audit</li>
+                <li>Smart Upload with AWS Textract</li>
+                <li>Real-time webhook notifications</li>
+                <li>Documents page with DE 2/3 references</li>
+              </ul>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Known Limitations -->
+  <section id="limitations">
+    <h2>Known Limitations</h2>
+    <p class="section-desc">Current product scope constraints</p>
+    <div class="card">
+      <div class="check-item"><div class="check-icon" style="background:rgba(245,158,11,.15);color:var(--amber)">!</div>H1 declarations only (no H2, H3, H4, I1 yet)</div>
+      <div class="check-item"><div class="check-icon" style="background:rgba(245,158,11,.15);color:var(--amber)">!</div>Import only (no export declarations)</div>
+      <div class="check-item"><div class="check-icon" style="background:rgba(245,158,11,.15);color:var(--amber)">!</div>No simplified declarations procedures</div>
+      <div class="check-item"><div class="check-icon" style="background:rgba(245,158,11,.15);color:var(--amber)">!</div>No TRE CSV import yet</div>
+      <div class="check-item"><div class="check-icon" style="background:rgba(245,158,11,.15);color:var(--amber)">!</div>No invoice to declaration auto-fill yet</div>
+      <div class="check-item"><div class="check-icon" style="background:rgba(245,158,11,.15);color:var(--amber)">!</div>Single workspace per user limit</div>
+      <div class="check-item"><div class="check-icon" style="background:rgba(239,68,68,.15);color:var(--red)">!</div>Sandbox only — production credentials pending</div>
+    </div>
+  </section>
+
+  <!-- Data Processing & GDPR -->
+  <section id="gdpr">
+    <h2>Data Processing & GDPR</h2>
+    <p class="section-desc">Data handling agreements and sub-processor lists</p>
+    
+    <h3 style="font-size:15px;margin-bottom:12px">Data Processing Agreement</h3>
+    <div class="card" style="margin-bottom:24px">
+      <ul style="list-style:inside;font-size:13px;line-height:2">
+        <li><strong>Controller:</strong> The FreightCode customer (broker/importer)</li>
+        <li><strong>Processor:</strong> FreightCode Ltd</li>
+        <li><strong>Data Processed:</strong> EORI, declaration data, goods descriptions, financial values</li>
+        <li><strong>Legal Basis:</strong> Article 6(1)(c) legal obligation (HMRC CDS)</li>
+        <li><strong>Retention:</strong> 4 years minimum per HMRC requirements</li>
+      </ul>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">Sub-processor List</h3>
+    <div class="table-wrap" style="margin-bottom:24px">
+      <table>
+        <thead><tr><th>Sub-processor</th><th>Purpose</th><th>Region</th></tr></thead>
+        <tbody>
+          <tr><td>Convex</td><td>Database</td><td>EU Region</td></tr>
+          <tr><td>Clerk</td><td>Authentication</td><td>US (UK-US Data Bridge)</td></tr>
+          <tr><td>Cloudflare R2</td><td>Document storage</td><td>EU</td></tr>
+          <tr><td>AWS Textract</td><td>OCR processing</td><td><i>Not specified (standard)</i></td></tr>
+          <tr><td>Stripe</td><td>Payment processing</td><td>Global</td></tr>
+          <tr><td>Groq</td><td>AI inference</td><td>Global</td></tr>
+          <tr><td>Vercel</td><td>Hosting</td><td>UK + EU regions</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">Cookie Policy Summary</h3>
+    <div class="card">
+      <div class="check-item"><div class="check-icon">✓</div>Essential cookies only (Clerk session)</div>
+      <div class="check-item"><div class="check-icon">✓</div>No advertising cookies</div>
+      <div class="check-item"><div class="check-icon">✓</div>No third party tracking</div>
+    </div>
+  </section>
+
+  <!-- Audit Trail -->
+  <section id="audit-trail">
+    <h2>Audit Trail</h2>
+    <p class="section-desc">Compliance logs for all declaration events</p>
+    
+    <div class="card" style="margin-bottom:24px;border-left:4px solid var(--amber)">
+      <h3 style="font-size:14px;color:var(--amber);margin-bottom:8px">⚠️ Implementation Missing</h3>
+      <p style="font-size:13px;color:var(--text-dim)">The <code>auditLogs</code> table is currently missing from <code>convex/schema.ts</code>. The application does not consistently log Action, Timestamp, IP Address, or User ID for each payload event.</p>
+    </div>
+
+    <h3 style="font-size:15px;margin-bottom:12px">Required Log Format</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Declaration ID</td><td>String</td><td>Reference to the declaration record</td></tr>
+          <tr><td>User ID</td><td>String</td><td>User who initiated the action</td></tr>
+          <tr><td>Action</td><td>String</td><td>created, submitted, amended, deleted</td></tr>
+          <tr><td>Timestamp</td><td>DateTime</td><td>Time of action</td></tr>
+          <tr><td>IP Address</td><td>String</td><td>Source IP address of user</td></tr>
+          <tr><td>HMRC Response Code</td><td>String</td><td>Code returned by HMRC (e.g. DMSACC)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Agent Authorisation -->
+  <section id="agent-auth">
+    <h2>Agent Authorisation</h2>
+    <p class="section-desc">Recording representative authority for customs submissions</p>
+    
+    <div class="card" style="margin-bottom:24px;border-left:4px solid var(--amber)">
+      <h3 style="font-size:14px;color:var(--amber);margin-bottom:8px">⚠️ Implementation Missing</h3>
+      <p style="font-size:13px;color:var(--text-dim)">The <code>declarations</code> schema lacks explicit fields for <strong>Authorisation Type</strong>, <strong>Importer EORI (DE 3/16)</strong>, and <strong>Date of Authority</strong>. Currently it only holds a generic <code>eori</code> field.</p>
+    </div>
+
+    <h3 style="font-size:15px;margin-bottom:12px">Required Fields for Brokers</h3>
+    <ul style="list-style:inside;font-size:13px;line-height:2">
+      <li><strong>Broker EORI</strong> must be recorded (DE 3/21)</li>
+      <li><strong>Importer EORI</strong> must be recorded (DE 3/16)</li>
+      <li><strong>Authorisation type</strong> must be recorded (Direct vs Indirect)</li>
+      <li><strong>Date of authorisation</strong></li>
+    </ul>
+  </section>
+
+  <!-- Data Retention -->
+  <section id="data-retention">
+    <h2>Data Retention</h2>
+    <p class="section-desc">HMRC compliance rules for record keeping</p>
+
+    <div class="card" style="margin-bottom:24px;border-left:4px solid var(--amber)">
+      <h3 style="font-size:14px;color:var(--amber);margin-bottom:8px">⚠️ Implementation Missing</h3>
+      <p style="font-size:13px;color:var(--text-dim)">Automated archival and deletion processes (cron jobs) are not yet implemented in the Convex backend.</p>
+    </div>
+    
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Data Type</th><th>Retention Period</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Declaration Records</td><td>4 years minimum</td><td>HMRC requirement</td></tr>
+          <tr><td>Supporting Documents</td><td>4 years minimum</td><td>Kept in Cloudflare R2</td></tr>
+          <tr><td>Financial Records</td><td>6 years</td><td>HMRC VAT requirement</td></tr>
+          <tr><td>Audit Logs</td><td>4 years</td><td>Corresponding to declarations</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Support & Escalation -->
+  <section id="support">
+    <h2>Support & Escalation</h2>
+    <p class="section-desc">Incident reporting and response SLAs</p>
+    
+    <div class="card-grid" style="margin-bottom:24px">
+      <div class="card">
+        <h3 style="font-size:14px;margin-bottom:8px">Level 1</h3>
+        <p style="font-size:13px;color:var(--text-dim)">User resolves via User Guide</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:14px;margin-bottom:8px">Level 2</h3>
+        <p style="font-size:13px;color:var(--text-dim)">Email <code>support@freightcode.co.uk</code></p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:14px;margin-bottom:8px">Level 3</h3>
+        <p style="font-size:13px;color:var(--text-dim)">Declaration rejected by HMRC — agent must amend and resubmit</p>
+      </div>
+      <div class="card">
+        <h3 style="font-size:14px;margin-bottom:8px">Level 4</h3>
+        <p style="font-size:13px;color:var(--text-dim)">HMRC dispute — user contacts HMRC directly, FreightCode exports records</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">Response SLAs</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Plan Level</th><th>Response Time SLA</th></tr></thead>
+        <tbody>
+          <tr><td><strong style="color:var(--text)">Starter</strong></td><td>48 hours</td></tr>
+          <tr><td><strong style="color:var(--accent)">Professional</strong></td><td>24 hours</td></tr>
+          <tr><td><strong style="color:var(--green)">Enterprise</strong></td><td>4 hours</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Customer Onboarding Checklist -->
+  <section id="onboarding">
+    <h2>Customer Onboarding Checklist</h2>
+    <p class="section-desc">Required steps for all new customers</p>
+    <div class="card">
+      <div class="check-item"><div class="check-icon">1</div>Sign up and verify email</div>
+      <div class="check-item"><div class="check-icon">2</div>Create workspace</div>
+      <div class="check-item"><div class="check-icon">3</div>Enter EORI number</div>
+      <div class="check-item"><div class="check-icon">4</div>Connect HMRC Government Gateway (OAuth)</div>
+      <div class="check-item"><div class="check-icon">5</div>Verify sandbox connection</div>
+      <div class="check-item"><div class="check-icon">6</div>Create first test declaration</div>
+      <div class="check-item"><div class="check-icon">7</div>Upload first document</div>
+      <div class="check-item"><div class="check-icon">8</div>Submit test declaration to sandbox</div>
+      <div class="check-item"><div class="check-icon">9</div>Switch to production when ready</div>
+    </div>
+  </section>
+
+  <!-- Customer Offboarding -->
+  <section id="offboarding">
+    <h2>Customer Offboarding</h2>
+    <p class="section-desc">When a customer decides to leave FreightCode</p>
+    <div class="card" style="margin-bottom:24px">
+      <p style="font-size:13px;line-height:2;font-family:monospace">
+        1️⃣ Export all declarations as CSV<br>
+        2️⃣ Export all documents as ZIP<br>
+        3️⃣ Export financial records as CSV<br>
+        4️⃣ Delete account and workspace<br>
+        5️⃣ Convex data purged after 30 days<br>
+        6️⃣ Cloudflare R2 documents deleted immediately on request
+      </p>
+    </div>
+    <div class="card" style="border-left:4px solid var(--accent)">
+      <p style="font-size:13px"><strong>Note:</strong> HMRC records must be retained by the customer for 4 years regardless of software change.</p>
+    </div>
+  </section>
+
+  <!-- Webhook Configuration -->
+  <section id="webhooks">
+    <h2>Webhook Configuration</h2>
+    <p class="section-desc">Push notifications endpoints from HMRC DMS</p>
+    
+    <h3 style="font-size:15px;margin-bottom:12px">HMRC Production</h3>
+    <div class="card" style="margin-bottom:24px">
+      <ul style="list-style:inside;font-size:13px;line-height:2">
+        <li><strong>Endpoint URL:</strong> <code>https://freightcode.co.uk/api/hmrc/webhooks/notify</code></li>
+        <li><strong>Authentication:</strong> HMRC signed payload</li>
+        <li><strong>Expected events:</strong> DMSUB, DMSACC, DMSCLE, DMSROG, DMSREJ, DMSINV</li>
+        <li><strong>Retry policy:</strong> HMRC retries for 24 hours on failure</li>
+        <li><strong>Response:</strong> Must be HTTP 200</li>
+      </ul>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">HMRC Sandbox</h3>
+    <div class="card">
+      <ul style="list-style:inside;font-size:13px;line-height:2">
+        <li><strong>Endpoint URL:</strong> <code>localhost</code> is not reachable by HMRC directly.</li>
+        <li><strong>Simulation:</strong> Use local webhook simulation for testing routines.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Rate Limits -->
+  <section id="rate-limits">
+    <h2>Rate Limits</h2>
+    <p class="section-desc">API ingestion caps and user quotas</p>
+
+    <div class="card" style="margin-bottom:24px;border-left:4px solid var(--amber)">
+      <h3 style="font-size:14px;color:var(--amber);margin-bottom:8px">⚠️ Implementation Missing</h3>
+      <p style="font-size:13px;color:var(--text-dim)">Per-user submission plan tracking (Starter: 20 declarations, Pro: 100 declarations, Enterprise: unlimited) is not currently enforced inside the <code>src/app/api/hmrc/submit/route.ts</code> endpoint.</p>
+    </div>
+
+    <h3 style="font-size:15px;margin-bottom:12px">HMRC API Global Limits</h3>
+    <div class="card" style="margin-bottom:24px">
+      <ul style="list-style:inside;font-size:13px;line-height:2">
+        <li><strong>Customs Declarations API:</strong> Rate limited, throws HTTP 429 on breach.</li>
+        <li><strong>FreightCode Retry Policy:</strong> Pauses 2s on first 429, then 5s backoff, max 3 attempts.</li>
+      </ul>
+    </div>
+    
+    <h3 style="font-size:15px;margin:24px 0 12px">FreightCode Per-User Limits</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Plan Level</th><th>Declarations per month</th></tr></thead>
+        <tbody>
+          <tr><td><strong style="color:var(--text)">Starter</strong></td><td>20</td></tr>
+          <tr><td><strong style="color:var(--accent)">Professional</strong></td><td>100</td></tr>
+          <tr><td><strong style="color:var(--green)">Enterprise</strong></td><td>Unlimited</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// Navigation
+const navItems = document.querySelectorAll('.nav-item');
+const sections = document.querySelectorAll('section');
+function navigate(sectionId) {
+  navItems.forEach(n => n.classList.remove('active'));
+  sections.forEach(s => s.classList.remove('active'));
+  const nav = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
+  const sec = document.getElementById(sectionId);
+  if (nav) {
+    nav.classList.add('active');
+    const group = nav.closest('details');
+    if (group) group.open = true;
+  }
+  if (sec) sec.classList.add('active');
+}
+navItems.forEach(item => { item.addEventListener('click', () => navigate(item.dataset.section)); });
+
+// Copy to clipboard
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    event.target.textContent = '✓ Copied';
+    event.target.classList.add('copied');
+    setTimeout(() => { event.target.textContent = 'Copy'; event.target.classList.remove('copied'); }, 1500);
+  });
+}
+
+// Search
+const sectionData = Array.from(navItems).map(n => ({
+  id: n.dataset.section,
+  label: n.querySelector('span:last-child').textContent
+}));
+const overlay = document.getElementById('searchOverlay');
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+const sidebarSearch = document.getElementById('sidebarSearch');
+
+function openSearch() { overlay.classList.add('open'); searchInput.value = ''; searchInput.focus(); renderResults(''); }
+function closeSearch() { overlay.classList.remove('open'); }
+function renderResults(q) {
+  const filtered = q ? sectionData.filter(s => s.label.toLowerCase().includes(q.toLowerCase())) : sectionData;
+  searchResults.innerHTML = filtered.map(s => `<div class="search-result" data-id="${s.id}">${s.label}</div>`).join('');
+  searchResults.querySelectorAll('.search-result').forEach(r => {
+    r.addEventListener('click', () => { navigate(r.dataset.id); closeSearch(); });
+  });
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
+  if (e.key === 'Escape') closeSearch();
+});
+searchInput.addEventListener('input', e => renderResults(e.target.value));
+overlay.addEventListener('click', e => { if (e.target === overlay) closeSearch(); });
+sidebarSearch.addEventListener('focus', () => openSearch());
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw-admin.js')
+      .then((registration) => {
+        console.log('Service Worker registered with scope:', registration.scope);
+      })
+      .catch((error) => {
+        console.log('Service Worker registration failed:', error);
+      });
+  });
+}
+</script>
+</body>
+</html>

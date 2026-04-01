@@ -1,7 +1,5 @@
-import { mutation, query, action, internalMutation } from "./_generated/server";
-import { api, internal } from "./_generated/api";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 export const logAction = mutation({
   args: {

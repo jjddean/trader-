@@ -97,6 +97,7 @@ export default defineSchema({
     mrn: v.optional(v.any()),
     declarationId: v.optional(v.any()),
     auditStatus: v.optional(v.any()),
+    ocrText: v.optional(v.string()),
   }).index("by_user", ["userId"]).index("by_mrn", ["mrn"]),
   
   workspaces: defineTable({
@@ -133,4 +134,14 @@ export default defineSchema({
     timestamp: v.optional(v.any()),
     archived: v.optional(v.any()),
   }).index("by_timestamp", ["timestamp"]),
+  admin_subscriptions: defineTable({
+    service: v.string(),
+    plan: v.string(),
+    status: v.string(), // "active", "expiring", "suspended"
+    statusOverride: v.optional(v.string()),
+    loginUrl: v.string(),
+    nextRenewal: v.number(), // timestamp
+    notes: v.optional(v.string()),
+    lastChecked: v.optional(v.number()),
+  }).index("by_service", ["service"]),
 });

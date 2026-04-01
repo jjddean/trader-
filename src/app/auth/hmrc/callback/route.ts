@@ -71,8 +71,8 @@ export async function GET(request: Request) {
 
     return NextResponse.redirect(new URL("/dashboard?success=hmrc_connected", request.url));
 
-  } catch (err) {
+  } catch (err: any) {
     console.error("Exception in HMRC callback:", err);
-    return NextResponse.redirect(new URL("/dashboard?error=internal_error", request.url));
+    return NextResponse.redirect(new URL(`/dashboard?error=internal_error&msg=${encodeURIComponent(err.message || "unknown")}`, request.url));
   }
 }

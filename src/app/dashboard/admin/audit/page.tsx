@@ -5,18 +5,14 @@ import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 
 import { api } from "../../../../../convex/_generated/api";
-import { 
-  ShieldCheck, 
-  ShieldAlert,
+import {
   History, 
   Search, 
-  Filter, 
   Download, 
   ArrowUpRight,
   Clock,
   User,
   Activity,
-  FileText,
   Key
 } from "lucide-react";
 import { cn } from "@/lib/utils";

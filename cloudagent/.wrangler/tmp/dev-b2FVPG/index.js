@@ -22264,7 +22264,7 @@ var require_code2 = __commonJS({
     exports.reportMissingProp = reportMissingProp;
     function hasPropFunc(gen) {
       return gen.scopeValue("func", {
-        // eslint-disable-next-line @typescript-eslint/unbound-method
+         
         ref: Object.prototype.hasOwnProperty,
         code: (0, codegen_1._)`Object.prototype.hasOwnProperty`
       });
@@ -56141,8 +56141,8 @@ var require_global_this = __commonJS({
       return it && it.Math === Math && it;
     }, "check");
     module.exports = // eslint-disable-next-line es/no-global-this -- safe
-    check2(typeof globalThis == "object" && globalThis) || check2(typeof window == "object" && window) || // eslint-disable-next-line no-restricted-globals -- safe
-    check2(typeof self == "object" && self) || check2(typeof global == "object" && global) || check2(typeof exports == "object" && exports) || // eslint-disable-next-line no-new-func -- fallback
+    check2(typeof globalThis == "object" && globalThis) || check2(typeof window == "object" && window) ||  
+    check2(typeof self == "object" && self) || check2(typeof global == "object" && global) || check2(typeof exports == "object" && exports) ||  
     /* @__PURE__ */ (function() {
       return this;
     })() || Function("return this")();
@@ -66730,7 +66730,7 @@ init_modules_watch_stub();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_process();
 init_virtual_unenv_global_polyfill_cloudflare_unenv_preset_node_console();
 init_performance2();
-import { channel as channel2, subscribe as subscribe$1, unsubscribe } from "node:diagnostics_channel";
+import { channel as channel2 } from "node:diagnostics_channel";
 var channels = {
   state: channel2("agents:state"),
   rpc: channel2("agents:rpc"),
@@ -67229,7 +67229,6 @@ function parseCronExpression(cronExpression) {
 __name(parseCronExpression, "parseCronExpression");
 
 // node_modules/agents/dist/index.js
-import { EmailMessage } from "cloudflare:email";
 function isRPCRequest(msg) {
   return typeof msg === "object" && msg !== null && "type" in msg && msg.type === MessageType.RPC && "id" in msg && typeof msg.id === "string" && "method" in msg && typeof msg.method === "string" && "args" in msg && Array.isArray(msg.args);
 }

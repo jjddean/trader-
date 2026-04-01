@@ -53,7 +53,10 @@ Ref: [HMRC Path to Production](https://developer.service.hmrc.gov.uk/guides/cust
 - [x] Tone down jargon on `src/app/about/page.tsx`
 - [x] Tone down jargon on `src/app/solutions/page.tsx`
 - [x] Tone down jargon on `src/app/resources/page.tsx`
-## TRE Analysis Feature
-- [ ] Implement comprehensive `/tre` landing page with provided copy
-- [ ] Add lead-capture form ("Get Access") to TRE page
-- [ ] Add TRE link to site-header navigation
+## HS Code LoRA Integration
+- [x] Create `cloudagent/TRAINING_GUIDE.md` from the user's instructions
+- [x] Create `cloudagent/src/prompts/girAgent.ts` with GIR-specific system prompts
+- [x] Update `cloudagent/src/index.ts` to support LoRA-based GIR classification
+- [x] Create `scripts/generate-training-data.mjs` to export Convex data for training
+- [x] Integrate "Run AI Audit" button into Documents Dashboard
+- [ ] (Waiting for User) Run Colab training and upload LoRA adapters to Cloudflare

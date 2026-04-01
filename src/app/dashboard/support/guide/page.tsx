@@ -1,4 +1,4 @@
-import { HelpCircle, BookOpen, FileText, Send, Zap, Bot } from "lucide-react";
+import { HelpCircle, BookOpen, FileText, Zap, Bot } from "lucide-react";
 
 export default function UserGuidePage() {
   const sections = [

@@ -1,6 +1,5 @@
 import React from 'react';
 import { HSCodeLookup } from '@/components/tools/HSCodeLookup';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 const HSCodePage = () => {
     return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Search, Loader2, AlertCircle, BookOpen, Copy, ExternalLink } from 'lucide-react';
+import { Search, Loader2, AlertCircle, Copy, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useAction } from "convex/react";

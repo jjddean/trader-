@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
-import { Id } from "../../../../../convex/_generated/dataModel";
 import { mapToCDS_H1, validateCdsFields } from "../../../../lib/wco-mapper";
 import { xmlEscape } from "../../../../lib/xml-utils";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
@@ -11,7 +10,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function POST(request: Request) {
   try {
-    let { userId } = await auth();
+    const { userId } = await auth();
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -198,7 +197,7 @@ export async function POST(request: Request) {
       "Content-Type": "application/xml; charset=UTF-8",
     };
 
-    let hmrcResponse = await fetchHmrc(hmrcEndpoint, {
+    const hmrcResponse = await fetchHmrc(hmrcEndpoint, {
       method: "POST",
       headers: hmrcHeaders,
       body: xmlPayload,

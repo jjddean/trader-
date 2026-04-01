@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, Globe, RotateCcw, Calculator, ArrowRight } from "lucide-react";
+import { BookOpen, ArrowRight } from "lucide-react";
 
 export default function ToolsHubPage() {
   const tools = [

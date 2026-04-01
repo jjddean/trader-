@@ -66,7 +66,7 @@ export async function POST(request: Request) {
       : "https://api.service.hmrc.gov.uk";
     const hmrcEndpoint = `${hmrcBase}/customs/declarations`;
 
-    let hmrcResponse = await fetchHmrc(hmrcEndpoint, {
+    const hmrcResponse = await fetchHmrc(hmrcEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/xml; charset=UTF-8" },
       body: xmlPayload,

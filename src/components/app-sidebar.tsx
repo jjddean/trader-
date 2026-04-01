@@ -8,15 +8,13 @@ import {
   FileText,
   Settings,
   Compass,
-  FileSpreadsheet,
-  Scale,
   ShieldCheck,
   Bot,
-  BookOpen,
   HelpCircle,
   History,
   Wrench,
   ChevronRight,
+  CreditCard,
 } from "lucide-react";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
@@ -67,6 +65,7 @@ const adminItems = [
     items: [
       { href: "/dashboard/admin/setup", label: "Set Up", icon: Settings },
       { href: "/dashboard/admin/clerk", label: "Online Clerk", icon: Bot },
+      { href: "/dashboard/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
       { href: "/dashboard/admin/audit", label: "System Audit", icon: History },
     ],
   },
