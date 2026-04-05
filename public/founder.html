@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreightCode — Founder Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#0a0b0f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="/founder-manifest.json">
+    <link rel="icon" type="image/png" href="/icon.png">
+    <style>
+        :root {
+            --bg: #0a0b0f;
+            --sidebar: #12131a;
+            --card: #161822;
+            --card-hover: #1c1e2e;
+            --border: #2a2d3e;
+            --accent: #6366f1;
+            --accent-glow: rgba(99,102,241,0.15);
+            --green: #22c55e;
+            --amber: #f59e0b;
+            --red: #ef4444;
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+            --text-muted: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header { padding: 24px 20px; border-bottom: 1px solid var(--border); }
+        .sidebar-header h1 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .sidebar-header h1 span { background: var(--accent); color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase; }
+        
+        .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 12px 20px;
+            font-size: 13px; color: var(--text-dim); cursor: pointer; transition: 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+        .nav-item.active { color: var(--accent); background: var(--accent-glow); border-left-color: var(--accent); font-weight: 600; }
+        .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+        .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
+        .backup-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .btn-small {
+            background: var(--card); border: 1px solid var(--border); color: var(--text-dim);
+            padding: 6px; border-radius: 6px; font-size: 10px; cursor: pointer; transition: 0.2s; text-align: center;
+        }
+        .btn-small:hover { border-color: var(--accent); color: var(--text); }
+        .last-backup { font-size: 10px; color: var(--text-muted); text-align: center; }
+
+        /* Main Content */
+        main { margin-left: 260px; flex: 1; padding: 40px; max-width: 1280px; width: 100%; }
+        section { display: none; animation: fadeIn 0.3s ease; }
+        section.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; }
+        h2 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+        .section-desc { color: var(--text-dim); font-size: 14px; margin-top: 4px; }
+
+        /* Grid Cards */
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+        .status-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+            padding: 20px; cursor: pointer; transition: 0.3s; position: relative;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .status-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+        .status-card.done { border-color: var(--green); background: rgba(34,197,94,0.05); }
+        .status-card h3 { font-size: 14px; font-weight: 600; }
+        .check-circle { 
+            width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border);
+            display: flex; align-items: center; justify-content: center; transition: 0.2s;
+        }
+        .status-card.done .check-circle { background: var(--green); border-color: var(--green); color: #fff; }
+        .status-card.done .check-circle::after { content: '✓'; font-weight: 800; font-size: 12px; }
+
+        /* Notes Area */
+        .notes-container { height: calc(100vh - 200px); background: #000; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
+        #notesArea {
+            width: 100%; height: 100%; background: transparent; border: none; color: #fff;
+            padding: 40px; font-size: 18px; line-height: 1.6; outline: none; resize: none;
+            font-family: inherit;
+        }
+        .notes-footer { display: flex; justify-content: space-between; padding: 12px 20px; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); }
+
+        /* News Feed */
+        .feed-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .api-config { background: var(--card); padding: 16px; border-radius: 10px; margin-bottom: 24px; border: 1px solid var(--border); }
+        .api-config input { background: #000; border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 6px; width: 300px; font-size: 12px; }
+        .news-list { display: flex; flex-direction: column; gap: 12px; }
+        .news-item {
+            background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+            padding: 16px; text-decoration: none; color: inherit; transition: 0.2s;
+        }
+        .news-item:hover { transform: translateX(4px); border-color: var(--accent); }
+        .news-source { font-size: 10px; color: var(--accent); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+        .news-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; line-height: 1.4; }
+        .news-meta { font-size: 11px; color: var(--text-muted); }
+
+        /* Skeleton Loaders */
+        .skeleton { background: linear-gradient(90deg, var(--card) 25%, #1c1e2e 50%, var(--card) 75%); background-size: 200% 100%; animation: loading 1.5s infinite; height: 80px; border-radius: 12px; }
+        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* Links */
+        .links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+        .link-btn {
+            background: var(--card); border: 1px solid var(--border); padding: 16px; border-radius: 12px;
+            text-decoration: none; color: var(--text); display: flex; flex-direction: column; gap: 4px; transition: 0.2s;
+        }
+        .link-btn:hover { border-color: var(--accent); background: var(--accent-glow); }
+        .link-btn h4 { font-size: 13px; font-weight: 600; }
+        .link-btn p { font-size: 10px; color: var(--text-muted); }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-260px); }
+            .sidebar.open { transform: translateX(0); }
+            main { margin-left: 0; padding: 20px; }
+            .header-row { flex-direction: column; align-items: flex-start; gap: 16px; }
+            .api-config input { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h1>📦 FreightCode <span>Founder</span></h1>
+    </div>
+    <div class="sidebar-nav">
+        <div class="nav-item active" data-section="status">
+            <span class="icon">💼</span><span>Business Status</span>
+        </div>
+        <div class="nav-item" data-section="launch">
+            <span class="icon">🚀</span><span>Launch Checklist</span>
+        </div>
+        <div class="nav-item" data-section="notes">
+            <span class="icon">📝</span><span>Founder Notes</span>
+        </div>
+        <div class="nav-item" data-section="news">
+            <span class="icon">📰</span><span>Trade Intelligence</span>
+        </div>
+        <div class="nav-item" data-section="marketing">
+            <span class="icon">📢</span><span>Marketing Intel</span>
+        </div>
+        <div class="nav-item" data-section="links">
+            <span class="icon">🔗</span><span>Key Links</span>
+        </div>
+    </div>
+    <div class="sidebar-footer">
+        <div class="backup-btns">
+            <button class="btn-small" onclick="exportData()">Export</button>
+            <button class="btn-small" onclick="document.getElementById('importInput').click()">Import</button>
+            <input type="file" id="importInput" style="display:none" onchange="importData(event)">
+        </div>
+        <p class="last-backup" id="lastBackup">Never exported</p>
+    </div>
+</nav>
+
+<main>
+    <!-- Section 1: Business Status -->
+    <section id="status" class="active">
+        <div class="header-row">
+            <div>
+                <h2>Business Status</h2>
+                <p class="section-desc">Core registry and compliance status</p>
+            </div>
+        </div>
+        <div class="card-grid" id="statusGrid">
+            <!-- Populated by JS -->
+        </div>
+    </section>
+
+    <!-- Section 2: Launch Checklist -->
+    <section id="launch">
+        <div class="header-row">
+            <div>
+                <h2>Launch Checklist</h2>
+                <p class="section-desc">HMRC production path and GTM milestones</p>
+            </div>
+        </div>
+        <div class="card-grid" id="launchGrid">
+            <!-- Populated by JS -->
+        </div>
+    </section>
+
+    <!-- Section 3: Notes -->
+    <section id="notes">
+        <div class="header-row">
+            <div>
+                <h2>Founder Notes</h2>
+                <p class="section-desc">Distraction-free scratchpad. Auto-saves every 30s.</p>
+            </div>
+        </div>
+        <div class="notes-container">
+            <textarea id="notesArea" placeholder="Start typing thoughts, features, or strategy..."></textarea>
+            <div class="notes-footer">
+                <span id="wordCount">0 words</span>
+                <span id="saveStatus">Synced locally</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Trade News -->
+    <section id="news">
+        <div class="feed-header">
+            <div>
+                <h2>Trade Intelligence</h2>
+                <p class="section-desc">Curated field intelligence for UK Customs & HMRC</p>
+            </div>
+            <button class="btn-small" onclick="loadNews('trade')">Refresh</button>
+        </div>
+        <div class="api-config" id="newsConfig">
+            <p style="font-size:11px; margin-bottom:8px">NewsAPI Key Required</p>
+            <input type="password" id="newsApiKey" placeholder="Enter NewsAPI Key..." onchange="saveApiKey(this.value)">
+        </div>
+        <div class="news-list" id="tradeNewsList">
+            <!-- Populated by JS -->
+        </div>
+    </section>
+
+    <!-- Section 5: Gov Updates -->
+    <section id="marketing">
+        <div class="feed-header">
+            <div>
+                <h2>UK Gov & Marketing</h2>
+                <p class="section-desc">Trade Tariff updates and software market research</p>
+            </div>
+        </div>
+        
+        <h4 style="margin: 20px 0 10px; font-size: 14px; color: var(--accent)">Government News (Live)</h4>
+        <div class="news-list" id="govNewsList">
+            <div class="skeleton"></div>
+        </div>
+
+        <h4 style="margin: 40px 0 10px; font-size: 14px; color: var(--accent)">Market Research (NewsAPI)</h4>
+        <div class="news-list" id="marketingNewsList">
+            <!-- Populated by JS -->
+        </div>
+    </section>
+
+    <!-- Section 6: Links -->
+    <section id="links">
+        <div class="header-row">
+            <div>
+                <h2>Key Links</h2>
+                <p class="section-desc">Mission critical dashboards and documentation</p>
+            </div>
+        </div>
+        <div class="links-grid">
+            <a href="https://developer.service.hmrc.gov.uk/developer/applications" target="_blank" class="link-btn"><h4>HMRC Developer Hub</h4><p>Applications & API credentials</p></a>
+            <a href="https://dashboard.convex.dev" target="_blank" class="link-btn"><h4>Convex Dashboard</h4><p>Database & Cloud functions</p></a>
+            <a href="https://vercel.com/dashboard" target="_blank" class="link-btn"><h4>Vercel Dashboard</h4><p>Deployment & Analytics</p></a>
+            <a href="https://dashboard.stripe.com" target="_blank" class="link-btn"><h4>Stripe Dashboard</h4><p>Business revenue & subscriptions</p></a>
+            <a href="https://dashboard.clerk.com" target="_blank" class="link-btn"><h4>Clerk Dashboard</h4><p>User authentication & management</p></a>
+            <a href="https://dash.cloudflare.com" target="_blank" class="link-btn"><h4>Cloudflare Dashboard</h4><p>DNS, R2 Storage & Workers</p></a>
+            <a href="/admin-app.html" target="_blank" class="link-btn"><h4>FC Admin Guide</h4><p>Internal technical reference</p></a>
+            <a href="http://localhost:3000" target="_blank" class="link-btn"><h4>Local Environment</h4><p>localhost:3000</p></a>
+            <a href="https://freightcode.co.uk" target="_blank" class="link-btn"><h4>Live Site</h4><p>freightcode.co.uk</p></a>
+        </div>
+    </section>
+</main>
+
+<script>
+    // --- STATE ---
+    const DEFAULT_STATE = {
+        business: {
+            reg: { label: 'Companies House registration', done: false },
+            pii: { label: 'Professional Indemnity Insurance', done: false },
+            cli: { label: 'Cyber Liability Insurance', done: false },
+            hmrc: { label: 'HMRC Production Approval', done: false },
+            list: { label: 'GOV.UK Approved Software List', done: false },
+            stripe: { label: 'Stripe Live Keys', done: false },
+            clerk: { label: 'Clerk Production Keys', done: false }
+        },
+        launch: {
+            sandbox: { label: 'HMRC sandbox scenarios complete', done: false },
+            fraud: { label: 'Fraud prevention headers', done: false },
+            check: { label: 'Production checklist submitted', done: false },
+            ets: { label: 'ETS access granted', done: false },
+            vendor: { label: 'Vendor ID assigned', done: false },
+            customer: { label: 'First paying customer', done: false },
+            flow: { label: 'Onboarding flow built', done: false }
+        },
+        notes: '',
+        apiKey: '',
+        lastBackup: null
+    };
+
+    let state = JSON.parse(localStorage.getItem('fc_founder_state')) || DEFAULT_STATE;
+
+    function saveState() {
+        localStorage.setItem('fc_founder_state', JSON.stringify(state));
+    }
+
+    // --- RENDERERS ---
+    function renderGrids() {
+        renderGrid('statusGrid', state.business, 'business');
+        renderGrid('launchGrid', state.launch, 'launch');
+    }
+
+    function renderGrid(containerId, data, category) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        Object.keys(data).forEach(key => {
+            const item = data[key];
+            const card = document.createElement('div');
+            card.className = `status-card ${item.done ? 'done' : ''}`;
+            card.innerHTML = `
+                <h3>${item.label}</h3>
+                <div class="check-circle"></div>
+            `;
+            card.onclick = () => {
+                item.done = !item.done;
+                saveState();
+                renderGrids();
+            };
+            container.appendChild(card);
+        });
+    }
+
+    // --- NAVIGATION ---
+    const navItems = document.querySelectorAll('.nav-item');
+    const sections = document.querySelectorAll('section');
+
+    navItems.forEach(item => {
+        item.onclick = () => {
+            const target = item.dataset.section;
+            navItems.forEach(n => n.classList.remove('active'));
+            sections.forEach(s => s.classList.remove('active'));
+            item.classList.add('active');
+            document.getElementById(target).classList.add('active');
+            
+            // Special load for news sections
+            if (target === 'news') loadNews('trade');
+            if (target === 'marketing') {
+                loadGovUpdates();
+                loadNews('marketing');
+            }
+        };
+    });
+
+    // --- NOTES LOGIC ---
+    const notesArea = document.getElementById('notesArea');
+    const wordCount = document.getElementById('wordCount');
+    const saveStatus = document.getElementById('saveStatus');
+
+    notesArea.value = state.notes;
+    notesArea.addEventListener('input', () => {
+        state.notes = notesArea.value;
+        const count = notesArea.value.trim().split(/\s+/).filter(x => x).length;
+        wordCount.innerText = `${count} words`;
+    });
+
+    // Auto-save every 30s
+    setInterval(() => {
+        saveState();
+        const now = new Date();
+        saveStatus.innerText = `Auto-saved at ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+    }, 30000);
+
+    // --- API INTEGRATIONS ---
+    function saveApiKey(val) {
+        state.apiKey = val;
+        saveState();
+    }
+
+    if (state.apiKey) document.getElementById('newsApiKey').value = state.apiKey;
+
+    async function loadNews(type) {
+        const list = document.getElementById(`${type}NewsList`);
+        if (!state.apiKey) {
+            list.innerHTML = '<p class="section-desc">Add NewsAPI key to enable</p>';
+            return;
+        }
+
+        list.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>';
+        
+        const queries = {
+            trade: '"UK customs declaration" OR "HMRC CDS" OR "UK trade"',
+            marketing: '"customs declaration software UK" OR "CDS HMRC software"'
+        };
+
+        try {
+            const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(queries[type])}&sortBy=publishedAt&pageSize=5&apiKey=${state.apiKey}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            if (data.status === 'error') throw new Error(data.message);
+            
+            list.innerHTML = data.articles.map(art => `
+                <a href="${art.url}" target="_blank" class="news-item">
+                    <div class="news-source">${art.source.name}</div>
+                    <div class="news-title">${art.title}</div>
+                    <div class="news-meta">${new Date(art.publishedAt).toLocaleDateString()}</div>
+                </a>
+            `).join('');
+        } catch (e) {
+            list.innerHTML = `<p class="section-desc" style="color:var(--red)">Error: ${e.message}</p>`;
+        }
+    }
+
+    async function loadGovUpdates() {
+        const list = document.getElementById('govNewsList');
+        try {
+            const res = await fetch('https://www.trade-tariff.service.gov.uk/api/v2/news_items');
+            const data = await res.json();
+            
+            list.innerHTML = data.data.slice(0, 5).map(item => `
+                <a href="https://www.trade-tariff.service.gov.uk/news/${item.attributes.slug}" target="_blank" class="news-item">
+                    <div class="news-source">UK TRADE TARIFF</div>
+                    <div class="news-title">${item.attributes.title}</div>
+                    <div class="news-meta">${new Date(item.attributes.start_date).toLocaleDateString()}</div>
+                </a>
+            `).join('');
+        } catch (e) {
+            list.innerHTML = `<p class="section-desc">Unable to load official gov updates.</p>`;
+        }
+    }
+
+    // --- BACKUP / RESTORE ---
+    function exportData() {
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `founder-backup-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        
+        state.lastBackup = new Date().toLocaleString();
+        saveState();
+        updateBackupLabel();
+    }
+
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if (!imported.business || !imported.launch) throw new Error('Invalid backup file');
+                state = imported;
+                saveState();
+                location.reload();
+            } catch (e) {
+                alert('Failed to import: ' + e.message);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function updateBackupLabel() {
+        if (state.lastBackup) {
+            document.getElementById('lastBackup').innerText = `Last export: ${state.lastBackup}`;
+        }
+    }
+
+    // --- INIT ---
+    renderGrids();
+    updateBackupLabel();
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw-founder.js');
+        });
+    }
+</script>
+</body>
+</html>

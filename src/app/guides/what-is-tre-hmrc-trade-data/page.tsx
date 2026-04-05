@@ -4,13 +4,17 @@ import { WaitlistForm } from "@/components/waitlist-form";
 export const metadata: Metadata = {
   title: "What is TRE and How to Use Your HMRC Trade Data | FreightCode",
   description: "A plain-English guide to HMRC's Trade Reporting and Extracting (TRE) — what the data contains, how to access it for free, and how to use it to understand your import costs and patterns.",
+  robots: {
+    index: true,
+    follow: true,
+  },
   openGraph: {
     title: "What is TRE and How to Use Your HMRC Trade Data",
     description: "A plain-English guide to HMRC's Trade Reporting and Extracting (TRE) — what the data contains, how to access it for free, and how to use it to understand your import costs and patterns.",
     type: "article",
   },
   alternates: {
-    canonical: "/guides/what-is-tre-hmrc-trade-data",
+    canonical: "https://www.freightcode.co.uk/guides/what-is-tre-hmrc-trade-data",
   },
 };
 

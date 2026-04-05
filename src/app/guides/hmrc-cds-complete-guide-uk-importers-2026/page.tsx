@@ -4,13 +4,17 @@ import { WaitlistForm } from "@/components/waitlist-form";
 export const metadata: Metadata = {
   title: "HMRC CDS: Complete Guide for UK Importers 2026 | FreightCode",
   description: "Everything a UK business needs to know about HMRC's Customs Declaration Service in 2026 — registration, declaration types, duty deferment, and practical filing tips.",
+  robots: {
+    index: true,
+    follow: true,
+  },
   openGraph: {
     title: "HMRC CDS: Complete Guide for UK Importers 2026",
     description: "Everything a UK business needs to know about HMRC's Customs Declaration Service in 2026 — registration, declaration types, duty deferment, and practical filing tips.",
     type: "article",
   },
   alternates: {
-    canonical: "/guides/hmrc-cds-complete-guide-uk-importers-2026",
+    canonical: "https://www.freightcode.co.uk/guides/hmrc-cds-complete-guide-uk-importers-2026",
   },
 };
 

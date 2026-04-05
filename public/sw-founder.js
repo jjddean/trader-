@@ -1,14 +1,15 @@
-const CACHE_NAME = 'fc-admin-v2';
+const CACHE_NAME = 'fc-founder-v1';
 const ASSETS_TO_CACHE = [
-  '/admin-app.html',
-  '/admin-manifest.json',
-  '/icon.png'
+  '/founder.html',
+  '/founder-manifest.json',
+  '/icon.png',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Opened cache');
+      console.log('[SW] Caching assets');
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
@@ -17,11 +18,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
-      // Cache hit - return response
-      if (response) {
-        return response;
-      }
-      return fetch(event.request);
+      return response || fetch(event.request);
     })
   );
 });

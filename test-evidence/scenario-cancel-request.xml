@@ -1,0 +1,22 @@
+<!-- timestamp: 2026-04-01T19:46:44.101Z | http_status: 202 | conversation_id: conv-cancel-45yw5 -->
+<?xml version="1.0" encoding="UTF-8"?>
+<MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
+  <WCODataModelVersionCode>3.6</WCODataModelVersionCode>
+  <WCOTypeName>DEC</WCOTypeName>
+  <ResponsibleCountryCode>GB</ResponsibleCountryCode>
+  <ResponsibleAgencyName>HMRC</ResponsibleAgencyName>
+  <AgencyAssignedCustomizationVersionCode>v2.1</AgencyAssignedCustomizationVersionCode>
+  <Declaration xmlns="urn:wco:datamodel:WCO:DEC-DMS:2" xmlns:clm63055="urn:un:unece:uncefact:codelist:standard:UNECE:AgencyIdentificationCode:D12B" xmlns:ds="urn:wco:datamodel:WCO:MetaData_DS-DMS:2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <FunctionCode>13</FunctionCode>
+    <FunctionalReferenceID>CX-REF-1775072804103</FunctionalReferenceID>
+    <ID>24GBDMSATEST000001</ID>
+    <TypeCode>INV</TypeCode>
+    <Declarant>
+      <ID>GB553202734852</ID>
+    </Declarant>
+    <AdditionalInformation>
+      <StatementDescription>Cancellation requested due to clerical error in data entry.</StatementDescription>
+      <StatementTypeCode>AES</StatementTypeCode>
+    </AdditionalInformation>
+  </Declaration>
+</MetaData>

@@ -56,13 +56,13 @@ export const DocumentsTable = React.memo(function DocumentsTable({
       <div className="flex items-center justify-between border-b border-[#e9e9e7] bg-gray-50 px-5 py-4">
         <div className="flex items-center gap-3">
           <Select value={declarationFilter} onValueChange={onDeclarationFilterChange}>
-            <SelectTrigger className="h-9 w-[200px] border-gray-200 bg-white text-xs">
+            <SelectTrigger className="h-9 w-[200px] border-gray-200 bg-white text-[0.6875rem]">
               <SelectValue placeholder="All declarations" />
             </SelectTrigger>
             <SelectContent position="popper" className="z-[100] max-h-[300px]">
-              <SelectItem value="all">All declarations</SelectItem>
+              <SelectItem value="all" className="text-[0.6875rem]">All declarations</SelectItem>
               {allDeclarationOptions.map((decl) => (
-                <SelectItem key={decl.id} value={decl.id} className="font-mono">
+                <SelectItem key={decl.id} value={decl.id} className="font-mono text-[0.6875rem]">
                   {decl.mrn}
                 </SelectItem>
               ))}
@@ -70,13 +70,13 @@ export const DocumentsTable = React.memo(function DocumentsTable({
           </Select>
 
           <Select value={typeFilter} onValueChange={onTypeFilterChange}>
-            <SelectTrigger className="h-9 w-[180px] border-gray-200 bg-white text-xs">
+            <SelectTrigger className="h-9 w-[180px] border-gray-200 bg-white text-[0.6875rem]">
               <SelectValue placeholder="All types" />
             </SelectTrigger>
             <SelectContent position="popper" className="z-[100] max-h-[300px]">
-              <SelectItem value="all">All types</SelectItem>
+              <SelectItem value="all" className="text-[0.6875rem]">All types</SelectItem>
               {DOCUMENT_TYPES.map((type) => (
-                <SelectItem key={type.code} value={type.name}>
+                <SelectItem key={type.code} value={type.name} className="text-[0.6875rem]">
                   {type.name}
                 </SelectItem>
               ))}
@@ -85,8 +85,9 @@ export const DocumentsTable = React.memo(function DocumentsTable({
         </div>
 
         <div className="flex items-center gap-3">
+
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex h-9 w-[180px] items-center justify-between rounded-md border border-gray-200 bg-white px-3 text-xs text-gray-700 transition-colors hover:border-gray-400 focus:outline-none shadow-sm">
+            <DropdownMenuTrigger className="flex h-9 w-[180px] items-center justify-between rounded-md border border-gray-200 bg-white px-3 text-[0.6875rem] text-gray-700 transition-colors hover:border-gray-400 focus:outline-none shadow-sm">
               <span>Compliance Tools</span>
               <ChevronDown className="h-4 w-4 text-gray-400" />
             </DropdownMenuTrigger>
@@ -94,19 +95,19 @@ export const DocumentsTable = React.memo(function DocumentsTable({
             <DropdownMenuContent className="z-[100] min-w-[12rem] overflow-hidden rounded-lg border border-gray-100 bg-white shadow-lg" align="end">
               <DropdownMenuItem 
                 onClick={() => onActiveToolChange("preference")}
-                className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-xs text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
+                className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-[0.6875rem] text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
               >
                 Preference Checker
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => onActiveToolChange("roo")}
-                className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-xs text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
+                className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-[0.6875rem] text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
               >
                 Rules of Origin
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => onActiveToolChange("landed")}
-                className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-xs text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
+                className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-[0.6875rem] text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
               >
                 Landed Cost Calculator
               </DropdownMenuItem>

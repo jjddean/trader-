@@ -1,0 +1,34 @@
+<!-- timestamp: 2026-04-01T19:46:44.101Z | http_status: 202 | conversation_id: conv-amend-l8hkss -->
+<?xml version="1.0" encoding="UTF-8"?>
+<MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
+  <WCODataModelVersionCode>3.6</WCODataModelVersionCode>
+  <WCOTypeName>DEC</WCOTypeName>
+  <ResponsibleCountryCode>GB</ResponsibleCountryCode>
+  <ResponsibleAgencyName>HMRC</ResponsibleAgencyName>
+  <AgencyAssignedCustomizationVersionCode>v2.1</AgencyAssignedCustomizationVersionCode>
+  <Declaration xmlns="urn:wco:datamodel:WCO:DEC-DMS:2" xmlns:clm63055="urn:un:unece:uncefact:codelist:standard:UNECE:AgencyIdentificationCode:D12B" xmlns:ds="urn:wco:datamodel:WCO:MetaData_DS-DMS:2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <FunctionCode>13</FunctionCode>
+    <FunctionalReferenceID>AM-REF-1775072804101</FunctionalReferenceID>
+    <ID>24GBDMSATEST000001</ID>
+    <TypeCode>IMA</TypeCode>
+    <GoodsItemQuantity>1</GoodsItemQuantity>
+    <TotalGrossMassMeasure unitCode="KGM">150</TotalGrossMassMeasure>
+    <TotalPackageQuantity>10</TotalPackageQuantity>
+    <InvoiceAmount currencyID="GBP">5500</InvoiceAmount>
+    <Declarant>
+      <ID>GB553202734852</ID>
+    </Declarant>
+    <GoodsShipment>
+      <GovernmentAgencyGoodsItem>
+        <SequenceNumeric>1</SequenceNumeric>
+        <Commodity>
+          <Description>Men knitted cotton jumper - AMENDED DESCRIPTION</Description>
+          <Classification>
+            <ID>6110201000</ID>
+            <IdentificationTypeCode>TSP</IdentificationTypeCode>
+          </Classification>
+        </Commodity>
+      </GovernmentAgencyGoodsItem>
+    </GoodsShipment>
+  </Declaration>
+</MetaData>

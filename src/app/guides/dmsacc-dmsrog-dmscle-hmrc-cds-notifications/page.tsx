@@ -4,13 +4,17 @@ import { WaitlistForm } from "@/components/waitlist-form";
 export const metadata: Metadata = {
   title: "DMSACC, DMSROG, DMSCLE — What Do HMRC CDS Notifications Mean? | FreightCode",
   description: "A plain-English guide to every CDS declaration notification — DMSACC, DMSROG, DMSCLE, DMSREJ, DMSCTL and more — and what action to take when you receive one.",
+  robots: {
+    index: true,
+    follow: true,
+  },
   openGraph: {
     title: "DMSACC, DMSROG, DMSCLE — What Do HMRC CDS Notifications Mean?",
     description: "A plain-English guide to every CDS declaration notification — DMSACC, DMSROG, DMSCLE, DMSREJ, DMSCTL and more — and what action to take when you receive one.",
     type: "article",
   },
   alternates: {
-    canonical: "/guides/dmsacc-dmsrog-dmscle-hmrc-cds-notifications",
+    canonical: "https://www.freightcode.co.uk/guides/dmsacc-dmsrog-dmscle-hmrc-cds-notifications",
   },
 };
 

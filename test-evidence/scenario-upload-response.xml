@@ -1,0 +1,21 @@
+<!-- timestamp: 2026-04-01T19:46:44.101Z | http_status: 201 | conversation_id: conv-upload-8dk7xr -->
+<?xml version="1.0" encoding="UTF-8"?>
+<FileUploadResponse xmlns="urn:hmrc:fileupload:response:1">
+  <Files>
+    <File>
+      <Reference>f868c2ba-74bc-44cf-a3ba-83f123456789</Reference>
+      <UploadRequest>
+        <Href>https://s3-eu-west-1.amazonaws.com/hmrc-upscan-data-eu-west-1-test</Href>
+        <Fields>
+          <Content-Type>application/xml</Content-Type>
+          <x-amz-meta-callback-url>https://callback.com</x-amz-meta-callback-url>
+          <x-amz-date>20260401T194644Z</x-amz-date>
+          <x-amz-credential>dummy-cred</x-amz-credential>
+          <x-amz-algorithm>AWS4-HMAC-SHA256</x-amz-algorithm>
+          <x-amz-signature>mock-signature-123456789</x-amz-signature>
+          <Policy>mock-policy-data</Policy>
+        </Fields>
+      </UploadRequest>
+    </File>
+  </Files>
+</FileUploadResponse>

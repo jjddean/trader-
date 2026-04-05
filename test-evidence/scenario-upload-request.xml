@@ -1,0 +1,10 @@
+<!-- timestamp: 2026-04-01T19:46:44.101Z | http_status: 201 | conversation_id: conv-upload-8dk7xr -->
+<?xml version="1.0" encoding="UTF-8"?>
+<FileUploadRequest xmlns="urn:hmrc:fileupload:request:1">
+  <DeclarationID>24GBDMSATEST000001</DeclarationID>
+  <FileGroupSize>1</FileGroupSize>
+  <File>
+    <FileSequenceNo>1</FileSequenceNo>
+    <DocumentType>invoice</DocumentType>
+  </File>
+</FileUploadRequest>

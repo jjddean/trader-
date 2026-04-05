@@ -33,12 +33,21 @@ export const metadata: Metadata = {
     type: "website",
     url: "https://www.freightcode.co.uk",
     siteName: "FreightCode",
+    images: [
+      {
+        url: "/social/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "FreightCode Dashboard and Logo",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "FreightCode | Instant UK Customs Clearance Software",
     description: "Automate your UK customs declarations (HMRC CDS), detect savings, and ensure compliance instantly with FreightCode.",
     creator: "@freightcode",
+    images: ["/social/og-image.png"],
   },
 };
 

@@ -68,8 +68,8 @@ export default function GuidesIndex() {
         </section>
 
         {/* Guides List */}
-        <section className="max-w-4xl mx-auto px-6 pt-16">
-          <div className="flex flex-col gap-6">
+        <section className="max-w-6xl mx-auto px-6 pt-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             {guides.map((guide, idx) => (
               <Link 
                 key={idx} 

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>freightcode | Business & Investment Plan</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="icon" href="icon.png">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-box">f</span>
+                    <span class="logo-text">freight<span class="bold">code</span><span class="reg">®</span></span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-group">
+                    <span class="group-label">PLANNING</span>
+                    <a href="#" class="nav-item active" data-section="summary">
+                        <i data-lucide="layout-dashboard"></i> Executive Summary
+                    </a>
+                    <a href="#" class="nav-item" data-section="market">
+                        <i data-lucide="compass"></i> Market Intelligence
+                    </a>
+                    <a href="#" class="nav-item" data-section="product">
+                        <i data-lucide="file-text"></i> Product Vision
+                    </a>
+                    <a href="#" class="nav-item" data-section="ops">
+                        <i data-lucide="settings"></i> Operations & Revenue
+                    </a>
+                    <a href="#" class="nav-item" data-section="team">
+                        <i data-lucide="shield-check"></i> Team & Growth
+                    </a>
+                    <a href="#" class="nav-item" data-section="financials">
+                        <i data-lucide="credit-card"></i> Financial Projections
+                    </a>
+                </div>
+                
+                <div class="nav-group">
+                    <span class="group-label">LOGS & REPORTS</span>
+                    <a href="#" class="nav-item" data-section="build-log">
+                        <i data-lucide="history"></i> Build Log & Progress
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-card">
+                    <div class="user-avatar">BP</div>
+                    <div class="user-info">
+                        <span class="user-name">Business Plan</span>
+                        <span class="user-role">Standalone PWA</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1 id="section-title">Executive Summary</h1>
+                <div class="header-actions">
+                    <button id="save-btn" class="btn btn-primary">
+                        <i data-lucide="save"></i> Save Changes
+                    </button>
+                    <button id="export-btn" class="btn btn-outline">
+                        <i data-lucide="download"></i> Export JSON
+                    </button>
+                </div>
+            </header>
+            
+            <section id="content-area" class="content-body">
+                <!-- Section Content Injected Here -->
+                <div class="glass-card">
+                    <div class="field-group">
+                        <label>Problem Statement</label>
+                        <textarea id="field-problem" placeholder="What pain point are you solving?"></textarea>
+                    </div>
+                    <div class="field-group">
+                        <label>Solution</label>
+                        <textarea id="field-solution" placeholder="Describe your product/service and why it's indispensable."></textarea>
+                    </div>
+                    <div class="field-group">
+                        <label>Value Proposition</label>
+                        <textarea id="field-value-prop" placeholder="What makes your solution better than alternatives?"></textarea>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- PWA Offline Toast -->
+    <div id="offline-toast" class="toast hidden">
+        Working Offline
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

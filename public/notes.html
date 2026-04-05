@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimalist Pages</title>
+    <link rel="manifest" href="/notes-manifest.json?v=2">
+    <link rel="stylesheet" href="/notes.css?v=2">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#0a0a0a">
+    <link rel="icon" type="image/png" href="/notes-icon.png?v=2">
+</head>
+<body class="dark-mode">
+    <div id="app" class="glass-container">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h2>Pages</h2>
+                <button id="new-page-btn" title="New Page" class="icon-btn">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>
+                </button>
+            </div>
+            <nav id="page-list" class="page-list"></nav>
+            <div class="sidebar-footer">
+                <button id="toggle-sidebar" class="icon-btn" title="Collapse Sidebar">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"></path></svg>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="editor-container">
+            <header class="editor-header">
+                <button id="expand-sidebar" class="icon-btn hidden" title="Show Sidebar">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 7l5 5-5 5M6 7l5 5-5 5"></path></svg>
+                </button>
+                <input type="text" id="page-title" class="page-title-input" placeholder="Untitled Page">
+                <div class="editor-actions">
+                    <span id="saved-indicator" class="saved-indicator">Saved</span>
+                    <button id="delete-page-btn" title="Delete Page" class="icon-btn danger">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+                    </button>
+                </div>
+            </header>
+            <textarea id="editor" class="editor-textarea" placeholder="Start typing..."></textarea>
+            <footer class="editor-footer">
+                <div id="word-count" class="meta-info">0 words</div>
+            </footer>
+        </main>
+    </div>
+
+    <script src="/notes.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/notes-sw.js', { scope: '/notes.html' });
+        }
+    </script>
+</body>
+</html>

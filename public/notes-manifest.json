@@ -1,0 +1,22 @@
+{
+  "name": "Minimalist Pages",
+  "short_name": "Pages",
+  "description": "A distraction-free, multi-tab text editor.",
+  "start_url": "/notes.html",
+  "scope": "/notes.html",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    {
+      "src": "/notes-icon.png?v=2",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/notes-icon.png?v=2",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

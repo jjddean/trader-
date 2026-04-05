@@ -4,13 +4,17 @@ import { WaitlistForm } from "@/components/waitlist-form";
 export const metadata: Metadata = {
   title: "How to Read Your CDS CSV Export from TRE | FreightCode",
   description: "A practical column-by-column guide to reading your CDS CSV export from HMRC's Trade Reporting and Extracting (TRE) service — what each field means and how to use the data.",
+  robots: {
+    index: true,
+    follow: true,
+  },
   openGraph: {
     title: "How to Read Your CDS CSV Export from TRE",
     description: "A practical column-by-column guide to reading your CDS CSV export from HMRC's Trade Reporting and Extracting (TRE) service — what each field means and how to use the data.",
     type: "article",
   },
   alternates: {
-    canonical: "/guides/how-to-read-cds-csv-export-tre",
+    canonical: "https://www.freightcode.co.uk/guides/how-to-read-cds-csv-export-tre",
   },
 };
 
