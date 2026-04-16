@@ -159,7 +159,7 @@ export default function DocumentsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button className="h-9 text-xs bg-black text-white hover:bg-gray-800" onClick={() => handleUploadOpenChange(true)}>
+          <Button variant="ghost" className="h-9 text-xs" onClick={() => handleUploadOpenChange(true)}>
             <Upload className="mr-2 h-4 w-4" />
             Upload document
           </Button>
