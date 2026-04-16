@@ -15,6 +15,7 @@ import {
 export const navigation = [
   { name: "Solutions", href: "/solutions" },
   { name: "Resources", href: "/resources" },
+  { name: "Docs", href: "/docs" },
   { name: "About", href: "/about" },
   { name: "Contact", href: "/contact" },
 ];
