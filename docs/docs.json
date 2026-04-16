@@ -15,25 +15,32 @@
     "name": "Dashboard",
     "url": "https://freightcode.co.uk/dashboard"
   },
-  "navigation": [
-    {
-      "group": "Getting Started",
-      "pages": ["introduction", "quickstart"]
-    },
-    {
-      "group": "HMRC CDS",
-      "pages": [
-        "hmrc/connect",
-        "hmrc/declarations",
-        "hmrc/documents"
-      ]
-    },
-    {
-      "group": "Compliance",
-      "pages": [
-        "compliance/audit",
-        "compliance/hs-codes"
-      ]
-    }
-  ]
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": ["introduction", "quickstart"]
+          },
+          {
+            "group": "HMRC CDS",
+            "pages": [
+              "hmrc/connect",
+              "hmrc/declarations",
+              "hmrc/documents"
+            ]
+          },
+          {
+            "group": "Compliance",
+            "pages": [
+              "compliance/audit",
+              "compliance/hs-codes"
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }
