@@ -1,5 +1,7 @@
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const encodeValue = (value: string) => encodeURIComponent(value).replace(/%20/g, "+");
+
 export async function fetchHmrc(
   endpoint: string, 
   options: RequestInit, 
@@ -8,14 +10,19 @@ export async function fetchHmrc(
 ) {
   // Extract client IP
   const clientIp = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "127.0.0.1";
+  const clientPort = req.headers.get("x-forwarded-port") || "443";
+  const vendorPublicIp = process.env.HMRC_VENDOR_PUBLIC_IP || "203.0.113.6";
   
   // Base server-side HMRC headers
   const govHeaders: Record<string, string> = {
     "Gov-Client-Connection-Method": "WEB_APP_VIA_SERVER",
     "Gov-Vendor-Version": "TradeDNA=1.0.0",
-    "Gov-Vendor-Product-Name": "TradeDNA",
+    "Gov-Vendor-Product-Name": encodeValue("TradeDNA"),
     "Gov-Client-Public-IP": clientIp.split(",")[0].trim(),
-    "Gov-Client-Public-IP-Timestamp": new Date().toISOString()
+    "Gov-Client-Public-IP-Timestamp": new Date().toISOString(),
+    "Gov-Client-Public-Port": clientPort,
+    "Gov-Vendor-Public-IP": vendorPublicIp,
+    "Gov-Vendor-Forwarded": `by=${encodeValue(vendorPublicIp)}&for=${encodeValue(clientIp.split(",")[0].trim())}`,
   };
 
   // Client-sourced headers that must be forwarded from the NextJS API request
@@ -25,7 +32,12 @@ export async function fetchHmrc(
     "Gov-Client-Screens",
     "Gov-Client-Browser-JS-User-Agent",
     "Gov-Client-Browser-Do-Not-Track",
-    "Gov-Client-Local-IPs"
+    // Gov-Client-Local-IPs omitted — not required for WEB_APP_VIA_SERVER; loopback/private IPs trigger HMRC WAF
+    "Gov-Client-Device-ID",
+    "Gov-Client-User-IDs",
+    "Gov-Client-Multi-Factor",
+    "Gov-Client-Browser-Plugins",
+    "Gov-Client-User-Agent"
   ];
   
   for (const h of clientHeaders) {
@@ -62,12 +74,15 @@ export async function fetchHmrc(
 
   let hmrcResponse = await fetch(endpoint, fetchOptions);
 
-  // Standardised Retry limit for HTTP 429 Rate Limits
-  if (hmrcResponse.status === 429) {
-    await sleep(2000);
+  // Retry on rate limit (429) and transient server errors (502/503/504)
+  const isRetryable = (status: number) => status === 429 || status === 502 || status === 503 || status === 504;
+
+  if (isRetryable(hmrcResponse.status)) {
+    const delay = hmrcResponse.status === 429 ? 2000 : 1000;
+    await sleep(delay);
     hmrcResponse = await fetch(endpoint, fetchOptions);
-    if (hmrcResponse.status === 429) {
-      await sleep(5000);
+    if (isRetryable(hmrcResponse.status)) {
+      await sleep(hmrcResponse.status === 429 ? 5000 : 3000);
       hmrcResponse = await fetch(endpoint, fetchOptions);
     }
   }

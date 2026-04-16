@@ -8,13 +8,13 @@ export const getWorkspaces = query({
     const owned = await ctx.db
       .query("workspaces")
       .withIndex("by_owner", (q) => q.eq("ownerId", args.userId))
-      .collect();
+      .take(100);
 
     // 2. Get member workspaces
     const memberships = await ctx.db
       .query("workspaceMembers")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .collect();
+      .take(200);
 
     const memberWorkspaces = await Promise.all(
       memberships.map((m) => ctx.db.get(m.workspaceId))

@@ -19,7 +19,7 @@ export default function OnlineClerkPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const declarations = useQuery(api.declarations.getAllDecls);
+  const declarations = useQuery(api.declarations.getAllDecls, { limit: 300 });
 
   const filteredDeclarations = declarations?.filter((dec: any) => {
     const term = searchQuery.toLowerCase();

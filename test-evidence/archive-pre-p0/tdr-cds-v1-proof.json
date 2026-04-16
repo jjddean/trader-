@@ -1,0 +1,46 @@
+{
+  "conversationId": "",
+  "eori": "GB553202734852",
+  "submission": {
+    "timestamp": "2026-04-09T00:24:07.972Z",
+    "xmlPayload": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<MetaData xmlns=\"urn:wco:datamodel:WCO:DocumentMetaData-DMS:2\">\n  <WCODataModelVersionCode>3.6</WCODataModelVersionCode>\n  <WCOTypeName>DEC</WCOTypeName>\n  <ResponsibleCountryCode>GB</ResponsibleCountryCode>\n  <ResponsibleAgencyName>HMRC</ResponsibleAgencyName>\n  <AgencyAssignedCustomizationVersionCode>v2.1</AgencyAssignedCustomizationVersionCode>\n  <Declaration xmlns=\"urn:wco:datamodel:WCO:DEC-DMS:2\" xmlns:clm63055=\"urn:un:unece:uncefact:codelist:standard:UNECE:AgencyIdentificationCode:D12B\" xmlns:ds=\"urn:wco:datamodel:WCO:MetaData_DS-DMS:2\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"urn:wco:datamodel:WCO:DocumentMetaData-DMS:2 ../DocumentMetaData_2_DMS.xsd \">\n    <FunctionCode>9</FunctionCode>\n    <FunctionalReferenceID>TDR-1775694247971</FunctionalReferenceID>\n    <TypeCode>IMA</TypeCode>\n    <GoodsItemQuantity>1</GoodsItemQuantity>\n    <DeclarationOfficeID>GB000051</DeclarationOfficeID>\n    <InvoiceAmount currencyID=\"GBP\">1000</InvoiceAmount>\n    <TotalGrossMassMeasure unitCode=\"KGM\">10</TotalGrossMassMeasure>\n    <TotalPackageQuantity>1</TotalPackageQuantity>\n    <CurrencyExchange>\n      <CurrencyTypeCode>GBP</CurrencyTypeCode>\n    </CurrencyExchange>\n    <Declarant>\n      <ID>GB553202734852</ID>\n    </Declarant>\n    <Exporter>\n      <ID>GB553202734852</ID>\n    </Exporter>\n    <GoodsShipment>\n      <Consignment>\n        <ContainerCode>0</ContainerCode>\n        <ArrivalTransportMeans>\n          <ID>CSCL GLOBE</ID>\n          <IdentificationTypeCode>11</IdentificationTypeCode>\n          <ModeCode>1</ModeCode>\n        </ArrivalTransportMeans>\n        <GoodsLocation>\n          <Name>GBWLAFXTFXTGW</Name>\n          <ID>GBAUFXTFXTGW</ID>\n        </GoodsLocation>\n      </Consignment>\n      <Destination>\n        <CountryCode>GB</CountryCode>\n      </Destination>\n      <ExportCountry>\n        <ID>GB</ID>\n      </ExportCountry>\n      \n      <GovernmentAgencyGoodsItem>\n        <SequenceNumeric>1</SequenceNumeric>\n        <StatisticalValueAmount currencyID=\"GBP\">1000</StatisticalValueAmount>\n        <AdditionalDocument>\n          <CategoryCode>Y</CategoryCode>\n          <ID>922</ID>\n          <TypeCode>922</TypeCode>\n        </AdditionalDocument>\n        <Commodity>\n          <Description>Personal computer, weighing not more than 10kg</Description>\n          <Classification>\n            <ID>8471300000</ID>\n            <IdentificationTypeCode>TSP</IdentificationTypeCode>\n          </Classification>\n          <GoodsMeasure>\n            <GrossMassMeasure unitCode=\"KGM\">10</GrossMassMeasure>\n            <NetNetWeightMeasure unitCode=\"KGM\">9.8</NetNetWeightMeasure>\n          </GoodsMeasure>\n        </Commodity>\n        \n        <GovernmentProcedure>\n          <CurrentCode>4000</CurrentCode>\n          \n        </GovernmentProcedure>\n        <Packaging>\n          <SequenceNumeric>1</SequenceNumeric>\n          <MarksNumbersID>N/A</MarksNumbersID>\n          <QuantityQuantity>1</QuantityQuantity>\n          <TypeCode>PK</TypeCode>\n        </Packaging>\n      </GovernmentAgencyGoodsItem>\n      <Importer>\n        <ID>GB553202734852</ID>\n      </Importer>\n      <TradeTerms>\n        <ConditionCode>FOB</ConditionCode>\n        <LocationID>GBFXT</LocationID>\n      </TradeTerms>\n      <UCR>\n        <TraderAssignedReferenceID>9GB553202734852-247971</TraderAssignedReferenceID>\n      </UCR>\n    </GoodsShipment>\n  </Declaration>\n</MetaData>",
+    "headers": {
+      "Accept": "application/vnd.hmrc.1.0+xml",
+      "Content-Type": "application/xml",
+      "Authorization": "Bearer [REDACTED]",
+      "X-Client-ID": "ZSoA1lpJi8FyuzSsncFrOZKpmrNe",
+      "Gov-Test-Scenario": "HAPPY_PATH",
+      "X-Submitter-Identifier": "GB553202734852"
+    },
+    "attempts": [
+      {
+        "timestamp": "2026-04-09T00:24:07.972Z",
+        "status": 401,
+        "conversationId": "",
+        "body": "<errorResponse><code>INVALID_CREDENTIALS</code><message>Invalid Authentication information provided</message></errorResponse>"
+      }
+    ]
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "conversationId": ""
+    },
+    "body": "<errorResponse><code>INVALID_CREDENTIALS</code><message>Invalid Authentication information provided</message></errorResponse>"
+  },
+  "notifications": [
+    {
+      "listStatus": 0,
+      "listBody": ""
+    }
+  ],
+  "result": {
+    "submitted": false,
+    "accepted": false,
+    "cleared": false,
+    "finalStatus": "FAIL",
+    "errorCodes": [
+      "INVALID_CREDENTIALS"
+    ]
+  }
+}

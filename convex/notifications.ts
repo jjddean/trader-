@@ -29,21 +29,23 @@ export const saveWebhook = mutation({
     });
 
     let declaration = null;
-    
-    if (args.mrn && args.mrn !== "UNKNOWN") {
+
+    // Look up by conversationId first — most reliable link after 202
+    if (args.conversationId && args.conversationId !== "UNKNOWN") {
+      declaration = await ctx.db
+        .query("declarations")
+        .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
+        .first();
+    }
+
+    // Fall back to MRN lookup (for notifications where conversationId isn't stored yet)
+    if (!declaration && args.mrn && args.mrn !== "UNKNOWN") {
       declaration = await ctx.db
         .query("declarations")
         .withIndex("by_mrn", (q) => q.eq("mrn", args.mrn))
         .first();
     }
-    
-    if (!declaration && args.conversationId && args.conversationId !== "UNKNOWN") {
-      declaration = await ctx.db
-        .query("declarations")
-        .filter((q) => q.eq(q.field("conversationId"), args.conversationId))
-        .first();
-    }
-        
+
     if (declaration) {
       let newStatus = declaration.status;
       const hasResolvedMrn =
@@ -56,18 +58,19 @@ export const saveWebhook = mutation({
       if (args.notificationType === "DMSREJ") newStatus = "Rejected";
       if (args.notificationType === "DMSINV") newStatus = "Invalid";
 
-      const patchObj: any = {
+      const patchObj: Record<string, string | number> = {
         status: newStatus,
         lastUpdated: Date.now()
       };
 
-      if (args.mrn && args.mrn !== "UNKNOWN" && !declaration.mrn) {
+      // Always sync the CDS-assigned MRN back to the declaration when HMRC provides one.
+      // Overwrite any locally-set draft MRN so the declaration MRN matches what CDS issued.
+      if (args.mrn && args.mrn !== "UNKNOWN") {
         patchObj.mrn = args.mrn;
       }
 
       await ctx.db.patch(declaration._id, patchObj);
-      
-      // Audit log entry for status change
+
       await ctx.runMutation(api.audit.logAction, {
         userId: declaration.userId,
         action: "declaration_status_updated",
@@ -90,23 +93,33 @@ export const saveWebhook = mutation({
 export const getWebhooks = query({
   args: { mrn: v.optional(v.string()), conversationId: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    let results: any[] = [];
-    
+    const seen = new Set<string>();
+    const results: any[] = [];
+
+    // Always query both — conversationId is the more reliable link post-submission
+    if (args.conversationId) {
+      const convResults = await ctx.db
+        .query("notifications")
+        .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId!))
+        .take(100);
+      for (const n of convResults) {
+        if (!seen.has(n._id)) { seen.add(n._id); results.push(n); }
+      }
+    }
+
     if (args.mrn && args.mrn !== "UNKNOWN") {
-      results = await ctx.db
+      const mrnResults = await ctx.db
         .query("notifications")
         .withIndex("by_mrn", (q) => q.eq("mrn", args.mrn!))
-        .collect();
+        .take(100);
+      for (const n of mrnResults) {
+        if (!seen.has(n._id)) { seen.add(n._id); results.push(n); }
+      }
     }
-    
-    if (results.length === 0 && args.conversationId) {
-      results = await ctx.db
-        .query("notifications")
-        .filter((q) => q.eq(q.field("conversationId"), args.conversationId))
-        .collect();
-    }
-    
-    return results.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    return results.sort(
+      (a, b) => new Date(String(b.timestamp || 0)).getTime() - new Date(String(a.timestamp || 0)).getTime()
+    );
   },
 });
 

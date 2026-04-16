@@ -3,43 +3,12 @@
     "scenario": "scenario-1-happy-path",
     "header": "HAPPY_PATH",
     "status": 403,
-    "conversationId": "408a295e-a12a-4726-862d-4786420f63e7",
-    "timestamp": "2026-03-28T14:15:50.258Z"
-  },
-  {
-    "scenario": "scenario-2-rejection",
-    "header": "REJECTION",
-    "status": 403,
-    "conversationId": "0df9a1c6-3d3a-4a5e-9d6e-6b4e980debd5",
-    "timestamp": "2026-03-28T14:15:50.546Z"
-  },
-  {
-    "scenario": "scenario-3-route-to-examine",
-    "header": "ROUTE_TO_EXAMINE",
-    "status": 403,
-    "conversationId": "83b1aa7e-0f6a-43db-b645-06ee1afe5525",
-    "timestamp": "2026-03-28T14:15:50.750Z"
-  },
-  {
-    "scenario": "scenario-4-invalid-declaration",
-    "header": "INVALID_DECLARATION",
-    "status": 400,
-    "conversationId": "ef461151-7e62-460a-b8d4-085f20aa315e",
-    "timestamp": "2026-03-28T14:15:50.894Z"
-  },
-  {
-    "scenario": "scenario-5-rate-limit",
-    "header": "RATE_LIMIT",
-    "rapidStatuses": [
-      403,
-      403,
-      403,
-      403,
-      403
-    ],
-    "retryStatuses": [
-      403
-    ],
-    "timestamp": "2026-03-28T14:15:51.376Z"
+    "conversationId": "fd9a0959-206f-41de-96d3-66b09fea9295",
+    "timestamp": "2026-04-11T15:31:42.349Z",
+    "lane": {
+      "hs": "0207129000",
+      "origin": "BR",
+      "cpc": "4000"
+    }
   }
 ]

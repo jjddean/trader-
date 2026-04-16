@@ -2,7 +2,8 @@
 
 import React from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { useQuery } from "convex/react";
+import { useQuery, useConvexAuth } from "convex/react";
+import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import { FileText, ListChecks, UploadCloud, Activity, Send, Loader2, ArrowLeft, ShieldCheck, ShieldAlert, AlertCircle } from "lucide-react";
@@ -13,12 +14,17 @@ export default function DeclarationWorkspaceLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const params = useParams<{ id: string }>();
   const pathname = usePathname();
   const router = useRouter();
   
   const declarationId = params?.id as Id<"declarations">;
-  const declaration = useQuery(api.declarations.getLane, declarationId ? { id: declarationId } : "skip");
+  const declaration = useQuery(
+    api.declarations.getLane,
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId ? { id: declarationId } : "skip",
+  );
 
   const steps = [
     { id: "overview", name: "1. Core Schema", icon: FileText, path: `/dashboard/declarations/${declarationId}` },
@@ -28,10 +34,32 @@ export default function DeclarationWorkspaceLayout({
     { id: "documents", name: "5. Secure Upload", icon: UploadCloud, path: `/dashboard/declarations/${declarationId}/documents`, disabled: !declaration?.mrn },
   ];
 
-  if (declaration === undefined) {
+  if (!isLoaded || isConvexAuthLoading || (isSignedIn && isAuthenticated && declaration === undefined)) {
     return (
       <div className="flex h-[400px] items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    return (
+      <div className="flex h-[400px] flex-col items-center justify-center space-y-4">
+        <p className="text-sm text-gray-500">Session expired or not signed in.</p>
+        <button onClick={() => router.push("/")} className="text-xs text-blue-600 hover:underline">
+          Return to Home
+        </button>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex h-[400px] flex-col items-center justify-center space-y-4">
+        <p className="text-sm text-gray-500">Convex authentication not active for this session.</p>
+        <button onClick={() => window.location.reload()} className="text-xs text-blue-600 hover:underline">
+          Refresh Session
+        </button>
       </div>
     );
   }

@@ -36,7 +36,7 @@ export default function DocumentsPage() {
   const { user } = useUser();
   const userId = user?.id || "";
   const dbDocuments = useQuery(api.documents.getDocuments, userId ? { userId } : "skip");
-  const allDeclarations = useQuery(api.declarations.getMyDeclarations);
+  const allDeclarations = useQuery(api.declarations.getDeclarationPreviews);
   const declarations = allDeclarations || [];
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -131,7 +131,7 @@ export default function DocumentsPage() {
 
   const allDeclarationOptions = useMemo(() => {
     return declarations.map((decl: any) => ({
-      id: String(decl._id),
+      id: String(decl.declarationId),
       mrn: decl.mrn ? String(decl.mrn) : "Draft (Pending)",
     }));
   }, [declarations]);
@@ -159,7 +159,7 @@ export default function DocumentsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" className="h-9 text-xs" onClick={() => handleUploadOpenChange(true)}>
+          <Button className="h-9 text-xs bg-black text-white hover:bg-gray-800" onClick={() => handleUploadOpenChange(true)}>
             <Upload className="mr-2 h-4 w-4" />
             Upload document
           </Button>
@@ -362,7 +362,7 @@ export default function DocumentsPage() {
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold text-gray-900">GIR HS Code Audit (Mistral-7B LoRA)</h3>
                     <Button 
-                      onClick={() => runHsCodeAudit(selectedDocument.ocrText, declarations.find(d => d._id === selectedDocument.declarationId)?.commodityCode || "Unknown")}
+                      onClick={() => runHsCodeAudit(selectedDocument.ocrText, "Unknown")}
                       disabled={isAuditing || !selectedDocument.ocrText}
                       variant="outline" 
                       size="sm" 
@@ -456,4 +456,3 @@ export default function DocumentsPage() {
     </div>
   );
 }
-

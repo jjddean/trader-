@@ -1,36 +1,63 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { AlertCircle, PoundSterling, FileText, ArrowUpRight, TrendingUp, Archive, RefreshCw, ShieldCheck, ShieldAlert, Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export default function DashboardPage() {
   const { user } = useUser();
   const userId = user?.id || "";
+  const didRebuildRef = useRef(false);
 
-  const stats = useQuery(api.declarations.getDashboardStats, userId ? { userId } : "skip");
+  const summary = useQuery(api.declarations.getDashboardSummary);
+  const declarationPreviews = useQuery(api.declarations.getDeclarationPreviews);
   const hmrcToken = useQuery(api.hmrc.getToken, userId ? { userId } : "skip");
+  const rebuildMyReadModels = useMutation(api.declarations.rebuildMyReadModels);
+  const disconnectHmrc = useMutation(api.hmrc.disconnectToken);
+  const stats = useMemo(() => {
+    if (!summary) return null;
 
-  // Keep a live clock to trigger banner changes even if the user is idle
-  const [now, setNow] = useState(Date.now());
+    const recentDeclarations = (declarationPreviews || []).slice(0, 7).map((preview: any) => ({
+      id: preview.declarationId,
+      date: new Date(preview.lastUpdated || 0).toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
+      mrn: preview.mrn || "Draft",
+      status: preview.status || "Draft",
+      value: Number(preview.totalValue || 0),
+      duty: 0,
+    }));
+
+    return {
+      kpis: {
+        totalDuty: 0,
+        importValue: Number(summary.totalValue || 0),
+        declarationsCount: Number(summary.totalDeclarations || 0),
+        avgDuty: 0,
+      },
+      chartData: [],
+      recentDeclarations,
+      overpayments: [],
+    };
+  }, [summary, declarationPreviews]);
+
   useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 60000); // Check every minute
-    return () => clearInterval(interval);
-  }, []);
+    if (!userId || didRebuildRef.current) return;
+    if (summary === undefined || declarationPreviews === undefined) return;
+    if ((summary?.totalDeclarations || 0) > 0 || declarationPreviews.length > 0) return;
+
+    didRebuildRef.current = true;
+    void rebuildMyReadModels().catch(() => {
+      didRebuildRef.current = false;
+    });
+  }, [userId, summary, declarationPreviews, rebuildMyReadModels]);
 
 
 
-  const hmrcEnvironment = (process.env.NEXT_PUBLIC_HMRC_ENV || "sandbox").toLowerCase() === "live" ? "Live" : "Sandbox";
-  const tokenRemainingMs = hmrcToken?.expiresAt ? hmrcToken.expiresAt - now : null;
-  const tokenExpiryText = tokenRemainingMs === null
-    ? "—"
-    : tokenRemainingMs <= 0
-      ? "Expired"
-      : `Expires in ${Math.floor(tokenRemainingMs / 3600000)}h ${Math.floor((tokenRemainingMs % 3600000) / 60000)}m`;
+  const tokenExpiryText = hmrcToken?.expiresAt
+    ? `Expires ${new Date(hmrcToken.expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
+    : "—";
 
 
   return (
@@ -48,16 +75,23 @@ export default function DashboardPage() {
         {hmrcToken !== undefined && (
           hmrcToken ? (
             <div className="flex items-center gap-3">
-              <span className={cn("text-xs font-medium", tokenRemainingMs !== null && tokenRemainingMs <= 0 ? "text-red-600" : "text-gray-500")}>
+              <span className="text-xs font-medium text-gray-500">
                 {tokenExpiryText}
               </span>
               <a
                 href="/api/hmrc/auth"
-                className={cn("flex h-9 items-center gap-2 rounded-md px-4 text-xs font-medium transition-opacity hover:opacity-90", tokenRemainingMs !== null && tokenRemainingMs <= 0 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700")}
+                className="flex h-9 items-center gap-2 rounded-md bg-green-100 px-4 text-xs font-medium text-green-700 transition-opacity hover:opacity-90"
               >
                 <ShieldCheck className="h-4 w-4" />
-                {tokenRemainingMs !== null && tokenRemainingMs <= 0 ? "HMRC Expired - Reconnect" : `HMRC Connected (${hmrcEnvironment})`}
+                HMRC Connected
               </a>
+              <button
+                onClick={() => disconnectHmrc()}
+                className="flex h-9 items-center gap-2 rounded-md bg-red-50 px-4 text-xs font-medium text-red-600 transition-opacity hover:opacity-90"
+              >
+                <ShieldAlert className="h-4 w-4" />
+                Disconnect
+              </button>
             </div>
           ) : (
             <a

@@ -21,8 +21,8 @@ export function validateCdsFields(declaration: any, items: any[], payloadInfo: a
   }
 
   const exportCountry = payloadInfo?.Declaration?.GoodsShipment?.ExportCountry?.ID;
-  if (!isValidIsoCountryCode(exportCountry)) {
-    errors.push({ field: "dispatchCountry", reason: "Country code must be valid ISO 3166-1 alpha-2" });
+  if (!exportCountry || !isValidIsoCountryCode(exportCountry)) {
+    errors.push({ field: "dispatchCountry", reason: "Dispatch country (DE 5/14) is required — set the country goods were shipped FROM, e.g. BR for Brazil. Never leave blank." });
   }
 
   for (let i = 0; i < (items || []).length; i++) {
@@ -104,7 +104,7 @@ export function mapToCDS_H1(declaration: any, items: any[]) {
     Declaration: {
       FunctionCode: "9", 
       TypeCode: mapDeclarationType(declaration.declarationType, declaration.route),    
-      FunctionalReferenceID: declaration.lrn || `FC-${declaration._id}`,
+      FunctionalReferenceID: declaration.lrn || `FC-${Date.now().toString(36).toUpperCase()}`,
       GoodsItemQuantity: items.length || 1,
       DeclarationOfficeID: declaration.presentationOffice || "GB000051",
       TotalGrossMassMeasure: declaration.totalGrossWeight || totalGrossWeight,
@@ -117,13 +117,16 @@ export function mapToCDS_H1(declaration: any, items: any[]) {
         CurrencyTypeCode: declaration.invoiceCurrency || "GBP"
       },
       Declarant: {
-        ID: declaration.eori || ""
+        ID: String(declaration.eori || "").trim()
       },
+      // Exporter: only include a GB/XI EORI — never fall back to the declarant's own EORI.
+      // HMRC DE 3/2: "Do NOT enter if the exporter is not UK-based."
+      // For non-UK exporters the submission route omits the Exporter element entirely.
       Exporter: {
-        ID: declaration.exporterEori || declaration.eori || ""
+        ID: declaration.exporterEori || ""
       },
       UCR: {
-        TraderAssignedReferenceID: declaration.ducr || `9${declaration.eori || "GB123456789000"}-${declaration._id.substring(0,6).toUpperCase()}`
+        TraderAssignedReferenceID: declaration.ducr || `${new Date().getFullYear() % 10}GB${String(declaration.eori || "GB123456789000").trim().replace(/^GB/i, "")}-${declaration._id.substring(0,6).toUpperCase()}`
       },
       GoodsShipment: {
         Consignment: {
@@ -142,61 +145,86 @@ export function mapToCDS_H1(declaration: any, items: any[]) {
            CountryCode: declaration.destinationCountry || "GB"
         },
         ExportCountry: {
-           ID: declaration.dispatchCountry || "US"
+           ID: declaration.dispatchCountry || ""
         },
         Importer: {
-           ID: declaration.importerEori || declaration.eori || ""
+           ID: String(declaration.importerEori || declaration.eori || "").trim()
         },
         TradeTerms: {
            ConditionCode: declaration.incoterms || "FOB",
            LocationID: declaration.incotermLocation || "GBFXT"
         },
-        GovernmentAgencyGoodsItem: (items || []).map((item, index) => ({
-          SequenceNumeric: item.sequenceNumber || index + 1,
-          AdditionalDocument: [
-            {
-              CategoryCode: "Y",
-              ID: "922",
-              TypeCode: "922"
-            }
-          ],
-          StatisticalValueAmount: {
-            currencyID: item.valueCurrency || "GBP",
-            value: item.valueAmount || 0
-          },
-          Commodity: {
-            Description: item.description || "General goods",
-            Classification: [
+        GovernmentAgencyGoodsItem: (items || []).map((item, index) => {
+          const providedDocs: unknown[] = Array.isArray(item.additionalDocuments)
+            ? item.additionalDocuments
+            : Array.isArray(item.additionalDocument)
+              ? item.additionalDocument
+              : item.additionalDocument
+                ? [item.additionalDocument]
+                : [];
+          const mappedDocs = providedDocs
+            .map((doc) => {
+              const source = typeof doc === "object" && doc !== null ? doc as Record<string, unknown> : {};
+              const mapped: Record<string, string> = {
+                CategoryCode: String(source.CategoryCode || source.categoryCode || source.category || "").trim(),
+                TypeCode: String(source.TypeCode || source.typeCode || source.type || "").trim(),
+                ID: String(source.ID || source.id || source.reference || "").trim(),
+              };
+              const statusCode = String(source.StatusCode || source.statusCode || "").trim();
+              if (statusCode) mapped.StatusCode = statusCode;
+              return mapped;
+            })
+            .filter((doc) => doc.CategoryCode && doc.TypeCode && doc.ID);
+
+          return {
+            SequenceNumeric: item.sequenceNumber || index + 1,
+            ...(mappedDocs.length > 0 ? { AdditionalDocument: mappedDocs } : {}),
+            StatisticalValueAmount: {
+              currencyID: item.valueCurrency || "GBP",
+              value: item.valueAmount || 0
+            },
+            Commodity: {
+              Description: item.description || "General goods",
+              Classification: [
+                {
+                  ID: item.commodityCode || item.hsCode || "",
+                  IdentificationTypeCode: "TSP"
+                }
+              ],
+              GoodsMeasure: {
+                GrossMassMeasure: item.grossWeightKg || 10,
+                NetNetWeightMeasure: item.netWeightKg || 9
+              }
+            },
+            Packaging: [
               {
-                ID: item.commodityCode || item.hsCode || "",
-                IdentificationTypeCode: "TSP"
+                SequenceNumeric: "1",
+                MarksNumbersID: item.shippingMarks || "N/A",
+                QuantityQuantity: item.packageCount || "1",
+                TypeCode: item.packageType || "PK"
               }
             ],
-            GoodsMeasure: {
-              GrossMassMeasure: item.grossWeightKg || 10,
-              NetNetWeightMeasure: item.netWeightKg || 9
-            }
-          },
-          Packaging: [
-            {
-              SequenceNumeric: "1",
-              MarksNumbersID: item.shippingMarks || "N/A",
-              QuantityQuantity: item.packageCount || "1",
-              TypeCode: item.packageType || "PK"
-            }
-          ],
-          GovernmentProcedure: [
-            {
-              // DE 1/10: Requested and Previous Procedure (e.g., 40 00)
-              CurrentCode: (item.procedureCode?.replace(/\s+/g, '') || "4000").substring(0, 2),
-              PreviousCode: (item.procedureCode?.replace(/\s+/g, '') || "4000").substring(2, 4) || "00"
-            },
-            {
-              // DE 1/11: Additional Procedure Code (e.g., 000)
-              CurrentCode: item.additionalProcedureCode || "000"
-            }
-          ]
-        }))
+            // DE 5/16: Country of Origin — mandatory for most H1 imports.
+            // TypeCode "1" = non-preferential origin declaration.
+            ...(item.originCountry ? {
+              Origin: {
+                CountryCode: item.originCountry,
+                TypeCode: "1"
+              }
+            } : {}),
+            GovernmentProcedure: [
+              {
+                // DE 1/10: Requested and Previous Procedure (e.g., 40 00)
+                CurrentCode: (item.procedureCode?.replace(/\s+/g, '') || "4000").substring(0, 2),
+                PreviousCode: (item.procedureCode?.replace(/\s+/g, '') || "4000").substring(2, 4) || "00"
+              },
+              {
+                // DE 1/11: Additional Procedure Code (e.g., 000)
+                CurrentCode: item.additionalProcedureCode || "000"
+              }
+            ]
+          };
+        })
       }
     }
   };

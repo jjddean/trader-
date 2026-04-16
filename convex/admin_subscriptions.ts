@@ -9,7 +9,7 @@ const ADMIN_ROLE = "admin";
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("admin_subscriptions").collect();
+    return await ctx.db.query("admin_subscriptions").order("desc").take(200);
   },
 });
 
@@ -88,7 +88,7 @@ export const seedSubscriptions = mutation({
       throw new Error("Unauthorized: Admin access required");
     }
 
-    const existing = await ctx.db.query("admin_subscriptions").collect();
+    const existing = await ctx.db.query("admin_subscriptions").take(1);
     if (existing.length > 0) return "Already seeded";
 
     const now = Date.now();

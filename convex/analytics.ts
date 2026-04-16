@@ -14,7 +14,7 @@ export const suggestFromHistory = query({
       .query("historical_declarations")
       .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .filter((q) => q.eq(q.field("countryOfOriginCode"), args.originCountry))
-      .collect();
+      .take(1000);
 
     if (records.length === 0) return { hsCode: null, confidence: 0 };
 
@@ -44,7 +44,7 @@ export const getDashboardAnalytics = query({
       .query("historical_declarations")
       .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .order("desc")
-      .collect();
+      .take(2000);
 
     // Group by month
     const monthlyData: Record<string, { value: number; duty: number }> = {};

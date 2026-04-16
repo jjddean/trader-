@@ -23,8 +23,9 @@ export function GlobalSearchOverlay({ isOpen, onClose }: GlobalSearchOverlayProp
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const declarations = useQuery(api.declarations.getMyDeclarations) || [];
-  const documents = useQuery(api.documents.getDocuments, userId ? { userId } : "skip");
+  const canSubscribe = isOpen;
+  const declarations = useQuery(api.declarations.getDeclarationPreviews, canSubscribe ? {} : "skip") || [];
+  const documents = useQuery(api.documents.getDocuments, canSubscribe && userId ? { userId } : "skip");
 
   const handleSearch = async (val: string) => {
     setQuery(val);
@@ -41,15 +42,15 @@ export function GlobalSearchOverlay({ isOpen, onClose }: GlobalSearchOverlayProp
           String(decl.mrn || "").toLowerCase().includes(term) ||
           String(decl.eori || "").toLowerCase().includes(term) ||
           String(decl.status || "").toLowerCase().includes(term) ||
-          String(decl._id || "").toLowerCase().includes(term),
+          String(decl.declarationId || "").toLowerCase().includes(term),
         )
         .slice(0, 10)
         .map((decl: any) => ({
-          id: `decl-${decl._id}`,
+          id: `decl-${decl.declarationId}`,
           kind: "declaration",
           title: decl.mrn || "— pending",
           subtitle: `${decl.eori || "Unknown EORI"} • ${decl.status || "Draft"}`,
-          meta: String(decl._id),
+          meta: String(decl.declarationId),
         }));
 
       const documentResults = (documents || [])

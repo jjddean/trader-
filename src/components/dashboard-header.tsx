@@ -46,7 +46,7 @@ interface DashboardHeaderProps {
   children?: React.ReactNode;
 }
 
-function HmrcStatusPill() {
+function HmrcStatusIndicator() {
   const { user } = useUser();
   const userId = user?.id;
   const hmrcToken = useQuery(api.hmrc.getToken, userId ? { userId } : "skip");
@@ -66,36 +66,32 @@ function HmrcStatusPill() {
     else status = "valid";
   }
 
+  const dotColor =
+    status === "valid" ? "bg-green-500" :
+    status === "expiring" ? "bg-amber-500" :
+    "bg-red-500";
+
+  const label =
+    status === "valid" ? "HMRC" :
+    status === "expiring" ? "HMRC" :
+    status === "expired" ? "HMRC" :
+    "HMRC";
+
+  const baseClass = "flex h-[32px] items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:text-black";
+
   if (status === "valid") {
     return (
-      <div className="flex h-[32px] items-center justify-center px-1" title="HMRC Connected">
-        <div className="h-2 w-2 rounded-full bg-green-500"></div>
+      <div className={baseClass}>
+        <div className={`h-1.5 w-1.5 rounded-full ${dotColor}`} />
+        {label}
       </div>
     );
   }
 
-  if (status === "expiring") {
-    return (
-      <a href="/api/hmrc/auth" className="flex h-[24px] items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 text-[10px] font-medium text-amber-600 hover:bg-amber-100 transition-colors">
-        <div className="h-1.5 w-1.5 rounded-full bg-amber-500"></div>
-        Token expiring
-      </a>
-    );
-  }
-
-  if (status === "expired") {
-    return (
-      <a href="/api/hmrc/auth" className="flex h-[24px] items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 text-[10px] font-medium text-red-600 hover:bg-red-100 transition-colors">
-        <div className="h-1.5 w-1.5 rounded-full bg-red-500"></div>
-        Re-authenticate
-      </a>
-    );
-  }
-
   return (
-    <a href="/api/hmrc/auth" className="flex h-[24px] items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 text-[10px] font-medium text-red-600 hover:bg-red-100 transition-colors">
-      <div className="h-1.5 w-1.5 rounded-full bg-red-500"></div>
-      Connect HMRC
+    <a href="/api/hmrc/auth" className={baseClass}>
+      <div className={`h-1.5 w-1.5 rounded-full ${dotColor}`} />
+      {label}
     </a>
   );
 }
@@ -170,23 +166,9 @@ export const DashboardHeader = ({
       </div>
 
       <div className="flex flex-shrink-0 items-center gap-4">
-        {showSearch && (
-          <div className="relative">
-            <Search className="absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 font-bold" />
-            <input
-              type="text"
-              placeholder={searchPlaceholder}
-              autoComplete="off"
-              onFocus={() => setIsOverlayOpen(true)}
-              onClick={() => setIsOverlayOpen(true)}
-              className="focus:border-ring focus:ring-ring/50 h-[32px] w-44 cursor-pointer rounded-md border border-gray-200 bg-gray-50 pr-3 pl-8 text-xs text-gray-700 transition-[color,box-shadow] outline-none focus:ring-[2px]"
-              readOnly
-            />
-          </div>
-        )}
-        <GlobalSearchOverlay 
-          isOpen={isOverlayOpen} 
-          onClose={() => setIsOverlayOpen(false)} 
+        <GlobalSearchOverlay
+          isOpen={isOverlayOpen}
+          onClose={() => setIsOverlayOpen(false)}
         />
         {buttonLabel && (
           <button
@@ -198,7 +180,7 @@ export const DashboardHeader = ({
             {buttonLabel}
           </button>
         )}
-        
+
         <AssistantSideSheet>
           <button className="flex h-[32px] items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 text-xs font-medium whitespace-nowrap text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:text-black">
             <Bot className="h-4 w-4 text-indigo-600" />
@@ -208,7 +190,21 @@ export const DashboardHeader = ({
 
         {mounted ? (
           <div className="flex items-center gap-3">
-            <HmrcStatusPill />
+            <HmrcStatusIndicator />
+            {showSearch && (
+              <div className="relative">
+                <Search className="absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 font-bold" />
+                <input
+                  type="text"
+                  placeholder={searchPlaceholder}
+                  autoComplete="off"
+                  onFocus={() => setIsOverlayOpen(true)}
+                  onClick={() => setIsOverlayOpen(true)}
+                  className="focus:border-ring focus:ring-ring/50 h-[32px] w-44 cursor-pointer rounded-md border border-gray-200 bg-gray-50 pr-3 pl-8 text-xs text-gray-700 transition-[color,box-shadow] outline-none focus:ring-[2px]"
+                  readOnly
+                />
+              </div>
+            )}
             <div className="h-4 w-px bg-gray-200" />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

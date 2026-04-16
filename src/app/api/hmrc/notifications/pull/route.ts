@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../../convex/_generated/api";
 import { fetchHmrc } from "../../../../../lib/hmrc-fetch";
+import { parseHmrcNotification } from "../../../../../lib/hmrc-notification-parser";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -100,28 +101,16 @@ export async function GET(request: Request) {
 
       // Save each notification to Convex using same schema as push webhook
       if (notifResponse.ok) {
-        let notificationType = "UNKNOWN";
-        const upperBody = notifBody.toUpperCase();
-        if (upperBody.includes("DMSCLE")) notificationType = "DMSCLE";
-        else if (upperBody.includes("DMSACC")) notificationType = "DMSACC";
-        else if (upperBody.includes("DMSREJ")) notificationType = "DMSREJ";
-        else if (upperBody.includes("DMSROG")) notificationType = "DMSROG";
-        else if (upperBody.includes("DMSINV")) notificationType = "DMSINV";
-        else if (upperBody.includes("DMSTAX")) notificationType = "DMSTAX";
-        else if (upperBody.includes("DMSCTL")) notificationType = "DMSCTL";
-        else if (upperBody.includes("DMSRES")) notificationType = "DMSRES";
-
-        let mrn = "UNKNOWN";
-        const mrnMatch = notifBody.match(/<(?:[^>]*:)?ID[^>]*>([0-9]{2}[A-Za-z]{2}[A-Za-z0-9]{14})<\/(?:[^>]*:)?ID>/i);
-        if (mrnMatch?.[1]) mrn = mrnMatch[1];
+        const { notificationType, mrn, errorCodes, fieldErrors } = parseHmrcNotification(notifBody);
+        console.log(`[HMRC-PULL] Parsed: type=${notificationType}, mrn=${mrn}, errorCodes=${errorCodes.join(",") || "none"}`);
 
         try {
           await convex.mutation(api.notifications.saveWebhook, {
             mrn,
             conversationId,
             notificationType,
-            fieldErrors: [],
-            errorCodes: [],
+            fieldErrors,
+            errorCodes,
             rawPayload: notifBody,
             timestamp: new Date().toISOString(),
           });
@@ -137,8 +126,9 @@ export async function GET(request: Request) {
       total: notificationIds.length,
       notifications,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Pull notifications crash:", error);
-    return NextResponse.json({ error: "Internal Server Error", message: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ error: "Internal Server Error", message }, { status: 500 });
   }
 }

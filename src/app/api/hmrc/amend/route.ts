@@ -5,9 +5,6 @@ import { api } from "../../../../../convex/_generated/api";
 import { xmlEscape } from "../../../../lib/xml-utils";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 /**
  * POST /api/hmrc/amend
  * Submit an amendment to an existing declaration.
@@ -16,10 +13,18 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  */
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
+    const clerkAuth = await auth();
+    const { userId } = clerkAuth;
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+    const convexToken = await clerkAuth.getToken({ template: "convex" });
+    if (!convexToken) {
+      return NextResponse.json({ error: "Convex auth token missing for current Clerk session." }, { status: 401 });
+    }
+    convex.setAuth(convexToken);
 
     const { declarationId, mrn } = await request.json();
     if (!declarationId || !mrn) {

@@ -5,8 +5,10 @@ import { usePathname } from "next/navigation";
 import { UserSync } from "@/components/auth/user-sync";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { AdminSidebar } from "@/components/admin-sidebar";
 import { DashboardHeader } from "@/components/dashboard-header";
-import { useQuery } from "convex/react";
+import { useQuery, useConvexAuth } from "convex/react";
+import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 
@@ -16,6 +18,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
+  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   
   const hmrcEnv = process.env.NEXT_PUBLIC_HMRC_ENV || "sandbox";
   const dashboardBadge = hmrcEnv === "production" ? "LIVE" : "SANDBOX";
@@ -48,7 +52,9 @@ export default function DashboardLayout({
   // Fetch declaration data to get the name
   const declaration = useQuery(
     api.declarations.getLane,
-    declarationId ? { id: declarationId as Id<"declarations"> } : "skip",
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId
+      ? { id: declarationId as Id<"declarations"> }
+      : "skip",
   );
 
   let config = routeConfigs[pathname] || { title: "FreightCode", badge: "BETA" };
@@ -67,7 +73,7 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <AppSidebar />
+      {pathname.startsWith("/dashboard/admin") ? <AdminSidebar /> : <AppSidebar />}
       <UserSync />
       <SidebarInset className="flex min-h-screen flex-col overflow-hidden bg-gray-50">
         {pathname !== "/dashboard/inbox" && (

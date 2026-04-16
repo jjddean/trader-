@@ -2,17 +2,24 @@
 
 import React, { useState } from "react";
 import { useParams } from "next/navigation";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
+import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Loader2, Info } from "lucide-react";
+import { countries } from "@/lib/data/countries";
 
 export default function CoreSchemaPage() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const params = useParams<{ id: string }>();
   const id = params?.id as Id<"declarations">;
   
-  const declaration = useQuery(api.declarations.getLane, id ? { id } : "skip");
+  const declaration = useQuery(
+    api.declarations.getLane,
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && id ? { id } : "skip",
+  );
   const updateDeclaration = useMutation(api.declarations.updateDeclarationDetails);
 
   const [saving, setSaving] = useState(false);
@@ -20,6 +27,7 @@ export default function CoreSchemaPage() {
     eori: "",
     declarationType: "H1",
     route: "Route 1",
+    dispatchCountry: "",
   });
 
   // Hydrate form once data loads
@@ -29,6 +37,7 @@ export default function CoreSchemaPage() {
         eori: declaration.eori || "",
         declarationType: "H1",
         route: declaration.route || "Route 1",
+        dispatchCountry: (declaration as any).dispatchCountry || "",
       });
     }
   }, [declaration]);
@@ -42,6 +51,7 @@ export default function CoreSchemaPage() {
         eori: formData.eori,
         declarationType: formData.declarationType,
         route: formData.route,
+        dispatchCountry: formData.dispatchCountry || undefined,
       });
     } catch (e) {
       console.error("Failed to save core schema", e);
@@ -50,7 +60,7 @@ export default function CoreSchemaPage() {
     }
   };
 
-  if (!declaration) {
+  if (!isLoaded || isConvexAuthLoading || !declaration) {
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
@@ -115,7 +125,7 @@ export default function CoreSchemaPage() {
               <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                 Customs Routing
               </label>
-              <Select 
+              <Select
                 value={formData.route}
                 onValueChange={(val) => setFormData({ ...formData, route: val })}
               >
@@ -128,6 +138,33 @@ export default function CoreSchemaPage() {
                   <SelectItem value="Route 6">Route 6 (Direct Clearance)</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Dispatch Country — DE 5/14 ExportCountry */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+                Dispatch Country (DE 5/14)
+                <span className="text-red-500">*</span>
+              </label>
+              <Select
+                value={formData.dispatchCountry}
+                onValueChange={(val) => setFormData({ ...formData, dispatchCountry: val })}
+              >
+                <SelectTrigger className="w-full text-sm">
+                  <SelectValue placeholder="Country goods shipped FROM" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {countries.map((c) => (
+                    <SelectItem key={c.code} value={c.code} className="text-xs">
+                      {c.name} ({c.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                <Info className="h-3 w-3" />
+                Country goods were shipped FROM — never GB for a third-country import.
+              </p>
             </div>
 
           </div>

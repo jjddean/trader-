@@ -2,23 +2,29 @@
 
 import React, { useState } from "react";
 import { useParams } from "next/navigation";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
+import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { UploadCloud, File, ShieldCheck, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function DocumentsPage() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const params = useParams<{ id: string }>();
   const id = params?.id as Id<"declarations">;
   
-  const declaration = useQuery(api.declarations.getLane, id ? { id } : "skip");
+  const declaration = useQuery(
+    api.declarations.getLane,
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && id ? { id } : "skip",
+  );
   const trackUpload = useMutation(api.documents.trackUpload);
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<{name: string, type: string, size: string}[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  if (declaration === undefined) {
+  if (!isLoaded || isConvexAuthLoading || declaration === undefined) {
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="h-5 w-5 animate-spin text-gray-400" />

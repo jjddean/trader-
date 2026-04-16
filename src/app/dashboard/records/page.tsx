@@ -12,8 +12,7 @@ import { RefreshCw } from "lucide-react";
 
 export default function RecordsPage() {
   const { user } = useUser();
-  const userId = user?.id || "";
-  const liveRecords = useQuery(api.declarations.getFinancialRecords, userId ? { userId } : "skip");
+  const declarationPreviews = useQuery(api.declarations.getDeclarationPreviews, user?.id ? {} : "skip");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecord, setSelectedRecord] = useState<any | null>(null);
@@ -24,7 +23,21 @@ export default function RecordsPage() {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const recordsData = liveRecords || [];
+  const recordsData = (declarationPreviews || [])
+    .filter((preview: any) => preview.status !== "Draft")
+    .map((preview: any) => ({
+      id: `${preview.declarationId}-duty`,
+      mrn: preview.mrn || "Draft",
+      type: "Duty (A00)",
+      amount: 0,
+      method: "Deferment Account (DAN)",
+      date: new Date(preview.lastUpdated || Date.now()).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+      accountNumber: "DAN 8931234",
+      statementContext: "Monthly Statement",
+      paymentLimit: "£1,200,000.00",
+      calculationMethod: `Derived from declaration preview total value £${Number(preview.totalValue || 0).toFixed(2)}`,
+      natureOfTransaction: "11 (Outright Purchase)",
+    }));
   const filteredRecords = recordsData.filter((record: any) =>
     !searchQuery || record.mrn?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
@@ -122,7 +135,7 @@ export default function RecordsPage() {
 
       <Card className="bg-white shadow-none border-[#e9e9e7]">
         <CardContent className="p-0">
-          {liveRecords === undefined ? (
+          {declarationPreviews === undefined ? (
             <div className="flex h-40 flex-col items-center justify-center gap-2">
               <RefreshCw className="h-5 w-5 animate-spin text-gray-400" />
               <p className="text-xs text-gray-400">Loading Financial Records...</p>

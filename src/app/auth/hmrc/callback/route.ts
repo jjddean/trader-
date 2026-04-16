@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 
@@ -20,10 +19,14 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
+  // Resolve userId: prefer state parameter (set by /api/hmrc/auth), fall back to env var
+  const state = searchParams.get("state") || "";
+  const userIdFromState = state.includes(".") ? state.split(".").slice(1).join(".") : null;
+  const userId = userIdFromState || process.env.HMRC_TEST_USER_ID || null;
+
   try {
-    const { userId } = await auth();
     if (!userId) {
-      console.error("No authenticated Clerk user found during HMRC callback");
+      console.error("No userId available — set HMRC_TEST_USER_ID in .env.local");
       return NextResponse.redirect(new URL("/dashboard?error=unauthorized", request.url));
     }
 

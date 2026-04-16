@@ -70,11 +70,13 @@ export default defineSchema({
     description: v.optional(v.any()),
     lastVerified: v.optional(v.any()),
     originCountry: v.optional(v.any()),
+    dispatchCountry: v.optional(v.any()),
     savingsEstimate: v.optional(v.any()),
     tier: v.optional(v.any()),
-  }).index("by_user", ["userId"]).index("by_mrn", ["mrn"]),
+  }).index("by_user", ["userId"]).index("by_mrn", ["mrn"]).index("by_conversationId", ["conversationId"]),
   
   goods_items: defineTable({
+    ownerId: v.optional(v.any()),
     declarationId: v.optional(v.any()),
     sequenceNumber: v.optional(v.any()),
     commodityCode: v.optional(v.any()),
@@ -85,7 +87,9 @@ export default defineSchema({
     valueCurrency: v.optional(v.any()),
     grossWeightKg: v.optional(v.any()),
     netWeightKg: v.optional(v.any()),
-  }).index("by_declaration", ["declarationId"]),
+    additionalDocuments: v.optional(v.any()),
+    additionalProcedureCode: v.optional(v.any()),
+  }).index("by_declaration", ["declarationId"]).index("by_owner", ["ownerId"]),
 
   documents: defineTable({
     userId: v.optional(v.any()),
@@ -125,7 +129,27 @@ export default defineSchema({
     processed: v.optional(v.any()),
     userId: v.optional(v.any()),
     declarationId: v.optional(v.any()),
-  }).index("by_mrn", ["mrn"]).index("by_user", ["userId"]),
+  }).index("by_mrn", ["mrn"]).index("by_user", ["userId"]).index("by_conversationId", ["conversationId"]).index("by_declaration", ["declarationId"]),
+
+  dashboard_summary: defineTable({
+    userId: v.string(),
+    totalDeclarations: v.number(),
+    reviewCount: v.number(),
+    totalValue: v.number(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  declaration_preview: defineTable({
+    declarationId: v.id("declarations"),
+    userId: v.string(),
+    status: v.string(),
+    totalItems: v.number(),
+    totalValue: v.number(),
+    mrn: v.optional(v.string()),
+    eori: v.optional(v.string()),
+    declarationType: v.optional(v.string()),
+    lastUpdated: v.number(),
+  }).index("by_user", ["userId"]).index("by_declarationId", ["declarationId"]),
   
   auditLogs: defineTable({
     userId: v.optional(v.any()),

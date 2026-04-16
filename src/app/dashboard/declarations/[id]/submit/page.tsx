@@ -2,33 +2,54 @@
 
 import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useQuery, useMutation, useAction } from "convex/react";
+import { useQuery, useAction, useConvexAuth } from "convex/react";
+import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { ShieldCheck, Send, Loader2, AlertTriangle, CheckCircle2, Code2 } from "lucide-react";
 import { mapToCDS_H1 } from "@/lib/wco-mapper";
+import { generateClientFraudHeaders } from "@/lib/hmrc-fraud-headers";
 
 export default function SubmitPage() {
+  const { isLoaded, isSignedIn, userId } = useAuth();
+  const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const declarationId = params?.id as Id<"declarations">;
   
-  const declaration = useQuery(api.declarations.getLane, declarationId ? { id: declarationId } : "skip");
-  const items = useQuery(api.goods_items.getItems, declarationId ? { declarationId } : "skip");
+  const declaration = useQuery(
+    api.declarations.getLane,
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId ? { id: declarationId } : "skip",
+  );
+  const items = useQuery(
+    api.goods_items.getItems,
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId ? { declarationId } : "skip",
+  );
   
-  // Note: These mutations map to our existing Convex logic
-  const updateStatus = useMutation(api.declarations.updateDeclarationStatus);
   const checkHmrcStatus = useAction(api.actions.hmrc.getHmrcStatus);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDryRunning, setIsDryRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dryRunResult, setDryRunResult] = useState<string | null>(null);
+  const [dryRunPassed, setDryRunPassed] = useState(false);
+
+  const readResponsePayload = async (res: Response) => {
+    try {
+      return await res.json();
+    } catch {
+      const text = await res.text();
+      return { error: text || `HTTP ${res.status}` };
+    }
+  };
 
   // Pre-flight validation checks
   const missingEori = !declaration?.eori;
   const noItems = !items || items.length === 0;
   const missingHS = items?.some((i: any) => !i.commodityCode);
-  
-  const isReady = !missingEori && !noItems && !missingHS;
+  const missingDocs = items?.some((i: any) => !Array.isArray(i.additionalDocuments) || i.additionalDocuments.length === 0);
+
+  const isReady = !missingEori && !noItems && !missingHS && !missingDocs;
   
   // Generate the WCO payload for preview
   const wcoPayloadPreview = isReady ? mapToCDS_H1(declaration, items) : null;
@@ -36,8 +57,13 @@ export default function SubmitPage() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setError(null);
+    setDryRunResult(null);
+    setDryRunPassed(false);
 
     try {
+      if (!isAuthenticated) {
+        throw new Error("Convex session not authenticated. Please refresh and sign in again.");
+      }
       // 1. Verify OAuth Token Status before attempting
       const oauthStatus = await checkHmrcStatus();
       if (!oauthStatus.connected || oauthStatus.isExpired) {
@@ -45,9 +71,13 @@ export default function SubmitPage() {
       }
 
       // 2. Call the Next.js API route that handles the actual WCO mapping and POST to HMRC
+      const fraudHeaders = generateClientFraudHeaders(userId || undefined);
       const res = await fetch("/api/hmrc/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...fraudHeaders,
+        },
         body: JSON.stringify({
           declarationId,
           eori: declaration?.eori,
@@ -56,7 +86,7 @@ export default function SubmitPage() {
         }),
       });
 
-      const data = await res.json();
+      const data = await readResponsePayload(res);
 
       if (!res.ok) {
         console.log("HMRC validation details:", data.details, data.fields);
@@ -65,16 +95,17 @@ export default function SubmitPage() {
               .map((fieldErr: { field?: string; reason?: string }) => `${fieldErr.field || "unknown"}: ${fieldErr.reason || "Validation error"}`)
               .join("\n")
           : "";
-        const errorMessage = data.details 
+        const errorMessage = data.details
           ? `${data.error}\n\n${data.details}`
           : fieldErrors
             ? `${data.error || "Validation failed"}\n\n${fieldErrors}`
-          : (data.error || "HMRC API rejected the submission payload.");
+          : (data.message
+              ? `${data.error || "Request failed"}\n\n${data.message}`
+              : `${data.error || "HMRC API rejected the submission payload."}\n\nHTTP ${res.status}`);
         throw new Error(errorMessage);
       }
 
-      // 3. Automatically advance the user to the Status timeline page where they await the MRN webhook
-      await updateStatus({ id: declarationId, status: "Submitted" });
+      // 3. Advance to Status timeline page to await the MRN webhook
       router.push(`/dashboard/declarations/${declarationId}/status`);
 
     } catch (err: any) {
@@ -85,10 +116,76 @@ export default function SubmitPage() {
     }
   };
 
-  if (declaration === undefined || items === undefined) {
+  const handleDryRun = async () => {
+    setIsDryRunning(true);
+    setError(null);
+    setDryRunResult(null);
+
+    try {
+      if (!isAuthenticated) {
+        throw new Error("Convex session not authenticated. Please refresh and sign in again.");
+      }
+      const oauthStatus = await checkHmrcStatus();
+      if (!oauthStatus.connected || oauthStatus.isExpired) {
+        throw new Error("HMRC Developer Hub OAuth token is missing or expired. Please reconnect in Settings.");
+      }
+
+      const fraudHeaders = generateClientFraudHeaders(userId || undefined);
+      const res = await fetch("/api/hmrc/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...fraudHeaders,
+        },
+        body: JSON.stringify({
+          declarationId,
+          eori: declaration?.eori,
+          type: declaration?.declarationType,
+          items: items,
+          dryRunOnly: true,
+        }),
+      });
+
+      const data = await readResponsePayload(res);
+      if (!res.ok) {
+        const failedChecks = Array.isArray(data.failedChecks) ? `\n${data.failedChecks.join(", ")}` : "";
+        const missingHeaders = Array.isArray(data.missingHeaders) ? `\n${data.missingHeaders.join(", ")}` : "";
+        const message = data.message ? `\n${data.message}` : "";
+        throw new Error(`${data.error || "Dry run failed"}${message}${failedChecks}${missingHeaders}\nHTTP ${res.status}`);
+      }
+
+      setDryRunResult(JSON.stringify(data, null, 2));
+      setDryRunPassed(data.success === true);
+    } catch (err: any) {
+      setError(err.message || "Dry run failed");
+      setDryRunPassed(false);
+    } finally {
+      setIsDryRunning(false);
+    }
+  };
+
+  if (!isLoaded || isConvexAuthLoading || (isSignedIn && isAuthenticated && (declaration === undefined || items === undefined))) {
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    return (
+      <div className="rounded-md border border-red-200 bg-red-50 p-4">
+        <h4 className="text-xs font-bold text-red-800 uppercase tracking-widest mb-1">HMRC API Error</h4>
+        <p className="text-sm text-red-700 font-mono whitespace-pre-wrap">Session expired or not signed in. Please sign in again and retry.</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="rounded-md border border-red-200 bg-red-50 p-4">
+        <h4 className="text-xs font-bold text-red-800 uppercase tracking-widest mb-1">HMRC API Error</h4>
+        <p className="text-sm text-red-700 font-mono whitespace-pre-wrap">Convex authentication is not active for this session. Refresh the page and sign in again.</p>
       </div>
     );
   }
@@ -110,8 +207,12 @@ export default function SubmitPage() {
               <ShieldCheck className="h-5 w-5 text-gray-400" />
               <h3 className="text-sm font-semibold text-gray-900">Pre-flight Validation</h3>
             </div>
-            <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${isReady ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-              {isReady ? "Ready to Submit" : "Action Required"}
+            <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${
+              isReady && dryRunPassed ? "bg-green-100 text-green-700"
+              : isReady ? "bg-amber-100 text-amber-700"
+              : "bg-red-100 text-red-700"
+            }`}>
+              {isReady && dryRunPassed ? "Ready to Submit" : isReady ? "Awaiting Dry Run" : "Action Required"}
             </span>
           </div>
 
@@ -139,12 +240,35 @@ export default function SubmitPage() {
                 <p className="text-xs text-gray-500">All goods items must have a valid 10-digit HS Code.</p>
               </div>
             </li>
+
+            <li className="flex items-start gap-3">
+              {missingDocs ? <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
+              <div>
+                <p className={`text-sm font-medium ${missingDocs ? "text-red-700" : "text-gray-900"}`}>Supporting Documents</p>
+                <p className="text-xs text-gray-500">Every goods item must have at least one additional document (e.g. 42A/67A licence).</p>
+              </div>
+            </li>
+
+            <li className="flex items-start gap-3">
+              {!dryRunPassed ? <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
+              <div>
+                <p className={`text-sm font-medium ${!dryRunPassed ? "text-amber-700" : "text-gray-900"}`}>Dry Run Gate</p>
+                <p className="text-xs text-gray-500">Run and pass the local dry check before submitting to HMRC.</p>
+              </div>
+            </li>
           </ul>
 
           {error && (
             <div className="rounded-md border border-red-200 bg-red-50 p-4">
                <h4 className="text-xs font-bold text-red-800 uppercase tracking-widest mb-1">HMRC API Error</h4>
                <p className="text-sm text-red-700 font-mono whitespace-pre-wrap">{error}</p>
+            </div>
+          )}
+
+          {dryRunResult && (
+            <div className="rounded-md border border-green-200 bg-green-50 p-4">
+              <h4 className="text-xs font-bold text-green-800 uppercase tracking-widest mb-1">Dry Run Result</h4>
+              <p className="text-sm text-green-700 font-mono whitespace-pre-wrap">{dryRunResult}</p>
             </div>
           )}
 
@@ -172,8 +296,16 @@ export default function SubmitPage() {
             By submitting, you confirm authorization to act as the legal Declarant.
           </p>
           <button
+            onClick={handleDryRun}
+            disabled={!isReady || isSubmitting || isDryRunning}
+            className="flex w-full h-8 rounded-md border border-gray-300 bg-white px-4 text-xs font-normal text-gray-800 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
+          >
+            {isDryRunning ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldCheck className="h-4 w-4 text-blue-600" />}
+            {isDryRunning ? "Running Local Dry Check..." : "Run Local Dry Check (No HMRC Call)"}
+          </button>
+          <button
             onClick={handleSubmit}
-            disabled={!isReady || isSubmitting}
+            disabled={!isReady || !dryRunPassed || isSubmitting || isDryRunning}
             className="flex w-full h-8 rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
           >
             {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-4 w-4 text-green-400" />}

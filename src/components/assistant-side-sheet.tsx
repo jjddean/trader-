@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { useAction, useQuery } from "convex/react";
-import { useUser } from "@clerk/nextjs";
+import { useAction, useConvexAuth, useQuery } from "convex/react";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { api } from "../../convex/_generated/api";
 import { Bot, Send, User, ShieldCheck, Globe, Package, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -43,13 +43,17 @@ export function AssistantSideSheet({ children }: { children: React.ReactNode }) 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
 
+  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const { user } = useUser();
   const userId = user?.id || "";
+  const canQueryContext = isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && !!userId;
 
   // Pre-fetch context arrays for the LLM
-  const reportsInfo = useQuery(api.declarations.getReports, userId ? { userId } : "skip");
-  const documentsInfo = useQuery(api.documents.getDocuments, userId ? { userId } : "skip");
-  const notificationsInfo = useQuery(api.notifications.getUserNotifications, userId ? { userId } : "skip");
+  const canSubscribeContext = canQueryContext && isOpen;
+  const declarationsInfo = useQuery(api.declarations.getDeclarationPreviews, canSubscribeContext ? {} : "skip");
+  const documentsInfo = useQuery(api.documents.getDocuments, canSubscribeContext ? { userId } : "skip");
+  const notificationsInfo = useQuery(api.notifications.getUserNotifications, canSubscribeContext ? { userId } : "skip");
 
   const explainTradeRule = useAction(api.ai.explainTradeRule);
   const askViaCloudAgent = async (query: string) => {
@@ -163,8 +167,9 @@ export function AssistantSideSheet({ children }: { children: React.ReactNode }) 
 
     try {
       // Build dynamic system context footprint
-      const openDecls = (reportsInfo || [])
-        .filter((r: any) => r.status && r.status !== "Clean" && r.status !== "Draft" && r.mrn)
+      const openDecls = (declarationsInfo || [])
+        .filter((r: any) => r.status && r.status !== "Cleared" && r.status !== "Accepted" && r.status !== "Draft" && r.mrn)
+        .slice(0, 20)
         .map((r: any) => ({ mrn: r.mrn, status: r.status }));
       const recentDocs = (documentsInfo || [])
         .slice(0, 5)

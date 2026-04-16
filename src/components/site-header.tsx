@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { useAuth, UserButton, Waitlist } from "@clerk/nextjs";
@@ -29,11 +28,6 @@ export function SiteHeader() {
       <div className="mx-auto flex h-[64px] max-w-[1280px] items-center justify-between px-[24px] relative">
         <div className="flex items-center">
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex items-center justify-center rounded-md bg-[#DFEAF9] p-1.5 shadow-sm">
-              <div className="flex h-4 w-4 items-center justify-center rounded-sm bg-[#2563EB]">
-                <div className="h-1.5 w-1.5 rounded-full bg-white"></div>
-              </div>
-            </div>
             <div className="flex items-baseline whitespace-nowrap text-[#020817] leading-none">
               <span className="text-xl font-bold tracking-tight">freight</span>
               <span className="text-xl font-bold tracking-tight text-slate-600">code</span>

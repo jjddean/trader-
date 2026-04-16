@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
+import { api } from "../../../../../convex/_generated/api";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function POST(request: Request) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { storageId, mrn, documentType } = await request.json();
 
     if (!storageId || !mrn) {
@@ -16,10 +22,11 @@ export async function POST(request: Request) {
     console.log(`[HMRC Document Sync] Preparing to sync document ${storageId} for MRN ${mrn}...`);
 
     const hmrcUploadEndpoint = process.env.HMRC_DOCUMENT_UPLOAD_URL || "https://test-api.service.hmrc.gov.uk/customs/declarations/document-upload";
-    const hmrcBearer = process.env.HMRC_CDS_BEARER_TOKEN;
+    const tokenRecord = await convex.query(api.hmrc.getToken, { userId });
+    const hmrcBearer = tokenRecord?.accessToken;
 
     if (!hmrcBearer) {
-      return NextResponse.json({ error: "Missing HMRC_CDS_BEARER_TOKEN credential for actual secure upload." }, { status: 401 });
+      return NextResponse.json({ error: "HMRC OAuth Token not found. Please connect your account." }, { status: 403 });
     }
 
     const hmrcRes = await fetchHmrc(hmrcUploadEndpoint, {

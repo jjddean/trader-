@@ -24,9 +24,15 @@ export const explainTradeRule = action({
     const effectiveQuery = args.query ?? 
       `Explain trade rule for HS Code ${args.hsCode} from ${args.country} in context of ${args.context}`;
 
-    // Temporarily hardcode to bypass env propagation issues
-    const agentUrl = "https://7330-62-31-164-236.ngrok-free.app";
-    console.log(`[explainTradeRule] Using HARDCODED AGENT_URL: ${agentUrl}`);
+    const agentUrl = (process.env.AGENT_URL || "").trim();
+    if (!agentUrl) {
+      return {
+        response: `[AGENT URL MISSING] AGENT_URL is not configured in Convex environment.`,
+        agentName: "DNA Consultant (Offline)",
+      };
+    }
+
+    console.log(`[explainTradeRule] Using AGENT_URL: ${agentUrl}`);
 
     try {
       // Connect to the Cloudflare Agent via the provided URL

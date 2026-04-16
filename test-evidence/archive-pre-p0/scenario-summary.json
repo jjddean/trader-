@@ -1,0 +1,9 @@
+[
+  {
+    "scenario": "scenario-1-happy-path",
+    "header": "HAPPY_PATH",
+    "status": 403,
+    "conversationId": "4d48e772-1c89-4a64-9d3d-5ab1af5a5c33",
+    "timestamp": "2026-04-09T11:11:57.093Z"
+  }
+]

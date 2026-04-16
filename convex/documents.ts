@@ -69,6 +69,6 @@ export const getDocuments = query({
       .query("documents")
       .withIndex("by_user", q => q.eq("userId", identity.subject))
       .order("desc")
-      .collect();
+      .take(200);
   }
 });

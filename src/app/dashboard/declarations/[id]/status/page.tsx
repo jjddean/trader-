@@ -2,17 +2,23 @@
 
 import React, { useState } from "react";
 import { useParams } from "next/navigation";
-import { useQuery } from "convex/react";
+import { useQuery, useConvexAuth } from "convex/react";
+import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { Activity, Clock, CheckCircle2, XCircle, Loader2, ShieldCheck, ShieldAlert, FileText, AlertCircle } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
 export default function StatusTimelinePage() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const params = useParams<{ id: string }>();
   const id = params?.id as Id<"declarations">;
   
-  const declaration = useQuery(api.declarations.getLane, id ? { id } : "skip");
+  const declaration = useQuery(
+    api.declarations.getLane,
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && id ? { id } : "skip",
+  );
   
   // Fetch real-time webhook notifications using MRN or Conversation ID
   const notifications = useQuery(
@@ -21,8 +27,33 @@ export default function StatusTimelinePage() {
   );
 
   const [nextStepsOpen, setNextStepsOpen] = useState(false);
+  const [isPulling, setIsPulling] = useState(false);
+  const [pullResult, setPullResult] = useState<string | null>(null);
+  const [pullError, setPullError] = useState<string | null>(null);
 
-  if (declaration === undefined) {
+  const handlePullNotifications = async () => {
+    if (!declaration?.conversationId) {
+      setPullError("No conversation ID available yet for pull notifications.");
+      return;
+    }
+    setIsPulling(true);
+    setPullError(null);
+    setPullResult(null);
+    try {
+      const res = await fetch(`/api/hmrc/notifications/pull?conversationId=${encodeURIComponent(declaration.conversationId)}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.details || data?.error || `Pull failed (HTTP ${res.status})`);
+      }
+      setPullResult(`Pulled ${data?.total ?? 0} notification(s)`);
+    } catch (err: any) {
+      setPullError(err?.message || "Failed to pull notifications");
+    } finally {
+      setIsPulling(false);
+    }
+  };
+
+  if (!isLoaded || isConvexAuthLoading || declaration === undefined) {
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
@@ -36,12 +67,21 @@ export default function StatusTimelinePage() {
 
   const isSubmitted = declaration.status !== "Draft";
   const notificationMeta: Record<string, { title: string; color: string; icon: "success" | "warning" | "danger" | "info"; detail: string }> = {
-    DMSUB: { title: "Declaration received by HMRC", color: "bg-blue-500", icon: "info", detail: "Declaration has been received and queued by HMRC." },
-    DMSACC: { title: "Declaration accepted", color: "bg-green-500", icon: "success", detail: "Declaration passed initial controls and is accepted." },
-    DMSCLE: { title: "Goods cleared", color: "bg-green-500", icon: "success", detail: "Goods are cleared for release." },
-    DMSROG: { title: "Route to examine", color: "bg-amber-500", icon: "warning", detail: "HMRC routed this declaration for examination. Action required." },
-    DMSREJ: { title: "Declaration rejected", color: "bg-red-500", icon: "danger", detail: "HMRC rejected the declaration. Review error codes and amend." },
-    DMSINV: { title: "Declaration invalid", color: "bg-red-500", icon: "danger", detail: "HMRC returned field-level validation errors." },
+    DMSUB:  { title: "Declaration received by HMRC", color: "bg-blue-500",  icon: "info",    detail: "Declaration has been received and queued by HMRC." },
+    DMSSUB: { title: "Declaration received by HMRC", color: "bg-blue-500",  icon: "info",    detail: "Declaration has been received and queued by HMRC." },
+    DMSACC: { title: "Declaration accepted",          color: "bg-green-500", icon: "success", detail: "Declaration passed initial controls and is accepted." },
+    DMSCLE: { title: "Goods cleared",                 color: "bg-green-500", icon: "success", detail: "Goods are cleared for release." },
+    DMSROG: { title: "Route to examine",              color: "bg-amber-500", icon: "warning", detail: "HMRC routed this declaration for examination. Action required." },
+    DMSREJ: { title: "Declaration rejected",          color: "bg-red-500",   icon: "danger",  detail: "HMRC rejected the declaration. Review error codes and amend." },
+    DMSINV: { title: "Declaration invalid",           color: "bg-red-500",   icon: "danger",  detail: "HMRC returned field-level validation errors." },
+    DMSTAX: { title: "Tax notification",              color: "bg-amber-500", icon: "warning", detail: "HMRC issued a tax/duty demand. Payment may be required." },
+    DMSCTL: { title: "Documentary control",           color: "bg-amber-500", icon: "warning", detail: "Declaration under documentary control. Documents may be requested." },
+    DMSRES: { title: "Response required",             color: "bg-amber-500", icon: "warning", detail: "HMRC requires a response before proceeding." },
+    DMSRCV: { title: "Declaration received",          color: "bg-blue-500",  icon: "info",    detail: "HMRC confirmed receipt of the declaration." },
+    DMSREQ: { title: "Further information required",  color: "bg-amber-500", icon: "warning", detail: "HMRC has requested additional information." },
+    DMSDOC: { title: "Document check",                color: "bg-amber-500", icon: "warning", detail: "HMRC is checking supporting documents." },
+    DMSQRY: { title: "Query raised",                  color: "bg-amber-500", icon: "warning", detail: "HMRC has raised a query on this declaration." },
+    DMSNOTFN: { title: "General notification",        color: "bg-blue-500",  icon: "info",    detail: "HMRC sent a general status notification." },
   };
 
   const latestNotificationType = notifications?.[0]?.notificationType || "DMSUB";
@@ -113,6 +153,24 @@ export default function StatusTimelinePage() {
                    {new Date(declaration.lastUpdated || declaration._creationTime).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
+            </div>
+
+            <div className="rounded-lg border border-gray-200 bg-white p-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Conversation ID</p>
+                  <p className="text-xs font-mono text-gray-700 break-all">{declaration.conversationId || "Pending"}</p>
+                </div>
+                <button
+                  onClick={handlePullNotifications}
+                  disabled={isPulling || !declaration.conversationId}
+                  className="h-8 rounded-md border border-gray-300 bg-white px-3 text-xs text-gray-800 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {isPulling ? "Pulling..." : "Pull Notifications Now"}
+                </button>
+              </div>
+              {pullResult && <p className="mt-2 text-xs text-green-700">{pullResult}</p>}
+              {pullError && <p className="mt-2 text-xs text-red-700">{pullError}</p>}
             </div>
 
             <div className="relative pl-6">

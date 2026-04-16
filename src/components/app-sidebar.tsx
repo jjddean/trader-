@@ -9,12 +9,8 @@ import {
   Settings,
   Compass,
   ShieldCheck,
-  Bot,
   HelpCircle,
-  History,
-  Wrench,
   ChevronRight,
-  CreditCard,
 } from "lucide-react";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
@@ -52,30 +48,16 @@ const navItems = [
       { href: "/dashboard/audit", label: "Compliance Audit" },
       { href: "/dashboard/reports", label: "Customs Reports" },
       { href: "/dashboard/records", label: "Financial Records" },
-    ],
-  },
-
-  { href: "/dashboard/tools", label: "Tools & Utilities", icon: Wrench },
-];
-
-const adminItems = [
-  {
-    label: "Admin",
-    icon: ShieldCheck,
-    items: [
-      { href: "/dashboard/admin/setup", label: "Set Up", icon: Settings },
-      { href: "/dashboard/admin/clerk", label: "Online Clerk", icon: Bot },
-      { href: "/dashboard/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
-      { href: "/dashboard/admin/audit", label: "System Audit", icon: History },
+      { href: "/dashboard/tools/hscode-lookup", label: "HS Code Lookup" },
     ],
   },
 ];
+
 
 
 export function AppSidebar() {
   const pathname = usePathname();
   const { user: clerkUser } = useUser();
-  const userId = clerkUser?.id || "";
   const userData = useQuery(api.users.current);
   const isAdmin = userData?.role === "admin";
 
@@ -85,23 +67,20 @@ export function AppSidebar() {
     setMounted(true);
   }, []);
 
-  const declarations = useQuery(api.declarations.getMyDeclarations) ?? [];
-  const reviewCount = (declarations as any[]).filter((l: any) => l.status === "Action Required" || l.status === "Rejected" || l.status === "Invalid").length ?? 0;
+  const declarationCounts = useQuery(api.declarations.getMyDeclarationCounts);
+  const reviewCount = declarationCounts?.reviewCount ?? 0;
 
   return (
     <Sidebar className="border-r border-gray-200 bg-gray-50 !h-screen">
       <SidebarHeader className="flex h-[48px] flex-row items-center border-b border-gray-200 px-6">
         <Link
           href="/"
-          className="flex w-full items-center gap-2 text-black transition-opacity hover:opacity-80"
+          className="flex w-full items-center gap-2 transition-opacity hover:opacity-80"
         >
-          <div className="flex h-5 w-5 items-center justify-center rounded bg-blue-600 text-white">
-            <span className="text-xs font-bold leading-none">f</span>
-          </div>
-          <div className="flex items-baseline whitespace-nowrap text-gray-900 leading-none">
-            <span className="text-sm font-medium tracking-tight">freight</span>
-            <span className="text-sm font-bold tracking-tight text-black">code</span>
-            <span className="font-normal text-[10px] -translate-y-[2px] ml-[1px] text-black">®</span>
+          <div className="flex items-baseline whitespace-nowrap text-[#020817] leading-none">
+            <span className="text-lg font-bold tracking-tight">freight</span>
+            <span className="text-lg font-bold tracking-tight text-slate-500">code</span>
+            <span className="font-normal text-[11px] -translate-y-[4px] ml-[-1px] text-slate-500">®</span>
           </div>
         </Link>
       </SidebarHeader>
@@ -113,7 +92,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
-              {([...navItems, ...(isAdmin ? adminItems[0].items : [])]).map((item) => {
+              {navItems.map((item) => {
                 const Icon = (item as any).icon;
                 const hasItems = "items" in item && item.items && item.items.length > 0;
                 
@@ -214,48 +193,41 @@ export function AppSidebar() {
 
 
 
-        <SidebarGroup className="p-0 mt-1">
-          <SidebarGroupLabel className="mb-0.5 px-3 text-[10px] font-normal tracking-widest text-gray-400 uppercase">
-            Help & Docs
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === "/dashboard/support/guide"} className={cn("flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors", pathname === "/dashboard/support/guide" ? "bg-gray-100 text-black" : "text-gray-500 hover:bg-gray-100 hover:text-black")}>
-                  <Link href="/dashboard/support/guide" className="flex flex-1 items-center gap-2">
-                    <HelpCircle className={cn("h-3.5 w-3.5", pathname === "/dashboard/support/guide" ? "text-gray-700" : "text-gray-400")} />
-                    <span className="flex-1">User Guide</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={pathname === "/dashboard/settings"}
-                  className={cn(
-                    "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors",
-                    pathname === "/dashboard/settings"
-                      ? "bg-gray-100 text-black"
-                      : "text-gray-500 hover:bg-gray-100 hover:text-black",
-                  )}
-                >
-                  <Link href="/dashboard/settings" className="flex flex-1 items-center gap-2">
-                    <Settings
-                      className={cn(
-                        "h-3.5 w-3.5",
-                        pathname === "/dashboard/settings" ? "text-gray-700" : "text-gray-400",
-                      )}
-                    />
-                    <span className="flex-1">Settings</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="space-y-3 p-4">
+        <SidebarMenu className="space-y-0.5">
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={pathname === "/dashboard/support/guide"} className={cn("flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors", pathname === "/dashboard/support/guide" ? "bg-gray-100 text-black" : "text-gray-500 hover:bg-gray-100 hover:text-black")}>
+              <Link href="/dashboard/support/guide" className="flex flex-1 items-center gap-2">
+                <HelpCircle className={cn("h-3.5 w-3.5", pathname === "/dashboard/support/guide" ? "text-gray-700" : "text-gray-400")} />
+                <span className="flex-1">User Guide</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname === "/dashboard/settings"}
+              className={cn(
+                "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors",
+                pathname === "/dashboard/settings"
+                  ? "bg-gray-100 text-black"
+                  : "text-gray-500 hover:bg-gray-100 hover:text-black",
+              )}
+            >
+              <Link href="/dashboard/settings" className="flex flex-1 items-center gap-2">
+                <Settings
+                  className={cn(
+                    "h-3.5 w-3.5",
+                    pathname === "/dashboard/settings" ? "text-gray-700" : "text-gray-400",
+                  )}
+                />
+                <span className="flex-1">Settings</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
         {mounted ? (
           <div className="flex items-center gap-2 rounded-md bg-gray-100 px-3 py-2">
             <UserButton />

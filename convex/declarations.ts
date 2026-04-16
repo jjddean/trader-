@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 
 const preferenceCountries = new Set(["BD", "PK", "LK", "KE", "GH", "NG", "TZ", "UG", "ZM", "ZW"]);
 const hsDutyRateByPrefix: Record<string, number> = {
@@ -21,7 +21,7 @@ async function getHistoricalRateMap(ctx: any, userId: string) {
   const rows = await ctx.db
     .query("historical_declarations")
     .withIndex("by_user", (q: any) => q.eq("userId", userId))
-    .collect();
+    .take(2000);
 
   const rateMap: Record<string, { dutyTotal: number; vatTotal: number; customsTotal: number }> = {};
   for (const row of rows) {
@@ -87,16 +87,184 @@ function hmrcStatusForDeclaration(decl: any, notifications: any[]) {
   return { score: 0, status: "Warning" };
 }
 
+function isReviewStatus(status: string | undefined) {
+  return status === "Action Required" || status === "Rejected" || status === "Invalid";
+}
+
+async function recomputeDashboardSummaryByUser(ctx: any, userId: string) {
+  const previews = await ctx.db
+    .query("declaration_preview")
+    .withIndex("by_user", (q: any) => q.eq("userId", userId))
+    .take(5000);
+
+  let reviewCount = 0;
+  let totalValue = 0;
+  for (const preview of previews) {
+    if (isReviewStatus(preview.status)) reviewCount += 1;
+    totalValue += Number(preview.totalValue || 0);
+  }
+
+  const existing = await ctx.db
+    .query("dashboard_summary")
+    .withIndex("by_user", (q: any) => q.eq("userId", userId))
+    .first();
+
+  const next = {
+    userId,
+    totalDeclarations: previews.length,
+    reviewCount,
+    totalValue,
+    updatedAt: Date.now(),
+  };
+
+  if (existing) {
+    await ctx.db.patch(existing._id, next);
+  } else {
+    await ctx.db.insert("dashboard_summary", next);
+  }
+}
+
+async function upsertDeclarationPreviewByDeclaration(ctx: any, declarationId: any) {
+  const declaration = await ctx.db.get(declarationId);
+  const existingPreview = await ctx.db
+    .query("declaration_preview")
+    .withIndex("by_declarationId", (q: any) => q.eq("declarationId", declarationId))
+    .first();
+
+  if (!declaration) {
+    if (existingPreview) await ctx.db.delete(existingPreview._id);
+    return;
+  }
+
+  const declarationUserId = typeof declaration.userId === "string" ? declaration.userId : "";
+  const items = await ctx.db
+    .query("goods_items")
+    .withIndex("by_declaration", (q: any) => q.eq("declarationId", declarationId))
+    .take(2000);
+
+  const totalItems = items.length;
+  let totalValue = 0;
+  for (const item of items) {
+    totalValue += parseNumberish(item.valueAmount);
+  }
+
+  const nextPreview = {
+    declarationId,
+    userId: declarationUserId,
+    status: String(declaration.status || "Draft"),
+    totalItems,
+    totalValue,
+    mrn: declaration.mrn ? String(declaration.mrn) : undefined,
+    eori: declaration.eori ? String(declaration.eori) : undefined,
+    declarationType: declaration.declarationType ? String(declaration.declarationType) : undefined,
+    lastUpdated: Date.now(),
+  };
+
+  if (existingPreview) {
+    await ctx.db.patch(existingPreview._id, nextPreview);
+  } else {
+    await ctx.db.insert("declaration_preview", nextPreview);
+  }
+
+  if (declarationUserId) {
+    await recomputeDashboardSummaryByUser(ctx, declarationUserId);
+  }
+}
+
+export const recomputeDashboardSummary = internalMutation({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    await recomputeDashboardSummaryByUser(ctx, args.userId);
+  },
+});
+
+export const upsertDeclarationPreview = internalMutation({
+  args: { declarationId: v.id("declarations") },
+  handler: async (ctx, args) => {
+    await upsertDeclarationPreviewByDeclaration(ctx, args.declarationId);
+  },
+});
+
+async function getItemsByDeclarationForUser(ctx: any, userId: string, declarationIds: string[]) {
+  if (declarationIds.length === 0) return new Map<string, any[]>();
+
+  const allOwnedItems = await ctx.db
+    .query("goods_items")
+    .withIndex("by_owner", (q: any) => q.eq("ownerId", userId))
+    .take(3000);
+
+  const idSet = new Set(declarationIds.map((id) => String(id)));
+  const grouped = new Map<string, any[]>();
+  for (const item of allOwnedItems) {
+    const key = String(item.declarationId || "");
+    if (!idSet.has(key)) continue;
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key)!.push(item);
+  }
+
+  const missingIds = declarationIds.filter((id) => !grouped.has(String(id)));
+  if (missingIds.length > 0) {
+    const legacyItems = await Promise.all(
+      missingIds.map((id) =>
+        ctx.db
+          .query("goods_items")
+          .withIndex("by_declaration", (q: any) => q.eq("declarationId", id))
+          .take(500),
+      ),
+    );
+
+    for (let i = 0; i < missingIds.length; i++) {
+      const declId = String(missingIds[i]);
+      const items = legacyItems[i] || [];
+      grouped.set(declId, items);
+    }
+  }
+
+  return grouped;
+}
+
 export const getLane = query({
   args: { id: v.id("declarations") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
-    
+
     const declaration = await ctx.db.get(args.id);
     if (!declaration || declaration.userId !== identity.subject) {
       throw new Error("Unauthorized: You do not own this declaration.");
     }
+    return declaration;
+  },
+});
+
+// Debug-only: list declarations for a userId without a Clerk session (same pattern as getToken).
+export const listForDebug = query({
+  args: { userId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    const effectiveUserId = identity?.subject || args.userId;
+    if (!effectiveUserId) return [];
+    return await ctx.db
+      .query("declarations")
+      .withIndex("by_user", (q: any) => q.eq("userId", effectiveUserId))
+      .order("desc")
+      .take(20);
+  },
+});
+
+// Debug-only query: used by test-evidence/debug-payload.js to fetch a declaration
+// without a Clerk browser session. Falls back to args.userId (same pattern as hmrc.getToken).
+// Still enforces ownership — only returns if userId matches the declaration owner.
+export const getForDebug = query({
+  args: { id: v.id("declarations"), userId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    const effectiveUserId = identity?.subject || args.userId;
+    if (!effectiveUserId) return null;
+
+    const declaration = await ctx.db.get(args.id);
+    if (!declaration) return null;
+    if (String(declaration.userId ?? "") !== effectiveUserId) return null;
     return declaration;
   },
 });
@@ -129,6 +297,7 @@ export const createDeclaration = mutation({
 
     if (initialItem) {
       await ctx.db.insert("goods_items", {
+        ownerId: identity.subject,
         declarationId: declarationId,
         sequenceNumber: 1,
         commodityCode: initialItem.hsCode,
@@ -139,6 +308,8 @@ export const createDeclaration = mutation({
         valueCurrency: "GBP",
       });
     }
+
+    await upsertDeclarationPreviewByDeclaration(ctx, declarationId);
 
     return declarationId;
   },
@@ -159,12 +330,21 @@ export const deleteDeclaration = mutation({
     const items = await ctx.db
       .query("goods_items")
       .withIndex("by_declaration", (q) => q.eq("declarationId", args.id))
-      .collect();
+      .take(1000);
     for (const item of items) {
       await ctx.db.delete(item._id);
     }
     // 2. Delete the declaration itself
     await ctx.db.delete(args.id);
+
+    const existingPreview = await ctx.db
+      .query("declaration_preview")
+      .withIndex("by_declarationId", (q) => q.eq("declarationId", args.id))
+      .first();
+    if (existingPreview) {
+      await ctx.db.delete(existingPreview._id);
+    }
+    await recomputeDashboardSummaryByUser(ctx, identity.subject);
   },
 });
 
@@ -190,6 +370,7 @@ export const updateDeclarationStatus = mutation({
     if (args.conversationId) patchObj.conversationId = args.conversationId;
 
     await ctx.db.patch(args.id, patchObj);
+    await upsertDeclarationPreviewByDeclaration(ctx, args.id);
   },
 });
 
@@ -199,6 +380,7 @@ export const updateDeclarationDetails = mutation({
     eori: v.string(),
     declarationType: v.string(),
     route: v.string(),
+    dispatchCountry: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -213,8 +395,10 @@ export const updateDeclarationDetails = mutation({
       eori: args.eori,
       declarationType: args.declarationType,
       route: args.route,
+      ...(args.dispatchCountry !== undefined ? { dispatchCountry: args.dispatchCountry } : {}),
       lastUpdated: Date.now(),
     });
+    await upsertDeclarationPreviewByDeclaration(ctx, args.id);
   },
 });
 
@@ -240,10 +424,11 @@ export const populateDemoData = mutation({
     const existingItems = await ctx.db
       .query("goods_items")
       .withIndex("by_declaration", (q) => q.eq("declarationId", args.id))
-      .collect();
+      .take(1);
 
     if (existingItems.length === 0) {
       await ctx.db.insert("goods_items", {
+        ownerId: identity.subject,
         declarationId: args.id,
         sequenceNumber: 1,
         commodityCode: "6109100010",
@@ -256,17 +441,20 @@ export const populateDemoData = mutation({
         netWeightKg: 145,
       });
     }
+
+    await upsertDeclarationPreviewByDeclaration(ctx, args.id);
   },
 });
 
 export const getAllDecls = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity || identity.role !== "admin") {
       throw new Error("Unauthorized access to global declaration data.");
     }
-    return await ctx.db.query("declarations").collect();
+    const limit = Math.min(Math.max(args.limit ?? 300, 1), 1000);
+    return await ctx.db.query("declarations").order("desc").take(limit);
   }
 });
 
@@ -279,8 +467,122 @@ export const getMyDeclarations = query({
       .query("declarations")
       .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .order("desc")
-      .collect();
+      .take(200);
   }
+});
+
+export const getMyDeclarationCounts = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return { total: 0, reviewCount: 0 };
+
+    const summary = await ctx.db
+      .query("dashboard_summary")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .first();
+
+    if (!summary) {
+      return { total: 0, reviewCount: 0 };
+    }
+
+    return { total: summary.totalDeclarations, reviewCount: summary.reviewCount };
+  },
+});
+
+export const getDashboardSummary = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const summary = await ctx.db
+      .query("dashboard_summary")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .first();
+
+    if (summary) return summary;
+
+    const declarations = await ctx.db
+      .query("declarations")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .take(200);
+
+    let reviewCount = 0;
+    for (const declaration of declarations) {
+      if (isReviewStatus(String(declaration.status || "Draft"))) {
+        reviewCount += 1;
+      }
+    }
+
+    return {
+      userId: identity.subject,
+      totalDeclarations: declarations.length,
+      reviewCount,
+      totalValue: 0,
+      updatedAt: Date.now(),
+    };
+  },
+});
+
+export const getDeclarationPreviews = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const previews = await ctx.db
+      .query("declaration_preview")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .order("desc")
+      .take(20);
+
+    if (previews.length > 0) {
+      return previews;
+    }
+
+    const declarations = await ctx.db
+      .query("declarations")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .order("desc")
+      .take(20);
+
+    return declarations.map((declaration) => ({
+      declarationId: declaration._id,
+      userId: identity.subject,
+      status: String(declaration.status || "Draft"),
+      totalItems: 0,
+      totalValue: 0,
+      mrn: declaration.mrn ? String(declaration.mrn) : undefined,
+      eori: declaration.eori ? String(declaration.eori) : undefined,
+      declarationType: declaration.declarationType ? String(declaration.declarationType) : undefined,
+      lastUpdated: Number(declaration.lastUpdated || declaration.created || declaration._creationTime || Date.now()),
+    }));
+  },
+});
+
+export const rebuildMyReadModels = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const declarations = await ctx.db
+      .query("declarations")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .take(5000);
+
+    for (const declaration of declarations) {
+      await upsertDeclarationPreviewByDeclaration(ctx, declaration._id);
+    }
+
+    await recomputeDashboardSummaryByUser(ctx, identity.subject);
+
+    return {
+      declarationCount: declarations.length,
+      rebuiltAt: Date.now(),
+    };
+  },
 });
 
 export const getDashboardStats = query({
@@ -293,7 +595,7 @@ export const getDashboardStats = query({
       .query("declarations")
       .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .order("desc")
-      .collect();
+      .take(120);
 
     let totalDuty = 0;
     let importValue = 0;
@@ -303,11 +605,11 @@ export const getDashboardStats = query({
     const recentDeclarations = [];
     const overpayments: Array<{ title: string; subtitle: string; amount: number }> = [];
 
+    const declarationIds = decls.map((decl) => String(decl._id));
+    const itemsByDeclaration = await getItemsByDeclarationForUser(ctx, identity.subject, declarationIds);
+
     for (const decl of decls) {
-      const items = await ctx.db
-        .query("goods_items")
-        .withIndex("by_declaration", (q) => q.eq("declarationId", decl._id))
-        .collect();
+      const items = itemsByDeclaration.get(String(decl._id)) || [];
 
       let declValue = 0;
       let declDuty = 0;
@@ -380,19 +682,32 @@ export const getReports = query({
       .query("declarations")
       .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .order("desc")
-      .collect();
+      .take(150);
 
     const historicalRates = await getHistoricalRateMap(ctx, identity.subject);
     const reports = [];
+    const declarationIds = decls.map((decl) => String(decl._id));
+    const itemsByDeclaration = await getItemsByDeclarationForUser(ctx, identity.subject, declarationIds);
+    const allNotifications = await ctx.db
+      .query("notifications")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .take(400);
+    const notificationsByDeclaration = new Map<string, any[]>();
+    for (const notification of allNotifications) {
+      const declarationId = String(notification.declarationId || "");
+      if (!declarationId) continue;
+      if (!notificationsByDeclaration.has(declarationId)) {
+        notificationsByDeclaration.set(declarationId, []);
+      }
+      notificationsByDeclaration.get(declarationId)!.push(notification);
+    }
+
     for (const decl of decls) {
-      const items = await ctx.db
-        .query("goods_items")
-        .withIndex("by_declaration", (q) => q.eq("declarationId", decl._id))
-        .collect();
+      const items = itemsByDeclaration.get(String(decl._id)) || [];
       
       let totalValue = 0;
       let totalDutyAndVat = 0;
-      const mappedItems = items.map((item, idx) => {
+      const mappedItems = items.slice(0, 50).map((item, idx) => {
         const val = item.valueAmount || 0;
         const { dutyRate, vatRate } = resolveRates(item, historicalRates);
         const duty = val * dutyRate;
@@ -412,10 +727,7 @@ export const getReports = query({
           vatAmount: `£${vat.toFixed(2)}`,
         };
       });
-      const declarationNotifications = await ctx.db
-        .query("notifications")
-        .filter((q) => q.eq(q.field("declarationId"), decl._id))
-        .collect();
+      const declarationNotifications = notificationsByDeclaration.get(String(decl._id)) || [];
       declarationNotifications.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
       const hmrcStatus = hmrcStatusForDeclaration(decl, declarationNotifications);
 
@@ -457,17 +769,16 @@ export const getFinancialRecords = query({
       .query("declarations")
       .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .order("desc")
-      .collect();
+      .take(200);
 
     const historicalRates = await getHistoricalRateMap(ctx, identity.subject);
     const records = [];
+    const declarationIds = decls.map((decl) => String(decl._id));
+    const itemsByDeclaration = await getItemsByDeclarationForUser(ctx, identity.subject, declarationIds);
     for (const decl of decls) {
       if (decl.status === "Draft" || !decl.mrn) continue;
 
-      const items = await ctx.db
-        .query("goods_items")
-        .withIndex("by_declaration", (q) => q.eq("declarationId", decl._id))
-        .collect();
+      const items = itemsByDeclaration.get(String(decl._id)) || [];
       
       let declValue = 0;
       let duty = 0;

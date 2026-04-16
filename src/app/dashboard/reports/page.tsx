@@ -6,14 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useQuery } from "convex/react";
+import { useConvexAuth } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { useUser } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { RefreshCw } from "lucide-react";
 
 export default function ReportsPage() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const { user } = useUser();
   const userId = user?.id || "";
-  const liveReports = useQuery(api.declarations.getReports, userId ? { userId } : "skip");
+  const canQueryReports = isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated;
+  const declarationPreviews = useQuery(api.declarations.getDeclarationPreviews, canQueryReports ? {} : "skip");
   
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedReport, setSelectedReport] = useState<any | null>(null);
@@ -21,7 +25,33 @@ export default function ReportsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const reportsData = liveReports || [];
+  const reportsData = (declarationPreviews || []).map((preview: any) => {
+    const date = new Date(preview.lastUpdated || Date.now()).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+    const status = preview.status || "Draft";
+    const score = status === "Cleared" || status === "Accepted" ? 100 : status === "Draft" ? 50 : 25;
+    return {
+      id: preview.declarationId,
+      mrn: preview.mrn || "Draft",
+      date,
+      broker: preview.eori || "Unknown Broker",
+      score,
+      status: status === "Cleared" || status === "Accepted" ? "Clean" : status === "Draft" ? "Draft" : "Action Required",
+      ducr: `1GB${preview.eori || "000000000000"}-${String(preview.declarationId).substring(0, 4)}`,
+      lrn: `LRN${preview.lastUpdated || Date.now()}`,
+      importer: preview.eori || "Unknown",
+      declarant: `${preview.eori || "Unknown"} (Self-filed)`,
+      consignor: "N/A",
+      dispatchCountry: "GB",
+      originCountry: "GB",
+      portCode: "GBSOU",
+      acceptanceDate: new Date(preview.lastUpdated || Date.now()).toLocaleString("en-GB"),
+      clearanceDate: status === "Cleared" || status === "Accepted" ? new Date(preview.lastUpdated || Date.now()).toLocaleString("en-GB") : "Pending",
+      totalInvoiceValue: `GBP ${Number(preview.totalValue || 0).toFixed(2)}`,
+      totalCustomsValue: `GBP ${Number(preview.totalValue || 0).toFixed(2)}`,
+      totalDutyAndVat: "GBP 0.00",
+      items: [],
+    };
+  });
   const filteredReports = reportsData.filter((report: any) => {
     const matchesSearch =
       !searchQuery ||
@@ -105,7 +135,7 @@ export default function ReportsPage() {
 
       <Card className="bg-white shadow-none border-[#e9e9e7]">
         <CardContent className="p-0">
-          {liveReports === undefined ? (
+          {!isLoaded || isConvexAuthLoading || (canQueryReports && declarationPreviews === undefined) ? (
             <div className="flex h-40 flex-col items-center justify-center gap-2">
               <RefreshCw className="h-5 w-5 animate-spin text-gray-400" />
               <p className="text-xs text-gray-400">Loading Historical Reports...</p>

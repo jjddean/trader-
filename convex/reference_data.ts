@@ -30,6 +30,6 @@ export const updateDatasetVersion = internalMutation({
 
 export const listAllDatasets = query({
   handler: async (ctx) => {
-    return await ctx.db.query("referenceDatasets").collect();
+    return await ctx.db.query("referenceDatasets").order("desc").take(200);
   },
 });

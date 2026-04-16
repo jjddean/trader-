@@ -71,6 +71,38 @@ export const saveToken = mutation({
   },
 });
 
+export const disconnectToken = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const existing = await ctx.db
+      .query("hmrc_tokens")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .first();
+
+    if (existing) {
+      await ctx.db.delete(existing._id);
+
+      const workspace = await ctx.db
+        .query("workspaces")
+        .withIndex("by_owner", (q) => q.eq("ownerId", identity.subject))
+        .first();
+      if (workspace) {
+        await ctx.db.patch(workspace._id, { hmrcTokensId: undefined });
+      }
+
+      await ctx.db.insert("auditLogs", {
+        userId: identity.subject,
+        action: "hmrc_auth_disconnected",
+        details: JSON.stringify({ timestamp: Date.now() }),
+        timestamp: Date.now(),
+      });
+    }
+  },
+});
+
 export const getToken = query({
   args: { userId: v.optional(v.string()) },
   handler: async (ctx, args) => {

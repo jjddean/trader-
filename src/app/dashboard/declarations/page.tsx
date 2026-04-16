@@ -28,7 +28,7 @@ export default function DeclarationsPage() {
   const userId = user?.id || "";
   const router = useRouter();
 
-  const declarations = useQuery(api.declarations.getMyDeclarations) || [];
+  const declarations = useQuery(api.declarations.getDeclarationPreviews) || [];
   const createDeclaration = useMutation(api.declarations.createDeclaration);
 
   const [isCreating, setIsCreating] = useState(false);
@@ -145,8 +145,8 @@ export default function DeclarationsPage() {
             <tbody className="divide-y divide-gray-100">
               {filteredDeclarations.map((dec: any) => (
                 <tr
-                  key={dec._id}
-                  onClick={() => router.push(`/dashboard/declarations/${dec._id}`)}
+                  key={dec.declarationId}
+                  onClick={() => router.push(`/dashboard/declarations/${dec.declarationId}`)}
                   className="group cursor-pointer transition-colors hover:bg-gray-50/50"
                 >
                   <td className="px-6 py-4">
@@ -186,11 +186,11 @@ export default function DeclarationsPage() {
                     <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
                       {dec.status === "Draft" && (
                         <button
-                          onClick={(e) => handleDelete(e, dec._id)}
-                          disabled={deletingId === dec._id}
+                          onClick={(e) => handleDelete(e, dec.declarationId)}
+                          disabled={deletingId === dec.declarationId}
                           className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:outline-none"
                         >
-                          {deletingId === dec._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                          {deletingId === dec.declarationId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                         </button>
                       )}
                        <ArrowRight className="h-4 w-4 text-gray-400" />
@@ -250,18 +250,14 @@ export default function DeclarationsPage() {
               <label htmlFor="description" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
                 Description
               </label>
-              <Select value={description} onValueChange={setDescription}>
-                <SelectTrigger id="description" className="h-9 w-full rounded-md border-gray-200 bg-gray-50 text-xs text-gray-700">
-                  <SelectValue placeholder="Select Cargo Description" />
-                </SelectTrigger>
-                <SelectContent position="popper" className="max-h-[300px]">
-                  <SelectItem value="Knitwear" className="text-xs">Knitwear</SelectItem>
-                  <SelectItem value="Electronics" className="text-xs">Electronics</SelectItem>
-                  <SelectItem value="Machinery" className="text-xs">Machinery</SelectItem>
-                  <SelectItem value="Apparel" className="text-xs">Apparel</SelectItem>
-                  <SelectItem value="Furniture" className="text-xs">Furniture</SelectItem>
-                </SelectContent>
-              </Select>
+              <input
+                id="description"
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g. Frozen whole chicken"
+                className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none"
+              />
             </div>
           </div>
           <DialogFooter>

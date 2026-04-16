@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-04-15T20:34:38.267Z",
+  "declarationId": "kn7ber0a8tds7vs4kd936nv3f584x13h",
+  "userId": "user_3Ab42qRLt6cchUas7LDrkJx11kM",
+  "overall": "READY",
+  "issues": [],
+  "warnings": [],
+  "declaration": {
+    "eori": "GB071550591800",
+    "dispatchCountry": "BR",
+    "declarationType": "H1",
+    "status": "Draft"
+  },
+  "items": [
+    {
+      "seq": 1,
+      "commodityCode": "0207129000",
+      "description": "Frozen whole chicken",
+      "originCountry": "BR",
+      "procedureCode": "4000",
+      "valueAmount": 5000,
+      "valueCurrency": "GBP",
+      "grossWeightKg": 120,
+      "netWeightKg": 110,
+      "additionalDocuments": [
+        {
+          "CategoryCode": "N",
+          "ID": "GBCHD2026.1234567",
+          "StatusCode": "XW",
+          "TypeCode": "853"
+        },
+        {
+          "CategoryCode": "Y",
+          "ID": "Excluded",
+          "StatusCode": "",
+          "TypeCode": "929"
+        },
+        {
+          "CategoryCode": "Y",
+          "ID": "Excluded",
+          "StatusCode": "",
+          "TypeCode": "930"
+        }
+      ]
+    }
+  ]
+}
