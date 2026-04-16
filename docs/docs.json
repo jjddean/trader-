@@ -1,15 +1,9 @@
 {
-  "$schema": "https://mintlify.com/schema.json",
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
   "name": "FreightCode",
-  "logo": {
-    "dark": "/logo/dark.svg",
-    "light": "/logo/light.svg"
-  },
-  "favicon": "/favicon.svg",
   "colors": {
-    "primary": "#2563EB",
-    "light": "#3B82F6",
-    "dark": "#1D4ED8"
+    "primary": "#2563EB"
   },
   "topbarLinks": [
     {
@@ -41,8 +35,5 @@
         "compliance/hs-codes"
       ]
     }
-  ],
-  "footerSocials": {
-    "website": "https://freightcode.co.uk"
-  }
+  ]
 }
