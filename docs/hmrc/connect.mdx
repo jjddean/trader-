@@ -1,0 +1,27 @@
+---
+title: Connect HMRC
+description: Link your HMRC account via OAuth
+---
+
+## Overview
+
+FreightCode connects to HMRC CDS using the official OAuth 2.0 authorisation code flow. Your credentials are never stored — only the short-lived access token and refresh token are saved.
+
+## Steps
+
+1. Go to your **Dashboard**
+2. Click **Connect HMRC**
+3. You will be redirected to the HMRC Government Gateway login
+4. Sign in and grant FreightCode the `write:customs-declaration` scope
+5. You are redirected back — your token is saved automatically
+
+## Token Refresh
+
+Tokens expire after 4 hours. FreightCode automatically refreshes them before expiry. If the refresh fails (e.g. you revoke access in Government Gateway), you will see a **Re-authenticate** prompt in the header.
+
+## Environments
+
+| Environment | Endpoint |
+|-------------|----------|
+| Sandbox | `test-api.service.hmrc.gov.uk` |
+| Production | `api.service.hmrc.gov.uk` |

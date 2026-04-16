@@ -1,0 +1,33 @@
+---
+title: Quickstart
+description: Get up and running with FreightCode in minutes
+---
+
+## 1. Create your account
+
+Sign up at [freightcode.co.uk](https://freightcode.co.uk) and verify your email.
+
+## 2. Connect your HMRC account
+
+Navigate to **Dashboard → Connect HMRC** and complete the OAuth flow using your Government Gateway credentials. FreightCode will securely store your access token — you only need to do this once.
+
+<Note>
+  You need an HMRC Developer Hub account and an active EORI number to connect.
+</Note>
+
+## 3. Create a declaration
+
+Go to **Declarations → New Declaration**. Enter the origin country, HS code, and description of your goods.
+
+## 4. Add goods items
+
+Open the declaration and fill in the goods items tab:
+- Commodity code (10 digits)
+- Procedure code (DE 1/10)
+- Origin country
+- Gross and net weight
+- Supporting documents (e.g. N853, Y930, Y929)
+
+## 5. Submit to HMRC CDS
+
+Click **Submit** from the declaration workspace. FreightCode validates the payload, maps it to WCO DEC-DMS:2 format, and posts it to HMRC CDS. You'll receive a conversation ID immediately and notifications as HMRC processes your declaration.

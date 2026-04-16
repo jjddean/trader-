@@ -1,0 +1,48 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "FreightCode",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#2563EB",
+    "light": "#3B82F6",
+    "dark": "#1D4ED8"
+  },
+  "topbarLinks": [
+    {
+      "name": "freightcode.co.uk",
+      "url": "https://freightcode.co.uk"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Dashboard",
+    "url": "https://freightcode.co.uk/dashboard"
+  },
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": ["introduction", "quickstart"]
+    },
+    {
+      "group": "HMRC CDS",
+      "pages": [
+        "hmrc/connect",
+        "hmrc/declarations",
+        "hmrc/documents"
+      ]
+    },
+    {
+      "group": "Compliance",
+      "pages": [
+        "compliance/audit",
+        "compliance/hs-codes"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "website": "https://freightcode.co.uk"
+  }
+}

@@ -1,0 +1,30 @@
+---
+title: Supporting Documents
+description: Required additional documents for CDS declarations (DE 2/3)
+---
+
+## Document Format
+
+Each document entry requires three fields:
+
+| Field | Example | Description |
+|-------|---------|-------------|
+| Category Code | `N`, `Y`, `C` | Document category |
+| Type Code | `853`, `930`, `929` | Document type |
+| Reference / ID | `GBCHD2026.1234567` | Document reference number |
+
+The status code (`LPCOExemptionCode`) is derived automatically:
+- `N853` → `XW` (post October 2025)
+- `Y929`, `Y930` → `XB`
+
+## Common Documents — HS 0207129000 (Frozen Poultry, BR origin)
+
+| Code | Category | Type | Status | Reference |
+|------|----------|------|--------|-----------|
+| N853 | N | 853 | XW | `GBCHD{YYYY}.{IPAFFS-ref}` |
+| Y930 | Y | 930 | XB | `Excluded` |
+| Y929 | Y | 929 | XB | `Excluded` |
+
+<Warning>
+  The N853 CHED reference must be a valid IPAFFS reference. Placeholder values may be rejected by HMRC CDS in TDR and production environments.
+</Warning>
