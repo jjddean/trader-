@@ -1,6 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: "/docs",
+        destination: "https://1marketliveonline.mintlify.app/docs",
+      },
+      {
+        source: "/docs/:path*",
+        destination: "https://1marketliveonline.mintlify.app/docs/:path*",
+      },
+    ];
+  },
   redirects: async () => {
     return [
       // Force www for all non-www requests (http->https handled by Vercel)

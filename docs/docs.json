@@ -5,42 +5,18 @@
   "colors": {
     "primary": "#2563EB"
   },
-  "topbarLinks": [
+  "navigation": [
     {
-      "name": "freightcode.co.uk",
-      "url": "https://freightcode.co.uk"
+      "group": "Getting Started",
+      "pages": ["introduction", "quickstart"]
+    },
+    {
+      "group": "HMRC CDS",
+      "pages": ["hmrc/connect", "hmrc/declarations", "hmrc/documents"]
+    },
+    {
+      "group": "Compliance",
+      "pages": ["compliance/audit", "compliance/hs-codes"]
     }
-  ],
-  "topbarCtaButton": {
-    "name": "Dashboard",
-    "url": "https://freightcode.co.uk/dashboard"
-  },
-  "navigation": {
-    "tabs": [
-      {
-        "tab": "Documentation",
-        "groups": [
-          {
-            "group": "Getting Started",
-            "pages": ["introduction", "quickstart"]
-          },
-          {
-            "group": "HMRC CDS",
-            "pages": [
-              "hmrc/connect",
-              "hmrc/declarations",
-              "hmrc/documents"
-            ]
-          },
-          {
-            "group": "Compliance",
-            "pages": [
-              "compliance/audit",
-              "compliance/hs-codes"
-            ]
-          }
-        ]
-      }
-    ]
-  }
+  ]
 }
