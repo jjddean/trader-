@@ -5,11 +5,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/docs",
-        destination: "https://1marketliveonline.mintlify.app/docs",
+        destination: "https://1marketliveonline.mintlify.app",
       },
       {
         source: "/docs/:path*",
-        destination: "https://1marketliveonline.mintlify.app/docs/:path*",
+        destination: "https://1marketliveonline.mintlify.app/:path*",
       },
     ];
   },
