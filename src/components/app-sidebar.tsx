@@ -71,7 +71,7 @@ export function AppSidebar() {
   const reviewCount = declarationCounts?.reviewCount ?? 0;
 
   return (
-    <Sidebar className="border-r border-gray-200 bg-gray-50 !h-screen">
+    <Sidebar className="!h-screen border-r border-gray-200 bg-gray-50">
       <SidebarHeader className="flex h-[48px] flex-row items-center border-b border-gray-200 px-6">
         <Link
           href="/"
@@ -85,7 +85,7 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="flex flex-col p-4 pt-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <SidebarContent className="flex-1 min-h-0 p-4 pt-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <SidebarGroup className="p-0">
           <SidebarGroupLabel className="mb-0.5 px-3 text-[10px] font-normal tracking-widest text-gray-400 uppercase">
             {isAdmin ? "Control Plane" : "Platform"}
@@ -195,7 +195,7 @@ export function AppSidebar() {
 
       </SidebarContent>
 
-      <SidebarFooter className="space-y-3 p-4">
+      <SidebarFooter className="mt-auto space-y-3 border-t border-gray-200 bg-white/60 p-4">
         <SidebarMenu className="space-y-0.5">
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname === "/dashboard/support/guide"} className={cn("flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors", pathname === "/dashboard/support/guide" ? "bg-gray-100 text-black" : "text-gray-500 hover:bg-gray-100 hover:text-black")}>
@@ -229,7 +229,7 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
         {mounted ? (
-          <div className="flex items-center gap-2 rounded-md bg-gray-100 px-3 py-2">
+          <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2">
             <UserButton />
             <div className="flex flex-col">
               <span className="max-w-[100px] truncate text-xs font-normal text-gray-700">

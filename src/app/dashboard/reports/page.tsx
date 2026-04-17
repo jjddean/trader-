@@ -17,7 +17,7 @@ export default function ReportsPage() {
   const { user } = useUser();
   const userId = user?.id || "";
   const canQueryReports = isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated;
-  const declarationPreviews = useQuery(api.declarations.getDeclarationPreviews, canQueryReports ? {} : "skip");
+  const reports = useQuery(api.declarations.getReports, canQueryReports ? {} : "skip");
   
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedReport, setSelectedReport] = useState<any | null>(null);
@@ -25,34 +25,7 @@ export default function ReportsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const reportsData = (declarationPreviews || []).map((preview: any) => {
-    const date = new Date(preview.lastUpdated || Date.now()).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-    const status = preview.status || "Draft";
-    const score = status === "Cleared" || status === "Accepted" ? 100 : status === "Draft" ? 50 : 25;
-    return {
-      id: preview.declarationId,
-      mrn: preview.mrn || "Draft",
-      date,
-      broker: preview.eori || "Unknown Broker",
-      score,
-      status: status === "Cleared" || status === "Accepted" ? "Clean" : status === "Draft" ? "Draft" : "Action Required",
-      ducr: `1GB${preview.eori || "000000000000"}-${String(preview.declarationId).substring(0, 4)}`,
-      lrn: `LRN${preview.lastUpdated || Date.now()}`,
-      importer: preview.eori || "Unknown",
-      declarant: `${preview.eori || "Unknown"} (Self-filed)`,
-      consignor: "N/A",
-      dispatchCountry: "GB",
-      originCountry: "GB",
-      portCode: "GBSOU",
-      acceptanceDate: new Date(preview.lastUpdated || Date.now()).toLocaleString("en-GB"),
-      clearanceDate: status === "Cleared" || status === "Accepted" ? new Date(preview.lastUpdated || Date.now()).toLocaleString("en-GB") : "Pending",
-      totalInvoiceValue: `GBP ${Number(preview.totalValue || 0).toFixed(2)}`,
-      totalCustomsValue: `GBP ${Number(preview.totalValue || 0).toFixed(2)}`,
-      totalDutyAndVat: "GBP 0.00",
-      items: [],
-    };
-  });
-  const filteredReports = reportsData.filter((report: any) => {
+  const filteredReports = (reports || []).filter((report: any) => {
     const matchesSearch =
       !searchQuery ||
       report.mrn?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -61,9 +34,64 @@ export default function ReportsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleCopy = () => {
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
+  const handleCopy = async () => {
+    if (!selectedReport) return;
+    const payload = [
+      `MRN: ${selectedReport.mrn || "N/A"}`,
+      `Date: ${selectedReport.date || "N/A"}`,
+      `Status: ${selectedReport.status || "N/A"}`,
+      `Broker: ${selectedReport.broker || "N/A"}`,
+      `Score: ${selectedReport.score || 0}%`,
+      `Invoice Value: ${selectedReport.totalInvoiceValue || "N/A"}`,
+      `Duty & VAT: ${selectedReport.totalDutyAndVat || "N/A"}`,
+      `Provenance: ${selectedReport.provenanceLabel || "N/A"}`,
+    ].join("\n");
+
+    try {
+      await navigator.clipboard.writeText(payload);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch {
+      // Clipboard may be unavailable in some browsers; fail silently.
+    }
+  };
+
+  const handleDownloadReport = () => {
+    if (!selectedReport) return;
+    if (!selectedReport.isAuthoritative) return;
+    const data = {
+      mrn: selectedReport.mrn,
+      date: selectedReport.date,
+      broker: selectedReport.broker,
+      status: selectedReport.status,
+      score: selectedReport.score,
+      ducr: selectedReport.ducr,
+      lrn: selectedReport.lrn,
+      importer: selectedReport.importer,
+      declarant: selectedReport.declarant,
+      consignor: selectedReport.consignor,
+      dispatchCountry: selectedReport.dispatchCountry,
+      originCountry: selectedReport.originCountry,
+      portCode: selectedReport.portCode,
+      acceptanceDate: selectedReport.acceptanceDate,
+      clearanceDate: selectedReport.clearanceDate,
+      totalInvoiceValue: selectedReport.totalInvoiceValue,
+      totalCustomsValue: selectedReport.totalCustomsValue,
+      totalDutyAndVat: selectedReport.totalDutyAndVat,
+      items: selectedReport.items || [],
+      provenance: selectedReport.provenance || "derived",
+      provenanceLabel: selectedReport.provenanceLabel || "Derived from declaration preview data",
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `customs-report-${String(selectedReport.mrn || "draft").replace(/\s+/g, "-")}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -75,6 +103,9 @@ export default function ReportsPage() {
           </h1>
           <p className="mt-1 text-sm text-gray-500">
             Historical declaration batches and compliance scoring.
+          </p>
+          <p className="mt-2 inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+            Status may be HMRC-confirmed where available; financial values remain derived unless explicitly confirmed.
           </p>
         </div>
       </div>
@@ -135,7 +166,7 @@ export default function ReportsPage() {
 
       <Card className="bg-white shadow-none border-[#e9e9e7]">
         <CardContent className="p-0">
-          {!isLoaded || isConvexAuthLoading || (canQueryReports && declarationPreviews === undefined) ? (
+          {!isLoaded || isConvexAuthLoading || (canQueryReports && reports === undefined) ? (
             <div className="flex h-40 flex-col items-center justify-center gap-2">
               <RefreshCw className="h-5 w-5 animate-spin text-gray-400" />
               <p className="text-xs text-gray-400">Loading Historical Reports...</p>
@@ -193,27 +224,36 @@ export default function ReportsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {report.status === "Clean" ? (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
-                          <ShieldCheck className="h-3 w-3" />
-                          {report.status}
+                      <div className="inline-flex flex-col items-end gap-1">
+                        {report.status === "Clean" ? (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
+                            <ShieldCheck className="h-3 w-3" />
+                            {report.status}
+                          </span>
+                        ) : report.status === "Warning" ? (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-[0.625rem] font-medium text-amber-700">
+                            <ShieldAlert className="h-3 w-3" />
+                            {report.status}
+                          </span>
+                        ) : report.status === "Draft" ? (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
+                            <FileText className="h-3 w-3" />
+                            {report.status}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
+                            <ShieldAlert className="h-3 w-3" />
+                            {report.status}
+                          </span>
+                        )}
+                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[0.5625rem] font-medium ${
+                          report.provenance === "hmrc_confirmed"
+                            ? "bg-green-50 text-green-700"
+                            : "bg-amber-50 text-amber-700"
+                        }`}>
+                          {report.provenance === "hmrc_confirmed" ? "hmrc_confirmed" : "derived"}
                         </span>
-                      ) : report.status === "Warning" ? (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-[0.625rem] font-medium text-amber-700">
-                          <ShieldAlert className="h-3 w-3" />
-                          {report.status}
-                        </span>
-                      ) : report.status === "Draft" ? (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
-                          <FileText className="h-3 w-3" />
-                          {report.status}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
-                          <ShieldAlert className="h-3 w-3" />
-                          {report.status}
-                        </span>
-                      )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -254,8 +294,10 @@ export default function ReportsPage() {
                         <Copy className="h-3 w-3 text-gray-300 transition-colors group-hover:text-gray-500" />
                     )}
                   </button>
-                  <button className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer">
-                    <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">DOWNLOAD</span>
+                  <button disabled={!selectedReport.isAuthoritative} onClick={handleDownloadReport} className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">
+                    <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">
+                      {selectedReport.isAuthoritative ? "DOWNLOAD" : "DOWNLOAD DISABLED (DERIVED)"}
+                    </span>
                     <Download className="h-3 w-3 text-gray-300 transition-colors group-hover:text-gray-500" />
                   </button>
                 </div>
@@ -266,6 +308,9 @@ export default function ReportsPage() {
                 {/* Header Summary Section */}
                 <section className="bg-gray-50/80 rounded-xl p-6 border border-gray-100/80 shadow-sm">
                   <h3 className="mb-6 text-sm font-semibold text-gray-900 border-b border-gray-200 pb-3">Declaration Summary</h3>
+                  <p className="mb-5 inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-700">
+                    {selectedReport.provenanceLabel}
+                  </p>
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4">
                     <div>
                       <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">DUCR</p>

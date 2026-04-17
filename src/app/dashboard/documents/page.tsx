@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
+import { useSearchParams } from "next/navigation";
 import { 
   Upload, 
   ClipboardPaste, 
@@ -18,6 +19,8 @@ import { api } from "../../../../convex/_generated/api";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 import { UnifiedComplianceTool } from "./components/UnifiedComplianceTool";
@@ -27,22 +30,43 @@ import { UploadModal } from "./components/UploadModal";
 import { 
   inferDocTypeCode, 
   docTypeName, 
-  normalizeDocStatus 
+  normalizeDocStatus,
+  DOCUMENT_TYPES,
+  getHmrcRequirementSetForDeclaration,
+  validateDocumentForCode,
+  buildGeneratedTemplate,
 } from "@/lib/utils/document-utils";
 
 // import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function DocumentsPage() {
+  const searchParams = useSearchParams();
+  const requestedDeclarationId = searchParams.get("declaration");
   const { user } = useUser();
   const userId = user?.id || "";
   const dbDocuments = useQuery(api.documents.getDocuments, userId ? { userId } : "skip");
+  const requirements = useQuery(api.documents.getDocumentRequirements, userId ? {} : "skip");
+  const getDocumentDownloadUrl = useMutation(api.documents.getDocumentDownloadUrl);
+  const deleteDocument = useMutation(api.documents.deleteDocument);
+  const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
   const allDeclarations = useQuery(api.declarations.getDeclarationPreviews);
   const declarations = allDeclarations || [];
+  const replaceFileInputRef = useRef<HTMLInputElement | null>(null);
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isPasteOpen, setIsPasteOpen] = useState(false);
   const [declarationFilter, setDeclarationFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  const [pasteText, setPasteText] = useState("");
+  const [pasteType, setPasteType] = useState("");
+  const [pasteDeclarationId, setPasteDeclarationId] = useState("none");
+  const [isPasting, setIsPasting] = useState(false);
+  const [isGeneratingTemplates, setIsGeneratingTemplates] = useState(false);
+  const [isGeneratePickerOpen, setIsGeneratePickerOpen] = useState(false);
+  const [generateDeclarationId, setGenerateDeclarationId] = useState("none");
+  const hydratedRequirementDeclarationsRef = useRef<Set<string>>(new Set());
+  const appliedQueryDeclarationRef = useRef(false);
 
   const handleActiveToolChange = useCallback((tool: string | null) => {
     setActiveTool(tool);
@@ -66,6 +90,7 @@ export default function DocumentsPage() {
 
   const [isAuditing, setIsAuditing] = useState(false);
   const [auditResult, setAuditResult] = useState<any>(null);
+  const [isDocActionLoading, setIsDocActionLoading] = useState(false);
 
   const runHsCodeAudit = async (extractedText: string, userCode: string) => {
     setIsAuditing(true);
@@ -88,10 +113,94 @@ export default function DocumentsPage() {
     }
   };
 
+  const handleDownloadDocument = useCallback(async () => {
+    if (!selectedDocument?.id || selectedDocument.isVirtual) return;
+    try {
+      setIsDocActionLoading(true);
+      const downloadUrl = await getDocumentDownloadUrl({ documentId: selectedDocument.id });
+      if (!downloadUrl) {
+        throw new Error("Failed to generate download URL.");
+      }
+      window.open(downloadUrl, "_blank", "noopener,noreferrer");
+    } catch (error: any) {
+      alert(error?.message || "Failed to download document.");
+    } finally {
+      setIsDocActionLoading(false);
+    }
+  }, [selectedDocument, getDocumentDownloadUrl]);
+
+  const handleRemoveDocument = useCallback(async () => {
+    if (!selectedDocument?.id || selectedDocument.isVirtual) return;
+    const confirmed = window.confirm("Remove this document permanently?");
+    if (!confirmed) return;
+
+    try {
+      setIsDocActionLoading(true);
+      await deleteDocument({ documentId: selectedDocument.id });
+      setSelectedDocument(null);
+    } catch (error: any) {
+      alert(error?.message || "Failed to remove document.");
+    } finally {
+      setIsDocActionLoading(false);
+    }
+  }, [selectedDocument, deleteDocument]);
+
+  const handleTriggerReplace = useCallback(() => {
+    replaceFileInputRef.current?.click();
+  }, []);
+
+  const handleReplaceDocument = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file || !selectedDocument?.id || selectedDocument.isVirtual) return;
+
+      try {
+        setIsDocActionLoading(true);
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("type", selectedDocument.typeName || selectedDocument.type || "Unknown");
+        formData.append("linkedDeclarationId", selectedDocument.declarationId || "none");
+        formData.append("linkedMrn", selectedDocument.mrn || "none");
+        formData.append("replaceDocumentId", selectedDocument.id);
+        formData.append("userId", userId);
+
+        const response = await fetch("/api/ai/smart-upload", {
+          method: "POST",
+          body: formData,
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload?.error || "Failed to replace document.");
+        }
+
+        setSelectedDocument((prev: any) =>
+          prev
+            ? {
+                ...prev,
+                name: file.name,
+              }
+            : prev,
+        );
+      } catch (error: any) {
+        alert(error?.message || "Failed to replace document.");
+      } finally {
+        setIsDocActionLoading(false);
+        event.target.value = "";
+      }
+    },
+    [selectedDocument, userId],
+  );
+
   const liveDocuments = useMemo(() => {
     return (dbDocuments || []).map((doc: any) => {
-      const docTypeCode = inferDocTypeCode(doc.fileName || "");
+      const docTypeCode = inferDocTypeCode(doc.fileType || doc.fileName || "");
       const normalizedStatus = normalizeDocStatus(doc.status || doc.auditStatus);
+      const validation = validateDocumentForCode({
+        code: docTypeCode,
+        fileName: doc.fileName,
+        ocrText: doc.ocrText,
+      });
+      const finalStatus = validation.valid ? normalizedStatus : "review";
       return {
         id: doc._id,
         declarationId: doc.declarationId ? String(doc.declarationId) : "",
@@ -101,15 +210,71 @@ export default function DocumentsPage() {
         type: docTypeCode,
         typeName: docTypeName(docTypeCode),
         mrn: doc.mrn || "Unlinked",
-        status: normalizedStatus,
+        status: finalStatus,
         de23: docTypeCode,
         ocrText: doc.ocrText || "",
-        flag: normalizedStatus === "review" ? "Validation required" : normalizedStatus === "missing" ? "Required for declaration submission" : "",
+        flag:
+          !validation.valid
+            ? validation.message || "Validation required"
+            : normalizedStatus === "review"
+              ? "Validation required"
+              : normalizedStatus === "missing"
+                ? "Required for declaration submission"
+                : "",
+        isVirtual: false,
       };
     });
   }, [dbDocuments]);
 
-  const mergedDocuments = liveDocuments;
+  const declarationById = useMemo(() => {
+    const map = new Map<string, any>();
+    for (const decl of declarations) {
+      map.set(String(decl.declarationId), decl);
+    }
+    return map;
+  }, [declarations]);
+
+  const missingRequirementRows = useMemo(() => {
+    const uploadedKeys = new Set(
+      liveDocuments
+        .filter((doc) => doc.declarationId && doc.type)
+        .map((doc) => `${doc.declarationId}:${String(doc.type).toUpperCase()}`),
+    );
+
+    return (requirements || [])
+      .filter((req: any) => req.status !== "waived")
+      .filter((req: any) => !uploadedKeys.has(`${String(req.declarationId)}:${String(req.code).toUpperCase()}`))
+      .map((req: any) => {
+        const decl = declarationById.get(String(req.declarationId));
+        const requirementLevel = String(req.requirementLevel || "blocking");
+        return {
+          id: String(req._id),
+          declarationId: String(req.declarationId),
+          name: req.name,
+          method: req.source || "Requirement Engine",
+          date: new Date(req.updatedAt || req._creationTime).toLocaleString("en-GB", {
+            day: "numeric",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          type: String(req.code || "UNKNOWN"),
+          typeName: req.name,
+          mrn: decl?.mrn || "Draft (Pending)",
+          status: requirementLevel === "advisory" ? "review" : "missing",
+          de23: String(req.deReference || req.code || "UNKNOWN"),
+          ocrText: "",
+          flag:
+            requirementLevel === "advisory"
+              ? req.hmrcGuidance || "Advisory evidence recommended"
+              : req.hmrcGuidance || "Required for declaration submission",
+          requirementLevel,
+          isVirtual: true,
+        };
+      });
+  }, [requirements, liveDocuments, declarationById]);
+
+  const mergedDocuments = useMemo(() => [...liveDocuments, ...missingRequirementRows], [liveDocuments, missingRequirementRows]);
 
   const stats = useMemo(() => {
     const total = mergedDocuments.length;
@@ -136,6 +301,140 @@ export default function DocumentsPage() {
     }));
   }, [declarations]);
 
+  useEffect(() => {
+    if (appliedQueryDeclarationRef.current) return;
+    if (!requestedDeclarationId) {
+      appliedQueryDeclarationRef.current = true;
+      return;
+    }
+    if (allDeclarationOptions.length === 0) return;
+
+    const hasRequestedDeclaration = allDeclarationOptions.some((opt) => opt.id === requestedDeclarationId);
+    if (hasRequestedDeclaration) {
+      setDeclarationFilter(requestedDeclarationId);
+    }
+    appliedQueryDeclarationRef.current = true;
+  }, [requestedDeclarationId, allDeclarationOptions]);
+
+  const handleManualPaste = useCallback(async () => {
+    if (!pasteText.trim() || !pasteType) return;
+    const linkedDeclaration = allDeclarationOptions.find((decl) => decl.id === pasteDeclarationId);
+
+    try {
+      setIsPasting(true);
+      const formData = new FormData();
+      formData.append("pasteText", pasteText.trim());
+      formData.append("type", pasteType);
+      formData.append("linkedDeclarationId", pasteDeclarationId);
+      formData.append("linkedMrn", linkedDeclaration?.mrn || "none");
+      formData.append("userId", userId);
+
+      const res = await fetch("/api/ai/smart-upload", {
+        method: "POST",
+        body: formData,
+      });
+      const payload = await res.json();
+      if (!res.ok) {
+        throw new Error(payload?.error || "Manual paste upload failed");
+      }
+
+      setIsPasteOpen(false);
+      setPasteText("");
+      setPasteType("");
+      setPasteDeclarationId("none");
+    } catch (error: any) {
+      alert(error?.message || "Manual paste upload failed");
+    } finally {
+      setIsPasting(false);
+    }
+  }, [pasteText, pasteType, pasteDeclarationId, allDeclarationOptions, userId]);
+
+  const selectedDeclaration = useMemo(() => {
+    if (declarationFilter === "all") return null;
+    return declarationById.get(String(declarationFilter)) || null;
+  }, [declarationFilter, declarationById]);
+
+  useEffect(() => {
+    const declarationId = selectedDeclaration?.declarationId ? String(selectedDeclaration.declarationId) : null;
+    if (!declarationId) return;
+    if (hydratedRequirementDeclarationsRef.current.has(declarationId)) return;
+
+    const requiredDocs = getHmrcRequirementSetForDeclaration(selectedDeclaration);
+    if (requiredDocs.length === 0) return;
+
+    hydratedRequirementDeclarationsRef.current.add(declarationId);
+    void upsertRequirementsForDeclaration({
+      declarationId: declarationId as any,
+      requirements: requiredDocs,
+    }).catch(() => {
+      hydratedRequirementDeclarationsRef.current.delete(declarationId);
+    });
+  }, [selectedDeclaration, upsertRequirementsForDeclaration]);
+
+  const generateTemplatesForDeclaration = useCallback(async (targetDeclaration: any) => {
+    if (!targetDeclaration?.declarationId) {
+      return;
+    }
+    const requiredDocs = getHmrcRequirementSetForDeclaration(targetDeclaration);
+    if (requiredDocs.length === 0) return;
+
+    try {
+      setIsGeneratingTemplates(true);
+      for (const requirement of requiredDocs) {
+        if (!["N935", "N271", "9100", "U166"].includes(requirement.code)) continue;
+        const template = buildGeneratedTemplate({
+          code: requirement.code,
+          declaration: targetDeclaration,
+          userName: user?.fullName || user?.firstName || "Declarant",
+        });
+
+        const formData = new FormData();
+        formData.append("pasteText", template.text);
+        formData.append("type", `${requirement.code} ${requirement.name}`);
+        formData.append("linkedDeclarationId", String(targetDeclaration.declarationId));
+        formData.append("linkedMrn", targetDeclaration.mrn || "none");
+        formData.append("userId", userId);
+
+        const res = await fetch("/api/ai/smart-upload", {
+          method: "POST",
+          body: formData,
+        });
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          throw new Error(payload?.error || `Failed generating ${requirement.code}`);
+        }
+      }
+    } catch (error: any) {
+      alert(error?.message || "Failed to generate templates.");
+    } finally {
+      setIsGeneratingTemplates(false);
+    }
+  }, [user, userId]);
+
+  const handleGenerateTemplates = useCallback(async () => {
+    if (selectedDeclaration?.declarationId) {
+      await generateTemplatesForDeclaration(selectedDeclaration);
+      return;
+    }
+    if (allDeclarationOptions.length === 0) {
+      alert("No declarations available for template generation.");
+      return;
+    }
+    setGenerateDeclarationId(allDeclarationOptions[0].id);
+    setIsGeneratePickerOpen(true);
+  }, [selectedDeclaration, allDeclarationOptions, generateTemplatesForDeclaration]);
+
+  const handleGenerateFromPicker = useCallback(async () => {
+    if (!generateDeclarationId || generateDeclarationId === "none") return;
+    const target = declarationById.get(String(generateDeclarationId));
+    if (!target) {
+      alert("Selected declaration could not be found.");
+      return;
+    }
+    setIsGeneratePickerOpen(false);
+    await generateTemplatesForDeclaration(target);
+  }, [generateDeclarationId, declarationById, generateTemplatesForDeclaration]);
+
   const relevantDeclarationIds = useMemo(() => {
     return new Set(mergedDocuments.map(doc => doc.declarationId).filter(Boolean));
   }, [mergedDocuments]);
@@ -159,11 +458,18 @@ export default function DocumentsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" className="h-9 text-xs" onClick={() => handleUploadOpenChange(true)}>
+          <Button
+            variant="ghost"
+            className="h-9 text-[0.6875rem] font-medium tracking-normal"
+            onClick={() => handleUploadOpenChange(true)}
+          >
             <Upload className="mr-2 h-4 w-4" />
             Upload document
           </Button>
-          <Button className="h-9 text-xs bg-black text-white hover:bg-gray-800">
+          <Button
+            className="h-9 text-[0.6875rem] font-medium tracking-normal bg-black text-white hover:bg-gray-800"
+            onClick={() => setIsPasteOpen(true)}
+          >
             <ClipboardPaste className="mr-2 h-4 w-4" />
             Manual paste
           </Button>
@@ -227,6 +533,9 @@ export default function DocumentsPage() {
         allDeclarationOptions={allDeclarationOptions}
         onSelectDocument={handleSelectDocument}
         onActiveToolChange={handleActiveToolChange}
+        onGenerateTemplates={handleGenerateTemplates}
+        isGeneratingTemplates={isGeneratingTemplates}
+        canGenerateTemplates={allDeclarationOptions.length > 0}
       />
       
       <p className="text-[0.6875rem] text-gray-400 flex items-center gap-1.5 mt-3">
@@ -262,20 +571,34 @@ export default function DocumentsPage() {
                 </div>
                 
                 {/* Minimal Action Buttons Matching Documents Page Style */}
+                {!selectedDocument.isVirtual && (
                 <div className="flex items-center gap-2 mr-8">
-                  <button className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer">
+                  <button
+                    onClick={handleTriggerReplace}
+                    disabled={isDocActionLoading}
+                    className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer disabled:opacity-50"
+                  >
                     <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">REPLACE</span>
                     <Upload className="h-3 w-3 text-gray-300 transition-colors group-hover:text-gray-500" />
                   </button>
-                  <button className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-red-50 cursor-pointer">
+                  <button
+                    onClick={handleRemoveDocument}
+                    disabled={isDocActionLoading}
+                    className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-red-50 cursor-pointer disabled:opacity-50"
+                  >
                     <span className="text-[0.6875rem] text-red-600 font-medium tracking-wide">REMOVE</span>
                     <Trash2 className="h-3 w-3 text-red-400 transition-colors group-hover:text-red-500" />
                   </button>
-                  <button className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer">
+                  <button
+                    onClick={handleDownloadDocument}
+                    disabled={isDocActionLoading}
+                    className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer disabled:opacity-50"
+                  >
                     <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">DOWNLOAD</span>
                     <Download className="h-3 w-3 text-gray-300 transition-colors group-hover:text-gray-500" />
                   </button>
                 </div>
+                )}
               </SheetHeader>
 
               <div className="pt-6 px-6 sm:px-8 pb-12 space-y-8">
@@ -422,7 +745,11 @@ export default function DocumentsPage() {
                       <FileText className="h-10 w-10 text-gray-300 mb-4" />
                       <p className="text-sm font-medium text-gray-900">Preview not available</p>
                       <p className="mt-1 text-xs text-gray-500">Document preview must be downloaded to view securely.</p>
-                      <button className="mt-6 group flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 transition-colors hover:bg-gray-50 cursor-pointer shadow-sm">
+                      <button
+                        onClick={handleDownloadDocument}
+                        disabled={isDocActionLoading}
+                        className="mt-6 group flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 transition-colors hover:bg-gray-50 cursor-pointer shadow-sm disabled:opacity-50"
+                      >
                         <span className="text-xs text-gray-700 font-semibold tracking-wide">DOWNLOAD FILE</span>
                         <Download className="h-3.5 w-3.5 text-gray-400 transition-colors group-hover:text-gray-600" />
                       </button>
@@ -435,6 +762,14 @@ export default function DocumentsPage() {
         </SheetContent>
       </Sheet>
 
+      <input
+        ref={replaceFileInputRef}
+        type="file"
+        className="hidden"
+        accept=".pdf,.jpg,.jpeg,.png,.txt"
+        onChange={handleReplaceDocument}
+      />
+
 
       <UploadModal 
         isOpen={isUploadOpen}
@@ -445,13 +780,106 @@ export default function DocumentsPage() {
 
       <UnifiedComplianceTool 
         isOpen={activeTool === 'preference' || activeTool === 'roo'} 
-        onOpenChange={(open) => !open && handleActiveToolChange(null)} 
+        onOpenChange={(open) => !open && handleActiveToolChange(null)}
+        declarationId={declarationFilter !== "all" ? declarationFilter : null}
       />
 
       <LandedCostCalculator 
         isOpen={activeTool === 'landed'} 
         onOpenChange={(open) => !open && handleActiveToolChange(null)} 
       />
+
+      <Dialog open={isPasteOpen} onOpenChange={setIsPasteOpen}>
+        <DialogContent className="sm:max-w-[640px]">
+          <DialogHeader>
+            <DialogTitle>Manual paste document</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Document Type</label>
+              <Select value={pasteType} onValueChange={setPasteType}>
+                <SelectTrigger className="h-9 w-full bg-gray-50 border-gray-200 text-xs text-gray-700">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="max-h-[300px] z-[110]">
+                  {DOCUMENT_TYPES.map((docType) => (
+                    <SelectItem key={docType.code} value={`${docType.code} ${docType.name}`} className="text-xs">
+                      {docType.name} ({docType.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Link to Declaration</label>
+              <Select value={pasteDeclarationId} onValueChange={setPasteDeclarationId}>
+                <SelectTrigger className="h-9 w-full bg-gray-50 border-gray-200 text-xs text-gray-700">
+                  <SelectValue placeholder="Select declaration" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="max-h-[300px] z-[110]">
+                  <SelectItem value="none" className="text-xs">Do not link</SelectItem>
+                  {allDeclarationOptions.map((decl) => (
+                    <SelectItem key={decl.id} value={decl.id} className="font-mono text-xs">
+                      {decl.mrn}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Pasted Text</label>
+              <textarea
+                value={pasteText}
+                onChange={(e) => setPasteText(e.target.value)}
+                rows={10}
+                placeholder="Paste OCR output, invoice text, or supporting document text..."
+                className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 focus:border-gray-400 focus:outline-none"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={handleManualPaste}
+              disabled={isPasting || !pasteText.trim() || !pasteType}
+              className="h-9 text-xs bg-black text-white hover:bg-gray-800"
+            >
+              {isPasting ? "Analyzing..." : "Save & Analyze"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isGeneratePickerOpen} onOpenChange={setIsGeneratePickerOpen}>
+        <DialogContent className="sm:max-w-[460px]">
+          <DialogHeader>
+            <DialogTitle>Select declaration for templates</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-1.5 py-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Declaration</label>
+            <Select value={generateDeclarationId} onValueChange={setGenerateDeclarationId}>
+              <SelectTrigger className="h-9 w-full bg-gray-50 border-gray-200 text-xs text-gray-700">
+                <SelectValue placeholder="Select declaration" />
+              </SelectTrigger>
+              <SelectContent position="popper" className="max-h-[300px] z-[110]">
+                {allDeclarationOptions.map((decl) => (
+                  <SelectItem key={decl.id} value={decl.id} className="font-mono text-xs">
+                    {decl.mrn}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={handleGenerateFromPicker}
+              disabled={isGeneratingTemplates || !generateDeclarationId || generateDeclarationId === "none"}
+              className="h-9 text-xs bg-black text-white hover:bg-gray-800"
+            >
+              {isGeneratingTemplates ? "Generating..." : "Generate templates"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

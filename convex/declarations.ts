@@ -87,6 +87,66 @@ function hmrcStatusForDeclaration(decl: any, notifications: any[]) {
   return { score: 0, status: "Warning" };
 }
 
+const HMRC_CONFIRMED_NOTIFICATION_TYPES = new Set(["DMSCLE", "DMSACC", "DMSROG", "DMSREJ", "DMSINV"]);
+const HMRC_CONFIRMED_DECLARATION_STATUSES = new Set(["Cleared", "Accepted", "Rejected", "Invalid", "Action Required"]);
+
+function isHmrcConfirmedDeclaration(decl: any, notifications: any[]) {
+  const latestType = String(notifications[0]?.notificationType || "").toUpperCase();
+  if (HMRC_CONFIRMED_NOTIFICATION_TYPES.has(latestType)) return true;
+  return HMRC_CONFIRMED_DECLARATION_STATUSES.has(String(decl?.status || ""));
+}
+
+function parseRawPayload(rawPayload: any): any | null {
+  if (!rawPayload) return null;
+  if (typeof rawPayload === "object") return rawPayload;
+  if (typeof rawPayload === "string") {
+    try {
+      return JSON.parse(rawPayload);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function findNumericByKeyPattern(input: any, regex: RegExp): number | null {
+  const stack = [input];
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (!node) continue;
+    if (Array.isArray(node)) {
+      for (const item of node) stack.push(item);
+      continue;
+    }
+    if (typeof node !== "object") continue;
+    for (const [key, value] of Object.entries(node)) {
+      if (value && typeof value === "object") {
+        stack.push(value);
+      } else if (regex.test(String(key))) {
+        const num = Number(value);
+        if (Number.isFinite(num)) return num;
+      }
+    }
+  }
+  return null;
+}
+
+function extractConfirmedFinancials(notifications: any[]) {
+  for (const notification of notifications) {
+    const payload = parseRawPayload(notification?.rawPayload);
+    if (!payload) continue;
+    const duty = findNumericByKeyPattern(payload, /(duty|a00).*(amount|paid|total)|^(duty|a00)$/i);
+    const vat = findNumericByKeyPattern(payload, /(vat|b00).*(amount|paid|total)|^(vat|b00)$/i);
+    if ((duty && duty > 0) || (vat && vat > 0)) {
+      return {
+        duty: duty || 0,
+        vat: vat || 0,
+      };
+    }
+  }
+  return null;
+}
+
 function isReviewStatus(status: string | undefined) {
   return status === "Action Required" || status === "Rejected" || status === "Invalid";
 }
@@ -730,6 +790,7 @@ export const getReports = query({
       const declarationNotifications = notificationsByDeclaration.get(String(decl._id)) || [];
       declarationNotifications.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
       const hmrcStatus = hmrcStatusForDeclaration(decl, declarationNotifications);
+      const isAuthoritative = isHmrcConfirmedDeclaration(decl, declarationNotifications);
 
       reports.push({
         id: decl._id,
@@ -752,6 +813,11 @@ export const getReports = query({
         totalCustomsValue: `GBP ${totalValue.toFixed(2)}`,
         totalDutyAndVat: `GBP ${totalDutyAndVat.toFixed(2)}`,
         items: mappedItems,
+        provenance: isAuthoritative ? "hmrc_confirmed" : "derived",
+        provenanceLabel: isAuthoritative
+          ? "HMRC-confirmed declaration status data"
+          : "Derived from declaration preview data",
+        isAuthoritative,
       });
     }
 
@@ -775,10 +841,29 @@ export const getFinancialRecords = query({
     const records = [];
     const declarationIds = decls.map((decl) => String(decl._id));
     const itemsByDeclaration = await getItemsByDeclarationForUser(ctx, identity.subject, declarationIds);
+    const allNotifications = await ctx.db
+      .query("notifications")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .take(400);
+    const notificationsByDeclaration = new Map<string, any[]>();
+    for (const notification of allNotifications) {
+      const declarationId = String(notification.declarationId || "");
+      if (!declarationId) continue;
+      if (!notificationsByDeclaration.has(declarationId)) {
+        notificationsByDeclaration.set(declarationId, []);
+      }
+      notificationsByDeclaration.get(declarationId)!.push(notification);
+    }
+    for (const bucket of notificationsByDeclaration.values()) {
+      bucket.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
+    }
     for (const decl of decls) {
       if (decl.status === "Draft" || !decl.mrn) continue;
 
       const items = itemsByDeclaration.get(String(decl._id)) || [];
+      const declarationNotifications = notificationsByDeclaration.get(String(decl._id)) || [];
+      const confirmedFinancials = extractConfirmedFinancials(declarationNotifications);
+      const hasConfirmedFinancials = !!confirmedFinancials && (confirmedFinancials.duty > 0 || confirmedFinancials.vat > 0);
       
       let declValue = 0;
       let duty = 0;
@@ -792,7 +877,15 @@ export const getFinancialRecords = query({
         duty += itemDuty;
         vat += itemVat;
       }
+      if (hasConfirmedFinancials) {
+        duty = confirmedFinancials!.duty;
+        vat = confirmedFinancials!.vat;
+      }
       const dateStr = new Date(decl.created || Date.now()).toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' });
+      const provenance = hasConfirmedFinancials ? "hmrc_confirmed" : "derived";
+      const provenanceLabel = hasConfirmedFinancials
+        ? "HMRC-confirmed settlement figures"
+        : "Derived from declaration preview data";
 
       if (duty > 0) {
         records.push({
@@ -805,8 +898,13 @@ export const getFinancialRecords = query({
           accountNumber: "DAN 8931234",
           statementContext: "Monthly Statement",
           paymentLimit: "£1,200,000.00",
-          calculationMethod: `Tariff-derived rates by HS/origin over customs value £${declValue.toFixed(2)}`,
+          calculationMethod: hasConfirmedFinancials
+            ? "Value sourced from HMRC-confirmed notification payload"
+            : `Tariff-derived rates by HS/origin over customs value £${declValue.toFixed(2)}`,
           natureOfTransaction: "11 (Outright Purchase)",
+          provenance,
+          provenanceLabel,
+          isAuthoritative: hasConfirmedFinancials,
         });
       }
 
@@ -821,8 +919,13 @@ export const getFinancialRecords = query({
           accountNumber: "PVA Declared",
           statementContext: "Monthly PVA Statement",
           paymentLimit: "N/A",
-          calculationMethod: `VAT derived from customs value + duty for £${declValue.toFixed(2)}`,
+          calculationMethod: hasConfirmedFinancials
+            ? "Value sourced from HMRC-confirmed notification payload"
+            : `VAT derived from customs value + duty for £${declValue.toFixed(2)}`,
           natureOfTransaction: "11 (Outright Purchase)",
+          provenance,
+          provenanceLabel,
+          isAuthoritative: hasConfirmedFinancials,
         });
       }
     }

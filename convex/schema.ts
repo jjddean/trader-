@@ -96,13 +96,30 @@ export default defineSchema({
     workspaceId: v.optional(v.any()),
     fileId: v.optional(v.any()),
     fileName: v.optional(v.any()),
+    fileType: v.optional(v.any()),
     status: v.optional(v.any()),
     uploadDate: v.optional(v.any()),
     mrn: v.optional(v.any()),
     declarationId: v.optional(v.any()),
     auditStatus: v.optional(v.any()),
     ocrText: v.optional(v.string()),
-  }).index("by_user", ["userId"]).index("by_mrn", ["mrn"]),
+  }).index("by_user", ["userId"]).index("by_mrn", ["mrn"]).index("by_declaration", ["declarationId"]),
+
+  document_requirements: defineTable({
+    declarationId: v.id("declarations"),
+    userId: v.string(),
+    code: v.string(),
+    name: v.string(),
+    type: v.optional(v.string()),
+    source: v.optional(v.string()),
+    requirementLevel: v.optional(v.string()), // blocking | advisory
+    deReference: v.optional(v.string()),
+    hmrcGuidance: v.optional(v.string()),
+    status: v.string(), // missing | uploaded | waived
+    linkedDocumentId: v.optional(v.id("documents")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]).index("by_declaration", ["declarationId"]).index("by_declaration_code", ["declarationId", "code"]),
   
   workspaces: defineTable({
     name: v.optional(v.any()),
@@ -157,7 +174,7 @@ export default defineSchema({
     details: v.optional(v.any()),
     timestamp: v.optional(v.any()),
     archived: v.optional(v.any()),
-  }).index("by_timestamp", ["timestamp"]),
+  }).index("by_timestamp", ["timestamp"]).index("by_user", ["userId"]),
   admin_subscriptions: defineTable({
     service: v.string(),
     plan: v.string(),

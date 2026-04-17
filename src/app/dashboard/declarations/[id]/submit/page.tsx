@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useQuery, useAction, useConvexAuth } from "convex/react";
+import { useQuery, useAction, useConvexAuth, useMutation } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { ShieldCheck, Send, Loader2, AlertTriangle, CheckCircle2, Code2 } from "lucide-react";
 import { mapToCDS_H1 } from "@/lib/wco-mapper";
 import { generateClientFraudHeaders } from "@/lib/hmrc-fraud-headers";
+import { getHmrcRequirementSetForDeclaration } from "@/lib/utils/document-utils";
 
 export default function SubmitPage() {
   const { isLoaded, isSignedIn, userId } = useAuth();
@@ -25,8 +26,14 @@ export default function SubmitPage() {
     api.goods_items.getItems,
     isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId ? { declarationId } : "skip",
   );
+  const requirements = useQuery(
+    api.documents.getDocumentRequirements,
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId ? { declarationId } : "skip",
+  );
+  const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
   
   const checkHmrcStatus = useAction(api.actions.hmrc.getHmrcStatus);
+  const hydratedRequirementsRef = useRef(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDryRunning, setIsDryRunning] = useState(false);
@@ -43,13 +50,37 @@ export default function SubmitPage() {
     }
   };
 
+  useEffect(() => {
+    if (!declarationId || !declaration) return;
+    if (hydratedRequirementsRef.current) return;
+    const requiredDocs = getHmrcRequirementSetForDeclaration(declaration);
+    if (requiredDocs.length === 0) return;
+
+    hydratedRequirementsRef.current = true;
+    void upsertRequirementsForDeclaration({
+      declarationId,
+      requirements: requiredDocs,
+    }).catch(() => {
+      hydratedRequirementsRef.current = false;
+    });
+  }, [declarationId, declaration, upsertRequirementsForDeclaration]);
+
   // Pre-flight validation checks
   const missingEori = !declaration?.eori;
   const noItems = !items || items.length === 0;
   const missingHS = items?.some((i: any) => !i.commodityCode);
-  const missingDocs = items?.some((i: any) => !Array.isArray(i.additionalDocuments) || i.additionalDocuments.length === 0);
+  const missingBlockingRequirements = (requirements || []).filter(
+    (req: any) => req.status === "missing" && (req.requirementLevel || "blocking") === "blocking",
+  );
+  const missingAdvisoryRequirements = (requirements || []).filter(
+    (req: any) => req.status === "missing" && (req.requirementLevel || "blocking") === "advisory",
+  );
+  const missingBlockingCodes = missingBlockingRequirements
+    .map((req: any) => String(req.code || "UNKNOWN"));
+  const missingAdvisoryCodes = missingAdvisoryRequirements
+    .map((req: any) => String(req.code || "UNKNOWN"));
 
-  const isReady = !missingEori && !noItems && !missingHS && !missingDocs;
+  const isReady = !missingEori && !noItems && !missingHS && missingBlockingRequirements.length === 0;
   
   // Generate the WCO payload for preview
   const wcoPayloadPreview = isReady ? mapToCDS_H1(declaration, items) : null;
@@ -164,7 +195,7 @@ export default function SubmitPage() {
     }
   };
 
-  if (!isLoaded || isConvexAuthLoading || (isSignedIn && isAuthenticated && (declaration === undefined || items === undefined))) {
+  if (!isLoaded || isConvexAuthLoading || (isSignedIn && isAuthenticated && (declaration === undefined || items === undefined || requirements === undefined))) {
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
@@ -196,6 +227,9 @@ export default function SubmitPage() {
         <h2 className="text-lg font-medium text-gray-900">Validate & Submit</h2>
         <p className="mt-1 text-xs text-gray-500">
           Run final pre-flight checks before pushing the WCO 3.6 payload to the HMRC Customs Declarations API.
+        </p>
+        <p className="mt-2 inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+          Pre-flight pass means structurally ready to submit. It does not guarantee HMRC acceptance.
         </p>
       </div>
 
@@ -242,10 +276,24 @@ export default function SubmitPage() {
             </li>
 
             <li className="flex items-start gap-3">
-              {missingDocs ? <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
+              {missingBlockingRequirements.length > 0 ? <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
               <div>
-                <p className={`text-sm font-medium ${missingDocs ? "text-red-700" : "text-gray-900"}`}>Supporting Documents</p>
-                <p className="text-xs text-gray-500">Every goods item must have at least one additional document (e.g. 42A/67A licence).</p>
+                <p className={`text-sm font-medium ${missingBlockingRequirements.length > 0 ? "text-red-700" : "text-gray-900"}`}>Required Documents (Blocking)</p>
+                <p className="text-xs text-gray-500">
+                  Submit gate is based on persisted declaration requirements.
+                  {missingBlockingCodes.length > 0 ? ` Missing: ${missingBlockingCodes.join(", ")}` : ""}
+                </p>
+              </div>
+            </li>
+
+            <li className="flex items-start gap-3">
+              {missingAdvisoryRequirements.length > 0 ? <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
+              <div>
+                <p className={`text-sm font-medium ${missingAdvisoryRequirements.length > 0 ? "text-amber-700" : "text-gray-900"}`}>Advisory Evidence</p>
+                <p className="text-xs text-gray-500">
+                  Advisory documents do not block submit but should be resolved.
+                  {missingAdvisoryCodes.length > 0 ? ` Missing: ${missingAdvisoryCodes.join(", ")}` : ""}
+                </p>
               </div>
             </li>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { useMutation } from "convex/react";
 import { 
   Globe, 
   ShieldCheck, 
@@ -25,10 +26,13 @@ import {
 } from "@/components/ui/select";
 import { countries } from "@/lib/data/countries";
 import { cn } from "@/lib/utils";
+import { docTypeName } from "@/lib/utils/document-utils";
+import { api } from "../../../../../convex/_generated/api";
 
 interface UnifiedComplianceToolProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  declarationId?: string | null;
 }
 
 interface ComplianceData {
@@ -52,7 +56,7 @@ interface ComplianceData {
   };
 }
 
-export function UnifiedComplianceTool({ isOpen, onOpenChange }: UnifiedComplianceToolProps) {
+export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: UnifiedComplianceToolProps) {
   // FORM STATE
   const [selectedCountry, setSelectedCountry] = useState("");
   const [commodityCode, setCommodityCode] = useState("");
@@ -64,6 +68,8 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange }: UnifiedComplianc
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCalculator, setShowCalculator] = useState(false);
+  const [isSavingRequirements, setIsSavingRequirements] = useState(false);
+  const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
 
   const schemeMapping: Record<string, string> = {
     "1013": "UK-EU Trade and Cooperation Agreement",
@@ -78,12 +84,12 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange }: UnifiedComplianc
   };
 
   const certMapping: Record<string, string> = {
-    "N865": "Form A — Certificate of Origin",
-    "N935": "Origin Declaration on Invoice",
-    "U166": "Statement on Origin (REX)",
-    "U101": "Registered Exporter System (REX)",
-    "U164": "EUR.1 Movement Certificate",
-    "9100": "Rules of Origin Statement",
+    "N865": docTypeName("N865"),
+    "N935": docTypeName("N935"),
+    "U166": docTypeName("U166"),
+    "U101": docTypeName("U101"),
+    "U164": docTypeName("U164"),
+    "9100": docTypeName("9100"),
   };
 
   const handleRunCheck = async () => {
@@ -199,6 +205,30 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange }: UnifiedComplianc
     return { duty, vat, total: valueNum + shipNum + duty + vat };
   }, [data, itemValue, shippingCost]);
 
+  const handleSaveRequirements = async () => {
+    if (!data || !declarationId) return;
+    try {
+      setIsSavingRequirements(true);
+      const advisoryCodes = new Set(["9100", "U166", "U101", "U164", "N865", "N864"]);
+      await upsertRequirementsForDeclaration({
+        declarationId: declarationId as any,
+        requirements: data.documents.map((doc) => ({
+          code: doc.code,
+          name: doc.name,
+          type: doc.type,
+          source: "preference_tool",
+          requirementLevel: advisoryCodes.has(String(doc.code).toUpperCase()) ? "advisory" : "blocking",
+          deReference: "DE 2/3",
+          hmrcGuidance: advisoryCodes.has(String(doc.code).toUpperCase())
+            ? "Origin evidence is advisory unless procedure/agreement makes it mandatory."
+            : "Required supporting document reference for declaration validation.",
+        })),
+      });
+    } finally {
+      setIsSavingRequirements(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
@@ -295,7 +325,22 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange }: UnifiedComplianc
 
               {/* AVAILABLE DOCUMENTS */}
               <div>
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 ml-1">Available Documents</h3>
+                <div className="mb-3 ml-1 flex items-center justify-between">
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Available Documents</h3>
+                  {declarationId ? (
+                    <Button
+                      onClick={handleSaveRequirements}
+                      disabled={isSavingRequirements}
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[10px]"
+                    >
+                      {isSavingRequirements ? "Saving..." : "Save as Required Docs"}
+                    </Button>
+                  ) : (
+                    <span className="text-[10px] text-gray-400">Select a declaration filter to persist</span>
+                  )}
+                </div>
                 <div className="space-y-2">
                   {data.documents.length > 0 ? data.documents.map((doc, i) => (
                     <div key={i} className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-100 transition-colors hover:border-gray-200">

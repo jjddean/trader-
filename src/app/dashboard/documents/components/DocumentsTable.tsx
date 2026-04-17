@@ -18,6 +18,7 @@ import {
   DropdownMenuContent, 
   DropdownMenuItem 
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { DOCUMENT_TYPES } from "@/lib/utils/document-utils";
 
 interface DocumentsTableProps {
@@ -29,6 +30,9 @@ interface DocumentsTableProps {
   allDeclarationOptions: any[];
   onSelectDocument: (doc: any) => void;
   onActiveToolChange: (tool: string) => void;
+  onGenerateTemplates: () => void;
+  isGeneratingTemplates: boolean;
+  canGenerateTemplates: boolean;
 }
 
 export const DocumentsTable = React.memo(function DocumentsTable({
@@ -39,7 +43,10 @@ export const DocumentsTable = React.memo(function DocumentsTable({
   onTypeFilterChange,
   allDeclarationOptions,
   onSelectDocument,
-  onActiveToolChange
+  onActiveToolChange,
+  onGenerateTemplates,
+  isGeneratingTemplates,
+  canGenerateTemplates,
 }: DocumentsTableProps) {
 
   const filteredDocuments = useMemo(() => {
@@ -53,10 +60,10 @@ export const DocumentsTable = React.memo(function DocumentsTable({
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
       {/* FILTER BAR */}
-      <div className="flex items-center justify-between border-b border-[#e9e9e7] bg-gray-50 px-5 py-4">
-        <div className="flex items-center gap-3">
+      <div className="border-b border-[#e9e9e7] bg-gray-50 px-5 py-4">
+        <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-4">
           <Select value={declarationFilter} onValueChange={onDeclarationFilterChange}>
-            <SelectTrigger className="h-9 w-[200px] border-gray-200 bg-white text-[0.6875rem]">
+            <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[0.6875rem] font-medium tracking-normal text-gray-600">
               <SelectValue placeholder="All declarations" />
             </SelectTrigger>
             <SelectContent position="popper" className="z-[100] max-h-[300px]">
@@ -70,7 +77,7 @@ export const DocumentsTable = React.memo(function DocumentsTable({
           </Select>
 
           <Select value={typeFilter} onValueChange={onTypeFilterChange}>
-            <SelectTrigger className="h-9 w-[180px] border-gray-200 bg-white text-[0.6875rem]">
+            <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[0.6875rem] font-medium tracking-normal text-gray-600">
               <SelectValue placeholder="All types" />
             </SelectTrigger>
             <SelectContent position="popper" className="z-[100] max-h-[300px]">
@@ -82,12 +89,9 @@ export const DocumentsTable = React.memo(function DocumentsTable({
               ))}
             </SelectContent>
           </Select>
-        </div>
-
-        <div className="flex items-center gap-3">
 
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex h-9 w-[180px] items-center justify-between rounded-md border border-gray-200 bg-white px-3 text-[0.6875rem] text-gray-700 transition-colors hover:border-gray-400 focus:outline-none shadow-sm">
+            <DropdownMenuTrigger className="flex h-9 w-full items-center justify-between rounded-md border border-gray-200 bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-gray-600 transition-colors hover:border-gray-400 focus:outline-none shadow-sm">
               <span>Compliance Tools</span>
               <ChevronDown className="h-4 w-4 text-gray-400" />
             </DropdownMenuTrigger>
@@ -113,6 +117,15 @@ export const DocumentsTable = React.memo(function DocumentsTable({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <Button
+            variant="ghost"
+            className="h-9 w-full rounded-md border border-gray-200 bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-gray-600 shadow-sm transition-colors hover:border-gray-400 hover:bg-gray-50"
+            onClick={onGenerateTemplates}
+            disabled={isGeneratingTemplates || !canGenerateTemplates}
+          >
+            {isGeneratingTemplates ? "Generating..." : "Generate templates"}
+          </Button>
         </div>
       </div>
 
@@ -174,7 +187,7 @@ export const DocumentsTable = React.memo(function DocumentsTable({
                       )}
                       {doc.status === 'review' && (
                         <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-[0.625rem] font-medium text-amber-700">
-                          Review
+                          {doc.requirementLevel === "advisory" ? "Advisory" : "Review"}
                         </span>
                       )}
                       {doc.status === 'missing' && (

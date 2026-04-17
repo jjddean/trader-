@@ -12,39 +12,66 @@ import { RefreshCw } from "lucide-react";
 
 export default function RecordsPage() {
   const { user } = useUser();
-  const declarationPreviews = useQuery(api.declarations.getDeclarationPreviews, user?.id ? {} : "skip");
+  const recordsData = useQuery(api.declarations.getFinancialRecords, user?.id ? {} : "skip");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecord, setSelectedRecord] = useState<any | null>(null);
   const [isCopied, setIsCopied] = useState(false);
 
-  const handleCopy = () => {
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
+  const handleCopy = async () => {
+    if (!selectedRecord) return;
+    const payload = [
+      `MRN: ${selectedRecord.mrn || "N/A"}`,
+      `Date: ${selectedRecord.date || "N/A"}`,
+      `Tax Type: ${selectedRecord.type || "N/A"}`,
+      `Method: ${selectedRecord.method || "N/A"}`,
+      `Amount: £${Number(selectedRecord.amount || 0).toFixed(2)}`,
+      `Account: ${selectedRecord.accountNumber || "N/A"}`,
+      `Calculation: ${selectedRecord.calculationMethod || "N/A"}`,
+    ].join("\n");
+    try {
+      await navigator.clipboard.writeText(payload);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch {
+      // Clipboard may be unavailable in some browsers; fail silently.
+    }
   };
 
-  const recordsData = (declarationPreviews || [])
-    .filter((preview: any) => preview.status !== "Draft")
-    .map((preview: any) => ({
-      id: `${preview.declarationId}-duty`,
-      mrn: preview.mrn || "Draft",
-      type: "Duty (A00)",
-      amount: 0,
-      method: "Deferment Account (DAN)",
-      date: new Date(preview.lastUpdated || Date.now()).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
-      accountNumber: "DAN 8931234",
-      statementContext: "Monthly Statement",
-      paymentLimit: "£1,200,000.00",
-      calculationMethod: `Derived from declaration preview total value £${Number(preview.totalValue || 0).toFixed(2)}`,
-      natureOfTransaction: "11 (Outright Purchase)",
-    }));
-  const filteredRecords = recordsData.filter((record: any) =>
+  const handleDownloadRecord = () => {
+    if (!selectedRecord) return;
+    const data = {
+      id: selectedRecord.id,
+      mrn: selectedRecord.mrn,
+      date: selectedRecord.date,
+      type: selectedRecord.type,
+      amount: selectedRecord.amount,
+      method: selectedRecord.method,
+      accountNumber: selectedRecord.accountNumber,
+      statementContext: selectedRecord.statementContext,
+      paymentLimit: selectedRecord.paymentLimit,
+      calculationMethod: selectedRecord.calculationMethod,
+      natureOfTransaction: selectedRecord.natureOfTransaction,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `financial-record-${String(selectedRecord.mrn || "draft").replace(/\s+/g, "-")}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const filteredRecords = (recordsData || []).filter((record: any) =>
     !searchQuery || record.mrn?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const totalDuty = recordsData.filter((r: any) => r.type.includes("Duty")).reduce((acc: number, curr: any) => acc + curr.amount, 0);
-  const totalPVA = recordsData.filter((r: any) => r.type.includes("VAT")).reduce((acc: number, curr: any) => acc + curr.amount, 0);
+  const totalDuty = (recordsData || []).filter((r: any) => r.type.includes("Duty")).reduce((acc: number, curr: any) => acc + curr.amount, 0);
+  const totalPVA = (recordsData || []).filter((r: any) => r.type.includes("VAT")).reduce((acc: number, curr: any) => acc + curr.amount, 0);
   const handleExportCsv = () => {
+    if (filteredRecords.some((record: any) => !record.isAuthoritative)) return;
     const grouped = filteredRecords.reduce((acc: Record<string, { mrn: string; date: string; dutyPaid: number; vat: number }>, record: any) => {
       const key = `${record.mrn}__${record.date}`;
       if (!acc[key]) {
@@ -83,10 +110,17 @@ export default function RecordsPage() {
           <p className="mt-1 text-sm text-gray-500">
             VAT and Duty ledgers generated from your historic HMRC declarations.
           </p>
+          <p className="mt-2 inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+            Values are derived by default and switch to HMRC-confirmed when settlement figures are available.
+          </p>
         </div>
-        <button onClick={handleExportCsv} className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800">
+        <button
+          onClick={handleExportCsv}
+          disabled={filteredRecords.some((record: any) => !record.isAuthoritative)}
+          className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300"
+        >
           <Download className="h-4 w-4" />
-          Export to CSV
+          {filteredRecords.some((record: any) => !record.isAuthoritative) ? "EXPORT DISABLED (DERIVED)" : "Export to CSV"}
         </button>
       </div>
 
@@ -135,7 +169,7 @@ export default function RecordsPage() {
 
       <Card className="bg-white shadow-none border-[#e9e9e7]">
         <CardContent className="p-0">
-          {declarationPreviews === undefined ? (
+          {recordsData === undefined ? (
             <div className="flex h-40 flex-col items-center justify-center gap-2">
               <RefreshCw className="h-5 w-5 animate-spin text-gray-400" />
               <p className="text-xs text-gray-400">Loading Financial Records...</p>
@@ -186,7 +220,16 @@ export default function RecordsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-[0.6875rem] text-gray-600">
-                      {record.method}
+                      <div className="flex flex-col gap-1">
+                        <span>{record.method}</span>
+                        <span className={`inline-flex w-fit items-center rounded-md px-2 py-0.5 text-[0.5625rem] font-medium ${
+                          record.provenance === "hmrc_confirmed"
+                            ? "bg-green-50 text-green-700"
+                            : "bg-amber-50 text-amber-700"
+                        }`}>
+                          {record.provenance === "hmrc_confirmed" ? "hmrc_confirmed" : "derived"}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <span className="text-sm font-semibold text-black">
@@ -232,8 +275,14 @@ export default function RecordsPage() {
                         <Copy className="h-3 w-3 text-gray-300 transition-colors group-hover:text-gray-500" />
                     )}
                   </button>
-                  <button className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer">
-                    <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">DOWNLOAD</span>
+                  <button
+                    disabled={!selectedRecord.isAuthoritative}
+                    onClick={handleDownloadRecord}
+                    className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">
+                      {selectedRecord.isAuthoritative ? "DOWNLOAD" : "DOWNLOAD DISABLED (DERIVED)"}
+                    </span>
                     <Download className="h-3 w-3 text-gray-300 transition-colors group-hover:text-gray-500" />
                   </button>
                 </div>
@@ -244,6 +293,9 @@ export default function RecordsPage() {
                 {/* Transaction & Account Details Section */}
                 <section className="bg-gray-50/80 rounded-xl p-6 border border-gray-100/80 shadow-sm">
                   <h3 className="mb-6 text-sm font-semibold text-gray-900 border-b border-gray-200 pb-3">Transaction & Account Details</h3>
+                  <p className="mb-5 inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-700">
+                    {selectedRecord.provenanceLabel}
+                  </p>
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4">
                     <div>
                       <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Account Used</p>

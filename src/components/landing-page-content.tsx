@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { HomeDashboardPreview } from "@/components/home-dashboard-preview";
 
 const faqs = [
   {
@@ -70,11 +71,11 @@ export function LandingPageContent() {
       />
       <SiteHeader />
 
-      <main className="pt-[160px]">
+      <main className="pt-[120px]">
         {/* Hero Section */}
-        <section className="px-[24px] pb-[80px]">
+        <section className="px-[24px] pb-[28px]">
           <div className="mx-auto max-w-4xl text-center">
-            <div className="mb-[48px] flex items-center justify-center gap-[8px]">
+            <div className="mb-[24px] flex items-center justify-center gap-[8px]">
               <div className="flex h-5 w-5 items-center justify-center">
                 <span className="text-[18px] leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.25)]">🛃</span>
               </div>
@@ -83,13 +84,13 @@ export function LandingPageContent() {
               </span>
             </div>
 
-            <h1 className="mb-6 text-[48px] leading-[48px] font-bold tracking-tight text-[#020817]">
+            <h1 className="mb-3 text-4xl font-bold tracking-tight leading-snug text-[#020817]">
               Complete CDS visibility.
               <br />
               Seamless customs clearance.
             </h1>
 
-            <p className="mx-auto mb-10 max-w-2xl text-[20px] leading-[28px] text-slate-700">
+            <p className="mx-auto mb-6 max-w-[760px] text-[15px] leading-[24px] text-slate-700 md:text-[16px]">
               Automate your customs declarations, reduce manual work, avoid costly errors, and ensure you never overpay duties.
             </p>
 
@@ -108,12 +109,17 @@ export function LandingPageContent() {
           </div>
         </section>
 
-        {/* Visibility Hero Banner */}
-        <section className="bg-white py-[128px] md:py-[160px]">
-          <div className="mx-auto max-w-[1024px] px-[24px] text-center">
-             <h2 className="text-[48px] leading-[48px] font-bold tracking-tight text-[#020817] md:text-[52px]">
-               Full visibility and control over your customs declarations.
-             </h2>
+        <section className="bg-white px-[24px] pb-[72px]">
+          <div className="mx-auto max-w-[1200px] text-center">
+            <HomeDashboardPreview />
+            <div className="mx-auto mt-36 max-w-[900px]">
+              <h2 className="text-[34px] leading-[1.06] font-bold tracking-tight text-[#020817] md:text-[44px]">
+                Full visibility and control over your customs declarations.
+              </h2>
+              <p className="mx-auto mt-4 max-w-[760px] text-[16px] leading-[1.65] text-slate-600 md:text-[17px]">
+                Track live HMRC statuses, recent declarations, and compliance signals from one shared operational view.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -321,7 +327,7 @@ export function LandingPageContent() {
               </p>
             </div>
 
-            <div className="grid gap-[24px] md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-[24px] md:grid-cols-2">
               {[
                 { 
                   title: "HMRC CDS Complete Guide (2026)", 

@@ -25,7 +25,7 @@ interface UploadModalProps {
 
 export function UploadModal({ isOpen, onOpenChange, allDeclarationOptions, userId }: UploadModalProps) {
   const [uploadStep, setUploadStep] = useState(1);
-  const [uploadForm, setUploadForm] = useState({ type: "", linkedMrn: "", file: null as any });
+  const [uploadForm, setUploadForm] = useState({ type: "", linkedDeclarationId: "", file: null as any });
   const [isUploading, setIsUploading] = useState(false);
 
   const handleSubmit = async () => {
@@ -33,10 +33,12 @@ export function UploadModal({ isOpen, onOpenChange, allDeclarationOptions, userI
     setIsUploading(true);
     
     try {
+      const linkedDeclaration = allDeclarationOptions.find((decl: any) => decl.id === uploadForm.linkedDeclarationId);
       const formData = new FormData();
       formData.append("file", uploadForm.file);
       formData.append("type", uploadForm.type);
-      formData.append("linkedMrn", uploadForm.linkedMrn);
+      formData.append("linkedDeclarationId", uploadForm.linkedDeclarationId);
+      formData.append("linkedMrn", linkedDeclaration?.mrn || "none");
       formData.append("userId", userId);
 
       const res = await fetch("/api/ai/smart-upload", {
@@ -51,7 +53,7 @@ export function UploadModal({ isOpen, onOpenChange, allDeclarationOptions, userI
 
       onOpenChange(false);
       setUploadStep(1);
-      setUploadForm({ type: "", linkedMrn: "", file: null as any });
+      setUploadForm({ type: "", linkedDeclarationId: "", file: null as any });
     } catch (err: any) {
       console.error(err);
       alert(err.message);
@@ -64,7 +66,7 @@ export function UploadModal({ isOpen, onOpenChange, allDeclarationOptions, userI
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!open) {
         setUploadStep(1);
-        setUploadForm({ type: "", linkedMrn: "", file: null as any });
+        setUploadForm({ type: "", linkedDeclarationId: "", file: null as any });
       }
       onOpenChange(open);
     }}>
@@ -98,7 +100,7 @@ export function UploadModal({ isOpen, onOpenChange, allDeclarationOptions, userI
                 <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
                   Link to Declaration
                 </label>
-                <Select value={uploadForm.linkedMrn} onValueChange={(val) => setUploadForm({...uploadForm, linkedMrn: val})}>
+                <Select value={uploadForm.linkedDeclarationId} onValueChange={(val) => setUploadForm({...uploadForm, linkedDeclarationId: val})}>
                   <SelectTrigger className="h-9 w-full bg-gray-50 border-gray-200 text-xs text-gray-700">
                     <SelectValue placeholder="Select declaration" />
                   </SelectTrigger>
@@ -115,7 +117,7 @@ export function UploadModal({ isOpen, onOpenChange, allDeclarationOptions, userI
             </div>
             <DialogFooter>
               <button
-                disabled={!uploadForm.type || !uploadForm.linkedMrn}
+                disabled={!uploadForm.type || !uploadForm.linkedDeclarationId}
                 onClick={() => setUploadStep(2)}
                 className="flex h-9 w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800 disabled:opacity-50"
               >
