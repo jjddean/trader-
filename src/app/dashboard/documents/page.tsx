@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import React, { useState, useMemo, useCallback, useRef, useEffect, Suspense } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { useSearchParams } from "next/navigation";
@@ -39,7 +39,7 @@ import {
 
 // import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-export default function DocumentsPage() {
+function DocumentsPageInner() {
   const searchParams = useSearchParams();
   const requestedDeclarationId = searchParams.get("declaration");
   const { user } = useUser();
@@ -882,5 +882,13 @@ export default function DocumentsPage() {
       </Dialog>
 
     </div>
+  );
+}
+
+export default function DocumentsPage() {
+  return (
+    <Suspense>
+      <DocumentsPageInner />
+    </Suspense>
   );
 }
