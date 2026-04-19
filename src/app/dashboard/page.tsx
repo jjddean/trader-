@@ -119,7 +119,7 @@ export default function DashboardPage() {
 // 1️⃣ KPI ROW
 function KpiRow({ kpis }: { kpis: any }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-4 gap-4">
       <KpiCard 
         title="Total Duty (30d)" 
         value={`£${kpis.totalDuty.toLocaleString("en-GB", { minimumFractionDigits: 2 })}`} 
