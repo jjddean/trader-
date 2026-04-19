@@ -48,6 +48,28 @@ export default function GoodsItemsPage() {
   // Prevent re-initialising slots the user is actively editing
   const docEditsTouched = useRef<Set<string>>(new Set());
 
+  // Batch pending field updates per item — flushed as a single updateItem call after 600ms idle.
+  // Prevents one mutation per field blur (e.g. tabbing through 8 fields = 8 mutations → 1).
+  const pendingUpdates = useRef<Record<string, Record<string, unknown>>>({});
+  const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  const scheduleUpdate = (itemId: string, field: string, value: unknown) => {
+    if (!pendingUpdates.current[itemId]) pendingUpdates.current[itemId] = {};
+    pendingUpdates.current[itemId][field] = value;
+
+    clearTimeout(debounceTimers.current[itemId]);
+    debounceTimers.current[itemId] = setTimeout(async () => {
+      const updates = pendingUpdates.current[itemId];
+      if (!updates || Object.keys(updates).length === 0) return;
+      delete pendingUpdates.current[itemId];
+      try {
+        await updateItem({ id: itemId as Id<"goods_items">, ...updates } as any);
+      } catch (err) {
+        console.error("Failed to save item updates:", err);
+      }
+    }, 600);
+  };
+
   type AdditionalDocumentInput = { CategoryCode: string; TypeCode: string; ID: string };
   type GoodsItemRow = { _id: Id<"goods_items">; [key: string]: unknown };
 
@@ -142,57 +164,49 @@ export default function GoodsItemsPage() {
     }
   };
 
-  const handleItemFieldBlur = async (
+  const handleItemFieldBlur = (
     itemId: Id<"goods_items">,
     field: "description" | "commodityCode" | "originCountry" | "valueAmount" | "procedureCode" | "additionalProcedureCode" | "grossWeightKg" | "netWeightKg",
     value: string,
   ) => {
-    try {
-      if (field === "commodityCode") {
-        const cleaned = value.trim();
-        if (cleaned.length !== 10 || !/^\d{10}$/.test(cleaned)) {
-          setFieldErrors(prev => ({ ...prev, [`${itemId}-commodityCode`]: "Must be exactly 10 digits" }));
-          return;
-        }
-        setFieldErrors(prev => ({ ...prev, [`${itemId}-commodityCode`]: "" }));
-        await updateItem({ id: itemId, commodityCode: cleaned });
+    if (field === "commodityCode") {
+      const cleaned = value.trim();
+      if (cleaned.length !== 10 || !/^\d{10}$/.test(cleaned)) {
+        setFieldErrors(prev => ({ ...prev, [`${itemId}-commodityCode`]: "Must be exactly 10 digits" }));
         return;
       }
-      
-      if (field === "originCountry") {
-        const cleaned = value.trim().toUpperCase();
-        if (cleaned.length !== 2 || !/^[A-Z]{2}$/.test(cleaned)) {
-          setFieldErrors(prev => ({ ...prev, [`${itemId}-originCountry`]: "Must be exactly 2 letters" }));
-          return;
-        }
-        setFieldErrors(prev => ({ ...prev, [`${itemId}-originCountry`]: "" }));
-        await updateItem({ id: itemId, originCountry: cleaned });
-        return;
-      }
-
-      if (field === "valueAmount") {
-        await updateItem({ id: itemId, valueAmount: Number(value) || 0 });
-        return;
-      }
-
-      if (field === "grossWeightKg") {
-        await updateItem({ id: itemId, grossWeightKg: Number(value) || 0 });
-        return;
-      }
-
-      if (field === "netWeightKg") {
-        await updateItem({ id: itemId, netWeightKg: Number(value) || 0 });
-        return;
-      }
-
-      const sanitizedValue = value.trim();
-      await updateItem({
-        id: itemId,
-        [field]: sanitizedValue,
-      });
-    } catch (err) {
-      console.error("Failed to update item field:", err);
+      setFieldErrors(prev => ({ ...prev, [`${itemId}-commodityCode`]: "" }));
+      scheduleUpdate(itemId, "commodityCode", cleaned);
+      return;
     }
+
+    if (field === "originCountry") {
+      const cleaned = value.trim().toUpperCase();
+      if (cleaned.length !== 2 || !/^[A-Z]{2}$/.test(cleaned)) {
+        setFieldErrors(prev => ({ ...prev, [`${itemId}-originCountry`]: "Must be exactly 2 letters" }));
+        return;
+      }
+      setFieldErrors(prev => ({ ...prev, [`${itemId}-originCountry`]: "" }));
+      scheduleUpdate(itemId, "originCountry", cleaned);
+      return;
+    }
+
+    if (field === "valueAmount") {
+      scheduleUpdate(itemId, "valueAmount", Number(value) || 0);
+      return;
+    }
+
+    if (field === "grossWeightKg") {
+      scheduleUpdate(itemId, "grossWeightKg", Number(value) || 0);
+      return;
+    }
+
+    if (field === "netWeightKg") {
+      scheduleUpdate(itemId, "netWeightKg", Number(value) || 0);
+      return;
+    }
+
+    scheduleUpdate(itemId, field, value.trim());
   };
 
   const handleManualAdd = async () => {

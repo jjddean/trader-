@@ -7,16 +7,16 @@ export const current = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
 
+    const dbUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
     return {
-
-
-      ...(await ctx.db
-        .query("users")
-        .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
-        .unique()),
-      role: identity.role as string | undefined,
+      ...dbUser,
+      // JWT claim takes precedence; fall back to stored role
+      role: (identity.role as string | undefined) ?? dbUser?.role,
     };
-
   },
 });
 
@@ -25,6 +25,7 @@ export const syncUser = mutation({
     name: v.optional(v.string()),
     email: v.string(),
     orgId: v.optional(v.string()),
+    role: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -40,6 +41,7 @@ export const syncUser = mutation({
         name: args.name,
         email: args.email,
         orgId: args.orgId,
+        ...(args.role !== undefined && { role: args.role }),
       });
       return existing._id;
     }
@@ -49,6 +51,7 @@ export const syncUser = mutation({
       name: args.name,
       email: args.email,
       orgId: args.orgId,
+      role: args.role,
     });
   },
 });

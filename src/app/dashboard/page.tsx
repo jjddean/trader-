@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useMemo } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -10,12 +10,10 @@ import { AlertCircle, PoundSterling, FileText, ArrowUpRight, TrendingUp, Archive
 export default function DashboardPage() {
   const { user } = useUser();
   const userId = user?.id || "";
-  const didRebuildRef = useRef(false);
 
   const summary = useQuery(api.declarations.getDashboardSummary);
   const declarationPreviews = useQuery(api.declarations.getDeclarationPreviews);
   const hmrcToken = useQuery(api.hmrc.getToken, userId ? { userId } : "skip");
-  const rebuildMyReadModels = useMutation(api.declarations.rebuildMyReadModels);
   const disconnectHmrc = useMutation(api.hmrc.disconnectToken);
   const stats = useMemo(() => {
     if (!summary) return null;
@@ -41,19 +39,6 @@ export default function DashboardPage() {
       overpayments: [],
     };
   }, [summary, declarationPreviews]);
-
-  useEffect(() => {
-    if (!userId || didRebuildRef.current) return;
-    if (summary === undefined || declarationPreviews === undefined) return;
-    if ((summary?.totalDeclarations || 0) > 0 || declarationPreviews.length > 0) return;
-
-    didRebuildRef.current = true;
-    void rebuildMyReadModels().catch(() => {
-      didRebuildRef.current = false;
-    });
-  }, [userId, summary, declarationPreviews, rebuildMyReadModels]);
-
-
 
   const tokenExpiryText = hmrcToken?.expiresAt
     ? `Expires ${new Date(hmrcToken.expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
@@ -272,23 +257,23 @@ function RecentDeclarations({ declarations }: { declarations: any[] }) {
                   <td className="px-6 py-4 font-mono text-[0.6875rem] text-gray-900 font-semibold">{decl.mrn}</td>
                   <td className="px-6 py-4">
                     {Boolean(decl.mrn && String(decl.mrn).trim().length > 0) && (decl.status === "Cleared" || decl.status === "Accepted") ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[0.625rem] font-semibold text-emerald-700">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
+                        <ShieldCheck className="h-3 w-3" />
                         {decl.status}
                       </span>
                     ) : decl.status === "Rejected" || decl.status === "Action Required" || decl.status === "Invalid" ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[0.625rem] font-semibold text-rose-700">
-                        <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                      <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
+                        <ShieldAlert className="h-3 w-3" />
                         {decl.status === "Invalid" ? "Invalid (DMSINV)" : decl.status}
                       </span>
                     ) : decl.status === "Draft" ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[0.625rem] font-semibold text-slate-700">
-                        <span className="h-1.5 w-1.5 rounded-full bg-slate-500" />
+                      <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
+                        <FileText className="h-3 w-3" />
                         {decl.status}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[0.625rem] font-semibold text-sky-700">
-                        <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
+                      <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700">
+                        <AlertCircle className="h-3 w-3" />
                         {decl.status}
                       </span>
                     )}

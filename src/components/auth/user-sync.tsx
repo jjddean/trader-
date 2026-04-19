@@ -18,6 +18,7 @@ export function UserSync() {
         name: user.fullName ?? undefined,
         email: user.primaryEmailAddress?.emailAddress ?? "",
         orgId: user.organizationMemberships?.[0]?.organization?.id,
+        role: (user.publicMetadata?.role as string | undefined),
       }).catch((err) => {
         console.error("User sync failed:", err);
         hasSynced.current = false; // Allow retry on failure

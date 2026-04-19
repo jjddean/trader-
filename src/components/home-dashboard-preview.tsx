@@ -7,31 +7,33 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  ShieldAlert,
+  AlertCircle,
 } from "lucide-react";
 
 const kpis = [
   {
-    label: "Declarations",
-    value: "184",
-    detail: "14 updated in the last 24h",
+    label: "Total Duty (30d)",
+    value: "£8,420",
+    detail: "Duty assigned across active declarations",
     tone: "neutral",
   },
   {
-    label: "Cleared",
-    value: "91%",
-    detail: "DMSCLE rate across live entries",
+    label: "Import Value",
+    value: "£312k",
+    detail: "Total customs value of goods",
     tone: "success",
   },
   {
-    label: "Flagged",
-    value: "07",
-    detail: "Rejections and audits needing review",
+    label: "Declarations",
+    value: "184",
+    detail: "Total declarations filed",
     tone: "warning",
   },
   {
-    label: "Duty At Risk",
-    value: "GBP 12.4k",
-    detail: "Potential overpayment and reclaim value",
+    label: "Avg. Duty",
+    value: "£45.70",
+    detail: "Average duty per declaration",
     tone: "info",
   },
 ];
@@ -48,8 +50,8 @@ const declarationRows = [
     mrn: "24GB9X41A8CD12058",
     type: "IMD",
     updated: "11 mins ago",
-    status: "Action Required",
-    statusTone: "danger",
+    status: "Submitted",
+    statusTone: "info",
   },
   {
     mrn: "Draft Entry",
@@ -61,22 +63,36 @@ const declarationRows = [
 ];
 
 const chartValues = [44, 76, 58, 92, 66, 84];
-const timelineValues = [22, 58, 41, 77, 36, 69, 48, 84, 44, 72, 39, 66, 28, 63, 34, 79, 52, 74, 45, 70, 57, 82];
 const hsCodeLabels = ["84", "39", "61", "94", "22", "73"];
 
 function StatusPill({ tone, label }: { tone: string; label: string }) {
-  const styles =
-    tone === "success"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-      : tone === "danger"
-        ? "border-rose-200 bg-rose-50 text-rose-700"
-        : "border-slate-200 bg-slate-50 text-slate-700";
-  const dot =
-    tone === "success" ? "bg-emerald-500" : tone === "danger" ? "bg-rose-500" : "bg-slate-500";
-
+  if (tone === "success") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">
+        <ShieldCheck className="h-3 w-3" />
+        {label}
+      </span>
+    );
+  }
+  if (tone === "danger") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-700">
+        <ShieldAlert className="h-3 w-3" />
+        {label}
+      </span>
+    );
+  }
+  if (tone === "info") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+        <AlertCircle className="h-3 w-3" />
+        {label}
+      </span>
+    );
+  }
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${styles}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+    <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-700">
+      <FileText className="h-3 w-3" />
       {label}
     </span>
   );
@@ -86,7 +102,7 @@ export function HomeDashboardPreview() {
   return (
     <div className="relative mx-auto mt-8 max-w-[980px] lg:mt-10">
       <div className="absolute inset-x-12 -top-8 h-32 rounded-full bg-blue-200/25 blur-3xl" />
-      <div className="relative max-h-[620px] overflow-hidden rounded-[22px] border border-[#dbe4f0] bg-white shadow-[0_24px_80px_rgba(15,23,42,0.12)]">
+      <div className="relative max-h-[660px] overflow-hidden rounded-[22px] border border-[#dbe4f0] bg-white shadow-[0_24px_80px_rgba(15,23,42,0.12)]">
         <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-red-300" />
           <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
@@ -97,8 +113,8 @@ export function HomeDashboardPreview() {
         </div>
 
         <div className="grid min-h-[540px] grid-cols-1 lg:grid-cols-[180px_minmax(0,1fr)]">
-          <aside className="hidden border-r border-gray-200 bg-gray-50 lg:flex lg:flex-col">
-            <div className="flex h-12 items-center border-b border-gray-200 px-4">
+          <aside className="hidden border-r border-gray-200 bg-gray-50 lg:flex lg:flex-col h-full">
+            <div className="flex h-12 shrink-0 items-center border-b border-gray-200 px-4">
               <div className="flex items-baseline whitespace-nowrap text-[#020817] leading-none">
                 <span className="text-[16px] font-bold tracking-tight">freight</span>
                 <span className="text-[16px] font-bold tracking-tight text-slate-500">code</span>
@@ -106,7 +122,7 @@ export function HomeDashboardPreview() {
               </div>
             </div>
 
-            <div className="flex flex-1 flex-col px-3 py-2.5">
+            <div className="flex-1 px-3 py-2.5">
               <p className="mb-2 px-2 text-[9px] font-medium uppercase tracking-[0.2em] text-gray-400">
                 Platform
               </p>
@@ -135,27 +151,24 @@ export function HomeDashboardPreview() {
                   </div>
                 </div>
               </nav>
-
-              <div className="mt-auto space-y-0.5 pt-4">
-                <div className="flex items-center gap-2 rounded-md px-2.5 py-1 text-[10px] text-gray-500">
-                  <HelpCircle className="h-3 w-3 text-gray-400" />
-                  <span>User Guide</span>
-                </div>
-                <div className="flex items-center gap-2 rounded-md px-2.5 py-1 text-[10px] text-gray-500">
-                  <Settings className="h-3 w-3 text-gray-400" />
-                  <span>Settings</span>
-                </div>
-              </div>
             </div>
 
-            <div className="border-t border-gray-200 bg-white/70 px-3 py-3">
-              <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#111827] text-[10px] font-semibold text-white">
+            <div className="shrink-0 space-y-0.5 border-t border-gray-200 px-3 py-2">
+              <div className="flex items-center gap-2 rounded-md px-2.5 py-1 text-[10px] text-gray-500">
+                <HelpCircle className="h-3 w-3 text-gray-400" />
+                <span>User Guide</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-md px-2.5 py-1 text-[10px] text-gray-500">
+                <Settings className="h-3 w-3 text-gray-400" />
+                <span>Settings</span>
+              </div>
+              <div className="mt-1.5 flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[10px] font-semibold text-white">
                   JC
                 </div>
-                <div>
-                  <p className="text-[11px] font-medium text-gray-700">Jason Clarke</p>
-                  <p className="text-[9px] text-gray-400">Enterprise</p>
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate text-xs font-normal text-gray-700">James Carter</span>
+                  <span className="text-[10px] text-gray-400">Enterprise</span>
                 </div>
               </div>
             </div>
@@ -249,78 +262,48 @@ export function HomeDashboardPreview() {
                 </div>
 
                 <div className="overflow-hidden rounded-xl border border-[#e9e9e7] bg-white">
-                  <div className="border-b border-gray-200 bg-gray-50/60 px-4 py-2.5">
-                    <h4 className="text-[15px] font-medium text-black">Duty by HS Code</h4>
+                  <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50/60 px-4 py-2.5">
+                    <h4 className="text-[13px] font-medium text-black">Duty by HS Code</h4>
+                    <span className="text-[10px] text-gray-400">Last 30d</span>
                   </div>
-                  <div className="px-4 pb-4 pt-5">
-                    <div className="relative h-[132px] rounded-lg border border-gray-100 bg-gray-50/40 p-3">
-                      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full">
-                        <polyline
-                          fill="none"
-                          stroke="#0f172a"
-                          strokeWidth="2.25"
-                          strokeLinejoin="round"
-                          strokeLinecap="round"
-                          points={chartValues
-                            .map((value, index) => {
-                              const x = (index / (chartValues.length - 1)) * 100;
-                              const y = 100 - (value / 100) * 86 - 7;
-                              return `${x},${y}`;
-                            })
-                            .join(" ")}
-                        />
-                      </svg>
-                    </div>
+                  <div className="p-4">
+                    <svg viewBox="0 0 300 120" preserveAspectRatio="none" className="h-[120px] w-full">
+                      <defs>
+                        <linearGradient id="dutyGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#111827" stopOpacity="0.12" />
+                          <stop offset="100%" stopColor="#111827" stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                      {/* horizontal grid lines */}
+                      <line x1="0" y1="30" x2="300" y2="30" stroke="#f1f5f9" strokeWidth="1" />
+                      <line x1="0" y1="60" x2="300" y2="60" stroke="#f1f5f9" strokeWidth="1" />
+                      <line x1="0" y1="90" x2="300" y2="90" stroke="#f1f5f9" strokeWidth="1" />
+                      {/* fill area */}
+                      <path
+                        d="M0,76 C25,68 50,28 75,44 C100,60 125,12 150,20 C175,28 200,52 225,36 C250,20 275,48 300,32 L300,120 L0,120 Z"
+                        fill="url(#dutyGrad)"
+                      />
+                      {/* line */}
+                      <path
+                        d="M0,76 C25,68 50,28 75,44 C100,60 125,12 150,20 C175,28 200,52 225,36 C250,20 275,48 300,32"
+                        fill="none"
+                        stroke="#111827"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      {/* data points */}
+                      {[
+                        [0,76],[75,44],[150,20],[225,36],[300,32]
+                      ].map(([x,y], i) => (
+                        <circle key={i} cx={x} cy={y} r="3" fill="#111827" />
+                      ))}
+                    </svg>
                     <div className="mt-2 grid grid-cols-6 text-center text-[10px] text-gray-400">
                       {hsCodeLabels.map((label) => (
                         <span key={label}>{label}</span>
                       ))}
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="overflow-hidden rounded-xl border border-[#e9e9e7] bg-white">
-                <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50/60 px-4 py-2.5">
-                  <div>
-                    <h4 className="text-[15px] font-medium text-black">Clearance Activity</h4>
-                    <p className="text-[10px] text-gray-500">Live declaration volume and HMRC response velocity</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[9px] font-medium text-gray-600">Last 30 days</span>
-                    <span className="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[9px] font-medium text-gray-500">7 days</span>
-                  </div>
-                </div>
-                <div className="px-4 pb-4 pt-5">
-                  <div className="relative h-[136px] overflow-hidden rounded-lg border border-gray-100 bg-gray-50/40 px-3 pb-3 pt-4">
-                    <div className="absolute inset-x-0 top-[26%] border-t border-gray-200/70" />
-                    <div className="absolute inset-x-0 top-[54%] border-t border-gray-200/70" />
-                    <div className="absolute inset-x-0 top-[82%] border-t border-gray-200/70" />
-                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full">
-                      <polyline
-                        fill="none"
-                        stroke="#111827"
-                        strokeWidth="1.8"
-                        strokeLinejoin="round"
-                        strokeLinecap="round"
-                        points={timelineValues
-                          .map((value, index) => {
-                            const x = (index / (timelineValues.length - 1)) * 100;
-                            const y = 100 - (Math.max(18, value) / 100) * 82 - 8;
-                            return `${x},${y}`;
-                          })
-                          .join(" ")}
-                      />
-                    </svg>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between text-[10px] text-gray-400">
-                    <span>Apr 6</span>
-                    <span>Apr 18</span>
-                    <span>May 2</span>
-                    <span>May 16</span>
-                    <span>Jun 1</span>
-                    <span>Jun 17</span>
-                    <span>Jun 30</span>
                   </div>
                 </div>
               </div>
