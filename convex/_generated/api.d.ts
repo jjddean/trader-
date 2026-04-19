@@ -17,7 +17,6 @@ import type * as ai from "../ai.js";
 import type * as analytics from "../analytics.js";
 import type * as archive from "../archive.js";
 import type * as audit from "../audit.js";
-import type * as calculator from "../calculator.js";
 import type * as compliance from "../compliance.js";
 import type * as crons from "../crons.js";
 import type * as declarations from "../declarations.js";
@@ -54,7 +53,6 @@ declare const fullApi: ApiFromModules<{
   analytics: typeof analytics;
   archive: typeof archive;
   audit: typeof audit;
-  calculator: typeof calculator;
   compliance: typeof compliance;
   crons: typeof crons;
   declarations: typeof declarations;

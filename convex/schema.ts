@@ -7,6 +7,7 @@ export default defineSchema({
     email: v.optional(v.any()),
     name: v.optional(v.any()),
     orgId: v.optional(v.any()),
+    role: v.optional(v.string()),
   }).index("by_clerk", ["clerkId"]),
 
   subscriptions: defineTable({
@@ -175,6 +176,15 @@ export default defineSchema({
     timestamp: v.optional(v.any()),
     archived: v.optional(v.any()),
   }).index("by_timestamp", ["timestamp"]).index("by_user", ["userId"]),
+  // Pre-computed historical duty/VAT rate map per user.
+  // Rebuilt only when historical_declarations are ingested — prevents getReports and
+  // getFinancialRecords from scanning 2,000 historical rows on every subscription refresh.
+  rate_cache: defineTable({
+    userId: v.string(),
+    rateMap: v.any(), // Record<string, { dutyTotal: number; vatTotal: number; customsTotal: number }>
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
   admin_subscriptions: defineTable({
     service: v.string(),
     plan: v.string(),
