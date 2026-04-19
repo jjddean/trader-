@@ -199,7 +199,7 @@ export function HomeDashboardPreview() {
             </div>
 
             <div className="space-y-4 p-4 md:p-4.5">
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-4 grid-cols-4">
                 {kpis.map((item) => (
                   <div key={item.label} className="rounded-xl border border-[#e9e9e7] bg-white p-4">
                     <div className="mb-2 flex items-center justify-between">
