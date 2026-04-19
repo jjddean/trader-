@@ -96,7 +96,6 @@ export const getWebhooks = query({
     const seen = new Set<string>();
     const results: any[] = [];
 
-    // Always query both — conversationId is the more reliable link post-submission
     if (args.conversationId) {
       const convResults = await ctx.db
         .query("notifications")
@@ -107,7 +106,9 @@ export const getWebhooks = query({
       }
     }
 
-    if (args.mrn && args.mrn !== "UNKNOWN") {
+    // Only query by mrn if conversationId produced nothing — avoids a second index scan when
+    // conversationId is the authoritative link (post-submission normal path).
+    if (args.mrn && args.mrn !== "UNKNOWN" && results.length === 0) {
       const mrnResults = await ctx.db
         .query("notifications")
         .withIndex("by_mrn", (q) => q.eq("mrn", args.mrn!))

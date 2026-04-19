@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 
 const getOwnerId = (doc: unknown): string | null => {
   if (!doc || typeof doc !== "object") return null;
@@ -12,8 +12,19 @@ function parseNumberish(value: unknown) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function isReviewStatus(status: string | undefined) {
-  return status === "Action Required" || status === "Rejected" || status === "Invalid";
+// Applies only a totalValue delta to dashboard_summary — no full rescan needed for item mutations
+// because item changes never affect totalDeclarations or reviewCount.
+async function applyValueDeltaToSummary(ctx: any, userId: string, valueDelta: number) {
+  if (valueDelta === 0) return;
+  const existing = await ctx.db
+    .query("dashboard_summary")
+    .withIndex("by_user", (q: any) => q.eq("userId", userId))
+    .first();
+  if (!existing) return; // not yet bootstrapped; getDashboardSummary fallback will handle it
+  await ctx.db.patch(existing._id, {
+    totalValue: Math.max(0, (existing.totalValue || 0) + valueDelta),
+    updatedAt: Date.now(),
+  });
 }
 
 async function refreshReadModels(ctx: any, declarationId: any) {
@@ -24,7 +35,12 @@ async function refreshReadModels(ctx: any, declarationId: any) {
     .first();
 
   if (!declaration) {
-    if (existingPreview) await ctx.db.delete(existingPreview._id);
+    if (existingPreview) {
+      const userId = existingPreview.userId;
+      const oldValue = existingPreview.totalValue || 0;
+      await ctx.db.delete(existingPreview._id);
+      if (userId) await applyValueDeltaToSummary(ctx, userId, -oldValue);
+    }
     return;
   }
 
@@ -34,17 +50,17 @@ async function refreshReadModels(ctx: any, declarationId: any) {
     .withIndex("by_declaration", (q: any) => q.eq("declarationId", declarationId))
     .take(2000);
 
-  const totalItems = items.length;
   let totalValue = 0;
-  for (const item of items) {
-    totalValue += parseNumberish(item.valueAmount);
-  }
+  for (const item of items) totalValue += parseNumberish(item.valueAmount);
+
+  const oldTotalValue = existingPreview?.totalValue || 0;
+  const valueDelta = totalValue - oldTotalValue;
 
   const nextPreview = {
     declarationId,
     userId: declarationUserId,
     status: String(declaration.status || "Draft"),
-    totalItems,
+    totalItems: items.length,
     totalValue,
     mrn: declaration.mrn ? String(declaration.mrn) : undefined,
     eori: declaration.eori ? String(declaration.eori) : undefined,
@@ -58,37 +74,8 @@ async function refreshReadModels(ctx: any, declarationId: any) {
     await ctx.db.insert("declaration_preview", nextPreview);
   }
 
-  if (!declarationUserId) return;
-
-  const previews = await ctx.db
-    .query("declaration_preview")
-    .withIndex("by_user", (q: any) => q.eq("userId", declarationUserId))
-    .take(5000);
-
-  let reviewCount = 0;
-  let dashboardTotalValue = 0;
-  for (const preview of previews) {
-    if (isReviewStatus(preview.status)) reviewCount += 1;
-    dashboardTotalValue += parseNumberish(preview.totalValue);
-  }
-
-  const existingSummary = await ctx.db
-    .query("dashboard_summary")
-    .withIndex("by_user", (q: any) => q.eq("userId", declarationUserId))
-    .first();
-
-  const summaryPayload = {
-    userId: declarationUserId,
-    totalDeclarations: previews.length,
-    reviewCount,
-    totalValue: dashboardTotalValue,
-    updatedAt: Date.now(),
-  };
-
-  if (existingSummary) {
-    await ctx.db.patch(existingSummary._id, summaryPayload);
-  } else {
-    await ctx.db.insert("dashboard_summary", summaryPayload);
+  if (declarationUserId) {
+    await applyValueDeltaToSummary(ctx, declarationUserId, valueDelta);
   }
 }
 
@@ -100,7 +87,7 @@ export const getItems = query({
 
     const declaration = await ctx.db.get(args.declarationId);
     if (!declaration || getOwnerId(declaration) !== identity.subject) {
-      return []; // Return empty if not owned
+      return [];
     }
 
     return await ctx.db
@@ -233,5 +220,33 @@ export const updateItem = mutation({
       ownerId: identity.subject,
     });
     await refreshReadModels(ctx, existing.declarationId);
+  },
+});
+
+// One-shot backfill: patches ownerId onto legacy goods_items that pre-date the by_owner index.
+// Run once via the Convex dashboard — eliminates the N+1 fallback in getItemsByDeclarationForUser.
+export const backfillItemOwnership = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    // Walk items without ownerId via the by_declaration index (no ownerId filter available).
+    const items = await ctx.db.query("goods_items").take(5000);
+    const toFix = items.filter((item) => !item.ownerId && item.declarationId);
+    if (toFix.length === 0) return { patched: 0 };
+
+    const declIds = [...new Set(toFix.map((i) => i.declarationId))];
+    const decls = await Promise.all(declIds.map((id) => ctx.db.get(id as any)));
+    const ownerById = new Map<string, string>();
+    for (const decl of decls) {
+      if (decl && "userId" in decl) ownerById.set(String(decl._id), String((decl as any).userId));
+    }
+
+    await Promise.all(
+      toFix.map((item) => {
+        const owner = ownerById.get(String(item.declarationId));
+        return owner ? ctx.db.patch(item._id, { ownerId: owner }) : Promise.resolve();
+      }),
+    );
+
+    return { patched: toFix.length };
   },
 });

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 export const processEmailAttachment = internalMutation({
   args: {
@@ -18,15 +19,15 @@ export const processEmailAttachment = internalMutation({
     // Map headers flexibly to handle variations like "Entry Identifier" vs "Entry No"
     const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/"/g, ''));
     
+    const rows: Parameters<typeof ctx.db.insert<"historical_declarations">>[1][] = [];
+    const now = Date.now();
+
     for (let i = 1; i < lines.length; i++) {
-        // Simple comma split (a production parser would handle quoted commas better)
-        const row = lines[i].split(",").map(c => c.trim().replace(/"/g, ''));
-        if (row.length < 2 || row.join("").trim() === "") continue; // skip short/empty rows
-      
-        const record: any = {};
-        headers.forEach((header, idx) => {
-          record[header] = row[idx];
-        });
+      const row = lines[i].split(",").map((c) => c.trim().replace(/"/g, ""));
+      if (row.length < 2 || row.join("").trim() === "") continue;
+
+      const record: Record<string, string> = {};
+      headers.forEach((header, idx) => { record[header] = row[idx]; });
 
       let dutyAmount = 0;
       if (record["duty paid"]) dutyAmount = parseFloat(record["duty paid"]);
@@ -37,9 +38,9 @@ export const processEmailAttachment = internalMutation({
       if (record["customs value"]) customsValue = parseFloat(record["customs value"]);
       else if (record["item customs value"]) customsValue = parseFloat(record["item customs value"]);
 
-      await ctx.db.insert("historical_declarations", {
+      rows.push({
         userId: args.userId,
-        entryIdentifierMrn: record["entry number"] || record["entry identifier"] || `csv_import_${Date.now()}_${i}`,
+        entryIdentifierMrn: record["entry number"] || record["entry identifier"] || `csv_import_${now}_${i}`,
         declarantEori: record["declarant eori"] || record["agent eori"],
         commodityCode: record["commodity code"],
         countryOfOriginCode: record["country of origin"] || record["origin"],
@@ -48,8 +49,11 @@ export const processEmailAttachment = internalMutation({
         taxLineTotalAmount: isNaN(dutyAmount) ? undefined : dutyAmount,
         methodOfPaymentCode: record["mop"] || record["method of payment code"],
         taxType: record["tax type"] || record["tax type code"],
-        createdAt: Date.now()
+        createdAt: now,
       });
     }
+
+    await Promise.all(rows.map((row) => ctx.db.insert("historical_declarations", row)));
+    await ctx.runMutation(internal.declarations.refreshRateCache, { userId: args.userId });
   }
 });

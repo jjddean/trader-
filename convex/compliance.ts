@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { query } from "./_generated/server";
 
 // DCTS Regional Cumulation Groups
 const GROUPS: Record<string, string[]> = {
@@ -181,75 +181,3 @@ export const checkEligibility = query({
   },
 });
 
-export const simulateRoO = mutation({
-  args: {
-    originCountry: v.string(),
-    commodityCode: v.string(),
-    valueUK: v.number(),
-    valueOrigin: v.number(),
-    valueThirdParty: v.number(),
-    materials: v.optional(
-      v.array(
-        v.object({
-          country: v.string(),
-          value: v.number(),
-          description: v.string(),
-        }),
-      ),
-    ),
-  },
-  handler: async (ctx, args) => {
-    const originGroup = getCountryGroup(args.originCountry);
-    let qualifyingMaterialValue = args.valueOrigin + args.valueUK;
-    const cumulationSummary: string[] = [];
-
-    if (args.materials) {
-      for (const material of args.materials) {
-        const materialGroup = getCountryGroup(material.country);
-
-        // Cumulation Rule: If from same group, it counts as originating
-        if (
-          originGroup &&
-          materialGroup === originGroup &&
-          material.country !== args.originCountry
-        ) {
-          qualifyingMaterialValue += material.value;
-          cumulationSummary.push(
-            `${material.description} from ${material.country} (Group Cumulation ✅)`,
-          );
-        } else if (material.country === "UK") {
-          // Explicit UK value added via materials list (if not already in valueUK)
-          qualifyingMaterialValue += material.value;
-        }
-      }
-    }
-
-    const totalValue =
-      args.valueOrigin +
-      args.valueUK +
-      args.valueThirdParty +
-      (args.materials?.reduce((acc, m) => acc + m.value, 0) || 0);
-    const valueAddedPercent = totalValue > 0 ? (qualifyingMaterialValue / totalValue) * 100 : 0;
-
-    const threshold = 30; // 30% local/applied value added requirement for DCTS
-    const isCompliant = valueAddedPercent >= threshold;
-
-    let message = "";
-    if (isCompliant) {
-      message = `Compliant: ${valueAddedPercent.toFixed(1)}% qualifying content exceeds the ${threshold}% threshold.`;
-      if (cumulationSummary.length > 0) {
-        message += ` Benefited from Group Cumulation: ${cumulationSummary.join(", ")}.`;
-      }
-    } else {
-      message = `Non-Compliant: Only ${valueAddedPercent.toFixed(1)}% qualifying content. Minimum ${threshold}% required for DCTS preference.`;
-    }
-
-    return {
-      isCompliant,
-      valueAddedPercent,
-      threshold,
-      message,
-      cumulationApplied: cumulationSummary.length > 0,
-    };
-  },
-});

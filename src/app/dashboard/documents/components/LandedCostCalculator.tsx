@@ -1,12 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { 
-  Calculator, 
-  Loader2 
-} from "lucide-react";
-import { useMutation } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
+import { Calculator } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
@@ -16,26 +11,14 @@ interface LandedCostCalculatorProps {
 }
 
 export function LandedCostCalculator({ isOpen, onOpenChange }: LandedCostCalculatorProps) {
-  const calculateLandedCost = useMutation(api.calculator.calculateLandedCost);
-  const [calcForm, setCalcForm] = useState({ hsCode: "", originCountry: "", itemValue: "", shippingCost: "", dutyRate: "", vatRate: "20" });
-  const [calcResult, setCalcResult] = useState<any | null>(null);
-  const [calculating, setCalculating] = useState(false);
+  const [calcForm, setCalcForm] = useState({ itemValue: "", shippingCost: "", dutyRate: "", vatRate: "20" });
+  const [calcResult, setCalcResult] = useState<{ cifValue: number; dutyAmount: number; vatAmount: number; totalLandedCost: number } | null>(null);
 
-  const handleCalculate = async () => {
-    setCalculating(true);
-    try {
-      const res = await calculateLandedCost({
-        hsCode: "N/A",
-        originCountry: "N/A",
-        itemValue: Number(calcForm.itemValue),
-        shippingCost: Number(calcForm.shippingCost),
-        dutyRate: Number(calcForm.dutyRate),
-        vatRate: Number(calcForm.vatRate),
-      });
-      setCalcResult(res);
-    } finally {
-      setCalculating(false);
-    }
+  const handleCalculate = () => {
+    const cifValue = Number(calcForm.itemValue) + Number(calcForm.shippingCost);
+    const dutyAmount = (cifValue * Number(calcForm.dutyRate)) / 100;
+    const vatAmount = ((cifValue + dutyAmount) * Number(calcForm.vatRate)) / 100;
+    setCalcResult({ cifValue, dutyAmount, vatAmount, totalLandedCost: cifValue + dutyAmount + vatAmount });
   };
 
   return (
@@ -93,15 +76,10 @@ export function LandedCostCalculator({ isOpen, onOpenChange }: LandedCostCalcula
 
           <Button 
             className="h-9 bg-black text-white hover:bg-gray-800 w-full text-xs"
-            disabled={calculating || !calcForm.itemValue}
+            disabled={!calcForm.itemValue}
             onClick={handleCalculate}
           >
-            {calculating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Calculating...
-              </>
-            ) : "Run Calculation"}
+            Run Calculation
           </Button>
 
           {calcResult && (

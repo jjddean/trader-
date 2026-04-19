@@ -234,11 +234,10 @@ export const deleteDocument = mutation({
       if (code) {
         const remainingDocs = await ctx.db
           .query("documents")
-          .withIndex("by_user", (q: any) => q.eq("userId", identity.subject))
-          .take(300);
+          .withIndex("by_declaration", (q: any) => q.eq("declarationId", document.declarationId))
+          .take(50);
         const hasSameCode = remainingDocs.some(
           (doc: any) =>
-            String(doc.declarationId || "") === String(document.declarationId) &&
             (extractDocumentCode(doc.fileName) || extractDocumentCode(doc.fileType)) === code,
         );
         if (!hasSameCode) {
@@ -360,13 +359,15 @@ export const upsertRequirementsForDeclaration = mutation({
     }
 
     const incomingCodes = new Set<string>();
+    const ops: Promise<unknown>[] = [];
+
     for (const requirement of args.requirements) {
       const code = String(requirement.code).toUpperCase();
       incomingCodes.add(code);
       const existingRow = existingByCode.get(code);
 
       if (existingRow) {
-        await ctx.db.patch(existingRow._id, {
+        ops.push(ctx.db.patch(existingRow._id, {
           name: requirement.name,
           type: requirement.type,
           source: requirement.source || "preference_tool",
@@ -374,13 +375,13 @@ export const upsertRequirementsForDeclaration = mutation({
           deReference: requirement.deReference || existingRow.deReference || "DE 2/3",
           hmrcGuidance: requirement.hmrcGuidance || existingRow.hmrcGuidance,
           updatedAt: now,
-        });
+        }));
       } else {
         const hasExistingDoc = declarationDocs.some(
           (doc: any) =>
             (extractDocumentCode(doc.fileName) || extractDocumentCode(doc.fileType)) === code,
         );
-        await ctx.db.insert("document_requirements", {
+        ops.push(ctx.db.insert("document_requirements", {
           declarationId: args.declarationId,
           userId: identity.subject,
           code,
@@ -393,7 +394,7 @@ export const upsertRequirementsForDeclaration = mutation({
           status: hasExistingDoc ? "uploaded" : "missing",
           createdAt: now,
           updatedAt: now,
-        });
+        }));
       }
     }
 
@@ -402,9 +403,11 @@ export const upsertRequirementsForDeclaration = mutation({
     );
     for (const row of existing) {
       if (incomingSources.has(String(row.source || "preference_tool")) && !incomingCodes.has(String(row.code))) {
-        await ctx.db.delete(row._id);
+        ops.push(ctx.db.delete(row._id));
       }
     }
+
+    await Promise.all(ops);
 
     return { success: true, count: args.requirements.length };
   },
@@ -468,14 +471,16 @@ export const getRequirementTelemetry = query({
       .query("declarations")
       .withIndex("by_user", (q: any) => q.eq("userId", identity.subject))
       .take(600);
-    const auditLogs = await ctx.db
-      .query("auditLogs")
-      .withIndex("by_user", (q: any) => q.eq("userId", identity.subject))
-      .take(1500);
-
     const days = 7;
     const dayKeys: string[] = [];
     const now = Date.now();
+    const sevenDaysAgoMs = now - days * 24 * 60 * 60 * 1000;
+
+    const auditLogs = await ctx.db
+      .query("auditLogs")
+      .withIndex("by_user", (q: any) => q.eq("userId", identity.subject))
+      .filter((q: any) => q.gte(q.field("timestamp"), sevenDaysAgoMs))
+      .take(400);
     for (let i = days - 1; i >= 0; i--) {
       dayKeys.push(toDateKeyFromMs(now - i * 24 * 60 * 60 * 1000));
     }
@@ -539,9 +544,7 @@ export const getRequirementTelemetry = query({
       ? declarationsWithBlockingMissing.size / activeDeclarations.length
       : 0;
 
-    const sevenDaysAgoMs = now - 7 * 24 * 60 * 60 * 1000;
     const relevantErrorLogs = auditLogs
-      .filter((row: any) => Number(row.timestamp || 0) >= sevenDaysAgoMs)
       .filter((row: any) => ["doc_action_error", "smart_upload_error"].includes(String(row.action || "")));
 
     const signatureMap = new Map<string, { count: number; lastSeen: number }>();

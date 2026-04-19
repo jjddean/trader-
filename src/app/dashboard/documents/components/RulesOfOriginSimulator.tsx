@@ -1,14 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { 
-  Package, 
-  CheckCircle2, 
-  XCircle, 
-  Loader2 
-} from "lucide-react";
-import { useMutation } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
+import { Package, CheckCircle2, XCircle } from "lucide-react";
+import { simulateRoO, type RoOResult } from "@/lib/rules-of-origin";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,25 +21,17 @@ interface RulesOfOriginSimulatorProps {
 }
 
 export function RulesOfOriginSimulator({ isOpen, onOpenChange }: RulesOfOriginSimulatorProps) {
-  const simulateRoO = useMutation(api.compliance.simulateRoO);
-  const [rooForm, setRooForm] = useState({ originCountry: "", commodityCode: "", valueOrigin: "", valueUK: "", valueThirdParty: "" });
-  const [rooResult, setRooResult] = useState<any | null>(null);
-  const [simulating, setSimulating] = useState(false);
+  const [rooForm, setRooForm] = useState({ originCountry: "", valueOrigin: "", valueUK: "", valueThirdParty: "" });
+  const [rooResult, setRooResult] = useState<RoOResult | null>(null);
 
-  const handleSimulate = async () => {
-    setSimulating(true);
-    try {
-      const res = await simulateRoO({
-        originCountry: rooForm.originCountry,
-        commodityCode: "N/A",
-        valueOrigin: Number(rooForm.valueOrigin),
-        valueUK: Number(rooForm.valueUK),
-        valueThirdParty: Number(rooForm.valueThirdParty),
-      });
-      setRooResult(res);
-    } finally {
-      setSimulating(false);
-    }
+  const handleSimulate = () => {
+    const res = simulateRoO({
+      originCountry: rooForm.originCountry,
+      valueOrigin: Number(rooForm.valueOrigin),
+      valueUK: Number(rooForm.valueUK),
+      valueThirdParty: Number(rooForm.valueThirdParty),
+    });
+    setRooResult(res);
   };
 
   return (
@@ -113,15 +99,10 @@ export function RulesOfOriginSimulator({ isOpen, onOpenChange }: RulesOfOriginSi
 
           <Button 
             className="h-9 bg-black text-white hover:bg-gray-800 w-full text-xs"
-            disabled={simulating || !rooForm.originCountry}
+            disabled={!rooForm.originCountry}
             onClick={handleSimulate}
           >
-            {simulating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Simulating...
-              </>
-            ) : "Simulate Origin Eligibility"}
+            Simulate Origin Eligibility
           </Button>
 
           {rooResult && (

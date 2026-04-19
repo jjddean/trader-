@@ -51,9 +51,7 @@ export const getOldLogs = query({
 export const markArchived = internalMutation({
   args: { logIds: v.array(v.id("auditLogs")) },
   handler: async (ctx, args) => {
-    for (const id of args.logIds) {
-      await ctx.db.patch(id, { archived: true });
-    }
+    await Promise.all(args.logIds.map((id) => ctx.db.patch(id, { archived: true })));
   }
 });
 

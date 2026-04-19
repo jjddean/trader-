@@ -112,12 +112,11 @@ export const seedSubscriptions = mutation({
       { service: "Ollama / Ngrok", plan: "Self-hosted", status: "active", loginUrl: "https://dashboard.ngrok.com/", nextRenewal: now + thirtyDays, notes: "Local AI Orchestration" },
     ];
 
-    for (const service of initialServices) {
-      await ctx.db.insert("admin_subscriptions", {
-        ...service,
-        lastChecked: now,
-      });
-    }
+    await Promise.all(
+      initialServices.map((service) =>
+        ctx.db.insert("admin_subscriptions", { ...service, lastChecked: now }),
+      ),
+    );
 
     return "Seeded " + initialServices.length + " services";
   },

@@ -84,14 +84,14 @@ export function LandingPageContent() {
               </span>
             </div>
 
-            <h1 className="mb-3 text-4xl font-bold tracking-tight leading-snug text-[#020817]">
-              Complete CDS visibility.
+            <h1 className="mb-3 text-[34px] md:text-[44px] font-bold tracking-tight leading-[1.1] text-[#020817]">
+              Full control of your customs
               <br />
-              Seamless customs clearance.
+              declarations, duties, and compliance.
             </h1>
 
-            <p className="mx-auto mb-6 max-w-[760px] text-[15px] leading-[24px] text-slate-700 md:text-[16px]">
-              Automate your customs declarations, reduce manual work, avoid costly errors, and ensure you never overpay duties.
+            <p className="mx-auto mb-6 max-w-[760px] text-[18px] leading-[1.6] text-slate-600">
+              Automate declarations, recover overpaid duties, and stay ahead of HMRC compliance changes — from one connected platform.
             </p>
 
             <div id="waitlist-form" className="flex flex-col items-center justify-center gap-[16px] sm:flex-row">
@@ -103,7 +103,10 @@ export function LandingPageContent() {
                   Open Dashboard <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Link>
               ) : (
-                <WaitlistForm />
+                <>
+                  <WaitlistForm />
+                  <p className="text-[12px] text-slate-400">Free during beta. No credit card required.</p>
+                </>
               )}
             </div>
           </div>
@@ -114,11 +117,33 @@ export function LandingPageContent() {
             <HomeDashboardPreview />
             <div className="mx-auto mt-36 max-w-[900px]">
               <h2 className="text-[34px] leading-[1.06] font-bold tracking-tight text-[#020817] md:text-[44px]">
-                Full visibility and control over your customs declarations.
+                Recover Duty. Reduce Risk. Strengthen Audit Position.
               </h2>
-              <p className="mx-auto mt-4 max-w-[760px] text-[16px] leading-[1.65] text-slate-600 md:text-[17px]">
-                Track live HMRC statuses, recent declarations, and compliance signals from one shared operational view.
+              <p className="mx-auto mt-4 max-w-[760px] text-[18px] leading-[1.6] text-slate-600">
+                Identify overpaid duties, reclaim eligible amounts, and maintain a continuous audit-ready record across all shipments — fully aligned with ongoing HMRC compliance enforcement cycles.
               </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Stats + Audience Strip */}
+        <section className="border-y border-gray-100 bg-gray-50/50 py-28">
+          <div className="mx-auto max-w-[1280px] px-[24px]">
+            <div className="flex flex-col items-center justify-center gap-6 sm:flex-row sm:gap-16">
+              <div className="text-center">
+                <p className="text-[24px] font-bold tracking-tight text-[#020817]">£4.8bn</p>
+                <p className="mt-1 text-[13px] text-slate-500">UK customs duty paid annually</p>
+              </div>
+              <div className="hidden h-8 w-px bg-gray-200 sm:block" />
+              <div className="text-center">
+                <p className="text-[24px] font-bold tracking-tight text-[#020817]">3 years</p>
+                <p className="mt-1 text-[13px] text-slate-500">HMRC window to reclaim overpaid duty</p>
+              </div>
+              <div className="hidden h-8 w-px bg-gray-200 sm:block" />
+              <div className="text-center">
+                <p className="text-[24px] font-bold tracking-tight text-[#020817]">28 Mar 2026</p>
+                <p className="mt-1 text-[13px] text-slate-500">CDS 5.1.0 enforcement live</p>
+              </div>
             </div>
           </div>
         </section>
@@ -130,8 +155,8 @@ export function LandingPageContent() {
               <h2 className="mb-4 text-[36px] font-bold tracking-tight text-[#020817] md:text-[42px]">
                 How It Works
               </h2>
-              <p className="mx-auto max-w-2xl text-[20px] text-slate-600">
-                A simple three-step process to optimize your UK customs strategy and ensure total compliance.
+              <p className="mx-auto max-w-2xl text-[18px] leading-[1.6] text-slate-600">
+                Three steps from raw HMRC data to recovered duty and full compliance — continuously mapped to upcoming CDS changes through 2026.
               </p>
             </div>
 
@@ -177,10 +202,10 @@ export function LandingPageContent() {
           <div className="mx-auto max-w-[1280px] px-[24px]">
             <div className="mb-[64px] text-center">
               <h2 className="mb-4 text-[36px] font-bold tracking-tight text-[#020817] md:text-[42px]">
-                Core Capabilities
+                Everything You Need to Stop Overpaying.
               </h2>
-              <p className="mx-auto max-w-2xl text-[20px] text-slate-600">
-                Transform your HMRC data into actionable intelligence. We provide end-to-end oversight of your UK customs obligations.
+              <p className="mx-auto max-w-2xl text-[18px] leading-[1.6] text-slate-600">
+                From declaration automation to duty reclaims — freightcode covers the full customs compliance stack, aligned with current CDS audit standards and enforcement rules.
               </p>
             </div>
 
@@ -237,19 +262,21 @@ export function LandingPageContent() {
         <section id="tre-analysis" className="py-[96px] bg-white">
           <div className="mx-auto max-w-[1280px] px-[24px]">
             <div className="mb-[64px] text-center">
-              <h2 className="mb-4 text-[36px] font-bold tracking-tight text-[#020817] md:text-[42px]">
-                Automated TRE Data Analysis
+              <h2 className="mb-4 text-[36px] font-bold tracking-tight leading-[1.15] text-[#020817] md:text-[42px]">
+                Turn Your HMRC TRE Data Into Commercial
+                <br />
+                Intelligence
               </h2>
-              <p className="mx-auto max-w-2xl text-[20px] text-slate-600">
-                We turn raw HMRC Trade Reporting and Extracting (TRE) exports into actionable compliance audits and immediate duty savings.
+              <p className="mx-auto max-w-2xl text-[18px] leading-[1.6] text-slate-600">
+                HMRC&apos;s Trade Reporting and Extracting (TRE) service became the sole route to your MSS/CDS declaration data from 31 March 2026 — replacing costly third-party report contracts. We connect directly to TRE via Government Gateway and transform your raw declaration data into duty recovery insights, compliance scoring, and full financial visibility.
               </p>
             </div>
 
             <div className="grid gap-[32px] md:grid-cols-3">
               {/* Pillar 1 */}
               <div className="rounded-2xl border border-[#e9e9e7] bg-gray-50/50 p-8 transition-all hover:bg-white hover:shadow-lg">
-                <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-600 text-white shadow-[0_4px_12px_rgba(37,99,235,0.25)]">
-                  <ArrowRight className="h-6 w-6" />
+                <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-md bg-[#111827] text-white">
+                  <ArrowRight className="h-4 w-4" />
                 </div>
                 <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Automated Ingestion</h3>
                 <p className="text-[15px] leading-[1.6] text-slate-600">
@@ -259,8 +286,8 @@ export function LandingPageContent() {
 
               {/* Pillar 2 */}
               <div className="rounded-2xl border border-[#e9e9e7] bg-gray-50/50 p-8 transition-all hover:bg-white hover:shadow-lg">
-                <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-lg bg-green-600 text-white shadow-[0_4px_12px_rgba(22,163,74,0.25)]">
-                  <ArrowRight className="h-6 w-6" />
+                <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-md bg-[#111827] text-white">
+                  <ArrowRight className="h-4 w-4" />
                 </div>
                 <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Instant Reclaims</h3>
                 <p className="text-[15px] leading-[1.6] text-slate-600">
@@ -270,12 +297,12 @@ export function LandingPageContent() {
 
               {/* Pillar 3 */}
               <div className="rounded-2xl border border-[#e9e9e7] bg-gray-50/50 p-8 transition-all hover:bg-white hover:shadow-lg">
-                <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-lg bg-purple-600 text-white shadow-[0_4px_12px_rgba(147,51,234,0.25)]">
-                  <ArrowRight className="h-6 w-6" />
+                <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-md bg-[#111827] text-white">
+                  <ArrowRight className="h-4 w-4" />
                 </div>
-                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Broker Audit</h3>
+                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Overpayment Detection</h3>
                 <p className="text-[15px] leading-[1.6] text-slate-600">
-                  Finally gain full visibility into agent performance. Monitor clearance accuracy and compliance health scores across all your UK ports.
+                  Every TRE record is automatically scanned against current tariff rates and trade agreements — flagging exactly where you paid more duty than required and how much you can reclaim.
                 </p>
               </div>
             </div>
@@ -322,7 +349,7 @@ export function LandingPageContent() {
               <h2 className="mb-4 text-[36px] font-bold tracking-tight text-[#020817] md:text-[42px]">
                 Knowledge Hub
               </h2>
-              <p className="mx-auto max-w-2xl text-[20px] text-slate-600">
+              <p className="mx-auto max-w-2xl text-[18px] leading-[1.6] text-slate-600">
                 Master the complexities of the UK Customs Declaration Service with our comprehensive AI-enhanced guides.
               </p>
             </div>

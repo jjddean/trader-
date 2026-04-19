@@ -18,11 +18,22 @@ function parseNumberish(value: any) {
 }
 
 async function getHistoricalRateMap(ctx: any, userId: string) {
+  const cached = await ctx.db
+    .query("rate_cache")
+    .withIndex("by_user", (q: any) => q.eq("userId", userId))
+    .first();
+  if (cached) return cached.rateMap as Record<string, { dutyTotal: number; vatTotal: number; customsTotal: number }>;
+
+  // Cold path — no cache yet (before first ingest). Build from raw rows.
   const rows = await ctx.db
     .query("historical_declarations")
     .withIndex("by_user", (q: any) => q.eq("userId", userId))
     .take(2000);
 
+  return buildRateMap(rows);
+}
+
+function buildRateMap(rows: any[]) {
   const rateMap: Record<string, { dutyTotal: number; vatTotal: number; customsTotal: number }> = {};
   for (const row of rows) {
     const commodityCode = String(row.commodityCode || "");
@@ -202,17 +213,14 @@ async function upsertDeclarationPreviewByDeclaration(ctx: any, declarationId: an
     .withIndex("by_declaration", (q: any) => q.eq("declarationId", declarationId))
     .take(2000);
 
-  const totalItems = items.length;
   let totalValue = 0;
-  for (const item of items) {
-    totalValue += parseNumberish(item.valueAmount);
-  }
+  for (const item of items) totalValue += parseNumberish(item.valueAmount);
 
   const nextPreview = {
     declarationId,
     userId: declarationUserId,
     status: String(declaration.status || "Draft"),
-    totalItems,
+    totalItems: items.length,
     totalValue,
     mrn: declaration.mrn ? String(declaration.mrn) : undefined,
     eori: declaration.eori ? String(declaration.eori) : undefined,
@@ -220,14 +228,39 @@ async function upsertDeclarationPreviewByDeclaration(ctx: any, declarationId: an
     lastUpdated: Date.now(),
   };
 
+  const isNew = !existingPreview;
   if (existingPreview) {
     await ctx.db.patch(existingPreview._id, nextPreview);
   } else {
     await ctx.db.insert("declaration_preview", nextPreview);
   }
 
-  if (declarationUserId) {
+  if (!declarationUserId) return;
+
+  const summary = await ctx.db
+    .query("dashboard_summary")
+    .withIndex("by_user", (q: any) => q.eq("userId", declarationUserId))
+    .first();
+
+  if (!summary) {
+    // Bootstrap on first write — full scan runs once per user, never again on hot paths.
     await recomputeDashboardSummaryByUser(ctx, declarationUserId);
+    return;
+  }
+
+  const countDelta = isNew ? 1 : 0;
+  const oldReview = isReviewStatus(existingPreview?.status);
+  const newReview = isReviewStatus(nextPreview.status);
+  const reviewDelta = (newReview ? 1 : 0) - (oldReview ? 1 : 0);
+  const valueDelta = totalValue - (existingPreview?.totalValue || 0);
+
+  if (countDelta !== 0 || reviewDelta !== 0 || valueDelta !== 0) {
+    await ctx.db.patch(summary._id, {
+      totalDeclarations: Math.max(0, (summary.totalDeclarations || 0) + countDelta),
+      reviewCount: Math.max(0, (summary.reviewCount || 0) + reviewDelta),
+      totalValue: Math.max(0, (summary.totalValue || 0) + valueDelta),
+      updatedAt: Date.now(),
+    });
   }
 }
 
@@ -242,6 +275,26 @@ export const upsertDeclarationPreview = internalMutation({
   args: { declarationId: v.id("declarations") },
   handler: async (ctx, args) => {
     await upsertDeclarationPreviewByDeclaration(ctx, args.declarationId);
+  },
+});
+
+export const refreshRateCache = internalMutation({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query("historical_declarations")
+      .withIndex("by_user", (q: any) => q.eq("userId", args.userId))
+      .take(2000);
+    const rateMap = buildRateMap(rows);
+    const existing = await ctx.db
+      .query("rate_cache")
+      .withIndex("by_user", (q: any) => q.eq("userId", args.userId))
+      .first();
+    if (existing) {
+      await ctx.db.patch(existing._id, { rateMap, updatedAt: Date.now() });
+    } else {
+      await ctx.db.insert("rate_cache", { userId: args.userId, rateMap, updatedAt: Date.now() });
+    }
   },
 });
 
@@ -386,25 +439,38 @@ export const deleteDeclaration = mutation({
       throw new Error("Unauthorized: You do not own this declaration.");
     }
 
-    // 1. Delete associated goods items
-    const items = await ctx.db
-      .query("goods_items")
-      .withIndex("by_declaration", (q) => q.eq("declarationId", args.id))
-      .take(1000);
-    for (const item of items) {
-      await ctx.db.delete(item._id);
-    }
-    // 2. Delete the declaration itself
-    await ctx.db.delete(args.id);
-
+    // Read preview before deletion to capture delta values
     const existingPreview = await ctx.db
       .query("declaration_preview")
       .withIndex("by_declarationId", (q) => q.eq("declarationId", args.id))
       .first();
-    if (existingPreview) {
-      await ctx.db.delete(existingPreview._id);
+
+    // Delete associated goods items in parallel
+    const items = await ctx.db
+      .query("goods_items")
+      .withIndex("by_declaration", (q) => q.eq("declarationId", args.id))
+      .take(1000);
+    await Promise.all(items.map((item) => ctx.db.delete(item._id)));
+
+    await ctx.db.delete(args.id);
+    if (existingPreview) await ctx.db.delete(existingPreview._id);
+
+    // Apply delta to dashboard_summary instead of full rescan
+    const summary = await ctx.db
+      .query("dashboard_summary")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .first();
+
+    if (summary) {
+      const reviewDelta = isReviewStatus(existingPreview?.status) ? -1 : 0;
+      const valueDelta = -(existingPreview?.totalValue || 0);
+      await ctx.db.patch(summary._id, {
+        totalDeclarations: Math.max(0, (summary.totalDeclarations || 0) - 1),
+        reviewCount: Math.max(0, (summary.reviewCount || 0) + reviewDelta),
+        totalValue: Math.max(0, (summary.totalValue || 0) + valueDelta),
+        updatedAt: Date.now(),
+      });
     }
-    await recomputeDashboardSummaryByUser(ctx, identity.subject);
   },
 });
 
@@ -580,7 +646,7 @@ export const getDashboardSummary = query({
       totalDeclarations: declarations.length,
       reviewCount,
       totalValue: 0,
-      updatedAt: Date.now(),
+      updatedAt: 0,
     };
   },
 });
@@ -616,7 +682,7 @@ export const getDeclarationPreviews = query({
       mrn: declaration.mrn ? String(declaration.mrn) : undefined,
       eori: declaration.eori ? String(declaration.eori) : undefined,
       declarationType: declaration.declarationType ? String(declaration.declarationType) : undefined,
-      lastUpdated: Number(declaration.lastUpdated || declaration.created || declaration._creationTime || Date.now()),
+      lastUpdated: Number(declaration.lastUpdated || declaration.created || declaration._creationTime || 0),
     }));
   },
 });
@@ -632,102 +698,13 @@ export const rebuildMyReadModels = mutation({
       .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .take(5000);
 
-    for (const declaration of declarations) {
-      await upsertDeclarationPreviewByDeclaration(ctx, declaration._id);
-    }
+    await Promise.all(declarations.map((d) => upsertDeclarationPreviewByDeclaration(ctx, d._id)));
 
     await recomputeDashboardSummaryByUser(ctx, identity.subject);
 
     return {
       declarationCount: declarations.length,
       rebuiltAt: Date.now(),
-    };
-  },
-});
-
-export const getDashboardStats = query({
-  args: { userId: v.optional(v.string()) }, // userId is now optional and ignored in favor of identity
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
-
-    const decls = await ctx.db
-      .query("declarations")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
-      .order("desc")
-      .take(120);
-
-    let totalDuty = 0;
-    let importValue = 0;
-    const historicalRates = await getHistoricalRateMap(ctx, identity.subject);
-    
-    const hsCodeDutyMap: Record<string, number> = {};
-    const recentDeclarations = [];
-    const overpayments: Array<{ title: string; subtitle: string; amount: number }> = [];
-
-    const declarationIds = decls.map((decl) => String(decl._id));
-    const itemsByDeclaration = await getItemsByDeclarationForUser(ctx, identity.subject, declarationIds);
-
-    for (const decl of decls) {
-      const items = itemsByDeclaration.get(String(decl._id)) || [];
-
-      let declValue = 0;
-      let declDuty = 0;
-      let declOverpayment = 0;
-
-      for (const item of items) {
-        const val = item.valueAmount || 0;
-        const { dutyRate } = resolveRates(item, historicalRates);
-        const duty = val * dutyRate;
-        const baselineDuty = val * (hsDutyRateByPrefix[String(item?.commodityCode || "").substring(0, 2)] ?? 0.06);
-        declOverpayment += Math.max(0, baselineDuty - duty);
-        
-        declValue += val;
-        declDuty += duty;
-        totalDuty += duty;
-        importValue += val;
-
-        if (item.commodityCode) {
-          const code = item.commodityCode.substring(0, 4);
-          hsCodeDutyMap[code] = (hsCodeDutyMap[code] || 0) + duty;
-        }
-      }
-
-      if (declOverpayment > 0) {
-        overpayments.push({
-          title: `Potential preference relief (${decl.mrn || "Draft"})`,
-          subtitle: `${items.length} item${items.length === 1 ? "" : "s"} affected`,
-          amount: Number(declOverpayment.toFixed(2)),
-        });
-      }
-
-      if (recentDeclarations.length < 7) {
-        recentDeclarations.push({
-          id: decl._id,
-          date: new Date(decl.created || Date.now()).toLocaleDateString("en-GB", { day: 'numeric', month: 'short' }),
-          mrn: decl.mrn || "Draft",
-          status: decl.status || "Draft",
-          value: declValue,
-          duty: declDuty,
-        });
-      }
-    }
-
-    const chartData = Object.entries(hsCodeDutyMap)
-      .map(([code, duty]) => ({ code, duty }))
-      .sort((a, b) => b.duty - a.duty)
-      .slice(0, 6);
-
-    return {
-      kpis: {
-        totalDuty,
-        importValue,
-        declarationsCount: decls.length,
-        avgDuty: decls.length > 0 ? totalDuty / decls.length : 0,
-      },
-      chartData,
-      recentDeclarations,
-      overpayments: overpayments.sort((a, b) => b.amount - a.amount).slice(0, 5),
     };
   },
 });
