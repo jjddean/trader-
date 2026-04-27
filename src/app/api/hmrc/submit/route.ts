@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
-import { mapToCDS_H1, validateCdsFields } from "../../../../lib/wco-mapper";
+import { mapToCDS_H1, validateCdsFields, validateCdsCodeLists } from "../../../../lib/wco-mapper";
 import { xmlEscape } from "../../../../lib/xml-utils";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
+import { evaluateRules, activeEffects, summarizeFailures, type RuleDefinition, type ScenarioInput } from "../../../../../convex/lib/rule_engine";
 
 // Confirmed required set for WEB_APP_VIA_SERVER (HMRC Fraud Prevention v3.3, Jan 2025)
 // Gov-Client-Local-IPs is NOT in this list — it is not required for WEB_APP_VIA_SERVER
@@ -27,17 +28,21 @@ function validateClientFraudHeaders(headers: Headers) {
   };
 }
 
-function validateXmlPreflight(xmlPayload: string, eori: string) {
-  const checks = {
+function validateXmlPreflight(xmlPayload: string, eori: string, opts: { requireAdditionalDocument?: boolean } = {}) {
+  const requireAdditionalDocument = opts.requireAdditionalDocument !== false;
+  const checks: Record<string, boolean> = {
     has_metadata: xmlPayload.includes("<MetaData"),
     has_declaration: xmlPayload.includes("<Declaration"),
     has_function_code: xmlPayload.includes("<FunctionCode>9</FunctionCode>"),
     has_type_code: /<TypeCode>(IM[A-Z]|EX[A-Z])<\/TypeCode>/.test(xmlPayload),
     has_declarant_id: xmlPayload.includes(`<ID>${eori}</ID>`),
     has_goods_shipment: xmlPayload.includes("<GoodsShipment>"),
-    has_additional_document: xmlPayload.includes("<AdditionalDocument>"),
+    has_previous_document: xmlPayload.includes("<PreviousDocument>"),
     no_y922: !xmlPayload.includes("<TypeCode>922</TypeCode>"),
   };
+  if (requireAdditionalDocument) {
+    checks.has_additional_document = xmlPayload.includes("<AdditionalDocument>");
+  }
   const failed = Object.entries(checks)
     .filter(([, ok]) => !ok)
     .map(([key]) => key);
@@ -67,7 +72,7 @@ export async function POST(request: Request) {
     convex.setAuth(convexToken);
 
     const body = await request.json();
-    const { declarationId, eori: providedEori, dryRunOnly } = body;
+    const { declarationId, eori: providedEori, dryRunOnly, omitAdditionalDocuments } = body;
     if (!declarationId) {
       return NextResponse.json({ error: "Missing declarationId" }, { status: 400 });
     }
@@ -158,9 +163,70 @@ export async function POST(request: Request) {
       });
     }
 
+    // Rule engine runs BEFORE mapping so its forbidden-document list can
+    // shape the emitted XML. Pure JS — safe to run before the auth/network
+    // sections complete.
+    let ruleResults: ReturnType<typeof evaluateRules> = [];
+    let forbiddenDocCodes: string[] = [];
+    const scenarioInput: ScenarioInput = {
+      declaration: {
+        declarationType: lane.declarationType,
+        route: lane.route,
+        dispatchCountry: lane.dispatchCountry,
+        transportMode: (lane as Record<string, unknown>).transportMode as string | undefined,
+        transportId: (lane as Record<string, unknown>).transportId as string | undefined,
+        transportIdType: (lane as Record<string, unknown>).transportIdType as string | undefined,
+        valuationMethod: (lane as Record<string, unknown>).valuationMethod as string | undefined,
+        mode: (lane as Record<string, unknown>).mode as string | undefined,
+        invoiceTotal: (lane as Record<string, unknown>).invoiceTotal as number | string | undefined,
+      },
+      items: items.map((i: any) => ({
+        commodityCode: i.commodityCode,
+        originCountry: i.originCountry,
+        procedureCode: i.procedureCode,
+        additionalProcedureCode: i.additionalProcedureCode,
+        valuationMethod: i.valuationMethod,
+        preferenceCode: i.preferenceCode,
+        additionalDocuments: Array.isArray(i.additionalDocuments) ? i.additionalDocuments : [],
+      })),
+    };
+    try {
+      const enabledRules = (await convex.query(api.rule_definitions.listEnabled, {})) as unknown as RuleDefinition[];
+      ruleResults = evaluateRules(enabledRules, scenarioInput);
+      const merged = activeEffects(enabledRules, scenarioInput);
+      forbiddenDocCodes = (merged.forbiddenDocuments || []).map((d) => d.code);
+    } catch (ruleErr: any) {
+      console.error("Rule engine evaluation failed:", ruleErr?.message || ruleErr);
+    }
+    const blockingFailures = ruleResults.filter((r) => r.status === "fail" && r.severity === "blocking");
+    const advisoryFailures = ruleResults.filter((r) => r.status === "fail" && r.severity === "advisory");
+    if (blockingFailures.length > 0 && dryRunOnly !== true) {
+      // Block live submissions on rule failures. Dry runs proceed so the user
+      // can see exactly which rules fired without losing the rest of the
+      // preflight payload.
+      return NextResponse.json(
+        {
+          error: "Rule engine blocked submission",
+          blockingFailures: blockingFailures.map((r) => ({
+            ruleId: r.ruleId,
+            ruleName: r.ruleName,
+            field: r.field,
+            reason: r.reason,
+          })),
+          advisoryFailures: advisoryFailures.map((r) => ({
+            ruleId: r.ruleId,
+            ruleName: r.ruleName,
+            field: r.field,
+            reason: r.reason,
+          })),
+        },
+        { status: 400 },
+      );
+    }
+
     let payloadInfo;
     try {
-      payloadInfo = mapToCDS_H1(lane, items);
+      payloadInfo = mapToCDS_H1(lane, items, { omitAdditionalDocuments, forbiddenDocCodes });
     } catch (mappingError: any) {
       return NextResponse.json(
         {
@@ -181,6 +247,30 @@ export async function POST(request: Request) {
       );
     }
 
+    // Code-list validation against the seeded HMRC datasets. If the
+    // cds_code_lists table is empty (seed not run yet) the lookup returns
+    // every value as missing — degrade gracefully by treating an empty list
+    // as "validation skipped" rather than blocking every submission.
+    const codeListErrors = await validateCdsCodeLists(payloadInfo, items, async (listName, values) => {
+      try {
+        const result = await convex.query(api.cds_codes.validateCodes, { listName, values });
+        const seeded = await convex.query(api.cds_codes.listCodes, { listName, limit: 1 });
+        if (!seeded || seeded.length === 0) return [];
+        return result?.missing ?? [];
+      } catch {
+        return [];
+      }
+    });
+    if (codeListErrors.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Code-list validation failed",
+          fields: codeListErrors,
+        },
+        { status: 400 },
+      );
+    }
+
     // Convert the JSON payload into the required HMRC XML Envelope
     const d = payloadInfo.Declaration;
     const gs = d.GoodsShipment;
@@ -193,17 +283,72 @@ export async function POST(request: Request) {
       ? `\n    <Exporter>\n      <ID>${xmlEscape(exporterEori)}</ID>\n    </Exporter>`
       : "";
 
+
     // WCO DEC-DMS 2 xs:sequence — Declaration element order:
     //   FunctionCode → FunctionalReferenceID → TypeCode → GoodsItemQuantity →
     //   DeclarationOfficeID → InvoiceAmount → TotalGrossMassMeasure → TotalPackageQuantity →
     //   Declarant → Exporter → GoodsShipment
     //
-    // GoodsShipment xs:sequence order (WCO DEC-DMS 2 / HMRC CDS profile):
-    //   UCR → Consignment → Destination → ExportCountry → Importer →
-    //   TradeTerms → GovernmentAgencyGoodsItem[]
-    // Source: documentation/HMRC/TDR_Integration_Reference.md §6
+    // GoodsShipment xs:sequence is ALPHABETICAL (WCO DEC-DMS 2):
+    //   Consignment → Destination → ExportCountry → GovernmentAgencyGoodsItem[] →
+    //   Importer → PreviousDocument[] → TradeTerms → UCR
+    // Getting this order wrong => "Invalid content was found starting with element X.
+    // One of Warehouse is expected" from the CDS schema validator.
     // Warehouse is NOT included — it is a dependent (D) field, only required for customs
     // warehouse procedures. CPC 4000 (release to free circulation) does not use a warehouse.
+    const previousDocs = Array.isArray(gs.PreviousDocument) ? gs.PreviousDocument : [];
+    const previousDocumentXml = previousDocs.map((pd: any) => `
+      <PreviousDocument>
+        <CategoryCode>${xmlEscape(pd.CategoryCode || "")}</CategoryCode>
+        <ID>${xmlEscape(pd.ID || "")}</ID>
+        <TypeCode>${xmlEscape(pd.TypeCode || "")}</TypeCode>${pd.LineNumeric ? `\n        <LineNumeric>${xmlEscape(pd.LineNumeric)}</LineNumeric>` : ""}
+      </PreviousDocument>`).join("");
+
+    // DE 7/14 + 7/15 — BorderTransportMeans at Declaration level. Full
+    // triplet (ID + IdentificationTypeCode + ModeCode) — ModeCode-only fails
+    // CDS12073. Pairs with Consignment.ArrivalTransportMeans (R123).
+    const btm = d.BorderTransportMeans || {};
+    const borderTransportMeansXml = btm.ID
+      ? `
+    <BorderTransportMeans>
+      <ID>${xmlEscape(btm.ID)}</ID>
+      <IdentificationTypeCode>${xmlEscape(btm.IdentificationTypeCode || "")}</IdentificationTypeCode>
+      <ModeCode>${xmlEscape(btm.ModeCode || "")}</ModeCode>
+    </BorderTransportMeans>`
+      : "";
+
+    // DE 7/9 — ArrivalTransportMeans inside Consignment. Mirrors BTM (R123
+    // requires matching identity at both layers).
+    const atm = gs.Consignment?.ArrivalTransportMeans || {};
+    const arrivalTransportMeansXml = atm.ID
+      ? `
+        <ArrivalTransportMeans>
+          <ID>${xmlEscape(atm.ID)}</ID>
+          <IdentificationTypeCode>${xmlEscape(atm.IdentificationTypeCode || "")}</IdentificationTypeCode>
+          <ModeCode>${xmlEscape(atm.ModeCode || "")}</ModeCode>
+        </ArrivalTransportMeans>`
+      : "";
+
+    // DE 3/24 / 3/1 — Buyer / Seller. Country code only (no fake names).
+    // WCO Address complex type: CountryCode is the relevant child.
+    const buyer = gs.Buyer || {};
+    const buyerXml = buyer.AddressCountryCode
+      ? `
+      <Buyer>
+        <Address>
+          <CountryCode>${xmlEscape(buyer.AddressCountryCode)}</CountryCode>
+        </Address>
+      </Buyer>`
+      : "";
+    const seller = gs.Seller || {};
+    const sellerXml = seller.AddressCountryCode
+      ? `
+      <Seller>
+        <Address>
+          <CountryCode>${xmlEscape(seller.AddressCountryCode)}</CountryCode>
+        </Address>
+      </Seller>`
+      : "";
     const xmlPayload = `<?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
   <WCODataModelVersionCode>3.6</WCODataModelVersionCode>
@@ -219,23 +364,14 @@ export async function POST(request: Request) {
     <DeclarationOfficeID>${xmlEscape(d.DeclarationOfficeID)}</DeclarationOfficeID>
     <InvoiceAmount currencyID="${xmlEscape(d.InvoiceAmount.currencyID)}">${xmlEscape(d.InvoiceAmount.value)}</InvoiceAmount>
     <TotalGrossMassMeasure unitCode="KGM">${xmlEscape(d.TotalGrossMassMeasure)}</TotalGrossMassMeasure>
-    <TotalPackageQuantity>${xmlEscape(d.TotalPackageQuantity)}</TotalPackageQuantity>
+    <TotalPackageQuantity>${xmlEscape(d.TotalPackageQuantity)}</TotalPackageQuantity>${borderTransportMeansXml}
     <Declarant>
       <ID>${xmlEscape(d.Declarant.ID)}</ID>
     </Declarant>${exporterXml}
-    <GoodsShipment>
-      <UCR>
-        <TraderAssignedReferenceID>${xmlEscape(d.UCR.TraderAssignedReferenceID)}</TraderAssignedReferenceID>
-      </UCR>
+    <GoodsShipment>${buyerXml}
       <Consignment>
-        <ContainerCode>${xmlEscape(gs.Consignment.ContainerCode)}</ContainerCode>
-        <ArrivalTransportMeans>
-          <ID>${xmlEscape(gs.Consignment.BorderTransportMeans.ID)}</ID>
-          <IdentificationTypeCode>${xmlEscape(gs.Consignment.BorderTransportMeans.IdentificationTypeCode)}</IdentificationTypeCode>
-          <ModeCode>${xmlEscape(gs.Consignment.BorderTransportMeans.ModeCode)}</ModeCode>
-        </ArrivalTransportMeans>
+        <ContainerCode>${xmlEscape(gs.Consignment.ContainerCode)}</ContainerCode>${arrivalTransportMeansXml}
         <GoodsLocation>
-          <Name>${xmlEscape(gs.Consignment.GoodsLocation.Name)}</Name>
           <ID>${xmlEscape(gs.Consignment.GoodsLocation.ID)}</ID>
         </GoodsLocation>
       </Consignment>
@@ -245,13 +381,6 @@ export async function POST(request: Request) {
       <ExportCountry>
         <ID>${xmlEscape(gs.ExportCountry.ID)}</ID>
       </ExportCountry>
-      <Importer>
-        <ID>${xmlEscape(gs.Importer.ID)}</ID>
-      </Importer>
-      <TradeTerms>
-        <ConditionCode>${xmlEscape(gs.TradeTerms.ConditionCode)}</ConditionCode>
-        <LocationID>${xmlEscape(gs.TradeTerms.LocationID)}</LocationID>
-      </TradeTerms>
       ${gs.GovernmentAgencyGoodsItem.map((item: any) => {
         const additionalDocuments = Array.isArray(item.AdditionalDocument) ? item.AdditionalDocument : [];
         const additionalDocumentsXml = additionalDocuments
@@ -289,6 +418,9 @@ export async function POST(request: Request) {
             <NetNetWeightMeasure unitCode="KGM">${xmlEscape(item?.Commodity?.GoodsMeasure?.NetNetWeightMeasure || 0)}</NetNetWeightMeasure>
           </GoodsMeasure>
         </Commodity>
+        <CustomsValuation>
+          <MethodCode>${xmlEscape(item?.CustomsValuation?.MethodCode || "1")}</MethodCode>
+        </CustomsValuation>
         ${procedures.map((proc: any) => `
         <GovernmentProcedure>
           <CurrentCode>${xmlEscape(proc.CurrentCode)}</CurrentCode>
@@ -302,11 +434,23 @@ export async function POST(request: Request) {
         </Packaging>
       </GovernmentAgencyGoodsItem>`;
       }).join('')}
+      <Importer>
+        <ID>${xmlEscape(gs.Importer.ID)}</ID>
+      </Importer>${previousDocumentXml}${sellerXml}
+      <TradeTerms>
+        <ConditionCode>${xmlEscape(gs.TradeTerms.ConditionCode)}</ConditionCode>
+        <LocationID>${xmlEscape(gs.TradeTerms.LocationID)}</LocationID>
+      </TradeTerms>
+      <UCR>
+        <TraderAssignedReferenceID>${xmlEscape(d.UCR.TraderAssignedReferenceID)}</TraderAssignedReferenceID>
+      </UCR>
     </GoodsShipment>
   </Declaration>
 </MetaData>`;
 
-    const xmlPreflight = validateXmlPreflight(xmlPayload, lane.eori || "");
+    const xmlPreflight = validateXmlPreflight(xmlPayload, lane.eori || "", {
+      requireAdditionalDocument: !omitAdditionalDocuments,
+    });
     if (!xmlPreflight.valid) {
       return NextResponse.json(
         {
@@ -318,6 +462,14 @@ export async function POST(request: Request) {
     }
 
     if (dryRunOnly === true) {
+      // Persist the rule results so the dashboard can surface "ready / blocked"
+      // state without re-running the engine. Fire-and-forget — a persistence
+      // failure must not break the dry-run response.
+      try {
+        await convex.mutation(api.validation_results.recompute, { declarationId });
+      } catch (persistErr: any) {
+        console.warn("[VALIDATION] Failed to persist rule results (non-critical):", persistErr?.message || persistErr);
+      }
       const eoriConsistencyPass = !providedEori || !lane.eori || providedEori === lane.eori;
       // Extract document summary from XML for visual verification — no HMRC call made
       const docMatches = [...xmlPayload.matchAll(/<AdditionalDocument>[\s\S]*?<\/AdditionalDocument>/g)];
@@ -340,7 +492,26 @@ export async function POST(request: Request) {
           xmlFailedChecks: xmlPreflight.failed.length > 0 ? xmlPreflight.failed : undefined,
           validationFields: validationErrors.length === 0 ? "pass" : "fail",
           token: token ? "pass" : "fail",
+          ruleEngine: ruleResults.length === 0
+            ? "skipped"
+            : ruleResults.some((r) => r.status === "fail" && r.severity === "blocking")
+              ? "blocked"
+              : ruleResults.some((r) => r.status === "fail")
+                ? "advisory"
+                : "pass",
         },
+        ruleResults: ruleResults.map((r) => ({
+          ruleId: r.ruleId,
+          ruleName: r.ruleName,
+          severity: r.severity,
+          status: r.status,
+          source: r.source,
+          measureId: r.measureId,
+          field: r.field,
+          reason: r.reason,
+          evidence: r.evidence,
+        })),
+        actionableFailures: summarizeFailures(ruleResults),
         documentSummary,
       });
     }

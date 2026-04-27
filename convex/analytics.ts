@@ -12,8 +12,9 @@ export const suggestFromHistory = query({
 
     const records = await ctx.db
       .query("historical_declarations")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
-      .filter((q) => q.eq(q.field("countryOfOriginCode"), args.originCountry))
+      .withIndex("by_user_country", (q) =>
+        q.eq("userId", identity.subject).eq("countryOfOriginCode", args.originCountry),
+      )
       .take(1000);
 
     if (records.length === 0) return { hsCode: null, confidence: 0 };

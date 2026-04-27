@@ -1,89 +1,41 @@
-User ID
+# HMRC Test User
 
-186312903557
+Sandbox / Trade Test test user issued from the HMRC Developer Hub Create Test User API.
+Do **not** use these credentials in production.
 
-Password
+---
 
-lTrMNKwnDlaQ
+## Yasmine Kerr
 
-LISA Manager Reference Number
+| Field | Value |
+|-------|-------|
+| User ID | `564716008843` |
+| Password | `UvyjIAG8ooEQ` |
+| Full Name | Yasmine Kerr |
+| Email Address | yasmine.kerr@example.com |
+| Date of Birth | 1987-12-07 |
+| Address | 49 Waterloo Gardens, Verwood, TS13 1PA |
+| EORI | `GB243617410764` |
+| NINO | `YA418774A` |
+| Self Assessment UTR | `9361730549` |
+| Corporation Tax UTR | `1971402321` |
+| VAT Registration Number | `439672709` |
+| VAT Registration Date | 2020-04-23 |
+| LISA Manager Reference | `Z007338` |
+| Pension Scheme Admin ID | `a0631237` |
+| Employer Reference | `938/M3DLSSOFNP` |
+| CRN | `3767464745` |
+| Making Tax Digital ITSA ID | `XWIT00290301089` |
+| Excise Number | `OGbCvjYVlPHUm` |
+| SET Reference Number | `111122224008` |
+| Pillar 2 ID | `XIPLR0805461396` |
+| Group Identifier | `484962900674` |
+| Taxpayer Type | Individual |
+| Organisation Name | Company 4NVXFV |
+| Organisation Address | 48 Virgil Street, Ventnor, TS10 1PA |
 
-Z521770
+---
 
-Email Address
-
-iona.venables@example.com
-
-VAT Registration Date
-
-2025-04-15
-
-Pension Scheme Administrator Identifier
-
-A7243656
-
-Self Assessment UTR
-
-4903991650
-
-Individual Details
-
-{"firstName":"Iona","lastName":"Venables","dateOfBirth":"1980-01-01","address":{"line1":"8 High Holborn","line2":"Leeds","postcode":"TS15 1PA"}}
-
-Employer Reference
-
-367/ROFSRMIHMS
-
-crn
-
-4061155833
-
-VAT Registration Number
-
-142615979
-
-Organisation Details
-
-{"name":"Company 4NCFXU","address":{"line1":"10 Jamaica Road","line2":"Torquay","postcode":"TS13 1PA"}}
-
-Full Name
-
-Iona Venables
-
-Economic Operator Registration and Identification (EORI) number
-
-GB071550591800
-
-National Insurance Number (NINO)
-
-WG314108D
-
-Making Tax Digital Income Tax ID
-
-XCIT00669301562
-
-exciseNumber
-
-IGnAz4CejdwkF
-
-Secure Electronic Transfer reference number
-
-111111111198
-
-taxpayerType
-
-Individual
-
-pillar2Id
-
-XTPLR8821573821
-
-Group Identifier
-
-809095912428
-
-Corporation Tax UTR
-
-9210048788
-
-
+## Notes
+- `.env.local` `HMRC_EORI` is set to `GB243617410764` to match this user.
+- Switching test users requires updating that env var, restarting `npm run dev`, and re-running the OAuth flow (sign in with this User ID + Password) so the persisted token is tied to the right HMRC account.

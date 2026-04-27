@@ -528,6 +528,30 @@ export const updateDeclarationDetails = mutation({
   },
 });
 
+// One-off backfill for transport (DE 7/4, 7/7, 7/9) + lane mode. Used when a
+// declaration was created before these fields existed on the form. Runs as
+// internal so we can invoke it from `npx convex run` without auth juggling.
+export const backfillTransportAndMode = internalMutation({
+  args: {
+    id: v.id("declarations"),
+    transportMode: v.optional(v.string()),
+    transportId: v.optional(v.string()),
+    transportIdType: v.optional(v.string()),
+    mode: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.get(args.id);
+    if (!existing) throw new Error(`Declaration ${args.id} not found`);
+    const patch: Record<string, unknown> = { lastUpdated: Date.now() };
+    if (args.transportMode !== undefined) patch.transportMode = args.transportMode;
+    if (args.transportId !== undefined) patch.transportId = args.transportId;
+    if (args.transportIdType !== undefined) patch.transportIdType = args.transportIdType;
+    if (args.mode !== undefined) patch.mode = args.mode;
+    await ctx.db.patch(args.id, patch);
+    return { id: args.id, applied: patch };
+  },
+});
+
 export const populateDemoData = mutation({
   args: { id: v.id("declarations") },
   handler: async (ctx, args) => {

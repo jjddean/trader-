@@ -100,9 +100,15 @@ function StatusPill({ tone, label }: { tone: string; label: string }) {
 
 export function HomeDashboardPreview() {
   return (
-    <div className="relative mx-auto mt-8 max-w-[980px] lg:mt-10">
-      <div className="absolute inset-x-12 -top-8 h-32 rounded-full bg-blue-200/25 blur-3xl" />
-      <div className="relative max-h-[660px] overflow-hidden rounded-[22px] border border-[#dbe4f0] bg-white shadow-[0_24px_80px_rgba(15,23,42,0.12)]">
+    <div
+      className="relative mx-auto mt-10 w-full max-w-[980px]"
+      style={{ containerType: "inline-size" }}
+    >
+      <div className="absolute inset-x-12 -top-20 -z-10 h-24 rounded-full bg-blue-200/20 blur-3xl pointer-events-none" />
+      <div
+        className="w-[980px] max-h-[660px] overflow-hidden rounded-[22px] border border-[#dbe4f0] bg-white shadow-[0_24px_80px_rgba(15,23,42,0.12)]"
+        style={{ zoom: "min(1, calc(100cqw / 980px))" }}
+      >
         <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-red-300" />
           <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
@@ -112,8 +118,8 @@ export function HomeDashboardPreview() {
           </div>
         </div>
 
-        <div className="grid min-h-[540px] grid-cols-1 lg:grid-cols-[180px_minmax(0,1fr)]">
-          <aside className="hidden border-r border-gray-200 bg-gray-50 lg:flex lg:flex-col h-full">
+        <div className="grid min-h-[540px] grid-cols-[180px_minmax(0,1fr)]">
+          <aside className="flex flex-col border-r border-gray-200 bg-gray-50 h-full">
             <div className="flex h-12 shrink-0 items-center border-b border-gray-200 px-4">
               <div className="flex items-baseline whitespace-nowrap text-[#020817] leading-none">
                 <span className="text-[16px] font-bold tracking-tight">freight</span>
@@ -175,7 +181,7 @@ export function HomeDashboardPreview() {
           </aside>
 
           <div className="bg-white">
-            <div className="flex h-12 items-center justify-between border-b border-gray-200 px-4 md:px-5">
+            <div className="flex h-12 items-center justify-between border-b border-gray-200 px-5">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="h-4 w-px bg-gray-200" />
                 <div className="truncate text-[13px] font-semibold text-black">Customs Dashboard</div>
@@ -184,7 +190,7 @@ export function HomeDashboardPreview() {
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="hidden items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-[11px] text-gray-500 md:flex">
+                <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-[11px] text-gray-500">
                   <Search className="h-3 w-3" />
                   <span>Global Search</span>
                 </div>
@@ -198,7 +204,7 @@ export function HomeDashboardPreview() {
               </div>
             </div>
 
-            <div className="space-y-4 p-4 md:p-4.5">
+            <div className="space-y-4 p-4.5">
               <div className="grid gap-4 grid-cols-4">
                 {kpis.map((item) => (
                   <div key={item.label} className="rounded-xl border border-[#e9e9e7] bg-white p-4">
@@ -224,7 +230,7 @@ export function HomeDashboardPreview() {
                 ))}
               </div>
 
-              <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+              <div className="grid gap-4 grid-cols-[1.2fr_0.8fr]">
                 <div className="overflow-hidden rounded-xl border border-[#e9e9e7] bg-white">
                   <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50/60 px-4 py-2.5">
                     <div>

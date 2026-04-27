@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useQuery, useAction, useConvexAuth, useMutation } from "convex/react";
+import { useQuery, useConvexAuth, useMutation } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
@@ -31,14 +31,32 @@ export default function SubmitPage() {
     isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId ? { declarationId } : "skip",
   );
   const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
-  
-  const checkHmrcStatus = useAction(api.actions.hmrc.getHmrcStatus);
+
+  const hmrcTokens = useQuery(
+    api.hmrc_internal.getTokens,
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && userId ? { userId } : "skip",
+  );
   const hydratedRequirementsRef = useRef(false);
+
+  type ActionableFailure = {
+    action: "provide-document" | "declare-exemption" | "fix-field" | "remove-document" | "fix-predicate";
+    oneOf?: string[];
+    field?: string;
+    severity: "blocking" | "advisory";
+    reason: string;
+    causedBy: { ruleIds: string[]; measureIds: string[] };
+  };
+  type DryRunPayload = {
+    success: boolean;
+    localPreflight?: Record<string, string | undefined>;
+    actionableFailures?: ActionableFailure[];
+    ruleResults?: Array<{ ruleId: string; ruleName: string; severity: string; status: string; source?: string; measureId?: string; reason?: string }>;
+  };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDryRunning, setIsDryRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dryRunResult, setDryRunResult] = useState<string | null>(null);
+  const [dryRunResult, setDryRunResult] = useState<DryRunPayload | null>(null);
   const [dryRunPassed, setDryRunPassed] = useState(false);
 
   const readResponsePayload = async (res: Response) => {
@@ -96,8 +114,7 @@ export default function SubmitPage() {
         throw new Error("Convex session not authenticated. Please refresh and sign in again.");
       }
       // 1. Verify OAuth Token Status before attempting
-      const oauthStatus = await checkHmrcStatus();
-      if (!oauthStatus.connected || oauthStatus.isExpired) {
+      if (!hmrcTokens || Date.now() > (hmrcTokens.expiresAt ?? 0)) {
         throw new Error("HMRC Developer Hub OAuth token is missing or expired. Please reconnect in Settings.");
       }
 
@@ -156,8 +173,7 @@ export default function SubmitPage() {
       if (!isAuthenticated) {
         throw new Error("Convex session not authenticated. Please refresh and sign in again.");
       }
-      const oauthStatus = await checkHmrcStatus();
-      if (!oauthStatus.connected || oauthStatus.isExpired) {
+      if (!hmrcTokens || Date.now() > (hmrcTokens.expiresAt ?? 0)) {
         throw new Error("HMRC Developer Hub OAuth token is missing or expired. Please reconnect in Settings.");
       }
 
@@ -181,11 +197,16 @@ export default function SubmitPage() {
       if (!res.ok) {
         const failedChecks = Array.isArray(data.failedChecks) ? `\n${data.failedChecks.join(", ")}` : "";
         const missingHeaders = Array.isArray(data.missingHeaders) ? `\n${data.missingHeaders.join(", ")}` : "";
+        const fieldErrors = Array.isArray(data.fields)
+          ? "\n\n" + data.fields
+              .map((fe: { field?: string; reason?: string }) => `• ${fe.field || "unknown"}: ${fe.reason || "Validation error"}`)
+              .join("\n")
+          : "";
         const message = data.message ? `\n${data.message}` : "";
-        throw new Error(`${data.error || "Dry run failed"}${message}${failedChecks}${missingHeaders}\nHTTP ${res.status}`);
+        throw new Error(`${data.error || "Dry run failed"}${message}${failedChecks}${missingHeaders}${fieldErrors}\nHTTP ${res.status}`);
       }
 
-      setDryRunResult(JSON.stringify(data, null, 2));
+      setDryRunResult(data as DryRunPayload);
       setDryRunPassed(data.success === true);
     } catch (err: any) {
       setError(err.message || "Dry run failed");
@@ -314,9 +335,65 @@ export default function SubmitPage() {
           )}
 
           {dryRunResult && (
-            <div className="rounded-md border border-green-200 bg-green-50 p-4">
-              <h4 className="text-xs font-bold text-green-800 uppercase tracking-widest mb-1">Dry Run Result</h4>
-              <p className="text-sm text-green-700 font-mono whitespace-pre-wrap">{dryRunResult}</p>
+            <div className="space-y-3">
+              <div className={`rounded-md border p-4 ${dryRunResult.success ? "border-green-200 bg-green-50" : "border-amber-200 bg-amber-50"}`}>
+                <h4 className={`text-xs font-bold uppercase tracking-widest mb-2 ${dryRunResult.success ? "text-green-800" : "text-amber-800"}`}>
+                  Dry Run {dryRunResult.success ? "Passed" : "Completed"}
+                </h4>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+                  {Object.entries(dryRunResult.localPreflight || {}).map(([k, v]) => (
+                    <div key={k} className="flex items-center justify-between">
+                      <span className="text-gray-600">{k}</span>
+                      <span className={`font-mono font-semibold ${
+                        v === "pass" ? "text-green-700"
+                        : v === "blocked" || v === "fail" ? "text-red-700"
+                        : v === "advisory" ? "text-amber-700"
+                        : "text-gray-500"
+                      }`}>{v ?? "—"}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {(dryRunResult.actionableFailures?.length ?? 0) > 0 && (
+                <div className="rounded-md border border-gray-200 bg-white p-4">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-gray-800 mb-3">
+                    Actions Required ({dryRunResult.actionableFailures!.length})
+                  </h4>
+                  <ul className="space-y-3">
+                    {dryRunResult.actionableFailures!.map((af, i) => (
+                      <li key={i} className="flex items-start gap-3 rounded-md border border-gray-100 bg-gray-50 p-3">
+                        <span className={`mt-0.5 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide shrink-0 ${
+                          af.severity === "blocking" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+                        }`}>
+                          {af.severity}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-gray-900">
+                            {af.action.replace(/-/g, " ")}
+                            {af.field ? <span className="ml-2 font-mono text-gray-500">[{af.field}]</span> : null}
+                          </p>
+                          <p className="text-xs text-gray-700 mt-0.5">{af.reason}</p>
+                          {af.oneOf && af.oneOf.length > 0 && (
+                            <div className="mt-1.5 flex flex-wrap gap-1">
+                              {af.oneOf.map((c) => (
+                                <span key={c} className="inline-flex items-center rounded border border-gray-300 bg-white px-1.5 py-0.5 font-mono text-[10px] text-gray-700">
+                                  {c}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {af.causedBy.measureIds.length > 0 && (
+                            <p className="mt-1.5 text-[10px] text-gray-500">
+                              Tariff measure{af.causedBy.measureIds.length > 1 ? "s" : ""}: {af.causedBy.measureIds.join(", ")}
+                            </p>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 

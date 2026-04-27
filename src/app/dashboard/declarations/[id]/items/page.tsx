@@ -109,7 +109,7 @@ export default function GoodsItemsPage() {
         const id = item._id as string;
         if (!docEditsTouched.current.has(id)) {
           const docs = getNormalizedDocs(item as Record<string, unknown>);
-          next[id] = [0, 1, 2].map(i => ({
+          next[id] = [0, 1, 2, 3, 4, 5].map(i => ({
             code: docs[i] ? `${docs[i].CategoryCode}${docs[i].TypeCode}` : "",
             ref: docs[i]?.ID || "",
           }));
@@ -130,10 +130,21 @@ export default function GoodsItemsPage() {
     return "";
   };
 
+  const DOC_SLOT_HINTS: Array<{ label: string; code: string; ref: string }> = [
+    { label: "CHED-P (live-animal / POAO)", code: "N853", ref: "GBCHD2026.1234567" },
+    { label: "Organic statement waiver", code: "Y929", ref: "Excluded" },
+    { label: "Non-organic statement", code: "Y930", ref: "Excluded" },
+    { label: "Commercial invoice", code: "N935", ref: "INV-2026-04112" },
+    { label: "Packing list", code: "N271", ref: "PL-2026-04112" },
+    { label: "Spare slot", code: "", ref: "" },
+  ];
+
+  const emptySlots = () => [0, 1, 2, 3, 4, 5].map(() => ({ code: "", ref: "" }));
+
   const handleDocChange = (itemId: string, slotIndex: number, part: "code" | "ref", value: string) => {
     docEditsTouched.current.add(itemId);
     setDocEdits(prev => {
-      const current = prev[itemId] ?? [{ code: "", ref: "" }, { code: "", ref: "" }, { code: "", ref: "" }];
+      const current = prev[itemId] ?? emptySlots();
       const updated = current.map((slot, i) => i === slotIndex ? { ...slot, [part]: value } : slot);
       return { ...prev, [itemId]: updated };
     });
@@ -345,163 +356,167 @@ export default function GoodsItemsPage() {
          </div>
       )}
 
-      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-        <div className="border-b border-gray-100 bg-gray-50/40 px-4 py-2 text-[11px] text-gray-500">
-          Scroll horizontally to edit all fields, including document codes and references.
-        </div>
-        {items.length > 0 ? (
-          <div className="overflow-x-auto">
-          <table className="min-w-[2200px] w-full text-left text-sm">
-            <thead className="border-b border-gray-200 bg-gray-50/50">
-              <tr>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Seq</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Description</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">HS Code</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Origin</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Value</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">CPC (DE 1/10)</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Add. Proc (DE 1/11)</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Gross KG</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Net KG</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Doc Code 1</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Doc Ref 1</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Doc Code 2</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Doc Ref 2</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Doc Code 3</th>
-                <th className="px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Doc Ref 3</th>
-                <th className="px-4 py-3 text-right"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {items.map((item: GoodsItemRow, index: number) => (
-                <tr key={item._id} className="transition-colors hover:bg-gray-50/50">
-                  <td className="px-4 py-3 text-xs text-gray-400">{index + 1}</td>
-                  <td className="px-4 py-3">
+      {items.length > 0 ? (
+        <div className="space-y-4">
+          {items.map((item: GoodsItemRow, index: number) => {
+            const slots = docEdits[item._id as string];
+            return (
+              <div key={item._id} className="rounded-xl border border-gray-200 bg-white">
+                <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/40 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-900 text-[11px] font-medium text-white">
+                      {index + 1}
+                    </span>
                     <input
                       type="text"
                       defaultValue={String(item.description ?? "")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "description", e.target.value)}
-                      className="w-full bg-transparent text-xs font-medium text-gray-900 outline-none"
+                      placeholder="Item description"
+                      className="w-[26rem] max-w-full bg-transparent text-sm font-medium text-gray-900 outline-none placeholder:text-gray-400"
                     />
-                  </td>
-                  <td className="px-4 py-3 align-top">
+                  </div>
+                  <button
+                    onClick={() => removeItem({ id: item._id })}
+                    className="rounded p-1 text-gray-400 transition-colors hover:text-red-600"
+                    aria-label="Remove item"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4 px-4 py-4 md:grid-cols-3 lg:grid-cols-4">
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">HS Code</label>
                     <input
                       type="text"
                       defaultValue={String(item.commodityCode ?? "")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "commodityCode", e.target.value)}
-                      placeholder="e.g. 6109100010"
-                      className={`w-28 rounded border p-1 font-mono text-xs text-gray-700 outline-none focus:bg-white ${fieldErrors[`${item._id}-commodityCode`] ? 'border-red-500 bg-red-50 focus:border-red-500' : 'border-transparent bg-transparent hover:border-gray-200 focus:border-blue-500'}`}
+                      placeholder="e.g. 0207129000"
+                      className={`h-9 w-full rounded-md border bg-white px-2 font-mono text-xs text-gray-800 outline-none focus:border-blue-500 ${fieldErrors[`${item._id}-commodityCode`] ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}
                     />
                     {fieldErrors[`${item._id}-commodityCode`] && (
-                      <div className="mt-1 text-[10px] text-red-500 max-w-[120px] leading-tight">{fieldErrors[`${item._id}-commodityCode`]}</div>
+                      <div className="mt-1 text-[10px] text-red-500 leading-tight">{fieldErrors[`${item._id}-commodityCode`]}</div>
                     )}
-                  </td>
-                  <td className="px-4 py-3 align-top">
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Origin</label>
                     <input
                       type="text"
                       defaultValue={String(item.originCountry ?? "")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "originCountry", e.target.value)}
-                      placeholder="e.g. GB"
-                      className={`w-12 rounded border p-1 font-mono text-xs text-gray-700 outline-none focus:bg-white ${fieldErrors[`${item._id}-originCountry`] ? 'border-red-500 bg-red-50 focus:border-red-500' : 'border-transparent bg-transparent hover:border-gray-200 focus:border-blue-500'}`}
+                      placeholder="e.g. BR"
+                      className={`h-9 w-full rounded-md border bg-white px-2 font-mono text-xs text-gray-800 outline-none focus:border-blue-500 ${fieldErrors[`${item._id}-originCountry`] ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}
                     />
                     {fieldErrors[`${item._id}-originCountry`] && (
-                      <div className="mt-1 text-[10px] text-red-500 max-w-[80px] leading-tight">{fieldErrors[`${item._id}-originCountry`]}</div>
+                      <div className="mt-1 text-[10px] text-red-500 leading-tight">{fieldErrors[`${item._id}-originCountry`]}</div>
                     )}
-                  </td>
-                  <td className="px-4 py-3 align-top">
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs text-gray-400">{String(item.valueCurrency ?? "")}</span>
-                      <input
-                        type="number"
-                        defaultValue={Number(item.valueAmount ?? 0)}
-                        onBlur={(e) => handleItemFieldBlur(item._id, "valueAmount", e.target.value)}
-                        className="w-20 rounded border border-transparent bg-transparent p-1 text-xs text-gray-700 outline-none hover:border-gray-200 focus:border-blue-500 focus:bg-white"
-                      />
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 align-top">
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Value ({String(item.valueCurrency ?? "GBP")})</label>
+                    <input
+                      type="number"
+                      defaultValue={Number(item.valueAmount ?? 0)}
+                      onBlur={(e) => handleItemFieldBlur(item._id, "valueAmount", e.target.value)}
+                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">CPC (DE 1/10)</label>
                     <input
                       type="text"
                       defaultValue={String(item.procedureCode ?? "4000")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "procedureCode", e.target.value)}
                       placeholder="4000"
-                      className="w-16 rounded border border-transparent bg-transparent p-1 font-mono text-xs text-gray-700 outline-none hover:border-gray-200 focus:border-blue-500 focus:bg-white"
+                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 font-mono text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
                     />
-                  </td>
-                  <td className="px-4 py-3 align-top">
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Add. Proc (DE 1/11)</label>
                     <input
                       type="text"
                       defaultValue={String(item.additionalProcedureCode ?? "000")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "additionalProcedureCode", e.target.value)}
                       placeholder="000"
-                      className="w-14 rounded border border-transparent bg-transparent p-1 font-mono text-xs text-gray-700 outline-none hover:border-gray-200 focus:border-blue-500 focus:bg-white"
+                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 font-mono text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
                     />
-                  </td>
-                  <td className="px-4 py-3 align-top">
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Gross (kg)</label>
                     <input
                       type="number"
                       defaultValue={item.grossWeightKg != null ? Number(item.grossWeightKg) : ""}
                       onBlur={(e) => handleItemFieldBlur(item._id, "grossWeightKg", e.target.value)}
-                      placeholder="kg"
-                      className="w-16 rounded border border-transparent bg-transparent p-1 text-xs text-gray-700 outline-none hover:border-gray-200 focus:border-blue-500 focus:bg-white"
+                      placeholder="0"
+                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
                     />
-                  </td>
-                  <td className="px-4 py-3 align-top">
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Net (kg)</label>
                     <input
                       type="number"
                       defaultValue={item.netWeightKg != null ? Number(item.netWeightKg) : ""}
                       onBlur={(e) => handleItemFieldBlur(item._id, "netWeightKg", e.target.value)}
-                      placeholder="kg"
-                      className="w-16 rounded border border-transparent bg-transparent p-1 text-xs text-gray-700 outline-none hover:border-gray-200 focus:border-blue-500 focus:bg-white"
+                      placeholder="0"
+                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
                     />
-                  </td>
-                  {[0, 1, 2].map(slotIdx => (
-                    <React.Fragment key={slotIdx}>
-                      <td className="px-4 py-3 align-top">
-                        <input
-                          type="text"
-                          value={docEdits[item._id as string]?.[slotIdx]?.code ?? getDocCell(item, slotIdx).code}
-                          onChange={(e) => handleDocChange(item._id as string, slotIdx, "code", e.target.value)}
-                          onBlur={() => handleDocBlur(item)}
-                          placeholder={slotIdx === 0 ? "e.g. N853" : "e.g. Y929"}
-                          className="w-20 rounded border border-transparent bg-transparent p-1 font-mono text-xs text-gray-700 outline-none hover:border-gray-200 focus:border-blue-500 focus:bg-white"
-                        />
-                      </td>
-                      <td className="px-4 py-3 align-top">
-                        <input
-                          type="text"
-                          value={docEdits[item._id as string]?.[slotIdx]?.ref ?? getDocCell(item, slotIdx).ref}
-                          onChange={(e) => handleDocChange(item._id as string, slotIdx, "ref", e.target.value)}
-                          onBlur={() => handleDocBlur(item)}
-                          placeholder="Reference"
-                          className="w-40 rounded border border-transparent bg-transparent p-1 text-xs text-gray-700 outline-none hover:border-gray-200 focus:border-blue-500 focus:bg-white"
-                        />
-                      </td>
-                    </React.Fragment>
-                  ))}
-                  <td className="px-4 py-3 text-right">
-                     <button
-                        onClick={() => removeItem({ id: item._id })}
-                        className="text-gray-400 hover:text-red-600 transition-colors p-1"
-                     >
-                        <Trash2 className="h-4 w-4" />
-                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          </div>
-        ) : (
-           <div className="flex flex-col items-center justify-center py-20 text-center">
-             <UploadCloud className="mb-4 h-8 w-8 text-gray-300" />
-             <h3 className="text-sm font-medium text-gray-900">No goods items yet</h3>
-             <p className="mt-1 text-xs text-gray-500 max-w-sm">
-               You can manually add rows or use our AI to automatically extract the line items from your commercial invoice PDF.
-             </p>
-           </div>
-        )}
-      </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 px-4 py-4">
+                  <div className="mb-3 flex items-baseline justify-between">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-600">Additional Documents (DE 2/3)</h4>
+                    <span className="text-[10px] text-gray-400">Status code auto-derived: N+CHED → XW · Y929/Y930 → XB</span>
+                  </div>
+                  <div className="space-y-2">
+                    {[0, 1, 2, 3, 4, 5].map(slotIdx => {
+                      const hint = DOC_SLOT_HINTS[slotIdx];
+                      const codeVal = slots?.[slotIdx]?.code ?? getDocCell(item, slotIdx).code;
+                      const refVal = slots?.[slotIdx]?.ref ?? getDocCell(item, slotIdx).ref;
+                      return (
+                        <div key={slotIdx} className="grid grid-cols-12 items-center gap-2">
+                          <div className="col-span-12 text-[10px] uppercase tracking-wider text-gray-400 sm:col-span-3">
+                            Slot {slotIdx + 1} · {hint.label}
+                          </div>
+                          <input
+                            type="text"
+                            value={codeVal}
+                            onChange={(e) => handleDocChange(item._id as string, slotIdx, "code", e.target.value)}
+                            onBlur={() => handleDocBlur(item)}
+                            placeholder={hint.code || "e.g. N935"}
+                            className="col-span-4 h-9 rounded-md border border-gray-200 bg-white px-2 font-mono text-xs uppercase text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 sm:col-span-2"
+                          />
+                          <input
+                            type="text"
+                            value={refVal}
+                            onChange={(e) => handleDocChange(item._id as string, slotIdx, "ref", e.target.value)}
+                            onBlur={() => handleDocBlur(item)}
+                            placeholder={hint.ref || "Reference"}
+                            className="col-span-8 h-9 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 sm:col-span-7"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white py-20 text-center">
+          <UploadCloud className="mb-4 h-8 w-8 text-gray-300" />
+          <h3 className="text-sm font-medium text-gray-900">No goods items yet</h3>
+          <p className="mt-1 max-w-sm text-xs text-gray-500">
+            You can manually add rows or use our AI to automatically extract the line items from your commercial invoice PDF.
+          </p>
+        </div>
+      )}
 
       <Dialog open={showAddRowModal} onOpenChange={setShowAddRowModal}>
         <DialogContent className="sm:max-w-[425px]">

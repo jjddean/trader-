@@ -1,6 +1,6 @@
-import { mutation } from "./_generated/server";
+import { query } from "./_generated/server";
 
-export default mutation({
+export default query({
   handler: async (ctx) => {
     return await ctx.db.query("declarations").first();
   },

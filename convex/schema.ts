@@ -54,7 +54,9 @@ export default defineSchema({
     taxType: v.optional(v.any()),
     commodityCode: v.optional(v.any()),
     createdAt: v.optional(v.any()),
-  }).index("by_user", ["userId"]),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_country", ["userId", "countryOfOriginCode"]),
   
   declarations: defineTable({
     userId: v.optional(v.any()), // clerkId
@@ -74,6 +76,25 @@ export default defineSchema({
     dispatchCountry: v.optional(v.any()),
     savingsEstimate: v.optional(v.any()),
     tier: v.optional(v.any()),
+    // Rule engine mode: "minimal" forbids any non-mandatory enrichment
+    // (documents, additional procedures, valuation adjustments). "enriched"
+    // unlocks them subject to per-rule allowance. Defaults to "minimal" when
+    // unset so new lanes can't accidentally include kitchen-sink data.
+    mode: v.optional(v.string()),
+    // Optional explicit declaration-level invoice total used by the
+    // VALUE_MATCH_INVOICE rule. When unset the rule skips (mapper's
+    // auto-sum makes the check meaningless).
+    invoiceTotal: v.optional(v.any()),
+    // DE 7/4 — Mode of transport at the border. Numeric: "1" sea, "3" road,
+    // "4" air, "8" inland waterway. Required for imports (CDS12073).
+    transportMode: v.optional(v.string()),
+    // DE 7/9 — Identity of the active means of transport crossing the border
+    // (vessel name, vehicle reg, flight number). R123 demands this matches the
+    // ArrivalTransportMeans inside the consignment.
+    transportId: v.optional(v.string()),
+    // DE 7/7 — Identification type of the means of transport. e.g. "11"
+    // vessel name, "30" road vehicle reg, "40" flight number.
+    transportIdType: v.optional(v.string()),
   }).index("by_user", ["userId"]).index("by_mrn", ["mrn"]).index("by_conversationId", ["conversationId"]),
   
   goods_items: defineTable({
@@ -124,16 +145,19 @@ export default defineSchema({
   
   workspaces: defineTable({
     name: v.optional(v.any()),
+    slug: v.optional(v.any()),
     ownerId: v.optional(v.any()), // clerkId
     hmrcTokensId: v.optional(v.any()),
     eoriNumber: v.optional(v.any()),
     createdAt: v.optional(v.any()),
   }).index("by_owner", ["ownerId"]),
-  
+
   workspaceMembers: defineTable({
     workspaceId: v.optional(v.any()),
     userId: v.optional(v.any()),
     role: v.optional(v.any()),
+    workspaceName: v.optional(v.any()),
+    workspaceSlug: v.optional(v.any()),
   }).index("by_user", ["userId"]),
   
   notifications: defineTable({
@@ -195,4 +219,136 @@ export default defineSchema({
     notes: v.optional(v.string()),
     lastChecked: v.optional(v.number()),
   }).index("by_service", ["service"]),
+
+  // Authoritative HMRC CDS code lists, sourced from github.com/hmrc/wco-dec.
+  // Used by the dry-run preflight to reject invented values before they hit
+  // CDS — Method 1 valuation requires N935, AuthorisationHolder needs CGU/EIR/SDE etc.,
+  // SupervisingOffice values look like GBABD001 not GB000060.
+  cds_code_lists: defineTable({
+    listName: v.string(), // e.g. "additional_documents", "customs_offices", "auth_categories"
+    value: v.string(),    // e.g. "A004", "GBABD001", "CGU"
+    description: v.string(),
+    metadata: v.optional(v.any()),
+    updatedAt: v.number(),
+  })
+    .index("by_list", ["listName"])
+    .index("by_list_value", ["listName", "value"]),
+
+  // Rule engine: declarative CDS business rules. The submit pipeline resolves
+  // a scenario (CPC + additional procedure + commodity + origin + valuation)
+  // from the declaration+items, then evaluates every enabled rule whose
+  // triggerScope matches. Rules can require/forbid documents, require/forbid
+  // fields, or both. Sources cite UK Tariff API, HMRC CDS Reject Library,
+  // wco-dec, or empirical TDR rejections.
+  rule_definitions: defineTable({
+    ruleId: v.string(), // e.g. "INV-METHOD1-N935", "TRANS-R123-MIRROR"
+    name: v.string(),
+    description: v.string(),
+    severity: v.string(), // "blocking" | "advisory"
+    enabled: v.boolean(),
+    source: v.optional(v.string()), // citation
+    // triggerScope: empty array on a key = matches anything for that key
+    triggerScope: v.object({
+      procedureCodes: v.optional(v.array(v.string())),         // DE 1/10 4-digit
+      additionalProcedureCodes: v.optional(v.array(v.string())), // DE 1/11 3-digit
+      commodityPrefixes: v.optional(v.array(v.string())),      // HS prefix match (any length)
+      originCountries: v.optional(v.array(v.string())),        // ISO alpha-2
+      // ISO alpha-2 codes the rule explicitly does NOT apply to. Used when a
+      // tariff measure targets a region group (e.g. "All third countries")
+      // but excludes specific countries via measure.excluded_countries.
+      excludedOriginCountries: v.optional(v.array(v.string())),
+      // When true, the rule only applies if the declaration actually claims a
+      // tariff preference. Used by tariff measure types 142/143 (preference /
+      // suspension under quota) — these only kick in when the trader is
+      // claiming preferential treatment, not on every import.
+      requiresPreferenceClaim: v.optional(v.boolean()),
+      dispatchCountries: v.optional(v.array(v.string())),      // ISO alpha-2
+      valuationMethods: v.optional(v.array(v.string())),       // DE 4/16
+      transportModes: v.optional(v.array(v.string())),         // DE 7/4
+      declarationTypes: v.optional(v.array(v.string())),       // IMA, IMD, etc.
+      modes: v.optional(v.array(v.string())),                  // "minimal" | "enriched"
+    }),
+    // effects: any combination — all are optional
+    effects: v.object({
+      requiredDocuments: v.optional(v.array(v.object({
+        code: v.string(),                       // e.g. "N935"
+        alternatives: v.optional(v.array(v.string())), // any-of satisfies
+        lpcoExemptionCode: v.optional(v.string()),
+        reason: v.optional(v.string()),
+      }))),
+      forbiddenDocuments: v.optional(v.array(v.object({
+        code: v.string(),
+        reason: v.optional(v.string()),
+      }))),
+      requiredFields: v.optional(v.array(v.object({
+        path: v.string(),  // e.g. "declaration.dispatchCountry"
+        reason: v.optional(v.string()),
+      }))),
+      forbiddenFields: v.optional(v.array(v.object({
+        path: v.string(),
+        reason: v.optional(v.string()),
+      }))),
+      predicates: v.optional(v.array(v.object({
+        name: v.string(),  // see PredicateName in rule_engine.ts
+        reason: v.optional(v.string()),
+        tolerance: v.optional(v.number()),
+      }))),
+    }),
+    // Provenance metadata for tariff-derived rules. Lets the dry-run output
+    // surface measure_id, measure_type, geographical area, and validity dates
+    // alongside the rule result so a reviewer can verify against the source.
+    metadata: v.optional(v.object({
+      measureId: v.optional(v.string()),
+      measureTypeId: v.optional(v.string()),
+      measureTypeDescription: v.optional(v.string()),
+      geographicalAreaId: v.optional(v.string()),
+      geographicalAreaDescription: v.optional(v.string()),
+      effectiveStartDate: v.optional(v.string()),
+      effectiveEndDate: v.optional(v.string()),
+    })),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_ruleId", ["ruleId"])
+    .index("by_enabled", ["enabled"]),
+
+  // Cached UK Trade Tariff API response per commodity. Source of truth for
+  // any tariff-derived rule_definitions — the parser cites rows from here.
+  // We cache because the parser walks the response on every refresh and the
+  // payload for a single 10-digit commodity is ~350KB.
+  // Endpoint: https://www.trade-tariff.service.gov.uk/uk/api/commodities/{code}
+  // Header:   Accept: application/vnd.hmrc.2.0+json
+  tariff_cache: defineTable({
+    commodityCode: v.string(),    // 10-digit HS code
+    fetchedAt: v.number(),
+    sourceUrl: v.string(),
+    rawResponse: v.any(),         // full JSON:API document
+    derivedRuleIds: v.optional(v.array(v.string())), // ruleIds parsed out, for cleanup on refresh
+  }).index("by_commodity", ["commodityCode"]),
+
+  // Per-declaration evaluation output. Recomputed on every relevant write
+  // (declaration update, item write, document linkage). The submit blocker
+  // refuses to call HMRC when any blocking row has status="fail".
+  validation_results: defineTable({
+    declarationId: v.id("declarations"),
+    userId: v.string(),
+    ruleId: v.string(),
+    ruleName: v.string(),
+    severity: v.string(),  // "blocking" | "advisory"
+    status: v.string(),    // "pass" | "fail" | "skip"
+    // Provenance: "core" = hand-curated CDS rule; "tariff" = parsed from
+    // gov.uk Trade Tariff API. Lets the dashboard distinguish "this is a
+    // standing CDS rule" from "this came from today's tariff snapshot".
+    source: v.optional(v.string()),
+    // Tariff measure_id when source = "tariff" — links the row back to the
+    // exact measure in tariff_cache.rawResponse.included[].
+    measureId: v.optional(v.string()),
+    field: v.optional(v.string()),
+    reason: v.optional(v.string()),
+    evidence: v.optional(v.any()), // arbitrary debug context
+    evaluatedAt: v.number(),
+  })
+    .index("by_declaration", ["declarationId"])
+    .index("by_declaration_status", ["declarationId", "status"])
+    .index("by_user", ["userId"]),
 });

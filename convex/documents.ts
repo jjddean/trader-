@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
-const DOC_CODE_REGEX = /\b([A-Z]\d{3}|\d{4})\b/;
+const DOC_CODE_REGEX = /(?:^|[^A-Z0-9])([A-Z]\d{3}|\d{4})(?:[^A-Z0-9]|$)/;
 
 function extractDocumentCode(value: unknown): string | null {
   if (typeof value !== "string") return null;
@@ -366,7 +366,19 @@ export const upsertRequirementsForDeclaration = mutation({
       incomingCodes.add(code);
       const existingRow = existingByCode.get(code);
 
+      const hasExistingDoc = declarationDocs.some(
+        (doc: any) =>
+          (extractDocumentCode(doc.fileName) || extractDocumentCode(doc.fileType)) === code,
+      );
+
       if (existingRow) {
+        const currentStatus = String(existingRow.status || "missing");
+        const preserveStatus = currentStatus === "uploaded" || currentStatus === "verified";
+        const nextStatus = preserveStatus
+          ? currentStatus
+          : hasExistingDoc
+            ? "uploaded"
+            : "missing";
         ops.push(ctx.db.patch(existingRow._id, {
           name: requirement.name,
           type: requirement.type,
@@ -374,13 +386,10 @@ export const upsertRequirementsForDeclaration = mutation({
           requirementLevel: requirement.requirementLevel || existingRow.requirementLevel || "blocking",
           deReference: requirement.deReference || existingRow.deReference || "DE 2/3",
           hmrcGuidance: requirement.hmrcGuidance || existingRow.hmrcGuidance,
+          status: nextStatus,
           updatedAt: now,
         }));
       } else {
-        const hasExistingDoc = declarationDocs.some(
-          (doc: any) =>
-            (extractDocumentCode(doc.fileName) || extractDocumentCode(doc.fileType)) === code,
-        );
         ops.push(ctx.db.insert("document_requirements", {
           declarationId: args.declarationId,
           userId: identity.subject,

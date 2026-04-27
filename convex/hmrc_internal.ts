@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalMutation, internalQuery } from "./_generated/server";
+import { internalMutation, query } from "./_generated/server";
 
 export const storeTokens = internalMutation({
   args: {
@@ -34,9 +34,11 @@ export const storeTokens = internalMutation({
   },
 });
 
-export const getTokens = internalQuery({
+export const getTokens = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.userId) return null;
     return await ctx.db
       .query("hmrc_tokens")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
