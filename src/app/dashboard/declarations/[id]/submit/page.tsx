@@ -45,12 +45,47 @@ export default function SubmitPage() {
     severity: "blocking" | "advisory";
     reason: string;
     causedBy: { ruleIds: string[]; measureIds: string[] };
+    sources?: Array<"core" | "tariff" | "curated">;
   };
+  const sourceLabel = (s: "core" | "tariff" | "curated") =>
+    s === "tariff" ? "Tariff" : s === "curated" ? "CDS (Observed)" : "Core";
+  const sourceClass = (s: "core" | "tariff" | "curated") =>
+    s === "tariff"
+      ? "bg-blue-50 text-blue-700 border-blue-200"
+      : s === "curated"
+      ? "bg-purple-50 text-purple-700 border-purple-200"
+      : "bg-gray-100 text-gray-700 border-gray-200";
   type DryRunPayload = {
     success: boolean;
     localPreflight?: Record<string, string | undefined>;
     actionableFailures?: ActionableFailure[];
     ruleResults?: Array<{ ruleId: string; ruleName: string; severity: string; status: string; source?: string; measureId?: string; reason?: string }>;
+    payloadDebug?: {
+      declaration?: {
+        borderTransportMeans?: { ID?: string; IdentificationTypeCode?: string; ModeCode?: string } | null;
+        ucr?: string;
+        declarationOfficeId?: string;
+        functionalReferenceId?: string;
+      };
+      goodsShipment?: {
+        exportCountryId?: string;
+        sellerCountryCode?: string;
+        buyerCountryCode?: string;
+        destinationCountryCode?: string;
+        consignment?: {
+          arrivalTransportMeans?: { ID?: string; IdentificationTypeCode?: string; ModeCode?: string } | null;
+          goodsLocationId?: string;
+        };
+      };
+      items?: Array<{
+        sequenceNumeric?: string;
+        governmentProcedures?: Array<{ CurrentCode?: string; PreviousCode?: string }>;
+        additionalDocuments?: Array<{ CategoryCode?: string; TypeCode?: string; ID?: string; StatusCode?: string }>;
+        packaging?: Array<{ MarksNumbersID?: string; QuantityQuantity?: string; TypeCode?: string }>;
+        origin?: { CountryCode?: string; TypeCode?: string } | null;
+      }>;
+    };
+    xmlPayload?: string;
   };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -383,6 +418,18 @@ export default function SubmitPage() {
                               ))}
                             </div>
                           )}
+                          {(af.sources?.length ?? 0) > 0 && (
+                            <div className="mt-1.5 flex flex-wrap gap-1">
+                              {af.sources!.map((s) => (
+                                <span
+                                  key={s}
+                                  className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-medium ${sourceClass(s)}`}
+                                >
+                                  {sourceLabel(s)}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                           {af.causedBy.measureIds.length > 0 && (
                             <p className="mt-1.5 text-[10px] text-gray-500">
                               Tariff measure{af.causedBy.measureIds.length > 1 ? "s" : ""}: {af.causedBy.measureIds.join(", ")}
@@ -392,6 +439,99 @@ export default function SubmitPage() {
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {(dryRunResult.payloadDebug || dryRunResult.xmlPayload) && (
+                <div className="rounded-md border border-blue-200 bg-blue-50 p-4 space-y-4">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-blue-800">
+                    Live CDS Payload Debug
+                  </h4>
+
+                  {dryRunResult.payloadDebug && (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <div className="rounded border border-blue-100 bg-white p-3">
+                        <p className="text-[11px] font-semibold text-gray-900 mb-2">Declaration / Transport</p>
+                        <div className="space-y-1 text-[11px] font-mono text-gray-700">
+                          <div>LRN: {dryRunResult.payloadDebug.declaration?.functionalReferenceId || "—"}</div>
+                          <div>Office: {dryRunResult.payloadDebug.declaration?.declarationOfficeId || "—"}</div>
+                          <div>UCR: {dryRunResult.payloadDebug.declaration?.ucr || "—"}</div>
+                          <div>BTM ID: {dryRunResult.payloadDebug.declaration?.borderTransportMeans?.ID || "—"}</div>
+                          <div>BTM Type: {dryRunResult.payloadDebug.declaration?.borderTransportMeans?.IdentificationTypeCode || "—"}</div>
+                          <div>BTM Mode: {dryRunResult.payloadDebug.declaration?.borderTransportMeans?.ModeCode || "—"}</div>
+                          <div>ATM ID: {dryRunResult.payloadDebug.goodsShipment?.consignment?.arrivalTransportMeans?.ID || "—"}</div>
+                          <div>ATM Type: {dryRunResult.payloadDebug.goodsShipment?.consignment?.arrivalTransportMeans?.IdentificationTypeCode || "—"}</div>
+                          <div>ATM Mode: {dryRunResult.payloadDebug.goodsShipment?.consignment?.arrivalTransportMeans?.ModeCode || "—"}</div>
+                          <div>Goods Location: {dryRunResult.payloadDebug.goodsShipment?.consignment?.goodsLocationId || "—"}</div>
+                        </div>
+                      </div>
+
+                      <div className="rounded border border-blue-100 bg-white p-3">
+                        <p className="text-[11px] font-semibold text-gray-900 mb-2">Countries / Parties</p>
+                        <div className="space-y-1 text-[11px] font-mono text-gray-700">
+                          <div>Export Country: {dryRunResult.payloadDebug.goodsShipment?.exportCountryId || "—"}</div>
+                          <div>Seller Country: {dryRunResult.payloadDebug.goodsShipment?.sellerCountryCode || "—"}</div>
+                          <div>Buyer Country: {dryRunResult.payloadDebug.goodsShipment?.buyerCountryCode || "—"}</div>
+                          <div>Destination: {dryRunResult.payloadDebug.goodsShipment?.destinationCountryCode || "—"}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {dryRunResult.payloadDebug?.items?.map((item, index) => (
+                    <div key={index} className="rounded border border-blue-100 bg-white p-3">
+                      <p className="text-[11px] font-semibold text-gray-900 mb-2">
+                        Item {item.sequenceNumeric || String(index + 1)}
+                      </p>
+                      <div className="space-y-2 text-[11px]">
+                        <div>
+                          <span className="font-medium text-gray-700">Government Procedures:</span>{" "}
+                          <span className="font-mono text-gray-700">
+                            {(item.governmentProcedures || [])
+                              .map((proc) => proc.PreviousCode ? `${proc.CurrentCode}/${proc.PreviousCode}` : `${proc.CurrentCode}`)
+                              .join(", ") || "—"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">Additional Documents:</span>
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {(item.additionalDocuments || []).length > 0 ? (
+                              item.additionalDocuments!.map((doc, docIndex) => (
+                                <span key={docIndex} className="inline-flex items-center rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] text-gray-700">
+                                  {(doc.CategoryCode || "") + (doc.TypeCode || "")}:{doc.ID || "—"}{doc.StatusCode ? `:${doc.StatusCode}` : ""}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="font-mono text-gray-500">—</span>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">Packaging:</span>{" "}
+                          <span className="font-mono text-gray-700">
+                            {(item.packaging || [])
+                              .map((pkg) => `${pkg.TypeCode || "—"} / ${pkg.QuantityQuantity || "—"} / ${pkg.MarksNumbersID || "—"}`)
+                              .join(", ") || "—"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">Origin:</span>{" "}
+                          <span className="font-mono text-gray-700">{item.origin?.CountryCode || "—"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {dryRunResult.xmlPayload && (
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-900 mb-2">Exact XML Sent On Submit</p>
+                      <div className="rounded-md bg-gray-900 p-4 max-h-96 overflow-y-auto w-full">
+                        <pre className="text-[10px] text-green-400 font-mono whitespace-pre-wrap break-all">
+                          {dryRunResult.xmlPayload}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

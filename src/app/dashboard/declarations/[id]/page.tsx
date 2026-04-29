@@ -28,6 +28,9 @@ export default function CoreSchemaPage() {
     declarationType: "H1",
     route: "Route 1",
     dispatchCountry: "",
+    transportMode: "",
+    transportId: "",
+    transportIdType: "",
   });
 
   // Hydrate form once data loads
@@ -37,7 +40,10 @@ export default function CoreSchemaPage() {
         eori: declaration.eori || "",
         declarationType: "H1",
         route: declaration.route || "Route 1",
-        dispatchCountry: (declaration as any).dispatchCountry || "",
+        dispatchCountry: (declaration as Record<string, unknown>).dispatchCountry as string || "",
+        transportMode: (declaration as Record<string, unknown>).transportMode as string || "",
+        transportId: (declaration as Record<string, unknown>).transportId as string || "",
+        transportIdType: (declaration as Record<string, unknown>).transportIdType as string || "",
       });
     }
   }, [declaration]);
@@ -52,6 +58,9 @@ export default function CoreSchemaPage() {
         declarationType: formData.declarationType,
         route: formData.route,
         dispatchCountry: formData.dispatchCountry || undefined,
+        transportMode: formData.transportMode || undefined,
+        transportId: formData.transportId || undefined,
+        transportIdType: formData.transportIdType || undefined,
       });
     } catch (e) {
       console.error("Failed to save core schema", e);
@@ -167,6 +176,77 @@ export default function CoreSchemaPage() {
               </p>
             </div>
 
+          </div>
+
+          <div className="border-t border-gray-100 pt-6">
+            <h3 className="text-sm font-medium text-gray-900">Transport Identity</h3>
+            <p className="mt-1 text-[11px] text-gray-500">
+              DE 7/4 (mode), DE 7/7 / 7/9 (border / arrival means). CDS rejects mismatched or stale values — use the actual vessel/IMO/wagon/vehicle/flight identifier for this consignment.
+            </p>
+            <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-3">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Transport Mode (DE 7/4)
+                </label>
+                <Select
+                  value={formData.transportMode}
+                  onValueChange={(val) => setFormData({ ...formData, transportMode: val })}
+                >
+                  <SelectTrigger className="w-full text-sm">
+                    <SelectValue placeholder="Select mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 — Sea</SelectItem>
+                    <SelectItem value="2">2 — Rail</SelectItem>
+                    <SelectItem value="3">3 — Road</SelectItem>
+                    <SelectItem value="4">4 — Air</SelectItem>
+                    <SelectItem value="5">5 — Postal</SelectItem>
+                    <SelectItem value="7">7 — Fixed transport installations</SelectItem>
+                    <SelectItem value="8">8 — Inland waterway</SelectItem>
+                    <SelectItem value="9">9 — Mode unknown</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Identification Type (DE 7/7)
+                </label>
+                <Select
+                  value={formData.transportIdType}
+                  onValueChange={(val) => setFormData({ ...formData, transportIdType: val })}
+                >
+                  <SelectTrigger className="w-full text-sm">
+                    <SelectValue placeholder="Select identifier type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10 — IMO ship identification number</SelectItem>
+                    <SelectItem value="11">11 — Name of seagoing vessel</SelectItem>
+                    <SelectItem value="20">20 — Wagon number</SelectItem>
+                    <SelectItem value="30">30 — Vehicle registration number</SelectItem>
+                    <SelectItem value="40">40 — IATA flight number</SelectItem>
+                    <SelectItem value="41">41 — Registration of aircraft</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Identification (DE 7/9)
+                </label>
+                <input
+                  type="text"
+                  value={formData.transportId}
+                  onChange={(e) => setFormData({ ...formData, transportId: e.target.value })}
+                  placeholder="e.g. IMO9395044, vessel name, vehicle reg"
+                  className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+                />
+                <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                  <Info className="h-3 w-3" />
+                  Real identifier for this consignment. Don&apos;t carry over a value from a previous declaration.
+                </p>
+              </div>
+            </div>
           </div>
 
         </div>

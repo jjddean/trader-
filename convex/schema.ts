@@ -111,6 +111,7 @@ export default defineSchema({
     netWeightKg: v.optional(v.any()),
     additionalDocuments: v.optional(v.any()),
     additionalProcedureCode: v.optional(v.any()),
+    shippingMarks: v.optional(v.any()),
   }).index("by_declaration", ["declarationId"]).index("by_owner", ["ownerId"]),
 
   documents: defineTable({
@@ -297,6 +298,9 @@ export default defineSchema({
     // Provenance metadata for tariff-derived rules. Lets the dry-run output
     // surface measure_id, measure_type, geographical area, and validity dates
     // alongside the rule result so a reviewer can verify against the source.
+    // Curated (source kind = "curated") rules carry an `evidence` block instead
+    // — pointing at the CDS rejection (MRN/conversationId/FunctionCode 03) that
+    // proved the requirement.
     metadata: v.optional(v.object({
       measureId: v.optional(v.string()),
       measureTypeId: v.optional(v.string()),
@@ -305,6 +309,14 @@ export default defineSchema({
       geographicalAreaDescription: v.optional(v.string()),
       effectiveStartDate: v.optional(v.string()),
       effectiveEndDate: v.optional(v.string()),
+      evidence: v.optional(v.object({
+        mrn: v.optional(v.string()),
+        conversationId: v.optional(v.string()),
+        functionCode: v.optional(v.string()),  // "03" = rejection
+        references: v.optional(v.array(v.string())),  // WCO section codes (42A/67A/68A)
+        confidence: v.optional(v.string()),  // "high" | "medium"
+        observedAt: v.optional(v.number()),
+      })),
     })),
     createdAt: v.number(),
     updatedAt: v.number(),

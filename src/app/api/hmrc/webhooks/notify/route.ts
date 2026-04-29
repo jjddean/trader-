@@ -52,6 +52,23 @@ export async function POST(request: Request) {
       timestamp: new Date().toISOString(),
     });
 
+    // Auto-ingest curated rule proposals when HMRC rejects (FunctionCode 03 /
+    // DMSREJ) and cites missing AdditionalDocument codes. Inserted rules are
+    // ALWAYS disabled — the user reviews and promotes manually so a misread
+    // rejection can never auto-block a future submission. Failures here are
+    // non-critical: the raw payload is already persisted via saveWebhook.
+    if (notificationType === "DMSREJ" && fieldErrors.length > 0) {
+      try {
+        const proposalResult = await convex.mutation(
+          api.rule_definitions.proposeCuratedFromRejection,
+          { mrn, conversationId, fieldErrors },
+        );
+        console.log(`[HMRC-WEBHOOK] Curated rule proposals: ${JSON.stringify(proposalResult)}`);
+      } catch (proposeErr) {
+        console.warn("[HMRC-WEBHOOK] Curated proposal failed (non-critical):", proposeErr);
+      }
+    }
+
     // Provide the 200 OK that HMRC expects to acknowledge receipt
     return new Response(null, { status: 200 });
   } catch (error: unknown) {

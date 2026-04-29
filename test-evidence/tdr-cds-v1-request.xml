@@ -1,5 +1,5 @@
-<!-- timestamp: 2026-04-11T15:31:42.285Z | http_status: 0 | conversation_id: HAPPY_PATH -->
-<!-- request_accept: application/vnd.hmrc.1.0+xml | request_content_type: application/xml; charset=UTF-8 | request_authorization: Bearer [REDACTED] | request_x_client_id: ZSoA1lpJi8FyuzSsncFrOZKpmrNe | request_gov_test_scenario: HAPPY_PATH -->
+<!-- timestamp: 2026-04-28T13:02:41.315Z | http_status: 0 | conversation_id: HAPPY_PATH -->
+<!-- request_accept: application/vnd.hmrc.2.0+xml | request_content_type: application/xml; charset=UTF-8 | request_authorization: Bearer [REDACTED] | request_x_client_id: ZSoA1lpJi8FyuzSsncFrOZKpmrNe | request_gov_test_scenario: HAPPY_PATH -->
 <?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
   <WCODataModelVersionCode>3.6</WCODataModelVersionCode>
@@ -9,7 +9,7 @@
   <AgencyAssignedCustomizationVersionCode>v2.1</AgencyAssignedCustomizationVersionCode>
   <Declaration xmlns="urn:wco:datamodel:WCO:DEC-DMS:2" xmlns:clm63055="urn:un:unece:uncefact:codelist:standard:UNECE:AgencyIdentificationCode:D12B" xmlns:ds="urn:wco:datamodel:WCO:MetaData_DS-DMS:2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2 ../DocumentMetaData_2_DMS.xsd ">
     <FunctionCode>9</FunctionCode>
-    <FunctionalReferenceID>TDR-1775921502041</FunctionalReferenceID>
+    <FunctionalReferenceID>TDR-1777381360909</FunctionalReferenceID>
     <TypeCode>IMA</TypeCode>
     <GoodsItemQuantity>1</GoodsItemQuantity>
     <DeclarationOfficeID>GB000051</DeclarationOfficeID>
@@ -20,12 +20,13 @@
       <CurrencyTypeCode>GBP</CurrencyTypeCode>
     </CurrencyExchange>
     <Declarant>
-      <ID>GB553202734852</ID>
+      <ID>GB243617410764</ID>
     </Declarant>
-    <Exporter>
-      <ID>GB553202734852</ID>
-    </Exporter>
+    
     <GoodsShipment>
+      <UCR>
+        <TraderAssignedReferenceID>6GB243617410764-1777381360910</TraderAssignedReferenceID>
+      </UCR>
       <Consignment>
         <ContainerCode>0</ContainerCode>
         <ArrivalTransportMeans>
@@ -44,6 +45,13 @@
       <ExportCountry>
         <ID>BR</ID>
       </ExportCountry>
+      <Importer>
+        <ID>GB243617410764</ID>
+      </Importer>
+      <TradeTerms>
+        <ConditionCode>FOB</ConditionCode>
+        <LocationID>GBFXT</LocationID>
+      </TradeTerms>
       
       <GovernmentAgencyGoodsItem>
         <SequenceNumeric>1</SequenceNumeric>
@@ -51,9 +59,9 @@
         
         <AdditionalDocument>
           <CategoryCode>N</CategoryCode>
-          <ID>GBCHD2024.1234567</ID>
+          <ID>GBCHD2026.1234567</ID>
           <TypeCode>853</TypeCode>
-          <LPCOExemptionCode>AE</LPCOExemptionCode>
+          <LPCOExemptionCode>XW</LPCOExemptionCode>
         </AdditionalDocument>
         <AdditionalDocument>
           <CategoryCode>Y</CategoryCode>
@@ -94,16 +102,6 @@
           <TypeCode>PK</TypeCode>
         </Packaging>
       </GovernmentAgencyGoodsItem>
-      <Importer>
-        <ID>GB553202734852</ID>
-      </Importer>
-      <TradeTerms>
-        <ConditionCode>FOB</ConditionCode>
-        <LocationID>GBFXT</LocationID>
-      </TradeTerms>
-      <UCR>
-        <TraderAssignedReferenceID>9GB553202734852-1775921502041</TraderAssignedReferenceID>
-      </UCR>
     </GoodsShipment>
   </Declaration>
 </MetaData>

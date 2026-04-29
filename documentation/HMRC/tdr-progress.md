@@ -1,8 +1,8 @@
 # CDS Submission Progress Tracker
 
-**Goal:** Get a single declaration through the v2.0 Trade Test as **DMSACC → DMSCLE** (no DMSREJ), proving end-to-end submission validity before consuming TDR attempts.
+**Goal:** Get a single declaration through the v2.0 Trade Test as **DMSACC → DMSCLE** (no DMSREJ), proving end-to-end submission validity.
 
-**Current stage:** Transport / authorisation business rules. Past schema, past auth, past structure.
+**Current stage:** Document context (02A) — curated rules layer in place; need to promote BR/02071290/4000 lane to enriched mode, stub the 4 required docs, dry-run, resubmit.
 
 ---
 

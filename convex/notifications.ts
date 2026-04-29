@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 export const saveWebhook = mutation({
   args: {
@@ -70,6 +70,10 @@ export const saveWebhook = mutation({
       }
 
       await ctx.db.patch(declaration._id, patchObj);
+
+      await ctx.runMutation(internal.declarations.upsertDeclarationPreview, {
+        declarationId: declaration._id,
+      });
 
       await ctx.runMutation(api.audit.logAction, {
         userId: declaration.userId,

@@ -52,6 +52,58 @@ function validateXmlPreflight(xmlPayload: string, eori: string, opts: { requireA
   };
 }
 
+function buildPayloadDebugSnapshot(payloadInfo: any) {
+  const declaration = payloadInfo?.Declaration ?? {};
+  const shipment = declaration?.GoodsShipment ?? {};
+  const goodsItems = Array.isArray(shipment?.GovernmentAgencyGoodsItem)
+    ? shipment.GovernmentAgencyGoodsItem
+    : [];
+
+  return {
+    declaration: {
+      functionCode: declaration?.FunctionCode || "",
+      functionalReferenceId: declaration?.FunctionalReferenceID || "",
+      typeCode: declaration?.TypeCode || "",
+      declarationOfficeId: declaration?.DeclarationOfficeID || "",
+      invoiceAmount: declaration?.InvoiceAmount || null,
+      totalGrossMassMeasure: declaration?.TotalGrossMassMeasure || "",
+      totalPackageQuantity: declaration?.TotalPackageQuantity || "",
+      borderTransportMeans: declaration?.BorderTransportMeans || null,
+      declarantId: declaration?.Declarant?.ID || "",
+      exporterId: declaration?.Exporter?.ID || "",
+      ucr: declaration?.UCR?.TraderAssignedReferenceID || "",
+    },
+    goodsShipment: {
+      buyerCountryCode: shipment?.Buyer?.AddressCountryCode || "",
+      sellerCountryCode: shipment?.Seller?.AddressCountryCode || "",
+      destinationCountryCode: shipment?.Destination?.CountryCode || "",
+      exportCountryId: shipment?.ExportCountry?.ID || "",
+      importerId: shipment?.Importer?.ID || "",
+      tradeTerms: shipment?.TradeTerms || null,
+      previousDocuments: Array.isArray(shipment?.PreviousDocument) ? shipment.PreviousDocument : [],
+      consignment: {
+        containerCode: shipment?.Consignment?.ContainerCode || "",
+        goodsLocationId: shipment?.Consignment?.GoodsLocation?.ID || "",
+        arrivalTransportMeans: shipment?.Consignment?.ArrivalTransportMeans || null,
+      },
+    },
+    items: goodsItems.map((item: any) => ({
+      sequenceNumeric: item?.SequenceNumeric || "",
+      statisticalValueAmount: item?.StatisticalValueAmount || null,
+      commodity: {
+        description: item?.Commodity?.Description || "",
+        classification: Array.isArray(item?.Commodity?.Classification) ? item.Commodity.Classification : [],
+        goodsMeasure: item?.Commodity?.GoodsMeasure || null,
+      },
+      customsValuation: item?.CustomsValuation || null,
+      governmentProcedures: Array.isArray(item?.GovernmentProcedure) ? item.GovernmentProcedure : [],
+      additionalDocuments: Array.isArray(item?.AdditionalDocument) ? item.AdditionalDocument : [],
+      packaging: Array.isArray(item?.Packaging) ? item.Packaging : [],
+      origin: item?.Origin || null,
+    })),
+  };
+}
+
 export async function POST(request: Request) {
   try {
     const clerkAuth = await auth();
@@ -480,6 +532,7 @@ export async function POST(request: Request) {
         const status = m[0].match(/<LPCOExemptionCode>(.*?)<\/LPCOExemptionCode>/)?.[1] ?? "";
         return { code: `${cat}${type}`, id, lpcoExemptionCode: status };
       });
+      const payloadDebug = buildPayloadDebugSnapshot(payloadInfo);
       return NextResponse.json({
         success: xmlPreflight.valid,
         dryRunOnly: true,
@@ -513,6 +566,8 @@ export async function POST(request: Request) {
         })),
         actionableFailures: summarizeFailures(ruleResults),
         documentSummary,
+        payloadDebug,
+        xmlPayload,
       });
     }
 

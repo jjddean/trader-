@@ -59,6 +59,17 @@ export interface RuleMetadata {
   geographicalAreaDescription?: string;
   effectiveStartDate?: string;
   effectiveEndDate?: string;
+  // Evidence block — populated for curated rules sourced from CDS rejections.
+  // The engine never translates between code systems (e.g. N853 != D006) so
+  // each curated rule must cite the rejection that proved its existence.
+  evidence?: {
+    mrn?: string;
+    conversationId?: string;
+    functionCode?: string;       // "03" = CDS rejection
+    references?: string[];       // WCO section codes (42A/67A/68A) cited in the rejection
+    confidence?: "high" | "medium";
+    observedAt?: number;
+  };
 }
 
 export interface RuleDefinition {
@@ -73,11 +84,13 @@ export interface RuleDefinition {
   metadata?: RuleMetadata;
 }
 
-export type RuleSourceKind = "core" | "tariff";
+export type RuleSourceKind = "core" | "tariff" | "curated";
 
 function ruleSourceKind(rule: RuleDefinition): RuleSourceKind {
   if (rule.ruleId.startsWith("TARIFF-")) return "tariff";
   if (rule.source && rule.source.startsWith("trade-tariff:")) return "tariff";
+  if (rule.ruleId.startsWith("CURATED-")) return "curated";
+  if (rule.source && rule.source.startsWith("cds-rejection:")) return "curated";
   return "core";
 }
 
@@ -358,13 +371,13 @@ export function evaluateRules(
   const presentDocs = gatherDocCodes(input);
   const results: ValidationResult[] = [];
 
-  // Sort core rules first so the dry-run output reads structurally:
-  // "structure/valuation problems" appear before "tariff specifics".
-  const ordered = [...rules].sort((a, b) => {
-    const ak = ruleSourceKind(a) === "core" ? 0 : 1;
-    const bk = ruleSourceKind(b) === "core" ? 0 : 1;
-    return ak - bk;
-  });
+  // Sort core rules first so structural problems (transport identity,
+  // valuation invariants) read before document specifics. Within docs the
+  // tariff and curated layers are co-equal — both are independent obligations.
+  const sourcePriority: Record<RuleSourceKind, number> = { core: 0, curated: 1, tariff: 2 };
+  const ordered = [...rules].sort((a, b) =>
+    sourcePriority[ruleSourceKind(a)] - sourcePriority[ruleSourceKind(b)],
+  );
 
   for (const rule of ordered) {
     if (!rule.enabled) continue;
@@ -477,6 +490,9 @@ export interface ActionableFailure {
   reason: string;
   // Provenance: every rule + measure that produced this action.
   causedBy: { ruleIds: string[]; measureIds: string[] };
+  // Distinct source kinds that contributed. Lets the UI label each action
+  // with where the obligation came from (Tariff, CDS-observed, Core).
+  sources: RuleSourceKind[];
 }
 
 // Collapse the raw rule results into the minimum set of actions a user has
@@ -499,6 +515,9 @@ export function summarizeFailures(results: ValidationResult[]): ActionableFailur
     }
     for (const id of action.causedBy.measureIds) {
       if (!existing.causedBy.measureIds.includes(id)) existing.causedBy.measureIds.push(id);
+    }
+    for (const s of action.sources) {
+      if (!existing.sources.includes(s)) existing.sources.push(s);
     }
   };
 
@@ -527,6 +546,7 @@ export function summarizeFailures(results: ValidationResult[]): ActionableFailur
           ruleIds: [r.ruleId],
           measureIds: r.measureId ? [r.measureId] : [],
         },
+        sources: [r.source],
       });
       continue;
     }
@@ -542,6 +562,7 @@ export function summarizeFailures(results: ValidationResult[]): ActionableFailur
           ruleIds: [r.ruleId],
           measureIds: r.measureId ? [r.measureId] : [],
         },
+        sources: [r.source],
       });
       continue;
     }
@@ -557,6 +578,7 @@ export function summarizeFailures(results: ValidationResult[]): ActionableFailur
           ruleIds: [r.ruleId],
           measureIds: r.measureId ? [r.measureId] : [],
         },
+        sources: [r.source],
       });
     }
   }

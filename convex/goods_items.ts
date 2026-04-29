@@ -130,6 +130,7 @@ export const addItem = mutation({
     valueCurrency: v.string(),
     grossWeightKg: v.optional(v.number()),
     netWeightKg: v.optional(v.number()),
+    shippingMarks: v.optional(v.string()),
     additionalDocuments: v.optional(
       v.array(
         v.object({
@@ -191,6 +192,7 @@ export const updateItem = mutation({
     valueCurrency: v.optional(v.string()),
     grossWeightKg: v.optional(v.number()),
     netWeightKg: v.optional(v.number()),
+    shippingMarks: v.optional(v.string()),
     additionalDocuments: v.optional(
       v.array(
         v.object({
@@ -248,5 +250,115 @@ export const backfillItemOwnership = internalMutation({
     );
 
     return { patched: toFix.length };
+  },
+});
+
+// One-shot helper for unblocking a curated-rule lane: add document codes to
+// every goods_item on a declaration. Each `code` is split into CategoryCode
+// (first char) + TypeCode (remainder) — matches CDS AdditionalDocument
+// concatenation. Dedupes by Category+Type+ID so re-running is idempotent.
+//
+// Example:
+//   npx convex run goods_items:addDocsToAllItems \
+//     '{"declarationId":"kn7ber0a8tds7vs4kd936nv3f584x13h","docs":[
+//        {"code":"D006","id":"PENDING-D006","statusCode":"XB"},
+//        {"code":"D028","id":"PENDING-D028","statusCode":"XB"},
+//        {"code":"D031","id":"PENDING-D031","statusCode":"XB"},
+//        {"code":"360","id":"PENDING-360","statusCode":"XB"}
+//      ]}'
+export const addDocsToAllItems = internalMutation({
+  args: {
+    declarationId: v.id("declarations"),
+    docs: v.array(
+      v.object({
+        code: v.string(),
+        id: v.string(),
+        statusCode: v.optional(v.string()),
+      }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const declaration = await ctx.db.get(args.declarationId);
+    if (!declaration) throw new Error("Declaration not found");
+
+    const newDocs = args.docs.map((d) => {
+      const code = d.code.trim().toUpperCase();
+      if (code.length < 2) throw new Error(`Doc code too short: '${d.code}'`);
+      const entry: { CategoryCode: string; TypeCode: string; ID: string; StatusCode?: string } = {
+        CategoryCode: code.slice(0, 1),
+        TypeCode: code.slice(1),
+        ID: d.id.trim(),
+      };
+      if (d.statusCode && d.statusCode.trim()) entry.StatusCode = d.statusCode.trim().toUpperCase();
+      return entry;
+    });
+
+    const items = await ctx.db
+      .query("goods_items")
+      .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId))
+      .take(500);
+
+    let patched = 0;
+    for (const item of items) {
+      const existing = Array.isArray(item.additionalDocuments) ? item.additionalDocuments : [];
+      const existingKeys = new Set(
+        existing.map((d: { CategoryCode?: string; TypeCode?: string; ID?: string }) =>
+          `${(d.CategoryCode || "").toUpperCase()}|${(d.TypeCode || "").toUpperCase()}|${(d.ID || "").toUpperCase()}`,
+        ),
+      );
+      const toAdd = newDocs.filter(
+        (d) =>
+          !existingKeys.has(
+            `${d.CategoryCode.toUpperCase()}|${d.TypeCode.toUpperCase()}|${d.ID.toUpperCase()}`,
+          ),
+      );
+      if (toAdd.length === 0) continue;
+      await ctx.db.patch(item._id, {
+        additionalDocuments: [...existing, ...toAdd],
+      });
+      patched++;
+    }
+
+    await refreshReadModels(ctx, args.declarationId);
+    return { itemsScanned: items.length, itemsPatched: patched, addedPerItem: newDocs.length };
+  },
+});
+
+// Inverse of addDocsToAllItems — strip every entry whose Cat+Type matches one
+// of the supplied codes, on every item in the declaration. Used to undo a bad
+// curated-rule patch without touching the user's own document selections.
+export const removeDocsFromAllItems = internalMutation({
+  args: {
+    declarationId: v.id("declarations"),
+    codes: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const declaration = await ctx.db.get(args.declarationId);
+    if (!declaration) throw new Error("Declaration not found");
+
+    const targets = new Set(args.codes.map((c) => c.trim().toUpperCase()));
+
+    const items = await ctx.db
+      .query("goods_items")
+      .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId))
+      .take(500);
+
+    let patched = 0;
+    let removed = 0;
+    for (const item of items) {
+      const existing = Array.isArray(item.additionalDocuments) ? item.additionalDocuments : [];
+      if (existing.length === 0) continue;
+      const filtered = existing.filter((d: { CategoryCode?: string; TypeCode?: string }) => {
+        const combined = `${(d.CategoryCode || "").toUpperCase()}${(d.TypeCode || "").toUpperCase()}`;
+        return !targets.has(combined);
+      });
+      if (filtered.length === existing.length) continue;
+      removed += existing.length - filtered.length;
+      await ctx.db.patch(item._id, { additionalDocuments: filtered });
+      patched++;
+    }
+
+    await refreshReadModels(ctx, args.declarationId);
+    return { itemsScanned: items.length, itemsPatched: patched, entriesRemoved: removed };
   },
 });

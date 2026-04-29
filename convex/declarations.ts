@@ -507,6 +507,9 @@ export const updateDeclarationDetails = mutation({
     declarationType: v.string(),
     route: v.string(),
     dispatchCountry: v.optional(v.string()),
+    transportMode: v.optional(v.string()),
+    transportId: v.optional(v.string()),
+    transportIdType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -522,6 +525,9 @@ export const updateDeclarationDetails = mutation({
       declarationType: args.declarationType,
       route: args.route,
       ...(args.dispatchCountry !== undefined ? { dispatchCountry: args.dispatchCountry } : {}),
+      ...(args.transportMode !== undefined ? { transportMode: args.transportMode } : {}),
+      ...(args.transportId !== undefined ? { transportId: args.transportId } : {}),
+      ...(args.transportIdType !== undefined ? { transportIdType: args.transportIdType } : {}),
       lastUpdated: Date.now(),
     });
     await upsertDeclarationPreviewByDeclaration(ctx, args.id);
@@ -685,7 +691,7 @@ export const getDeclarationPreviews = query({
       .query("declaration_preview")
       .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .order("desc")
-      .take(20);
+      .take(200);
 
     if (previews.length > 0) {
       return previews;
@@ -695,7 +701,7 @@ export const getDeclarationPreviews = query({
       .query("declarations")
       .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .order("desc")
-      .take(20);
+      .take(200);
 
     return declarations.map((declaration) => ({
       declarationId: declaration._id,
@@ -729,6 +735,27 @@ export const rebuildMyReadModels = mutation({
     return {
       declarationCount: declarations.length,
       rebuiltAt: Date.now(),
+    };
+  },
+});
+
+// Debug-only: rebuild declaration previews + dashboard summary for a known user
+// without requiring an interactive Clerk session in the terminal.
+export const rebuildReadModelsForDebug = internalMutation({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const declarations = await ctx.db
+      .query("declarations")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .take(5000);
+
+    await Promise.all(declarations.map((d) => upsertDeclarationPreviewByDeclaration(ctx, d._id)));
+    await recomputeDashboardSummaryByUser(ctx, args.userId);
+
+    return {
+      declarationCount: declarations.length,
+      rebuiltAt: Date.now(),
+      userId: args.userId,
     };
   },
 });

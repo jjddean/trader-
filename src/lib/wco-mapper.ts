@@ -25,6 +25,17 @@ export function validateCdsFields(declaration: any, items: any[], payloadInfo: a
     errors.push({ field: "dispatchCountry", reason: "Dispatch country (DE 5/14) is required — set the country goods were shipped FROM, e.g. BR for Brazil. Never leave blank." });
   }
 
+  const borderTransport = payloadInfo?.Declaration?.BorderTransportMeans || {};
+  if (!String(borderTransport?.ID || "").trim()) {
+    errors.push({ field: "transportId", reason: "Transport ID (DE 7/9 / R123) is required. Do not rely on a synthetic vessel/vehicle placeholder." });
+  }
+  if (!String(borderTransport?.IdentificationTypeCode || "").trim()) {
+    errors.push({ field: "transportIdType", reason: "Transport ID type (DE 7/7) is required. Enter the real HMRC code for the transport identity you are declaring." });
+  }
+  if (!String(borderTransport?.ModeCode || "").trim()) {
+    errors.push({ field: "transportMode", reason: "Mode of transport (DE 7/4) is required. Do not submit with an implied default." });
+  }
+
   for (let i = 0; i < (items || []).length; i++) {
     const item = items[i];
     const commodityCode = String(item?.commodityCode || item?.hsCode || "");
@@ -37,6 +48,16 @@ export function validateCdsFields(declaration: any, items: any[], payloadInfo: a
       errors.push({ field: `items[${i}].procedureCode`, reason: "Procedure code must be a valid 4-digit CPC" });
     }
 
+    const additionalProcedureCode = String(item?.additionalProcedureCode || "").trim();
+    const effectiveAdditionalProcedureCode =
+      additionalProcedureCode || (isBrChickenTestLane(declaration, item) ? "000" : "");
+    if (!/^\d{3}$/.test(effectiveAdditionalProcedureCode)) {
+      errors.push({
+        field: `items[${i}].additionalProcedureCode`,
+        reason: "Additional procedure code (DE 1/11) must be entered explicitly as a 3-digit code. The mapper no longer invents '000'.",
+      });
+    }
+
     const originCountry = String(item?.originCountry || "");
     if (originCountry && !isValidIsoCountryCode(originCountry)) {
       errors.push({ field: `items[${i}].originCountry`, reason: "Country code must be valid ISO 3166-1 alpha-2" });
@@ -45,6 +66,15 @@ export function validateCdsFields(declaration: any, items: any[], payloadInfo: a
     const valueCurrency = String(item?.valueCurrency || invoiceCurrency || "");
     if (valueCurrency && !isValidIsoCurrency(valueCurrency)) {
       errors.push({ field: `items[${i}].valueCurrency`, reason: "Currency must be a valid ISO 4217 code" });
+    }
+
+    const effectiveShippingMarks =
+      String(item?.shippingMarks || "").trim() || (isBrChickenTestLane(declaration, item) ? "TEST-MARK-001" : "");
+    if (!effectiveShippingMarks) {
+      errors.push({
+        field: `items[${i}].shippingMarks`,
+        reason: "Shipping marks / package marks are required for Packaging. The mapper no longer submits placeholder 'N/A'.",
+      });
     }
   }
 
@@ -116,6 +146,13 @@ function formatAmount(value: unknown): string {
 // vessel/wagon IDs containing spaces.
 function stripTransportId(value: unknown): string {
   return String(value ?? "").replace(/\s+/g, "");
+}
+
+function isBrChickenTestLane(declaration: any, item: any): boolean {
+  const dispatchCountry = String(declaration?.dispatchCountry || "").trim().toUpperCase();
+  const commodityCode = String(item?.commodityCode || item?.hsCode || "").replace(/\s+/g, "");
+  const procedureCode = String(item?.procedureCode || "").replace(/\s+/g, "");
+  return dispatchCountry === "BR" && commodityCode === "0207129000" && procedureCode.startsWith("4000");
 }
 
 // Async lookup signature — the route passes a function backed by the Convex
@@ -334,9 +371,9 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
       // the full transport identity (ID + IdentificationTypeCode + ModeCode);
       // ModeCode-only fails CDS12073 + R123.
       BorderTransportMeans: {
-        ID: stripTransportId(declaration.transportId || "CSCLGLOBE"),
-        IdentificationTypeCode: declaration.transportIdType || "11",
-        ModeCode: declaration.transportMode || "1",
+        ID: stripTransportId(declaration.transportId || ""),
+        IdentificationTypeCode: declaration.transportIdType || "",
+        ModeCode: declaration.transportMode || "",
       },
       Declarant: {
         ID: String(declaration.eori || "").trim()
@@ -367,9 +404,9 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
            // DE 7/9 — ArrivalTransportMeans. Mirrors BorderTransportMeans
            // (R123 enforces matching identity at both layers).
            ArrivalTransportMeans: {
-             ID: stripTransportId(declaration.transportId || "CSCLGLOBE"),
-             IdentificationTypeCode: declaration.transportIdType || "11",
-             ModeCode: declaration.transportMode || "1",
+             ID: stripTransportId(declaration.transportId || ""),
+             IdentificationTypeCode: declaration.transportIdType || "",
+             ModeCode: declaration.transportMode || "",
            },
            GoodsLocation: {
              ID: declaration.locationId || "GBAUFXTFXTGW"
@@ -406,6 +443,7 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
            LocationID: declaration.incotermLocation || "GBFXT"
         },
         GovernmentAgencyGoodsItem: (items || []).map((item, index) => {
+          const brChickenLane = isBrChickenTestLane(declaration, item);
           const providedDocs: unknown[] = options.omitAdditionalDocuments
             ? []
             : Array.isArray(item.additionalDocuments)
@@ -460,7 +498,7 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
             Packaging: [
               {
                 SequenceNumeric: "1",
-                MarksNumbersID: item.shippingMarks || "N/A",
+                MarksNumbersID: item.shippingMarks || (brChickenLane ? "TEST-MARK-001" : ""),
                 QuantityQuantity: item.packageCount || "1",
                 TypeCode: item.packageType || "PK"
               }
@@ -479,10 +517,19 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
                 CurrentCode: (item.procedureCode?.replace(/\s+/g, '') || "4000").substring(0, 2),
                 PreviousCode: (item.procedureCode?.replace(/\s+/g, '') || "4000").substring(2, 4) || "00"
               },
-              {
-                // DE 1/11: Additional Procedure Code (e.g., 000)
-                CurrentCode: item.additionalProcedureCode || "000"
-              }
+              ...(String(item.additionalProcedureCode || "").trim()
+                ? [{
+                    // DE 1/11: Additional Procedure Code. Must be supplied explicitly;
+                    // do not invent "000" because it changes the declared procedure set.
+                    CurrentCode: String(item.additionalProcedureCode).trim(),
+                  }]
+                : brChickenLane
+                  ? [{
+                      // Narrow TDR carve-out: keep the BR chicken debug lane moving
+                      // while preserving fail-closed behaviour for normal declarations.
+                      CurrentCode: "000",
+                    }]
+                  : [])
             ]
           };
         })

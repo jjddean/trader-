@@ -38,6 +38,16 @@ interface SeedRule {
     forbiddenFields?: { path: string; reason?: string }[];
     predicates?: { name: string; reason?: string; tolerance?: number }[];
   };
+  metadata?: {
+    evidence?: {
+      mrn?: string;
+      conversationId?: string;
+      functionCode?: string;
+      references?: string[];
+      confidence?: "high" | "medium";
+      observedAt?: number;
+    };
+  };
 }
 
 const RULES: SeedRule[] = [
@@ -129,6 +139,11 @@ const RULES: SeedRule[] = [
 // Rules that USED to live in this seed file but were removed because they
 // were guesses rather than authoritative facts. seedAll disables them so
 // re-running this script after a trim doesn't leave stale rules enabled.
+//
+// NOTE: D006/D028/D031/360 were retired as guesses, then RE-INSTATED below
+// as CURATED rules after CDS empirically rejected an HS 0207129000 / BR /
+// CPC 4000 submission for missing exactly those codes (TDR rejection,
+// 2026-04-26). The new CURATED-* IDs supersede the retired CPC-4000-* IDs.
 const RETIRED_RULE_IDS: string[] = [
   "ORIGIN-PREFERENCE-NO-U110",
   "CPC-4000-NO-D006",
@@ -138,12 +153,116 @@ const RETIRED_RULE_IDS: string[] = [
   "CPC-4000-NO-DOC-360",  // actual ruleId in DB
 ];
 
+// Curated rules — each backed by a real CDS rejection. These are NOT guesses:
+// every entry cites the rejection that proved the requirement exists. They
+// fill gaps the gov.uk public Trade Tariff API does not surface (e.g. D006
+// CITES, D028 CHED, D031 customs decision references, 360 CHED-PP).
+const CURATED_RULES: SeedRule[] = [
+  {
+    ruleId: "CURATED-4000-02071290-BR-D006",
+    name: "Curated: D006 required for HS 02071290 / BR / CPC 4000",
+    description:
+      "CDS rejected an HS 0207129000 (frozen chicken cuts) import from BR under CPC 4000 for missing D006. Required even though the public Trade Tariff API does not surface D006 in measure_conditions for this commodity.",
+    severity: "blocking",
+    enabled: true,
+    source: "cds-rejection:TDR-2026-04-26",
+    triggerScope: {
+      procedureCodes: ["4000"],
+      commodityPrefixes: ["02071290"],
+      originCountries: ["BR"],
+    },
+    effects: {
+      requiredDocuments: [{ code: "D006", reason: "Required by CDS (observed): rejection cited missing D006 on AdditionalDocument 02A." }],
+    },
+    metadata: {
+      evidence: {
+        functionCode: "03",
+        references: ["68A", "02A"],
+        confidence: "high",
+      },
+    },
+  },
+  {
+    ruleId: "CURATED-4000-02071290-BR-D028",
+    name: "Curated: D028 required for HS 02071290 / BR / CPC 4000",
+    description:
+      "CDS rejected an HS 0207129000 import from BR under CPC 4000 for missing D028. Required even though the public Trade Tariff API does not surface D028 in measure_conditions for this commodity.",
+    severity: "blocking",
+    enabled: true,
+    source: "cds-rejection:TDR-2026-04-26",
+    triggerScope: {
+      procedureCodes: ["4000"],
+      commodityPrefixes: ["02071290"],
+      originCountries: ["BR"],
+    },
+    effects: {
+      requiredDocuments: [{ code: "D028", reason: "Required by CDS (observed): rejection cited missing D028 on AdditionalDocument 02A." }],
+    },
+    metadata: {
+      evidence: {
+        functionCode: "03",
+        references: ["68A", "02A"],
+        confidence: "high",
+      },
+    },
+  },
+  {
+    ruleId: "CURATED-4000-02071290-BR-D031",
+    name: "Curated: D031 required for HS 02071290 / BR / CPC 4000",
+    description:
+      "CDS rejected an HS 0207129000 import from BR under CPC 4000 for missing D031. Required even though the public Trade Tariff API does not surface D031 in measure_conditions for this commodity.",
+    severity: "blocking",
+    enabled: true,
+    source: "cds-rejection:TDR-2026-04-26",
+    triggerScope: {
+      procedureCodes: ["4000"],
+      commodityPrefixes: ["02071290"],
+      originCountries: ["BR"],
+    },
+    effects: {
+      requiredDocuments: [{ code: "D031", reason: "Required by CDS (observed): rejection cited missing D031 on AdditionalDocument 02A." }],
+    },
+    metadata: {
+      evidence: {
+        functionCode: "03",
+        references: ["68A", "02A"],
+        confidence: "high",
+      },
+    },
+  },
+  {
+    ruleId: "CURATED-4000-02071290-BR-360",
+    name: "Curated: 360 required for HS 02071290 / BR / CPC 4000",
+    description:
+      "CDS rejected an HS 0207129000 import from BR under CPC 4000 for missing document code 360 (CHED-PP / phytosanitary equivalent). Required even though the public Trade Tariff API does not surface 360 in measure_conditions for this commodity.",
+    severity: "blocking",
+    enabled: true,
+    source: "cds-rejection:TDR-2026-04-26",
+    triggerScope: {
+      procedureCodes: ["4000"],
+      commodityPrefixes: ["02071290"],
+      originCountries: ["BR"],
+    },
+    effects: {
+      requiredDocuments: [{ code: "360", reason: "Required by CDS (observed): rejection cited missing 360 on AdditionalDocument 02A." }],
+    },
+    metadata: {
+      evidence: {
+        functionCode: "03",
+        references: ["68A", "02A"],
+        confidence: "high",
+      },
+    },
+  },
+];
+
 export const seedAll = internalMutation({
   handler: async (ctx) => {
     const now = Date.now();
     let inserted = 0;
     let updated = 0;
     let retired = 0;
+    let curated = 0;
     for (const ruleId of RETIRED_RULE_IDS) {
       const stale = await ctx.db
         .query("rule_definitions")
@@ -154,7 +273,8 @@ export const seedAll = internalMutation({
         retired++;
       }
     }
-    for (const rule of RULES) {
+    const allRules = [...RULES, ...CURATED_RULES];
+    for (const rule of allRules) {
       const existing = await ctx.db
         .query("rule_definitions")
         .withIndex("by_ruleId", (q) => q.eq("ruleId", rule.ruleId))
@@ -168,6 +288,7 @@ export const seedAll = internalMutation({
           source: rule.source,
           triggerScope: rule.triggerScope,
           effects: rule.effects,
+          metadata: rule.metadata,
           updatedAt: now,
         });
         updated++;
@@ -179,7 +300,8 @@ export const seedAll = internalMutation({
         });
         inserted++;
       }
+      if (rule.ruleId.startsWith("CURATED-")) curated++;
     }
-    return { inserted, updated, retired, total: RULES.length };
+    return { inserted, updated, retired, curated, total: allRules.length };
   },
 });

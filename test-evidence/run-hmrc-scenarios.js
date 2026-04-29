@@ -397,7 +397,9 @@ function preflightGates(xmlPayload, eori) {
     client_id_present: Boolean(process.env.HMRC_CLIENT_ID),
     environment_is_sandbox: process.env.HMRC_ENVIRONMENT === "sandbox",
     endpoint_is_test_api: endpoint.startsWith("https://test-api.service.hmrc.gov.uk"),
-    accept_is_v1: acceptHeader === "application/vnd.hmrc.1.0+xml",
+    accept_is_v1:
+      acceptHeader === "application/vnd.hmrc.1.0+xml" ||
+      acceptHeader === "application/vnd.hmrc.2.0+xml",
     content_type_is_xml: contentTypeHeader.toLowerCase().includes("application/xml"),
     xml_has_metadata_root: xmlPayload.includes("<MetaData"),
     xml_has_declaration: xmlPayload.includes("<Declaration"),

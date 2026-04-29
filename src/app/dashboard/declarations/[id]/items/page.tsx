@@ -109,7 +109,11 @@ export default function GoodsItemsPage() {
         const id = item._id as string;
         if (!docEditsTouched.current.has(id)) {
           const docs = getNormalizedDocs(item as Record<string, unknown>);
-          next[id] = [0, 1, 2, 3, 4, 5].map(i => ({
+          // Always seed >= 6 slots so the editor has room for new entries, but
+          // never truncate existing docs — earlier hardcoded length of 6 was
+          // dropping AdditionalDocument rows >= index 6 on save.
+          const slotCount = Math.max(6, docs.length);
+          next[id] = Array.from({ length: slotCount }, (_, i) => ({
             code: docs[i] ? `${docs[i].CategoryCode}${docs[i].TypeCode}` : "",
             ref: docs[i]?.ID || "",
           }));
@@ -150,6 +154,40 @@ export default function GoodsItemsPage() {
     });
   };
 
+  const addDocSlot = (itemId: string) => {
+    docEditsTouched.current.add(itemId);
+    setDocEdits(prev => {
+      const current = prev[itemId] ?? emptySlots();
+      return { ...prev, [itemId]: [...current, { code: "", ref: "" }] };
+    });
+  };
+
+  const removeDocSlot = async (item: GoodsItemRow, slotIndex: number) => {
+    const itemId = item._id as string;
+    docEditsTouched.current.add(itemId);
+    const next = (docEdits[itemId] ?? emptySlots()).filter((_, i) => i !== slotIndex);
+    setDocEdits(prev => ({ ...prev, [itemId]: next }));
+    // Persist immediately — removal isn't covered by the onBlur path.
+    try {
+      const validDocs = next
+        .map(slot => {
+          const raw = slot.code.replace(/\s+/g, "").trim().toUpperCase();
+          const category = raw.slice(0, 1);
+          const type = raw.slice(1);
+          return {
+            CategoryCode: category,
+            TypeCode: type,
+            ID: slot.ref.trim(),
+            StatusCode: raw ? deriveStatusCode(category, type) : "",
+          };
+        })
+        .filter(doc => doc.CategoryCode && doc.TypeCode && doc.ID);
+      await updateItem({ id: item._id, additionalDocuments: validDocs });
+    } catch (err) {
+      console.error("Failed to remove document slot:", err);
+    }
+  };
+
   const handleDocBlur = async (item: GoodsItemRow) => {
     const itemId = item._id as string;
     const slots = docEdits[itemId];
@@ -177,7 +215,7 @@ export default function GoodsItemsPage() {
 
   const handleItemFieldBlur = (
     itemId: Id<"goods_items">,
-    field: "description" | "commodityCode" | "originCountry" | "valueAmount" | "procedureCode" | "additionalProcedureCode" | "grossWeightKg" | "netWeightKg",
+    field: "description" | "commodityCode" | "originCountry" | "valueAmount" | "procedureCode" | "additionalProcedureCode" | "grossWeightKg" | "netWeightKg" | "shippingMarks",
     value: string,
   ) => {
     if (field === "commodityCode") {
@@ -438,9 +476,9 @@ export default function GoodsItemsPage() {
                     <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Add. Proc (DE 1/11)</label>
                     <input
                       type="text"
-                      defaultValue={String(item.additionalProcedureCode ?? "000")}
+                      defaultValue={String(item.additionalProcedureCode ?? "")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "additionalProcedureCode", e.target.value)}
-                      placeholder="000"
+                      placeholder="000 = none"
                       className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 font-mono text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
                     />
                   </div>
@@ -466,6 +504,17 @@ export default function GoodsItemsPage() {
                       className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
                     />
                   </div>
+
+                  <div className="md:col-span-3 lg:col-span-4">
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Shipping Marks (DE 6/11)</label>
+                    <input
+                      type="text"
+                      defaultValue={String((item as Record<string, unknown>).shippingMarks ?? "")}
+                      onBlur={(e) => handleItemFieldBlur(item._id, "shippingMarks", e.target.value)}
+                      placeholder='Marks printed on the cartons/pallets — or "UNMARKED" if literally none'
+                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
+                    />
+                  </div>
                 </div>
 
                 <div className="border-t border-gray-100 px-4 py-4">
@@ -474,10 +523,8 @@ export default function GoodsItemsPage() {
                     <span className="text-[10px] text-gray-400">Status code auto-derived: N+CHED → XW · Y929/Y930 → XB</span>
                   </div>
                   <div className="space-y-2">
-                    {[0, 1, 2, 3, 4, 5].map(slotIdx => {
-                      const hint = DOC_SLOT_HINTS[slotIdx];
-                      const codeVal = slots?.[slotIdx]?.code ?? getDocCell(item, slotIdx).code;
-                      const refVal = slots?.[slotIdx]?.ref ?? getDocCell(item, slotIdx).ref;
+                    {(slots ?? emptySlots()).map((slot, slotIdx) => {
+                      const hint = DOC_SLOT_HINTS[slotIdx] ?? { label: "Additional document", code: "", ref: "" };
                       return (
                         <div key={slotIdx} className="grid grid-cols-12 items-center gap-2">
                           <div className="col-span-12 text-[10px] uppercase tracking-wider text-gray-400 sm:col-span-3">
@@ -485,24 +532,39 @@ export default function GoodsItemsPage() {
                           </div>
                           <input
                             type="text"
-                            value={codeVal}
+                            value={slot.code}
                             onChange={(e) => handleDocChange(item._id as string, slotIdx, "code", e.target.value)}
                             onBlur={() => handleDocBlur(item)}
-                            placeholder={hint.code || "e.g. N935"}
-                            className="col-span-4 h-9 rounded-md border border-gray-200 bg-white px-2 font-mono text-xs uppercase text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 sm:col-span-2"
+                            placeholder={hint.code || "e.g. D006"}
+                            className="col-span-3 h-9 rounded-md border border-gray-200 bg-white px-2 font-mono text-xs uppercase text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 sm:col-span-2"
                           />
                           <input
                             type="text"
-                            value={refVal}
+                            value={slot.ref}
                             onChange={(e) => handleDocChange(item._id as string, slotIdx, "ref", e.target.value)}
                             onBlur={() => handleDocBlur(item)}
                             placeholder={hint.ref || "Reference"}
-                            className="col-span-8 h-9 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 sm:col-span-7"
+                            className="col-span-8 h-9 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 sm:col-span-6"
                           />
+                          <button
+                            type="button"
+                            onClick={() => removeDocSlot(item as GoodsItemRow, slotIdx)}
+                            className="col-span-1 h-9 rounded-md border border-gray-200 bg-white text-xs text-gray-400 transition-colors hover:border-red-200 hover:text-red-500"
+                            title="Remove this document slot"
+                          >
+                            ×
+                          </button>
                         </div>
                       );
                     })}
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => addDocSlot(item._id as string)}
+                    className="mt-3 inline-flex h-8 items-center gap-1 rounded-md border border-dashed border-gray-300 px-3 text-[11px] font-medium text-gray-600 transition-colors hover:border-blue-400 hover:text-blue-600"
+                  >
+                    + Add document slot
+                  </button>
                 </div>
               </div>
             );

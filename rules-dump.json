@@ -1,0 +1,557 @@
+[
+  {
+    "_creationTime": 1777211467808.0173,
+    "_id": "nh78y8y67ksdkg1hsf7vsttyds85j862",
+    "createdAt": 1777211467808,
+    "description": "Every import declaration must carry the country goods were shipped FROM. CDS rejects with CDS10001/CDS12100 22B 090 when ExportCountry.ID is blank or set to GB on a non-UK lane.",
+    "effects": {
+      "requiredFields": [
+        {
+          "path": "declaration.dispatchCountry",
+          "reason": "DE 5/14 dispatch country must be the country goods shipped FROM (e.g. BR for Brazil)."
+        }
+      ]
+    },
+    "enabled": true,
+    "name": "Dispatch country (DE 5/14) is mandatory",
+    "ruleId": "DEC-DISPATCH-COUNTRY",
+    "severity": "blocking",
+    "source": "HMRC CDS guide DE 5/14; empirical TDR (CDS12100 22B 090)",
+    "triggerScope": {
+      "declarationTypes": [
+        "IMA",
+        "IMD",
+        "IMY",
+        "IMZ"
+      ]
+    },
+    "updatedAt": 1777225860221
+  },
+  {
+    "_creationTime": 1777211467808.0176,
+    "_id": "nh776c495tvy1z7nhva859kazd85jx6v",
+    "createdAt": 1777211467808,
+    "description": "Both BorderTransportMeans and ArrivalTransportMeans need the full triplet (ID + IdentificationTypeCode + ModeCode). CDS rejects R123/CDS12073 when ID or IdentificationTypeCode is missing.",
+    "effects": {
+      "requiredFields": [
+        {
+          "path": "declaration.transportId",
+          "reason": "Transport ID (vessel/wagon/flight) required for R123."
+        },
+        {
+          "path": "declaration.transportIdType",
+          "reason": "Transport ID type code (DE 7/7) required for R123."
+        },
+        {
+          "path": "declaration.transportMode",
+          "reason": "Mode of transport (DE 7/4) required for CDS12073."
+        }
+      ]
+    },
+    "enabled": true,
+    "name": "Transport identity (DE 7/9 + 7/14) must be populated",
+    "ruleId": "DEC-TRANSPORT-IDENTITY",
+    "severity": "blocking",
+    "source": "WCO DEC-DMS:2; CDS R123 / CDS12073; empirical TDR pass 2 (2026-04-25)",
+    "triggerScope": {
+      "declarationTypes": [
+        "IMA",
+        "IMD"
+      ]
+    },
+    "updatedAt": 1777225860221
+  },
+  {
+    "_creationTime": 1777211467808.0178,
+    "_id": "nh71xv51pyecz6tpgmf3c73px585kddj",
+    "createdAt": 1777211467808,
+    "description": "D006 is only valid for warehouse-discharge procedures (e.g. 4071). Including it on plain 4000 triggers CDS77002 (document not appropriate).",
+    "effects": {
+      "forbiddenDocuments": [
+        {
+          "code": "D006",
+          "reason": "D006 is only valid for warehouse-discharge procedures."
+        }
+      ]
+    },
+    "enabled": false,
+    "name": "CPC 4000/000 must not declare D006 (CDS warehouse stock removal)",
+    "ruleId": "CPC-4000-NO-D006",
+    "severity": "blocking",
+    "source": "HMRC tariff DE 2/3 D006; CDS reject CDS77002",
+    "triggerScope": {
+      "additionalProcedureCodes": [
+        "000"
+      ],
+      "procedureCodes": [
+        "4000"
+      ]
+    },
+    "updatedAt": 1777215557574
+  },
+  {
+    "_creationTime": 1777211467808.018,
+    "_id": "nh73ptm626jmxnc1r8ewv81kex85j7j1",
+    "createdAt": 1777211467808,
+    "description": "D031 references a special-procedure authorisation that 4000/000 (release to free circulation, no additional procedure) does not use. CDS77005 (document not allowed for procedure).",
+    "effects": {
+      "forbiddenDocuments": [
+        {
+          "code": "D031",
+          "reason": "D031 only applies to authorised special procedures."
+        }
+      ]
+    },
+    "enabled": false,
+    "name": "CPC 4000/000 must not declare D031 (CDS authorisation reference)",
+    "ruleId": "CPC-4000-NO-D031",
+    "severity": "blocking",
+    "source": "HMRC tariff DE 2/3 D031; empirical TDR (CDS77005)",
+    "triggerScope": {
+      "additionalProcedureCodes": [
+        "000"
+      ],
+      "procedureCodes": [
+        "4000"
+      ]
+    },
+    "updatedAt": 1777215557574
+  },
+  {
+    "_creationTime": 1777211467808.0183,
+    "_id": "nh71w99x3j47v24p8j0kg6x47985jp0x",
+    "createdAt": 1777211467808,
+    "description": "D028 (CDS guarantee reference) is only required when the procedure has an associated guarantee — 4000/000 does not. CDS rejects CDS12070 (combination invalid).",
+    "effects": {
+      "forbiddenDocuments": [
+        {
+          "code": "D028",
+          "reason": "Guarantee reference not used by 4000/000."
+        }
+      ]
+    },
+    "enabled": false,
+    "name": "CPC 4000/000 must not declare D028",
+    "ruleId": "CPC-4000-NO-D028",
+    "severity": "blocking",
+    "source": "HMRC tariff DE 2/3 D028; CDS reject CDS12070",
+    "triggerScope": {
+      "additionalProcedureCodes": [
+        "000"
+      ],
+      "procedureCodes": [
+        "4000"
+      ]
+    },
+    "updatedAt": 1777215557574
+  },
+  {
+    "_creationTime": 1777211467808.0186,
+    "_id": "nh75hd66b8sts45jkq6vmcf0s185kv87",
+    "createdAt": 1777211467808,
+    "description": "Document code 360 is a special-procedure indicator. CDS rejects CDS12056 / CDS77002 when present on a release-to-free-circulation procedure.",
+    "effects": {
+      "forbiddenDocuments": [
+        {
+          "code": "360",
+          "reason": "Document 360 is not appropriate for 4000/000."
+        }
+      ]
+    },
+    "enabled": false,
+    "name": "CPC 4000/000 must not declare document type 360",
+    "ruleId": "CPC-4000-NO-DOC-360",
+    "severity": "blocking",
+    "source": "HMRC tariff DE 2/3 360; CDS reject CDS12056",
+    "triggerScope": {
+      "additionalProcedureCodes": [
+        "000"
+      ],
+      "procedureCodes": [
+        "4000"
+      ]
+    },
+    "updatedAt": 1777225860221
+  },
+  {
+    "_creationTime": 1777211467808.0188,
+    "_id": "nh7fmad7s6a0y2py17ta672gy985kfyc",
+    "createdAt": 1777211467808,
+    "description": "DE 4/16 = 1 (transaction value) requires N935 on every goods item per the wco-dec valuation-method-types invariant.",
+    "effects": {
+      "requiredDocuments": [
+        {
+          "code": "N935",
+          "reason": "Commercial invoice required for Method 1 transaction value."
+        }
+      ]
+    },
+    "enabled": true,
+    "name": "Method 1 valuation requires N935 (commercial invoice)",
+    "ruleId": "INV-METHOD1-N935",
+    "severity": "blocking",
+    "source": "github.com/hmrc/wco-dec valuation-method-types.json",
+    "triggerScope": {
+      "valuationMethods": [
+        "1"
+      ]
+    },
+    "updatedAt": 1777225860221
+  },
+  {
+    "_creationTime": 1777211467808.019,
+    "_id": "nh707qyd4f59rm6n5sbd3fmrtx85k0mh",
+    "createdAt": 1777211467808,
+    "description": "Brazil currently has no preferential agreement with the UK. Declaring U110 (or any U-series preference doc) on a BR lane will be rejected as inappropriate.",
+    "effects": {
+      "forbiddenDocuments": [
+        {
+          "code": "U110",
+          "reason": "BR has no UK preference; remove U110 unless tariff explicitly permits."
+        },
+        {
+          "code": "U112",
+          "reason": "BR has no UK preference; remove U112 unless tariff explicitly permits."
+        }
+      ]
+    },
+    "enabled": false,
+    "name": "Non-preference origin must not declare U110 (preference certificate)",
+    "ruleId": "ORIGIN-PREFERENCE-NO-U110",
+    "severity": "advisory",
+    "source": "UK Tariff API origin-preference matrix; empirical",
+    "triggerScope": {
+      "originCountries": [
+        "BR"
+      ]
+    },
+    "updatedAt": 1777215557574
+  },
+  {
+    "_creationTime": 1777215557574.5022,
+    "_id": "nh70earz9g2tx7xrgdeqhmekgh85kjm6",
+    "createdAt": 1777215557574,
+    "description": "When the declaration is in minimal mode (default for new lanes) the engine refuses every document, regardless of code. The user must promote the lane to enriched mode before adding docs — that way bad data can't slip in by default.",
+    "effects": {
+      "predicates": [
+        {
+          "name": "WILDCARD_FORBID_ALL_DOCUMENTS",
+          "reason": "Lane is in minimal mode — promote to enriched before adding documents."
+        }
+      ]
+    },
+    "enabled": true,
+    "name": "Minimal mode forbids any AdditionalDocument",
+    "ruleId": "MODE-MINIMAL-LOCK",
+    "severity": "blocking",
+    "source": "Internal — TradeDNA minimal-mode contract",
+    "triggerScope": {
+      "modes": [
+        "minimal"
+      ]
+    },
+    "updatedAt": 1777225860221
+  },
+  {
+    "_creationTime": 1777215557574.5024,
+    "_id": "nh7e58v7asx5agf84tb6avepbx85k81v",
+    "createdAt": 1777215557574,
+    "description": "When the user has set declaration.invoiceTotal explicitly, the sum of goods_items.valueAmount must match within 0.01. Catches data entry drift before CDS does.",
+    "effects": {
+      "predicates": [
+        {
+          "name": "ITEM_VALUE_SUM_MATCHES_INVOICE",
+          "tolerance": 0.01
+        }
+      ]
+    },
+    "enabled": true,
+    "name": "Sum of item values must match declaration invoiceTotal",
+    "ruleId": "VALUE-MATCH-INVOICE",
+    "severity": "blocking",
+    "source": "Empirical — CDS routinely rejects invoice/item value mismatches",
+    "triggerScope": {},
+    "updatedAt": 1777225860221
+  },
+  {
+    "_creationTime": 1777215729574.3777,
+    "_id": "nh79g3em5md63mhjyyh5js5cjn85jqtv",
+    "createdAt": 1777215729574,
+    "description": "Trade Tariff measure 20234422 (type 410 — Veterinary control) requires presentation of one of: C084, N853, Y930. Geographical area: 1008 (All third countries). Source: gov.uk Trade Tariff API.",
+    "effects": {
+      "requiredDocuments": [
+        {
+          "alternatives": [
+            "N853",
+            "Y930"
+          ],
+          "code": "C084",
+          "reason": "Required by tariff measure 20234422 (Veterinary control)."
+        }
+      ]
+    },
+    "enabled": true,
+    "metadata": {
+      "effectiveStartDate": "2024-02-06T00:00:00.000Z",
+      "geographicalAreaDescription": "All third countries",
+      "geographicalAreaId": "1008",
+      "measureId": "20234422",
+      "measureTypeDescription": "Veterinary control",
+      "measureTypeId": "410"
+    },
+    "name": "Tariff 0207129000: Veterinary control requires document",
+    "ruleId": "TARIFF-0207129000-MEASURE-20234422",
+    "severity": "blocking",
+    "source": "trade-tariff:0207129000@2026-04-27#measure-20234422",
+    "triggerScope": {
+      "commodityPrefixes": [
+        "0207129000"
+      ]
+    },
+    "updatedAt": 1777285058901
+  },
+  {
+    "_creationTime": 1777215729574.378,
+    "_id": "nh78pzydrxda9r9anvytztcads85k1dd",
+    "createdAt": 1777215729574,
+    "description": "Trade Tariff measure 20232644 (type 750 — Import control of organic products) requires presentation of one of: C644, Y929. Geographical area: 1011 (ERGA OMNES). Source: gov.uk Trade Tariff API.",
+    "effects": {
+      "requiredDocuments": [
+        {
+          "alternatives": [
+            "Y929"
+          ],
+          "code": "C644",
+          "reason": "Required by tariff measure 20232644 (Import control of organic products)."
+        }
+      ]
+    },
+    "enabled": true,
+    "metadata": {
+      "effectiveStartDate": "2024-02-01T00:00:00.000Z",
+      "geographicalAreaDescription": "ERGA OMNES",
+      "geographicalAreaId": "1011",
+      "measureId": "20232644",
+      "measureTypeDescription": "Import control of organic products",
+      "measureTypeId": "750"
+    },
+    "name": "Tariff 0207129000: Import control of organic products requires document",
+    "ruleId": "TARIFF-0207129000-MEASURE-20232644",
+    "severity": "blocking",
+    "source": "trade-tariff:0207129000@2026-04-27#measure-20232644",
+    "triggerScope": {
+      "commodityPrefixes": [
+        "0207129000"
+      ],
+      "excludedOriginCountries": [
+        "AT",
+        "BE",
+        "BG",
+        "CH",
+        "CY",
+        "CZ",
+        "DE",
+        "DK",
+        "EE",
+        "ES",
+        "EU",
+        "FI",
+        "FR",
+        "GB",
+        "GR",
+        "HR",
+        "HU",
+        "IE",
+        "IS",
+        "IT",
+        "LT",
+        "LU",
+        "LV",
+        "MT",
+        "NL",
+        "NO",
+        "PL",
+        "PT",
+        "RO",
+        "SE",
+        "SI",
+        "SK",
+        "XI"
+      ]
+    },
+    "updatedAt": 1777285058901
+  },
+  {
+    "_creationTime": 1777215729574.3782,
+    "_id": "nh7dwtas29mvbhw8btzsnaex6n85jd3m",
+    "createdAt": 1777215729574,
+    "description": "[SKIPPED — geographical area 2052 (CPTPP Japan) is a country group whose members are not in this response; not safe to apply universally] Trade Tariff measure 20249021 (type 142 — Tariff preference) requires the trader to declare one of these exemption / status codes: 9081. Geographical area: 2052 (CPTPP Japan). Only applies when a preference is claimed (DE 4/17 ≠ 100). Source: gov.uk Trade Tariff API.",
+    "effects": {
+      "requiredDocuments": [
+        {
+          "code": "9081",
+          "reason": "Declare exemption code for tariff measure 20249021 (Tariff preference)."
+        }
+      ]
+    },
+    "enabled": false,
+    "metadata": {
+      "effectiveStartDate": "2024-12-15T00:00:00.000Z",
+      "geographicalAreaDescription": "CPTPP Japan",
+      "geographicalAreaId": "2052",
+      "measureId": "20249021",
+      "measureTypeDescription": "Tariff preference",
+      "measureTypeId": "142"
+    },
+    "name": "Tariff 0207129000: Tariff preference — declare exemption",
+    "ruleId": "TARIFF-0207129000-MEASURE-20249021",
+    "severity": "advisory",
+    "source": "trade-tariff:0207129000@2026-04-27#measure-20249021",
+    "triggerScope": {
+      "commodityPrefixes": [
+        "0207129000"
+      ],
+      "requiresPreferenceClaim": true
+    },
+    "updatedAt": 1777285058901
+  },
+  {
+    "_creationTime": 1777215729574.3784,
+    "_id": "nh7bczbae1nx3ae7at96wv5mzx85km9h",
+    "createdAt": 1777215729574,
+    "description": "[SKIPPED — geographical area 2057 (CPTPP New Zealand) is a country group whose members are not in this response; not safe to apply universally] Trade Tariff measure 20247840 (type 142 — Tariff preference) requires the trader to declare one of these exemption / status codes: 9081. Geographical area: 2057 (CPTPP New Zealand). Only applies when a preference is claimed (DE 4/17 ≠ 100). Source: gov.uk Trade Tariff API.",
+    "effects": {
+      "requiredDocuments": [
+        {
+          "code": "9081",
+          "reason": "Declare exemption code for tariff measure 20247840 (Tariff preference)."
+        }
+      ]
+    },
+    "enabled": false,
+    "metadata": {
+      "effectiveStartDate": "2024-12-15T00:00:00.000Z",
+      "geographicalAreaDescription": "CPTPP New Zealand",
+      "geographicalAreaId": "2057",
+      "measureId": "20247840",
+      "measureTypeDescription": "Tariff preference",
+      "measureTypeId": "142"
+    },
+    "name": "Tariff 0207129000: Tariff preference — declare exemption",
+    "ruleId": "TARIFF-0207129000-MEASURE-20247840",
+    "severity": "advisory",
+    "source": "trade-tariff:0207129000@2026-04-27#measure-20247840",
+    "triggerScope": {
+      "commodityPrefixes": [
+        "0207129000"
+      ],
+      "requiresPreferenceClaim": true
+    },
+    "updatedAt": 1777285058901
+  },
+  {
+    "_creationTime": 1777215729574.3787,
+    "_id": "nh7av3p3w8s66z6wsp4g6ysern85jdts",
+    "createdAt": 1777215729574,
+    "description": "[SKIPPED — geographical area 2059 (CPTPP Vietnam) is a country group whose members are not in this response; not safe to apply universally] Trade Tariff measure 20249617 (type 142 — Tariff preference) requires the trader to declare one of these exemption / status codes: 9081. Geographical area: 2059 (CPTPP Vietnam). Only applies when a preference is claimed (DE 4/17 ≠ 100). Source: gov.uk Trade Tariff API.",
+    "effects": {
+      "requiredDocuments": [
+        {
+          "code": "9081",
+          "reason": "Declare exemption code for tariff measure 20249617 (Tariff preference)."
+        }
+      ]
+    },
+    "enabled": false,
+    "metadata": {
+      "effectiveEndDate": "2026-12-31T23:59:59.000Z",
+      "effectiveStartDate": "2024-12-15T00:00:00.000Z",
+      "geographicalAreaDescription": "CPTPP Vietnam",
+      "geographicalAreaId": "2059",
+      "measureId": "20249617",
+      "measureTypeDescription": "Tariff preference",
+      "measureTypeId": "142"
+    },
+    "name": "Tariff 0207129000: Tariff preference — declare exemption",
+    "ruleId": "TARIFF-0207129000-MEASURE-20249617",
+    "severity": "advisory",
+    "source": "trade-tariff:0207129000@2026-04-27#measure-20249617",
+    "triggerScope": {
+      "commodityPrefixes": [
+        "0207129000"
+      ],
+      "requiresPreferenceClaim": true
+    },
+    "updatedAt": 1777285058901
+  },
+  {
+    "_creationTime": 1777215729574.379,
+    "_id": "nh759x4mv1hk669yj1bd6130d185kjbg",
+    "createdAt": 1777215729574,
+    "description": "[SKIPPED — geographical area 2060 (CPTPP Singapore) is a country group whose members are not in this response; not safe to apply universally] Trade Tariff measure 20249254 (type 142 — Tariff preference) requires the trader to declare one of these exemption / status codes: 9081. Geographical area: 2060 (CPTPP Singapore). Only applies when a preference is claimed (DE 4/17 ≠ 100). Source: gov.uk Trade Tariff API.",
+    "effects": {
+      "requiredDocuments": [
+        {
+          "code": "9081",
+          "reason": "Declare exemption code for tariff measure 20249254 (Tariff preference)."
+        }
+      ]
+    },
+    "enabled": false,
+    "metadata": {
+      "effectiveStartDate": "2025-01-01T00:00:00.000Z",
+      "geographicalAreaDescription": "CPTPP Singapore",
+      "geographicalAreaId": "2060",
+      "measureId": "20249254",
+      "measureTypeDescription": "Tariff preference",
+      "measureTypeId": "142"
+    },
+    "name": "Tariff 0207129000: Tariff preference — declare exemption",
+    "ruleId": "TARIFF-0207129000-MEASURE-20249254",
+    "severity": "advisory",
+    "source": "trade-tariff:0207129000@2026-04-27#measure-20249254",
+    "triggerScope": {
+      "commodityPrefixes": [
+        "0207129000"
+      ],
+      "requiresPreferenceClaim": true
+    },
+    "updatedAt": 1777285058901
+  },
+  {
+    "_creationTime": 1777215729574.3792,
+    "_id": "nh7f281z5vqb9rc8rrcf7dvjxn85j4rs",
+    "createdAt": 1777215729574,
+    "description": "Trade Tariff measure 20179837 (type 465 — Restriction on entry into free circulation) requires the trader to declare one of these exemption / status codes: 9017. Geographical area: UA (Ukraine). Source: gov.uk Trade Tariff API.",
+    "effects": {
+      "requiredDocuments": [
+        {
+          "code": "9017",
+          "reason": "Declare exemption code for tariff measure 20179837 (Restriction on entry into free circulation)."
+        }
+      ]
+    },
+    "enabled": true,
+    "metadata": {
+      "effectiveStartDate": "2022-03-30T00:00:00.000Z",
+      "geographicalAreaDescription": "Ukraine",
+      "geographicalAreaId": "UA",
+      "measureId": "20179837",
+      "measureTypeDescription": "Restriction on entry into free circulation",
+      "measureTypeId": "465"
+    },
+    "name": "Tariff 0207129000: Restriction on entry into free circulation — declare exemption",
+    "ruleId": "TARIFF-0207129000-MEASURE-20179837",
+    "severity": "advisory",
+    "source": "trade-tariff:0207129000@2026-04-27#measure-20179837",
+    "triggerScope": {
+      "commodityPrefixes": [
+        "0207129000"
+      ],
+      "originCountries": [
+        "UA"
+      ]
+    },
+    "updatedAt": 1777285058901
+  }
+]

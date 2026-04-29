@@ -56,29 +56,12 @@ export function SiteHeader() {
         <div className="flex items-center gap-[12px] md:gap-[24px]">
           <div className="flex items-center gap-4">
             {!isSignedIn ? (
-              <Dialog>
-                <DialogTrigger asChild>
-                  <button
-                      className="h-[32px] rounded-md border border-transparent bg-[#111827] px-[12px] md:px-[16px] text-[13px] font-medium text-white transition-colors hover:bg-slate-800 flex items-center justify-center whitespace-nowrap shadow-sm cursor-pointer"
-                  >
-                      Gain Access
-                  </button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[440px] p-0 border-none bg-transparent shadow-none [&>button]:text-white [&>button]:bg-black/20 [&>button]:hover:bg-black/40 [&>button]:rounded-full [&>button]:top-2 [&>button]:right-2">
-                  <DialogHeader className="sr-only">
-                    <DialogTitle>Join Waitlist</DialogTitle>
-                  </DialogHeader>
-                  <Waitlist />
-                  <div className="pb-6 px-8 text-center">
-                    <p className="text-[12px] text-slate-500">
-                      Need help? Contact us at{" "}
-                      <a href="mailto:info@freightcode.co.uk" className="text-slate-900 font-medium hover:underline">
-                        info@freightcode.co.uk
-                      </a>
-                    </p>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <Link
+                href="/sign-in"
+                className="h-[32px] rounded-md border border-transparent bg-[#111827] px-[12px] md:px-[16px] text-[13px] font-medium text-white transition-colors hover:bg-slate-800 flex items-center justify-center whitespace-nowrap shadow-sm"
+              >
+                Sign In
+              </Link>
             ) : (
               <div className="flex items-center gap-4">
                 <Link

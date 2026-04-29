@@ -5,7 +5,7 @@ import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { AlertCircle, PoundSterling, FileText, ArrowUpRight, TrendingUp, Archive, RefreshCw, ShieldCheck, ShieldAlert, Plus } from "lucide-react";
+import { AlertCircle, PoundSterling, FileText, ArrowUpRight, TrendingUp, Archive, RefreshCw, Plus } from "lucide-react";
 
 export default function DashboardPage() {
   const { user } = useUser();
@@ -14,7 +14,6 @@ export default function DashboardPage() {
   const summary = useQuery(api.declarations.getDashboardSummary);
   const declarationPreviews = useQuery(api.declarations.getDeclarationPreviews);
   const hmrcToken = useQuery(api.hmrc.getToken, userId ? { userId } : "skip");
-  const disconnectHmrc = useMutation(api.hmrc.disconnectToken);
   const stats = useMemo(() => {
     if (!summary) return null;
 
@@ -58,35 +57,13 @@ export default function DashboardPage() {
         </div>
         
         {hmrcToken !== undefined && (
-          hmrcToken ? (
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-medium text-gray-500">
-                {tokenExpiryText}
-              </span>
-              <a
-                href="/api/hmrc/auth"
-                className="flex h-9 items-center gap-2 rounded-md bg-green-100 px-4 text-xs font-medium text-green-700 transition-opacity hover:opacity-90"
-              >
-                <ShieldCheck className="h-4 w-4" />
-                HMRC Connected
-              </a>
-              <button
-                onClick={() => disconnectHmrc()}
-                className="flex h-9 items-center gap-2 rounded-md bg-red-50 px-4 text-xs font-medium text-red-600 transition-opacity hover:opacity-90"
-              >
-                <ShieldAlert className="h-4 w-4" />
-                Disconnect
-              </button>
-            </div>
-          ) : (
-            <a
-              href="/api/hmrc/auth"
-              className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800"
-            >
-              <Plus className="h-4 w-4" />
-              Connect HMRC
-            </a>
-          )
+          <a
+            href="/api/hmrc/auth"
+            className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800"
+          >
+            <Plus className="h-4 w-4" />
+            Connect HMRC
+          </a>
         )}
       </div>
 

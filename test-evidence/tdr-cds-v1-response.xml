@@ -1,8 +1,2 @@
-<!-- timestamp: 2026-04-11T15:31:42.349Z | http_status: 403 | conversation_id: fd9a0959-206f-41de-96d3-66b09fea9295 -->
-<!-- request_accept: application/vnd.hmrc.1.0+xml | request_content_type: application/xml; charset=UTF-8 | request_authorization: Bearer [REDACTED] | request_x_client_id: ZSoA1lpJi8FyuzSsncFrOZKpmrNe | request_gov_test_scenario: HAPPY_PATH -->
-<?xml version='1.0' encoding='UTF-8'?>
-<errorResponse>
-      <code>PAYLOAD_FORBIDDEN</code>
-      <message>A firewall rejected the request</message>
-      
-    </errorResponse>
+<!-- timestamp: 2026-04-28T13:02:41.320Z | http_status: 0 | conversation_id: N/A -->
+<dryRunOnly>true</dryRunOnly>
