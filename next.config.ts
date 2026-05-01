@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  trailingSlash: false,
   redirects: async () => {
     return [
       // Force www for all non-www requests (http->https handled by Vercel)
@@ -13,19 +14,6 @@ const nextConfig: NextConfig = {
           {
             type: "host",
             value: "freightcode.co.uk",
-          },
-        ],
-      },
-    ];
-  },
-  headers: async () => {
-    return [
-      {
-        source: "/(.*)",
-        headers: [
-          {
-            key: "X-Robots-Tag",
-            value: "index, follow",
           },
         ],
       },

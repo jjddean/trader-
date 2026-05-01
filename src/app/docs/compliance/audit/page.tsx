@@ -4,6 +4,9 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Compliance Audit | freightcode® Docs",
   description: "Using the freightcode® Compliance Audit tool to validate customs documents.",
+  robots: {
+    index: false,
+  },
 };
 
 export default function ComplianceAuditPage() {
