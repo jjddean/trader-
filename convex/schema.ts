@@ -85,6 +85,19 @@ export default defineSchema({
     // VALUE_MATCH_INVOICE rule. When unset the rule skips (mapper's
     // auto-sum makes the check meaningless).
     invoiceTotal: v.optional(v.any()),
+    // DE 5/26 — Customs office where the declaration is presented.
+    presentationOffice: v.optional(v.string()),
+    // DE 7/2 — Goods location code under customs control.
+    locationId: v.optional(v.string()),
+    // Declaration-level invoice/statistical currency.
+    invoiceCurrency: v.optional(v.string()),
+    // Destination country for the import.
+    destinationCountry: v.optional(v.string()),
+    // Delivery terms and named location.
+    incoterms: v.optional(v.string()),
+    incotermLocation: v.optional(v.string()),
+    importerEori: v.optional(v.string()),
+    exporterEori: v.optional(v.string()),
     // DE 7/4 — Mode of transport at the border. Numeric: "1" sea, "3" road,
     // "4" air, "8" inland waterway. Required for imports (CDS12073).
     transportMode: v.optional(v.string()),
@@ -112,6 +125,8 @@ export default defineSchema({
     additionalDocuments: v.optional(v.any()),
     additionalProcedureCode: v.optional(v.any()),
     shippingMarks: v.optional(v.any()),
+    packageCount: v.optional(v.any()),
+    packageType: v.optional(v.any()),
   }).index("by_declaration", ["declarationId"]).index("by_owner", ["ownerId"]),
 
   documents: defineTable({

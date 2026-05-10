@@ -63,7 +63,7 @@ export default function GoodsItemsPage() {
       if (!updates || Object.keys(updates).length === 0) return;
       delete pendingUpdates.current[itemId];
       try {
-        await updateItem({ id: itemId as Id<"goods_items">, ...updates } as any);
+        await updateItem({ id: itemId as Id<"goods_items">, ...updates });
       } catch (err) {
         console.error("Failed to save item updates:", err);
       }
@@ -90,14 +90,6 @@ export default function GoodsItemsPage() {
         };
       })
       .filter((doc) => doc.CategoryCode || doc.TypeCode || doc.ID);
-  };
-
-  const getDocCell = (item: Record<string, unknown>, index: number) => {
-    const docs = getNormalizedDocs(item);
-    const doc = docs[index];
-    if (!doc) return { code: "", ref: "" };
-    const mergedCode = `${doc.CategoryCode}${doc.TypeCode}`.trim();
-    return { code: mergedCode, ref: doc.ID || "" };
   };
 
   // Seed docEdits from Convex when items first load (once per item, never overwrites user edits)
@@ -215,7 +207,7 @@ export default function GoodsItemsPage() {
 
   const handleItemFieldBlur = (
     itemId: Id<"goods_items">,
-    field: "description" | "commodityCode" | "originCountry" | "valueAmount" | "procedureCode" | "additionalProcedureCode" | "grossWeightKg" | "netWeightKg" | "shippingMarks",
+    field: "description" | "commodityCode" | "originCountry" | "valueAmount" | "procedureCode" | "additionalProcedureCode" | "grossWeightKg" | "netWeightKg" | "shippingMarks" | "packageCount" | "packageType",
     value: string,
   ) => {
     if (field === "commodityCode") {
@@ -255,6 +247,16 @@ export default function GoodsItemsPage() {
       return;
     }
 
+    if (field === "packageCount") {
+      scheduleUpdate(itemId, "packageCount", Math.max(1, Number(value) || 1));
+      return;
+    }
+
+    if (field === "packageType") {
+      scheduleUpdate(itemId, "packageType", value.trim().toUpperCase());
+      return;
+    }
+
     scheduleUpdate(itemId, field, value.trim());
   };
 
@@ -270,6 +272,8 @@ export default function GoodsItemsPage() {
         procedureCode: "4000",
         valueAmount: 0,
         valueCurrency: "GBP",
+        packageCount: 1,
+        packageType: "PK",
       });
       setShowAddRowModal(false);
       setHsCode("");
@@ -318,6 +322,8 @@ export default function GoodsItemsPage() {
             procedureCode: "4000", // Default to home use
             valueAmount: Number(item.valueAmount) || 0,
             valueCurrency: item.valueCurrency || "GBP",
+            packageCount: 1,
+            packageType: "PK",
           });
         }
       }
@@ -502,6 +508,28 @@ export default function GoodsItemsPage() {
                       onBlur={(e) => handleItemFieldBlur(item._id, "netWeightKg", e.target.value)}
                       placeholder="0"
                       className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Packages</label>
+                    <input
+                      type="number"
+                      defaultValue={item.packageCount != null ? Number(item.packageCount) : 1}
+                      onBlur={(e) => handleItemFieldBlur(item._id, "packageCount", e.target.value)}
+                      min={1}
+                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Package Type</label>
+                    <input
+                      type="text"
+                      defaultValue={String(item.packageType ?? "PK")}
+                      onBlur={(e) => handleItemFieldBlur(item._id, "packageType", e.target.value)}
+                      placeholder="PK"
+                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 font-mono text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
                     />
                   </div>
 

@@ -28,6 +28,14 @@ export default function CoreSchemaPage() {
     declarationType: "H1",
     route: "Route 1",
     dispatchCountry: "",
+    destinationCountry: "GB",
+    presentationOffice: "GBLON004",
+    locationId: "GBAUFXTFXTGW",
+    invoiceCurrency: "GBP",
+    incoterms: "FOB",
+    incotermLocation: "GBFXT",
+    importerEori: "",
+    exporterEori: "",
     transportMode: "",
     transportId: "",
     transportIdType: "",
@@ -41,6 +49,14 @@ export default function CoreSchemaPage() {
         declarationType: "H1",
         route: declaration.route || "Route 1",
         dispatchCountry: (declaration as Record<string, unknown>).dispatchCountry as string || "",
+        destinationCountry: (declaration as Record<string, unknown>).destinationCountry as string || "GB",
+        presentationOffice: (declaration as Record<string, unknown>).presentationOffice as string || "GBLON004",
+        locationId: (declaration as Record<string, unknown>).locationId as string || "GBAUFXTFXTGW",
+        invoiceCurrency: (declaration as Record<string, unknown>).invoiceCurrency as string || "GBP",
+        incoterms: (declaration as Record<string, unknown>).incoterms as string || "FOB",
+        incotermLocation: (declaration as Record<string, unknown>).incotermLocation as string || "GBFXT",
+        importerEori: (declaration as Record<string, unknown>).importerEori as string || "",
+        exporterEori: (declaration as Record<string, unknown>).exporterEori as string || "",
         transportMode: (declaration as Record<string, unknown>).transportMode as string || "",
         transportId: (declaration as Record<string, unknown>).transportId as string || "",
         transportIdType: (declaration as Record<string, unknown>).transportIdType as string || "",
@@ -58,6 +74,14 @@ export default function CoreSchemaPage() {
         declarationType: formData.declarationType,
         route: formData.route,
         dispatchCountry: formData.dispatchCountry || undefined,
+        destinationCountry: formData.destinationCountry || undefined,
+        presentationOffice: formData.presentationOffice || undefined,
+        locationId: formData.locationId || undefined,
+        invoiceCurrency: formData.invoiceCurrency || undefined,
+        incoterms: formData.incoterms || undefined,
+        incotermLocation: formData.incotermLocation || undefined,
+        importerEori: formData.importerEori || undefined,
+        exporterEori: formData.exporterEori || undefined,
         transportMode: formData.transportMode || undefined,
         transportId: formData.transportId || undefined,
         transportIdType: formData.transportIdType || undefined,
@@ -110,8 +134,111 @@ export default function CoreSchemaPage() {
               </p>
             </div>
 
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+                Destination Country
+                <span className="text-red-500">*</span>
+              </label>
+              <Select
+                value={formData.destinationCountry}
+                onValueChange={(val) => setFormData({ ...formData, destinationCountry: val })}
+              >
+                <SelectTrigger className="w-full text-sm">
+                  <SelectValue placeholder="Country goods shipped TO" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {countries.map((c) => (
+                    <SelectItem key={c.code} value={c.code} className="text-xs">
+                      {c.name} ({c.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Declaration Category */}
             <div className="space-y-2">
+          <div className="border-t border-gray-100 pt-6">
+            <h3 className="text-sm font-medium text-gray-900">CDS Declaration References</h3>
+            <p className="mt-1 text-[11px] text-gray-500">
+              Make hidden CDS defaults explicit before submission.
+            </p>
+            <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-3">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Presentation Office (DE 5/26)</label>
+                <input
+                  type="text"
+                  value={formData.presentationOffice}
+                  onChange={(e) => setFormData({ ...formData, presentationOffice: e.target.value.trim().toUpperCase() })}
+                  placeholder="GBLON004"
+                  className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Goods Location (DE 7/2)</label>
+                <input
+                  type="text"
+                  value={formData.locationId}
+                  onChange={(e) => setFormData({ ...formData, locationId: e.target.value.trim().toUpperCase() })}
+                  placeholder="GBAUFXTFXTGW"
+                  className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Invoice Currency</label>
+                <input
+                  type="text"
+                  value={formData.invoiceCurrency}
+                  onChange={(e) => setFormData({ ...formData, invoiceCurrency: e.target.value.trim().toUpperCase() })}
+                  placeholder="GBP"
+                  maxLength={3}
+                  className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Incoterms</label>
+                <input
+                  type="text"
+                  value={formData.incoterms}
+                  onChange={(e) => setFormData({ ...formData, incoterms: e.target.value.trim().toUpperCase() })}
+                  placeholder="FOB"
+                  maxLength={3}
+                  className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Incoterm Location</label>
+                <input
+                  type="text"
+                  value={formData.incotermLocation}
+                  onChange={(e) => setFormData({ ...formData, incotermLocation: e.target.value.trim().toUpperCase() })}
+                  placeholder="GBFXT"
+                  className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Importer EORI</label>
+                <input
+                  type="text"
+                  value={formData.importerEori}
+                  onChange={(e) => setFormData({ ...formData, importerEori: e.target.value.trim().toUpperCase() })}
+                  placeholder="Falls back to declarant"
+                  className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
+                />
+              </div>
+              <div className="space-y-2 md:col-span-3">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Exporter EORI</label>
+                <input
+                  type="text"
+                  value={formData.exporterEori}
+                  onChange={(e) => setFormData({ ...formData, exporterEori: e.target.value.trim().toUpperCase() })}
+                  placeholder="Optional GB/XI exporter EORI only"
+                  className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
               <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
                 Declaration Category
                 <span className="text-red-500">*</span>

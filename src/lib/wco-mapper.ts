@@ -3,77 +3,125 @@ const currencyValues =
   typeof Intl.supportedValuesOf === "function" ? new Set(Intl.supportedValuesOf("currency")) : null;
 const regionName = new Intl.DisplayNames(["en"], { type: "region" });
 
-export function validateCdsFields(declaration: any, items: any[], payloadInfo: any) {
+type CdsRecord = Record<string, unknown>;
+
+function asRecord(value: unknown): CdsRecord {
+  return typeof value === "object" && value !== null ? value as CdsRecord : {};
+}
+
+function asArray(value: unknown): CdsRecord[] {
+  return Array.isArray(value) ? value.map(asRecord) : [];
+}
+
+function getRecordValue(source: CdsRecord, key: string): CdsRecord {
+  return asRecord(source[key]);
+}
+
+export function validateCdsFields(declaration: CdsRecord, items: CdsRecord[], payloadInfo: CdsRecord) {
   const errors: { field: string; reason: string }[] = [];
-  const eori = declaration?.eori || payloadInfo?.Declaration?.Declarant?.ID || "";
+  const payloadDeclaration = getRecordValue(payloadInfo, "Declaration");
+  const payloadShipment = getRecordValue(payloadDeclaration, "GoodsShipment");
+  const payloadDeclarant = getRecordValue(payloadDeclaration, "Declarant");
+  const payloadConsignment = getRecordValue(payloadShipment, "Consignment");
+  const payloadGoodsLocation = getRecordValue(payloadConsignment, "GoodsLocation");
+  const payloadTradeTerms = getRecordValue(payloadShipment, "TradeTerms");
+  const payloadDestination = getRecordValue(payloadShipment, "Destination");
+  const payloadExportCountry = getRecordValue(payloadShipment, "ExportCountry");
+  const payloadInvoiceAmount = getRecordValue(payloadDeclaration, "InvoiceAmount");
+  const payloadBorderTransport = getRecordValue(payloadDeclaration, "BorderTransportMeans");
+  const eori = declaration?.eori || payloadDeclarant.ID || "";
   if (!/^GB\d{12}$/.test(String(eori))) {
     errors.push({ field: "eori", reason: "EORI must match format GB followed by 12 digits" });
   }
 
-  const invoiceCurrency = payloadInfo?.Declaration?.InvoiceAmount?.currencyID;
+  const invoiceCurrency = String(payloadInvoiceAmount.currencyID || "");
   if (!isValidIsoCurrency(invoiceCurrency)) {
     errors.push({ field: "invoiceCurrency", reason: "Currency must be a valid ISO 4217 code" });
   }
 
-  const destinationCountry = payloadInfo?.Declaration?.GoodsShipment?.Destination?.CountryCode;
+  const presentationOffice = payloadDeclaration.DeclarationOfficeID;
+  if (!String(presentationOffice || "").trim()) {
+    errors.push({ field: "presentationOffice", reason: "Presentation office (DE 5/26) is required." });
+  }
+
+  const locationId = payloadGoodsLocation.ID;
+  if (!String(locationId || "").trim()) {
+    errors.push({ field: "locationId", reason: "Goods location (DE 7/2) is required." });
+  }
+
+  const incoterms = payloadTradeTerms.ConditionCode;
+  if (!String(incoterms || "").trim()) {
+    errors.push({ field: "incoterms", reason: "Incoterms are required." });
+  }
+
+  const incotermLocation = payloadTradeTerms.LocationID;
+  if (!String(incotermLocation || "").trim()) {
+    errors.push({ field: "incotermLocation", reason: "Incoterm location is required." });
+  }
+
+  const destinationCountry = String(payloadDestination.CountryCode || "");
   if (!isValidIsoCountryCode(destinationCountry)) {
     errors.push({ field: "destinationCountry", reason: "Country code must be valid ISO 3166-1 alpha-2" });
   }
 
-  const exportCountry = payloadInfo?.Declaration?.GoodsShipment?.ExportCountry?.ID;
+  const exportCountry = String(payloadExportCountry.ID || "");
   if (!exportCountry || !isValidIsoCountryCode(exportCountry)) {
     errors.push({ field: "dispatchCountry", reason: "Dispatch country (DE 5/14) is required — set the country goods were shipped FROM, e.g. BR for Brazil. Never leave blank." });
   }
 
-  const borderTransport = payloadInfo?.Declaration?.BorderTransportMeans || {};
-  if (!String(borderTransport?.ID || "").trim()) {
+  if (!String(payloadBorderTransport.ID || "").trim()) {
     errors.push({ field: "transportId", reason: "Transport ID (DE 7/9 / R123) is required. Do not rely on a synthetic vessel/vehicle placeholder." });
   }
-  if (!String(borderTransport?.IdentificationTypeCode || "").trim()) {
+  if (!String(payloadBorderTransport.IdentificationTypeCode || "").trim()) {
     errors.push({ field: "transportIdType", reason: "Transport ID type (DE 7/7) is required. Enter the real HMRC code for the transport identity you are declaring." });
   }
-  if (!String(borderTransport?.ModeCode || "").trim()) {
+  if (!String(payloadBorderTransport.ModeCode || "").trim()) {
     errors.push({ field: "transportMode", reason: "Mode of transport (DE 7/4) is required. Do not submit with an implied default." });
   }
 
   for (let i = 0; i < (items || []).length; i++) {
     const item = items[i];
-    const commodityCode = String(item?.commodityCode || item?.hsCode || "");
+    const commodityCode = String(item.commodityCode || item.hsCode || "");
     if (!/^\d{10}$/.test(commodityCode)) {
       errors.push({ field: `items[${i}].commodityCode`, reason: "Commodity code must be exactly 10 digits" });
     }
 
-    const cpc = String((item?.procedureCode?.replace(/\s+/g, "") || "").substring(0, 4));
+    const cpc = String((String(item.procedureCode || "").replace(/\s+/g, "") || "").substring(0, 4));
     if (!/^\d{4}$/.test(cpc)) {
       errors.push({ field: `items[${i}].procedureCode`, reason: "Procedure code must be a valid 4-digit CPC" });
     }
 
-    const additionalProcedureCode = String(item?.additionalProcedureCode || "").trim();
-    const effectiveAdditionalProcedureCode =
-      additionalProcedureCode || (isBrChickenTestLane(declaration, item) ? "000" : "");
-    if (!/^\d{3}$/.test(effectiveAdditionalProcedureCode)) {
+    const additionalProcedureCode = String(item.additionalProcedureCode || "").trim();
+    if (!/^\d{3}$/.test(additionalProcedureCode)) {
       errors.push({
         field: `items[${i}].additionalProcedureCode`,
-        reason: "Additional procedure code (DE 1/11) must be entered explicitly as a 3-digit code. The mapper no longer invents '000'.",
+        reason: "Additional procedure code (DE 1/11) must be entered explicitly as a 3-digit code.",
       });
     }
 
-    const originCountry = String(item?.originCountry || "");
+    const originCountry = String(item.originCountry || "");
     if (originCountry && !isValidIsoCountryCode(originCountry)) {
       errors.push({ field: `items[${i}].originCountry`, reason: "Country code must be valid ISO 3166-1 alpha-2" });
     }
 
-    const valueCurrency = String(item?.valueCurrency || invoiceCurrency || "");
+    const valueCurrency = String(item.valueCurrency || invoiceCurrency || "");
     if (valueCurrency && !isValidIsoCurrency(valueCurrency)) {
       errors.push({ field: `items[${i}].valueCurrency`, reason: "Currency must be a valid ISO 4217 code" });
     }
 
-    const effectiveShippingMarks =
-      String(item?.shippingMarks || "").trim() || (isBrChickenTestLane(declaration, item) ? "TEST-MARK-001" : "");
-    if (!effectiveShippingMarks) {
+    const packageCount = Number(item.packageCount);
+    if (!Number.isFinite(packageCount) || packageCount < 1) {
+      errors.push({ field: `items[${i}].packageCount`, reason: "Package count must be at least 1." });
+    }
+
+    if (!String(item.packageType || "").trim()) {
+      errors.push({ field: `items[${i}].packageType`, reason: "Package type code is required." });
+    }
+
+    if (!String(item.shippingMarks || "").trim()) {
       errors.push({
         field: `items[${i}].shippingMarks`,
-        reason: "Shipping marks / package marks are required for Packaging. The mapper no longer submits placeholder 'N/A'.",
+        reason: "Shipping marks / package marks are required for Packaging.",
       });
     }
   }
@@ -148,13 +196,6 @@ function stripTransportId(value: unknown): string {
   return String(value ?? "").replace(/\s+/g, "");
 }
 
-function isBrChickenTestLane(declaration: any, item: any): boolean {
-  const dispatchCountry = String(declaration?.dispatchCountry || "").trim().toUpperCase();
-  const commodityCode = String(item?.commodityCode || item?.hsCode || "").replace(/\s+/g, "");
-  const procedureCode = String(item?.procedureCode || "").replace(/\s+/g, "");
-  return dispatchCountry === "BR" && commodityCode === "0207129000" && procedureCode.startsWith("4000");
-}
-
 // Async lookup signature — the route passes a function backed by the Convex
 // `cds_codes:validateCodes` query, so the mapper module stays Convex-free.
 // Returns the subset of values that are NOT present in the named code list.
@@ -179,15 +220,15 @@ const LIST = {
 // authoritative HMRC datasets. Returns one error per invented/unknown code.
 // Method 1 valuation has a special invariant: it requires N935 on the items.
 export async function validateCdsCodeLists(
-  payloadInfo: any,
-  items: any[],
+  payloadInfo: CdsRecord,
+  items: CdsRecord[],
   lookup: CodeListLookup,
 ): Promise<{ field: string; reason: string }[]> {
   const errors: { field: string; reason: string }[] = [];
-  const decl = payloadInfo?.Declaration ?? {};
-  const shipment = decl?.GoodsShipment ?? {};
+  const decl = getRecordValue(payloadInfo, "Declaration");
+  const shipment = getRecordValue(decl, "GoodsShipment");
 
-  const officeId = String(decl?.DeclarationOfficeID || "");
+  const officeId = String(decl.DeclarationOfficeID || "");
   if (officeId) {
     const missing = await lookup(LIST.customsOffices, [officeId]);
     if (missing.length) {
@@ -198,7 +239,8 @@ export async function validateCdsCodeLists(
     }
   }
 
-  const incoterm = String(shipment?.TradeTerms?.ConditionCode || "");
+  const tradeTerms = getRecordValue(shipment, "TradeTerms");
+  const incoterm = String(tradeTerms.ConditionCode || "");
   if (incoterm) {
     const missing = await lookup(LIST.incoterms, [incoterm]);
     if (missing.length) {
@@ -209,7 +251,8 @@ export async function validateCdsCodeLists(
     }
   }
 
-  const transportMode = String(decl?.BorderTransportMeans?.ModeCode || "");
+  const borderTransport = getRecordValue(decl, "BorderTransportMeans");
+  const transportMode = String(borderTransport.ModeCode || "");
   if (transportMode) {
     const missing = await lookup(LIST.transportModes, [transportMode]);
     if (missing.length) {
@@ -220,7 +263,7 @@ export async function validateCdsCodeLists(
     }
   }
 
-  const transportIdType = String(decl?.BorderTransportMeans?.IdentificationTypeCode || "");
+  const transportIdType = String(borderTransport.IdentificationTypeCode || "");
   if (transportIdType) {
     const missing = await lookup(LIST.transportIdTypes, [transportIdType]);
     if (missing.length) {
@@ -231,8 +274,8 @@ export async function validateCdsCodeLists(
     }
   }
 
-  const previousDocs = Array.isArray(shipment?.PreviousDocument) ? shipment.PreviousDocument : [];
-  const prevTypes = previousDocs.map((d: any) => String(d?.TypeCode || "")).filter(Boolean);
+  const previousDocs = asArray(shipment.PreviousDocument);
+  const prevTypes = previousDocs.map((d) => String(d.TypeCode || "")).filter(Boolean);
   if (prevTypes.length) {
     const missing = await lookup(LIST.previousDocumentTypes, prevTypes);
     for (const code of missing) {
@@ -243,12 +286,12 @@ export async function validateCdsCodeLists(
     }
   }
 
-  const goodsItems = Array.isArray(shipment?.GovernmentAgencyGoodsItem) ? shipment.GovernmentAgencyGoodsItem : [];
+  const goodsItems = asArray(shipment.GovernmentAgencyGoodsItem);
   for (let i = 0; i < goodsItems.length; i++) {
     const gi = goodsItems[i];
     const fieldPrefix = `items[${i}]`;
 
-    const valuationMethod = String(gi?.CustomsValuation?.MethodCode || "");
+    const valuationMethod = String(getRecordValue(gi, "CustomsValuation").MethodCode || "");
     if (valuationMethod) {
       const missing = await lookup(LIST.valuationMethods, [valuationMethod]);
       if (missing.length) {
@@ -283,8 +326,8 @@ export async function validateCdsCodeLists(
       }
     }
 
-    const packaging = Array.isArray(gi?.Packaging) ? gi.Packaging : [];
-    const pkgTypes = packaging.map((p: any) => String(p?.TypeCode || "")).filter(Boolean);
+    const packaging = asArray(gi.Packaging);
+    const pkgTypes = packaging.map((p) => String(p.TypeCode || "")).filter(Boolean);
     if (pkgTypes.length) {
       const missing = await lookup(LIST.packageTypes, pkgTypes);
       for (const code of missing) {
@@ -298,9 +341,9 @@ export async function validateCdsCodeLists(
     // wco-dec stores additional documents as combined CategoryCode+TypeCode
     // values (e.g. "N935", "Y929") — our XML splits them across two elements
     // so we have to recombine before lookup.
-    const addlDocs = Array.isArray(gi?.AdditionalDocument) ? gi.AdditionalDocument : [];
+    const addlDocs = asArray(gi.AdditionalDocument);
     const combinedDocCodes = addlDocs
-      .map((d: any) => `${String(d?.CategoryCode || "").trim()}${String(d?.TypeCode || "").trim()}`)
+      .map((d) => `${String(d.CategoryCode || "").trim()}${String(d.TypeCode || "").trim()}`)
       .filter((c: string) => c.length > 0);
     if (combinedDocCodes.length) {
       const missing = await lookup(LIST.additionalDocuments, combinedDocCodes);
@@ -339,31 +382,31 @@ export interface MapOptions {
   forbiddenDocCodes?: string[];
 }
 
-export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions = {}) {
+export function mapToCDS_H1(declaration: CdsRecord, items: CdsRecord[], options: MapOptions = {}) {
   if (!declaration || typeof declaration !== "object") {
     throw new Error("Invalid declaration object provided to H1 mapper.");
   }
 
-  // Automatically calculate totals from items if not provided
-  const totalGrossWeight = items.reduce((acc: number, item: any) => acc + (parseFloat(item.grossWeightKg) || 0), 0) || 100;
-  const invoiceTotal = items.reduce((acc: number, item: any) => acc + (parseFloat(item.valueAmount) || 0), 0) || 1000;
-  const ducr = declaration.ducr || `${new Date().getFullYear() % 10}GB${String(declaration.eori || "GB123456789000").trim().replace(/^GB/i, "")}-${declaration._id.substring(0,6).toUpperCase()}`;
+  const totalGrossWeight = items.reduce((acc, item) => acc + (parseFloat(String(item.grossWeightKg || "")) || 0), 0);
+  const invoiceTotal = items.reduce((acc, item) => acc + (parseFloat(String(item.valueAmount || "")) || 0), 0);
+  const declarationId = String(declaration._id || "");
+  const ducr = declaration.ducr || `${new Date().getFullYear() % 10}GB${String(declaration.eori || "GB123456789000").trim().replace(/^GB/i, "")}-${declarationId.substring(0,6).toUpperCase()}`;
 
   return {
     Declaration: {
       FunctionCode: "9",
-      TypeCode: mapDeclarationType(declaration.declarationType, declaration.route),
-      FunctionalReferenceID: declaration.lrn || `FC-${Date.now().toString(36).toUpperCase()}`,
+      TypeCode: mapDeclarationType(String(declaration.declarationType || ""), String(declaration.route || "")),
+      FunctionalReferenceID: String(declaration.lrn || `FC-${Date.now().toString(36).toUpperCase()}`),
       GoodsItemQuantity: items.length || 1,
-      DeclarationOfficeID: declaration.presentationOffice || "GBLON004",
+      DeclarationOfficeID: declaration.presentationOffice || "",
       TotalGrossMassMeasure: formatMass(declaration.totalGrossWeight || totalGrossWeight),
-      TotalPackageQuantity: items.reduce((acc: number, item: any) => acc + (parseInt(item.packageCount) || 1), 0),
+      TotalPackageQuantity: items.reduce((acc, item) => acc + (parseInt(String(item.packageCount || "")) || 1), 0),
       InvoiceAmount: {
-        currencyID: declaration.invoiceCurrency || "GBP",
+        currencyID: declaration.invoiceCurrency || "",
         value: formatAmount(declaration.invoiceTotal || invoiceTotal),
       },
       CurrencyExchange: {
-        CurrencyTypeCode: declaration.invoiceCurrency || "GBP"
+        CurrencyTypeCode: declaration.invoiceCurrency || ""
       },
       // DE 7/14 + 7/15 — BorderTransportMeans at Declaration level (the means
       // crossing the UK border). For IMA imports CDS expects BOTH this AND
@@ -391,7 +434,7 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
         // DE 3/24 — Buyer (UK importer). Country code is GB for imports;
         // Name is intentionally omitted until real party data is plumbed in.
         Buyer: {
-          AddressCountryCode: declaration.destinationCountry || "GB",
+          AddressCountryCode: declaration.destinationCountry || "",
           Name: declaration.buyerName || "",
         },
         Consignment: {
@@ -409,11 +452,11 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
              ModeCode: declaration.transportMode || "",
            },
            GoodsLocation: {
-             ID: declaration.locationId || "GBAUFXTFXTGW"
+             ID: declaration.locationId || ""
            }
         },
         Destination: {
-           CountryCode: declaration.destinationCountry || "GB"
+           CountryCode: declaration.destinationCountry || ""
         },
         ExportCountry: {
            ID: declaration.dispatchCountry || ""
@@ -439,11 +482,11 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
           },
         ],
         TradeTerms: {
-           ConditionCode: declaration.incoterms || "FOB",
-           LocationID: declaration.incotermLocation || "GBFXT"
+           ConditionCode: declaration.incoterms || "",
+           LocationID: declaration.incotermLocation || ""
         },
         GovernmentAgencyGoodsItem: (items || []).map((item, index) => {
-          const brChickenLane = isBrChickenTestLane(declaration, item);
+          const procedureCode = String(item.procedureCode || "").replace(/\s+/g, "");
           const providedDocs: unknown[] = options.omitAdditionalDocuments
             ? []
             : Array.isArray(item.additionalDocuments)
@@ -475,11 +518,11 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
             SequenceNumeric: item.sequenceNumber || index + 1,
             ...(mappedDocs.length > 0 ? { AdditionalDocument: mappedDocs } : {}),
             StatisticalValueAmount: {
-              currencyID: item.valueCurrency || "GBP",
+              currencyID: item.valueCurrency || declaration.invoiceCurrency || "",
               value: formatAmount(item.valueAmount),
             },
             Commodity: {
-              Description: item.description || "General goods",
+              Description: item.description || "",
               Classification: [
                 {
                   ID: item.commodityCode || item.hsCode || "",
@@ -498,9 +541,9 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
             Packaging: [
               {
                 SequenceNumeric: "1",
-                MarksNumbersID: item.shippingMarks || (brChickenLane ? "TEST-MARK-001" : ""),
-                QuantityQuantity: item.packageCount || "1",
-                TypeCode: item.packageType || "PK"
+                MarksNumbersID: item.shippingMarks || "",
+                QuantityQuantity: item.packageCount || "",
+                TypeCode: item.packageType || ""
               }
             ],
             // DE 5/16: Country of Origin — mandatory for most H1 imports.
@@ -514,22 +557,15 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
             GovernmentProcedure: [
               {
                 // DE 1/10: Requested and Previous Procedure (e.g., 40 00)
-                CurrentCode: (item.procedureCode?.replace(/\s+/g, '') || "4000").substring(0, 2),
-                PreviousCode: (item.procedureCode?.replace(/\s+/g, '') || "4000").substring(2, 4) || "00"
+                CurrentCode: procedureCode.substring(0, 2),
+                PreviousCode: procedureCode.substring(2, 4)
               },
               ...(String(item.additionalProcedureCode || "").trim()
                 ? [{
-                    // DE 1/11: Additional Procedure Code. Must be supplied explicitly;
-                    // do not invent "000" because it changes the declared procedure set.
+                    // DE 1/11: Additional Procedure Code.
                     CurrentCode: String(item.additionalProcedureCode).trim(),
                   }]
-                : brChickenLane
-                  ? [{
-                      // Narrow TDR carve-out: keep the BR chicken debug lane moving
-                      // while preserving fail-closed behaviour for normal declarations.
-                      CurrentCode: "000",
-                    }]
-                  : [])
+                : [])
             ]
           };
         })

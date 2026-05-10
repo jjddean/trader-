@@ -131,6 +131,8 @@ export const addItem = mutation({
     grossWeightKg: v.optional(v.number()),
     netWeightKg: v.optional(v.number()),
     shippingMarks: v.optional(v.string()),
+    packageCount: v.optional(v.number()),
+    packageType: v.optional(v.string()),
     additionalDocuments: v.optional(
       v.array(
         v.object({
@@ -193,6 +195,8 @@ export const updateItem = mutation({
     grossWeightKg: v.optional(v.number()),
     netWeightKg: v.optional(v.number()),
     shippingMarks: v.optional(v.string()),
+    packageCount: v.optional(v.number()),
+    packageType: v.optional(v.string()),
     additionalDocuments: v.optional(
       v.array(
         v.object({
@@ -321,6 +325,64 @@ export const addDocsToAllItems = internalMutation({
 
     await refreshReadModels(ctx, args.declarationId);
     return { itemsScanned: items.length, itemsPatched: patched, addedPerItem: newDocs.length };
+  },
+});
+
+export const syncRequirementDocumentsToItems = mutation({
+  args: { declarationId: v.id("declarations") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const declaration = await ctx.db.get(args.declarationId);
+    if (!declaration || getOwnerId(declaration) !== identity.subject) {
+      throw new Error("Unauthorized");
+    }
+
+    const requirements = await ctx.db
+      .query("document_requirements")
+      .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId))
+      .take(300);
+    const uploadedCodes = requirements
+      .filter((req) => ["uploaded", "verified", "waived"].includes(String(req.status || "")))
+      .map((req) => String(req.code || "").trim().toUpperCase())
+      .filter((code) => /^[A-Z0-9]\d{3}$|^[A-Z]\d{3}$/.test(code));
+
+    if (uploadedCodes.length === 0) return { patchedItems: 0, syncedCodes: [] };
+
+    const items = await ctx.db
+      .query("goods_items")
+      .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId))
+      .take(500);
+
+    let patchedItems = 0;
+    for (const item of items) {
+      const existingDocs = Array.isArray(item.additionalDocuments) ? item.additionalDocuments : [];
+      const existingCodes = new Set(
+        existingDocs.map((doc: Record<string, unknown>) =>
+          `${String(doc?.CategoryCode || "").trim()}${String(doc?.TypeCode || "").trim()}`.toUpperCase(),
+        ),
+      );
+      const nextDocs = [...existingDocs];
+      for (const code of uploadedCodes) {
+        if (existingCodes.has(code)) continue;
+        nextDocs.push({
+          CategoryCode: code.slice(0, 1),
+          TypeCode: code.slice(1),
+          ID: `DOC-${code}`,
+        });
+      }
+      if (nextDocs.length !== existingDocs.length) {
+        await ctx.db.patch(item._id, {
+          additionalDocuments: nextDocs,
+          ownerId: identity.subject,
+        });
+        patchedItems += 1;
+      }
+    }
+
+    if (patchedItems > 0) await refreshReadModels(ctx, args.declarationId);
+    return { patchedItems, syncedCodes: uploadedCodes };
   },
 });
 

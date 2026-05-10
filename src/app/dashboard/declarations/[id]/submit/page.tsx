@@ -31,6 +31,7 @@ export default function SubmitPage() {
     isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId ? { declarationId } : "skip",
   );
   const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
+  const syncRequirementDocumentsToItems = useMutation(api.goods_items.syncRequirementDocumentsToItems);
 
   const hmrcTokens = useQuery(
     api.hmrc_internal.getTokens,
@@ -93,6 +94,12 @@ export default function SubmitPage() {
   const [error, setError] = useState<string | null>(null);
   const [dryRunResult, setDryRunResult] = useState<DryRunPayload | null>(null);
   const [dryRunPassed, setDryRunPassed] = useState(false);
+  type RequirementRow = {
+    code?: string;
+    status?: string;
+    requirementLevel?: string;
+  };
+  const requirementRows = (requirements || []) as RequirementRow[];
 
   const readResponsePayload = async (res: Response) => {
     try {
@@ -121,17 +128,20 @@ export default function SubmitPage() {
   // Pre-flight validation checks
   const missingEori = !declaration?.eori;
   const noItems = !items || items.length === 0;
-  const missingHS = items?.some((i: any) => !i.commodityCode);
-  const missingBlockingRequirements = (requirements || []).filter(
-    (req: any) => req.status === "missing" && (req.requirementLevel || "blocking") === "blocking",
+  const missingHS = items?.some((i) => !i.commodityCode);
+  const missingBlockingRequirements = requirementRows.filter(
+    (req) => req.status === "missing" && (req.requirementLevel || "blocking") === "blocking",
   );
-  const missingAdvisoryRequirements = (requirements || []).filter(
-    (req: any) => req.status === "missing" && (req.requirementLevel || "blocking") === "advisory",
+  const missingAdvisoryRequirements = requirementRows.filter(
+    (req) => req.status === "missing" && (req.requirementLevel || "blocking") === "advisory",
   );
   const missingBlockingCodes = missingBlockingRequirements
-    .map((req: any) => String(req.code || "UNKNOWN"));
+    .map((req) => String(req.code || "UNKNOWN"));
   const missingAdvisoryCodes = missingAdvisoryRequirements
-    .map((req: any) => String(req.code || "UNKNOWN"));
+    .map((req) => String(req.code || "UNKNOWN"));
+  const linkableUploadedRequirements = requirementRows.filter(
+    (req) => ["uploaded", "verified", "waived"].includes(String(req.status || "")),
+  );
 
   const isReady = !missingEori && !noItems && !missingHS && missingBlockingRequirements.length === 0;
   
@@ -191,9 +201,9 @@ export default function SubmitPage() {
       // 3. Advance to Status timeline page to await the MRN webhook
       router.push(`/dashboard/declarations/${declarationId}/status`);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Submission failed:", err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Submission failed.");
     } finally {
       setIsSubmitting(false);
     }
@@ -243,11 +253,21 @@ export default function SubmitPage() {
 
       setDryRunResult(data as DryRunPayload);
       setDryRunPassed(data.success === true);
-    } catch (err: any) {
-      setError(err.message || "Dry run failed");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Dry run failed");
       setDryRunPassed(false);
     } finally {
       setIsDryRunning(false);
+    }
+  };
+
+  const handleSyncRequirementDocs = async () => {
+    setError(null);
+    try {
+      const result = await syncRequirementDocumentsToItems({ declarationId });
+      setError(`Linked ${result.patchedItems} goods item(s) with: ${result.syncedCodes.join(", ") || "none"}`);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to link requirement documents to goods items.");
     }
   };
 
@@ -350,6 +370,25 @@ export default function SubmitPage() {
                   Advisory documents do not block submit but should be resolved.
                   {missingAdvisoryCodes.length > 0 ? ` Missing: ${missingAdvisoryCodes.join(", ")}` : ""}
                 </p>
+              </div>
+            </li>
+
+            <li className="flex items-start gap-3">
+              {linkableUploadedRequirements.length > 0 ? <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
+              <div>
+                <p className="text-sm font-medium text-gray-900">Goods Item Document Links</p>
+                <p className="text-xs text-gray-500">
+                  Uploaded requirement references must also exist on each item as CDS AdditionalDocument rows.
+                </p>
+                {linkableUploadedRequirements.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleSyncRequirementDocs}
+                    className="mt-2 h-8 rounded-md border border-gray-200 bg-white px-3 text-[11px] font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Link uploaded requirements to goods items
+                  </button>
+                )}
               </div>
             </li>
 
