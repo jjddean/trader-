@@ -32,7 +32,7 @@ interface SeedRule {
     modes?: string[];
   };
   effects: {
-    requiredDocuments?: { code: string; lpcoExemptionCode?: string; reason?: string }[];
+    requiredDocuments?: { code: string; alternatives?: string[]; lpcoExemptionCode?: string; reason?: string }[];
     forbiddenDocuments?: { code: string; reason?: string }[];
     requiredFields?: { path: string; reason?: string }[];
     forbiddenFields?: { path: string; reason?: string }[];
@@ -49,6 +49,13 @@ interface SeedRule {
     };
   };
 }
+
+const BR_CHICKEN_4000_SCOPE = {
+  procedureCodes: ["4000"],
+  additionalProcedureCodes: ["000"],
+  commodityPrefixes: ["02071290"],
+  originCountries: ["BR"],
+};
 
 const RULES: SeedRule[] = [
   // -------- Universal (any import) --------
@@ -167,9 +174,7 @@ const CURATED_RULES: SeedRule[] = [
     enabled: true,
     source: "cds-rejection:TDR-2026-04-26",
     triggerScope: {
-      procedureCodes: ["4000"],
-      commodityPrefixes: ["02071290"],
-      originCountries: ["BR"],
+      ...BR_CHICKEN_4000_SCOPE,
     },
     effects: {
       requiredDocuments: [{ code: "D006", reason: "Required by CDS (observed): rejection cited missing D006 on AdditionalDocument 02A." }],
@@ -191,9 +196,7 @@ const CURATED_RULES: SeedRule[] = [
     enabled: true,
     source: "cds-rejection:TDR-2026-04-26",
     triggerScope: {
-      procedureCodes: ["4000"],
-      commodityPrefixes: ["02071290"],
-      originCountries: ["BR"],
+      ...BR_CHICKEN_4000_SCOPE,
     },
     effects: {
       requiredDocuments: [{ code: "D028", reason: "Required by CDS (observed): rejection cited missing D028 on AdditionalDocument 02A." }],
@@ -215,9 +218,7 @@ const CURATED_RULES: SeedRule[] = [
     enabled: true,
     source: "cds-rejection:TDR-2026-04-26",
     triggerScope: {
-      procedureCodes: ["4000"],
-      commodityPrefixes: ["02071290"],
-      originCountries: ["BR"],
+      ...BR_CHICKEN_4000_SCOPE,
     },
     effects: {
       requiredDocuments: [{ code: "D031", reason: "Required by CDS (observed): rejection cited missing D031 on AdditionalDocument 02A." }],
@@ -239,9 +240,7 @@ const CURATED_RULES: SeedRule[] = [
     enabled: true,
     source: "cds-rejection:TDR-2026-04-26",
     triggerScope: {
-      procedureCodes: ["4000"],
-      commodityPrefixes: ["02071290"],
-      originCountries: ["BR"],
+      ...BR_CHICKEN_4000_SCOPE,
     },
     effects: {
       requiredDocuments: [{ code: "360", reason: "Required by CDS (observed): rejection cited missing 360 on AdditionalDocument 02A." }],
@@ -251,6 +250,39 @@ const CURATED_RULES: SeedRule[] = [
         functionCode: "03",
         references: ["68A", "02A"],
         confidence: "high",
+      },
+    },
+  },
+  {
+    ruleId: "CURATED-4000-02071290-BR-DMSREJ-20260505",
+    name: "Curated: 2026-05-05 DMSREJ blocker for HS 02071290 / BR / CPC 4000",
+    description:
+      "HMRC rejected the BR chicken CPC 4000 lane on 2026-05-05 with CDS77002/CDS12056 for D006, D031, and 360 document combinations plus L110/L016 additional information and party/payment pointers. Keep these dependencies visible as blocking actions before the next live submit.",
+    severity: "blocking",
+    enabled: true,
+    source: "cds-rejection:TDR-2026-05-05",
+    triggerScope: BR_CHICKEN_4000_SCOPE,
+    effects: {
+      requiredDocuments: [
+        { code: "L110", reason: "CDS12099 cited missing/invalid L110 additional information on 64A." },
+        { code: "L016", reason: "CDS12099 cited missing/invalid L016 additional information on 64A." },
+      ],
+      requiredFields: [
+        { path: "declaration.transportId", reason: "CDS12005 R123 still points at BorderTransportMeans identity." },
+        { path: "declaration.transportIdType", reason: "CDS12005 R123 requires transport identity type." },
+        { path: "items.0.shippingMarks", reason: "CDS12070 Tag 122 cited package marks/quantity context." },
+        { path: "items.0.paymentMethod", reason: "CDS12005 R038 cited payment method context." },
+        { path: "declaration.declarantRole", reason: "CDS12005 R144/R145 cited declarant role/representative context." },
+      ],
+    },
+    metadata: {
+      evidence: {
+        conversationId: "1a390fcf990b4cbf8588c4622ec18ffb",
+        mrn: "26GB4YDHGAJWG2PAR6",
+        functionCode: "03",
+        references: ["42A", "67A", "68A", "64A", "02A", "17C", "05A", "57B", "74A"],
+        confidence: "high",
+        observedAt: 1778011230000,
       },
     },
   },

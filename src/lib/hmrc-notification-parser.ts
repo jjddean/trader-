@@ -28,6 +28,52 @@ export interface ParsedNotification {
   fieldErrors: Array<{ field: string; code?: string; reason: string }>;
 }
 
+function readTag(block: string, tagName: string): string {
+  const match = block.match(new RegExp(`<(?:[^>]*:)?${tagName}[^>]*>([^<]+)<\\/(?:[^>]*:)?${tagName}>`, "i"));
+  return match?.[1]?.trim() || "";
+}
+
+function formatPointers(errorBlock: string): string {
+  const parts: string[] = [];
+  const pointerRegex = /<(?:[^>]*:)?Pointer[^>]*>([\s\S]*?)<\/(?:[^>]*:)?Pointer>/gi;
+  let pointerMatch: RegExpExecArray | null;
+  while ((pointerMatch = pointerRegex.exec(errorBlock)) !== null) {
+    const pointer = pointerMatch[1];
+    const section = readTag(pointer, "DocumentSectionCode");
+    const sequence = readTag(pointer, "SequenceNumeric");
+    const tagId = readTag(pointer, "TagID");
+    const sectionPart = section
+      ? `${section}${sequence ? `[${sequence}]` : ""}`
+      : sequence
+        ? `Sequence ${sequence}`
+        : "";
+    const tagPart = tagId ? `Tag ${tagId}` : "";
+    const formatted = [sectionPart, tagPart].filter(Boolean).join(" ");
+    if (formatted) parts.push(formatted);
+  }
+  return parts.join(" > ");
+}
+
+function decodePointerField(pointerPath: string): string {
+  if (!pointerPath) return "Declaration";
+  if (pointerPath.includes("64A Tag L110")) return "AdditionalInformation L110";
+  if (pointerPath.includes("64A Tag L016")) return "AdditionalInformation L016";
+  if (pointerPath.includes("02A[1] Tag D006")) return "AdditionalDocument D006";
+  if (pointerPath.includes("02A[1] Tag D031")) return "AdditionalDocument D031";
+  if (pointerPath.includes("02A[1] Tag 360")) return "AdditionalDocument 360";
+  if (pointerPath.includes("17C[1] Tag R145")) return "Declarant R145";
+  if (pointerPath.includes("17C[1] Tag R144")) return "Declarant R144";
+  if (pointerPath.includes("05A Tag R004")) return "Declarant R004";
+  if (pointerPath.includes("57B Tag R123")) return "BorderTransportMeans R123";
+  if (pointerPath.includes("74A Tag R038")) return "PaymentMethod R038";
+  if (pointerPath.includes("41A Tag 122")) return "Packaging Tag 122";
+  if (pointerPath.includes("39B Tag 188")) return "GovernmentProcedure Tag 188";
+  if (pointerPath.includes("99B Tag 465")) return "AdditionalDocument Tag 465";
+  if (pointerPath.includes("22B")) return "ExportCountry";
+  if (pointerPath.includes("30A")) return "ValuationAdjustment";
+  return pointerPath;
+}
+
 export function parseHmrcNotification(rawPayload: string): ParsedNotification {
   const upper = rawPayload.toUpperCase();
 
@@ -67,24 +113,34 @@ export function parseHmrcNotification(rawPayload: string): ParsedNotification {
   let errMatch: RegExpExecArray | null;
   while ((errMatch = functionalErrorRegex.exec(rawPayload)) !== null) {
     const block = errMatch[1];
-    const pointer = block.match(/<(?:[^>]*:)?ErrorPointer[^>]*>([^<]+)<\/(?:[^>]*:)?ErrorPointer>/i)?.[1]?.trim() || "";
-    const code = block.match(/<(?:[^>]*:)?ErrorCode[^>]*>([^<]+)<\/(?:[^>]*:)?ErrorCode>/i)?.[1]?.trim() || "";
-    const reason = block.match(/<(?:[^>]*:)?ErrorReason[^>]*>([^<]+)<\/(?:[^>]*:)?ErrorReason>/i)?.[1]?.trim() || "";
+    const pointer = readTag(block, "ErrorPointer");
+    const code = readTag(block, "ValidationCode") || readTag(block, "ErrorCode");
+    const reason = readTag(block, "ErrorReason");
     if (code && !errorCodes.includes(code)) errorCodes.push(code);
     if (pointer || reason) {
       fieldErrors.push({ field: pointer || "Declaration", code: code || undefined, reason: reason || code });
     }
   }
 
-  // Also check <Error> elements (alternative HMRC error format)
-  if (errorCodes.length === 0) {
-    const errorRegex = /<(?:[^>]*:)?Error[^>]*>([\s\S]*?)<\/(?:[^>]*:)?Error>/gi;
-    while ((errMatch = errorRegex.exec(rawPayload)) !== null) {
-      const block = errMatch[1];
-      const code = block.match(/<(?:[^>]*:)?(?:Code|ErrorCode)[^>]*>([^<]+)<\/(?:[^>]*:)?(?:Code|ErrorCode)>/i)?.[1]?.trim() || "";
-      const reason = block.match(/<(?:[^>]*:)?(?:Description|Reason|Text)[^>]*>([^<]+)<\/(?:[^>]*:)?(?:Description|Reason|Text)>/i)?.[1]?.trim() || "";
-      if (code && !errorCodes.includes(code)) errorCodes.push(code);
-      if (reason) fieldErrors.push({ field: "Declaration", code: code || undefined, reason });
+  const errorRegex = /<(?:[^>]*:)?Error[^>]*>([\s\S]*?)<\/(?:[^>]*:)?Error>/gi;
+  while ((errMatch = errorRegex.exec(rawPayload)) !== null) {
+    const block = errMatch[1];
+    const code =
+      readTag(block, "ValidationCode") ||
+      readTag(block, "Code") ||
+      readTag(block, "ErrorCode");
+    const reason =
+      readTag(block, "Description") ||
+      readTag(block, "Reason") ||
+      readTag(block, "Text");
+    const pointerPath = formatPointers(block);
+    if (code && !errorCodes.includes(code)) errorCodes.push(code);
+    if (code || pointerPath || reason) {
+      fieldErrors.push({
+        field: decodePointerField(pointerPath),
+        code: code || undefined,
+        reason: reason || (code ? `${code}${pointerPath ? ` at ${pointerPath}` : ""}` : "HMRC validation error"),
+      });
     }
   }
 
