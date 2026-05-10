@@ -22,18 +22,34 @@ export default function CoreSchemaPage() {
   );
   const updateDeclaration = useMutation(api.declarations.updateDeclarationDetails);
 
+  type DeclarationStringField =
+    | "dispatchCountry"
+    | "destinationCountry"
+    | "presentationOffice"
+    | "locationId"
+    | "invoiceCurrency"
+    | "incoterms"
+    | "incotermLocation"
+    | "importerEori"
+    | "exporterEori"
+    | "transportMode"
+    | "transportId"
+    | "transportIdType"
+    | "eori"
+    | "route";
+
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     eori: "",
     declarationType: "H1",
-    route: "Route 1",
+    route: "",
     dispatchCountry: "",
-    destinationCountry: "GB",
-    presentationOffice: "GBLON004",
-    locationId: "GBAUFXTFXTGW",
-    invoiceCurrency: "GBP",
-    incoterms: "FOB",
-    incotermLocation: "GBFXT",
+    destinationCountry: "",
+    presentationOffice: "",
+    locationId: "",
+    invoiceCurrency: "",
+    incoterms: "",
+    incotermLocation: "",
     importerEori: "",
     exporterEori: "",
     transportMode: "",
@@ -44,25 +60,37 @@ export default function CoreSchemaPage() {
   // Hydrate form once data loads
   React.useEffect(() => {
     if (declaration) {
+      const getDeclarationString = (field: DeclarationStringField) => {
+        const value = (declaration as Record<string, unknown>)[field];
+        return typeof value === "string" ? value : "";
+      };
+
       setFormData({
         eori: declaration.eori || "",
         declarationType: "H1",
-        route: declaration.route || "Route 1",
-        dispatchCountry: (declaration as Record<string, unknown>).dispatchCountry as string || "",
-        destinationCountry: (declaration as Record<string, unknown>).destinationCountry as string || "GB",
-        presentationOffice: (declaration as Record<string, unknown>).presentationOffice as string || "GBLON004",
-        locationId: (declaration as Record<string, unknown>).locationId as string || "GBAUFXTFXTGW",
-        invoiceCurrency: (declaration as Record<string, unknown>).invoiceCurrency as string || "GBP",
-        incoterms: (declaration as Record<string, unknown>).incoterms as string || "FOB",
-        incotermLocation: (declaration as Record<string, unknown>).incotermLocation as string || "GBFXT",
-        importerEori: (declaration as Record<string, unknown>).importerEori as string || "",
-        exporterEori: (declaration as Record<string, unknown>).exporterEori as string || "",
-        transportMode: (declaration as Record<string, unknown>).transportMode as string || "",
-        transportId: (declaration as Record<string, unknown>).transportId as string || "",
-        transportIdType: (declaration as Record<string, unknown>).transportIdType as string || "",
+        route: getDeclarationString("route"),
+        dispatchCountry: getDeclarationString("dispatchCountry"),
+        destinationCountry: getDeclarationString("destinationCountry"),
+        presentationOffice: getDeclarationString("presentationOffice"),
+        locationId: getDeclarationString("locationId"),
+        invoiceCurrency: getDeclarationString("invoiceCurrency"),
+        incoterms: getDeclarationString("incoterms"),
+        incotermLocation: getDeclarationString("incotermLocation"),
+        importerEori: getDeclarationString("importerEori"),
+        exporterEori: getDeclarationString("exporterEori"),
+        transportMode: getDeclarationString("transportMode"),
+        transportId: getDeclarationString("transportId"),
+        transportIdType: getDeclarationString("transportIdType"),
       });
     }
   }, [declaration]);
+
+  const updateTextField = (field: DeclarationStringField, value: string) => {
+    setFormData((current) => ({
+      ...current,
+      [field]: value.trim().toUpperCase(),
+    }));
+  };
 
   const handleSave = async () => {
     if (!formData.eori) return;
@@ -124,8 +152,8 @@ export default function CoreSchemaPage() {
               <input
                 type="text"
                 value={formData.eori}
-                onChange={(e) => setFormData({ ...formData, eori: e.target.value })}
-                placeholder="e.g. GB123456789000"
+                onChange={(e) => updateTextField("eori", e.target.value)}
+                placeholder="Enter declarant EORI"
                 className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
               />
               <p className="text-[10px] text-gray-400 flex items-center gap-1">
@@ -156,21 +184,21 @@ export default function CoreSchemaPage() {
               </Select>
             </div>
 
-            {/* Declaration Category */}
-            <div className="space-y-2">
+          </div>
+
           <div className="border-t border-gray-100 pt-6">
             <h3 className="text-sm font-medium text-gray-900">CDS Declaration References</h3>
             <p className="mt-1 text-[11px] text-gray-500">
-              Make hidden CDS defaults explicit before submission.
+              These values are saved on the declaration and sent to CDS. Blank fields stay blank until you provide them.
             </p>
-            <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               <div className="space-y-2">
                 <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Presentation Office (DE 5/26)</label>
                 <input
                   type="text"
                   value={formData.presentationOffice}
-                  onChange={(e) => setFormData({ ...formData, presentationOffice: e.target.value.trim().toUpperCase() })}
-                  placeholder="GBLON004"
+                  onChange={(e) => updateTextField("presentationOffice", e.target.value)}
+                  placeholder="Enter presentation office code"
                   className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
                 />
               </div>
@@ -179,8 +207,8 @@ export default function CoreSchemaPage() {
                 <input
                   type="text"
                   value={formData.locationId}
-                  onChange={(e) => setFormData({ ...formData, locationId: e.target.value.trim().toUpperCase() })}
-                  placeholder="GBAUFXTFXTGW"
+                  onChange={(e) => updateTextField("locationId", e.target.value)}
+                  placeholder="Enter goods location code"
                   className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
                 />
               </div>
@@ -189,8 +217,8 @@ export default function CoreSchemaPage() {
                 <input
                   type="text"
                   value={formData.invoiceCurrency}
-                  onChange={(e) => setFormData({ ...formData, invoiceCurrency: e.target.value.trim().toUpperCase() })}
-                  placeholder="GBP"
+                  onChange={(e) => updateTextField("invoiceCurrency", e.target.value)}
+                  placeholder="Enter invoice currency code"
                   maxLength={3}
                   className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
                 />
@@ -200,8 +228,8 @@ export default function CoreSchemaPage() {
                 <input
                   type="text"
                   value={formData.incoterms}
-                  onChange={(e) => setFormData({ ...formData, incoterms: e.target.value.trim().toUpperCase() })}
-                  placeholder="FOB"
+                  onChange={(e) => updateTextField("incoterms", e.target.value)}
+                  placeholder="Enter Incoterms code"
                   maxLength={3}
                   className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
                 />
@@ -211,8 +239,8 @@ export default function CoreSchemaPage() {
                 <input
                   type="text"
                   value={formData.incotermLocation}
-                  onChange={(e) => setFormData({ ...formData, incotermLocation: e.target.value.trim().toUpperCase() })}
-                  placeholder="GBFXT"
+                  onChange={(e) => updateTextField("incotermLocation", e.target.value)}
+                  placeholder="Enter named place"
                   className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
                 />
               </div>
@@ -221,17 +249,17 @@ export default function CoreSchemaPage() {
                 <input
                   type="text"
                   value={formData.importerEori}
-                  onChange={(e) => setFormData({ ...formData, importerEori: e.target.value.trim().toUpperCase() })}
+                  onChange={(e) => updateTextField("importerEori", e.target.value)}
                   placeholder="Falls back to declarant"
                   className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
                 />
               </div>
-              <div className="space-y-2 md:col-span-3">
+              <div className="space-y-2 md:col-span-2 xl:col-span-2">
                 <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Exporter EORI</label>
                 <input
                   type="text"
                   value={formData.exporterEori}
-                  onChange={(e) => setFormData({ ...formData, exporterEori: e.target.value.trim().toUpperCase() })}
+                  onChange={(e) => updateTextField("exporterEori", e.target.value)}
                   placeholder="Optional GB/XI exporter EORI only"
                   className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
                 />
@@ -239,6 +267,9 @@ export default function CoreSchemaPage() {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            {/* Declaration Category */}
+            <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
                 Declaration Category
                 <span className="text-red-500">*</span>
