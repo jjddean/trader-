@@ -6,6 +6,7 @@ import { mapToCDS_H1, validateCdsFields, validateCdsCodeLists } from "../../../.
 import { xmlEscape } from "../../../../lib/xml-utils";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
 import { validateClientFraudHeaders } from "../../../../lib/hmrc/submit/fraud-header-preflight";
+import { buildPayloadDebugSnapshot } from "../../../../lib/hmrc/submit/payload-debug";
 import { evaluateRules, activeEffects, summarizeFailures, type RuleDefinition, type ScenarioInput } from "../../../../../convex/lib/rule_engine";
 
 function validateXmlPreflight(xmlPayload: string, eori: string, opts: { requireAdditionalDocument?: boolean } = {}) {
@@ -29,58 +30,6 @@ function validateXmlPreflight(xmlPayload: string, eori: string, opts: { requireA
   return {
     valid: failed.length === 0,
     failed,
-  };
-}
-
-function buildPayloadDebugSnapshot(payloadInfo: any) {
-  const declaration = payloadInfo?.Declaration ?? {};
-  const shipment = declaration?.GoodsShipment ?? {};
-  const goodsItems = Array.isArray(shipment?.GovernmentAgencyGoodsItem)
-    ? shipment.GovernmentAgencyGoodsItem
-    : [];
-
-  return {
-    declaration: {
-      functionCode: declaration?.FunctionCode || "",
-      functionalReferenceId: declaration?.FunctionalReferenceID || "",
-      typeCode: declaration?.TypeCode || "",
-      declarationOfficeId: declaration?.DeclarationOfficeID || "",
-      invoiceAmount: declaration?.InvoiceAmount || null,
-      totalGrossMassMeasure: declaration?.TotalGrossMassMeasure || "",
-      totalPackageQuantity: declaration?.TotalPackageQuantity || "",
-      borderTransportMeans: declaration?.BorderTransportMeans || null,
-      declarantId: declaration?.Declarant?.ID || "",
-      exporterId: declaration?.Exporter?.ID || "",
-      ucr: declaration?.UCR?.TraderAssignedReferenceID || "",
-    },
-    goodsShipment: {
-      buyerCountryCode: shipment?.Buyer?.AddressCountryCode || "",
-      sellerCountryCode: shipment?.Seller?.AddressCountryCode || "",
-      destinationCountryCode: shipment?.Destination?.CountryCode || "",
-      exportCountryId: shipment?.ExportCountry?.ID || "",
-      importerId: shipment?.Importer?.ID || "",
-      tradeTerms: shipment?.TradeTerms || null,
-      previousDocuments: Array.isArray(shipment?.PreviousDocument) ? shipment.PreviousDocument : [],
-      consignment: {
-        containerCode: shipment?.Consignment?.ContainerCode || "",
-        goodsLocationId: shipment?.Consignment?.GoodsLocation?.ID || "",
-        arrivalTransportMeans: shipment?.Consignment?.ArrivalTransportMeans || null,
-      },
-    },
-    items: goodsItems.map((item: any) => ({
-      sequenceNumeric: item?.SequenceNumeric || "",
-      statisticalValueAmount: item?.StatisticalValueAmount || null,
-      commodity: {
-        description: item?.Commodity?.Description || "",
-        classification: Array.isArray(item?.Commodity?.Classification) ? item.Commodity.Classification : [],
-        goodsMeasure: item?.Commodity?.GoodsMeasure || null,
-      },
-      customsValuation: item?.CustomsValuation || null,
-      governmentProcedures: Array.isArray(item?.GovernmentProcedure) ? item.GovernmentProcedure : [],
-      additionalDocuments: Array.isArray(item?.AdditionalDocument) ? item.AdditionalDocument : [],
-      packaging: Array.isArray(item?.Packaging) ? item.Packaging : [],
-      origin: item?.Origin || null,
-    })),
   };
 }
 
