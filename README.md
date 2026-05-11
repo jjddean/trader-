@@ -15,12 +15,6 @@ http://localhost:3000
 
 Stop the app with `Ctrl+C`.
 
-## Root directory
-
-Run commands from the repository root: the folder containing `package.json`, `next.config.ts`, `src/`, and `convex/`.
-
-For Vercel or other deployment tools, set the project root directory to the repository root (`.`) or leave it blank if the tool defaults to repo root.
-
 ## Local environment
 
 Put local secrets and service URLs in `.env.local`.
