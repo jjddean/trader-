@@ -1,10 +1,33 @@
-# Welcome to your Convex snapshot export!
+# TradeDNA / freightcode
 
-This ZIP file contains a snapshot of the tables in your Convex deployment.
+Minimal local workflow:
 
-Documents for each table are listed as lines of JSON in
-<table_name>/documents.jsonl files.
+```bash
+npm install
+npm run dev
+```
 
-For details on the format and how to use this snapshot with npx convex import,
-check out [the docs](https://docs.convex.dev/database/import-export/export) or
-ask us in [Discord](http://convex.dev/community).
+Open:
+
+```text
+http://localhost:3000
+```
+
+Stop the app with `Ctrl+C`.
+
+## Local environment
+
+Put local secrets and service URLs in `.env.local`.
+
+Do not commit `.env.local`.
+
+## Useful commands
+
+```bash
+npm run dev      # Start Next.js locally on port 3000
+npm run build    # Build locally
+npm run start    # Start a production build locally
+npm run lint     # Run ESLint
+```
+
+No Docker, extra ports, tunnels, worktrees, or deployment steps are required for the basic local workflow.
