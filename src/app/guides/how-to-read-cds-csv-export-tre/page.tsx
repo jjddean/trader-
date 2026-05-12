@@ -19,8 +19,58 @@ export const metadata: Metadata = {
 };
 
 export default function Guide4Page() {
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "How to Read Your CDS CSV Export from TRE",
+    "description": "A practical column-by-column guide to reading your CDS CSV export from HMRC's Trade Reporting and Extracting (TRE) service — what each field means and how to use the data.",
+    "url": "https://www.freightcode.co.uk/guides/how-to-read-cds-csv-export-tre",
+    "author": {
+      "@type": "Organization",
+      "name": "FreightCode"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "FreightCode",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://www.freightcode.co.uk/icon.png"
+      }
+    },
+    "datePublished": "2026-01-01",
+    "dateModified": "2026-05-01"
+  };
+  
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://www.freightcode.co.uk"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Guides",
+        "item": "https://www.freightcode.co.uk/guides"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "How to Read Your CDS CSV Export from TRE",
+        "item": "https://www.freightcode.co.uk/guides/how-to-read-cds-csv-export-tre"
+      }
+    ]
+  };
+
   return (
-    <article className="max-w-3xl mx-auto px-6 py-12 md:py-20">
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <article className="max-w-3xl mx-auto px-6 py-12 md:py-20">
       <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-6 leading-snug">
         How to Read Your CDS CSV Export from TRE
       </h1>
@@ -156,5 +206,6 @@ export default function Guide4Page() {
         </div>
       </div>
     </article>
+    </>
   );
 }

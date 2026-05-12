@@ -19,8 +19,58 @@ export const metadata: Metadata = {
 };
 
 export default function Guide1Page() {
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "HMRC CDS: Complete Guide for UK Importers 2026",
+    "description": "Everything a UK business needs to know about HMRC's Customs Declaration Service in 2026 — registration, declaration types, duty deferment, and practical filing tips.",
+    "url": "https://www.freightcode.co.uk/guides/hmrc-cds-complete-guide-uk-importers-2026",
+    "author": {
+      "@type": "Organization",
+      "name": "FreightCode"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "FreightCode",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://www.freightcode.co.uk/icon.png"
+      }
+    },
+    "datePublished": "2026-01-01",
+    "dateModified": "2026-05-01"
+  };
+  
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://www.freightcode.co.uk"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Guides",
+        "item": "https://www.freightcode.co.uk/guides"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "HMRC CDS: Complete Guide for UK Importers 2026",
+        "item": "https://www.freightcode.co.uk/guides/hmrc-cds-complete-guide-uk-importers-2026"
+      }
+    ]
+  };
+
   return (
-    <article className="max-w-3xl mx-auto px-6 py-12 md:py-20">
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <article className="max-w-3xl mx-auto px-6 py-12 md:py-20">
       <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-6 leading-snug">
         HMRC CDS: Complete Guide for UK Importers 2026
       </h1>
@@ -128,5 +178,6 @@ export default function Guide1Page() {
         </div>
       </div>
     </article>
+    </>
   );
 }

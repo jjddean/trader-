@@ -33,9 +33,17 @@ export default function GoodsItemsPage() {
 
   const [isUploading, setIsUploading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [showAddRowModal, setShowAddRowModal] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+
+  // Live completeness state from the rule engine. UI is display-only —
+  // it does NOT enforce anything beyond HTML form attributes (required,
+  // pattern). The rule engine in convex/lib/rule_engine.ts is the only
+  // server-side source of truth for what's missing.
+  const completeness = useQuery(
+    api.declaration_completeness.getStatus,
+    declarationId ? { declarationId } : "skip",
+  );
   
   const [originCountry, setOriginCountry] = useState("");
   const [hsCode, setHsCode] = useState("");
@@ -215,62 +223,55 @@ export default function GoodsItemsPage() {
 
   const handleItemFieldBlur = (
     itemId: Id<"goods_items">,
-    field: "description" | "commodityCode" | "originCountry" | "valueAmount" | "procedureCode" | "additionalProcedureCode" | "grossWeightKg" | "netWeightKg" | "shippingMarks",
+    field: "description" | "commodityCode" | "originCountry" | "valueAmount" | "procedureCode" | "additionalProcedureCode" | "grossWeightKg" | "netWeightKg" | "shippingMarks" | "packageCount" | "packageType",
     value: string,
   ) => {
+    // Format normalisation only — NO field-rule validation here.
+    // The browser enforces HTML required/pattern at form level. The rule
+    // engine (convex/lib/rule_engine.ts) is the only source of validation
+    // beyond format. This handler just shapes the value before persistence.
+    const trimmed = value.trim();
+
     if (field === "commodityCode") {
-      const cleaned = value.trim();
-      if (cleaned.length !== 10 || !/^\d{10}$/.test(cleaned)) {
-        setFieldErrors(prev => ({ ...prev, [`${itemId}-commodityCode`]: "Must be exactly 10 digits" }));
-        return;
-      }
-      setFieldErrors(prev => ({ ...prev, [`${itemId}-commodityCode`]: "" }));
-      scheduleUpdate(itemId, "commodityCode", cleaned);
+      scheduleUpdate(itemId, "commodityCode", trimmed);
       return;
     }
-
-    if (field === "originCountry") {
-      const cleaned = value.trim().toUpperCase();
-      if (cleaned.length !== 2 || !/^[A-Z]{2}$/.test(cleaned)) {
-        setFieldErrors(prev => ({ ...prev, [`${itemId}-originCountry`]: "Must be exactly 2 letters" }));
-        return;
-      }
-      setFieldErrors(prev => ({ ...prev, [`${itemId}-originCountry`]: "" }));
-      scheduleUpdate(itemId, "originCountry", cleaned);
+    if (field === "originCountry" || field === "packageType") {
+      scheduleUpdate(itemId, field, trimmed.toUpperCase());
       return;
     }
-
-    if (field === "valueAmount") {
-      scheduleUpdate(itemId, "valueAmount", Number(value) || 0);
+    if (field === "valueAmount" || field === "grossWeightKg" || field === "netWeightKg") {
+      // Empty input → undefined (not 0). Don't invent a value the user didn't supply.
+      const parsed = trimmed === "" ? undefined : Number(trimmed);
+      scheduleUpdate(itemId, field, parsed);
       return;
     }
-
-    if (field === "grossWeightKg") {
-      scheduleUpdate(itemId, "grossWeightKg", Number(value) || 0);
+    if (field === "packageCount") {
+      const parsed = trimmed === "" ? undefined : parseInt(trimmed, 10);
+      scheduleUpdate(itemId, field, parsed);
       return;
     }
-
-    if (field === "netWeightKg") {
-      scheduleUpdate(itemId, "netWeightKg", Number(value) || 0);
-      return;
-    }
-
-    scheduleUpdate(itemId, field, value.trim());
+    scheduleUpdate(itemId, field, trimmed);
   };
 
   const handleManualAdd = async () => {
+    // Persist exactly what the user provided. No invented defaults
+    // (no fake "GB" origin, no "New Item" description, no implicit "4000"
+    // CPC, no zero value, no GBP). Empty fields stay empty and the rule
+    // engine + form-required attributes flag what still needs filling.
     setIsAdding(true);
     try {
-      await addItem({
+      const payload: Record<string, unknown> = {
         declarationId,
         sequenceNumber: (items?.length || 0) + 1,
-        commodityCode: hsCode.trim() || "",
-        description: description.trim() || "New Item",
-        originCountry: originCountry.trim().toUpperCase() || "GB",
-        procedureCode: "4000",
-        valueAmount: 0,
-        valueCurrency: "GBP",
-      });
+      };
+      const trimmedHs = hsCode.trim();
+      const trimmedDesc = description.trim();
+      const trimmedOrigin = originCountry.trim().toUpperCase();
+      if (trimmedHs) payload.commodityCode = trimmedHs;
+      if (trimmedDesc) payload.description = trimmedDesc;
+      if (trimmedOrigin) payload.originCountry = trimmedOrigin;
+      await addItem(payload as any);
       setShowAddRowModal(false);
       setHsCode("");
       setDescription("");
@@ -305,20 +306,31 @@ export default function GoodsItemsPage() {
         throw new Error(data.error || "Failed to extract invoice data.");
       }
 
-      // Automatically add the extracted items to Convex (Acting as the Human-in-the-Loop review staging)
+      // Persist exactly what the AI extracted. No invented fallbacks
+      // (no implicit "GB" origin, no "Unknown Item" description, no "4000"
+      // CPC, no zero value, no GBP). Missing fields stay empty so the user
+      // sees what the AI couldn't determine and fills it in explicitly.
       if (data.items && Array.isArray(data.items)) {
         for (let i = 0; i < data.items.length; i++) {
           const item = data.items[i];
-          await addItem({
+          const payload: Record<string, unknown> = {
             declarationId,
             sequenceNumber: (items?.length || 0) + i + 1,
-            commodityCode: String(item.commodityCode || "").trim(),
-            description: String(item.description || "Unknown Item").trim(),
-            originCountry: String(item.originCountry || "GB").trim().toUpperCase(),
-            procedureCode: "4000", // Default to home use
-            valueAmount: Number(item.valueAmount) || 0,
-            valueCurrency: item.valueCurrency || "GBP",
-          });
+          };
+          const cc = String(item.commodityCode || "").trim();
+          const desc = String(item.description || "").trim();
+          const origin = String(item.originCountry || "").trim().toUpperCase();
+          const cpc = String(item.procedureCode || "").trim();
+          const valueRaw = item.valueAmount;
+          const valueParsed = valueRaw == null || valueRaw === "" ? undefined : Number(valueRaw);
+          const currency = String(item.valueCurrency || "").trim().toUpperCase();
+          if (cc) payload.commodityCode = cc;
+          if (desc) payload.description = desc;
+          if (origin) payload.originCountry = origin;
+          if (cpc) payload.procedureCode = cpc;
+          if (Number.isFinite(valueParsed) && (valueParsed as number) > 0) payload.valueAmount = valueParsed;
+          if (currency) payload.valueCurrency = currency;
+          await addItem(payload as any);
         }
       }
 
@@ -384,6 +396,24 @@ export default function GoodsItemsPage() {
         </div>
       )}
 
+      {/* Live completeness panel — derived from rule engine. NO local rules. */}
+      {completeness && completeness.missing.length > 0 && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-amber-900">
+            <AlertCircle className="h-4 w-4" />
+            {completeness.missing.length} blocking issue{completeness.missing.length === 1 ? "" : "s"} from rule engine
+          </div>
+          <ul className="space-y-1 text-[11px] text-amber-900/90">
+            {completeness.missing.map((m, i) => (
+              <li key={`${m.ruleId}-${i}`} className="flex gap-2">
+                <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-[10px]">{m.field}</code>
+                <span>{m.reason}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Mandatory Human-in-the-Loop Review Banner */}
       {items.length > 0 && (
          <div className="flex items-center gap-2 rounded-md bg-yellow-50 p-3 text-xs text-yellow-800 border border-yellow-200">
@@ -422,75 +452,97 @@ export default function GoodsItemsPage() {
                   </button>
                 </div>
 
+                {/*
+                  HTML required/pattern attributes are SEMANTIC markers.
+                  Mandatory levels per Appendix 21A H1 data set:
+                    DE 1/10 procedureCode  — A
+                    DE 1/11 additionalProcedureCode — A
+                    DE 5/15 originCountry — A
+                    DE 6/5  grossWeightKg item-level — A (multi-item)
+                    DE 6/14 commodityCode — A
+                    DE 4/14 valueAmount   — A
+                  Conditional fields (DE 6/11 shipping marks unless bulk,
+                  DE 6/1 net weight) are not marked required here.
+                  The rule engine remains the only enforcing source.
+                */}
                 <div className="grid grid-cols-2 gap-x-6 gap-y-4 px-4 py-4 md:grid-cols-3 lg:grid-cols-4">
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">HS Code</label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">HS Code <span className="text-red-500">*</span></label>
                     <input
                       type="text"
+                      required
+                      pattern="\d{10}"
                       defaultValue={String(item.commodityCode ?? "")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "commodityCode", e.target.value)}
                       placeholder="e.g. 0207129000"
-                      className={`h-9 w-full rounded-md border bg-white px-2 font-mono text-xs text-gray-800 outline-none focus:border-blue-500 ${fieldErrors[`${item._id}-commodityCode`] ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}
+                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 font-mono text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
-                    {fieldErrors[`${item._id}-commodityCode`] && (
-                      <div className="mt-1 text-[10px] text-red-500 leading-tight">{fieldErrors[`${item._id}-commodityCode`]}</div>
-                    )}
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Origin</label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Origin <span className="text-red-500">*</span></label>
                     <input
                       type="text"
+                      required
+                      pattern="[A-Za-z]{2}"
                       defaultValue={String(item.originCountry ?? "")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "originCountry", e.target.value)}
                       placeholder="e.g. BR"
-                      className={`h-9 w-full rounded-md border bg-white px-2 font-mono text-xs text-gray-800 outline-none focus:border-blue-500 ${fieldErrors[`${item._id}-originCountry`] ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}
+                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 font-mono text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
-                    {fieldErrors[`${item._id}-originCountry`] && (
-                      <div className="mt-1 text-[10px] text-red-500 leading-tight">{fieldErrors[`${item._id}-originCountry`]}</div>
-                    )}
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Value ({String(item.valueCurrency ?? "GBP")})</label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Value ({String(item.valueCurrency ?? "")}) <span className="text-red-500">*</span></label>
                     <input
                       type="number"
-                      defaultValue={Number(item.valueAmount ?? 0)}
+                      required
+                      min="0.01"
+                      step="0.01"
+                      defaultValue={item.valueAmount != null ? Number(item.valueAmount) : ""}
                       onBlur={(e) => handleItemFieldBlur(item._id, "valueAmount", e.target.value)}
-                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
+                      placeholder="0.00"
+                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">CPC (DE 1/10)</label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">CPC (DE 1/10) <span className="text-red-500">*</span></label>
                     <input
                       type="text"
-                      defaultValue={String(item.procedureCode ?? "4000")}
+                      required
+                      pattern="\d{4}"
+                      defaultValue={String(item.procedureCode ?? "")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "procedureCode", e.target.value)}
-                      placeholder="4000"
-                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 font-mono text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
+                      placeholder="e.g. 4000"
+                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 font-mono text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Add. Proc (DE 1/11)</label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Add. Proc (DE 1/11) <span className="text-red-500">*</span></label>
                     <input
                       type="text"
+                      required
+                      pattern="\d{3}"
                       defaultValue={String(item.additionalProcedureCode ?? "")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "additionalProcedureCode", e.target.value)}
-                      placeholder="000 = none"
-                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 font-mono text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
+                      placeholder="e.g. 000"
+                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 font-mono text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Gross (kg)</label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Gross (kg) <span className="text-red-500">*</span></label>
                     <input
                       type="number"
+                      required
+                      min="0.001"
+                      step="0.001"
                       defaultValue={item.grossWeightKg != null ? Number(item.grossWeightKg) : ""}
                       onBlur={(e) => handleItemFieldBlur(item._id, "grossWeightKg", e.target.value)}
-                      placeholder="0"
-                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
+                      placeholder="0.000"
+                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
                   </div>
 
@@ -498,10 +550,38 @@ export default function GoodsItemsPage() {
                     <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Net (kg)</label>
                     <input
                       type="number"
+                      min="0.001"
+                      step="0.001"
                       defaultValue={item.netWeightKg != null ? Number(item.netWeightKg) : ""}
                       onBlur={(e) => handleItemFieldBlur(item._id, "netWeightKg", e.target.value)}
-                      placeholder="0"
+                      placeholder="0.000"
                       className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Pkg Count (DE 6/10) <span className="text-red-500">*</span></label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      step="1"
+                      defaultValue={(item as Record<string, unknown>).packageCount != null ? Number((item as Record<string, unknown>).packageCount) : ""}
+                      onBlur={(e) => handleItemFieldBlur(item._id, "packageCount", e.target.value)}
+                      placeholder="e.g. 1"
+                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Pkg Type (DE 6/9) <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      required
+                      defaultValue={String((item as Record<string, unknown>).packageType ?? "")}
+                      onBlur={(e) => handleItemFieldBlur(item._id, "packageType", e.target.value)}
+                      placeholder="e.g. PK, BX, CT"
+                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 font-mono text-xs uppercase text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
                   </div>
 
@@ -511,7 +591,7 @@ export default function GoodsItemsPage() {
                       type="text"
                       defaultValue={String((item as Record<string, unknown>).shippingMarks ?? "")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "shippingMarks", e.target.value)}
-                      placeholder='Marks printed on the cartons/pallets — or "UNMARKED" if literally none'
+                      placeholder="Marks printed on the cartons/pallets"
                       className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
                     />
                   </div>

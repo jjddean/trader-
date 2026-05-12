@@ -96,7 +96,7 @@ function DocumentsPageInner() {
     setIsAuditing(true);
     setAuditResult(null);
     try {
-      const response = await fetch('https://cloudagent.workers.dev/classify-gir', {
+      const response = await fetch('/api/ai/gir-audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -104,10 +104,14 @@ function DocumentsPageInner() {
           declaredHsCode: userCode
         })
       });
+      if (!response.ok) {
+        throw new Error(`GIR audit failed: ${response.statusText}`);
+      }
       const data = await response.json();
       setAuditResult(data);
     } catch (e) {
       console.error("GIR Audit Error:", e);
+      setAuditResult({ error: e instanceof Error ? e.message : "Failed to run GIR audit" });
     } finally {
       setIsAuditing(false);
     }
@@ -697,35 +701,47 @@ function DocumentsPageInner() {
                   </div>
                   
                   {auditResult ? (
-                    <div className="space-y-4">
-                      <div className={`p-4 rounded-lg border ${auditResult.complianceVerdict === 'COMPLIANT' ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className={`text-[0.625rem] font-bold uppercase tracking-widest ${auditResult.complianceVerdict === 'COMPLIANT' ? 'text-green-700' : 'text-red-700'}`}>
-                            Verdict: {auditResult.complianceVerdict}
-                          </span>
-                          <Badge variant="outline" className="text-[0.625rem] bg-white">
-                            {(auditResult.confidence * 100).toFixed(0)}% Confidence
-                          </Badge>
-                        </div>
-                        <p className="text-sm font-semibold text-gray-900">Recommended HS: <span className="font-mono">{auditResult.correctHsCode}</span></p>
-                        <p className="mt-1 text-xs text-gray-700">{auditResult.verdictReasoning}</p>
+                    auditResult.error ? (
+                      <div className="p-4 rounded-lg bg-red-50 border border-red-100">
+                        <p className="text-xs font-semibold text-red-700 mb-1">Classification Error</p>
+                        <p className="text-xs text-red-600">{auditResult.error}</p>
                       </div>
-
-                      <div className="space-y-3">
-                        <p className="text-[0.625rem] font-bold uppercase tracking-widest text-gray-500">GIR Reasoning Path</p>
-                        {auditResult.girsApplied.map((gir: any, idx: number) => (
-                          <div key={idx} className="pl-3 border-l-2 border-gray-200">
-                            <p className="text-[0.6875rem] font-bold text-gray-900">{gir.rule}</p>
-                            <p className="text-[0.6875rem] text-gray-600">{gir.analysis}</p>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className={`p-4 rounded-lg border ${auditResult.complianceVerdict === 'COMPLIANT' ? 'bg-green-50 border-green-100' : auditResult.complianceVerdict === 'NON_COMPLIANT' ? 'bg-red-50 border-red-100' : 'bg-amber-50 border-amber-100'}`}>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className={`text-[0.625rem] font-bold uppercase tracking-widest ${auditResult.complianceVerdict === 'COMPLIANT' ? 'text-green-700' : auditResult.complianceVerdict === 'NON_COMPLIANT' ? 'text-red-700' : 'text-amber-700'}`}>
+                              Verdict: {auditResult.complianceVerdict}
+                            </span>
+                            <Badge variant="outline" className="text-[0.625rem] bg-white">
+                              {(auditResult.confidence * 100).toFixed(0)}% Confidence
+                            </Badge>
                           </div>
-                        ))}
-                      </div>
+                          <p className="text-sm font-semibold text-gray-900">Recommended HS: <span className="font-mono">{auditResult.correctHsCode}</span></p>
+                          <p className="mt-1 text-xs text-gray-700">{auditResult.verdictReasoning}</p>
+                        </div>
 
-                      <div className="rounded-lg bg-gray-50 p-4 border border-gray-100">
-                        <p className="text-[0.625rem] font-bold uppercase tracking-widest text-gray-500 mb-2">HMRC Officer Explanation</p>
-                        <p className="text-xs italic text-gray-600 leading-relaxed">"{auditResult.officerExplanation}"</p>
+                        {auditResult.girsApplied && Array.isArray(auditResult.girsApplied) && auditResult.girsApplied.length > 0 && (
+                          <div className="space-y-3">
+                            <p className="text-[0.625rem] font-bold uppercase tracking-widest text-gray-500">GIR Reasoning Path</p>
+                            {auditResult.girsApplied.map((gir: any, idx: number) => (
+                              <div key={idx} className="pl-3 border-l-2 border-gray-200">
+                                <p className="text-[0.6875rem] font-bold text-gray-900">{gir.rule}</p>
+                                <p className="text-[0.6875rem] text-gray-600">{gir.analysis}</p>
+                                {gir.conclusion && <p className="text-[0.6875rem] text-gray-500 italic mt-1">{gir.conclusion}</p>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {auditResult.officerExplanation && (
+                          <div className="rounded-lg bg-gray-50 p-4 border border-gray-100">
+                            <p className="text-[0.625rem] font-bold uppercase tracking-widest text-gray-500 mb-2">HMRC Officer Explanation</p>
+                            <p className="text-xs italic text-gray-600 leading-relaxed">"{auditResult.officerExplanation}"</p>
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    )
                   ) : !selectedDocument.ocrText ? (
                     <div className="p-4 rounded-lg bg-gray-50 border border-gray-100 text-center">
                       <p className="text-xs text-gray-500 italic">Upload document via Smart-Upload to enable AI GIR Auditing.</p>

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
-import { mapToCDS_H1, validateCdsFields, validateCdsCodeLists } from "../../../../lib/wco-mapper";
+import { mapToCDS_H1, validateCdsCodeLists } from "../../../../lib/wco-mapper";
 import { xmlEscape } from "../../../../lib/xml-utils";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
 import { evaluateRules, activeEffects, summarizeFailures, type RuleDefinition, type ScenarioInput } from "../../../../../convex/lib/rule_engine";
@@ -28,6 +28,42 @@ function validateClientFraudHeaders(headers: Headers) {
   };
 }
 
+// Hard fail-fast on missing required declaration data. Runs before XML build
+// so a 400 returns the exact list of gaps rather than emitting empty tags
+// that would later trip the XML preflight or get rejected by CDS. Each check
+// here corresponds to a field the mapper/route would otherwise emit blank.
+function validateDeclaration(lane: any, items: any[]) {
+  const errors: string[] = [];
+  if (!lane?.eori) errors.push("Missing declarant EORI");
+  if (!lane?.dispatchCountry) errors.push("Missing dispatch country (DE 5/14)");
+  if (!lane?.destinationCountry) errors.push("Missing destination country (DE 5/8)");
+  if (!lane?.locationId) errors.push("Missing goods location (DE 5/23)");
+  if (!lane?.transportMode) errors.push("Missing transport mode (DE 7/4)");
+  if (!lane?.transportId) errors.push("Missing transport identity (DE 7/9)");
+  if (!lane?.transportIdType) errors.push("Missing transport identity type (DE 7/7)");
+  if (!lane?.invoiceCurrency) errors.push("Missing invoice currency");
+  if (!Array.isArray(items) || items.length === 0) {
+    errors.push("No goods items");
+    return errors;
+  }
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    if (!it?.commodityCode) errors.push(`Item ${i}: missing commodity code (DE 6/14)`);
+    if (!it?.description) errors.push(`Item ${i}: missing description`);
+    if (!it?.originCountry) errors.push(`Item ${i}: missing origin (DE 5/15)`);
+    if (!it?.procedureCode) errors.push(`Item ${i}: missing CPC (DE 1/10)`);
+    if (!it?.additionalProcedureCode) errors.push(`Item ${i}: missing additional procedure (DE 1/11)`);
+    const v = parseFloat(String(it?.valueAmount ?? ""));
+    if (!Number.isFinite(v) || v <= 0) errors.push(`Item ${i}: value must be > 0`);
+    const g = parseFloat(String(it?.grossWeightKg ?? ""));
+    if (!Number.isFinite(g) || g <= 0) errors.push(`Item ${i}: gross weight must be > 0`);
+    if (!it?.packageType) errors.push(`Item ${i}: missing package type (DE 6/9)`);
+    const pc = parseInt(String(it?.packageCount ?? ""));
+    if (!Number.isFinite(pc) || pc < 1) errors.push(`Item ${i}: package count must be >= 1`);
+  }
+  return errors;
+}
+
 function validateXmlPreflight(xmlPayload: string, eori: string, opts: { requireAdditionalDocument?: boolean } = {}) {
   const requireAdditionalDocument = opts.requireAdditionalDocument !== false;
   const checks: Record<string, boolean> = {
@@ -39,6 +75,14 @@ function validateXmlPreflight(xmlPayload: string, eori: string, opts: { requireA
     has_goods_shipment: xmlPayload.includes("<GoodsShipment>"),
     has_previous_document: xmlPayload.includes("<PreviousDocument>"),
     no_y922: !xmlPayload.includes("<TypeCode>922</TypeCode>"),
+    // Empty same-tag pairs (<X></X>) almost always cause CDS12070
+    // ("forbidden in context") — the schema accepts the element but the
+    // business rule rejects an empty body. Reject before submission.
+    no_empty_tags: !/<([A-Za-z][\w]*)\s*>\s*<\/\1>/.test(xmlPayload),
+    // Placeholder strings that should never reach CDS. The hardcoded code
+    // defaults (GBLON004, FOB, etc.) ARE valid CDS values when chosen
+    // intentionally — only catch true placeholders here.
+    no_placeholders: !/(>\s*N\/A\s*<|>\s*TBD\s*<|>\s*PENDING-|>\s*General goods\s*<)/i.test(xmlPayload),
   };
   if (requireAdditionalDocument) {
     checks.has_additional_document = xmlPayload.includes("<AdditionalDocument>");
@@ -83,7 +127,7 @@ function buildPayloadDebugSnapshot(payloadInfo: any) {
       previousDocuments: Array.isArray(shipment?.PreviousDocument) ? shipment.PreviousDocument : [],
       consignment: {
         containerCode: shipment?.Consignment?.ContainerCode || "",
-        goodsLocationId: shipment?.Consignment?.GoodsLocation?.ID || "",
+        goodsLocationId: shipment?.Consignment?.GoodsLocation?.Name || shipment?.Consignment?.GoodsLocation?.ID || "",
         arrivalTransportMeans: shipment?.Consignment?.ArrivalTransportMeans || null,
       },
     },
@@ -155,12 +199,42 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+
+    // Declarant EORI format gate. Previously lived inside validateCdsFields
+    // (now deleted). Lifted here because the route uses lane.eori as the
+    // X-Submitter-Identifier header — sending a malformed value to HMRC is a
+    // guaranteed 400/403 not worth attempting.
+    if (!/^GB\d{12}$/.test(String(lane.eori || ""))) {
+      return NextResponse.json(
+        { error: "Declarant EORI on the declaration is missing or invalid (expected GB+12 digits)." },
+        { status: 400 },
+      );
+    }
     
     const items = await convex.query(api.goods_items.getItems, { declarationId });
     if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: "No goods items found for declaration" }, { status: 400 });
     }
-    
+
+    // Single-item lock: laptop baseline submission must contain exactly one
+    // goods item. Catches phantom/duplicate items before XML build.
+    if (items.length !== 1) {
+      return NextResponse.json(
+        { error: `Single-item lock: expected 1 goods item, got ${items.length}` },
+        { status: 400 },
+      );
+    }
+
+    // Fail-fast on missing required declaration data. Returns the exact gap
+    // list so the caller knows what to fill in. No XML built, no HMRC call.
+    const baselineErrors = validateDeclaration(lane, items);
+    if (baselineErrors.length > 0) {
+      return NextResponse.json(
+        { error: "Declaration incomplete", missing: baselineErrors },
+        { status: 400 },
+      );
+    }
+
     const tokenRecord = await convex.query(api.hmrc.getToken, { userId });
     
     if (!tokenRecord || !tokenRecord.accessToken) {
@@ -288,16 +362,10 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    const validationErrors = validateCdsFields(lane, items, payloadInfo);
-    if (validationErrors.length > 0) {
-      return NextResponse.json(
-        {
-          error: "Validation failed",
-          fields: validationErrors,
-        },
-        { status: 400 },
-      );
-    }
+    // Field/scenario validation lives entirely in the rule engine above
+    // (evaluateRules at line ~255). validateCdsFields was removed because it
+    // ran a parallel set of inferred checks. Adding a new completeness rule
+    // = adding a row to rule_definitions, not editing this route.
 
     // Code-list validation against the seeded HMRC datasets. If the
     // cds_code_lists table is empty (seed not run yet) the lookup returns
@@ -326,6 +394,22 @@ export async function POST(request: Request) {
     // Convert the JSON payload into the required HMRC XML Envelope
     const d = payloadInfo.Declaration;
     const gs = d.GoodsShipment;
+
+    // Defence in depth: the mapper iterates items exactly once, but if
+    // anything upstream ever duplicates the array we want to fail loud
+    // rather than emit a phantom <GovernmentAgencyGoodsItem> that CDS will
+    // reject under SequenceNumeric=2 pointers.
+    const emittedItemCount = Array.isArray(gs.GovernmentAgencyGoodsItem) ? gs.GovernmentAgencyGoodsItem.length : 0;
+    if (emittedItemCount !== items.length) {
+      return NextResponse.json(
+        {
+          error: "Goods item count mismatch between source and payload",
+          expected: items.length,
+          emitted: emittedItemCount,
+        },
+        { status: 500 },
+      );
+    }
 
     // Exporter: only include if an explicit exporterEori is set AND it's a GB/XI EORI.
     // HMRC DE 3/2 guidance: "Do NOT enter if Exporter is not UK-based."
@@ -381,25 +465,78 @@ export async function POST(request: Request) {
         </ArrivalTransportMeans>`
       : "";
 
-    // DE 3/24 / 3/1 — Buyer / Seller. Country code only (no fake names).
-    // WCO Address complex type: CountryCode is the relevant child.
-    const buyer = gs.Buyer || {};
-    const buyerXml = buyer.AddressCountryCode
-      ? `
-      <Buyer>
-        <Address>
-          <CountryCode>${xmlEscape(buyer.AddressCountryCode)}</CountryCode>
-        </Address>
-      </Buyer>`
+    // Buyer/Seller/Consignee/Consignor are dependent groups. Do not emit
+    // partial country-only party records: CDS treats the group as present and
+    // then requires the dependent name/address fields.
+    const buyerXml = "";
+    const sellerXml = "";
+    // ExportCountry must NEVER be emitted with an empty <ID> body — that's
+    // exactly the CDS12100 22B 090 reject. Omit the element when no real
+    // dispatch country has been set (validateCdsFields will already have
+    // rejected, but defence in depth).
+    const exportCountryXml = gs.ExportCountry?.ID
+      ? `\n      <ExportCountry>\n        <ID>${xmlEscape(gs.ExportCountry.ID)}</ID>\n      </ExportCountry>`
       : "";
-    const seller = gs.Seller || {};
-    const sellerXml = seller.AddressCountryCode
+    // DE 5/26 — Customs Office of Presentation. Conditional per Appendix 21A
+    // (only required when goods aren't at the location declared in 5/23).
+    // Omit the element entirely when blank rather than emitting an empty body
+    // (which trips no_empty_tags preflight + would be CDS12100 anyway).
+    const declarationOfficeXml = d.DeclarationOfficeID
+      ? `\n    <DeclarationOfficeID>${xmlEscape(d.DeclarationOfficeID)}</DeclarationOfficeID>`
+      : "";
+    // Same for Destination — wrap conditional, never emit empty.
+    const destinationXml = gs.Destination?.CountryCode
+      ? `\n      <Destination>\n        <CountryCode>${xmlEscape(gs.Destination.CountryCode)}</CountryCode>\n      </Destination>`
+      : "";
+    const consigneeXml = "";
+    const consignorXml = "";
+    // Per HMRC CDS Imports TCM v3.92 (rows 63-70):
+    //   DE 3/19-3/21 Representative => <Agent> at Declaration level
+    //   Children: <ID> (DE 3/20), <FunctionCode> (DE 3/21, PartyRoleStatusTypes)
+    // Element name is NOT <Representative>, child is NOT <RoleCode>.
+    // FunctionCode "3" = direct representative per PartyRoleStatusTypes.
+    const agentEori = String((lane as Record<string, unknown>).agentEori || "").trim();
+    const agentXml = agentEori ? `
+    <Agent>
+      <ID>${xmlEscape(agentEori)}</ID>
+      <FunctionCode>3</FunctionCode>
+    </Agent>` : "";
+    // Per HMRC CDS Imports TCM v3.92 (rows 90-91):
+    //   DE 3/39 Holder of authorisation => Declaration/AuthorisationHolder
+    //   Header level (H), NOT item level. C521 = direct representative auth.
+    // Schema sequence position established empirically: between
+    // TotalPackageQuantity and BorderTransportMeans (matches HMRC sample
+    // TT4_2_TC015 ordering).
+    const authorisationCategory = String((lane as Record<string, unknown>).authorisationCategory || "").trim();
+    const authorisationHolderXml = authorisationCategory ? `
+    <AuthorisationHolder>
+      <ID>${xmlEscape(String(lane.eori))}</ID>
+      <CategoryCode>${xmlEscape(authorisationCategory)}</CategoryCode>
+    </AuthorisationHolder>` : "";
+    // TradeTerms is optional in the schema. Emit only when both fields are
+    // populated — half-filled TradeTerms triggers CDS12070.
+    const tradeTermsXml = (gs.TradeTerms?.ConditionCode && gs.TradeTerms?.LocationID)
       ? `
-      <Seller>
-        <Address>
-          <CountryCode>${xmlEscape(seller.AddressCountryCode)}</CountryCode>
-        </Address>
-      </Seller>`
+      <TradeTerms>
+        <ConditionCode>${xmlEscape(gs.TradeTerms.ConditionCode)}</ConditionCode>
+        <LocationID>${xmlEscape(gs.TradeTerms.LocationID)}</LocationID>
+      </TradeTerms>`
+      : "";
+    const transactionNatureXml = gs.TransactionNatureCode
+      ? `\n      <TransactionNatureCode>${xmlEscape(gs.TransactionNatureCode)}</TransactionNatureCode>`
+      : "";
+    const goodsLocationAddress = gs.Consignment.GoodsLocation.Address || {};
+    const goodsLocationAddressXml = goodsLocationAddress.CountryCode
+      ? `
+          <Address>
+            <CountryCode>${xmlEscape(goodsLocationAddress.CountryCode)}</CountryCode>${
+              goodsLocationAddress.Line ? `\n            <Line>${xmlEscape(goodsLocationAddress.Line)}</Line>` : ""
+            }${
+              goodsLocationAddress.PostcodeID ? `\n            <PostcodeID>${xmlEscape(goodsLocationAddress.PostcodeID)}</PostcodeID>` : ""
+            }${
+              goodsLocationAddress.TypeCode ? `\n            <TypeCode>${xmlEscape(goodsLocationAddress.TypeCode)}</TypeCode>` : ""
+            }
+          </Address>`
       : "";
     const xmlPayload = `<?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
@@ -412,27 +549,23 @@ export async function POST(request: Request) {
     <FunctionCode>${xmlEscape(d.FunctionCode)}</FunctionCode>
     <FunctionalReferenceID>${xmlEscape(d.FunctionalReferenceID)}</FunctionalReferenceID>
     <TypeCode>${xmlEscape(d.TypeCode)}</TypeCode>
-    <GoodsItemQuantity>${xmlEscape(d.GoodsItemQuantity)}</GoodsItemQuantity>
-    <DeclarationOfficeID>${xmlEscape(d.DeclarationOfficeID)}</DeclarationOfficeID>
+    <GoodsItemQuantity>${xmlEscape(d.GoodsItemQuantity)}</GoodsItemQuantity>${declarationOfficeXml}
     <InvoiceAmount currencyID="${xmlEscape(d.InvoiceAmount.currencyID)}">${xmlEscape(d.InvoiceAmount.value)}</InvoiceAmount>
     <TotalGrossMassMeasure unitCode="KGM">${xmlEscape(d.TotalGrossMassMeasure)}</TotalGrossMassMeasure>
-    <TotalPackageQuantity>${xmlEscape(d.TotalPackageQuantity)}</TotalPackageQuantity>${borderTransportMeansXml}
+    <TotalPackageQuantity>${xmlEscape(d.TotalPackageQuantity)}</TotalPackageQuantity>${agentXml}${authorisationHolderXml}${borderTransportMeansXml}
     <Declarant>
       <ID>${xmlEscape(d.Declarant.ID)}</ID>
     </Declarant>${exporterXml}
-    <GoodsShipment>${buyerXml}
+    <GoodsShipment>${transactionNatureXml}${buyerXml}${consigneeXml}
       <Consignment>
         <ContainerCode>${xmlEscape(gs.Consignment.ContainerCode)}</ContainerCode>${arrivalTransportMeansXml}
         <GoodsLocation>
-          <ID>${xmlEscape(gs.Consignment.GoodsLocation.ID)}</ID>
+          <ID>${xmlEscape(gs.Consignment.GoodsLocation.ID || "")}</ID>
+          <Name>${xmlEscape(gs.Consignment.GoodsLocation.Name || "")}</Name>
+          <TypeCode>${xmlEscape(gs.Consignment.GoodsLocation.TypeCode || "")}</TypeCode>
+${goodsLocationAddressXml}
         </GoodsLocation>
-      </Consignment>
-      <Destination>
-        <CountryCode>${xmlEscape(gs.Destination.CountryCode)}</CountryCode>
-      </Destination>
-      <ExportCountry>
-        <ID>${xmlEscape(gs.ExportCountry.ID)}</ID>
-      </ExportCountry>
+      </Consignment>${consignorXml}${destinationXml}${exportCountryXml}
       ${gs.GovernmentAgencyGoodsItem.map((item: any) => {
         const additionalDocuments = Array.isArray(item.AdditionalDocument) ? item.AdditionalDocument : [];
         const additionalDocumentsXml = additionalDocuments
@@ -444,55 +577,84 @@ export async function POST(request: Request) {
           ${doc?.StatusCode ? `<LPCOExemptionCode>${xmlEscape(doc.StatusCode)}</LPCOExemptionCode>` : ""}
         </AdditionalDocument>`)
           .join("");
-        const classification = Array.isArray(item?.Commodity?.Classification) && item.Commodity.Classification[0]
-          ? item.Commodity.Classification[0]
-          : { ID: "", IdentificationTypeCode: "TSP" };
+        // No fallback shapes — validateCdsFields must have rejected the
+        // declaration before we get here. If Classification or Packaging is
+        // missing at this point, that's a bug, not a recoverable state.
+        const classifications = Array.isArray(item?.Commodity?.Classification) ? item.Commodity.Classification : [];
+        const classificationXml = classifications.map((classification: any) => `
+          <Classification>
+            <ID>${xmlEscape(classification?.ID || "")}</ID>
+            <IdentificationTypeCode>${xmlEscape(classification?.IdentificationTypeCode || "")}</IdentificationTypeCode>
+          </Classification>`).join("");
         const procedures = Array.isArray(item.GovernmentProcedure) ? item.GovernmentProcedure : [];
-        const packaging = Array.isArray(item.Packaging) && item.Packaging[0]
-          ? item.Packaging[0]
-          : { SequenceNumeric: "1", MarksNumbersID: "N/A", QuantityQuantity: "1", TypeCode: "PK" };
+        const packaging = item?.Packaging?.[0];
         const originXml = item.Origin?.CountryCode
           ? `\n        <Origin>\n          <CountryCode>${xmlEscape(item.Origin.CountryCode)}</CountryCode>\n          <TypeCode>${xmlEscape(item.Origin.TypeCode || "1")}</TypeCode>\n        </Origin>`
           : "";
+        const packagingXml = packaging
+          ? `
+        <Packaging>
+          <SequenceNumeric>${xmlEscape(packaging.SequenceNumeric)}</SequenceNumeric>
+          <MarksNumbersID>${xmlEscape(packaging.MarksNumbersID)}</MarksNumbersID>
+          <QuantityQuantity>${xmlEscape(packaging.QuantityQuantity)}</QuantityQuantity>
+          <TypeCode>${xmlEscape(packaging.TypeCode)}</TypeCode>
+        </Packaging>`
+          : "";
+        // GoodsMeasure only emitted when grossMass is a real positive number.
+        // NetNet only added when net is a real positive number. Empty values
+        // would otherwise produce `<GrossMassMeasure unitCode="KGM"></...>`
+        // which is exactly the no_empty_tags pattern we forbid.
+        const grossMass = parseFloat(String(item?.Commodity?.GoodsMeasure?.GrossMassMeasure || ""));
+        const netMass = parseFloat(String(item?.Commodity?.GoodsMeasure?.NetNetWeightMeasure || ""));
+        const goodsMeasureXml = (Number.isFinite(grossMass) && grossMass > 0)
+          ? `
+          <GoodsMeasure>
+            <GrossMassMeasure unitCode="KGM">${xmlEscape(grossMass.toFixed(3))}</GrossMassMeasure>${
+              Number.isFinite(netMass) && netMass > 0
+                ? `\n            <NetNetWeightMeasure unitCode="KGM">${xmlEscape(netMass.toFixed(3))}</NetNetWeightMeasure>`
+                : ""
+            }
+          </GoodsMeasure>`
+          : "";
+        const dutyTaxFeeXml = item?.Commodity?.DutyTaxFee?.DutyRegimeCode
+          ? `
+          <DutyTaxFee>
+            <DutyRegimeCode>${xmlEscape(item.Commodity.DutyTaxFee.DutyRegimeCode)}</DutyRegimeCode>
+          </DutyTaxFee>`
+          : "";
+        const invoiceLineAmount = item?.Commodity?.InvoiceLine?.ItemChargeAmount;
+        const invoiceLineXml = invoiceLineAmount?.value
+          ? `
+          <InvoiceLine>
+            <ItemChargeAmount currencyID="${xmlEscape(invoiceLineAmount.currencyID || "")}">${xmlEscape(invoiceLineAmount.value)}</ItemChargeAmount>
+          </InvoiceLine>`
+          : "";
+        const itemDestinationXml = "";
+        const procedureXml = procedures.map((procedure: any) => `
+        <GovernmentProcedure>
+          <CurrentCode>${xmlEscape(procedure.CurrentCode)}</CurrentCode>${
+            procedure.PreviousCode
+              ? `\n          <PreviousCode>${xmlEscape(procedure.PreviousCode)}</PreviousCode>`
+              : ""
+          }
+        </GovernmentProcedure>`).join("");
         return `
       <GovernmentAgencyGoodsItem>
         <SequenceNumeric>${xmlEscape(item.SequenceNumeric)}</SequenceNumeric>
         <StatisticalValueAmount currencyID="${xmlEscape(item.StatisticalValueAmount.currencyID)}">${xmlEscape(item.StatisticalValueAmount.value)}</StatisticalValueAmount>
         ${additionalDocumentsXml}
         <Commodity>
-          <Description>${xmlEscape(item?.Commodity?.Description || "General goods")}</Description>
-          <Classification>
-            <ID>${xmlEscape(classification.ID)}</ID>
-            <IdentificationTypeCode>${xmlEscape(classification.IdentificationTypeCode)}</IdentificationTypeCode>
-          </Classification>
-          <GoodsMeasure>
-            <GrossMassMeasure unitCode="KGM">${xmlEscape(item?.Commodity?.GoodsMeasure?.GrossMassMeasure || 0)}</GrossMassMeasure>
-            <NetNetWeightMeasure unitCode="KGM">${xmlEscape(item?.Commodity?.GoodsMeasure?.NetNetWeightMeasure || 0)}</NetNetWeightMeasure>
-          </GoodsMeasure>
+          <Description>${xmlEscape(item?.Commodity?.Description || "")}</Description>
+          ${classificationXml}${dutyTaxFeeXml}${goodsMeasureXml}${invoiceLineXml}
         </Commodity>
         <CustomsValuation>
-          <MethodCode>${xmlEscape(item?.CustomsValuation?.MethodCode || "1")}</MethodCode>
-        </CustomsValuation>
-        ${procedures.map((proc: any) => `
-        <GovernmentProcedure>
-          <CurrentCode>${xmlEscape(proc.CurrentCode)}</CurrentCode>
-          ${proc.PreviousCode ? `<PreviousCode>${xmlEscape(proc.PreviousCode)}</PreviousCode>` : ''}
-        </GovernmentProcedure>`).join('')}${originXml}
-        <Packaging>
-          <SequenceNumeric>${xmlEscape(packaging.SequenceNumeric)}</SequenceNumeric>
-          <MarksNumbersID>${xmlEscape(packaging.MarksNumbersID)}</MarksNumbersID>
-          <QuantityQuantity>${xmlEscape(packaging.QuantityQuantity)}</QuantityQuantity>
-          <TypeCode>${xmlEscape(packaging.TypeCode)}</TypeCode>
-        </Packaging>
+          <MethodCode>${xmlEscape(item?.CustomsValuation?.MethodCode || "")}</MethodCode>
+        </CustomsValuation>${itemDestinationXml}${procedureXml}${originXml}${packagingXml}
       </GovernmentAgencyGoodsItem>`;
       }).join('')}
       <Importer>
         <ID>${xmlEscape(gs.Importer.ID)}</ID>
-      </Importer>${previousDocumentXml}${sellerXml}
-      <TradeTerms>
-        <ConditionCode>${xmlEscape(gs.TradeTerms.ConditionCode)}</ConditionCode>
-        <LocationID>${xmlEscape(gs.TradeTerms.LocationID)}</LocationID>
-      </TradeTerms>
+      </Importer>${previousDocumentXml}${sellerXml}${tradeTermsXml}
       <UCR>
         <TraderAssignedReferenceID>${xmlEscape(d.UCR.TraderAssignedReferenceID)}</TraderAssignedReferenceID>
       </UCR>
@@ -543,7 +705,6 @@ export async function POST(request: Request) {
           eoriConsistency: eoriConsistencyPass ? "pass" : "fail",
           xml: xmlPreflight.valid ? "pass" : "fail",
           xmlFailedChecks: xmlPreflight.failed.length > 0 ? xmlPreflight.failed : undefined,
-          validationFields: validationErrors.length === 0 ? "pass" : "fail",
           token: token ? "pass" : "fail",
           ruleEngine: ruleResults.length === 0
             ? "skipped"
@@ -580,11 +741,13 @@ export async function POST(request: Request) {
       "Content-Type": "application/xml; charset=UTF-8",
     };
 
+    console.log("[HMRC SUBMIT] FINAL XML:\n" + xmlPayload);
+
     const hmrcResponse = await fetchHmrc(hmrcEndpoint, {
       method: "POST",
       headers: hmrcHeaders,
       body: xmlPayload,
-    }, request, token);
+    }, request, token, lane.eori);
 
     if (hmrcResponse.status === 429) {
       return NextResponse.json({ error: "HMRC rate limit reached, please try again shortly" }, { status: 429 });

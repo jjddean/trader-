@@ -27,31 +27,6 @@ export default function StatusTimelinePage() {
   );
 
   const [nextStepsOpen, setNextStepsOpen] = useState(false);
-  const [isPulling, setIsPulling] = useState(false);
-  const [pullResult, setPullResult] = useState<string | null>(null);
-  const [pullError, setPullError] = useState<string | null>(null);
-
-  const handlePullNotifications = async () => {
-    if (!declaration?.conversationId) {
-      setPullError("No conversation ID available yet for pull notifications.");
-      return;
-    }
-    setIsPulling(true);
-    setPullError(null);
-    setPullResult(null);
-    try {
-      const res = await fetch(`/api/hmrc/notifications/pull?conversationId=${encodeURIComponent(declaration.conversationId)}`);
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data?.details || data?.error || `Pull failed (HTTP ${res.status})`);
-      }
-      setPullResult(`Pulled ${data?.total ?? 0} notification(s)`);
-    } catch (err: any) {
-      setPullError(err?.message || "Failed to pull notifications");
-    } finally {
-      setIsPulling(false);
-    }
-  };
 
   if (!isLoaded || isConvexAuthLoading || declaration === undefined) {
     return (
@@ -153,24 +128,6 @@ export default function StatusTimelinePage() {
                    {new Date(declaration.lastUpdated || declaration._creationTime).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
-            </div>
-
-            <div className="rounded-lg border border-gray-200 bg-white p-4">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Conversation ID</p>
-                  <p className="text-xs font-mono text-gray-700 break-all">{declaration.conversationId || "Pending"}</p>
-                </div>
-                <button
-                  onClick={handlePullNotifications}
-                  disabled={isPulling || !declaration.conversationId}
-                  className="h-8 rounded-md border border-gray-300 bg-white px-3 text-xs text-gray-800 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {isPulling ? "Pulling..." : "Pull Notifications Now"}
-                </button>
-              </div>
-              {pullResult && <p className="mt-2 text-xs text-green-700">{pullResult}</p>}
-              {pullError && <p className="mt-2 text-xs text-red-700">{pullError}</p>}
             </div>
 
             <div className="relative pl-6">

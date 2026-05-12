@@ -74,6 +74,27 @@ export default function RootLayout({
               `,
             }}
           />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                "name": "FreightCode",
+                "url": "https://www.freightcode.co.uk",
+                "logo": "https://www.freightcode.co.uk/icon.png",
+                "description": "Automate UK customs declarations (HMRC CDS), detect savings, and ensure compliance with FreightCode.",
+                "sameAs": [
+                  "https://twitter.com/freightcode"
+                ],
+                "contactPoint": {
+                  "@type": "ContactPoint",
+                  "contactType": "Customer Support",
+                  "url": "https://www.freightcode.co.uk/contact"
+                }
+              })
+            }}
+          />
         </head>
         <body
           className={cn(geistSans.variable, "min-h-screen bg-slate-50 font-sans")}

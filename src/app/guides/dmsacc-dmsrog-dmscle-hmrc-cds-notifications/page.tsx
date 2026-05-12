@@ -19,8 +19,58 @@ export const metadata: Metadata = {
 };
 
 export default function Guide3Page() {
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "DMSACC, DMSROG, DMSCLE — What Do HMRC CDS Notifications Mean?",
+    "description": "A plain-English guide to every CDS declaration notification — DMSACC, DMSROG, DMSCLE, DMSREJ, DMSCTL and more — and what action to take when you receive one.",
+    "url": "https://www.freightcode.co.uk/guides/dmsacc-dmsrog-dmscle-hmrc-cds-notifications",
+    "author": {
+      "@type": "Organization",
+      "name": "FreightCode"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "FreightCode",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://www.freightcode.co.uk/icon.png"
+      }
+    },
+    "datePublished": "2026-01-01",
+    "dateModified": "2026-05-01"
+  };
+  
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://www.freightcode.co.uk"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Guides",
+        "item": "https://www.freightcode.co.uk/guides"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "DMSACC, DMSROG, DMSCLE — What Do HMRC CDS Notifications Mean?",
+        "item": "https://www.freightcode.co.uk/guides/dmsacc-dmsrog-dmscle-hmrc-cds-notifications"
+      }
+    ]
+  };
+
   return (
-    <article className="max-w-3xl mx-auto px-6 py-12 md:py-20">
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <article className="max-w-3xl mx-auto px-6 py-12 md:py-20">
       <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-6 leading-snug">
         DMSACC, DMSROG, DMSCLE — What Do HMRC CDS Notifications Mean?
       </h1>
@@ -95,5 +145,6 @@ export default function Guide3Page() {
         </div>
       </div>
     </article>
+    </>
   );
 }

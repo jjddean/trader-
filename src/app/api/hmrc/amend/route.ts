@@ -37,6 +37,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Declaration not found" }, { status: 404 });
     }
 
+    // Ownership check — must match the same gate as submit/route.ts. Without
+    // this, any authenticated user could amend any declaration by ID.
+    if (lane.userId !== userId && process.env.HMRC_ENVIRONMENT !== "sandbox") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
     const items = await convex.query(api.goods_items.getItems, { declarationId });
     const tokenRecord = await convex.query(api.hmrc.getToken, { userId });
 
@@ -45,11 +51,38 @@ export async function POST(request: Request) {
     }
 
     const token = tokenRecord.accessToken;
+    const eori = String(lane?.eori || "").trim();
+    if (!/^GB\d{12}$/.test(eori)) {
+      return NextResponse.json({ error: "Declarant EORI on the declaration is missing or invalid (expected GB+12 digits)." }, { status: 400 });
+    }
 
-    // Build amendment XML — FunctionCode 13 = amendment, includes MRN as ID
-    const totalGrossWeight = items.reduce((acc: number, item: any) => acc + (parseFloat(item.grossWeightKg) || 0), 0) || 100;
-    const invoiceTotal = items.reduce((acc: number, item: any) => acc + (parseFloat(item.valueAmount) || 0), 0) || 1000;
-    const eori = lane?.eori || "";
+    // Sums from real items only — no magic 100/1000 placeholders. If items
+    // are missing weights/values the amendment is incomplete; let CDS reject
+    // rather than papering over with fake totals.
+    const totalGrossWeight = items.reduce((acc: number, item: any) => acc + (parseFloat(item.grossWeightKg) || 0), 0);
+    const itemValueSum = items.reduce((acc: number, item: any) => acc + (parseFloat(item.valueAmount) || 0), 0);
+    const invoiceTotal = parseFloat(String(lane?.invoiceTotal ?? "")) || itemValueSum;
+
+    if (items.length === 0) {
+      return NextResponse.json({ error: "No goods items on declaration; cannot build amendment XML." }, { status: 400 });
+    }
+
+    // Build amendment XML — FunctionCode 13 = amendment, includes MRN as ID.
+    // Only emit elements that have real values; never empty bodies.
+    const goodsItemsXml = items.map((item: any, idx: number) => {
+      const description = String(item.description || "").trim();
+      const commodityCode = String(item.commodityCode || item.hsCode || "").trim();
+      const descXml = description ? `\n          <Description>${xmlEscape(description)}</Description>` : "";
+      const classificationXml = commodityCode
+        ? `\n          <Classification>\n            <ID>${xmlEscape(commodityCode)}</ID>\n            <IdentificationTypeCode>TSP</IdentificationTypeCode>\n          </Classification>`
+        : "";
+      return `
+      <GovernmentAgencyGoodsItem>
+        <SequenceNumeric>${idx + 1}</SequenceNumeric>
+        <Commodity>${descXml}${classificationXml}
+        </Commodity>
+      </GovernmentAgencyGoodsItem>`;
+    }).join("");
 
     const xmlPayload = `<?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
@@ -63,25 +96,14 @@ export async function POST(request: Request) {
     <FunctionalReferenceID>${xmlEscape(lane.lrn || `AM-${declarationId}`)}</FunctionalReferenceID>
     <ID>${xmlEscape(mrn)}</ID>
     <TypeCode>${xmlEscape(lane.declarationType === "export" ? "EXA" : "IMA")}</TypeCode>
-    <GoodsItemQuantity>${items.length || 1}</GoodsItemQuantity>
-    <TotalGrossMassMeasure unitCode="KGM">${xmlEscape(lane.totalGrossWeight || totalGrossWeight)}</TotalGrossMassMeasure>
-    <TotalPackageQuantity>${items.reduce((acc: number, item: any) => acc + (parseInt(item.packageCount) || 1), 0)}</TotalPackageQuantity>
-    <InvoiceAmount currencyID="${xmlEscape(lane.invoiceCurrency || "GBP")}">${xmlEscape(lane.invoiceTotal || invoiceTotal)}</InvoiceAmount>
+    <GoodsItemQuantity>${items.length}</GoodsItemQuantity>
+    <TotalGrossMassMeasure unitCode="KGM">${xmlEscape(String(lane.totalGrossWeight || totalGrossWeight))}</TotalGrossMassMeasure>
+    <TotalPackageQuantity>${items.reduce((acc: number, item: any) => acc + (parseInt(item.packageCount) || 0), 0)}</TotalPackageQuantity>
+    <InvoiceAmount currencyID="${xmlEscape(String(lane.invoiceCurrency || ""))}">${xmlEscape(String(invoiceTotal))}</InvoiceAmount>
     <Declarant>
       <ID>${xmlEscape(eori)}</ID>
     </Declarant>
-    <GoodsShipment>
-      ${items.map((item: any, idx: number) => `
-      <GovernmentAgencyGoodsItem>
-        <SequenceNumeric>${idx + 1}</SequenceNumeric>
-        <Commodity>
-          <Description>${xmlEscape(item.description || "")}</Description>
-          <Classification>
-            <ID>${xmlEscape(item.commodityCode || item.hsCode || "")}</ID>
-            <IdentificationTypeCode>TSP</IdentificationTypeCode>
-          </Classification>
-        </Commodity>
-      </GovernmentAgencyGoodsItem>`).join("")}
+    <GoodsShipment>${goodsItemsXml}
     </GoodsShipment>
   </Declaration>
 </MetaData>`;
@@ -96,7 +118,7 @@ export async function POST(request: Request) {
       method: "POST",
       headers: { "Content-Type": "application/xml; charset=UTF-8" },
       body: xmlPayload,
-    }, request, token);
+    }, request, token, eori);
 
     if (hmrcResponse.status === 429) {
       return NextResponse.json({ error: "HMRC rate limit reached" }, { status: 429 });

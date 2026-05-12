@@ -36,12 +36,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Declaration not found" }, { status: 404 });
     }
 
+    // Ownership check — must match the same gate as submit/route.ts.
+    if (lane.userId !== userId && process.env.HMRC_ENVIRONMENT !== "sandbox") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
     const tokenRecord = await convex.query(api.hmrc.getToken, { userId });
     if (!tokenRecord?.accessToken) {
       return NextResponse.json({ error: "HMRC OAuth Token not found." }, { status: 403 });
     }
 
-    const eori = lane.eori || "";
+    const eori = String(lane.eori || "").trim();
+    if (!/^GB\d{12}$/.test(eori)) {
+      return NextResponse.json({ error: "Declarant EORI on the declaration is missing or invalid (expected GB+12 digits)." }, { status: 400 });
+    }
+    const trimmedReason = String(reason || "").trim();
+    if (!trimmedReason) {
+      return NextResponse.json({ error: "Cancellation reason is required." }, { status: 400 });
+    }
 
     // Cancellation XML — FunctionCode 13, includes MRN, reason for invalidation
     const xmlPayload = `<?xml version="1.0" encoding="UTF-8"?>
@@ -60,7 +72,7 @@ export async function POST(request: Request) {
       <ID>${xmlEscape(eori)}</ID>
     </Declarant>
     <AdditionalInformation>
-      <StatementDescription>${xmlEscape(reason || "Cancellation requested by declarant")}</StatementDescription>
+      <StatementDescription>${xmlEscape(trimmedReason)}</StatementDescription>
       <StatementTypeCode>AES</StatementTypeCode>
     </AdditionalInformation>
   </Declaration>
@@ -75,7 +87,7 @@ export async function POST(request: Request) {
       method: "POST",
       headers: { "Content-Type": "application/xml; charset=UTF-8" },
       body: xmlPayload,
-    }, request, tokenRecord.accessToken);
+    }, request, tokenRecord.accessToken, eori);
 
     if (hmrcResponse.status === 429) {
       return NextResponse.json({ error: "HMRC rate limit reached" }, { status: 429 });

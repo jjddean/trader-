@@ -1,5 +1,65 @@
 # CLAUDE.md — TradeDNA
 
+## NON-NEGOTIABLE: NO INFERENCE, NO INVENTED DATA
+
+Before stating any claim about how this codebase behaves, you must have read the relevant file in this session. If you haven't, say "I haven't read X yet" and either read it or stop. Do not propose mechanisms, diagnoses, or fixes from screenshots, error messages, or inference. Every validation rule must cite a source: Appendix 21A row, CDS error code from the .ods list, HMRC GitHub schema, or explicit user instruction. No citation, no rule. If you find yourself writing "likely", "probably", "I think", "this means" — stop and read instead.
+
+---
+
+## FREIGHTCODE AGENT RULES (CDS Submission)
+
+### OBJECTIVE
+Produce a UK CDS declaration that is ACCEPTED (0 validation errors).
+Success = HMRC CDS returns no errors.
+Failure = Any CDSxxxx validation code present.
+
+### 1. MINIMAL VALID FIRST
+- Always construct the smallest possible valid declaration.
+- Exactly: 1 goods item (68A), 1 document (70A) → invoice only.
+- Do NOT include: additional information (99B), authorisations (64A), multiple documents, preference claims, special procedures.
+- Never build a "complete" declaration first.
+
+### 2. NEVER PATCH — ALWAYS REBUILD
+- Do NOT modify existing payloads.
+- Always generate a fresh declaration from scratch.
+- Old payloads are considered contaminated.
+
+### 3. STRICT ERROR REDUCTION LOOP
+On rejection: Group → Identify root cause category → Fix ONLY that category → Resubmit. Never fix multiple categories at once. Categories: CDS100xx (core/header), CDS1207x (goods item), CDS11004/CDS77002 (documents), CDS12005/CDS10020 (authorisations).
+
+### 4. NO GUESSING (HARD RULE)
+Every field must map to: CDS Declaration Completion Instructions OR official HMRC code lists (.ods). If mapping is unknown → STOP and report missing mapping. Do NOT invent: document codes, procedure codes, additional info, authorisations.
+
+### 5. DOCUMENT DISCIPLINE (CRITICAL)
+70A rules: only 1 document in minimal phase, must be valid for CPC + commodity. Forbidden: Y codes, multiple 02A sequences, mixing document types. If CDS11004 or CDS77002 occurs → remove documents, rebuild clean.
+
+### 6. GOODS ITEM RULES
+68A must include: commodity code (valid), procedure code (simple import), origin country, weight > 0, value > 0. Constraints: exactly 1 item, no repeated sequences, no conditional fields unless required.
+
+### 7. HEADER + PARTIES
+42A + 57A must include: declarant (valid EORI), importer (valid EORI), LRN, office of presentation, location ID, currency. Missing any → CDS10001 / CDS10002.
+
+### 8. FORBIDDEN BEHAVIOUR
+The agent MUST NOT: add fields "to see if it works", increase payload complexity after failure, duplicate structures, mix header-level and item-level data incorrectly, attempt full compliance builds before minimal passes.
+
+### 9. SUCCESS PATH
+Phase 1 → minimal declaration passes (0 errors).
+Phase 2 → add ONE feature at a time (additional document, additional info, preference, authorisation). Each addition must pass before the next is added.
+
+### 10. OUTPUT FORMAT (MANDATORY)
+Every response must include:
+1. Root cause (max 5 bullets)
+2. Fix applied (exact fields changed)
+3. Updated payload
+4. Expected CDS outcome
+
+No explanations, no filler.
+
+### FINAL RULE
+If error count increases after a change → revert immediately → return to last known working structure. The goal is convergence, not exploration.
+
+---
+
 ## What This App Is
 
 TradeDNA (deployed as freightcode.co.uk) is a UK customs declarations SaaS. Its core mission is to submit WCO-compliant XML declarations to HMRC's Customs Declaration Service (CDS) on behalf of UK importers and customs brokers. The end goal is HMRC "Recognised Software" status, gated behind the Trader Dress Rehearsal (TDR) process.
@@ -46,9 +106,8 @@ Convex (convex/)
   └─ schema.ts — source of truth for all table shapes
 
 HMRC CDS (external)
-  └─ POST /customs/declarations         → submit
-  └─ POST /customs/declarations/amend  → amend (FunctionCode 13)
-  └─ POST /customs/declarations/cancel → cancel (FunctionCode 13 + TypeCode INV)
+  └─ POST /customs/declarations  → submit (FunctionCode 9), amend (FunctionCode 13), cancel (FunctionCode 13 + TypeCode INV)
+                                  All three operations hit the SAME endpoint; the FunctionCode + TypeCode in the XML differentiates them.
   └─ GET  /customs/declarations-information/{id}/status
   └─ GET  /notifications/conversationId/{id}/unpulled → pull notifications
   └─ POST /api/hmrc/webhooks/notify     → HMRC pushes DMS* events here

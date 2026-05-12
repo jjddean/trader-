@@ -29,7 +29,17 @@ export default {
 			try {
 				const { textractOutput, declaredHsCode } = await request.json() as any;
 
-				const response = await env.AI.run('@cf/mistral/mistral-7b-instruct-v0.2-lora', {
+				if (!textractOutput || !declaredHsCode) {
+					return new Response(JSON.stringify({ error: "Missing textractOutput or declaredHsCode" }), {
+						status: 400,
+						headers: { 'Content-Type': 'application/json' }
+					});
+				}
+
+			let response: any;
+			try {
+				// Try LoRA model first (if trained and deployed)
+				response = await env.AI.run('@cf/mistral/mistral-7b-instruct-v0.2-lora', {
 					messages: [
 						{ role: 'system', content: GIR_AGENT_SYSTEM_PROMPT },
 						{ role: 'user', content: buildGIRUserPrompt(textractOutput, declaredHsCode) }
@@ -38,14 +48,38 @@ export default {
 					max_tokens: 1000,
 					temperature: 0.1
 				});
+			} catch (loraError: any) {
+				// Fallback to base model if LoRA not available
+				console.warn(`LoRA model not available, falling back to base model: ${loraError.message}`);
+				response = await env.AI.run('@cf/mistral/mistral-7b-instruct-v0.2', {
+					messages: [
+						{ role: 'system', content: GIR_AGENT_SYSTEM_PROMPT },
+						{ role: 'user', content: buildGIRUserPrompt(textractOutput, declaredHsCode) }
+					],
+					max_tokens: 1000,
+					temperature: 0.1
+				});
+			}
 
-				// Workers AI returns { response: "..." } or the raw output depending on the model
-				const result = response.response ? JSON.parse(response.response) : response;
-				return Response.json(result);
+			// Workers AI returns { response: "..." } or structured output depending on the model
+			let result: any;
+			if (typeof response === 'string') {
+				result = JSON.parse(response);
+			} else if (response.response && typeof response.response === 'string') {
+				result = JSON.parse(response.response);
+			} else if (response.choices && response.choices[0]?.message?.content) {
+				const content = response.choices[0].message.content;
+				result = typeof content === 'string' ? JSON.parse(content) : content;
+			} else {
+				result = response;
+			}
+
+			return Response.json(result);
 			} catch (error: any) {
-				return new Response(JSON.stringify({ error: error.message }), { 
-					status: 500, 
-					headers: { 'Content-Type': 'application/json' } 
+				console.error(`GIR classification error: ${error.message}`, { stack: error.stack });
+				return new Response(JSON.stringify({ error: error.message }), {
+					status: 500,
+					headers: { 'Content-Type': 'application/json' }
 				});
 			}
 		}

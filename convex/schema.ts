@@ -95,6 +95,23 @@ export default defineSchema({
     // DE 7/7 — Identification type of the means of transport. e.g. "11"
     // vessel name, "30" road vehicle reg, "40" flight number.
     transportIdType: v.optional(v.string()),
+    // DE 5/8 — Country of destination. ISO 3166-1 alpha-2. Mandatory for H1
+    // per Appendix 21A. Usually GB for imports but must be explicit, not
+    // defaulted by the mapper.
+    destinationCountry: v.optional(v.string()),
+    // DE 3/16 — Importer EORI. Mandatory for H1 per Appendix 21A.
+    // Distinct from declarant EORI when an agent submits on behalf.
+    importerEori: v.optional(v.string()),
+    // DE 4/11 currency for InvoiceAmount. ISO 4217. Mandatory companion to
+    // invoiceTotal — the currency must be explicit, not defaulted to GBP.
+    invoiceCurrency: v.optional(v.string()),
+    // DE 5/23 — Goods location. UN/LOCODE or HMRC-published location code
+    // (e.g. GBAUFXTFXTGW for Felixstowe authorised premises). A-mandatory.
+    locationId: v.optional(v.string()),
+    // DE 5/26 — Customs office of presentation. Conditional per Appendix
+    // 21A (only required when goods aren't at the location declared in 5/23).
+    // Stored optional; the mapper omits the XML element when blank.
+    presentationOffice: v.optional(v.string()),
   }).index("by_user", ["userId"]).index("by_mrn", ["mrn"]).index("by_conversationId", ["conversationId"]),
   
   goods_items: defineTable({
@@ -112,6 +129,10 @@ export default defineSchema({
     additionalDocuments: v.optional(v.any()),
     additionalProcedureCode: v.optional(v.any()),
     shippingMarks: v.optional(v.any()),
+    // DE 6/10 — number of packages. Mandatory per Appendix 21A H1.
+    packageCount: v.optional(v.number()),
+    // DE 6/9 — package type code (PK, BX, CT, etc.). Mandatory per Appendix 21A H1.
+    packageType: v.optional(v.string()),
   }).index("by_declaration", ["declarationId"]).index("by_owner", ["ownerId"]),
 
   documents: defineTable({
@@ -191,6 +212,12 @@ export default defineSchema({
     mrn: v.optional(v.string()),
     eori: v.optional(v.string()),
     declarationType: v.optional(v.string()),
+    // Completeness state — derived from convex/lib/declaration_completeness.ts.
+    // The single source of truth for "is this declaration submittable". Recomputed
+    // on every declaration/items write via upsertDeclarationPreviewByDeclaration.
+    // Optional for back-compat with rows written before this field existed.
+    completenessReady: v.optional(v.boolean()),
+    missingCount: v.optional(v.number()),
     lastUpdated: v.number(),
   }).index("by_user", ["userId"]).index("by_declarationId", ["declarationId"]),
   

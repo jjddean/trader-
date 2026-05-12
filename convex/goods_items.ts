@@ -122,15 +122,18 @@ export const addItem = mutation({
   args: {
     declarationId: v.id("declarations"),
     sequenceNumber: v.number(),
-    commodityCode: v.string(),
-    description: v.string(),
-    originCountry: v.string(),
-    procedureCode: v.string(),
-    valueAmount: v.number(),
-    valueCurrency: v.string(),
+    commodityCode: v.optional(v.string()),
+    description: v.optional(v.string()),
+    originCountry: v.optional(v.string()),
+    procedureCode: v.optional(v.string()),
+    additionalProcedureCode: v.optional(v.string()),
+    valueAmount: v.optional(v.number()),
+    valueCurrency: v.optional(v.string()),
     grossWeightKg: v.optional(v.number()),
     netWeightKg: v.optional(v.number()),
     shippingMarks: v.optional(v.string()),
+    packageCount: v.optional(v.number()),
+    packageType: v.optional(v.string()),
     additionalDocuments: v.optional(
       v.array(
         v.object({
@@ -193,6 +196,8 @@ export const updateItem = mutation({
     grossWeightKg: v.optional(v.number()),
     netWeightKg: v.optional(v.number()),
     shippingMarks: v.optional(v.string()),
+    packageCount: v.optional(v.number()),
+    packageType: v.optional(v.string()),
     additionalDocuments: v.optional(
       v.array(
         v.object({
