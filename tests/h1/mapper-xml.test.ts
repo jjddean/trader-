@@ -90,6 +90,9 @@ describe("H1 mapper and XML renderer", () => {
     assert.match(xml, /<ID>CSCLGLOBE<\/ID>/);
     assert.match(xml, /<CountryCode>GB<\/CountryCode>/);
     assert.match(xml, /<ID>DE<\/ID>/);
+    assert.match(xml, /<IdentificationTypeCode>TSP<\/IdentificationTypeCode>/);
+    assert.match(xml, /<IdentificationTypeCode>TRC<\/IdentificationTypeCode>/);
+    assert.match(xml, /<ID>10<\/ID>/);
     assert.match(xml, /<CurrentCode>40<\/CurrentCode>/);
     assert.match(xml, /<PreviousCode>00<\/PreviousCode>/);
     assert.match(xml, /<CurrentCode>000<\/CurrentCode>/);

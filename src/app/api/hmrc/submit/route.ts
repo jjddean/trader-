@@ -410,6 +410,7 @@ export async function POST(request: Request) {
         actionableFailures: summarizeFailures(ruleResults),
         documentSummary,
         payloadDebug,
+        payloadInfo,
         xmlPayload,
       });
     }

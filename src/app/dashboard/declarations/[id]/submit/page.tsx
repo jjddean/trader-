@@ -86,6 +86,15 @@ export default function SubmitPage() {
       }>;
     };
     xmlPayload?: string;
+    payloadInfo?: unknown;
+  };
+  type DeclarationItemPreview = {
+    commodityCode?: string;
+  };
+  type DocumentRequirementPreview = {
+    status?: string;
+    requirementLevel?: string;
+    code?: string;
   };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -121,22 +130,26 @@ export default function SubmitPage() {
   // Pre-flight validation checks
   const missingEori = !declaration?.eori;
   const noItems = !items || items.length === 0;
-  const missingHS = items?.some((i: any) => !i.commodityCode);
-  const missingBlockingRequirements = (requirements || []).filter(
-    (req: any) => req.status === "missing" && (req.requirementLevel || "blocking") === "blocking",
+  const previewItems = (items || []) as DeclarationItemPreview[];
+  const previewRequirements = (requirements || []) as DocumentRequirementPreview[];
+  const missingHS = previewItems.some((i) => !i.commodityCode);
+  const missingBlockingRequirements = previewRequirements.filter(
+    (req) => req.status === "missing" && (req.requirementLevel || "blocking") === "blocking",
   );
-  const missingAdvisoryRequirements = (requirements || []).filter(
-    (req: any) => req.status === "missing" && (req.requirementLevel || "blocking") === "advisory",
+  const missingAdvisoryRequirements = previewRequirements.filter(
+    (req) => req.status === "missing" && (req.requirementLevel || "blocking") === "advisory",
   );
   const missingBlockingCodes = missingBlockingRequirements
-    .map((req: any) => String(req.code || "UNKNOWN"));
+    .map((req) => String(req.code || "UNKNOWN"));
   const missingAdvisoryCodes = missingAdvisoryRequirements
-    .map((req: any) => String(req.code || "UNKNOWN"));
+    .map((req) => String(req.code || "UNKNOWN"));
 
   const isReady = !missingEori && !noItems && !missingHS && missingBlockingRequirements.length === 0;
   
-  // Generate the WCO payload for preview
-  const wcoPayloadPreview = isReady ? mapToCDS_H1(declaration, items) : null;
+  // Initial local preview only. After dry-run, show the exact server-side
+  // payload snapshot that produced the displayed XML evidence.
+  const wcoPayloadPreview = dryRunResult?.payloadInfo
+    ?? (isReady ? mapToCDS_H1(declaration, items) : null);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -191,9 +204,9 @@ export default function SubmitPage() {
       // 3. Advance to Status timeline page to await the MRN webhook
       router.push(`/dashboard/declarations/${declarationId}/status`);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Submission failed:", err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Submission failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -243,8 +256,8 @@ export default function SubmitPage() {
 
       setDryRunResult(data as DryRunPayload);
       setDryRunPassed(data.success === true);
-    } catch (err: any) {
-      setError(err.message || "Dry run failed");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Dry run failed");
       setDryRunPassed(false);
     } finally {
       setIsDryRunning(false);
@@ -544,7 +557,9 @@ export default function SubmitPage() {
                 <h3 className="text-sm font-semibold text-gray-900">WCO 3.6 Payload Preview</h3>
               </div>
               <p className="text-xs text-gray-500 mb-4">
-                This is the exact JSON structure that will be transmitted to the HMRC Customs Declarations API.
+                {dryRunResult?.payloadInfo
+                  ? "This is the exact server-side JSON payload that produced the dry-run XML above."
+                  : "Initial local preview. Run dry-run to capture the exact server-side payload/XML snapshot."}
               </p>
               <div className="rounded-md bg-gray-900 p-4 max-h-96 overflow-y-auto w-full">
                 <pre className="text-[10px] text-green-400 font-mono whitespace-pre-wrap break-all">

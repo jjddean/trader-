@@ -191,9 +191,12 @@ export function renderH1Xml(payloadInfo: unknown): string {
           ${doc?.StatusCode ? `<LPCOExemptionCode>${xmlEscape(doc.StatusCode)}</LPCOExemptionCode>` : ""}
         </AdditionalDocument>`)
           .join("");
-        const classification = asArray(commodity.Classification)[0]
-          ? asArray(commodity.Classification)[0]
-          : { ID: "", IdentificationTypeCode: "TSP" };
+        const classifications = asArray(commodity.Classification);
+        const classificationXml = classifications.map((classification) => `
+          <Classification>
+            <ID>${xmlEscape(classification.ID)}</ID>
+            <IdentificationTypeCode>${xmlEscape(classification.IdentificationTypeCode)}</IdentificationTypeCode>
+          </Classification>`).join("");
         const procedures = asArray(item.GovernmentProcedure);
         const packaging = asArray(item.Packaging)[0]
           ? asArray(item.Packaging)[0]
@@ -209,10 +212,7 @@ export function renderH1Xml(payloadInfo: unknown): string {
         ${additionalDocumentsXml}
         <Commodity>
           <Description>${xmlEscape(commodity.Description || "General goods")}</Description>
-          <Classification>
-            <ID>${xmlEscape(classification.ID)}</ID>
-            <IdentificationTypeCode>${xmlEscape(classification.IdentificationTypeCode)}</IdentificationTypeCode>
-          </Classification>
+          ${classificationXml}
           <GoodsMeasure>
             <GrossMassMeasure unitCode="KGM">${xmlEscape(goodsMeasure.GrossMassMeasure || 0)}</GrossMassMeasure>
             <NetNetWeightMeasure unitCode="KGM">${xmlEscape(goodsMeasure.NetNetWeightMeasure || 0)}</NetNetWeightMeasure>
