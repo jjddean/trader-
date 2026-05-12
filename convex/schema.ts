@@ -57,7 +57,7 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_country", ["userId", "countryOfOriginCode"]),
-  
+
   declarations: defineTable({
     userId: v.optional(v.any()), // clerkId
     workspaceId: v.optional(v.any()),
@@ -74,6 +74,11 @@ export default defineSchema({
     lastVerified: v.optional(v.any()),
     originCountry: v.optional(v.any()),
     dispatchCountry: v.optional(v.any()),
+    destinationCountry: v.optional(v.any()),
+    importerEori: v.optional(v.any()),
+    presentationOffice: v.optional(v.any()),
+    locationId: v.optional(v.any()),
+    invoiceCurrency: v.optional(v.any()),
     savingsEstimate: v.optional(v.any()),
     tier: v.optional(v.any()),
     // Rule engine mode: "minimal" forbids any non-mandatory enrichment
@@ -85,6 +90,8 @@ export default defineSchema({
     // VALUE_MATCH_INVOICE rule. When unset the rule skips (mapper's
     // auto-sum makes the check meaningless).
     invoiceTotal: v.optional(v.any()),
+    incoterms: v.optional(v.any()),
+    incotermLocation: v.optional(v.any()),
     // DE 7/4 — Mode of transport at the border. Numeric: "1" sea, "3" road,
     // "4" air, "8" inland waterway. Required for imports (CDS12073).
     transportMode: v.optional(v.string()),
@@ -95,25 +102,8 @@ export default defineSchema({
     // DE 7/7 — Identification type of the means of transport. e.g. "11"
     // vessel name, "30" road vehicle reg, "40" flight number.
     transportIdType: v.optional(v.string()),
-    // DE 5/8 — Country of destination. ISO 3166-1 alpha-2. Mandatory for H1
-    // per Appendix 21A. Usually GB for imports but must be explicit, not
-    // defaulted by the mapper.
-    destinationCountry: v.optional(v.string()),
-    // DE 3/16 — Importer EORI. Mandatory for H1 per Appendix 21A.
-    // Distinct from declarant EORI when an agent submits on behalf.
-    importerEori: v.optional(v.string()),
-    // DE 4/11 currency for InvoiceAmount. ISO 4217. Mandatory companion to
-    // invoiceTotal — the currency must be explicit, not defaulted to GBP.
-    invoiceCurrency: v.optional(v.string()),
-    // DE 5/23 — Goods location. UN/LOCODE or HMRC-published location code
-    // (e.g. GBAUFXTFXTGW for Felixstowe authorised premises). A-mandatory.
-    locationId: v.optional(v.string()),
-    // DE 5/26 — Customs office of presentation. Conditional per Appendix
-    // 21A (only required when goods aren't at the location declared in 5/23).
-    // Stored optional; the mapper omits the XML element when blank.
-    presentationOffice: v.optional(v.string()),
   }).index("by_user", ["userId"]).index("by_mrn", ["mrn"]).index("by_conversationId", ["conversationId"]),
-  
+
   goods_items: defineTable({
     ownerId: v.optional(v.any()),
     declarationId: v.optional(v.any()),
@@ -164,7 +154,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]).index("by_declaration", ["declarationId"]).index("by_declaration_code", ["declarationId", "code"]),
-  
+
   workspaces: defineTable({
     name: v.optional(v.any()),
     slug: v.optional(v.any()),
@@ -181,7 +171,7 @@ export default defineSchema({
     workspaceName: v.optional(v.any()),
     workspaceSlug: v.optional(v.any()),
   }).index("by_user", ["userId"]),
-  
+
   notifications: defineTable({
     mrn: v.optional(v.any()),
     conversationId: v.optional(v.any()),
@@ -220,7 +210,7 @@ export default defineSchema({
     missingCount: v.optional(v.number()),
     lastUpdated: v.number(),
   }).index("by_user", ["userId"]).index("by_declarationId", ["declarationId"]),
-  
+
   auditLogs: defineTable({
     userId: v.optional(v.any()),
     action: v.optional(v.any()),

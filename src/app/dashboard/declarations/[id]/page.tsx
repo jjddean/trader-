@@ -15,7 +15,7 @@ export default function CoreSchemaPage() {
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const params = useParams<{ id: string }>();
   const id = params?.id as Id<"declarations">;
-  
+
   const declaration = useQuery(
     api.declarations.getLane,
     isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && id ? { id } : "skip",
@@ -40,6 +40,8 @@ export default function CoreSchemaPage() {
     importerEori: "",
     invoiceCurrency: "",
     invoiceTotal: "",
+    incoterms: "",
+    incotermLocation: "",
     locationId: "",
     presentationOffice: "",
   });
@@ -60,6 +62,8 @@ export default function CoreSchemaPage() {
         importerEori: (d.importerEori as string) || "",
         invoiceCurrency: (d.invoiceCurrency as string) || "",
         invoiceTotal: d.invoiceTotal != null ? String(d.invoiceTotal) : "",
+        incoterms: (d.incoterms as string) || "",
+        incotermLocation: (d.incotermLocation as string) || "",
         locationId: (d.locationId as string) || "",
         presentationOffice: (d.presentationOffice as string) || "",
       });
@@ -86,6 +90,8 @@ export default function CoreSchemaPage() {
         importerEori: formData.importerEori.trim() || undefined,
         invoiceCurrency: formData.invoiceCurrency.trim().toUpperCase() || undefined,
         invoiceTotal: Number.isFinite(invoiceTotalParsed) ? invoiceTotalParsed : undefined,
+        incoterms: formData.incoterms.trim().toUpperCase() || undefined,
+        incotermLocation: formData.incotermLocation.trim() || undefined,
         locationId: formData.locationId.trim() || undefined,
         presentationOffice: formData.presentationOffice.trim() || undefined,
       });
@@ -333,6 +339,32 @@ export default function CoreSchemaPage() {
                 <Info className="h-3 w-3" />
                 Optional override — leave blank to derive from goods item values.
               </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Incoterms (DE 4/1)
+              </label>
+              <input
+                type="text"
+                value={formData.incoterms}
+                onChange={(e) => setFormData({ ...formData, incoterms: e.target.value.toUpperCase() })}
+                placeholder="e.g. CIF"
+                className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Incoterm Location
+              </label>
+              <input
+                type="text"
+                value={formData.incotermLocation}
+                onChange={(e) => setFormData({ ...formData, incotermLocation: e.target.value })}
+                placeholder="e.g. Felixstowe"
+                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+              />
             </div>
 
           </div>

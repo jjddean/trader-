@@ -526,15 +526,17 @@ export const updateDeclarationDetails = mutation({
     declarationType: v.string(),
     route: v.string(),
     dispatchCountry: v.optional(v.string()),
+    destinationCountry: v.optional(v.string()),
+    importerEori: v.optional(v.string()),
+    presentationOffice: v.optional(v.string()),
+    locationId: v.optional(v.string()),
+    invoiceCurrency: v.optional(v.string()),
+    invoiceTotal: v.optional(v.number()),
+    incoterms: v.optional(v.string()),
+    incotermLocation: v.optional(v.string()),
     transportMode: v.optional(v.string()),
     transportId: v.optional(v.string()),
     transportIdType: v.optional(v.string()),
-    destinationCountry: v.optional(v.string()),
-    importerEori: v.optional(v.string()),
-    invoiceCurrency: v.optional(v.string()),
-    invoiceTotal: v.optional(v.number()),
-    locationId: v.optional(v.string()),
-    presentationOffice: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -550,15 +552,17 @@ export const updateDeclarationDetails = mutation({
       declarationType: args.declarationType,
       route: args.route,
       ...(args.dispatchCountry !== undefined ? { dispatchCountry: args.dispatchCountry } : {}),
+      ...(args.destinationCountry !== undefined ? { destinationCountry: args.destinationCountry } : {}),
+      ...(args.importerEori !== undefined ? { importerEori: args.importerEori } : {}),
+      ...(args.presentationOffice !== undefined ? { presentationOffice: args.presentationOffice } : {}),
+      ...(args.locationId !== undefined ? { locationId: args.locationId } : {}),
+      ...(args.invoiceCurrency !== undefined ? { invoiceCurrency: args.invoiceCurrency } : {}),
+      ...(args.invoiceTotal !== undefined ? { invoiceTotal: args.invoiceTotal } : {}),
+      ...(args.incoterms !== undefined ? { incoterms: args.incoterms } : {}),
+      ...(args.incotermLocation !== undefined ? { incotermLocation: args.incotermLocation } : {}),
       ...(args.transportMode !== undefined ? { transportMode: args.transportMode } : {}),
       ...(args.transportId !== undefined ? { transportId: args.transportId } : {}),
       ...(args.transportIdType !== undefined ? { transportIdType: args.transportIdType } : {}),
-      ...(args.destinationCountry !== undefined ? { destinationCountry: args.destinationCountry } : {}),
-      ...(args.importerEori !== undefined ? { importerEori: args.importerEori } : {}),
-      ...(args.invoiceCurrency !== undefined ? { invoiceCurrency: args.invoiceCurrency } : {}),
-      ...(args.invoiceTotal !== undefined ? { invoiceTotal: args.invoiceTotal } : {}),
-      ...(args.locationId !== undefined ? { locationId: args.locationId } : {}),
-      ...(args.presentationOffice !== undefined ? { presentationOffice: args.presentationOffice } : {}),
       lastUpdated: Date.now(),
     });
     await upsertDeclarationPreviewByDeclaration(ctx, args.id);
@@ -823,7 +827,7 @@ export const getReports = query({
 
     for (const decl of decls) {
       const items = itemsByDeclaration.get(String(decl._id)) || [];
-      
+
       let totalValue = 0;
       let totalDutyAndVat = 0;
       const mappedItems = items.slice(0, 50).map((item, idx) => {
@@ -833,7 +837,7 @@ export const getReports = query({
         const vat = (val + duty) * vatRate;
         totalValue += val;
         totalDutyAndVat += (duty + vat);
-        
+
         return {
           sequence: item.sequenceNumber || (idx + 1),
           commodityCode: item.commodityCode || "Unknown",
@@ -923,7 +927,7 @@ export const getFinancialRecords = query({
       const declarationNotifications = notificationsByDeclaration.get(String(decl._id)) || [];
       const confirmedFinancials = extractConfirmedFinancials(declarationNotifications);
       const hasConfirmedFinancials = !!confirmedFinancials && (confirmedFinancials.duty > 0 || confirmedFinancials.vat > 0);
-      
+
       let declValue = 0;
       let duty = 0;
       let vat = 0;
