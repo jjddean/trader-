@@ -9,10 +9,15 @@ import { evaluateRules, activeEffects, summarizeFailures, type RuleDefinition, t
 
 type SubmitItemInput = {
   commodityCode?: string;
+  description?: string;
   originCountry?: string;
   procedureCode?: string;
   additionalProcedureCode?: string;
   valuationMethod?: string;
+  valueAmount?: number | string;
+  grossWeightKg?: number | string;
+  packageType?: string;
+  packageCount?: number | string;
   preferenceCode?: string;
   additionalDocuments?: Array<{
     categoryCode?: string;
@@ -21,6 +26,17 @@ type SubmitItemInput = {
     TypeCode?: string;
     code?: string;
   }>;
+};
+
+type SubmitDeclarationInput = {
+  eori?: string;
+  dispatchCountry?: string;
+  destinationCountry?: string;
+  locationId?: string;
+  transportMode?: string;
+  transportId?: string;
+  transportIdType?: string;
+  invoiceCurrency?: string;
 };
 
 // Confirmed required set for WEB_APP_VIA_SERVER (HMRC Fraud Prevention v3.3, Jan 2025)
@@ -48,7 +64,7 @@ function validateClientFraudHeaders(headers: Headers) {
 // so a 400 returns the exact list of gaps rather than emitting empty tags
 // that would later trip the XML preflight or get rejected by CDS. Each check
 // here corresponds to a field the mapper/route would otherwise emit blank.
-function validateDeclaration(lane: any, items: any[]) {
+function validateDeclaration(lane: SubmitDeclarationInput, items: SubmitItemInput[]) {
   const errors: string[] = [];
   if (!lane?.eori) errors.push("Missing declarant EORI");
   if (!lane?.dispatchCountry) errors.push("Missing dispatch country (DE 5/14)");

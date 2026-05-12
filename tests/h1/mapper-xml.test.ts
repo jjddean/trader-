@@ -64,13 +64,16 @@ describe("H1 mapper and XML renderer", () => {
     assert.equal(shipment.Consignment.ArrivalTransportMeans.ID, "CSCLGLOBE");
     assert.equal(shipment.TradeTerms.ConditionCode, "CIF");
     assert.equal(shipment.TradeTerms.LocationID, "Felixstowe");
-    assert.equal(item.Commodity.Classification[0].ID, "6109100010");
+    assert.deepEqual(item.Commodity.Classification, [
+      { ID: "61091000", IdentificationTypeCode: "TSP" },
+      { ID: "10", IdentificationTypeCode: "TRC" },
+    ]);
     assert.deepEqual(item.GovernmentProcedure, [
       { CurrentCode: "40", PreviousCode: "00" },
       { CurrentCode: "000" },
     ]);
     assert.deepEqual(item.AdditionalDocument, [
-      { CategoryCode: "N", TypeCode: "935", ID: "INV-2026-0001" },
+      { CategoryCode: "N", TypeCode: "935", ID: "INV-2026-0001", StatusCode: "AC" },
     ]);
   });
 
