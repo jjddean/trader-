@@ -28,6 +28,14 @@ export default function CoreSchemaPage() {
     declarationType: "H1",
     route: "Route 1",
     dispatchCountry: "",
+    destinationCountry: "GB",
+    importerEori: "",
+    presentationOffice: "",
+    locationId: "",
+    invoiceCurrency: "GBP",
+    invoiceTotal: "",
+    incoterms: "",
+    incotermLocation: "",
     transportMode: "",
     transportId: "",
     transportIdType: "",
@@ -41,6 +49,14 @@ export default function CoreSchemaPage() {
         declarationType: "H1",
         route: declaration.route || "Route 1",
         dispatchCountry: (declaration as Record<string, unknown>).dispatchCountry as string || "",
+        destinationCountry: (declaration as Record<string, unknown>).destinationCountry as string || "GB",
+        importerEori: (declaration as Record<string, unknown>).importerEori as string || declaration.eori || "",
+        presentationOffice: (declaration as Record<string, unknown>).presentationOffice as string || "",
+        locationId: (declaration as Record<string, unknown>).locationId as string || "",
+        invoiceCurrency: (declaration as Record<string, unknown>).invoiceCurrency as string || "GBP",
+        invoiceTotal: (declaration as Record<string, unknown>).invoiceTotal != null ? String((declaration as Record<string, unknown>).invoiceTotal) : "",
+        incoterms: (declaration as Record<string, unknown>).incoterms as string || "",
+        incotermLocation: (declaration as Record<string, unknown>).incotermLocation as string || "",
         transportMode: (declaration as Record<string, unknown>).transportMode as string || "",
         transportId: (declaration as Record<string, unknown>).transportId as string || "",
         transportIdType: (declaration as Record<string, unknown>).transportIdType as string || "",
@@ -58,6 +74,14 @@ export default function CoreSchemaPage() {
         declarationType: formData.declarationType,
         route: formData.route,
         dispatchCountry: formData.dispatchCountry || undefined,
+        destinationCountry: formData.destinationCountry || undefined,
+        importerEori: formData.importerEori || undefined,
+        presentationOffice: formData.presentationOffice || undefined,
+        locationId: formData.locationId || undefined,
+        invoiceCurrency: formData.invoiceCurrency || undefined,
+        invoiceTotal: formData.invoiceTotal ? Number(formData.invoiceTotal) : undefined,
+        incoterms: formData.incoterms || undefined,
+        incotermLocation: formData.incotermLocation || undefined,
         transportMode: formData.transportMode || undefined,
         transportId: formData.transportId || undefined,
         transportIdType: formData.transportIdType || undefined,
@@ -110,6 +134,19 @@ export default function CoreSchemaPage() {
               </p>
             </div>
 
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Importer EORI (DE 3/16)
+              </label>
+              <input
+                type="text"
+                value={formData.importerEori}
+                onChange={(e) => setFormData({ ...formData, importerEori: e.target.value })}
+                placeholder="Defaults to declarant EORI if left blank"
+                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+              />
+            </div>
+
             {/* Declaration Category */}
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
@@ -127,6 +164,105 @@ export default function CoreSchemaPage() {
                   <SelectItem value="H1">H1 (Release for Free Circulation)</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Destination Country (DE 5/8)
+              </label>
+              <Select
+                value={formData.destinationCountry}
+                onValueChange={(val) => setFormData({ ...formData, destinationCountry: val })}
+              >
+                <SelectTrigger className="w-full text-sm">
+                  <SelectValue placeholder="Country goods imported TO" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {countries.map((c) => (
+                    <SelectItem key={c.code} value={c.code} className="text-xs">
+                      {c.name} ({c.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Presentation Office (DE 5/26)
+              </label>
+              <input
+                type="text"
+                value={formData.presentationOffice}
+                onChange={(e) => setFormData({ ...formData, presentationOffice: e.target.value.toUpperCase() })}
+                placeholder="e.g. GBLON004"
+                className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Goods Location (DE 5/23)
+              </label>
+              <input
+                type="text"
+                value={formData.locationId}
+                onChange={(e) => setFormData({ ...formData, locationId: e.target.value.toUpperCase() })}
+                placeholder="e.g. GBAUFXTFXTGW"
+                className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Invoice Currency
+              </label>
+              <input
+                type="text"
+                value={formData.invoiceCurrency}
+                onChange={(e) => setFormData({ ...formData, invoiceCurrency: e.target.value.toUpperCase() })}
+                placeholder="GBP"
+                className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Invoice Total
+              </label>
+              <input
+                type="number"
+                value={formData.invoiceTotal}
+                onChange={(e) => setFormData({ ...formData, invoiceTotal: e.target.value })}
+                placeholder="Auto-sums items if left blank"
+                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Incoterms (DE 4/1)
+              </label>
+              <input
+                type="text"
+                value={formData.incoterms}
+                onChange={(e) => setFormData({ ...formData, incoterms: e.target.value.toUpperCase() })}
+                placeholder="e.g. CIF"
+                className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Incoterm Location
+              </label>
+              <input
+                type="text"
+                value={formData.incotermLocation}
+                onChange={(e) => setFormData({ ...formData, incotermLocation: e.target.value.toUpperCase() })}
+                placeholder="e.g. Felixstowe"
+                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+              />
             </div>
 
             {/* Routing */}

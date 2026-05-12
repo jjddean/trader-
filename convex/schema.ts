@@ -74,6 +74,11 @@ export default defineSchema({
     lastVerified: v.optional(v.any()),
     originCountry: v.optional(v.any()),
     dispatchCountry: v.optional(v.any()),
+    destinationCountry: v.optional(v.any()),
+    importerEori: v.optional(v.any()),
+    presentationOffice: v.optional(v.any()),
+    locationId: v.optional(v.any()),
+    invoiceCurrency: v.optional(v.any()),
     savingsEstimate: v.optional(v.any()),
     tier: v.optional(v.any()),
     // Rule engine mode: "minimal" forbids any non-mandatory enrichment
@@ -85,6 +90,8 @@ export default defineSchema({
     // VALUE_MATCH_INVOICE rule. When unset the rule skips (mapper's
     // auto-sum makes the check meaningless).
     invoiceTotal: v.optional(v.any()),
+    incoterms: v.optional(v.any()),
+    incotermLocation: v.optional(v.any()),
     // DE 7/4 — Mode of transport at the border. Numeric: "1" sea, "3" road,
     // "4" air, "8" inland waterway. Required for imports (CDS12073).
     transportMode: v.optional(v.string()),
