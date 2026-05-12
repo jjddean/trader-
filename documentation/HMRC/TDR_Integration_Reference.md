@@ -1,6 +1,6 @@
 # HMRC TDR Integration Reference — TradeDNA
 
-> **Last updated:** 2026-04-13  
+> **Last updated:** 2026-05-10  
 > **Scope:** Customs Declarations API v1.0 | Trader Dress Rehearsal (TDR) | HMRC CDS  
 > **Status:** Pre-pass. Blocked on CHED cross-system validation (CDS12050). See §8.
 
@@ -247,6 +247,16 @@ grant_type=refresh_token
 ---
 
 ## 6. WCO XML Payload Specification
+
+### HMRC Technical Documentation Baseline
+
+HMRC Software Developer Support confirmed the current documentation baseline for CDS declaration XML work:
+
+- Latest CDS Technical Documentation pack update: **2026-05-07**.
+- Latest WCO-Based Schema/XML samples uploaded to Developer Hub: **2026-03-20**.
+- HMRC typically uploads refreshed XML samples approximately every **3 months**.
+
+Before changing `wco-mapper.ts`, XML rendering, or validation rules, check Developer Hub for newer Technical Documentation or WCO-Based Schema/XML sample packs. Treat the latest published HMRC pack and WCO XSD/sample set as the implementation source of truth for H1 XML structure, ordering, namespaces, and validation expectations.
 
 ### Namespace Declarations
 
