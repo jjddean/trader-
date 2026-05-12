@@ -149,8 +149,6 @@ export default function CoreSchemaPage() {
               </label>
               <input
                 type="text"
-                required
-                pattern="GB\d{12}"
                 value={formData.eori}
                 onChange={(e) => setFormData({ ...formData, eori: e.target.value })}
                 placeholder="e.g. GB123456789000"
@@ -170,8 +168,6 @@ export default function CoreSchemaPage() {
               </label>
               <input
                 type="text"
-                required
-                pattern="GB\d{12}"
                 value={formData.importerEori}
                 onChange={(e) => setFormData({ ...formData, importerEori: e.target.value })}
                 placeholder="e.g. GB123456789000"
@@ -231,7 +227,6 @@ export default function CoreSchemaPage() {
                 <span className="text-red-500">*</span>
               </label>
               <select
-                required
                 value={formData.dispatchCountry}
                 onChange={(e) => setFormData({ ...formData, dispatchCountry: e.target.value })}
                 className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
@@ -254,7 +249,6 @@ export default function CoreSchemaPage() {
                 <span className="text-red-500">*</span>
               </label>
               <select
-                required
                 value={formData.destinationCountry}
                 onChange={(e) => setFormData({ ...formData, destinationCountry: e.target.value })}
                 className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
@@ -274,7 +268,6 @@ export default function CoreSchemaPage() {
               </label>
               <input
                 type="text"
-                required
                 value={formData.locationId}
                 onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
                 placeholder="e.g. GBAUFXTFXTGW"
@@ -312,8 +305,6 @@ export default function CoreSchemaPage() {
               </label>
               <input
                 type="text"
-                required
-                pattern="[A-Za-z]{3}"
                 value={formData.invoiceCurrency}
                 onChange={(e) => setFormData({ ...formData, invoiceCurrency: e.target.value.toUpperCase() })}
                 placeholder="ISO 4217 code, e.g. GBP"
@@ -445,6 +436,7 @@ export default function CoreSchemaPage() {
         <div className="border-t border-gray-100 bg-gray-50/50 p-4 px-6 flex justify-end">
           <button
             type="submit"
+            formNoValidate
             disabled={saving}
             className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800 disabled:opacity-50"
           >
