@@ -45,6 +45,13 @@ function stripTransportId(value: unknown): string {
   return String(value ?? "").replace(/\s+/g, "");
 }
 
+function stableLocalReference(declaration: Record<string, unknown>): string {
+  const existing = String(declaration.lrn || declaration.localReferenceNumber || "").trim();
+  if (existing) return existing;
+  const id = String(declaration._id || declaration.id || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+  return `FC-${(id || "DECLARATION").slice(0, 14)}`;
+}
+
 function commodityClassifications(codeValue: unknown) {
   const code = String(codeValue || "").replace(/\s+/g, "");
   if (/^\d{10}$/.test(code)) {
@@ -273,7 +280,7 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
     Declaration: {
       FunctionCode: "9",
       TypeCode: mapDeclarationType(declaration.declarationType, declaration.route),
-      FunctionalReferenceID: declaration.lrn || `FC-${Date.now().toString(36).toUpperCase()}`,
+      FunctionalReferenceID: stableLocalReference(declaration),
       GoodsItemQuantity: items.length,
       DeclarationOfficeID: declaration.presentationOffice || "",
       TotalGrossMassMeasure: formatMass(declaration.totalGrossWeight || totalGrossWeight),

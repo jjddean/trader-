@@ -51,6 +51,7 @@ describe("H1 mapper and XML renderer", () => {
     const shipment = mapped.GoodsShipment;
     const item = shipment.GovernmentAgencyGoodsItem[0];
 
+    assert.equal(mapped.FunctionalReferenceID, "FC-KN7BASELINEH1S");
     assert.equal(mapped.DeclarationOfficeID, "GBLON004");
     assert.equal(mapped.InvoiceAmount.currencyID, "GBP");
     assert.equal(mapped.InvoiceAmount.value, "2500.00");
@@ -79,9 +80,11 @@ describe("H1 mapper and XML renderer", () => {
 
   it("renders inspectable WCO XML for the same H1 payload", () => {
     const payload = mapToCDS_H1(declaration, items);
+    const remapped = mapToCDS_H1(declaration, items);
     const xml = renderH1Xml(payload);
     const preflight = validateXmlPreflight(xml, declaration.eori);
 
+    assert.equal(payload.Declaration.FunctionalReferenceID, remapped.Declaration.FunctionalReferenceID);
     assert.equal(preflight.valid, true);
     assert.match(xml, /<WCODataModelVersionCode>3\.6<\/WCODataModelVersionCode>/);
     assert.match(xml, /<TypeCode>IMA<\/TypeCode>/);
