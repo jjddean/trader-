@@ -1,10 +1,13 @@
-# Welcome to your Convex snapshot export!
+# Trader App
 
-This ZIP file contains a snapshot of the tables in your Convex deployment.
+Operational customs declaration app for HMRC CDS H1 submission work.
 
-Documents for each table are listed as lines of JSON in
-<table_name>/documents.jsonl files.
+## Current Safety Rule
 
-For details on the format and how to use this snapshot with npx convex import,
-check out [the docs](https://docs.convex.dev/database/import-export/export) or
-ask us in [Discord](http://convex.dev/community).
+Do not use stale planning notes as implementation authority. HMRC-related documentation is separated by authority level:
+
+- `documentation/HMRC/source-material/` contains untouched official source material only.
+- `documentation/HMRC/internal-guidance/` contains current project interpretations and operational rules.
+- `documentation/archive/` contains stale notes, generated artefacts, and superseded plans. Archive files are preserved for context but are not authoritative.
+
+Before changing mapper, Convex persistence, HMRC submission, XML rendering, or notification behavior, read `documentation/HMRC/internal-guidance/h1-operational-invariants.md`.
