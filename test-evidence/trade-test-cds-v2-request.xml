@@ -1,5 +1,5 @@
-<!-- timestamp: 2026-04-28T13:02:41.315Z | http_status: 0 | conversation_id: HAPPY_PATH -->
-<!-- request_accept: application/vnd.hmrc.2.0+xml | request_content_type: application/xml; charset=UTF-8 | request_authorization: Bearer [REDACTED] | request_x_client_id: ZSoA1lpJi8FyuzSsncFrOZKpmrNe | request_gov_test_scenario: HAPPY_PATH -->
+<!-- timestamp: 2026-05-14T19:13:10.263Z | http_status: 0 | conversation_id: DRY_RUN -->
+<!-- request_accept: application/vnd.hmrc.2.0+xml | request_content_type: application/xml; charset=UTF-8 | request_authorization: Bearer [REDACTED] | request_x_client_id: ZSoA1lpJi8FyuzSsncFrOZKpmrNe | request_gov_test_scenario: ABSENT -->
 <?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
   <WCODataModelVersionCode>3.6</WCODataModelVersionCode>
@@ -9,7 +9,7 @@
   <AgencyAssignedCustomizationVersionCode>v2.1</AgencyAssignedCustomizationVersionCode>
   <Declaration xmlns="urn:wco:datamodel:WCO:DEC-DMS:2" xmlns:clm63055="urn:un:unece:uncefact:codelist:standard:UNECE:AgencyIdentificationCode:D12B" xmlns:ds="urn:wco:datamodel:WCO:MetaData_DS-DMS:2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2 ../DocumentMetaData_2_DMS.xsd ">
     <FunctionCode>9</FunctionCode>
-    <FunctionalReferenceID>TDR-1777381360909</FunctionalReferenceID>
+    <FunctionalReferenceID>TT-1778785989974</FunctionalReferenceID>
     <TypeCode>IMA</TypeCode>
     <GoodsItemQuantity>1</GoodsItemQuantity>
     <DeclarationOfficeID>GB000051</DeclarationOfficeID>
@@ -25,7 +25,7 @@
     
     <GoodsShipment>
       <UCR>
-        <TraderAssignedReferenceID>6GB243617410764-1777381360910</TraderAssignedReferenceID>
+        <TraderAssignedReferenceID>6GB243617410764-1778785989975</TraderAssignedReferenceID>
       </UCR>
       <Consignment>
         <ContainerCode>0</ContainerCode>

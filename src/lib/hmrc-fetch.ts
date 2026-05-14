@@ -18,7 +18,12 @@ export async function fetchHmrc(
   endpoint: string,
   options: RequestInit,
   req: Request,
-  token: string
+  token: string,
+  // Optional declarant EORI to set as X-Submitter-Identifier (DCS spec
+  // requires either this or X-Badge-Identifier for CSPs on the Customs
+  // Declarations API). Non-declaration endpoints (file upload, info, status)
+  // can omit; declaration submit/amend/cancel must pass it.
+  submitterEori?: string,
 ) {
   const vendorPublicIp = process.env.HMRC_VENDOR_PUBLIC_IP || "203.0.113.6";
   // In local dev the browser and server are on the same machine, so the
@@ -68,6 +73,7 @@ export async function fetchHmrc(
     Authorization: `Bearer ${token}`,
     "X-Client-ID": process.env.HMRC_CLIENT_ID || "",
     ...govHeaders,
+    ...(submitterEori ? { "X-Submitter-Identifier": submitterEori } : {}),
     ...(options.headers as Record<string, string>),
   };
 

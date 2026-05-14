@@ -57,7 +57,7 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_country", ["userId", "countryOfOriginCode"]),
-  
+
   declarations: defineTable({
     userId: v.optional(v.any()), // clerkId
     workspaceId: v.optional(v.any()),
@@ -74,6 +74,11 @@ export default defineSchema({
     lastVerified: v.optional(v.any()),
     originCountry: v.optional(v.any()),
     dispatchCountry: v.optional(v.any()),
+    destinationCountry: v.optional(v.any()),
+    importerEori: v.optional(v.any()),
+    presentationOffice: v.optional(v.any()),
+    locationId: v.optional(v.any()),
+    invoiceCurrency: v.optional(v.any()),
     savingsEstimate: v.optional(v.any()),
     tier: v.optional(v.any()),
     // Rule engine mode: "minimal" forbids any non-mandatory enrichment
@@ -85,6 +90,8 @@ export default defineSchema({
     // VALUE_MATCH_INVOICE rule. When unset the rule skips (mapper's
     // auto-sum makes the check meaningless).
     invoiceTotal: v.optional(v.any()),
+    incoterms: v.optional(v.any()),
+    incotermLocation: v.optional(v.any()),
     // DE 7/4 — Mode of transport at the border. Numeric: "1" sea, "3" road,
     // "4" air, "8" inland waterway. Required for imports (CDS12073).
     transportMode: v.optional(v.string()),
@@ -96,7 +103,7 @@ export default defineSchema({
     // vessel name, "30" road vehicle reg, "40" flight number.
     transportIdType: v.optional(v.string()),
   }).index("by_user", ["userId"]).index("by_mrn", ["mrn"]).index("by_conversationId", ["conversationId"]),
-  
+
   goods_items: defineTable({
     ownerId: v.optional(v.any()),
     declarationId: v.optional(v.any()),
@@ -112,6 +119,10 @@ export default defineSchema({
     additionalDocuments: v.optional(v.any()),
     additionalProcedureCode: v.optional(v.any()),
     shippingMarks: v.optional(v.any()),
+    // DE 6/10 — number of packages. Mandatory per Appendix 21A H1.
+    packageCount: v.optional(v.number()),
+    // DE 6/9 — package type code (PK, BX, CT, etc.). Mandatory per Appendix 21A H1.
+    packageType: v.optional(v.string()),
   }).index("by_declaration", ["declarationId"]).index("by_owner", ["ownerId"]),
 
   documents: defineTable({
@@ -143,7 +154,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]).index("by_declaration", ["declarationId"]).index("by_declaration_code", ["declarationId", "code"]),
-  
+
   workspaces: defineTable({
     name: v.optional(v.any()),
     slug: v.optional(v.any()),
@@ -160,7 +171,7 @@ export default defineSchema({
     workspaceName: v.optional(v.any()),
     workspaceSlug: v.optional(v.any()),
   }).index("by_user", ["userId"]),
-  
+
   notifications: defineTable({
     mrn: v.optional(v.any()),
     conversationId: v.optional(v.any()),
@@ -191,9 +202,15 @@ export default defineSchema({
     mrn: v.optional(v.string()),
     eori: v.optional(v.string()),
     declarationType: v.optional(v.string()),
+    // Completeness state — derived from convex/lib/declaration_completeness.ts.
+    // The single source of truth for "is this declaration submittable". Recomputed
+    // on every declaration/items write via upsertDeclarationPreviewByDeclaration.
+    // Optional for back-compat with rows written before this field existed.
+    completenessReady: v.optional(v.boolean()),
+    missingCount: v.optional(v.number()),
     lastUpdated: v.number(),
   }).index("by_user", ["userId"]).index("by_declarationId", ["declarationId"]),
-  
+
   auditLogs: defineTable({
     userId: v.optional(v.any()),
     action: v.optional(v.any()),

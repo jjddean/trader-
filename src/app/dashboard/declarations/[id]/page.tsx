@@ -15,12 +15,17 @@ export default function CoreSchemaPage() {
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const params = useParams<{ id: string }>();
   const id = params?.id as Id<"declarations">;
-  
+
   const declaration = useQuery(
     api.declarations.getLane,
     isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && id ? { id } : "skip",
   );
   const updateDeclaration = useMutation(api.declarations.updateDeclarationDetails);
+
+  const completeness = useQuery(
+    api.declaration_completeness.getStatus,
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && id ? { declarationId: id } : "skip",
+  );
 
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -31,36 +36,64 @@ export default function CoreSchemaPage() {
     transportMode: "",
     transportId: "",
     transportIdType: "",
+    destinationCountry: "",
+    importerEori: "",
+    invoiceCurrency: "",
+    invoiceTotal: "",
+    incoterms: "",
+    incotermLocation: "",
+    locationId: "",
+    presentationOffice: "",
   });
 
-  // Hydrate form once data loads
+  // Hydrate form once data loads. Missing fields stay empty — no defaults.
   React.useEffect(() => {
     if (declaration) {
+      const d = declaration as Record<string, unknown>;
       setFormData({
-        eori: declaration.eori || "",
+        eori: (d.eori as string) || "",
         declarationType: "H1",
-        route: declaration.route || "Route 1",
-        dispatchCountry: (declaration as Record<string, unknown>).dispatchCountry as string || "",
-        transportMode: (declaration as Record<string, unknown>).transportMode as string || "",
-        transportId: (declaration as Record<string, unknown>).transportId as string || "",
-        transportIdType: (declaration as Record<string, unknown>).transportIdType as string || "",
+        route: (d.route as string) || "Route 1",
+        dispatchCountry: (d.dispatchCountry as string) || "",
+        transportMode: (d.transportMode as string) || "",
+        transportId: (d.transportId as string) || "",
+        transportIdType: (d.transportIdType as string) || "",
+        destinationCountry: (d.destinationCountry as string) || "",
+        importerEori: (d.importerEori as string) || "",
+        invoiceCurrency: (d.invoiceCurrency as string) || "",
+        invoiceTotal: d.invoiceTotal != null ? String(d.invoiceTotal) : "",
+        incoterms: (d.incoterms as string) || "",
+        incotermLocation: (d.incotermLocation as string) || "",
+        locationId: (d.locationId as string) || "",
+        presentationOffice: (d.presentationOffice as string) || "",
       });
     }
   }, [declaration]);
 
-  const handleSave = async () => {
-    if (!formData.eori) return;
+  const handleSave = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setSaving(true);
     try {
+      const invoiceTotalParsed = formData.invoiceTotal.trim() === ""
+        ? undefined
+        : Number(formData.invoiceTotal);
       await updateDeclaration({
         id,
-        eori: formData.eori,
+        eori: formData.eori.trim(),
         declarationType: formData.declarationType,
         route: formData.route,
         dispatchCountry: formData.dispatchCountry || undefined,
         transportMode: formData.transportMode || undefined,
-        transportId: formData.transportId || undefined,
+        transportId: formData.transportId.trim() || undefined,
         transportIdType: formData.transportIdType || undefined,
+        destinationCountry: formData.destinationCountry || undefined,
+        importerEori: formData.importerEori.trim() || undefined,
+        invoiceCurrency: formData.invoiceCurrency.trim().toUpperCase() || undefined,
+        invoiceTotal: Number.isFinite(invoiceTotalParsed) ? invoiceTotalParsed : undefined,
+        incoterms: formData.incoterms.trim().toUpperCase() || undefined,
+        incotermLocation: formData.incotermLocation.trim() || undefined,
+        locationId: formData.locationId.trim() || undefined,
+        presentationOffice: formData.presentationOffice.trim() || undefined,
       });
     } catch (e) {
       console.error("Failed to save core schema", e);
@@ -78,7 +111,7 @@ export default function CoreSchemaPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <form onSubmit={handleSave} className="space-y-6">
       <div>
         <h2 className="text-lg font-medium text-gray-900">Core Declaration Details</h2>
         <p className="mt-1 text-xs text-gray-500">
@@ -86,15 +119,32 @@ export default function CoreSchemaPage() {
         </p>
       </div>
 
+      {/* Live completeness panel — derived from rule engine. */}
+      {completeness && completeness.missing.length > 0 && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
+          <div className="mb-2 text-xs font-semibold text-amber-900">
+            {completeness.missing.length} blocking issue{completeness.missing.length === 1 ? "" : "s"} from rule engine
+          </div>
+          <ul className="space-y-1 text-[11px] text-amber-900/90">
+            {completeness.missing.map((m, i) => (
+              <li key={`${m.ruleId}-${i}`} className="flex gap-2">
+                <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-[10px]">{m.field}</code>
+                <span>{m.reason}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="rounded-xl border border-gray-200 bg-white">
         <div className="p-6 space-y-6">
-          
+
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            
-            {/* EORI Number */}
+
+            {/* EORI Number — DE 3/18 declarant. A-mandatory per Appendix 21A. */}
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
-                Declarant EORI
+                Declarant EORI (DE 3/18)
                 <span className="text-red-500">*</span>
               </label>
               <input
@@ -102,11 +152,30 @@ export default function CoreSchemaPage() {
                 value={formData.eori}
                 onChange={(e) => setFormData({ ...formData, eori: e.target.value })}
                 placeholder="e.g. GB123456789000"
-                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
               />
               <p className="text-[10px] text-gray-400 flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 Must match your HMRC Developer Hub credentials.
+              </p>
+            </div>
+
+            {/* Importer EORI — DE 3/16. A-mandatory per Appendix 21A. */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+                Importer EORI (DE 3/16)
+                <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.importerEori}
+                onChange={(e) => setFormData({ ...formData, importerEori: e.target.value })}
+                placeholder="e.g. GB123456789000"
+                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+              />
+              <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                <Info className="h-3 w-3" />
+                The UK importer&apos;s EORI. Same as declarant when self-representing.
               </p>
             </div>
 
@@ -116,7 +185,7 @@ export default function CoreSchemaPage() {
                 Declaration Category
                 <span className="text-red-500">*</span>
               </label>
-              <Select 
+              <Select
                 value={formData.declarationType}
                 onValueChange={(val) => setFormData({ ...formData, declarationType: val })}
               >
@@ -149,31 +218,144 @@ export default function CoreSchemaPage() {
               </Select>
             </div>
 
-            {/* Dispatch Country — DE 5/14 ExportCountry */}
+            {/* Dispatch Country — DE 5/14. A-mandatory per Appendix 21A.
+                Native <select> instead of shadcn Select so HTML `required`
+                actually fires at form-submit. */}
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
                 Dispatch Country (DE 5/14)
                 <span className="text-red-500">*</span>
               </label>
-              <Select
+              <select
                 value={formData.dispatchCountry}
-                onValueChange={(val) => setFormData({ ...formData, dispatchCountry: val })}
+                onChange={(e) => setFormData({ ...formData, dispatchCountry: e.target.value })}
+                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
               >
-                <SelectTrigger className="w-full text-sm">
-                  <SelectValue placeholder="Country goods shipped FROM" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
-                  {countries.map((c) => (
-                    <SelectItem key={c.code} value={c.code} className="text-xs">
-                      {c.name} ({c.code})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <option value="">Country goods shipped FROM</option>
+                {countries.map((c) => (
+                  <option key={c.code} value={c.code}>{c.name} ({c.code})</option>
+                ))}
+              </select>
               <p className="text-[10px] text-gray-400 flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 Country goods were shipped FROM — never GB for a third-country import.
               </p>
+            </div>
+
+            {/* Destination Country — DE 5/8. A-mandatory per Appendix 21A. */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+                Destination Country (DE 5/8)
+                <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.destinationCountry}
+                onChange={(e) => setFormData({ ...formData, destinationCountry: e.target.value })}
+                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+              >
+                <option value="">Country goods shipped TO</option>
+                {countries.map((c) => (
+                  <option key={c.code} value={c.code}>{c.name} ({c.code})</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Goods Location — DE 5/23. A-mandatory per Appendix 21A. */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+                Goods Location (DE 5/23)
+                <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.locationId}
+                onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
+                placeholder="e.g. GBAUFXTFXTGW"
+                className="w-full rounded-md border border-gray-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+              />
+              <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                <Info className="h-3 w-3" />
+                UN/LOCODE or HMRC location code. No default.
+              </p>
+            </div>
+
+            {/* Presentation Office — DE 5/26. Conditional per Appendix 21A. */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Customs Office of Presentation (DE 5/26)
+              </label>
+              <input
+                type="text"
+                value={formData.presentationOffice}
+                onChange={(e) => setFormData({ ...formData, presentationOffice: e.target.value })}
+                placeholder="e.g. GBLON004 (only if presented elsewhere than 5/23)"
+                className="w-full rounded-md border border-gray-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500"
+              />
+              <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                <Info className="h-3 w-3" />
+                Conditional — required only when goods aren&apos;t at the goods location.
+              </p>
+            </div>
+
+            {/* Invoice currency — DE 4/11 currency. A-mandatory per Appendix 21A. */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+                Invoice Currency (DE 4/11)
+                <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.invoiceCurrency}
+                onChange={(e) => setFormData({ ...formData, invoiceCurrency: e.target.value.toUpperCase() })}
+                placeholder="ISO 4217 code, e.g. GBP"
+                className="w-full rounded-md border border-gray-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+              />
+            </div>
+
+            {/* Invoice total — DE 4/11. A-mandatory per Appendix 21A. */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Invoice Total (DE 4/11)
+              </label>
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={formData.invoiceTotal}
+                onChange={(e) => setFormData({ ...formData, invoiceTotal: e.target.value })}
+                placeholder="If empty, mapper sums from items"
+                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+              />
+              <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                <Info className="h-3 w-3" />
+                Optional override — leave blank to derive from goods item values.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Incoterms (DE 4/1)
+              </label>
+              <input
+                type="text"
+                value={formData.incoterms}
+                onChange={(e) => setFormData({ ...formData, incoterms: e.target.value.toUpperCase() })}
+                placeholder="e.g. CIF"
+                className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Incoterm Location
+              </label>
+              <input
+                type="text"
+                value={formData.incotermLocation}
+                onChange={(e) => setFormData({ ...formData, incotermLocation: e.target.value })}
+                placeholder="e.g. Felixstowe"
+                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+              />
             </div>
 
           </div>
@@ -185,61 +367,61 @@ export default function CoreSchemaPage() {
             </p>
             <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-3">
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
                   Transport Mode (DE 7/4)
+                  <span className="text-red-500">*</span>
                 </label>
-                <Select
+                <select
+                  required
                   value={formData.transportMode}
-                  onValueChange={(val) => setFormData({ ...formData, transportMode: val })}
+                  onChange={(e) => setFormData({ ...formData, transportMode: e.target.value })}
+                  className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                 >
-                  <SelectTrigger className="w-full text-sm">
-                    <SelectValue placeholder="Select mode" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 — Sea</SelectItem>
-                    <SelectItem value="2">2 — Rail</SelectItem>
-                    <SelectItem value="3">3 — Road</SelectItem>
-                    <SelectItem value="4">4 — Air</SelectItem>
-                    <SelectItem value="5">5 — Postal</SelectItem>
-                    <SelectItem value="7">7 — Fixed transport installations</SelectItem>
-                    <SelectItem value="8">8 — Inland waterway</SelectItem>
-                    <SelectItem value="9">9 — Mode unknown</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <option value="">Select mode</option>
+                  <option value="1">1 — Sea</option>
+                  <option value="2">2 — Rail</option>
+                  <option value="3">3 — Road</option>
+                  <option value="4">4 — Air</option>
+                  <option value="5">5 — Postal</option>
+                  <option value="7">7 — Fixed transport installations</option>
+                  <option value="8">8 — Inland waterway</option>
+                  <option value="9">9 — Mode unknown</option>
+                </select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
                   Identification Type (DE 7/7)
+                  <span className="text-red-500">*</span>
                 </label>
-                <Select
+                <select
+                  required
                   value={formData.transportIdType}
-                  onValueChange={(val) => setFormData({ ...formData, transportIdType: val })}
+                  onChange={(e) => setFormData({ ...formData, transportIdType: e.target.value })}
+                  className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                 >
-                  <SelectTrigger className="w-full text-sm">
-                    <SelectValue placeholder="Select identifier type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10 — IMO ship identification number</SelectItem>
-                    <SelectItem value="11">11 — Name of seagoing vessel</SelectItem>
-                    <SelectItem value="20">20 — Wagon number</SelectItem>
-                    <SelectItem value="30">30 — Vehicle registration number</SelectItem>
-                    <SelectItem value="40">40 — IATA flight number</SelectItem>
-                    <SelectItem value="41">41 — Registration of aircraft</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <option value="">Select identifier type</option>
+                  <option value="10">10 — IMO ship identification number</option>
+                  <option value="11">11 — Name of seagoing vessel</option>
+                  <option value="20">20 — Wagon number</option>
+                  <option value="30">30 — Vehicle registration number</option>
+                  <option value="40">40 — IATA flight number</option>
+                  <option value="41">41 — Registration of aircraft</option>
+                </select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
                   Identification (DE 7/9)
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
+                  required
                   value={formData.transportId}
                   onChange={(e) => setFormData({ ...formData, transportId: e.target.value })}
                   placeholder="e.g. IMO9395044, vessel name, vehicle reg"
-                  className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+                  className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                 />
                 <p className="text-[10px] text-gray-400 flex items-center gap-1">
                   <Info className="h-3 w-3" />
@@ -253,8 +435,9 @@ export default function CoreSchemaPage() {
 
         <div className="border-t border-gray-100 bg-gray-50/50 p-4 px-6 flex justify-end">
           <button
-            onClick={handleSave}
-            disabled={saving || !formData.eori}
+            type="submit"
+            formNoValidate
+            disabled={saving}
             className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800 disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
@@ -262,6 +445,6 @@ export default function CoreSchemaPage() {
           </button>
         </div>
       </div>
-    </div>
+    </form>
   );
 }
