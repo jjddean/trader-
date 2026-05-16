@@ -428,7 +428,7 @@ export async function POST(request: Request) {
       method: "POST",
       headers: hmrcHeaders,
       body: xmlPayload,
-    }, request, token);
+    }, request, token, lane.eori);
 
     if (hmrcResponse.status === 429) {
       return NextResponse.json({ error: "HMRC rate limit reached, please try again shortly" }, { status: 429 });

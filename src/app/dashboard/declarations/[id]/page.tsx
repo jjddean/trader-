@@ -75,25 +75,25 @@ export default function CoreSchemaPage() {
     setSaving(true);
     try {
       const invoiceTotalParsed = formData.invoiceTotal.trim() === ""
-        ? undefined
+        ? null
         : Number(formData.invoiceTotal);
       await updateDeclaration({
         id,
         eori: formData.eori.trim(),
         declarationType: formData.declarationType,
         route: formData.route,
-        dispatchCountry: formData.dispatchCountry || undefined,
-        transportMode: formData.transportMode || undefined,
-        transportId: formData.transportId.trim() || undefined,
-        transportIdType: formData.transportIdType || undefined,
-        destinationCountry: formData.destinationCountry || undefined,
-        importerEori: formData.importerEori.trim() || undefined,
-        invoiceCurrency: formData.invoiceCurrency.trim().toUpperCase() || undefined,
-        invoiceTotal: Number.isFinite(invoiceTotalParsed) ? invoiceTotalParsed : undefined,
-        incoterms: formData.incoterms.trim().toUpperCase() || undefined,
-        incotermLocation: formData.incotermLocation.trim() || undefined,
-        locationId: formData.locationId.trim() || undefined,
-        presentationOffice: formData.presentationOffice.trim() || undefined,
+        dispatchCountry: formData.dispatchCountry,
+        transportMode: formData.transportMode,
+        transportId: formData.transportId.trim(),
+        transportIdType: formData.transportIdType,
+        destinationCountry: formData.destinationCountry,
+        importerEori: formData.importerEori.trim(),
+        invoiceCurrency: formData.invoiceCurrency.trim().toUpperCase(),
+        invoiceTotal: invoiceTotalParsed === null || Number.isFinite(invoiceTotalParsed) ? invoiceTotalParsed : null,
+        incoterms: formData.incoterms.trim().toUpperCase(),
+        incotermLocation: formData.incotermLocation.trim(),
+        locationId: formData.locationId.trim(),
+        presentationOffice: formData.presentationOffice.trim(),
       });
     } catch (e) {
       console.error("Failed to save core schema", e);

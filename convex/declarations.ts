@@ -531,7 +531,7 @@ export const updateDeclarationDetails = mutation({
     presentationOffice: v.optional(v.string()),
     locationId: v.optional(v.string()),
     invoiceCurrency: v.optional(v.string()),
-    invoiceTotal: v.optional(v.number()),
+    invoiceTotal: v.optional(v.union(v.number(), v.null())),
     incoterms: v.optional(v.string()),
     incotermLocation: v.optional(v.string()),
     transportMode: v.optional(v.string()),
