@@ -1,0 +1,98 @@
+rules:
+  - id: no-eval
+    patterns:
+      - pattern: eval(...)
+    message: >
+      Avoid using eval() as it can lead to code injection vulnerabilities.
+    languages: [javascript, typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-95: Improper Neutralization of Directives in Dynamically Evaluated Code"
+
+  - id: no-innerhtml-assignment
+    patterns:
+      - pattern: $EL.innerHTML = $VALUE
+    message: >
+      Direct innerHTML assignment can lead to XSS vulnerabilities.
+      Use textContent or a sanitization library instead.
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      cwe: "CWE-79: Improper Neutralization of Input During Web Page Generation"
+
+  - id: no-document-write
+    patterns:
+      - pattern: document.write(...)
+    message: >
+      document.write() can lead to XSS vulnerabilities. Use DOM manipulation methods instead.
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      cwe: "CWE-79: Improper Neutralization of Input During Web Page Generation"
+
+  - id: no-hardcoded-secrets
+    patterns:
+      - pattern: |
+          $KEY = "..."
+      - metavariable-regex:
+          metavariable: $KEY
+          regex: (?i)(password|secret|api_key|apikey|token|auth|credential)
+    message: >
+      Possible hardcoded secret detected. Use environment variables or a secrets manager.
+    languages: [javascript, typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-798: Use of Hard-coded Credentials"
+
+  - id: no-sql-string-concat
+    patterns:
+      - pattern: $QUERY + $INPUT
+      - metavariable-regex:
+          metavariable: $QUERY
+          regex: .*(SELECT|INSERT|UPDATE|DELETE|DROP|ALTER).*
+    message: >
+      Possible SQL injection via string concatenation.
+      Use parameterized queries instead.
+    languages: [javascript, typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-89: Improper Neutralization of Special Elements used in an SQL Command"
+
+  - id: no-dangerouslysetinnerhtml
+    patterns:
+      - pattern: dangerouslySetInnerHTML={{__html: $VALUE}}
+    message: >
+      dangerouslySetInnerHTML can lead to XSS if the value is not properly sanitized.
+      Ensure the input is trusted or sanitized before use.
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      cwe: "CWE-79: Improper Neutralization of Input During Web Page Generation"
+
+  - id: no-disabled-eslint-security
+    patterns:
+      - pattern-regex: "// eslint-disable.*(security|no-eval)"
+    message: >
+      Do not disable security-related ESLint rules.
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+
+  - id: no-cors-wildcard
+    patterns:
+      - pattern: |
+          "Access-Control-Allow-Origin": "*"
+    message: >
+      Avoid wildcard CORS origins in production. Specify allowed origins explicitly.
+    languages: [javascript, typescript]
+    severity: WARNING
+    metadata:
+      category: security
+      cwe: "CWE-942: Permissive Cross-domain Policy with Untrusted Domains"
