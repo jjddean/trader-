@@ -3,72 +3,51 @@ import path from "path";
 
 const API_BASE = "https://www.trade-tariff.service.gov.uk/api/v2";
 const OUTPUT_PATH = path.resolve("data/uk-tariff-full.json");
-const DELAY_MS = 300;
+const DELAY_MS = 250;
+const MAX_RETRIES = 3;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function fetchJson(url) {
-  const res = await fetch(url, {
-    headers: { Accept: "application/json" },
-  });
-  if (!res.ok) {
-    if (res.status === 404) return null;
-    throw new Error(`API error ${res.status} for ${url}: ${await res.text()}`);
+async function fetchJson(url, retries = MAX_RETRIES) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, {
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!res.ok) {
+        if (res.status === 404) return null;
+        if (res.status === 429 && attempt < retries) {
+          console.log(`    Rate limited, waiting ${attempt * 2}s...`);
+          await sleep(attempt * 2000);
+          continue;
+        }
+        throw new Error(`API error ${res.status} for ${url}`);
+      }
+      return res.json();
+    } catch (err) {
+      if (attempt < retries) {
+        console.log(`    Retry ${attempt}/${retries} for ${url}: ${err.message}`);
+        await sleep(attempt * 1000);
+        continue;
+      }
+      throw err;
+    }
   }
-  return res.json();
 }
 
-function extractDutyRate(commodity) {
-  const measures = commodity?.data?.attributes?.import_measures ?? commodity?.included ?? [];
+function extractDutyFromHeading(headingData, commodityCode) {
+  const included = headingData?.included ?? [];
+  const measures = included.filter(
+    (i) => i.type === "measure" && i.relationships?.goods_nomenclature?.data?.id,
+  );
   for (const m of measures) {
-    if (m?.type === "measure" && m?.attributes?.duty_expression?.base) {
+    if (m.attributes?.duty_expression?.base) {
       return m.attributes.duty_expression.base;
     }
   }
-  return "";
-}
-
-async function fetchHeadingCommodities(headingId) {
-  const data = await fetchJson(`${API_BASE}/headings/${headingId}`);
-  if (!data) return [];
-
-  const commodities = [];
-  const included = data.included ?? [];
-
-  for (const item of included) {
-    if (item.type === "commodity" && item.attributes) {
-      const code = item.attributes.goods_nomenclature_item_id ?? "";
-      const description = (item.attributes.formatted_description ?? item.attributes.description ?? "")
-        .replace(/<[^>]*>/g, "")
-        .trim();
-      if (code && description) {
-        commodities.push({ code, description, leaf: item.attributes.leaf ?? false });
-      }
-    }
-  }
-
-  return commodities;
-}
-
-async function fetchCommodityDuty(commodityId) {
-  const data = await fetchJson(`${API_BASE}/commodities/${commodityId}`);
-  if (!data) return "";
-
-  const included = data.included ?? [];
-  for (const item of included) {
-    if (item.type === "duty_expression" && item.attributes?.base) {
-      return item.attributes.base;
-    }
-    if (item.type === "measure" && item.attributes?.duty_expression?.base) {
-      return item.attributes.duty_expression.base;
-    }
-  }
-
-  const dutyExpr = data?.data?.attributes?.duty_expression?.base;
-  if (dutyExpr) return dutyExpr;
-
   return "";
 }
 
@@ -76,15 +55,11 @@ async function main() {
   console.log("Fetching UK Trade Tariff data...");
 
   const allCommodities = [];
-  const chapters = [];
 
   for (let ch = 1; ch <= 97; ch++) {
     const chStr = String(ch).padStart(2, "0");
-    chapters.push(chStr);
-  }
-
-  for (const chStr of chapters) {
     console.log(`Chapter ${chStr}/97...`);
+
     const chapterData = await fetchJson(`${API_BASE}/chapters/${chStr}`);
     if (!chapterData) {
       console.log(`  Chapter ${chStr} not found, skipping`);
@@ -99,28 +74,32 @@ async function main() {
       const headingId = heading.attributes?.goods_nomenclature_item_id?.slice(0, 4) ?? heading.id;
       if (!headingId) continue;
 
-      const commodities = await fetchHeadingCommodities(headingId);
+      let headingData;
+      try {
+        headingData = await fetchJson(`${API_BASE}/headings/${headingId}`);
+      } catch (err) {
+        console.log(`  Heading ${headingId} fetch failed: ${err.message}`);
+        continue;
+      }
+      if (!headingData) continue;
       await sleep(DELAY_MS);
 
-      const leafCommodities = commodities.filter((c) => c.leaf);
-      const toFetch = leafCommodities.length > 0 ? leafCommodities : commodities.slice(0, 10);
+      const included = headingData.included ?? [];
+      const defaultDuty = extractDutyFromHeading(headingData);
 
-      for (const comm of toFetch) {
-        let duty = "";
-        try {
-          duty = await fetchCommodityDuty(comm.code);
-          await sleep(DELAY_MS);
-        } catch (err) {
-          console.log(`    Duty fetch failed for ${comm.code}: ${err.message}`);
-        }
+      for (const item of included) {
+        if (item.type !== "commodity" || !item.attributes) continue;
 
-        const text = `Commodity ${comm.code} ${comm.description.toLowerCase()}${duty ? ` duty rate ${duty}` : ""}`;
-        allCommodities.push({
-          commodity: comm.code,
-          description: comm.description,
-          duty: duty || "See full tariff",
-          text,
-        });
+        const code = item.attributes.goods_nomenclature_item_id ?? "";
+        const description = (item.attributes.formatted_description ?? item.attributes.description ?? "")
+          .replace(/<[^>]*>/g, "")
+          .trim();
+        if (!code || !description) continue;
+
+        const duty = defaultDuty || "See full tariff";
+        const text = `Commodity ${code} ${description.toLowerCase()}${defaultDuty ? ` duty rate ${defaultDuty}` : ""}`;
+
+        allCommodities.push({ commodity: code, description, duty, text });
       }
     }
 
