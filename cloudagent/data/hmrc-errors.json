@@ -1,1088 +1,907 @@
 [
   {
-    "code": "CDS10001",
-    "message": "Obligation error: Mandatory Data Element has not been provided",
-    "fix": "Required details are missing - Either a DE is missing, or required information in a DE is missing/incomplete  Check the declaration to ensure that all the required data elements have been completed in full. For example, if declaring a party name and address, then name, street and number, country and postcode must be completed.",
-    "text": "CDS10001 obligation error: mandatory data element has not been provided required details are missing - either a de is missing, or required information in a de is missing/incomplete  check the declaration to ensure that all the required data elements have been completed in full. for example, if declaring a party name and address, then name, street and number, country and postcode must be completed."
+    "errorCode": "CDS10001",
+    "description": "Obligation error: Mandatory Data Element has not been provided",
+    "fixAction": "Required details are missing - Either a DE is missing, or required information in a DE is missing/incomplete\nCheck the declaration to ensure that all the required data elements have been completed in full. For example, if declaring a party name and address, then name, street and number, country and postcode must be completed."
   },
   {
-    "code": "CDS10002",
-    "message": "Obligation error: Data Element is not allowed",
-    "fix": "Invalid entry on the declaration  Go through the declaration from the beginning to find where you have entered details that are not permitted. Some details are not permitted at item level, only at header level - this is specified by an X or Y at the start of the value sent.",
-    "text": "CDS10002 obligation error: data element is not allowed invalid entry on the declaration  go through the declaration from the beginning to find where you have entered details that are not permitted. some details are not permitted at item level, only at header level - this is specified by an x or y at the start of the value sent."
+    "errorCode": "CDS10002",
+    "description": "Obligation error: Data Element is not allowed",
+    "fixAction": "Invalid entry on the declaration\nGo through the declaration from the beginning to find where you have entered details that are not permitted. Some details are not permitted at item level, only at header level - this is specified by an X or Y at the start of the value sent."
   },
   {
-    "code": "CDS10003",
-    "message": "Obligation error: Number of Occurrences exceeds what is allowed for the Data Element",
-    "fix": "Too many instances of a data element  You have exceeded the limit for one of the fields on the declaration. For example, only 1 preference code can be declared against an item.",
-    "text": "CDS10003 obligation error: number of occurrences exceeds what is allowed for the data element too many instances of a data element  you have exceeded the limit for one of the fields on the declaration. for example, only 1 preference code can be declared against an item."
+    "errorCode": "CDS10003",
+    "description": "Obligation error: Number of Occurrences exceeds what is allowed for the Data Element",
+    "fixAction": "Too many instances of a data element\nYou have exceeded the limit for one of the fields on the declaration. For example, only 1 preference code can be declared against an item."
   },
   {
-    "code": "CDS10004",
-    "message": "Commodity code Error: Mandatory data element not provided and/or format error and/or number of occurrences exceeds what is allowed for the data element",
-    "fix": "Commodity code error  A commodity code error is likely to be caused by missing or incorrect additional codes to the commodity code - these are the national additional codes or TARIC additional codes. It may also be triggered where an insufficient number of digits have been provided.",
-    "text": "CDS10004 commodity code error: mandatory data element not provided and/or format error and/or number of occurrences exceeds what is allowed for the data element commodity code error  a commodity code error is likely to be caused by missing or incorrect additional codes to the commodity code - these are the national additional codes or taric additional codes. it may also be triggered where an insufficient number of digits have been provided."
+    "errorCode": "CDS10004",
+    "description": "Commodity code Error: Mandatory data element not provided and/or format error and/or number of occurrences exceeds what is allowed for the data element",
+    "fixAction": "Commodity code error\nA commodity code error is likely to be caused by missing or incorrect additional codes to the commodity code - these are the national additional codes or TARIC additional codes.\nIt may also be triggered where an insufficient number of digits have been provided."
   },
   {
-    "code": "CDS10010",
-    "message": "Format error: data element has invalid format",
-    "fix": "Invalid format  One of the data elements does not comply with the minimum/maximum number of characters or uses characters not permitted. For example, the country code field with the address must only use alphabetic characters.",
-    "text": "CDS10010 format error: data element has invalid format invalid format  one of the data elements does not comply with the minimum/maximum number of characters or uses characters not permitted. for example, the country code field with the address must only use alphabetic characters."
+    "errorCode": "CDS10010",
+    "description": "Format error: data element has invalid format",
+    "fixAction": "Invalid format\nOne of the data elements does not comply with the minimum/maximum number of characters or uses characters not permitted. For example, the country code field with the address must only use alphabetic characters."
   },
   {
-    "code": "CDS10020",
-    "message": "Domain error: data element contains invalid value",
-    "fix": "Invalid value  A code used in the declaration is either not a recognised code or is not a code permitted on the particular declaration. For example: A document code which is only permitted on export declarations has been declared on an import declaration. A valid code has been entered on the declaration, but has been entered at the wrong level (header or item) to which it is permitted.",
-    "text": "CDS10020 domain error: data element contains invalid value invalid value  a code used in the declaration is either not a recognised code or is not a code permitted on the particular declaration. for example: a document code which is only permitted on export declarations has been declared on an import declaration. a valid code has been entered on the declaration, but has been entered at the wrong level (header or item) to which it is permitted."
+    "errorCode": "CDS10020",
+    "description": "Domain error: data element contains invalid value",
+    "fixAction": "Invalid value\nA code used in the declaration is either not a recognised code or is not a code permitted on the particular declaration.\nFor example:\nA document code which is only permitted on export declarations has been declared on an import declaration.\nA valid code has been entered on the declaration, but has been entered at the wrong level (header or item) to which it is permitted."
   },
   {
-    "code": "CDS10021",
-    "message": "Data Error: Value must be positive",
-    "fix": "You appear to have entered a negative value  A negative amount has been declared for writing off a licence. The quantity being written off for a licence must be equal to or greater than zero",
-    "text": "CDS10021 data error: value must be positive you appear to have entered a negative value  a negative amount has been declared for writing off a licence. the quantity being written off for a licence must be equal to or greater than zero"
+    "errorCode": "CDS10021",
+    "description": "Data Error: Value must be positive",
+    "fixAction": "You appear to have entered a negative value\nA negative amount has been declared for writing off a licence. The quantity being written off for a licence must be equal to or greater than zero"
   },
   {
-    "code": "CDS10045",
-    "message": "Calculated item Customs value is negative. Check declaration valuation data.",
-    "fix": "Valuation error  The deductions you declared may exceed the value of the items. See CDS Tariff completion notes for data element 4/9. Apportioning a deduction across multiple items must not reduce the value of any single item to zero or a negative amount.",
-    "text": "CDS10045 calculated item customs value is negative. check declaration valuation data. valuation error  the deductions you declared may exceed the value of the items. see cds tariff completion notes for data element 4/9. apportioning a deduction across multiple items must not reduce the value of any single item to zero or a negative amount."
+    "errorCode": "CDS10045",
+    "description": "Calculated item Customs value is negative. Check declaration valuation data.",
+    "fixAction": "Valuation error\nThe deductions you declared may exceed the value of the items. See CDS Tariff completion notes for data element 4/9. Apportioning a deduction across multiple items must not reduce the value of any single item to zero or a negative amount."
   },
   {
-    "code": "CDS11003",
-    "message": "Relation error: The value declared in Total Number of Items (D.E. 1/9) does not correspond with the number of goods items on the declaration",
-    "fix": "You have more or fewer items than the number you declared  Amend data element 1/9 to match the number of declared goods items on the declaration.",
-    "text": "CDS11003 relation error: the value declared in total number of items (d.e. 1/9) does not correspond with the number of goods items on the declaration you have more or fewer items than the number you declared  amend data element 1/9 to match the number of declared goods items on the declaration."
+    "errorCode": "CDS11003",
+    "description": "Relation error: The value declared in Total Number of Items (D.E. 1/9) does not correspond with the number of goods items on the declaration",
+    "fixAction": "You have more or fewer items than the number you declared\nAmend data element 1/9 to match the number of declared goods items on the declaration."
   },
   {
-    "code": "CDS11004",
-    "message": "Relation error: The combination of Trade Movement Type, Declaration Type followed by requested procedure and /or previous procedure code is invalid.",
-    "fix": "Relation error  The combination of procedure code and additional procedure code is either invalid or is not permitted on this type of declaration. Or the additional procedure code combination is not permitted.",
-    "text": "CDS11004 relation error: the combination of trade movement type, declaration type followed by requested procedure and /or previous procedure code is invalid. relation error  the combination of procedure code and additional procedure code is either invalid or is not permitted on this type of declaration. or the additional procedure code combination is not permitted."
+    "errorCode": "CDS11004",
+    "description": "Relation error: The combination of Trade Movement Type, Declaration Type followed by requested procedure and /or previous procedure code is invalid.",
+    "fixAction": "Relation error\nThe combination of procedure code and additional procedure code is either invalid or is not permitted on this type of declaration.\nOr the additional procedure code combination is not permitted."
   },
   {
-    "code": "CDS11005",
-    "message": "Relation Error: The Requested Procedure (D.E. 1/10) for each Goods Item must derive the same Declaration Category (e.g. H1) or acceptance date is not valid. No further validation has been carried out.",
-    "fix": "Relation error  All items on the declaration must derive from the same procedure category. For example if one item has requested procedure 40, then another item must not have a requested procedure of 71 because this would require a different declaration type.",
-    "text": "CDS11005 relation error: the requested procedure (d.e. 1/10) for each goods item must derive the same declaration category (e.g. h1) or acceptance date is not valid. no further validation has been carried out. relation error  all items on the declaration must derive from the same procedure category. for example if one item has requested procedure 40, then another item must not have a requested procedure of 71 because this would require a different declaration type."
+    "errorCode": "CDS11005",
+    "description": "Relation Error: The Requested Procedure (D.E. 1/10) for each Goods Item must derive the same Declaration Category (e.g. H1) or acceptance date is not valid. No further validation has been carried out.",
+    "fixAction": "Relation error\nAll items on the declaration must derive from the same procedure category. For example if one item has requested procedure 40, then another item must not have a requested procedure of 71 because this would require a different declaration type."
   },
   {
-    "code": "CDS11006",
-    "message": "Relation Error: Net Mass must be lower than Gross Mass",
-    "fix": "Relation error  Net mass declared is greater than the gross mass declared.",
-    "text": "CDS11006 relation error: net mass must be lower than gross mass relation error  net mass declared is greater than the gross mass declared."
+    "errorCode": "CDS11006",
+    "description": "Relation Error: Net Mass must be lower than Gross Mass",
+    "fixAction": "Relation error\nNet mass declared is greater than the gross mass declared."
   },
   {
-    "code": "CDS11007",
-    "message": "Relation Error: The submitter of the Additional Message differs from the original declaration.",
-    "fix": "Additional message cannot be accepted  A person linked to a different EORI number or different identification details cannot send a request to HMRC about the declaration, such as requesting a cancellation. Only the original declarant can send requests.",
-    "text": "CDS11007 relation error: the submitter of the additional message differs from the original declaration. additional message cannot be accepted  a person linked to a different eori number or different identification details cannot send a request to hmrc about the declaration, such as requesting a cancellation. only the original declarant can send requests."
+    "errorCode": "CDS11007",
+    "description": "Relation Error: The submitter of the Additional Message differs from the original declaration.",
+    "fixAction": "Additional message cannot be accepted\nA person linked to a different EORI number or different identification details cannot send a request to HMRC about the declaration, such as requesting a cancellation. Only the original declarant can send requests."
   },
   {
-    "code": "CDS11012",
-    "message": "Element is not allowed to be amended on this declaration type",
-    "fix": "Element is not allowed to be amended on this declaration type  Check your amendment request. For example, you cannot change a declaration from prelodged (D) to arrived (A) through amendment, only through goods arrival.",
-    "text": "CDS11012 element is not allowed to be amended on this declaration type element is not allowed to be amended on this declaration type  check your amendment request. for example, you cannot change a declaration from prelodged (d) to arrived (a) through amendment, only through goods arrival."
+    "errorCode": "CDS11012",
+    "description": "Element is not allowed to be amended on this declaration type",
+    "fixAction": "Element is not allowed to be amended on this declaration type\nCheck your amendment request. For example, you cannot change a declaration from prelodged (D) to arrived (A) through amendment, only through goods arrival."
   },
   {
-    "code": "CDS12003",
-    "message": "Uniqueness Error: Reuse of LRN (D.E. 2/5) is not allowed within 48 hours",
-    "fix": "Local reference number duplication  You used the same local reference number (LRN) within 48 hours. Change the LRN or add a version number at the end using letters and numbers only.",
-    "text": "CDS12003 uniqueness error: reuse of lrn (d.e. 2/5) is not allowed within 48 hours local reference number duplication  you used the same local reference number (lrn) within 48 hours. change the lrn or add a version number at the end using letters and numbers only."
+    "errorCode": "CDS12003",
+    "description": "Uniqueness Error: Reuse of LRN (D.E. 2/5) is not allowed within 48 hours",
+    "fixAction": "Local reference number duplication\nYou used the same local reference number (LRN) within 48 hours. Change the LRN or add a version number at the end using letters and numbers only."
   },
   {
-    "code": "CDS12005",
-    "message": "Authorisation Error: Party ID unknown or invalid",
-    "fix": "Identification not recognised  An EORI or VAT number included on the declaration is not recognised or the number used is not permitted in this DE.",
-    "text": "CDS12005 authorisation error: party id unknown or invalid identification not recognised  an eori or vat number included on the declaration is not recognised or the number used is not permitted in this de."
+    "errorCode": "CDS12005",
+    "description": "Authorisation Error: Party ID unknown or invalid",
+    "fixAction": "Identification not recognised\nAn EORI or VAT number included on the declaration is not recognised or the number used is not permitted in this DE."
   },
   {
-    "code": "CDS12006",
-    "message": "License Error: License has expired; or License ID cannot be recognised; or License ID does not belong to the party on the declaration; or License declared has insufficient balance remaining; or License does not apply to the goods or country declared",
-    "fix": "Licence has expired, not recognised, or does not match  You declared a licence number that is failing validation for one of these reasons:  Expiry date is in the past Licence ID not recognised Licence DUCR not matching declaration DUCR Licence ID does not match EORI declared Licence declared has insufficient balance remaining Licence does not match country of origin specified Licence does not permit quantity declared",
-    "text": "CDS12006 license error: license has expired; or license id cannot be recognised; or license id does not belong to the party on the declaration; or license declared has insufficient balance remaining; or license does not apply to the goods or country declared licence has expired, not recognised, or does not match  you declared a licence number that is failing validation for one of these reasons:  expiry date is in the past licence id not recognised licence ducr not matching declaration ducr licence id does not match eori declared licence declared has insufficient balance remaining licence does not match country of origin specified licence does not permit quantity declared"
+    "errorCode": "CDS12006",
+    "description": "License Error: License has expired; or License ID cannot be recognised; or License ID does not belong to the party on the declaration; or License declared has insufficient balance remaining; or License does not apply to the goods or country declared",
+    "fixAction": "Licence has expired, not recognised, or does not match\nYou declared a licence number that is failing validation for one of these reasons:\nExpiry date is in the past\nLicence ID not recognised\nLicence DUCR not matching declaration DUCR\nLicence ID does not match EORI declared\nLicence declared has insufficient balance remaining\nLicence does not match country of origin specified\nLicence does not permit quantity declared"
   },
   {
-    "code": "CDS12007",
-    "message": "Authorisation Error: Authorisation has expired or Authorisation reference number provided is not recognised",
-    "fix": "Authorisation number not accepted  You declared an authorisation that has expired; or the reference number does not belong to the party on the declaration; or the reference number provided is not recognised.",
-    "text": "CDS12007 authorisation error: authorisation has expired or authorisation reference number provided is not recognised authorisation number not accepted  you declared an authorisation that has expired; or the reference number does not belong to the party on the declaration; or the reference number provided is not recognised."
+    "errorCode": "CDS12007",
+    "description": "Authorisation Error: Authorisation has expired or Authorisation reference number provided is not recognised",
+    "fixAction": "Authorisation number not accepted\nYou declared an authorisation that has expired; or the reference number does not belong to the party on the declaration; or the reference number provided is not recognised."
   },
   {
-    "code": "CDS12013",
-    "message": "Authorisation Error: provided VAT number is not a valid destination for VAT transfer",
-    "fix": "Authorisation error  VAT number is not a valid destination for VAT transfer.",
-    "text": "CDS12013 authorisation error: provided vat number is not a valid destination for vat transfer authorisation error  vat number is not a valid destination for vat transfer."
+    "errorCode": "CDS12013",
+    "description": "Authorisation Error: provided VAT number is not a valid destination for VAT transfer",
+    "fixAction": "Authorisation error\nVAT number is not a valid destination for VAT transfer."
   },
   {
-    "code": "CDS12014",
-    "message": "Sequence Error: A Goods Arrival Notification must follow a pre-lodged declaration.",
-    "fix": "Goods arrival notification required  A goods arrival notification must follow a pre-lodged declaration.",
-    "text": "CDS12014 sequence error: a goods arrival notification must follow a pre-lodged declaration. goods arrival notification required  a goods arrival notification must follow a pre-lodged declaration."
+    "errorCode": "CDS12014",
+    "description": "Sequence Error: A Goods Arrival Notification must follow a pre-lodged declaration.",
+    "fixAction": "Goods arrival notification required\nA goods arrival notification must follow a pre-lodged declaration."
   },
   {
-    "code": "CDS12015",
-    "message": "Sequence Error: AdditionalMessage.declarationReference does not refer to an existing declaration or the existing declaration is not in a permissible state to process the request",
-    "fix": "Declaration status does not allow request  The request to arrive, amend or cancel declaration is invalid because the declaration cannot be found or is in a state that will not allow the requested action.",
-    "text": "CDS12015 sequence error: additionalmessage.declarationreference does not refer to an existing declaration or the existing declaration is not in a permissible state to process the request declaration status does not allow request  the request to arrive, amend or cancel declaration is invalid because the declaration cannot be found or is in a state that will not allow the requested action."
+    "errorCode": "CDS12015",
+    "description": "Sequence Error: AdditionalMessage.declarationReference does not refer to an existing declaration or the existing declaration is not in a permissible state to process the request",
+    "fixAction": "Declaration status does not allow request\nThe request to arrive, amend or cancel declaration is invalid because the declaration cannot be found or is in a state that will not allow the requested action."
   },
   {
-    "code": "CDS12016",
-    "message": "Date Error: The acceptance date must not be in the future and must not be more than 180 days in the past.",
-    "fix": "Supplementary declaration is too late or predates acceptance  The date when goods were accepted for the simplified declaration or EIDR must not be more than 365 days in the past (or 200 days for a type Q declaration) and also cannot be in the future (cannot be before the goods are accepted).",
-    "text": "CDS12016 date error: the acceptance date must not be in the future and must not be more than 180 days in the past. supplementary declaration is too late or predates acceptance  the date when goods were accepted for the simplified declaration or eidr must not be more than 365 days in the past (or 200 days for a type q declaration) and also cannot be in the future (cannot be before the goods are accepted)."
+    "errorCode": "CDS12016",
+    "description": "Date Error: The acceptance date must not be in the future and must not be more than 180 days in the past.",
+    "fixAction": "Supplementary declaration is too late or predates acceptance\nThe date when goods were accepted for the simplified declaration or EIDR must not be\nmore than 365 days in the past (or 200 days for a type Q declaration) and also cannot be\nin the future (cannot be before the goods are accepted)."
   },
   {
-    "code": "CDS12022",
-    "message": "Relation Error: The Good Item Number (D.E. 1/6) is larger than the total number of goods items on the declaration",
-    "fix": "Number of items error  The goods item number declared is larger than the total number of goods items on the declaration.",
-    "text": "CDS12022 relation error: the good item number (d.e. 1/6) is larger than the total number of goods items on the declaration number of items error  the goods item number declared is larger than the total number of goods items on the declaration."
+    "errorCode": "CDS12022",
+    "description": "Relation Error: The Good Item Number (D.E. 1/6) is larger than the total number of goods items on the declaration",
+    "fixAction": "Number of items error\nThe goods item number declared is larger than the total number of goods items on the declaration."
   },
   {
-    "code": "CDS12024",
-    "message": "Uniqueness Error: The value declared should be unique",
-    "fix": "Uniqueness error  You have declared a value and repeated it, when that is not allowed.  Check the entries for these data elements: 1/11 - additional procedure code can only be used once on each item 1/6 - item number cannot be repeated on the declaration 2/3 -ARC number declared with document code C651 can only be used on one declaration 4/9 - addition or deduction code can only be used once at header level or once with each item 2/3 - licence ID cannot be repeated on the same item",
-    "text": "CDS12024 uniqueness error: the value declared should be unique uniqueness error  you have declared a value and repeated it, when that is not allowed.  check the entries for these data elements: 1/11 - additional procedure code can only be used once on each item 1/6 - item number cannot be repeated on the declaration 2/3 -arc number declared with document code c651 can only be used on one declaration 4/9 - addition or deduction code can only be used once at header level or once with each item 2/3 - licence id cannot be repeated on the same item"
+    "errorCode": "CDS12024",
+    "description": "Uniqueness Error: The value declared should be unique",
+    "fixAction": "Uniqueness error\nYou have declared a value and repeated it, when that is not allowed.\nCheck the entries for these data elements:\n1/11 - additional procedure code can only be used once on each item\n1/6 - item number cannot be repeated on the declaration\n2/3 -ARC number declared with document code C651 can only be used on one declaration\n4/9 - addition or deduction code can only be used once at header level or once with each item\n2/3 - licence ID cannot be repeated on the same item"
   },
   {
-    "code": "CDS12026",
-    "message": "Uniqueness Error: The same data element cannot be amended more than once in the same request.",
-    "fix": "Field has been amended more than once  On amendments the same data element can only be amended once per amendment submission.",
-    "text": "CDS12026 uniqueness error: the same data element cannot be amended more than once in the same request. field has been amended more than once  on amendments the same data element can only be amended once per amendment submission."
+    "errorCode": "CDS12026",
+    "description": "Uniqueness Error: The same data element cannot be amended more than once in the same request.",
+    "fixAction": "Field has been amended more than once\nOn amendments the same data element can only be amended once per amendment submission."
   },
   {
-    "code": "CDS12031",
-    "message": "Sequence Error: Goods Arrival Notification must be submitted within 30 days.",
-    "fix": "Arrival notification is too late  Goods arrival notification has been submitted 30 or more days after the date the declaration was originally submitted and received.",
-    "text": "CDS12031 sequence error: goods arrival notification must be submitted within 30 days. arrival notification is too late  goods arrival notification has been submitted 30 or more days after the date the declaration was originally submitted and received."
+    "errorCode": "CDS12031",
+    "description": "Sequence Error: Goods Arrival Notification must be submitted within 30 days.",
+    "fixAction": "Arrival notification is too late\nGoods arrival notification has been submitted 30 or more days after the date the declaration was originally submitted and received."
   },
   {
-    "code": "CDS12034",
-    "message": "Relation Error: Submission channel of amendment must be the same as the original declaration.",
-    "fix": "Amendment request is invalid  The amendment must be submitted using the same submission channel as the original declaration.",
-    "text": "CDS12034 relation error: submission channel of amendment must be the same as the original declaration. amendment request is invalid  the amendment must be submitted using the same submission channel as the original declaration."
+    "errorCode": "CDS12034",
+    "description": "Relation Error: Submission channel of amendment must be the same as the original declaration.",
+    "fixAction": "Amendment request is invalid\nThe amendment must be submitted using the same submission channel as the original declaration."
   },
   {
-    "code": "CDS12036",
-    "message": "Sequence Error: A new request cannot be submitted until a response is received to your previous request.",
-    "fix": "Request not accepted  There is an outstanding cancellation or amendment request. A new request cannot be submitted until a response is received to your previous request.",
-    "text": "CDS12036 sequence error: a new request cannot be submitted until a response is received to your previous request. request not accepted  there is an outstanding cancellation or amendment request. a new request cannot be submitted until a response is received to your previous request."
+    "errorCode": "CDS12036",
+    "description": "Sequence Error: A new request cannot be submitted until a response is received to your previous request.",
+    "fixAction": "Request not accepted\nThere is an outstanding cancellation or amendment request. A new request cannot be submitted until a response is received to your previous request."
   },
   {
-    "code": "CDS12042",
-    "message": "Relation error: elements must be identical within the Goods Item",
-    "fix": "Relation error  Different quota order numbers cannot be declared on the same item. Note that declaration will be rejected if there is more than one quota order number in data element 8/1 for an item.",
-    "text": "CDS12042 relation error: elements must be identical within the goods item relation error  different quota order numbers cannot be declared on the same item. note that declaration will be rejected if there is more than one quota order number in data element 8/1 for an item."
+    "errorCode": "CDS12042",
+    "description": "Relation error: elements must be identical within the Goods Item",
+    "fixAction": "Relation error\nDifferent quota order numbers cannot be declared on the same item. Note that declaration will be rejected if there is more than one quota order number in data element 8/1 for an item."
   },
   {
-    "code": "CDS12044",
-    "message": "External Validation MUCR result: validation errors encountered",
-    "fix": "MUCR reference is invalid",
-    "text": "CDS12044 external validation mucr result: validation errors encountered mucr reference is invalid"
+    "errorCode": "CDS12044",
+    "description": "External Validation MUCR result: validation errors encountered",
+    "fixAction": "MUCR reference is invalid"
   },
   {
-    "code": "CDS12046",
-    "message": "Process Error: Goods Arrival Notification was not received within 30 days of the pre-lodged declaration.",
-    "fix": "Goods arrival notification has not been submitted within 30 days from the date the declaration was originally received. The declaration must now be resubmitted to CDS as either arrived (where permitted) or pre-lodged and then arrived.",
-    "text": "CDS12046 process error: goods arrival notification was not received within 30 days of the pre-lodged declaration. goods arrival notification has not been submitted within 30 days from the date the declaration was originally received. the declaration must now be resubmitted to cds as either arrived (where permitted) or pre-lodged and then arrived."
+    "errorCode": "CDS12046",
+    "description": "Process Error: Goods Arrival Notification was not received within 30 days of the pre-lodged declaration.",
+    "fixAction": "Goods arrival notification has not been submitted within 30 days from the date the declaration was originally received. The declaration must now be resubmitted to CDS as either arrived (where permitted) or pre-lodged and then arrived."
   },
   {
-    "code": "CDS12050",
-    "message": "A valid Requested Procedure (D.E. 1/10) has not been provided or acceptance date is not valid. No further validation has been carried out.",
-    "fix": "Procedure code is missing or invalid  Declaration must include at least one item and every item must include a valid procedure code.",
-    "text": "CDS12050 a valid requested procedure (d.e. 1/10) has not been provided or acceptance date is not valid. no further validation has been carried out. procedure code is missing or invalid  declaration must include at least one item and every item must include a valid procedure code."
+    "errorCode": "CDS12050",
+    "description": "A valid Requested Procedure (D.E. 1/10) has not been provided or acceptance date is not valid. No further validation has been carried out.",
+    "fixAction": "Procedure code is missing or invalid\nDeclaration must include at least one item and every item must include a valid procedure code."
   },
   {
-    "code": "CDS12052",
-    "message": "A valid Declaration Type (D.E. 1/2) has not been provided or acceptance date is not valid. No further validation has been carried out",
-    "fix": "No valid declaration type  Enter the declaration type - standard, simplified (regular use), simplified (occasional use), supplementary or clearance, and prelodged or arrived. See data element 1/2 for the correct codes.",
-    "text": "CDS12052 a valid declaration type (d.e. 1/2) has not been provided or acceptance date is not valid. no further validation has been carried out no valid declaration type  enter the declaration type - standard, simplified (regular use), simplified (occasional use), supplementary or clearance, and prelodged or arrived. see data element 1/2 for the correct codes."
+    "errorCode": "CDS12052",
+    "description": "A valid Declaration Type (D.E. 1/2) has not been provided or acceptance date is not valid. No further validation has been carried out",
+    "fixAction": "No valid declaration type\nEnter the declaration type - standard, simplified (regular use), simplified (occasional use), supplementary or clearance, and prelodged or arrived. See data element 1/2 for the correct codes."
   },
   {
-    "code": "CDS12056",
-    "message": "Relation error: the combination of elements is not allowed",
-    "fix": "The combination of 2 values you entered is not allowed or requires another value entered For example: A document code has an incompatible document status or You have declared a code/codes which require that another code is then entered but is missing, such as an additional procedure code required for another additional procedure code to be used. or You cannot enter the customs procedure using ABDIN for Authorisation by Declaration (ABD)",
-    "text": "CDS12056 relation error: the combination of elements is not allowed the combination of 2 values you entered is not allowed or requires another value entered for example: a document code has an incompatible document status or you have declared a code/codes which require that another code is then entered but is missing, such as an additional procedure code required for another additional procedure code to be used. or you cannot enter the customs procedure using abdin for authorisation by declaration (abd)"
+    "errorCode": "CDS12056",
+    "description": "Relation error: the combination of elements is not allowed",
+    "fixAction": "The combination of 2 values you entered is not allowed or requires another value entered\nFor example:\nA document code has an incompatible document status\nor\nYou have declared a code/codes which require that another code is then entered but is missing, such as an additional procedure code required for another additional procedure code to be used.\nor\nYou cannot enter the customs procedure using ABDIN for Authorisation by Declaration (ABD)"
   },
   {
-    "code": "CDS12057",
-    "message": "Relation Error: The invoice currency must be the same for every goods item on the declaration.",
-    "fix": "Invoice currency for all items must be the same  See data element 4/14 for the requirement.",
-    "text": "CDS12057 relation error: the invoice currency must be the same for every goods item on the declaration. invoice currency for all items must be the same  see data element 4/14 for the requirement."
+    "errorCode": "CDS12057",
+    "description": "Relation Error: The invoice currency must be the same for every goods item on the declaration.",
+    "fixAction": "Invoice currency for all items must be the same\nSee data element 4/14 for the requirement."
   },
   {
-    "code": "CDS12058",
-    "message": "Relation Error: When the packaging quantity is zero, then there must be another goods item with the same marks and numbers having a quantity greater than zero",
-    "fix": "Number of packages error  Packaging quantity cannot be zero for all packages for combined packaging",
-    "text": "CDS12058 relation error: when the packaging quantity is zero, then there must be another goods item with the same marks and numbers having a quantity greater than zero number of packages error  packaging quantity cannot be zero for all packages for combined packaging"
+    "errorCode": "CDS12058",
+    "description": "Relation Error: When the packaging quantity is zero, then there must be another goods item with the same marks and numbers having a quantity greater than zero",
+    "fixAction": "Number of packages error\nPackaging quantity cannot be zero for all packages for combined packaging"
   },
   {
-    "code": "CDS12062",
-    "message": "External Validation DUCR result: validation errors encountered",
-    "fix": "DUCR reference is a duplication or is invalid",
-    "text": "CDS12062 external validation ducr result: validation errors encountered ducr reference is a duplication or is invalid"
+    "errorCode": "CDS12062",
+    "description": "External Validation DUCR result: validation errors encountered",
+    "fixAction": "DUCR reference is a duplication or is invalid"
   },
   {
-    "code": "CDS12066",
-    "message": "This element or value is not allowed in combination with the declared element(s) or value(s).",
-    "fix": "Either: 1) the way the declaration has been completed requires specific DEs to also be completed with certain values. For example, required DE has not been completed or not completed correctly, or; 2) the way the declaration has been completed is not permitted. For example, the combination of DEs or their content is not allowed.",
-    "text": "CDS12066 this element or value is not allowed in combination with the declared element(s) or value(s). either: 1) the way the declaration has been completed requires specific des to also be completed with certain values. for example, required de has not been completed or not completed correctly, or; 2) the way the declaration has been completed is not permitted. for example, the combination of des or their content is not allowed."
+    "errorCode": "CDS12066",
+    "description": "This element or value is not allowed in combination with the declared element(s) or value(s).",
+    "fixAction": "Either:\n1) the way the declaration has been completed requires specific DEs to also be completed with certain values. For example, required DE has not been completed or not completed correctly, or;\n2) the way the declaration has been completed  is not permitted. For example, the combination of DEs or their content is not allowed."
   },
   {
-    "code": "CDS12067",
-    "message": "These elements or values are not allowed in combination with the declared element(s) or value(s).",
-    "fix": "Either a DE is not permitted to be completed on a declaration, has been completed incorrectly, or the combination of declared elements required has not been satisfied. For example: DE 8/1 Quota has been completed on a declaration where NIDOM and NIQUO are present in DE 2/2, or; DE 3/40 has been completed at header on a H8 declaration, but either APCs 'A04' or '1VW' and/or AI Statement 'PVA01' are missing.",
-    "text": "CDS12067 these elements or values are not allowed in combination with the declared element(s) or value(s). either a de is not permitted to be completed on a declaration, has been completed incorrectly, or the combination of declared elements required has not been satisfied. for example: de 8/1 quota has been completed on a declaration where nidom and niquo are present in de 2/2, or; de 3/40 has been completed at header on a h8 declaration, but either apcs 'a04' or '1vw' and/or ai statement 'pva01' are missing."
+    "errorCode": "CDS12067",
+    "description": "These elements or values are not allowed in combination with the declared element(s) or value(s).",
+    "fixAction": "Either a DE is not permitted to be completed on a declaration, has been completed incorrectly, or the combination of declared elements required has not been satisfied.\nFor example:\nDE 8/1 Quota has been completed on a declaration where NIDOM and NIQUO are present in DE 2/2, or;\nDE 3/40 has been completed at header on a H8 declaration, but either APCs 'A04' or '1VW' and/or AI Statement 'PVA01' are missing."
   },
   {
-    "code": "CDS12068",
-    "message": "This combination of elements mandates the declaration of a Document Identifier",
-    "fix": "A document code identifier is required for a specific doc code entered in DE 2/3.",
-    "text": "CDS12068 this combination of elements mandates the declaration of a document identifier a document code identifier is required for a specific doc code entered in de 2/3."
+    "errorCode": "CDS12068",
+    "description": "This combination of elements mandates the declaration of a Document Identifier",
+    "fixAction": "A document code identifier is required for a specific doc code entered in DE 2/3."
   },
   {
-    "code": "CDS12069",
-    "message": "Declaration invalidation is already being processed at the Office of Exit. Please wait for further update.",
-    "fix": "Declaration invalidation is already being processed at the Office of Exit. Please wait for further update.",
-    "text": "CDS12069 declaration invalidation is already being processed at the office of exit. please wait for further update. declaration invalidation is already being processed at the office of exit. please wait for further update."
+    "errorCode": "CDS12069",
+    "description": "Declaration invalidation is already being processed at the Office of Exit. Please wait for further update.",
+    "fixAction": "Declaration invalidation is already being processed at the Office of Exit. Please wait for further update."
   },
   {
-    "code": "CDS12070",
-    "message": "Relation error: The value supplied in Data Element 1 mandates the completion of Data Element 2",
-    "fix": "A required field is missing a value or is invalid  For example, you have entered a value that requires another field to be completed, or makes another field or code entered invalid.",
-    "text": "CDS12070 relation error: the value supplied in data element 1 mandates the completion of data element 2 a required field is missing a value or is invalid  for example, you have entered a value that requires another field to be completed, or makes another field or code entered invalid."
+    "errorCode": "CDS12070",
+    "description": "Relation error: The value supplied in Data Element 1 mandates the completion of Data Element 2",
+    "fixAction": "A required field is missing a value or is invalid\nFor example, you have entered a value that requires another field to be completed, or makes another field or code entered invalid."
   },
   {
-    "code": "CDS12071",
-    "message": "Relation error: Data Element must be supplied at either header or item level and cannot be declared at both levels",
-    "fix": "A field has been completed at header and item level  Check the data element completion guide for exports from the CDS Tariff. This tells you the exact requirements for each field. In particular see the data element completion guide for data elements 3/9, 5/8, 5/14, 7/10 and 8/5.",
-    "text": "CDS12071 relation error: data element must be supplied at either header or item level and cannot be declared at both levels a field has been completed at header and item level  check the data element completion guide for exports from the cds tariff. this tells you the exact requirements for each field. in particular see the data element completion guide for data elements 3/9, 5/8, 5/14, 7/10 and 8/5."
+    "errorCode": "CDS12071",
+    "description": "Relation error: Data Element must be supplied at either header or item level and cannot be declared at both levels",
+    "fixAction": "A field has been completed at header and item level\nCheck the data element completion guide for exports from the CDS Tariff. This tells you the exact requirements for each field. In particular see the data element completion guide for data elements 3/9, 5/8, 5/14, 7/10 and 8/5."
   },
   {
-    "code": "CDS12072",
-    "message": "Relation error: Either Data Element 1 or Data Element 2 must be supplied, but not both",
-    "fix": "Relation error  This could be an unacceptable combination of values at header and item level, for example gross weight has been declared at both header and item level.  Or EORI as well as name and address has been declared for consignee, consignor or buyer.",
-    "text": "CDS12072 relation error: either data element 1 or data element 2 must be supplied, but not both relation error  this could be an unacceptable combination of values at header and item level, for example gross weight has been declared at both header and item level.  or eori as well as name and address has been declared for consignee, consignor or buyer."
+    "errorCode": "CDS12072",
+    "description": "Relation error: Either Data Element 1 or Data Element 2 must be supplied, but not both",
+    "fixAction": "Relation error\nThis could be an unacceptable combination of values at header and item level, for example gross weight has been declared at both header and item level.\nOr EORI as well as name and address has been declared for consignee, consignor or buyer."
   },
   {
-    "code": "CDS12073",
-    "message": "Relation error: Data Element must be supplied at header or item level",
-    "fix": "Relation error  A value is missing or has been entered at the wrong level.  Check these data elements:  2/1, (31 or 3/2), and 8/5 must be declared at least once at either header or item level. 7/10 must be declared at least once at header or item level if 7/2 is coded 1. 3/15 or 3/16 must be declared at header level.",
-    "text": "CDS12073 relation error: data element must be supplied at header or item level relation error  a value is missing or has been entered at the wrong level.  check these data elements:  2/1, (31 or 3/2), and 8/5 must be declared at least once at either header or item level. 7/10 must be declared at least once at header or item level if 7/2 is coded 1. 3/15 or 3/16 must be declared at header level."
+    "errorCode": "CDS12073",
+    "description": "Relation error: Data Element must be supplied at header or item level",
+    "fixAction": "Relation error\nA value is missing or has been entered at the wrong level.\nCheck these data elements:\n2/1, (31 or 3/2), and 8/5 must be declared at least once at either header or item level.\n7/10 must be declared at least once at header or item level if 7/2 is coded 1.\n3/15 or 3/16 must be declared at header level."
   },
   {
-    "code": "CDS12074",
-    "message": "Relation error: Because Data Element 1 is not supplied, Data Element 2 is mandatory",
-    "fix": "Data elements are missing and one or the other is required  Check the data element completion guide for the CDS Tariff, and declare one or the other but not both. For example, exporter, consignor and carrier, complete either an EORI or name and address. See Tariff for specific requirements",
-    "text": "CDS12074 relation error: because data element 1 is not supplied, data element 2 is mandatory data elements are missing and one or the other is required  check the data element completion guide for the cds tariff, and declare one or the other but not both. for example, exporter, consignor and carrier, complete either an eori or name and address. see tariff for specific requirements"
+    "errorCode": "CDS12074",
+    "description": "Relation error: Because Data Element 1 is not supplied, Data Element 2 is mandatory",
+    "fixAction": "Data elements are missing and one or the other is required\nCheck the data element completion guide for the CDS Tariff, and declare one or the other but not both. For example, exporter, consignor and carrier, complete either an EORI or name and address. See Tariff for specific requirements"
   },
   {
-    "code": "CDS12075",
-    "message": "Relation error: Data Element 2 must not be supplied with this value in Data Element 1",
-    "fix": "Relation error  If one of the fields is completed the other should not have a value and should therefore be removed. For example, a document code and document status have been entered but the status is not required for this code. This can also indicate that a data element has been declared but is not permitted on this type of declaration.",
-    "text": "CDS12075 relation error: data element 2 must not be supplied with this value in data element 1 relation error  if one of the fields is completed the other should not have a value and should therefore be removed. for example, a document code and document status have been entered but the status is not required for this code. this can also indicate that a data element has been declared but is not permitted on this type of declaration."
+    "errorCode": "CDS12075",
+    "description": "Relation error: Data Element 2 must not be supplied with this value in Data Element 1",
+    "fixAction": "Relation error\nIf one of the fields is completed the other should not have a value and should therefore be removed. For example, a document code and document status have been entered but the status is not required for this code. This can also indicate that a data element has been declared but is not permitted on this type of declaration."
   },
   {
-    "code": "CDS12077",
-    "message": "Relation Error: A valid value must be supplied in Data Element 2 as Data Element 1 is present",
-    "fix": "Relation error affecting one or more additional completion requirements  For example, the completion of one DE with a certain value/code requires another value/code to be entered in the same DE or a different DE (such as not entering 00100 in DE 2/2 when ABDIN is entered in DE 2/2 etc), or; the DE itself has not been fully completed/populated as required (such as an address not fully completed when a name is provided in DE 7/14 etc). or; the DE has been completed incorrectly, for example DE 4/4 measurement units KTC or CTG cannot have zero values.",
-    "text": "CDS12077 relation error: a valid value must be supplied in data element 2 as data element 1 is present relation error affecting one or more additional completion requirements  for example, the completion of one de with a certain value/code requires another value/code to be entered in the same de or a different de (such as not entering 00100 in de 2/2 when abdin is entered in de 2/2 etc), or; the de itself has not been fully completed/populated as required (such as an address not fully completed when a name is provided in de 7/14 etc). or; the de has been completed incorrectly, for example de 4/4 measurement units ktc or ctg cannot have zero values."
+    "errorCode": "CDS12077",
+    "description": "Relation Error: A valid value must be supplied in Data Element 2 as Data Element 1 is present",
+    "fixAction": "Relation error affecting one or more additional completion requirements\nFor example, the completion of one DE with a certain value/code requires another value/code to be entered in the same DE or a different DE (such as not entering 00100 in DE 2/2 when ABDIN is entered in DE 2/2 etc),\nor;\nthe DE itself has not been fully completed/populated as required (such as an address not fully completed when a name is provided in DE 7/14 etc).\nor;\nthe DE has been completed incorrectly, for example DE 4/4 measurement units KTC or CTG cannot have zero values."
   },
   {
-    "code": "CDS12078",
-    "message": "Relation Error: As no Deferment Account Number is provided in D.E. 2/6, an immediate Method of Payment must be offered in D.E. 4/8",
-    "fix": "Relation Error: As no Deferment Account Number is provided in D.E. 2/6, an immediate Method of Payment must be offered in D.E. 4/8",
-    "text": "CDS12078 relation error: as no deferment account number is provided in d.e. 2/6, an immediate method of payment must be offered in d.e. 4/8 relation error: as no deferment account number is provided in d.e. 2/6, an immediate method of payment must be offered in d.e. 4/8"
+    "errorCode": "CDS12078",
+    "description": "Relation Error: As no Deferment Account Number is provided in D.E. 2/6, an immediate Method of Payment must be offered in D.E. 4/8",
+    "fixAction": "Relation Error: As no Deferment Account Number is provided in D.E. 2/6, an immediate Method of Payment must be offered in D.E. 4/8"
   },
   {
-    "code": "CDS12079",
-    "message": "Relation Error: Data Element 2 must not be supplied with Data Element 1",
-    "fix": "Relation error - Two values you declared are incompatible. For example: A data element is declared at both header and item levels but only one level is permissible; You have entered a MUCR in DE 2/1 for a GVMS location code in DE 5/23.",
-    "text": "CDS12079 relation error: data element 2 must not be supplied with data element 1 relation error - two values you declared are incompatible. for example: a data element is declared at both header and item levels but only one level is permissible; you have entered a mucr in de 2/1 for a gvms location code in de 5/23."
+    "errorCode": "CDS12079",
+    "description": "Relation Error: Data Element 2 must not be supplied with Data Element 1",
+    "fixAction": "Relation error - Two values you declared are incompatible.\nFor example:\nA data element is declared at both header and item levels but only one level is permissible;\nYou have entered a MUCR in DE 2/1 for a GVMS location code in DE 5/23."
   },
   {
-    "code": "CDS12080",
-    "message": "Relation error: Combination of Addition / Deduction codes (DE 4/9) is not allowed",
-    "fix": "Relation error  You have used a mix of addition or deduction codes for an item that is not permitted. Certain addition/deduction codes cannot be declared together.  Additions and deductions should only be declared at header level where they apply to all good items on the customs declaration.  Each addition or deduction code can only be declared once at header level. The same addition or deduction code cannot then be declared at item level as well.  If a specific addition or deduction is being declared at item level, that addition or deduction may only be declared once per item.",
-    "text": "CDS12080 relation error: combination of addition / deduction codes (de 4/9) is not allowed relation error  you have used a mix of addition or deduction codes for an item that is not permitted. certain addition/deduction codes cannot be declared together.  additions and deductions should only be declared at header level where they apply to all good items on the customs declaration.  each addition or deduction code can only be declared once at header level. the same addition or deduction code cannot then be declared at item level as well.  if a specific addition or deduction is being declared at item level, that addition or deduction may only be declared once per item."
+    "errorCode": "CDS12080",
+    "description": "Relation error: Combination of Addition / Deduction codes (DE 4/9) is not allowed",
+    "fixAction": "Relation error\nYou have used a mix of addition or deduction codes for an item that is not permitted. Certain addition/deduction codes cannot be declared together.\nAdditions and deductions should only be declared at header level where they apply to all good items on the customs declaration.\nEach addition or deduction code can only be declared once at header level. The same addition or deduction code cannot then be declared at item level as well.\nIf a specific addition or deduction is being declared at item level, that addition or deduction may only be declared once per item."
   },
   {
-    "code": "CDS12081",
-    "message": "Relation Error: Importer (D.E. 3/16) & Exporter (D.E. 3/2) must not be the same party",
-    "fix": "Relation Error: Importer (D.E. 3/16) & Exporter (D.E. 3/2) must not be the same party",
-    "text": "CDS12081 relation error: importer (d.e. 3/16) & exporter (d.e. 3/2) must not be the same party relation error: importer (d.e. 3/16) & exporter (d.e. 3/2) must not be the same party"
+    "errorCode": "CDS12081",
+    "description": "Relation Error: Importer (D.E. 3/16) &amp; Exporter (D.E. 3/2) must not be the same party",
+    "fixAction": "Relation Error: Importer (D.E. 3/16) &amp; Exporter (D.E. 3/2) must not be the same party"
   },
   {
-    "code": "CDS12082",
-    "message": "Relation error: The currency declared in DE 4/11 must be the same as the currency declared in DE 4/14",
-    "fix": "Relation error  The currency declared for the total amount invoiced does not match the currency declared at item price amount (data element 4/14).",
-    "text": "CDS12082 relation error: the currency declared in de 4/11 must be the same as the currency declared in de 4/14 relation error  the currency declared for the total amount invoiced does not match the currency declared at item price amount (data element 4/14)."
+    "errorCode": "CDS12082",
+    "description": "Relation error: The currency declared in DE 4/11 must be the same as the currency declared in DE 4/14",
+    "fixAction": "Relation error\nThe currency declared for the total amount invoiced does not match the currency declared at item price amount (data element 4/14)."
   },
   {
-    "code": "CDS12083",
-    "message": "Relation Error: For Country of Preferential Origin DE 5/16 where mandated, only provide one country or country group, not both",
-    "fix": "Relation error  You have provided both a country and country group for mandatory data element Preferential Origin.  Where the proof of origin document refers to a group of countries, enter the group of countries by using the relevant Union codes in accordance with the codes listed in Appendix 13: Country Codes.  Where data element 5/16 is completed using a preference group code, data element 5/15 must be completed with the specific country of origin for the goods.",
-    "text": "CDS12083 relation error: for country of preferential origin de 5/16 where mandated, only provide one country or country group, not both relation error  you have provided both a country and country group for mandatory data element preferential origin.  where the proof of origin document refers to a group of countries, enter the group of countries by using the relevant union codes in accordance with the codes listed in appendix 13: country codes.  where data element 5/16 is completed using a preference group code, data element 5/15 must be completed with the specific country of origin for the goods."
+    "errorCode": "CDS12083",
+    "description": "Relation Error: For Country of Preferential Origin DE 5/16 where mandated, only provide one country or country group, not both",
+    "fixAction": "Relation error\nYou have provided both a country and country group for mandatory data element Preferential Origin.\nWhere the proof of origin document refers to a group of countries, enter the group of countries by using the relevant Union codes in accordance with the codes listed in Appendix 13: Country Codes.\nWhere data element 5/16 is completed using a preference group code, data element 5/15 must be completed with the specific country of origin for the goods."
   },
   {
-    "code": "CDS12084",
-    "message": "Relation error: Either Consignee Name (DE 3/9) or Consignee Identification Number (DE 3/10) must be supplied, but not both",
-    "fix": "Consignee details  You have provided both consignee name and consignee EORI. Only declare either the EORI or the full name and address of consignee not both. EORI should be declared when known.",
-    "text": "CDS12084 relation error: either consignee name (de 3/9) or consignee identification number (de 3/10) must be supplied, but not both consignee details  you have provided both consignee name and consignee eori. only declare either the eori or the full name and address of consignee not both. eori should be declared when known."
+    "errorCode": "CDS12084",
+    "description": "Relation error: Either Consignee Name (DE 3/9) or Consignee Identification Number (DE 3/10) must be supplied, but not both",
+    "fixAction": "Consignee details\nYou have provided both consignee name and consignee EORI. Only declare either the EORI or the full name and address of consignee not both. EORI should be declared when known."
   },
   {
-    "code": "CDS12086",
-    "message": "Relation error: Either Carrier Name (DE 3/31) or Carrier Identification Number (DE 3/32) must be supplied, but not both",
-    "fix": "Carrier details  You have provided both Carrier name and Carrier EORI. Only declare either the EORI or the full name and address of carrier not both. EORI should be declared when known.",
-    "text": "CDS12086 relation error: either carrier name (de 3/31) or carrier identification number (de 3/32) must be supplied, but not both carrier details  you have provided both carrier name and carrier eori. only declare either the eori or the full name and address of carrier not both. eori should be declared when known."
+    "errorCode": "CDS12086",
+    "description": "Relation error: Either Carrier Name (DE 3/31) or Carrier Identification Number (DE 3/32) must be supplied, but not both",
+    "fixAction": "Carrier details\nYou have provided both Carrier name and Carrier EORI. Only declare either the EORI or the full name and address of carrier not both. EORI should be declared when known."
   },
   {
-    "code": "CDS12087",
-    "message": "Relation error: VAT Declaring Party Identification (DE 3/40), where mandated, must be supplied at either header or item",
-    "fix": "Additional fiscal party  You have declared your additional fiscal party VAT number at both header and item level. It should only be declared at either item or header level. Or you have declared procedure code 1042 and not declared an additional fiscal references ID.",
-    "text": "CDS12087 relation error: vat declaring party identification (de 3/40), where mandated, must be supplied at either header or item additional fiscal party  you have declared your additional fiscal party vat number at both header and item level. it should only be declared at either item or header level. or you have declared procedure code 1042 and not declared an additional fiscal references id."
+    "errorCode": "CDS12087",
+    "description": "Relation error: VAT Declaring Party Identification (DE 3/40), where mandated, must be supplied at either header or item",
+    "fixAction": "Additional fiscal party\nYou have declared your additional fiscal party VAT number at both header and item level. It should only be declared at either item or header level. Or you have declared procedure code 1042 and not declared an additional fiscal references ID."
   },
   {
-    "code": "CDS12088",
-    "message": "Relation error: Either Agent Name (DE 3/19) or Agent Identification Number (DE 3/20) must be supplied",
-    "fix": "Representative details missing  To correct this error, complete the EORI in data element 3/19, or the name and address in 3/20, even if they are your own details as the declarant and you are the direct representative.",
-    "text": "CDS12088 relation error: either agent name (de 3/19) or agent identification number (de 3/20) must be supplied representative details missing  to correct this error, complete the eori in data element 3/19, or the name and address in 3/20, even if they are your own details as the declarant and you are the direct representative."
+    "errorCode": "CDS12088",
+    "description": "Relation error: Either Agent Name (DE 3/19) or Agent Identification Number (DE 3/20) must be supplied",
+    "fixAction": "Representative details missing\nTo correct this error, complete the EORI in data element 3/19, or the name and address in 3/20, even if they are your own details as the declarant and you are the direct representative."
   },
   {
-    "code": "CDS12089",
-    "message": "Relation error: Consignee Party Name (DE3/9) must be supplied at either header or item level",
-    "fix": "Consignee party details  Consignee party name and address must be declared at either header or item level on a C21e unless the procedure code is 0019.",
-    "text": "CDS12089 relation error: consignee party name (de3/9) must be supplied at either header or item level consignee party details  consignee party name and address must be declared at either header or item level on a c21e unless the procedure code is 0019."
+    "errorCode": "CDS12089",
+    "description": "Relation error: Consignee Party Name (DE3/9) must be supplied at either header  or item level",
+    "fixAction": "Consignee party details\nConsignee party name and address must be declared at either header or item level on a C21e unless the procedure code is 0019."
   },
   {
-    "code": "CDS12090",
-    "message": "Relation error: Carrier Name (DE 3/31) or Carrier Identification Number (DE 3/32) must be supplied for the 17X Additional Procedure Code at either header or item level",
-    "fix": "Carrier EORI  When declaring additional procedure Code 17X on a C21e clearance request, the carrier name and address or the carrier EORI must be declared at header level.",
-    "text": "CDS12090 relation error: carrier name (de 3/31) or carrier identification number (de 3/32) must be supplied for the 17x additional procedure code at either header or item level carrier eori  when declaring additional procedure code 17x on a c21e clearance request, the carrier name and address or the carrier eori must be declared at header level."
+    "errorCode": "CDS12090",
+    "description": "Relation error: Carrier Name (DE 3/31) or Carrier Identification Number (DE 3/32)  must be supplied for the 17X Additional Procedure  Code at either header or item level",
+    "fixAction": "Carrier EORI\nWhen declaring additional procedure Code 17X on a C21e clearance request, the carrier name and address or the carrier EORI must be declared at header level."
   },
   {
-    "code": "CDS12091",
-    "message": "Relation error: Consignee (D.E. 3/10) & Exporter (D.E. 3/1) must not be the same Party",
-    "fix": "Relation error  Consignee (receiver of goods) and exporter cannot have the same EORI number.",
-    "text": "CDS12091 relation error: consignee (d.e. 3/10) & exporter (d.e. 3/1) must not be the same party relation error  consignee (receiver of goods) and exporter cannot have the same eori number."
+    "errorCode": "CDS12091",
+    "description": "Relation error: Consignee (D.E. 3/10) &amp; Exporter (D.E. 3/1) must not be the same Party",
+    "fixAction": "Relation error\nConsignee (receiver of goods) and exporter cannot have the same EORI number."
   },
   {
-    "code": "CDS12092",
-    "message": "Relation error: Seller (DE 3/25) & Exporter (DE 3/1) must not be the same Party",
-    "fix": "Relation error  You have declared the same party for seller (data element 3/25) and exporter (data element 3/1).  The seller details are only required where the seller is a different party to the exporter.  Where the seller is a different party to the exporter and holds a recognised EORI number, enter the seller’s EORI number in data element 3/25.",
-    "text": "CDS12092 relation error: seller (de 3/25) & exporter (de 3/1) must not be the same party relation error  you have declared the same party for seller (data element 3/25) and exporter (data element 3/1).  the seller details are only required where the seller is a different party to the exporter.  where the seller is a different party to the exporter and holds a recognised eori number, enter the seller’s eori number in data element 3/25."
+    "errorCode": "CDS12092",
+    "description": "Relation error: Seller (DE 3/25) &amp; Exporter (DE 3/1) must not be the same Party",
+    "fixAction": "Relation error\nYou have declared the same party for seller (data element 3/25) and exporter (data element 3/1).\nThe seller details are only required where the seller is a different party to the exporter.\nWhere the seller is a different party to the exporter and holds a recognised EORI number, enter the seller’s EORI number in data element 3/25."
   },
   {
-    "code": "CDS12095",
-    "message": "Relation error: Additional Procedure Combination (DE 1/11) can only be used when Country of Dispatch/Export (DE 5/14) Exportation Country is a Third Country",
-    "fix": "Relation error  You have used an additional procedure combination (data element 1/11) incorrectly. Additional procedure codes 1IL and 1LV can only be used for goods dispatched/exported from a third country.",
-    "text": "CDS12095 relation error: additional procedure combination (de 1/11) can only be used when country of dispatch/export (de 5/14) exportation country is a third country relation error  you have used an additional procedure combination (data element 1/11) incorrectly. additional procedure codes 1il and 1lv can only be used for goods dispatched/exported from a third country."
+    "errorCode": "CDS12095",
+    "description": "Relation error: Additional Procedure Combination (DE 1/11) can only be used when Country of Dispatch/Export (DE 5/14) Exportation Country is a Third Country",
+    "fixAction": "Relation error\nYou have used an additional procedure combination (data element 1/11) incorrectly. Additional procedure codes 1IL and 1LV can only be used for goods dispatched/exported from a third country."
   },
   {
-    "code": "CDS12096",
-    "message": "Relation error: Provided Authorisation Type (D.E. 3/39) requires specific document in Additional Documents",
-    "fix": "Authorisation error  When declaring any of the authorisation types CGU, EUS, IPO or TEA in data element 3/39, it is necessary to declare document code C505 (Customs Comprehensive Guarantee) in DE 2/3. It may be necessary to declare C505 together with a waiver status code such as XW.",
-    "text": "CDS12096 relation error: provided authorisation type (d.e. 3/39) requires specific document in additional documents authorisation error  when declaring any of the authorisation types cgu, eus, ipo or tea in data element 3/39, it is necessary to declare document code c505 (customs comprehensive guarantee) in de 2/3. it may be necessary to declare c505 together with a waiver status code such as xw."
+    "errorCode": "CDS12096",
+    "description": "Relation error: Provided Authorisation Type (D.E. 3/39) requires specific document in Additional Documents",
+    "fixAction": "Authorisation error\nWhen declaring any of the authorisation types CGU, EUS, IPO or TEA in data element 3/39, it is necessary to declare document code C505 (Customs Comprehensive Guarantee) in DE 2/3. It may be necessary to declare C505 together with a waiver status code such as XW."
   },
   {
-    "code": "CDS12097",
-    "message": "Relation error: Combination Additional Procedure Code (D.E. 1/11) and Country of Destination in DE 5/8 is not allowed",
-    "fix": "Relation error  When declaring Additional Procedure Code F75, the destination country must be a Special Fiscal Territory or other territory with which the EU has formed a Customs Union.",
-    "text": "CDS12097 relation error: combination additional procedure code (d.e. 1/11) and country of destination in de 5/8 is not allowed relation error  when declaring additional procedure code f75, the destination country must be a special fiscal territory or other territory with which the eu has formed a customs union."
+    "errorCode": "CDS12097",
+    "description": "Relation error: Combination Additional Procedure Code (D.E. 1/11) and Country of Destination in DE 5/8 is not allowed",
+    "fixAction": "Relation error\nWhen declaring Additional Procedure Code F75, the destination country must be a Special Fiscal Territory or other territory with which the EU has formed a Customs Union."
   },
   {
-    "code": "CDS12098",
-    "message": "Relation Error: Combination of Means of Transport (DE 7/4) and Delivery Terms in DE 4/1 is not allowed",
-    "fix": "Relation error  You have declared a means of transport code (data element 7/4) that is not compatible with the delivery terms (data element 4/1).",
-    "text": "CDS12098 relation error: combination of means of transport (de 7/4) and delivery terms in de 4/1 is not allowed relation error  you have declared a means of transport code (data element 7/4) that is not compatible with the delivery terms (data element 4/1)."
+    "errorCode": "CDS12098",
+    "description": "Relation Error: Combination of Means of Transport (DE 7/4) and Delivery Terms in DE 4/1 is not allowed",
+    "fixAction": "Relation error\nYou have declared a means of transport code (data element 7/4) that is not compatible with the delivery terms (data element 4/1)."
   },
   {
-    "code": "CDS12099",
-    "message": "Relation error: Combination of elements that make up the Goods Location code (5/23) is invalid",
-    "fix": "Goods location code not recognised  Check the codes listed in Appendix 16 and in the supplements to Tariff, where new goods location codes may be listed.",
-    "text": "CDS12099 relation error: combination of elements that make up the goods location code (5/23) is invalid goods location code not recognised  check the codes listed in appendix 16 and in the supplements to tariff, where new goods location codes may be listed."
+    "errorCode": "CDS12099",
+    "description": "Relation error: Combination of elements that make up the Goods Location code (5/23) is invalid",
+    "fixAction": "Goods location code not recognised\nCheck the codes listed in Appendix 16 and in the supplements to Tariff, where new goods location codes may be listed."
   },
   {
-    "code": "CDS12100",
-    "message": "Relation Error: Combination of Delivery terms (DE 4/1) and Addition/Deduction code (DE 4/9) is not allowed",
-    "fix": "Relation error  You have declared Delivery Terms (data element 4/1) that are not compatible with the Addition/Deduction code (data element 4/9).  The combination of Delivery Terms and Addition/Deduction Code must be compatible.",
-    "text": "CDS12100 relation error: combination of delivery terms (de 4/1) and addition/deduction code (de 4/9) is not allowed relation error  you have declared delivery terms (data element 4/1) that are not compatible with the addition/deduction code (data element 4/9).  the combination of delivery terms and addition/deduction code must be compatible."
+    "errorCode": "CDS12100",
+    "description": "Relation Error: Combination of Delivery terms (DE 4/1) and Addition/Deduction code (DE 4/9) is not allowed",
+    "fixAction": "Relation error\nYou have declared Delivery Terms (data element 4/1) that are not compatible with the Addition/Deduction code (data element 4/9).\nThe combination of Delivery Terms and Addition/Deduction Code must be compatible."
   },
   {
-    "code": "CDS12101",
-    "message": "Relation error: Declared Tax Type (DE4/3) is not allowed in combination with the Additional Procedure",
-    "fix": "Relation error  You have declared an additional procedure code that is not permitted to be combined with the declared tax type (data element 4/3). For example, additional procedure codes 32D, 31D, 1IL and 1LV cannot be used with an excise tax type.",
-    "text": "CDS12101 relation error: declared tax type (de4/3) is not allowed in combination with the additional procedure relation error  you have declared an additional procedure code that is not permitted to be combined with the declared tax type (data element 4/3). for example, additional procedure codes 32d, 31d, 1il and 1lv cannot be used with an excise tax type."
+    "errorCode": "CDS12101",
+    "description": "Relation error: Declared Tax Type (DE4/3) is not allowed in combination with the Additional Procedure",
+    "fixAction": "Relation error\nYou have declared an additional procedure code that is not permitted to be combined with the declared tax type (data element 4/3). For example, additional procedure codes 32D, 31D, 1IL and 1LV cannot be used with an excise tax type."
   },
   {
-    "code": "CDS12102",
-    "message": "Relation error: Deferred Payment Method in DE 4/8 is Required with the duty deferment account number provided in DE 2/6",
-    "fix": "Relation error  You have not declared the deferred payment method which is required for the duty deferment account number declared.",
-    "text": "CDS12102 relation error: deferred payment method in de 4/8 is required with the duty deferment account number provided in de 2/6 relation error  you have not declared the deferred payment method which is required for the duty deferment account number declared."
+    "errorCode": "CDS12102",
+    "description": "Relation error: Deferred Payment Method in DE 4/8 is Required with the duty deferment account number provided in DE 2/6",
+    "fixAction": "Relation error\nYou have not declared the deferred payment method which is required for the duty deferment account number declared."
   },
   {
-    "code": "CDS12103",
-    "message": "Relation error: Valid delivery destination is required in D.E.5/8 for a CO declaration",
-    "fix": "Relation error  When declaring Declaration Type code CO in data element 1/1, the destination country must be a Special Fiscal Territory or other territory with which the EU has formed a Customs Union.",
-    "text": "CDS12103 relation error: valid delivery destination is required in d.e.5/8 for a co declaration relation error  when declaring declaration type code co in data element 1/1, the destination country must be a special fiscal territory or other territory with which the eu has formed a customs union."
+    "errorCode": "CDS12103",
+    "description": "Relation error: Valid delivery destination is required in D.E.5/8 for a CO declaration",
+    "fixAction": "Relation error\nWhen declaring Declaration Type code CO in data element 1/1, the destination country must be a Special Fiscal Territory or other territory with which the EU has formed a Customs Union."
   },
   {
-    "code": "CDS12104",
-    "message": "Relation error: Valid Import Procedure code (1/10) is required",
-    "fix": "Relation error  For declaration type code IM, the procedure code must be a permitted import procedure code. Check Appendix 1 of the Import Tariff and the Inventory Import Tariff",
-    "text": "CDS12104 relation error: valid import procedure code (1/10) is required relation error  for declaration type code im, the procedure code must be a permitted import procedure code. check appendix 1 of the import tariff and the inventory import tariff"
+    "errorCode": "CDS12104",
+    "description": "Relation error: Valid Import Procedure code (1/10) is required",
+    "fixAction": "Relation error\nFor declaration type code IM, the procedure code must be a permitted import procedure code. Check Appendix 1 of the Import Tariff and the Inventory Import Tariff"
   },
   {
-    "code": "CDS12105",
-    "message": "Relation error: Addition/Deduction code (DE 4/9) not allowed with the declared Additional Procedure Code (DE1/11)",
-    "fix": "Relation error  When using additional procedure code E01 (simplified procedure value) or E02 (standard import value), data element 4/9 additions and deductions, must not be declared. See Appendix 1 for more information.",
-    "text": "CDS12105 relation error: addition/deduction code (de 4/9) not allowed with the declared additional procedure code (de1/11) relation error  when using additional procedure code e01 (simplified procedure value) or e02 (standard import value), data element 4/9 additions and deductions, must not be declared. see appendix 1 for more information."
+    "errorCode": "CDS12105",
+    "description": "Relation error: Addition/Deduction code (DE 4/9) not allowed with the declared Additional Procedure Code (DE1/11)",
+    "fixAction": "Relation error\nWhen using additional procedure code E01 (simplified procedure value) or E02 (standard import value), data element 4/9 additions and deductions, must not be declared.\nSee Appendix 1 for more information."
   },
   {
-    "code": "CDS12106",
-    "message": "Relation error: Appropriate Additional Information Code must be provided in DE2/2 with Additional Procedure Code 1CL",
-    "fix": "Relation error  An appropriate Additional Information (AI) code is required with the additional procedure code 1CL.",
-    "text": "CDS12106 relation error: appropriate additional information code must be provided in de2/2 with additional procedure code 1cl relation error  an appropriate additional information (ai) code is required with the additional procedure code 1cl."
+    "errorCode": "CDS12106",
+    "description": "Relation error: Appropriate Additional Information Code must be provided in DE2/2 with Additional Procedure Code 1CL",
+    "fixAction": "Relation error\nAn appropriate Additional Information (AI) code is required with the additional procedure code 1CL."
   },
   {
-    "code": "CDS12107",
-    "message": "Relation error: Conditions not met for the requested simplification. Please see CDS Trade Tariff Vol.3 Appendix 4",
-    "fix": "Relation error  When using Additional Information code 00600, data element 2/3 must not include any licence document codes, even if claiming a waiver/exemption.",
-    "text": "CDS12107 relation error: conditions not met for the requested simplification. please see cds trade tariff vol.3 appendix 4 relation error  when using additional information code 00600, data element 2/3 must not include any licence document codes, even if claiming a waiver/exemption."
+    "errorCode": "CDS12107",
+    "description": "Relation error: Conditions not met for the requested simplification. Please see CDS Trade Tariff Vol.3 Appendix 4",
+    "fixAction": "Relation error\nWhen using Additional Information code 00600, data element 2/3 must not include any licence document codes, even if claiming a waiver/exemption."
   },
   {
-    "code": "CDS12108",
-    "message": "Obligation Error: DUCR is mandatory on an Export Declaration",
-    "fix": "Obligation error  Declaration Unique Consignment Reference (DUCR) is mandatory at header level on an export declaration.",
-    "text": "CDS12108 obligation error: ducr is mandatory on an export declaration obligation error  declaration unique consignment reference (ducr) is mandatory at header level on an export declaration."
+    "errorCode": "CDS12108",
+    "description": "Obligation Error: DUCR is mandatory on an Export Declaration",
+    "fixAction": "Obligation error\nDeclaration Unique Consignment Reference (DUCR) is mandatory at header level on an export declaration."
   },
   {
-    "code": "CDS12109",
-    "message": "Obligation Error: When providing fixed rate of exchange rate in DE 4/15, a currency code of GBP must be supplied",
-    "fix": "Total invoiced amount should be in GBP  You declared a fixed rate of exchange meaning a contractually agreed rate of exchange was used. The invoice value (data element 4/14) on an import declaration or the total amount invoiced (data element 4/11) on an export declaration, needs to be declared in GBP, converted using the agreed rate.",
-    "text": "CDS12109 obligation error: when providing fixed rate of exchange rate in de 4/15, a currency code of gbp must be supplied total invoiced amount should be in gbp  you declared a fixed rate of exchange meaning a contractually agreed rate of exchange was used. the invoice value (data element 4/14) on an import declaration or the total amount invoiced (data element 4/11) on an export declaration, needs to be declared in gbp, converted using the agreed rate."
+    "errorCode": "CDS12109",
+    "description": "Obligation Error: When providing fixed rate of exchange rate in DE 4/15, a currency code of GBP must be supplied",
+    "fixAction": "Total invoiced amount should be in GBP\nYou declared a fixed rate of exchange meaning a contractually agreed rate of exchange was used. The invoice value (data element 4/14) on an import declaration or the total amount invoiced (data element 4/11) on an export declaration, needs to be declared in GBP, converted using the agreed rate."
   },
   {
-    "code": "CDS12110",
-    "message": "Relation error: A Quota Order number (DE8/1) cannot be provided in combination with this Preference Code (DE 4/17)",
-    "fix": "Relation error  The Preference Code declared (data element 4/17) is incompatible with claiming Quota (data element 8/1).",
-    "text": "CDS12110 relation error: a quota order number (de8/1) cannot be provided in combination with this preference code (de 4/17) relation error  the preference code declared (data element 4/17) is incompatible with claiming quota (data element 8/1)."
+    "errorCode": "CDS12110",
+    "description": "Relation error: A Quota Order number (DE8/1) cannot be provided in combination with this Preference Code (DE 4/17)",
+    "fixAction": "Relation error\nThe Preference Code declared (data element 4/17) is incompatible with claiming Quota (data element 8/1)."
   },
   {
-    "code": "CDS12111",
-    "message": "Relation error: The provided tax amount (DE 4/6 or DE 4/7) must always be declared with currency code GBP",
-    "fix": "Relation error  You have declared the tax amount (data element 4/6 or 4/7) in the incorrect currency. Tax amounts should always be declared with the sterling GBP currency code.",
-    "text": "CDS12111 relation error: the provided tax amount (de 4/6 or de 4/7) must always be declared with currency code gbp relation error  you have declared the tax amount (data element 4/6 or 4/7) in the incorrect currency. tax amounts should always be declared with the sterling gbp currency code."
+    "errorCode": "CDS12111",
+    "description": "Relation error: The provided tax amount (DE 4/6 or DE 4/7) must  always be declared with currency code GBP",
+    "fixAction": "Relation error\nYou have declared the tax amount (data element 4/6 or 4/7) in the incorrect currency. Tax amounts should always be declared with the sterling GBP currency code."
   },
   {
-    "code": "CDS12112",
-    "message": "Relation error: Airfreight related additions/deduction code must be provided in DE 4/9 when an airport place of loading is provided in DE 5/21",
-    "fix": "Addition/deduction code missing  You have not provided the mandatory airfreight related addition/deduction code (data element 4/9) for the declared airport place of loading (data element 5/21).",
-    "text": "CDS12112 relation error: airfreight related additions/deduction code must be provided in de 4/9 when an airport place of loading is provided in de 5/21 addition/deduction code missing  you have not provided the mandatory airfreight related addition/deduction code (data element 4/9) for the declared airport place of loading (data element 5/21)."
+    "errorCode": "CDS12112",
+    "description": "Relation error: Airfreight related additions/deduction code must be provided in DE 4/9 when an airport place of loading is provided in DE 5/21",
+    "fixAction": "Addition/deduction code missing\nYou have not provided the mandatory airfreight related addition/deduction code (data element 4/9) for the declared airport place of loading (data element 5/21)."
   },
   {
-    "code": "CDS12113",
-    "message": "Relation error: Authorisation holder CGU requires a guarantee type of 0 or 1 to be provided in D.E.8/2",
-    "fix": "Authorisation CGU requires a guarantee  Holder of authorisation type CGU has been declared and so guarantee type in data element 8/2 must be 0 (Guarantee Waiver) or 1 (Comprehensive Guarantee).",
-    "text": "CDS12113 relation error: authorisation holder cgu requires a guarantee type of 0 or 1 to be provided in d.e.8/2 authorisation cgu requires a guarantee  holder of authorisation type cgu has been declared and so guarantee type in data element 8/2 must be 0 (guarantee waiver) or 1 (comprehensive guarantee)."
+    "errorCode": "CDS12113",
+    "description": "Relation error: Authorisation holder CGU requires a guarantee type of 0 or 1 to be provided in D.E.8/2",
+    "fixAction": "Authorisation CGU requires a guarantee\nHolder of authorisation type CGU has been declared and so guarantee type in data element 8/2 must be 0 (Guarantee Waiver) or 1 (Comprehensive Guarantee)."
   },
   {
-    "code": "CDS12114",
-    "message": "Relation error: Value declared must be less than 100 as DE 4/9 Additions/Deductions code is a percentage",
-    "fix": "Relation error  The value you declared may not be less than 100%. The Additions/Deductions code is a percentage and so the value provided in data element 4/9 must be less than 100.",
-    "text": "CDS12114 relation error: value declared must be less than 100 as de 4/9 additions/deductions code is a percentage relation error  the value you declared may not be less than 100%. the additions/deductions code is a percentage and so the value provided in data element 4/9 must be less than 100."
+    "errorCode": "CDS12114",
+    "description": "Relation error: Value declared must be less than 100 as DE 4/9 Additions/Deductions code is a percentage",
+    "fixAction": "Relation error\nThe value you declared may not be less than 100%. The Additions/Deductions code is a percentage and so the value provided in data element 4/9 must be less than 100."
   },
   {
-    "code": "CDS12115",
-    "message": "Relation error: Declared Procedure Code (DE 1/10 and / or 1/11)  mandates the use of Additional Document (DE 2/3) 185C",
-    "fix": "Relation error  You have not have declared document code 185C (Claim to Visiting Forces Relief for goods removed from a customs warehouse), required for the additional procedure code entered.",
-    "text": "CDS12115 relation error: declared procedure code (de 1/10 and / or 1/11)  mandates the use of additional document (de 2/3) 185c relation error  you have not have declared document code 185c (claim to visiting forces relief for goods removed from a customs warehouse), required for the additional procedure code entered."
+    "errorCode": "CDS12115",
+    "description": "Relation error: Declared Procedure Code (DE 1/10 and / or 1/11)  mandates the use of Additional Document (DE 2/3) 185C",
+    "fixAction": "Relation error\nYou have not have declared document code 185C (Claim to Visiting Forces Relief for goods removed from a customs warehouse), required for the additional procedure code entered."
   },
   {
-    "code": "CDS12117",
-    "message": "Relation error: Importer (DE 3/16) & Buyer (DE 3/27) must not be the same party",
-    "fix": "Relation error  You have declared the same EORI for the Importer and Buyer on an import declaration.",
-    "text": "CDS12117 relation error: importer (de 3/16) & buyer (de 3/27) must not be the same party relation error  you have declared the same eori for the importer and buyer on an import declaration."
+    "errorCode": "CDS12117",
+    "description": "Relation error: Importer (DE 3/16) &amp; Buyer (DE 3/27) must not be the same party",
+    "fixAction": "Relation error\nYou have declared the same EORI for the Importer and Buyer on an import declaration."
   },
   {
-    "code": "CDS12118",
-    "message": "Relation error: Consignor (DE3/1) information must be supplied for the 17X Additional Procedure Code at either header or item level and cannot be declared at both levels",
-    "fix": "Relation error  You have declared consignor details for the additional procedure code 17X at both header and item level. It should only be declared at either item or header level.",
-    "text": "CDS12118 relation error: consignor (de3/1) information must be supplied for the 17x additional procedure code at either header or item level and cannot be declared at both levels relation error  you have declared consignor details for the additional procedure code 17x at both header and item level. it should only be declared at either item or header level."
+    "errorCode": "CDS12118",
+    "description": "Relation error: Consignor (DE3/1) information must be supplied for the 17X Additional Procedure Code at either header or item level and cannot be declared at both levels",
+    "fixAction": "Relation error\nYou have declared consignor details for the additional procedure code 17X at both header and item level. It should only be declared at either item or header level."
   },
   {
-    "code": "CDS12119",
-    "message": "Relation error: Declared Additional Document (D.E. 2/3) is not allowed with this Procedure Code (D.E. 1/10 or D.E. 1/11)",
-    "fix": "Additional document not allowed or is missing  Additional document code, for example licence, exemption or authorisation number, is not allowed or must not be declared with other data in the declaration.  Examples include C512 and C514 (SDP and EIDR authorisations) not permitted with certain procedure codes; licence document code restrictions with certain additional procedure codes, Special Procedure authorisations required with certain procedure combinations.",
-    "text": "CDS12119 relation error: declared additional document (d.e. 2/3) is not allowed with this procedure code (d.e. 1/10 or d.e. 1/11) additional document not allowed or is missing  additional document code, for example licence, exemption or authorisation number, is not allowed or must not be declared with other data in the declaration.  examples include c512 and c514 (sdp and eidr authorisations) not permitted with certain procedure codes; licence document code restrictions with certain additional procedure codes, special procedure authorisations required with certain procedure combinations."
+    "errorCode": "CDS12119",
+    "description": "Relation error: Declared Additional Document (D.E. 2/3) is not allowed with  this Procedure Code (D.E. 1/10 or D.E. 1/11)",
+    "fixAction": "Additional document not allowed or is missing\nAdditional document code, for example licence, exemption or authorisation number, is not allowed or must not be declared with other data in the declaration.\nExamples include C512 and C514 (SDP and EIDR authorisations) not permitted with certain procedure codes; licence document code restrictions with certain additional procedure codes, Special Procedure authorisations required with certain procedure combinations."
   },
   {
-    "code": "CDS12120",
-    "message": "Relation Error: The appropriate authorisation has not been declared for this Declaration Type (D.E. 1/2)",
-    "fix": "Authorisation error  You may not have declared an authorisation required for this declaration type. If you have declared the correct authorisation, check the authorisation number declared on the 'Additional documentation' page.  For SDP declarations, you need document code C512 For EIDR declarations, you need document code C514 For submitting an arrived export declaration, data element 3/39 must include one of the authorisation type codes CSE or EXRR.  You may have declared an authorisation that has expired; or the reference number does not belong to the party on the declaration; or the reference number provided is not recognised.",
-    "text": "CDS12120 relation error: the appropriate authorisation has not been declared for this declaration type (d.e. 1/2) authorisation error  you may not have declared an authorisation required for this declaration type. if you have declared the correct authorisation, check the authorisation number declared on the 'additional documentation' page.  for sdp declarations, you need document code c512 for eidr declarations, you need document code c514 for submitting an arrived export declaration, data element 3/39 must include one of the authorisation type codes cse or exrr.  you may have declared an authorisation that has expired; or the reference number does not belong to the party on the declaration; or the reference number provided is not recognised."
+    "errorCode": "CDS12120",
+    "description": "Relation Error: The appropriate authorisation has not been declared for this Declaration Type (D.E. 1/2)",
+    "fixAction": "Authorisation error\nYou may not have declared an authorisation required for this declaration type. If you have declared the correct authorisation, check the authorisation number declared on the 'Additional documentation' page.\nFor SDP declarations, you need document code C512\nFor EIDR declarations, you need document code C514\nFor submitting an arrived export declaration, data element 3/39 must include one of the authorisation type codes CSE or EXRR.\nYou may have declared an authorisation that has expired; or the reference number does not belong to the party on the declaration; or the reference number provided is not recognised."
   },
   {
-    "code": "CDS12121",
-    "message": "Relation Error: This combination of Additional Information codes (D.E. 2/2) is not allowed",
-    "fix": "There is an error with the Additional Information codes against a goods item.  Either, the AI codes declared together for one goods item are not compatible with each other, or an AI code entered for the goods item mandates another AI is present.",
-    "text": "CDS12121 relation error: this combination of additional information codes (d.e. 2/2) is not allowed there is an error with the additional information codes against a goods item.  either, the ai codes declared together for one goods item are not compatible with each other, or an ai code entered for the goods item mandates another ai is present."
+    "errorCode": "CDS12121",
+    "description": "Relation Error: This combination of Additional Information codes (D.E. 2/2) is not allowed",
+    "fixAction": "There is an error with the Additional Information codes against a goods item.\nEither, the AI codes declared together for one goods item are not compatible with each other, or an AI code entered for the goods item mandates another AI is present."
   },
   {
-    "code": "CDS12123",
-    "message": "Data Error: Value must be greater than 0",
-    "fix": "A value declared must be equal to or greater than 0.  For example: -Invoice value declared in DE 4/14 must be greater than 0. -Package quantity in DE 6/10 must be greater than or equal to 0.",
-    "text": "CDS12123 data error: value must be greater than 0 a value declared must be equal to or greater than 0.  for example: -invoice value declared in de 4/14 must be greater than 0. -package quantity in de 6/10 must be greater than or equal to 0."
+    "errorCode": "CDS12123",
+    "description": "Data Error: Value must be greater than 0",
+    "fixAction": "A value declared must be equal to or greater than 0.\nFor example:\n-Invoice value declared in DE 4/14 must be greater than 0.\n-Package quantity in DE 6/10 must be greater than or equal to 0."
   },
   {
-    "code": "CDS12125",
-    "message": "DAN Error: Account number is not recognised; or Account is suspended or revoked; or Parties declared on the declaration do not have authority to use account number provided",
-    "fix": "DAN error  The deferment account number or Guarantee reference Number you have provided - is not recognised or - the account may be suspended/revoked or - Parties declared on the declaration do not have authority to use account number provided.  Check the CDS financial dashboard/contact HMRC deferment department.",
-    "text": "CDS12125 dan error: account number is not recognised; or account is suspended or revoked; or parties declared on the declaration do not have authority to use account number provided dan error  the deferment account number or guarantee reference number you have provided - is not recognised or - the account may be suspended/revoked or - parties declared on the declaration do not have authority to use account number provided.  check the cds financial dashboard/contact hmrc deferment department."
+    "errorCode": "CDS12125",
+    "description": "DAN Error: Account number is not recognised; or Account is suspended or revoked; or Parties declared on the declaration do not have authority to use account number provided",
+    "fixAction": "DAN error\nThe deferment account number or Guarantee reference Number you have provided\n- is not recognised or\n- the account may be suspended/revoked or\n- Parties declared on the declaration do not have authority to use account number provided.\nCheck the CDS financial dashboard/contact HMRC deferment department."
   },
   {
-    "code": "CDS12132",
-    "message": "DUCR format not valid",
-    "fix": "Declaration Unique Consignment Reference (DUCR) format is not valid",
-    "text": "CDS12132 ducr format not valid declaration unique consignment reference (ducr) format is not valid"
+    "errorCode": "CDS12132",
+    "description": "DUCR format not valid",
+    "fixAction": "Declaration Unique Consignment Reference (DUCR) format is not valid"
   },
   {
-    "code": "CDS12133",
-    "message": "MUCR format not valid",
-    "fix": "MUCR format is not valid  If the MUCR was given to you, check it is in a valid format. If you created it yourself, check the guidance on the correct format (opens in new tab).",
-    "text": "CDS12133 mucr format not valid mucr format is not valid  if the mucr was given to you, check it is in a valid format. if you created it yourself, check the guidance on the correct format (opens in new tab)."
+    "errorCode": "CDS12133",
+    "description": "MUCR format not valid",
+    "fixAction": "MUCR format is not valid\nIf the MUCR was given to you, check it is in a valid format. If you created it yourself, check the guidance on the correct format (opens in new tab)."
   },
   {
-    "code": "CDS12134",
-    "message": "DUCR and MUCR formats not valid",
-    "fix": "MUCR or DUCR format is not valid  If the MUCR was given to you, check it is in a valid format. If you created it yourself, check the guidance on the correct format (opens in new tab).  If you have declared a previous declaration reference such as for an import, check the DUCR on the previous declaration.",
-    "text": "CDS12134 ducr and mucr formats not valid mucr or ducr format is not valid  if the mucr was given to you, check it is in a valid format. if you created it yourself, check the guidance on the correct format (opens in new tab).  if you have declared a previous declaration reference such as for an import, check the ducr on the previous declaration."
+    "errorCode": "CDS12134",
+    "description": "DUCR and MUCR formats not valid",
+    "fixAction": "MUCR or DUCR format is not valid\nIf the MUCR was given to you, check it is in a valid format. If you created it yourself, check the guidance on the correct format (opens in new tab).\nIf you have declared a previous declaration reference such as for an import, check the DUCR on the previous declaration."
   },
   {
-    "code": "CDS12135",
-    "message": "Relation Error: Country of Export (DE 5/14) must be supplied at either header or item level",
-    "fix": "Relation error  Country of export is mandatory at header or item level when declaring additional procedure code 1CD, 1CG, 2CG or 2CD. On a C21I with procedure code 0002, 0003, 0004, 0005, 0006 or 0007.",
-    "text": "CDS12135 relation error: country of export (de 5/14) must be supplied at either header or item level relation error  country of export is mandatory at header or item level when declaring additional procedure code 1cd, 1cg, 2cg or 2cd. on a c21i with procedure code 0002, 0003, 0004, 0005, 0006 or 0007."
+    "errorCode": "CDS12135",
+    "description": "Relation Error: Country of Export (DE 5/14) must be supplied at either header or item level",
+    "fixAction": "Relation error\nCountry of export is mandatory at header or item level when declaring additional procedure code 1CD, 1CG, 2CG or 2CD.\nOn a C21I with procedure code 0002, 0003, 0004, 0005, 0006 or 0007."
   },
   {
-    "code": "CDS12136",
-    "message": "Relation Error: Provided Additional Procedure Code (DE 1/11) necessitates indirect representation (DE 3/21) for the following declaration types: C F Y J K Z",
-    "fix": "Relation error  The additional procedure code declared requires this declaration to have indirect representation (data element 3/21).  The representative status declared in data element 3/21 would show Indirect, code ‘3’. The representative status declared in data element 3/21 indicates the relationship between the representative and the importer, not the sub-agent and any other party.",
-    "text": "CDS12136 relation error: provided additional procedure code (de 1/11) necessitates indirect representation (de 3/21) for the following declaration types: c f y j k z relation error  the additional procedure code declared requires this declaration to have indirect representation (data element 3/21).  the representative status declared in data element 3/21 would show indirect, code ‘3’. the representative status declared in data element 3/21 indicates the relationship between the representative and the importer, not the sub-agent and any other party."
+    "errorCode": "CDS12136",
+    "description": "Relation Error: Provided Additional Procedure Code (DE 1/11) necessitates indirect representation (DE 3/21) for the following declaration types: C F Y J K Z",
+    "fixAction": "Relation error\nThe additional procedure code declared requires this declaration to have indirect representation (data element 3/21).\nThe representative status declared in data element 3/21 would show Indirect, code ‘3’. The representative status declared in data element 3/21 indicates the relationship between the representative and the importer, not the sub-agent and any other party."
   },
   {
-    "code": "CDS12137",
-    "message": "Uniqueness Error: Only a single MUCR can be declared in DE 2/1 at Header level on an imports declaration",
-    "fix": "Uniqueness error  You have declared more than one MUCR at header level on your import declaration.",
-    "text": "CDS12137 uniqueness error: only a single mucr can be declared in de 2/1 at header level on an imports declaration uniqueness error  you have declared more than one mucr at header level on your import declaration."
+    "errorCode": "CDS12137",
+    "description": "Uniqueness Error: Only a single MUCR can be declared in DE 2/1 at Header level on an imports declaration",
+    "fixAction": "Uniqueness error\nYou have declared more than one MUCR at header level on your import declaration."
   },
   {
-    "code": "CDS12138",
-    "message": "Relation Error: Provided Additional Procedure Code (D.E. 1/11) cannot be used on a Type J/K (EIDR) declaration",
-    "fix": "Additional procedure code is not allowed  These additional procedure codes cannot be used with an EIDR C21 declaration.  1CD - Controlled drugs using Simplified Procedures 1CG - Controlled Goods using Simplified Procedures",
-    "text": "CDS12138 relation error: provided additional procedure code (d.e. 1/11) cannot be used on a type j/k (eidr) declaration additional procedure code is not allowed  these additional procedure codes cannot be used with an eidr c21 declaration.  1cd - controlled drugs using simplified procedures 1cg - controlled goods using simplified procedures"
+    "errorCode": "CDS12138",
+    "description": "Relation Error: Provided Additional Procedure Code (D.E. 1/11) cannot be used on a Type J/K (EIDR) declaration",
+    "fixAction": "Additional procedure code is not allowed\nThese additional procedure codes cannot be used with an EIDR C21 declaration.\n1CD - Controlled drugs using Simplified Procedures\n1CG - Controlled Goods using Simplified Procedures"
   },
   {
-    "code": "CDS12139",
-    "message": "Relation Error: Additional Information Code OVR01 must be provided in DE 2/2 when entering a manual tax amount in DE 4/6 or DE 4/7",
-    "fix": "Relation error  You have not provided the Additional Information (AI) Code OVR01 required for the declared manual tax amount in data element 4/6 or 4/7.",
-    "text": "CDS12139 relation error: additional information code ovr01 must be provided in de 2/2 when entering a manual tax amount in de 4/6 or de 4/7 relation error  you have not provided the additional information (ai) code ovr01 required for the declared manual tax amount in data element 4/6 or 4/7."
+    "errorCode": "CDS12139",
+    "description": "Relation Error: Additional Information Code OVR01 must be provided in DE 2/2 when entering a manual tax amount in DE 4/6 or DE 4/7",
+    "fixAction": "Relation error\nYou have not provided the Additional Information (AI) Code OVR01 required for the declared manual tax amount in data element 4/6 or 4/7."
   },
   {
-    "code": "CDS12141",
-    "message": "Relation Error: Incompatible goods movements declared. AI codes 'NIDOM' and 'NIIMP' must not be entered together on the same declaration.",
-    "fix": "Relation error  You have declared a combination of Additional Information Codes 'NIDOM' and 'NIIMP' that are not permitted to be declared together on the same declaration.",
-    "text": "CDS12141 relation error: incompatible goods movements declared. ai codes 'nidom' and 'niimp' must not be entered together on the same declaration. relation error  you have declared a combination of additional information codes 'nidom' and 'niimp' that are not permitted to be declared together on the same declaration."
+    "errorCode": "CDS12141",
+    "description": "Relation Error: Incompatible goods movements declared. AI codes 'NIDOM' and 'NIIMP' must not be entered together on the same declaration.",
+    "fixAction": "Relation error\nYou have declared a combination of Additional Information Codes 'NIDOM' and 'NIIMP' that are not permitted to be declared together on the same declaration."
   },
   {
-    "code": "CDS12143",
-    "message": "Incompatible goods movements declared. AI codes 'NIREM' and 'NIAID' must not be entered together on the same goods item on a declaration.",
-    "fix": "DE 2/2 AI statement error  The combination of NI Additional Information Codes are not permitted to be declared together on the same goods item",
-    "text": "CDS12143 incompatible goods movements declared. ai codes 'nirem' and 'niaid' must not be entered together on the same goods item on a declaration. de 2/2 ai statement error  the combination of ni additional information codes are not permitted to be declared together on the same goods item"
+    "errorCode": "CDS12143",
+    "description": "Incompatible goods movements declared. AI codes 'NIREM' and 'NIAID' must not be entered together on the same goods item on a declaration.",
+    "fixAction": "DE 2/2 AI statement error\nThe combination of NI Additional Information Codes are not permitted to be declared together on the same goods item"
   },
   {
-    "code": "CDS12144",
-    "message": "Relation Error: EU Quota order number beginning '09' must not be entered in DE 8/1 for any imports into the UK",
-    "fix": "Relation error  You have entered the incorrect EU Quota order number beginning with '09' which is not permitted for imports into the UK.",
-    "text": "CDS12144 relation error: eu quota order number beginning '09' must not be entered in de 8/1 for any imports into the uk relation error  you have entered the incorrect eu quota order number beginning with '09' which is not permitted for imports into the uk."
+    "errorCode": "CDS12144",
+    "description": "Relation Error: EU Quota order number beginning '09' must not be entered in DE 8/1 for any imports into the UK",
+    "fixAction": "Relation error\nYou have entered the incorrect EU Quota order number beginning with '09' which is not permitted for imports into the UK."
   },
   {
-    "code": "CDS12145",
-    "message": "Relation Error: When declaring the Requested Procedure code 42 in DE 1/10, the Additional Information code NIIMP must be declared in DE 2/3",
-    "fix": "Relation error  For the Requested Procedure code 42 in data element 1/10 the Additional Information code, NIIMP, must be declared in data element 2/2.",
-    "text": "CDS12145 relation error: when declaring the requested procedure code 42 in de 1/10, the additional information code niimp must be declared in de 2/3 relation error  for the requested procedure code 42 in data element 1/10 the additional information code, niimp, must be declared in data element 2/2."
+    "errorCode": "CDS12145",
+    "description": "Relation Error: When declaring the Requested Procedure code 42 in DE 1/10, the Additional Information code NIIMP must be declared in DE 2/3",
+    "fixAction": "Relation error\nFor the Requested Procedure code 42 in data element 1/10 the Additional Information code, NIIMP, must be declared in data element 2/2."
   },
   {
-    "code": "CDS12146",
-    "message": "The Requested Procedure code 42 (DE 1/10) and Additional Information code OSR42 (DE 2/2) must be entered together on the same goods item",
-    "fix": "Relation error  You have not entered either the Requested Procedure code 42 (DE 1/10) or Additional Information code OSR42 (DE 2/2) on the same goods item.",
-    "text": "CDS12146 the requested procedure code 42 (de 1/10) and additional information code osr42 (de 2/2) must be entered together on the same goods item relation error  you have not entered either the requested procedure code 42 (de 1/10) or additional information code osr42 (de 2/2) on the same goods item."
+    "errorCode": "CDS12146",
+    "description": "The Requested Procedure code 42 (DE 1/10) and Additional Information code OSR42 (DE 2/2) must be entered together on the same goods item",
+    "fixAction": "Relation error\nYou have not entered either the Requested Procedure code 42 (DE 1/10) or Additional Information code OSR42 (DE 2/2) on the same goods item."
   },
   {
-    "code": "CDS12147",
-    "message": "Relation Error: UVC01 declared on an original declaration. UVC01 can only be declared on an amendment request for a declaration",
-    "fix": "Additional Information (AI) code is not allowed  AI code UVC01 may only be used on an amendment.",
-    "text": "CDS12147 relation error: uvc01 declared on an original declaration. uvc01 can only be declared on an amendment request for a declaration additional information (ai) code is not allowed  ai code uvc01 may only be used on an amendment."
+    "errorCode": "CDS12147",
+    "description": "Relation Error: UVC01 declared on an original declaration. UVC01 can only be declared on an amendment request for a declaration",
+    "fixAction": "Additional Information (AI) code is not allowed\nAI code UVC01 may only be used on an amendment."
   },
   {
-    "code": "CDS12148",
-    "message": "Relation Error: Additional Document C506 requires deferred payment method",
-    "fix": "Relation error  You have not provided a deferred payment method for the declared Additional Document C506.",
-    "text": "CDS12148 relation error: additional document c506 requires deferred payment method relation error  you have not provided a deferred payment method for the declared additional document c506."
+    "errorCode": "CDS12148",
+    "description": "Relation Error: Additional Document C506 requires deferred payment method",
+    "fixAction": "Relation error\nYou have not provided a deferred payment method for the declared Additional Document C506."
   },
   {
-    "code": "CDS12149",
-    "message": "Relation Error: Additional Procedure code 000 can not be declared with any other Additional Procedure Code",
-    "fix": "Relation error  Additional procedure code 000 can not be declared with any other additional procedure code",
-    "text": "CDS12149 relation error: additional procedure code 000 can not be declared with any other additional procedure code relation error  additional procedure code 000 can not be declared with any other additional procedure code"
+    "errorCode": "CDS12149",
+    "description": "Relation Error: Additional Procedure code 000 can not be declared with any other Additional Procedure Code",
+    "fixAction": "Relation error\nAdditional procedure code 000 can not be declared with any other additional procedure code"
   },
   {
-    "code": "CDS12150",
-    "message": "Authorisation Error: Authorisation reference number does not belong to the party on the declaration",
-    "fix": "An authorisation number is invalid  An authorisation number, such as for a Special Procedure, SDP, EIDR, CCG, Customs Warehousing, national authorisation, is either not valid or is not authorised for use by the party given on the declaration.",
-    "text": "CDS12150 authorisation error: authorisation reference number does not belong to the party on the declaration an authorisation number is invalid  an authorisation number, such as for a special procedure, sdp, eidr, ccg, customs warehousing, national authorisation, is either not valid or is not authorised for use by the party given on the declaration."
+    "errorCode": "CDS12150",
+    "description": "Authorisation Error: Authorisation reference number does not belong to the party on the declaration",
+    "fixAction": "An authorisation number is invalid\nAn authorisation number, such as for a Special Procedure, SDP, EIDR, CCG, Customs Warehousing, national authorisation, is either not valid or is not authorised for use by the party given on the declaration."
   },
   {
-    "code": "CDS12151",
-    "message": "Relation Error: When a licence is declared, ID must be unique from all other additional documents (DE 2/3) in the same goods item",
-    "fix": "Duplication error  For example: Licence ID cannot be declared more than once on the same item in DE 2/3.",
-    "text": "CDS12151 relation error: when a licence is declared, id must be unique from all other additional documents (de 2/3) in the same goods item duplication error  for example: licence id cannot be declared more than once on the same item in de 2/3."
+    "errorCode": "CDS12151",
+    "description": "Relation Error: When a licence is declared, ID must be unique from all other additional documents (DE 2/3) in the same goods item",
+    "fixAction": "Duplication error\nFor example:\nLicence ID cannot be declared more than once on the same item in DE 2/3."
   },
   {
-    "code": "CDS12152",
-    "message": "Additional Procedure Code (DE 1/11) 1H7 can only be used when submitting an SRDS declaration and is required to be declared on all goods items.",
-    "fix": "An additional procedure code is missing for an H7/SRDS declaration:  Additional Procedure Code '1H7' must be present for the H7/SRDS declaration category.",
-    "text": "CDS12152 additional procedure code (de 1/11) 1h7 can only be used when submitting an srds declaration and is required to be declared on all goods items. an additional procedure code is missing for an h7/srds declaration:  additional procedure code '1h7' must be present for the h7/srds declaration category."
+    "errorCode": "CDS12152",
+    "description": "Additional Procedure Code (DE 1/11) 1H7 can only be used when submitting an SRDS declaration and is required to be declared on all goods items.",
+    "fixAction": "An additional procedure code is missing for an H7/SRDS declaration:\nAdditional Procedure Code '1H7' must be present for the H7/SRDS declaration category."
   },
   {
-    "code": "CDS12153",
-    "message": "Relation Error: EORIs with this country code are not supported",
-    "fix": "Relation Error  The country code at the start of an EORI must be GB when declaring any of the parties Importer (DE 3/16), Exporter (DE 3/2), Declarant (DE 3/18), Representative (DE 3/20).",
-    "text": "CDS12153 relation error: eoris with this country code are not supported relation error  the country code at the start of an eori must be gb when declaring any of the parties importer (de 3/16), exporter (de 3/2), declarant (de 3/18), representative (de 3/20)."
+    "errorCode": "CDS12153",
+    "description": "Relation Error: EORIs with this country code are not supported",
+    "fixAction": "Relation Error\nThe country code at the start of an EORI must be GB when declaring any of the parties Importer (DE 3/16), Exporter (DE 3/2), Declarant (DE 3/18), Representative (DE 3/20)."
   },
   {
-    "code": "CDS12154",
-    "message": "Incompatible goods movements declared. When AI code 'NIIMP', 'NIDOM' or 'NIEXP' is entered at item level in D.E. 2/2, Document Code – 999L cannot be entered in D.E.2/3",
-    "fix": "The Document Code 999L cannot be used for goods being imported or exported from Northern Ireland. Please use the UK/NI online tariff to identify the document codes, other than 999L, required by the measure conditions on your commodity code.",
-    "text": "CDS12154 incompatible goods movements declared. when ai code 'niimp', 'nidom' or 'niexp' is entered at item level in d.e. 2/2, document code – 999l cannot be entered in d.e.2/3 the document code 999l cannot be used for goods being imported or exported from northern ireland. please use the uk/ni online tariff to identify the document codes, other than 999l, required by the measure conditions on your commodity code."
+    "errorCode": "CDS12154",
+    "description": "Incompatible goods movements declared. When AI code 'NIIMP', 'NIDOM' or 'NIEXP' is entered at item level in D.E. 2/2, Document Code – 999L cannot be entered in D.E.2/3",
+    "fixAction": "The Document Code 999L cannot be used for goods being imported or exported from Northern Ireland.  Please use the UK/NI online tariff to identify the document codes, other than 999L, required by the measure conditions on your commodity code."
   },
   {
-    "code": "CDS12155",
-    "message": "Uniqueness Error: Only one instance of 999L may be declared in D.E. 2/3 per goods item",
-    "fix": "Uniqueness Error  The document code 999L can only be declared once per goods item. It does not have to be declared for each measure for which a waiver applies on that goods item. For example, if a goods item has two measures for which 999L is available to declare a waiver, declaring it once for that goods item will suffice to satisfy both measures. Declaring it twice will result in this rejection.",
-    "text": "CDS12155 uniqueness error: only one instance of 999l may be declared in d.e. 2/3 per goods item uniqueness error  the document code 999l can only be declared once per goods item. it does not have to be declared for each measure for which a waiver applies on that goods item. for example, if a goods item has two measures for which 999l is available to declare a waiver, declaring it once for that goods item will suffice to satisfy both measures. declaring it twice will result in this rejection."
+    "errorCode": "CDS12155",
+    "description": "Uniqueness Error: Only one instance of 999L may be declared in D.E. 2/3 per goods item",
+    "fixAction": "Uniqueness Error\nThe document code 999L can only be declared once per goods item. It does not have to be declared for each measure for which a waiver applies on that goods item. For example, if a goods item has two measures for which 999L is available to declare a waiver, declaring it once for that goods item will suffice to satisfy both measures. Declaring it twice will result in this rejection."
   },
   {
-    "code": "CDS12156",
-    "message": "Obligation Error: Mandatory Data Element has not been provided or the ID for previous document CLE must match the AcceptanceDate in the format yyyymmdd",
-    "fix": "The declaration Acceptance Date is missing or not in the correct format against Previous Document Code 'CLE'",
-    "text": "CDS12156 obligation error: mandatory data element has not been provided or the id for previous document cle must match the acceptancedate in the format yyyymmdd the declaration acceptance date is missing or not in the correct format against previous document code 'cle'"
+    "errorCode": "CDS12156",
+    "description": "Obligation Error: Mandatory Data Element has not been provided or the ID for previous document CLE must match the AcceptanceDate in the format yyyymmdd",
+    "fixAction": "The declaration Acceptance Date is missing or not in the correct format against Previous Document Code 'CLE'"
   },
   {
-    "code": "CDS12157",
-    "message": "Invalid EORI - This Party must have a permanent business establishment in Northern Ireland or the European Union",
-    "fix": "A relevant party on the declaration does not have the status of 'established in the Union', for the purposes of an NI declaration.",
-    "text": "CDS12157 invalid eori - this party must have a permanent business establishment in northern ireland or the european union a relevant party on the declaration does not have the status of 'established in the union', for the purposes of an ni declaration."
+    "errorCode": "CDS12157",
+    "description": "Invalid EORI - This Party must have a permanent business establishment in Northern Ireland or the European Union",
+    "fixAction": "A relevant party on the declaration does not have the status of 'established in the Union', for the purposes of an NI declaration."
   },
   {
-    "code": "CDS12158",
-    "message": "Missing Element - A non-GB EORI requires entry of NI Movement AI Codes in DE 2/2",
-    "fix": "A relevant party on an NI declaration has been entered with an XI EORI number, however no NI AI statements (NIIMP, NIDOM, NIEXP) are present.",
-    "text": "CDS12158 missing element - a non-gb eori requires entry of ni movement ai codes in de 2/2 a relevant party on an ni declaration has been entered with an xi eori number, however no ni ai statements (niimp, nidom, niexp) are present."
+    "errorCode": "CDS12158",
+    "description": "Missing Element - A non-GB EORI requires entry of NI Movement AI Codes in DE 2/2",
+    "fixAction": "A relevant party on an NI declaration has been entered with an XI EORI number, however no NI AI statements (NIIMP, NIDOM, NIEXP) are present."
   },
   {
-    "code": "CDS12170",
-    "message": "Authorisation Error: Invalid VAT number. Please note, if you are attempting to claim Onward Supply Relief (OSR), you must be identified as trading under the terms of the Northern Ireland Protocol (now Windsor Framework) for VAT.",
-    "fix": "Authorisation Error: Invalid VAT number. Please note, if you are attempting to claim Onward Supply Relief (OSR), you must be identified as trading under the terms of the Northern Ireland Protocol (now Windsor Framework) for VAT.",
-    "text": "CDS12170 authorisation error: invalid vat number. please note, if you are attempting to claim onward supply relief (osr), you must be identified as trading under the terms of the northern ireland protocol (now windsor framework) for vat. authorisation error: invalid vat number. please note, if you are attempting to claim onward supply relief (osr), you must be identified as trading under the terms of the northern ireland protocol (now windsor framework) for vat."
+    "errorCode": "CDS12170",
+    "description": "Authorisation Error: Invalid VAT number. Please note, if you are attempting to claim Onward Supply Relief (OSR), you must be identified as trading under the terms of the Northern Ireland Protocol (now Windsor Framework) for VAT.",
+    "fixAction": "Authorisation Error: Invalid VAT number. Please note, if you are attempting to claim Onward Supply Relief (OSR), you must be identified as trading under the terms of the Northern Ireland Protocol (now Windsor Framework) for VAT."
   },
   {
-    "code": "CDS12171",
-    "message": "Relation Error: The values supplied in Data Element 1 and Data Element 2 require a valid value to be provided in Data Element 3.",
-    "fix": "Due to the way the declaration has been completed, a further DE must be completed or completed in a certain way - For example, on an NI export dec if DE 7/4 is either 1, 3, 4, 8 or 9 then DE 7/15 must be completed.",
-    "text": "CDS12171 relation error: the values supplied in data element 1 and data element 2 require a valid value to be provided in data element 3. due to the way the declaration has been completed, a further de must be completed or completed in a certain way - for example, on an ni export dec if de 7/4 is either 1, 3, 4, 8 or 9 then de 7/15 must be completed."
+    "errorCode": "CDS12171",
+    "description": "Relation Error: The values supplied in Data Element 1 and Data Element 2 require a valid value to be provided in Data Element 3.",
+    "fixAction": "Due to the way the declaration has been completed, a further DE must be completed or completed in a certain way - For example, on an NI export dec if DE 7/4 is either 1, 3, 4, 8 or 9 then DE 7/15 must be completed."
   },
   {
-    "code": "CDS12172",
-    "message": "Relation Error: The values supplied in Data Element 1 and Data Element 2 require a valid value to be provided in Data Element 3 and/or Data Element 4.",
-    "fix": "Due to the way the declaration has been completed, a further DE must be completed or completed in a certain way - For example, on an NI export supp dec if DE 7/2 is '1' for containerised, a containder ID must be provided in DE 7/10 at header or item.",
-    "text": "CDS12172 relation error: the values supplied in data element 1 and data element 2 require a valid value to be provided in data element 3 and/or data element 4. due to the way the declaration has been completed, a further de must be completed or completed in a certain way - for example, on an ni export supp dec if de 7/2 is '1' for containerised, a containder id must be provided in de 7/10 at header or item."
+    "errorCode": "CDS12172",
+    "description": "Relation Error: The values supplied in Data Element 1 and Data Element 2 require a valid value to be provided in Data Element 3 and/or Data Element 4.",
+    "fixAction": "Due to the way the declaration has been completed, a further DE must be completed or completed in a certain way - For example, on an NI export supp dec if DE 7/2 is '1' for containerised, a containder ID must be provided in DE 7/10 at header or item."
   },
   {
-    "code": "CDS12174",
-    "message": "Relation Error: The value declared in Total amount invoiced (D.E. 4/11) does not correspond with the total of all item price amounts (D.E. 4/14) on the declaration",
-    "fix": "Relation Error: The value declared in Total amount invoiced (D.E. 4/11) does not correspond with the total of all item price amounts (D.E. 4/14) on the declaration",
-    "text": "CDS12174 relation error: the value declared in total amount invoiced (d.e. 4/11) does not correspond with the total of all item price amounts (d.e. 4/14) on the declaration relation error: the value declared in total amount invoiced (d.e. 4/11) does not correspond with the total of all item price amounts (d.e. 4/14) on the declaration"
+    "errorCode": "CDS12174",
+    "description": "Relation Error: The value declared in Total amount invoiced (D.E. 4/11) does not correspond with the total of all item price amounts (D.E. 4/14) on the declaration",
+    "fixAction": "Relation Error: The value declared in Total amount invoiced (D.E. 4/11) does not correspond with the total of all item price amounts (D.E. 4/14) on the declaration"
   },
   {
-    "code": "CDS12500",
-    "message": "Validation error: value limit exceeded",
-    "fix": "The value entered into a specific DE exceeds the amount permitted - Please consult the Tariff Volume 3 for the limits permitted for the procedure/relief in question.",
-    "text": "CDS12500 validation error: value limit exceeded the value entered into a specific de exceeds the amount permitted - please consult the tariff volume 3 for the limits permitted for the procedure/relief in question."
+    "errorCode": "CDS12500",
+    "description": "Validation error: value limit exceeded",
+    "fixAction": "The value entered into a specific DE exceeds the amount permitted - Please consult the Tariff Volume 3 for the limits permitted for the procedure/relief in question."
   },
   {
-    "code": "CDS13000",
-    "message": "Credibility check: incredible value found",
-    "fix": "Value fails credibility check as too high or too low",
-    "text": "CDS13000 credibility check: incredible value found value fails credibility check as too high or too low"
+    "errorCode": "CDS13000",
+    "description": "Credibility check: incredible value found",
+    "fixAction": "Value fails credibility check as too high or too low"
   },
   {
-    "code": "CDS14000",
-    "message": "Credibility check: incredible quota value found",
-    "fix": "Value fails credibility check as too high or too low",
-    "text": "CDS14000 credibility check: incredible quota value found value fails credibility check as too high or too low"
+    "errorCode": "CDS14000",
+    "description": "Credibility check: incredible quota value found",
+    "fixAction": "Value fails credibility check as too high or too low"
   },
   {
-    "code": "CDS19999",
-    "message": "Additional errors found",
-    "fix": "Declaration has multiple errors  Contact the help desk.",
-    "text": "CDS19999 additional errors found declaration has multiple errors  contact the help desk."
+    "errorCode": "CDS19999",
+    "description": "Additional errors found",
+    "fixAction": "Declaration has multiple errors\nContact the help desk."
   },
   {
-    "code": "CDS20001",
-    "message": "Related movement not (yet) found",
-    "fix": "Related movement not found",
-    "text": "CDS20001 related movement not (yet) found related movement not found"
+    "errorCode": "CDS20001",
+    "description": "Related movement not (yet) found",
+    "fixAction": "Related movement not found"
   },
   {
-    "code": "CDS20002",
-    "message": "Related movement does not match declaration",
-    "fix": "Related movement does not match declaration",
-    "text": "CDS20002 related movement does not match declaration related movement does not match declaration"
+    "errorCode": "CDS20002",
+    "description": "Related movement does not match declaration",
+    "fixAction": "Related movement does not match declaration"
   },
   {
-    "code": "CDS20003",
-    "message": "Related movement not found",
-    "fix": "Related movement not found",
-    "text": "CDS20003 related movement not found related movement not found"
+    "errorCode": "CDS20003",
+    "description": "Related movement not found",
+    "fixAction": "Related movement not found"
   },
   {
-    "code": "CDS40007",
-    "message": "Duplicate value",
-    "fix": "Duplication error  For example, the same Additional TARIC or National additional code has been declared twice for one item.",
-    "text": "CDS40007 duplicate value duplication error  for example, the same additional taric or national additional code has been declared twice for one item."
+    "errorCode": "CDS40007",
+    "description": "Duplicate value",
+    "fixAction": "Duplication error\nFor example, the same Additional TARIC or National additional code has been declared twice for one item."
   },
   {
-    "code": "CDS40010",
-    "message": "Data element value does not apply",
-    "fix": "Value given for a data element does not apply  This could be a formatting error or a code incorrectly completed.",
-    "text": "CDS40010 data element value does not apply value given for a data element does not apply  this could be a formatting error or a code incorrectly completed."
+    "errorCode": "CDS40010",
+    "description": "Data element value does not apply",
+    "fixAction": "Value given for a data element does not apply\nThis could be a formatting error or a code incorrectly completed."
   },
   {
-    "code": "CDS40011",
-    "message": "Missing data element value",
-    "fix": "Missing data element value  A value that is required by the commodity code has not been completed. For example, supplementary unit. You need to check the 'Measures' column for the commodity code on the Trade Tariff.",
-    "text": "CDS40011 missing data element value missing data element value  a value that is required by the commodity code has not been completed. for example, supplementary unit. you need to check the 'measures' column for the commodity code on the trade tariff."
+    "errorCode": "CDS40011",
+    "description": "Missing data element value",
+    "fixAction": "Missing data element value\nA value that is required by the commodity code has not been completed. For example, supplementary unit. You need to check the 'Measures' column for the commodity code on the Trade Tariff."
   },
   {
-    "code": "CDS40012",
-    "message": "At least one of the commodity codes you have declared requires additional information that cannot be provided on this dataset. Please use the standard full export declaration dataset (B1) instead.",
-    "fix": "At least one of the commodity codes you have declared requires additional information that cannot be provided on this dataset. Please use the standard full export declaration dataset (B1) instead.",
-    "text": "CDS40012 at least one of the commodity codes you have declared requires additional information that cannot be provided on this dataset. please use the standard full export declaration dataset (b1) instead. at least one of the commodity codes you have declared requires additional information that cannot be provided on this dataset. please use the standard full export declaration dataset (b1) instead."
+    "errorCode": "CDS40012",
+    "description": "At least one of the commodity codes you have declared requires additional information that cannot be provided on this dataset. Please use the standard full export declaration dataset (B1) instead.",
+    "fixAction": "At least one of the commodity codes you have declared requires additional information that cannot be provided on this dataset. Please use the standard full export declaration dataset (B1) instead."
   },
   {
-    "code": "CDS40013",
-    "message": "Data element contains invalid value",
-    "fix": "A DE contains invalid information related to a Tariff measure/condition - For example, the Preference code in DE 4/17 is incorrect.  Where this is in relation to a measurement unit error on DE 6/2 and/or DE 4/4: This can be due to the values supplied being invalid, or an incorrect combination has been entered. For example, supplying both LPA and ASV in DE 4/4 against an excise tax type that does not permit this combination. It can also indicate that two instances of the same measurement amount do not align. For example, the DE 6/2 Supplementary unit amount in litres differs to the amount entered against a measurement unit LTR in DE 4/4.",
-    "text": "CDS40013 data element contains invalid value a de contains invalid information related to a tariff measure/condition - for example, the preference code in de 4/17 is incorrect.  where this is in relation to a measurement unit error on de 6/2 and/or de 4/4: this can be due to the values supplied being invalid, or an incorrect combination has been entered. for example, supplying both lpa and asv in de 4/4 against an excise tax type that does not permit this combination. it can also indicate that two instances of the same measurement amount do not align. for example, the de 6/2 supplementary unit amount in litres differs to the amount entered against a measurement unit ltr in de 4/4."
+    "errorCode": "CDS40013",
+    "description": "Data element contains invalid value",
+    "fixAction": "A DE contains invalid information related to a Tariff measure/condition - For example, the Preference code in DE 4/17 is incorrect.\nWhere this is in relation to a measurement unit error on DE 6/2 and/or DE 4/4:\nThis can be due to the values supplied being invalid, or an incorrect combination has been entered. For example, supplying both LPA and ASV in DE 4/4 against an excise tax type that does not permit this combination.\nIt can also indicate that two instances of the same measurement amount do not align. For example, the DE 6/2 Supplementary unit amount in litres differs to the amount entered against a measurement unit LTR in DE 4/4."
   },
   {
-    "code": "CDS40044",
-    "message": "Disallowed Document",
-    "fix": "Document declared is not allowed for the given commodity code  You need to check the 'Conditions' box for the commodity code on the Trade Tariff. If you do not hold any licence, you must decide if you can declare a waiver (usually a Y-code). Instructions for how to use the code are given in the 'Conditions' box for the commodity code and Appendix 5A.",
-    "text": "CDS40044 disallowed document document declared is not allowed for the given commodity code  you need to check the 'conditions' box for the commodity code on the trade tariff. if you do not hold any licence, you must decide if you can declare a waiver (usually a y-code). instructions for how to use the code are given in the 'conditions' box for the commodity code and appendix 5a."
+    "errorCode": "CDS40044",
+    "description": "Disallowed Document",
+    "fixAction": "Document declared is not allowed for the given commodity code\nYou need to check the 'Conditions' box for the commodity code on the Trade Tariff. If you do not hold any licence, you must decide if you can declare a waiver (usually a Y-code). Instructions for how to use the code are given in the 'Conditions' box for the commodity code and  Appendix 5A."
   },
   {
-    "code": "CDS40045",
-    "message": "Missing document",
-    "fix": "A document is missing  The licence or exemption required for these goods is missing. You need to check the 'Conditions' box for the commodity code on the Trade Tariff. If you do not hold any licence, you must decide if you can declare a waiver (usually a Y-code). Instructions for how to use the code are given in the 'Conditions' box for the commodity code and Appendix 5A.",
-    "text": "CDS40045 missing document a document is missing  the licence or exemption required for these goods is missing. you need to check the 'conditions' box for the commodity code on the trade tariff. if you do not hold any licence, you must decide if you can declare a waiver (usually a y-code). instructions for how to use the code are given in the 'conditions' box for the commodity code and appendix 5a."
+    "errorCode": "CDS40045",
+    "description": "Missing document",
+    "fixAction": "A document is missing\nThe licence or exemption required for these goods is missing. You need to check the 'Conditions' box for the commodity code on the Trade Tariff. If you do not hold any licence, you must decide if you can declare a waiver (usually a Y-code). Instructions for how to use the code are given in the 'Conditions' box for the commodity code and  Appendix 5A."
   },
   {
-    "code": "CDS40047",
-    "message": "Prohibition",
-    "fix": "Value not allowed",
-    "text": "CDS40047 prohibition value not allowed"
+    "errorCode": "CDS40047",
+    "description": "Prohibition",
+    "fixAction": "Value not allowed"
   },
   {
-    "code": "CDS40049",
-    "message": "Quota exhausted",
-    "fix": "Quota used up",
-    "text": "CDS40049 quota exhausted quota used up"
+    "errorCode": "CDS40049",
+    "description": "Quota exhausted",
+    "fixAction": "Quota used up"
   },
   {
-    "code": "CDS40053",
-    "message": "Quota suspended",
-    "fix": "Quota suspended",
-    "text": "CDS40053 quota suspended quota suspended"
+    "errorCode": "CDS40053",
+    "description": "Quota suspended",
+    "fixAction": "Quota suspended"
   },
   {
-    "code": "CDS40059",
-    "message": "Incomplete measure or commodity code",
-    "fix": "Incomplete measure or commodity code",
-    "text": "CDS40059 incomplete measure or commodity code incomplete measure or commodity code"
+    "errorCode": "CDS40059",
+    "description": "Incomplete measure or commodity code",
+    "fixAction": "Incomplete measure or commodity code"
   },
   {
-    "code": "CDS40066",
-    "message": "Tariff condition not fulfilled",
-    "fix": "Tariff condition not fulfilled  Value is not allowed to be used for the given commodity code. You need to check the 'Measures' box for the commodity code on the Trade Tariff. If you do not hold any licence, you must decide if you can declare a waiver (usually a Y-code). Instructions for how to use the code are given in the 'Conditions' box for the commodity code and Appendix 5A.",
-    "text": "CDS40066 tariff condition not fulfilled tariff condition not fulfilled  value is not allowed to be used for the given commodity code. you need to check the 'measures' box for the commodity code on the trade tariff. if you do not hold any licence, you must decide if you can declare a waiver (usually a y-code). instructions for how to use the code are given in the 'conditions' box for the commodity code and appendix 5a."
+    "errorCode": "CDS40066",
+    "description": "Tariff condition not fulfilled",
+    "fixAction": "Tariff condition not fulfilled\nValue is not allowed to be used for the given commodity code. You need to check the 'Measures' box for the commodity code on the Trade Tariff. If you do not hold any licence, you must decide if you can declare a waiver (usually a Y-code).  Instructions for how to use the code are given in the 'Conditions' box for the commodity code and  Appendix 5A."
   },
   {
-    "code": "CDS40068",
-    "message": "Additional Excise code is missing",
-    "fix": "National additional code for excise is missing",
-    "text": "CDS40068 additional excise code is missing national additional code for excise is missing"
+    "errorCode": "CDS40068",
+    "description": "Additional Excise code is missing",
+    "fixAction": "National additional code for excise is missing"
   },
   {
-    "code": "CDS40069",
-    "message": "Quota Closed",
-    "fix": "Quota error  The Quota claimed is no longer available.",
-    "text": "CDS40069 quota closed quota error  the quota claimed is no longer available."
+    "errorCode": "CDS40069",
+    "description": "Quota Closed",
+    "fixAction": "Quota error\nThe Quota claimed is no longer available."
   },
   {
-    "code": "CDS40070",
-    "message": "When AI code 'NIIMP' is entered at item level in D.E. 2/2, it must be declared on all goods items in the declaration.",
-    "fix": "Additional information code NIIMP must appear on all items  Additional information code NIIMP when used on one item must be entered on all items.",
-    "text": "CDS40070 when ai code 'niimp' is entered at item level in d.e. 2/2, it must be declared on all goods items in the declaration. additional information code niimp must appear on all items  additional information code niimp when used on one item must be entered on all items."
+    "errorCode": "CDS40070",
+    "description": "When AI code 'NIIMP' is entered at item level in D.E. 2/2, it must be declared on all goods items in the declaration.",
+    "fixAction": "Additional information code NIIMP must appear on all items\nAdditional information code NIIMP when used on one item must be entered on all items."
   },
   {
-    "code": "CDS40071",
-    "message": "When AI code 'NIDOM' is entered at item level in D.E. 2/2, it must be declared on all goods items in the declaration",
-    "fix": "Additional information code NIDOM must appear on all items  Additional information code NIDOM when used on one item must be entered on all items.",
-    "text": "CDS40071 when ai code 'nidom' is entered at item level in d.e. 2/2, it must be declared on all goods items in the declaration additional information code nidom must appear on all items  additional information code nidom when used on one item must be entered on all items."
+    "errorCode": "CDS40071",
+    "description": "When AI code 'NIDOM' is entered at item level in D.E. 2/2, it must be declared on all goods items in the declaration",
+    "fixAction": "Additional information code NIDOM must appear on all items\nAdditional information code NIDOM when used on one item must be entered on all items."
   },
   {
-    "code": "CDS40072",
-    "message": "When AI code 'NIEXP' is entered at item level in D.E. 2/2, it must be declared on all goods items in the declaration",
-    "fix": "Additional information code NIEXP must appear on all items  Additional information code NIEXP when used on one item must be entered on all items.",
-    "text": "CDS40072 when ai code 'niexp' is entered at item level in d.e. 2/2, it must be declared on all goods items in the declaration additional information code niexp must appear on all items  additional information code niexp when used on one item must be entered on all items."
+    "errorCode": "CDS40072",
+    "description": "When AI code 'NIEXP' is entered at item level in D.E. 2/2, it must be declared on all goods items in the declaration",
+    "fixAction": "Additional information code NIEXP must appear on all items\nAdditional information code NIEXP when used on one item must be entered on all items."
   },
   {
-    "code": "CDS40073",
-    "message": "When de-risking AI code 'NIREM' is entered at item level in D.E. 2/2, either 'NIIMP' or 'NIDOM' AI codes must also be entered at item level on the same goods item",
-    "fix": "You declared NIREM additional information code on its own  NIREM additional information (AI) code may not be declared in isolation; NIDOM or NIIMP must also be declared on the same item.",
-    "text": "CDS40073 when de-risking ai code 'nirem' is entered at item level in d.e. 2/2, either 'niimp' or 'nidom' ai codes must also be entered at item level on the same goods item you declared nirem additional information code on its own  nirem additional information (ai) code may not be declared in isolation; nidom or niimp must also be declared on the same item."
+    "errorCode": "CDS40073",
+    "description": "When de-risking AI code 'NIREM' is entered at item level in D.E. 2/2, either 'NIIMP' or 'NIDOM' AI codes must also be entered at item level on the same goods item",
+    "fixAction": "You declared NIREM additional information code on its own\nNIREM additional information (AI) code may not be declared in isolation; NIDOM or NIIMP must also be declared on the same item."
   },
   {
-    "code": "CDS40074",
-    "message": "When subsidy AI code 'NIAID' is entered at item level in DE 2/2, either 'NIIMP' or 'NIDOM' AI codes must also be entered at item level on the same goods item",
-    "fix": "Relation error  You have not entered either 'NIIMP' or 'NIDOM' AI codes when you declared subsidy AI code 'NIAID'. Either of these codes are required to be entered at item level on the same good item.",
-    "text": "CDS40074 when subsidy ai code 'niaid' is entered at item level in de 2/2, either 'niimp' or 'nidom' ai codes must also be entered at item level on the same goods item relation error  you have not entered either 'niimp' or 'nidom' ai codes when you declared subsidy ai code 'niaid'. either of these codes are required to be entered at item level on the same good item."
+    "errorCode": "CDS40074",
+    "description": "When subsidy AI code 'NIAID' is entered at item level in DE 2/2, either 'NIIMP' or 'NIDOM' AI codes must also be entered at item level on the same goods item",
+    "fixAction": "Relation error\nYou have not entered either 'NIIMP' or 'NIDOM' AI codes when you declared subsidy AI code 'NIAID'. Either of these codes are required to be entered at item level on the same good item."
   },
   {
-    "code": "CDS49999",
-    "message": "Other errors",
-    "fix": "Other Errors",
-    "text": "CDS49999 other errors other errors"
+    "errorCode": "CDS49999",
+    "description": "Other errors",
+    "fixAction": "Other Errors"
   },
   {
-    "code": "CDS50000",
-    "message": "Response from ALVS is not release",
-    "fix": "Response from ALVS is not release",
-    "text": "CDS50000 response from alvs is not release response from alvs is not release"
+    "errorCode": "CDS50000",
+    "description": "Response from ALVS is not release",
+    "fixAction": "Response from ALVS is not release"
   },
   {
-    "code": "CDS50001",
-    "message": "Invalid UCR Format, DUCR or MUCR",
-    "fix": "Invalid UCR Format, DUCR or MUCR",
-    "text": "CDS50001 invalid ucr format, ducr or mucr invalid ucr format, ducr or mucr"
+    "errorCode": "CDS50001",
+    "description": "Invalid UCR Format, DUCR or MUCR",
+    "fixAction": "Invalid UCR Format, DUCR or MUCR"
   },
   {
-    "code": "CDS50003",
-    "message": "UCR is not at the top of its' consolidation",
-    "fix": "UCR is not at the top of its consolidation",
-    "text": "CDS50003 ucr is not at the top of its' consolidation ucr is not at the top of its consolidation"
+    "errorCode": "CDS50003",
+    "description": "UCR is not at the top of its' consolidation",
+    "fixAction": "UCR is not at the top of its consolidation"
   },
   {
-    "code": "CDS50008",
-    "message": "UCR Type does not match UCR Format",
-    "fix": "DUCR or MUCR is not the right format",
-    "text": "CDS50008 ucr type does not match ucr format ducr or mucr is not the right format"
+    "errorCode": "CDS50008",
+    "description": "UCR Type does not match UCR Format",
+    "fixAction": "DUCR or MUCR is not the right format"
   },
   {
-    "code": "CDS50015",
-    "message": "Declaration is cancelled/terminated/invalidated/handled externally/rejected (upon arrival)",
-    "fix": "Declaration is cancelled or terminated upon arrival  Declaration is cancelled/terminated/invalidated/handled externally/rejected (upon arrival).",
-    "text": "CDS50015 declaration is cancelled/terminated/invalidated/handled externally/rejected (upon arrival) declaration is cancelled or terminated upon arrival  declaration is cancelled/terminated/invalidated/handled externally/rejected (upon arrival)."
+    "errorCode": "CDS50015",
+    "description": "Declaration is cancelled/terminated/invalidated/handled externally/rejected (upon arrival)",
+    "fixAction": "Declaration is cancelled or terminated upon arrival\nDeclaration is cancelled/terminated/invalidated/handled externally/rejected (upon arrival)."
   },
   {
-    "code": "CDS50018",
-    "message": "Goods Arrival Date/Time is invalid or not included",
-    "fix": "This is an ILE error code and is returned for Inventory linking.",
-    "text": "CDS50018 goods arrival date/time is invalid or not included this is an ile error code and is returned for inventory linking."
+    "errorCode": "CDS50018",
+    "description": "Goods Arrival Date/Time is invalid or not included",
+    "fixAction": "This is an ILE error code and is returned for Inventory linking."
   },
   {
-    "code": "CDS50027",
-    "message": "Role/Location-Based Authorisation failed (PDS)",
-    "fix": "Authorisation failed",
-    "text": "CDS50027 role/location-based authorisation failed (pds) authorisation failed"
+    "errorCode": "CDS50027",
+    "description": "Role/Location-Based Authorisation failed (PDS)",
+    "fixAction": "Authorisation failed"
   },
   {
-    "code": "CDS50028",
-    "message": "Goods Location is invalid",
-    "fix": "Goods location code invalid  The codes declared in the goods location code field must be selected from the code lists shown in Appendix 16.",
-    "text": "CDS50028 goods location is invalid goods location code invalid  the codes declared in the goods location code field must be selected from the code lists shown in appendix 16."
+    "errorCode": "CDS50028",
+    "description": "Goods Location is invalid",
+    "fixAction": "Goods location code invalid\nThe codes declared in the goods location code field must be selected from the code lists shown in Appendix 16."
   },
   {
-    "code": "CDS50031",
-    "message": "Request has been received after a successful RET",
-    "fix": "Request has been received after a successful RET",
-    "text": "CDS50031 request has been received after a successful ret request has been received after a successful ret"
+    "errorCode": "CDS50031",
+    "description": "Request has been received after a successful RET",
+    "fixAction": "Request has been received after a successful RET"
   },
   {
-    "code": "CDS70711",
-    "message": "Licence Error: Electronic licence does not exist",
-    "fix": "Licence error  Electronic licence does not exist.",
-    "text": "CDS70711 licence error: electronic licence does not exist licence error  electronic licence does not exist."
+    "errorCode": "CDS70711",
+    "description": "Licence Error: Electronic licence does not exist",
+    "fixAction": "Licence error\nElectronic licence does not exist."
   },
   {
-    "code": "CDS70719",
-    "message": "Licence Error: Electronic licence quoted although Document Status Code indicated paper licence",
-    "fix": "Licence error  Electronic licence quoted but document status code indicates paper licence. Check the document status code.",
-    "text": "CDS70719 licence error: electronic licence quoted although document status code indicated paper licence licence error  electronic licence quoted but document status code indicates paper licence. check the document status code."
+    "errorCode": "CDS70719",
+    "description": "Licence Error: Electronic licence quoted although Document Status Code indicated paper licence",
+    "fixAction": "Licence error\nElectronic licence quoted but document status code indicates paper licence. Check the document status code."
   },
   {
-    "code": "CDS70724",
-    "message": "Licence Error: Licence is not valid",
-    "fix": "Licence reference quoted is not valid  This could be because:  licence does not match the commodity code licensing authority declared is incorrect licence is out of date licence allows insufficient quantity licence reference number declared is incorrect licence does not belong to the importer/ exporter declared licence is not valid for the country of origin/ dispatch/ destination licence does not match the DUCR declared in DE 2/1  If still stuck, contact the licencing authority",
-    "text": "CDS70724 licence error: licence is not valid licence reference quoted is not valid  this could be because:  licence does not match the commodity code licensing authority declared is incorrect licence is out of date licence allows insufficient quantity licence reference number declared is incorrect licence does not belong to the importer/ exporter declared licence is not valid for the country of origin/ dispatch/ destination licence does not match the ducr declared in de 2/1  if still stuck, contact the licencing authority"
+    "errorCode": "CDS70724",
+    "description": "Licence Error: Licence is not valid",
+    "fixAction": "Licence reference quoted is not valid\nThis could be because:\nlicence does not match the commodity code\nlicensing authority declared is incorrect\nlicence is out of date\nlicence allows insufficient quantity\nlicence reference number declared is incorrect\nlicence does not belong to the importer/ exporter declared\nlicence is not valid for the country of origin/ dispatch/ destination\nlicence does not match the DUCR declared in DE 2/1\nIf still stuck, contact the licencing authority"
   },
   {
-    "code": "CDS70739",
-    "message": "Licence Error: An Import licence cannot be used on an Export declaration",
-    "fix": "Licence error  Import licence cannot be used on an export declaration.",
-    "text": "CDS70739 licence error: an import licence cannot be used on an export declaration licence error  import licence cannot be used on an export declaration."
+    "errorCode": "CDS70739",
+    "description": "Licence Error: An Import licence cannot be used on an Export declaration",
+    "fixAction": "Licence error\nImport licence cannot be used on an export declaration."
   },
   {
-    "code": "CDS70740",
-    "message": "Licence Error: Importer/Exporter is not the owner of the licence",
-    "fix": "Licence error  Importer/Exporter is not the owner of the licence and/or licence is not valid.",
-    "text": "CDS70740 licence error: importer/exporter is not the owner of the licence licence error  importer/exporter is not the owner of the licence and/or licence is not valid."
+    "errorCode": "CDS70740",
+    "description": "Licence Error: Importer/Exporter is not the owner of the licence",
+    "fixAction": "Licence error\nImporter/Exporter is not the owner of the licence and/or licence is not valid."
   },
   {
-    "code": "CDS70758",
-    "message": "Licence is not valid for declared Country of Destination",
-    "fix": "Licence error  Licence is not valid for declared country of destination.",
-    "text": "CDS70758 licence is not valid for declared country of destination licence error  licence is not valid for declared country of destination."
+    "errorCode": "CDS70758",
+    "description": "Licence is not valid for declared Country of Destination",
+    "fixAction": "Licence error\nLicence is not valid for declared country of destination."
   },
   {
-    "code": "CDS70760",
-    "message": "Licence Error: Licence is not valid for the declared goods item",
-    "fix": "Licence is not valid for this item  This could be because:  licence does not match the commodity code licensing authority declared is incorrect licence is out of date licence allows insufficient quantity licence reference number declared is incorrect licence does not belong to the importer/ exporter declared licence is not valid for the country of origin/ dispatch/ destination licence does not match the DUCR declared in DE 2/1  If still stuck, contact the issuing authority",
-    "text": "CDS70760 licence error: licence is not valid for the declared goods item licence is not valid for this item  this could be because:  licence does not match the commodity code licensing authority declared is incorrect licence is out of date licence allows insufficient quantity licence reference number declared is incorrect licence does not belong to the importer/ exporter declared licence is not valid for the country of origin/ dispatch/ destination licence does not match the ducr declared in de 2/1  if still stuck, contact the issuing authority"
+    "errorCode": "CDS70760",
+    "description": "Licence Error: Licence is not valid for the declared goods item",
+    "fixAction": "Licence is not valid for this item\nThis could be because:\nlicence does not match the commodity code\nlicensing authority declared is incorrect\nlicence is out of date\nlicence allows insufficient quantity\nlicence reference number declared is incorrect\nlicence does not belong to the importer/ exporter declared\nlicence is not valid for the country of origin/ dispatch/ destination\nlicence does not match the DUCR declared in DE 2/1\nIf still stuck, contact the issuing authority"
   },
   {
-    "code": "CDS70761",
-    "message": "Licence has insufficient quantity remaining to meet claim",
-    "fix": "Licence error  Licence does not cover the quantity declared.",
-    "text": "CDS70761 licence has insufficient quantity remaining to meet claim licence error  licence does not cover the quantity declared."
+    "errorCode": "CDS70761",
+    "description": "Licence has insufficient quantity remaining to meet claim",
+    "fixAction": "Licence error\nLicence does not cover the quantity declared."
   },
   {
-    "code": "CDS70791",
-    "message": "Licence Error: Licence line number does not exist on the licence",
-    "fix": "Licence error  Line number given on licence is not valid.",
-    "text": "CDS70791 licence error: licence line number does not exist on the licence licence error  line number given on licence is not valid."
+    "errorCode": "CDS70791",
+    "description": "Licence Error: Licence line number does not exist on the licence",
+    "fixAction": "Licence error\nLine number given on licence is not valid."
   },
   {
-    "code": "CDS71115",
-    "message": "Licence Error: An Export licence cannot be used on an Import declaration",
-    "fix": "Licence error  Export licence cannot be used on an import declaration.",
-    "text": "CDS71115 licence error: an export licence cannot be used on an import declaration licence error  export licence cannot be used on an import declaration."
+    "errorCode": "CDS71115",
+    "description": "Licence Error: An Export licence cannot be used on an Import declaration",
+    "fixAction": "Licence error\nExport licence cannot be used on an import declaration."
   },
   {
-    "code": "CDS71200",
-    "message": "Uniqueness Error: Document Codes with identical IDs are not permitted on a single goods item",
-    "fix": "Document reference is a duplication  You cannot use the same reference on a single goods item.",
-    "text": "CDS71200 uniqueness error: document codes with identical ids are not permitted on a single goods item document reference is a duplication  you cannot use the same reference on a single goods item."
+    "errorCode": "CDS71200",
+    "description": "Uniqueness Error: Document Codes with identical IDs are not permitted on a single goods item",
+    "fixAction": "Document reference is a duplication\nYou cannot use the same reference on a single goods item."
   },
   {
-    "code": "CDS71201",
-    "message": "Licence Error: All instances of a licence for a declaration must use a consistent Document Status Code",
-    "fix": "Licence error  All instances of a licence for a declaration must use a consistent Document Status Code.",
-    "text": "CDS71201 licence error: all instances of a licence for a declaration must use a consistent document status code licence error  all instances of a licence for a declaration must use a consistent document status code."
+    "errorCode": "CDS71201",
+    "description": "Licence Error: All instances of a licence for a declaration must use a consistent Document Status Code",
+    "fixAction": "Licence error\nAll instances of a licence for a declaration must use a consistent Document Status Code."
   },
   {
-    "code": "CDS71203",
-    "message": "Licence Error: Document Status Code \"EL\" or \"EP\" is not allowed on a Single Use licence",
-    "fix": "Licence error  Document status code \"EL\" or \"EP\" is not allowed on a single use licence. The licence can only be used once so cannot be part used.",
-    "text": "CDS71203 licence error: document status code \"el\" or \"ep\" is not allowed on a single use licence licence error  document status code \"el\" or \"ep\" is not allowed on a single use licence. the licence can only be used once so cannot be part used."
+    "errorCode": "CDS71203",
+    "description": "Licence Error: Document Status Code \"EL\" or \"EP\" is not allowed on a Single Use licence",
+    "fixAction": "Licence error\nDocument status code \"EL\" or \"EP\" is not allowed on a single use licence.\nThe licence can only be used once so cannot be part used."
   },
   {
-    "code": "CDS71204",
-    "message": "Licence is already surrendered",
-    "fix": "Licence is already surrendered",
-    "text": "CDS71204 licence is already surrendered licence is already surrendered"
+    "errorCode": "CDS71204",
+    "description": "Licence is already surrendered",
+    "fixAction": "Licence is already surrendered"
   },
   {
-    "code": "CDS71206",
-    "message": "Licence is already exhausted",
-    "fix": "Licence is already exhausted",
-    "text": "CDS71206 licence is already exhausted licence is already exhausted"
+    "errorCode": "CDS71206",
+    "description": "Licence is already exhausted",
+    "fixAction": "Licence is already exhausted"
   },
   {
-    "code": "CDS71216",
-    "message": "Transaction not permitted; Licence is inactive and is no longer available for use",
-    "fix": "Licence is no longer available for use  Licence declared has been made inactive, check correct licence is declared or contact issuing authority.",
-    "text": "CDS71216 transaction not permitted; licence is inactive and is no longer available for use licence is no longer available for use  licence declared has been made inactive, check correct licence is declared or contact issuing authority."
+    "errorCode": "CDS71216",
+    "description": "Transaction not permitted; Licence is inactive and is no longer available for use",
+    "fixAction": "Licence is no longer available for use\nLicence declared has been made inactive, check correct licence is declared or contact issuing authority."
   },
   {
-    "code": "CDS71236",
-    "message": "Licence not valid for declared Country of Origin",
-    "fix": "Licence error  You have declared an invalid Licence for the declared Country of Origin.",
-    "text": "CDS71236 licence not valid for declared country of origin licence error  you have declared an invalid licence for the declared country of origin."
+    "errorCode": "CDS71236",
+    "description": "Licence not valid for declared Country of Origin",
+    "fixAction": "Licence error\nYou have declared an invalid Licence for the declared Country of Origin."
   },
   {
-    "code": "CDS71252",
-    "message": "Licence not valid for declared Country of Dispatch",
-    "fix": "Licence error  Licence not valid for declared country of dispatch",
-    "text": "CDS71252 licence not valid for declared country of dispatch licence error  licence not valid for declared country of dispatch"
+    "errorCode": "CDS71252",
+    "description": "Licence not valid for declared Country of Dispatch",
+    "fixAction": "Licence error\nLicence not valid for declared country of dispatch"
   },
   {
-    "code": "CDS71262",
-    "message": "Licence Error: Document Status Code \"EA\" can only be declared on Type Y declaration",
-    "fix": "Licence error  Document Status Code \"EA\" can only be used on a supplementary declaration.",
-    "text": "CDS71262 licence error: document status code \"ea\" can only be declared on type y declaration licence error  document status code \"ea\" can only be used on a supplementary declaration."
+    "errorCode": "CDS71262",
+    "description": "Licence Error: Document Status Code \"EA\" can only be declared on Type Y declaration",
+    "fixAction": "Licence error\nDocument Status Code \"EA\" can only be used on a supplementary declaration."
   },
   {
-    "code": "CDS73329",
-    "message": "Licence Error: Licence cannot be declared on declaration category/declaration type combination",
-    "fix": "Licence cannot be used  A licence document code (for example X002, 9106) cannot be declared on this type of declaration, even if using a waiver/exemption document status code. If the goods are entitled to a waiver/exemption and there is a waiver document code which can be used in place of the licence document code (for example Y903, Y927), then this can be used instead. If there is no waiver document code that can be used then it may be necessary to use a standard declaration.",
-    "text": "CDS73329 licence error: licence cannot be declared on declaration category/declaration type combination licence cannot be used  a licence document code (for example x002, 9106) cannot be declared on this type of declaration, even if using a waiver/exemption document status code. if the goods are entitled to a waiver/exemption and there is a waiver document code which can be used in place of the licence document code (for example y903, y927), then this can be used instead. if there is no waiver document code that can be used then it may be necessary to use a standard declaration."
+    "errorCode": "CDS73329",
+    "description": "Licence Error: Licence cannot be declared on declaration category/declaration type combination",
+    "fixAction": "Licence cannot be used\nA licence document code (for example X002, 9106) cannot be declared on this type of declaration, even if using a waiver/exemption document status code. If the goods are entitled to a waiver/exemption and there is a waiver document code which can be used in place of the licence document code (for example Y903, Y927), then this can be used instead. If there is no waiver document code that can be used then it may be necessary to use a standard declaration."
   },
   {
-    "code": "CDS77000",
-    "message": "Obligation Error: ID must be provided for declared Document Code",
-    "fix": "Document identifier required  Instructions for how to use the code are given in the 'Conditions' box for the commodity code and Appendix 5A.",
-    "text": "CDS77000 obligation error: id must be provided for declared document code document identifier required  instructions for how to use the code are given in the 'conditions' box for the commodity code and appendix 5a."
+    "errorCode": "CDS77000",
+    "description": "Obligation Error: ID must be provided for declared Document Code",
+    "fixAction": "Document identifier required\nInstructions for how to use the code are given in the 'Conditions' box for the commodity code and  Appendix 5A."
   },
   {
-    "code": "CDS77001",
-    "message": "Quantity must be provided for Document Category",
-    "fix": "Quantity must be provided  In some cases, when you declare a document status code to indicate a waiver for a licence, you are still required to enter a '0' as the quantity attributed to the licence. This will also require a measurement unit such as GBP.",
-    "text": "CDS77001 quantity must be provided for document category quantity must be provided  in some cases, when you declare a document status code to indicate a waiver for a licence, you are still required to enter a '0' as the quantity attributed to the licence. this will also require a measurement unit such as gbp."
+    "errorCode": "CDS77001",
+    "description": "Quantity must be provided for Document Category",
+    "fixAction": "Quantity must be provided\nIn some cases, when you declare a document status code to indicate a waiver for a licence, you are still required to enter a '0' as the  quantity attributed to the licence. This will also require a measurement unit such as GBP."
   },
   {
-    "code": "CDS77002",
-    "message": "Obligation Error: Document Status Code must be provided for declared Document Code",
-    "fix": "Document status code needed  Check appendix 5A for more information.",
-    "text": "CDS77002 obligation error: document status code must be provided for declared document code document status code needed  check appendix 5a for more information."
+    "errorCode": "CDS77002",
+    "description": "Obligation Error: Document Status Code must be provided for declared Document Code",
+    "fixAction": "Document status code needed\nCheck appendix 5A for more information."
   },
   {
-    "code": "CDS77003",
-    "message": "Licence Error: DUCR must be provided for an Import declaration with a Licence",
-    "fix": "Licence error  You have not provided a DUCR - this is required at header level for an import declaration with a licence.",
-    "text": "CDS77003 licence error: ducr must be provided for an import declaration with a licence licence error  you have not provided a ducr - this is required at header level for an import declaration with a licence."
+    "errorCode": "CDS77003",
+    "description": "Licence Error: DUCR must be provided for an Import declaration with a Licence",
+    "fixAction": "Licence error\nYou have not provided a DUCR - this is required at header level for an import declaration with a licence."
   },
   {
-    "code": "CDS77004",
-    "message": "Reservation could not be made",
-    "fix": "Reservation could not be made",
-    "text": "CDS77004 reservation could not be made reservation could not be made"
+    "errorCode": "CDS77004",
+    "description": "Reservation could not be made",
+    "fixAction": "Reservation could not be made"
   },
   {
-    "code": "CDS77005",
-    "message": "Reason for waiver must be declared for Document Category",
-    "fix": "Reason not given for use of a 'Y' code  The Y series document code used requires a document reason. Check the 'Conditions' box in the Online Tariff or appendix 5A for the information required.",
-    "text": "CDS77005 reason for waiver must be declared for document category reason not given for use of a 'y' code  the y series document code used requires a document reason. check the 'conditions' box in the online tariff or appendix 5a for the information required."
+    "errorCode": "CDS77005",
+    "description": "Reason for waiver must be declared for Document Category",
+    "fixAction": "Reason not given for use of a 'Y' code\nThe Y series document code used requires a document reason. Check the 'Conditions' box in the Online Tariff or appendix 5A for the information required."
   }
 ]
