@@ -10,6 +10,7 @@
         "@cloudflare/ai-chat": "latest",
         "agents": "latest",
         "ai": "latest",
+        "fast-xml-parser": "^5.8.0",
         "node-fetch": "^3.3.2"
     }
 }
