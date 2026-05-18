@@ -252,7 +252,7 @@ missing or using a non-permitted code for this commodity.
 | ID | Item | Method | Reviewer | Status |
 |----|------|--------|----------|--------|
 | P2.3.1 | Script's local `mapToCDS_H1` function: `GovernmentProcedure` produces 2 separate elements (40/00 + 000) — not single 4-digit+3-digit element | Code review run-hmrc-scenarios.js L75-L81 — fix if still wrong | Backend Engineer | ⬜ |
-| P2.3.2 | Script's `acceptHeader` default is `application/vnd.hmrc.1.0+xml` — not `vnd.hmrc.2.0+xml` | Code review run-hmrc-scenarios.js L247 | Backend Engineer | ⬜ |
+| P2.3.2 | Script's `acceptHeader` default is `application/vnd.hmrc.2.0+xml` | Code review run-hmrc-scenarios.js L247 | Backend Engineer | ✅ |
 | P2.3.3 | Script's `itemSeed.additionalDocuments` array uses ONLY documents from signed decision matrix | Code review / update run-hmrc-scenarios.js | Backend Engineer | ⬜ |
 | P2.3.4 | Script's `baseDecl.dispatchCountry` is set to `"BR"` — not `"GB"` | Code review run-hmrc-scenarios.js L358 | Backend Engineer | ⬜ |
 
@@ -310,7 +310,7 @@ missing or using a non-permitted code for this commodity.
 | P3.2.2 | `client_id_present` | ✅ | ⬜ |
 | P3.2.3 | `environment_is_sandbox` | ✅ | ⬜ |
 | P3.2.4 | `endpoint_is_test_api` | ✅ | ⬜ |
-| P3.2.5 | `accept_is_v1` | ✅ application/vnd.hmrc.1.0+xml | ⬜ |
+| P3.2.5 | `accept_is_v2` | ✅ application/vnd.hmrc.2.0+xml | ⬜ |
 | P3.2.6 | `content_type_is_xml` | ✅ | ⬜ |
 | P3.2.7 | `xml_has_metadata_root` | ✅ | ⬜ |
 | P3.2.8 | `xml_has_declaration` | ✅ | ⬜ |

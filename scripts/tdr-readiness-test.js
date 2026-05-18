@@ -286,18 +286,18 @@ async function testAcceptHeaderValue() {
       || src.match(/["']application\/vnd\.hmrc\.(\d+\.\d+)\+xml["']/);
     if (!match) {
       // Check if it uses env var with a 1.0 default
-      if (src.includes('vnd.hmrc.1.0+xml')) {
-        log("PASS", "P3-19", "Accept header = vnd.hmrc.1.0+xml (TDR)", `Found v1.0 as default fallback`);
+      if (src.includes('vnd.hmrc.2.0+xml')) {
+        log("PASS", "P3-19", "Accept header = vnd.hmrc.2.0+xml", `Found v2.0 as default fallback`);
       } else {
-        log("FAIL", "P3-19", "Accept header = vnd.hmrc.1.0+xml (TDR)", `Could not find Accept header in source`);
+        log("FAIL", "P3-19", "Accept header = vnd.hmrc.2.0+xml", `Could not find Accept header in source`);
       }
-    } else if (match[1].includes("1.0")) {
-      log("PASS", "P3-19", "Accept header = vnd.hmrc.1.0+xml (TDR)", `Found: ${match[1]}`);
+    } else if (match[1].includes("2.0")) {
+      log("PASS", "P3-19", "Accept header = vnd.hmrc.2.0+xml", `Found: ${match[1]}`);
     } else {
-      log("FAIL", "P3-19", "Accept header = vnd.hmrc.1.0+xml (TDR)", `Found: ${match[1]} — TDR requires v1.0`);
+      log("FAIL", "P3-19", "Accept header = vnd.hmrc.2.0+xml", `Found: ${match[1]} — requires v2.0`);
     }
   } catch (e) {
-    log("FAIL", "P3-19", "Accept header = vnd.hmrc.1.0+xml (TDR)", `Cannot read source: ${e.message}`);
+    log("FAIL", "P3-19", "Accept header = vnd.hmrc.2.0+xml", `Cannot read source: ${e.message}`);
   }
 }
 
