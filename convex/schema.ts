@@ -102,6 +102,21 @@ export default defineSchema({
     // DE 7/7 — Identification type of the means of transport. e.g. "11"
     // vessel name, "30" road vehicle reg, "40" flight number.
     transportIdType: v.optional(v.string()),
+    // DE 3/2 — Exporter EORI (only populated for UK/XI exporters).
+    exporterEori: v.optional(v.string()),
+    // DE 3/39 — Authorisation holders. Array of {id, categoryCode} objects.
+    // e.g. [{id: "GB449181054677", categoryCode: "CGU"}]
+    authorisationHolders: v.optional(v.any()),
+    // DE 5/23 — Goods location name (e.g. "GBWLAFXTFXTGW").
+    locationName: v.optional(v.string()),
+    // DE 8/5 — Nature of transaction code. Default "11" (sale).
+    transactionNatureCode: v.optional(v.string()),
+    // Buyer/Seller names for party data.
+    buyerName: v.optional(v.string()),
+    sellerName: v.optional(v.string()),
+    // DUCR and LRN if explicitly set.
+    ducr: v.optional(v.string()),
+    lrn: v.optional(v.string()),
   }).index("by_user", ["userId"]).index("by_mrn", ["mrn"]).index("by_conversationId", ["conversationId"]),
 
   goods_items: defineTable({
@@ -123,6 +138,12 @@ export default defineSchema({
     packageCount: v.optional(v.number()),
     // DE 6/9 — package type code (PK, BX, CT, etc.). Mandatory per Appendix 21A H1.
     packageType: v.optional(v.string()),
+    // DE 4/16 — Customs valuation method. Default "1" (transaction value).
+    valuationMethod: v.optional(v.string()),
+    // DE 4/13 — Valuation adjustment indicator. Default "0000" (no adjustments).
+    valuationAdjustment: v.optional(v.string()),
+    // DE 8/6 — Preference code (duty regime). Default "100".
+    preferenceCode: v.optional(v.string()),
   }).index("by_declaration", ["declarationId"]).index("by_owner", ["ownerId"]),
 
   documents: defineTable({

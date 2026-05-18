@@ -45,6 +45,10 @@ function mapToCDS_H1(declaration, items) {
     items.reduce((acc, item) => acc + (parseFloat(item.grossWeightKg) || 0), 0) || 100;
   const invoiceTotal =
     items.reduce((acc, item) => acc + (parseFloat(item.valueAmount) || 0), 0) || 1000;
+  const ducr = declaration.ducr ||
+    `${new Date().getFullYear() % 10}GB${(declaration.eori || "GB449181054677").replace(/^GB/i, "")}-${String(declaration._id || "manual")
+      .substring(0, 6)
+      .toUpperCase()}`;
 
   return {
     Declaration: {
@@ -65,32 +69,64 @@ function mapToCDS_H1(declaration, items) {
       CurrencyExchange: {
         CurrencyTypeCode: declaration.invoiceCurrency || "GBP",
       },
+      // DE 7/14 — BorderTransportMeans at Declaration level (required by CDS alongside
+      // ArrivalTransportMeans inside Consignment — R123 enforces matching identity).
+      BorderTransportMeans: {
+        ID: (declaration.transportId || "CSCL GLOBE").replace(/\s+/g, ""),
+        IdentificationTypeCode: declaration.transportIdType || "11",
+        ModeCode: declaration.transportMode || "1",
+      },
       Declarant: { ID: declaration.eori || "" },
       // Only include Exporter when a valid GB/XI EORI is present — HMRC DE 3/2: "Do NOT enter if exporter is not UK-based"
       Exporter: /^(GB|XI)\d{12}$/i.test(declaration.exporterEori || "") ? { ID: declaration.exporterEori } : null,
       UCR: {
-        TraderAssignedReferenceID:
-          declaration.ducr ||
-          `${new Date().getFullYear() % 10}GB${(declaration.eori || "GB449181054677").replace(/^GB/i, "")}-${String(declaration._id || "manual")
-            .substring(0, 6)
-            .toUpperCase()}`,
+        TraderAssignedReferenceID: ducr,
       },
+      // DE 3/39 — Authorisation holders at Declaration level.
+      AuthorisationHolder: Array.isArray(declaration.authorisationHolders)
+        ? declaration.authorisationHolders
+        : [],
       GoodsShipment: {
+        // DE 8/5 — Nature of transaction code. "11" = sale.
+        TransactionNatureCode: declaration.transactionNatureCode || "11",
+        // DE 3/24 — Buyer (UK importer).
+        Buyer: {
+          AddressCountryCode: declaration.destinationCountry || "GB",
+        },
         Consignment: {
           ContainerCode: "0",
-          BorderTransportMeans: {
-            IdentificationTypeCode: "11",
-            ID: declaration.transportId || "CSCL GLOBE",
+          // DE 7/9 — ArrivalTransportMeans (mirrors BorderTransportMeans).
+          ArrivalTransportMeans: {
+            ID: (declaration.transportId || "CSCL GLOBE").replace(/\s+/g, ""),
+            IdentificationTypeCode: declaration.transportIdType || "11",
             ModeCode: declaration.transportMode || "1",
           },
           GoodsLocation: {
             Name: declaration.locationName || "GBWLAFXTFXTGW",
             ID: declaration.locationId || "GBAUFXTFXTGW",
+            TypeCode: "A",
+            Address: {
+              TypeCode: "U",
+              CountryCode: declaration.destinationCountry || "GB",
+            },
           },
         },
         Destination: { CountryCode: declaration.destinationCountry || "GB" },
         ExportCountry: { ID: declaration.dispatchCountry || "BR" },
         Importer: { ID: declaration.importerEori || declaration.eori || "" },
+        // DE 3/1 — Seller.
+        Seller: {
+          AddressCountryCode: declaration.dispatchCountry || "BR",
+        },
+        // DE 2/1 — Previous document (DUCR).
+        PreviousDocument: [
+          {
+            CategoryCode: "Z",
+            TypeCode: "DCR",
+            ID: ducr,
+            LineNumeric: "1",
+          },
+        ],
         TradeTerms: {
           ConditionCode: declaration.incoterms || "FOB",
           LocationID: declaration.incotermLocation || "GBFXT",
@@ -102,9 +138,18 @@ function mapToCDS_H1(declaration, items) {
               ? item.additionalDocuments
               : SIGNED_ADDITIONAL_DOCUMENTS;
 
+          // Ensure N935 (commercial invoice) is present for valuation method 1
+          const hasN935 = docs.some((d) => d.CategoryCode === "N" && d.TypeCode === "935");
+          const allDocs = hasN935
+            ? docs
+            : [
+                ...docs,
+                { CategoryCode: "N", TypeCode: "935", StatusCode: "AC", ID: `INV-${Date.now()}` },
+              ];
+
           return {
             SequenceNumeric: item.sequenceNumber || index + 1,
-            AdditionalDocument: docs,
+            AdditionalDocument: allDocs,
             StatisticalValueAmount: {
               currencyID: item.valueCurrency || "GBP",
               value: item.valueAmount || 0,
@@ -121,15 +166,31 @@ function mapToCDS_H1(declaration, items) {
                 GrossMassMeasure: item.grossWeightKg || 10,
                 NetNetWeightMeasure: item.netWeightKg || 9,
               },
+              // DE 8/6 — Preference code / duty regime.
+              DutyTaxFee: {
+                DutyRegimeCode: item.preferenceCode || "100",
+              },
+            },
+            // DE 4/16 + 4/13 — Customs valuation method and adjustment indicators.
+            CustomsValuation: {
+              MethodCode: item.valuationMethod || "1",
+              ValuationAdjustment: {
+                AdditionCode: item.valuationAdjustment || "0000",
+              },
             },
             Packaging: [
               {
                 SequenceNumeric: "1",
-                MarksNumbersID: item.shippingMarks || "N/A",
+                MarksNumbersID: item.shippingMarks || "MARKS",
                 QuantityQuantity: item.packageCount || "1",
                 TypeCode: item.packageType || "PK",
               },
             ],
+            // DE 5/15/5/16 — Country of origin (mandatory for H1 imports).
+            Origin: {
+              CountryCode: item.originCountry || "",
+              TypeCode: "1",
+            },
             // FIX: DE 1/10 = two separate 2-digit codes; DE 1/11 = separate 3-digit element
             GovernmentProcedure: [
               {
@@ -180,25 +241,32 @@ function buildXml(payloadInfo) {
     <TotalPackageQuantity>${xmlEscape(d.TotalPackageQuantity)}</TotalPackageQuantity>
     <CurrencyExchange>
       <CurrencyTypeCode>${xmlEscape(d.CurrencyExchange.CurrencyTypeCode)}</CurrencyTypeCode>
-    </CurrencyExchange>
+    </CurrencyExchange>${d.BorderTransportMeans ? `\n    <BorderTransportMeans>\n      <ID>${xmlEscape(d.BorderTransportMeans.ID)}</ID>\n      <IdentificationTypeCode>${xmlEscape(d.BorderTransportMeans.IdentificationTypeCode)}</IdentificationTypeCode>\n      <ModeCode>${xmlEscape(d.BorderTransportMeans.ModeCode)}</ModeCode>\n    </BorderTransportMeans>` : ""}
     <Declarant>
       <ID>${xmlEscape(d.Declarant.ID)}</ID>
     </Declarant>
     ${d.Exporter ? `<Exporter>\n      <ID>${xmlEscape(d.Exporter.ID)}</ID>\n    </Exporter>` : ""}
-    <GoodsShipment>
+    ${(d.AuthorisationHolder || []).filter((ah) => ah.ID && ah.CategoryCode).map((ah) => `<AuthorisationHolder>\n      <ID>${xmlEscape(ah.ID)}</ID>\n      <CategoryCode>${xmlEscape(ah.CategoryCode)}</CategoryCode>\n    </AuthorisationHolder>`).join("\n    ")}
+    <GoodsShipment>${gs.TransactionNatureCode ? `\n      <TransactionNatureCode>${xmlEscape(gs.TransactionNatureCode)}</TransactionNatureCode>` : ""}
       <UCR>
         <TraderAssignedReferenceID>${xmlEscape(d.UCR.TraderAssignedReferenceID)}</TraderAssignedReferenceID>
       </UCR>
+      ${gs.Buyer && gs.Buyer.AddressCountryCode ? `<Buyer>\n        <Address>\n          <CountryCode>${xmlEscape(gs.Buyer.AddressCountryCode)}</CountryCode>\n        </Address>\n      </Buyer>` : ""}
       <Consignment>
         <ContainerCode>${xmlEscape(gs.Consignment.ContainerCode)}</ContainerCode>
         <ArrivalTransportMeans>
-          <ID>${xmlEscape(gs.Consignment.BorderTransportMeans.ID)}</ID>
-          <IdentificationTypeCode>${xmlEscape(gs.Consignment.BorderTransportMeans.IdentificationTypeCode)}</IdentificationTypeCode>
-          <ModeCode>${xmlEscape(gs.Consignment.BorderTransportMeans.ModeCode)}</ModeCode>
+          <ID>${xmlEscape(gs.Consignment.ArrivalTransportMeans.ID)}</ID>
+          <IdentificationTypeCode>${xmlEscape(gs.Consignment.ArrivalTransportMeans.IdentificationTypeCode)}</IdentificationTypeCode>
+          <ModeCode>${xmlEscape(gs.Consignment.ArrivalTransportMeans.ModeCode)}</ModeCode>
         </ArrivalTransportMeans>
         <GoodsLocation>
           <Name>${xmlEscape(gs.Consignment.GoodsLocation.Name)}</Name>
           <ID>${xmlEscape(gs.Consignment.GoodsLocation.ID)}</ID>
+          <TypeCode>${xmlEscape(gs.Consignment.GoodsLocation.TypeCode || "A")}</TypeCode>
+          <Address>
+            <TypeCode>${xmlEscape((gs.Consignment.GoodsLocation.Address || {}).TypeCode || "U")}</TypeCode>
+            <CountryCode>${xmlEscape((gs.Consignment.GoodsLocation.Address || {}).CountryCode || "")}</CountryCode>
+          </Address>
         </GoodsLocation>
       </Consignment>
       <Destination>
@@ -209,7 +277,8 @@ function buildXml(payloadInfo) {
       </ExportCountry>
       <Importer>
         <ID>${xmlEscape(gs.Importer.ID)}</ID>
-      </Importer>
+      </Importer>${(gs.PreviousDocument || []).map((pd) => `\n      <PreviousDocument>\n        <CategoryCode>${xmlEscape(pd.CategoryCode)}</CategoryCode>\n        <ID>${xmlEscape(pd.ID)}</ID>\n        <TypeCode>${xmlEscape(pd.TypeCode)}</TypeCode>${pd.LineNumeric ? `\n        <LineNumeric>${xmlEscape(pd.LineNumeric)}</LineNumeric>` : ""}\n      </PreviousDocument>`).join("")}
+      ${gs.Seller && gs.Seller.AddressCountryCode ? `<Seller>\n        <Address>\n          <CountryCode>${xmlEscape(gs.Seller.AddressCountryCode)}</CountryCode>\n        </Address>\n      </Seller>` : ""}
       <TradeTerms>
         <ConditionCode>${xmlEscape(gs.TradeTerms.ConditionCode)}</ConditionCode>
         <LocationID>${xmlEscape(gs.TradeTerms.LocationID)}</LocationID>
@@ -260,9 +329,17 @@ function buildXml(payloadInfo) {
           <GoodsMeasure>
             <GrossMassMeasure unitCode="KGM">${xmlEscape(item.Commodity.GoodsMeasure.GrossMassMeasure)}</GrossMassMeasure>
             <NetNetWeightMeasure unitCode="KGM">${xmlEscape(item.Commodity.GoodsMeasure.NetNetWeightMeasure)}</NetNetWeightMeasure>
-          </GoodsMeasure>
+          </GoodsMeasure>${item.Commodity.DutyTaxFee ? `\n          <DutyTaxFee>\n            <DutyRegimeCode>${xmlEscape(item.Commodity.DutyTaxFee.DutyRegimeCode)}</DutyRegimeCode>\n          </DutyTaxFee>` : ""}
         </Commodity>
-        ${proceduresXml}
+        <CustomsValuation>
+          <MethodCode>${xmlEscape((item.CustomsValuation || {}).MethodCode || "1")}</MethodCode>${(() => {
+            const va = (item.CustomsValuation || {}).ValuationAdjustment;
+            return va && va.AdditionCode
+              ? `\n          <ValuationAdjustment>\n            <AdditionCode>${xmlEscape(va.AdditionCode)}</AdditionCode>\n          </ValuationAdjustment>`
+              : "";
+          })()}
+        </CustomsValuation>
+        ${proceduresXml}${item.Origin && item.Origin.CountryCode ? `\n        <Origin>\n          <CountryCode>${xmlEscape(item.Origin.CountryCode)}</CountryCode>\n          <TypeCode>${xmlEscape(item.Origin.TypeCode || "1")}</TypeCode>\n        </Origin>` : ""}
         <Packaging>
           <SequenceNumeric>${xmlEscape(pkg.SequenceNumeric)}</SequenceNumeric>
           <MarksNumbersID>${xmlEscape(pkg.MarksNumbersID)}</MarksNumbersID>
@@ -457,7 +534,9 @@ async function run() {
     incoterms: "FOB",
     incotermLocation: "GBFXT",
     transportId: "CSCL GLOBE",
+    transportIdType: "11",
     transportMode: "1",
+    transactionNatureCode: "11",
   };
 
   // Signed lane: HS 0207129000 frozen whole poultry from Brazil
@@ -474,6 +553,7 @@ async function run() {
     netWeightKg: 118,
     packageCount: 8,
     packageType: "PK",
+    shippingMarks: "TEST-MARK-001",
     // Documents come from SIGNED_ADDITIONAL_DOCUMENTS via mapToCDS_H1 fallback
     // (additionalDocuments not set here so the signed matrix is used automatically)
   };

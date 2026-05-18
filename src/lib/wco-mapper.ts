@@ -307,6 +307,15 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
       UCR: {
         TraderAssignedReferenceID: ducr
       },
+      // DE 3/39 — Authorisation holders. Required when the declarant holds
+      // specific CDS authorisations (e.g. CGU, DPO, AEOC). Emitted at
+      // Declaration level with cardinality 99x.
+      AuthorisationHolder: Array.isArray(declaration.authorisationHolders) && declaration.authorisationHolders.length > 0
+        ? declaration.authorisationHolders.map((ah: any) => ({
+            ID: String(ah.id || ah.ID || declaration.eori || "").trim(),
+            CategoryCode: String(ah.categoryCode || ah.CategoryCode || "").trim(),
+          })).filter((ah: any) => ah.ID && ah.CategoryCode)
+        : [],
       GoodsShipment: {
         // DE 3/24 — Buyer (UK importer). Country code is GB for imports;
         // Name is intentionally omitted until real party data is plumbed in.
@@ -426,8 +435,14 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
               }
             },
             // DE 4/16 — Customs valuation method. "1" = transaction value of the imported goods.
+            // DE 4/13 — Valuation indicators (AdditionCode). "0000" = no
+            // additions or deductions to the transaction value. Required when
+            // MethodCode is "1" — CDS12070 fires without it.
             CustomsValuation: {
-              MethodCode: "1",
+              MethodCode: item.valuationMethod || "1",
+              ValuationAdjustment: {
+                AdditionCode: item.valuationAdjustment || "0000",
+              },
             },
             Packaging: [
               {

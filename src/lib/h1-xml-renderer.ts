@@ -145,6 +145,33 @@ export function renderH1Xml(payloadInfo: unknown): string {
         </Address>
       </Seller>`
     : "";
+  // DE 2/5 — CurrencyExchange at Declaration level.
+  const currencyExchange = read(d, "CurrencyExchange");
+  const currencyExchangeXml = currencyExchange.CurrencyTypeCode
+    ? `
+    <CurrencyExchange>
+      <CurrencyTypeCode>${xmlEscape(currencyExchange.CurrencyTypeCode)}</CurrencyTypeCode>
+    </CurrencyExchange>`
+    : "";
+  // DE 3/39 — AuthorisationHolder at Declaration level.
+  const authHolders = asArray(d.AuthorisationHolder);
+  const authHolderXml = authHolders
+    .filter((ah) => ah.ID && ah.CategoryCode)
+    .map((ah) => `
+    <AuthorisationHolder>
+      <ID>${xmlEscape(ah.ID)}</ID>
+      <CategoryCode>${xmlEscape(ah.CategoryCode)}</CategoryCode>
+    </AuthorisationHolder>`)
+    .join("");
+  // DE 8/5 — TransactionNatureCode at GoodsShipment level.
+  const transactionNatureCode = text(gs, "TransactionNatureCode");
+  const transactionNatureCodeXml = transactionNatureCode
+    ? `
+      <TransactionNatureCode>${xmlEscape(transactionNatureCode)}</TransactionNatureCode>`
+    : "";
+  // Full GoodsLocation with Name, TypeCode, Address (DE 5/23).
+  const goodsLocation = read(consignment, "GoodsLocation");
+  const goodsLocationAddress = read(goodsLocation, "Address");
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
@@ -161,15 +188,21 @@ export function renderH1Xml(payloadInfo: unknown): string {
     <DeclarationOfficeID>${xmlEscape(d.DeclarationOfficeID)}</DeclarationOfficeID>
     <InvoiceAmount currencyID="${xmlEscape(read(d, "InvoiceAmount").currencyID)}">${xmlEscape(read(d, "InvoiceAmount").value)}</InvoiceAmount>
     <TotalGrossMassMeasure unitCode="KGM">${xmlEscape(d.TotalGrossMassMeasure)}</TotalGrossMassMeasure>
-    <TotalPackageQuantity>${xmlEscape(d.TotalPackageQuantity)}</TotalPackageQuantity>${borderTransportMeansXml}
+    <TotalPackageQuantity>${xmlEscape(d.TotalPackageQuantity)}</TotalPackageQuantity>${currencyExchangeXml}${borderTransportMeansXml}
     <Declarant>
       <ID>${xmlEscape(read(d, "Declarant").ID)}</ID>
-    </Declarant>${exporterXml}
-    <GoodsShipment>${buyerXml}
+    </Declarant>${exporterXml}${authHolderXml}
+    <GoodsShipment>${transactionNatureCodeXml}${buyerXml}
       <Consignment>
         <ContainerCode>${xmlEscape(consignment.ContainerCode)}</ContainerCode>${arrivalTransportMeansXml}
         <GoodsLocation>
-          <ID>${xmlEscape(read(consignment, "GoodsLocation").ID)}</ID>
+          <Name>${xmlEscape(goodsLocation.Name || "")}</Name>
+          <ID>${xmlEscape(goodsLocation.ID || "")}</ID>
+          <TypeCode>${xmlEscape(goodsLocation.TypeCode || "A")}</TypeCode>
+          <Address>
+            <TypeCode>${xmlEscape(goodsLocationAddress.TypeCode || "U")}</TypeCode>
+            <CountryCode>${xmlEscape(goodsLocationAddress.CountryCode || "")}</CountryCode>
+          </Address>
         </GoodsLocation>
       </Consignment>
       <Destination>
@@ -216,10 +249,20 @@ export function renderH1Xml(payloadInfo: unknown): string {
           <GoodsMeasure>
             <GrossMassMeasure unitCode="KGM">${xmlEscape(goodsMeasure.GrossMassMeasure || 0)}</GrossMassMeasure>
             <NetNetWeightMeasure unitCode="KGM">${xmlEscape(goodsMeasure.NetNetWeightMeasure || 0)}</NetNetWeightMeasure>
-          </GoodsMeasure>
+          </GoodsMeasure>${(() => {
+            const dutyTaxFee = read(commodity, "DutyTaxFee");
+            return dutyTaxFee.DutyRegimeCode
+              ? `\n          <DutyTaxFee>\n            <DutyRegimeCode>${xmlEscape(dutyTaxFee.DutyRegimeCode)}</DutyRegimeCode>\n          </DutyTaxFee>`
+              : "";
+          })()}
         </Commodity>
         <CustomsValuation>
-          <MethodCode>${xmlEscape(read(item, "CustomsValuation").MethodCode || "1")}</MethodCode>
+          <MethodCode>${xmlEscape(read(item, "CustomsValuation").MethodCode || "1")}</MethodCode>${(() => {
+            const va = read(read(item, "CustomsValuation"), "ValuationAdjustment");
+            return va.AdditionCode
+              ? `\n          <ValuationAdjustment>\n            <AdditionCode>${xmlEscape(va.AdditionCode)}</AdditionCode>\n          </ValuationAdjustment>`
+              : "";
+          })()}
         </CustomsValuation>
         ${procedures.map((proc) => `
         <GovernmentProcedure>
