@@ -9,7 +9,7 @@ export interface Env {
     AI: any;
     HMRC_ERRORS_VECTORIZE: any;
     TARIFF_VECTORIZE: any;
-    DB: D1Database;
+    // DB binding removed — companies-db was unused
     ORCHESTRATOR: DurableObjectNamespace<import("./agents/orchestrator").AgentOrchestrator>;
     VALIDATION_AGENT: DurableObjectNamespace<import("./agents/validation").AgentValidationError>;
     CLASSIFIER_AGENT: DurableObjectNamespace<import("./agents/classifier").AgentClassifier>;

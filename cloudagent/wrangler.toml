@@ -3,11 +3,6 @@ main = "src/index.ts"
 compatibility_date = "2024-10-22"
 compatibility_flags = [ "nodejs_compat" ]
 
-[[d1_databases]]
-binding = "DB"
-database_name = "companies-db"
-database_id = "3afb31ce-83a9-4a12-ab5c-f85442ed10d1"
-remote = true
 
 [[vectorize]]
 binding = "HMRC_ERRORS_VECTORIZE"
