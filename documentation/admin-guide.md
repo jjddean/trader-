@@ -33,7 +33,7 @@ All config lives in `.env.local`. **Never commit this file** (`.gitignore` cover
 | `HMRC_CLIENT_SECRET` | HMRC OAuth secret | HMRC Developer Hub |
 | `HMRC_ENVIRONMENT` | `sandbox` or `production` | Set by admin |
 | `HMRC_EORI` | Default EORI number | HMRC registration |
-| `HMRC_DECLARATIONS_ACCEPT` | API version header | Set `application/vnd.hmrc.2.0+xml` for sandbox, remove for production (defaults to v1.0) |
+| `HMRC_DECLARATIONS_ACCEPT` | API version header | `application/vnd.hmrc.2.0+xml` (default) |
 | `HMRC_REDIRECT_URI` | OAuth callback URL | Must match your deployment URL |
 | `STRIPE_SECRET_KEY` | Stripe payments | Stripe dashboard |
 | `GROQ_API_KEY` | AI inference | Groq console |
@@ -44,7 +44,7 @@ All config lives in `.env.local`. **Never commit this file** (`.gitignore` cover
 ### Switching Environments (Sandbox → TDR → Production)
 
 1. Change `HMRC_ENVIRONMENT` to `production`
-2. Remove `HMRC_DECLARATIONS_ACCEPT` (defaults to v1.0 required by TDR/Production)  
+2. Ensure `HMRC_DECLARATIONS_ACCEPT` is set to `application/vnd.hmrc.2.0+xml` (or remove to use default v2.0)  
 3. Update `HMRC_CLIENT_ID` and `HMRC_CLIENT_SECRET` to production credentials
 4. Update `HMRC_REDIRECT_URI` to your production callback URL
 5. Restart the application

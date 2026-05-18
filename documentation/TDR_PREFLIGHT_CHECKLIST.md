@@ -6,7 +6,7 @@
 
 - [x] All API endpoints operational
 - [x] All 8 webhook handlers working
-- [x] Accept header = application/vnd.hmrc.1.0+xml
+- [x] Accept header = application/vnd.hmrc.2.0+xml
 - [x] XML sanitization implemented
 - [x] Rate limiting (3 req/s)
 - [x] HTTP 500/503 retry logic
@@ -21,7 +21,7 @@
 ### 1. Environment Configuration
 - [ ] `.env.local` updated:
   - `HMRC_ENVIRONMENT=production`
-  - `HMRC_DECLARATIONS_ACCEPT=application/vnd.hmrc.1.0+xml`
+  - `HMRC_DECLARATIONS_ACCEPT=application/vnd.hmrc.2.0+xml`
   - `HMRC_EORI=GB553202734852` (or your approved test EORI)
 - [ ] Dev server restarted after env changes
 - [ ] Verified environment variables loaded correctly

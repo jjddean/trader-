@@ -122,7 +122,7 @@ Without allowlisting:
 
 ### Confirmation
 
-Once allowlisted, HMRC will confirm via email and the TDR subscription will appear in your Developer Hub application. The Accept header remains `application/vnd.hmrc.1.0+xml` — the routing is done server-side by HMRC based on your allowlist status.
+Once allowlisted, HMRC will confirm via email and the TDR subscription will appear in your Developer Hub application. The Accept header is `application/vnd.hmrc.2.0+xml` — the routing is done server-side by HMRC based on your allowlist status.
 
 ---
 
@@ -214,7 +214,7 @@ grant_type=refresh_token
 | Header | Value | Notes |
 |--------|-------|-------|
 | `Authorization` | `Bearer {access_token}` | Required |
-| `Accept` | `application/vnd.hmrc.1.0+xml` | Required; 406 if wrong |
+| `Accept` | `application/vnd.hmrc.2.0+xml` | Required; 406 if wrong |
 | `Content-Type` | `application/xml; charset=UTF-8` | Required for POST |
 | `X-Conversation-ID` | Auto-assigned by HMRC | Returned in 202 response |
 
@@ -586,7 +586,7 @@ GET /notifications/unpulled/{notificationId}
 | Notification realism | Simulated | Mirrors production |
 | Evidence for Recognised Software | Not counted | Counted |
 | URL base | `test-api.service.hmrc.gov.uk` | Same URL, routing by allowlist |
-| Accept header | `application/vnd.hmrc.1.0+xml` | Same |
+| Accept header | `application/vnd.hmrc.2.0+xml` | Same |
 
 **Action required before TDR:** Set `HMRC_TEST_SCENARIO=` (blank) in `.env.local`
 
@@ -617,7 +617,7 @@ GET /notifications/unpulled/{notificationId}
 
 | Item | File | Status |
 |------|------|--------|
-| `Accept: application/vnd.hmrc.1.0+xml` | `hmrc-fetch.ts` | ✅ Correct |
+| `Accept: application/vnd.hmrc.2.0+xml` | `hmrc-fetch.ts` | ✅ Correct |
 | GovernmentProcedure split (DE 1/10 two-element, DE 1/11 separate) | `wco-mapper.ts` | ✅ Correct |
 | Exporter element conditional on GB/XI EORI regex | `wco-mapper.ts` | ✅ Correct |
 | DUCR format `{year%10}GB{eori_without_prefix}-{ref}` | `wco-mapper.ts` | ✅ Correct |

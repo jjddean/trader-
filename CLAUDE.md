@@ -179,7 +179,7 @@ NEXT_PUBLIC_CONVEX_URL       # Convex deployment URL
 HMRC_CLIENT_ID               # HMRC Developer Hub application client ID
 HMRC_CLIENT_SECRET           # HMRC Developer Hub application client secret
 HMRC_ENVIRONMENT             # "sandbox" | "production"
-HMRC_DECLARATIONS_ACCEPT     # "application/vnd.hmrc.1.0+xml" (sandbox/TDR)
+HMRC_DECLARATIONS_ACCEPT     # "application/vnd.hmrc.2.0+xml" (sandbox/TDR)
 HMRC_EORI                    # GB-format EORI for test submissions
 HMRC_TEST_SCENARIO           # Gov-Test-Scenario header value (e.g. HAPPY_PATH)
 HMRC_WEBHOOK_AUTH_TOKEN      # Bearer token HMRC uses when pushing notifications

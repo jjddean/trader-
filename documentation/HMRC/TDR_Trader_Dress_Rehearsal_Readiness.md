@@ -16,7 +16,7 @@ Trader Dress Rehearsal is **not** a development sandbox; it is a simulation of t
 | parameter | Value / Rule | Description |
 | :--- | :--- | :--- |
 | **HMRC_ENVIRONMENT** | `production` | TDR is a production simulation; it uses the Production API Gateway. |
-| **Accept Header** | `application/vnd.hmrc.1.0+xml` | **v1.0** is the mandatory version for the TDR phase. |
+| **Accept Header** | `application/vnd.hmrc.2.0+xml` | **v2.0** is the mandatory version for the TDR phase. |
 | **API Endpoints** | `https://api.service.hmrc.gov.uk/...` | Must target the Production URLs, not `test-api`. |
 | **Authorization** | OAuth 2.0 (Authorization Code Flow) | Use Production Application Client ID and Secret. |
 | **Fraud Prevention**| Mandatory | Headers like `Gov-Client-Public-IP`, `Gov-Client-Device-ID`, etc., must be present and correctly formatted. |

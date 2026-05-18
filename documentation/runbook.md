@@ -82,7 +82,7 @@ This runbook covers common support scenarios for the FreightCode Customs Declara
 | Setting | Sandbox | TDR/Production |
 |---------|---------|----------------|
 | `HMRC_ENVIRONMENT` | `sandbox` | `production` |
-| `HMRC_DECLARATIONS_ACCEPT` | `application/vnd.hmrc.2.0+xml` | _(remove to use default v1.0)_ |
+| `HMRC_DECLARATIONS_ACCEPT` | `application/vnd.hmrc.2.0+xml` | _(remove to use default v2.0)_ |
 | Token URL | `test-api.service.hmrc.gov.uk` | `api.service.hmrc.gov.uk` |
 | Declaration URL | `test-api.service.hmrc.gov.uk` | `api.service.hmrc.gov.uk` |
 
