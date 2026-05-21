@@ -1,3 +1,5 @@
+import { HMRC_CONFIG } from "@/lib/hmrc-config";
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const encodeValue = (value: string) => encodeURIComponent(value).replace(/%20/g, "+");
@@ -25,7 +27,7 @@ export async function fetchHmrc(
   // can omit; declaration submit/amend/cancel must pass it.
   submitterEori?: string,
 ) {
-  const vendorPublicIp = process.env.HMRC_VENDOR_PUBLIC_IP || "203.0.113.6";
+  const vendorPublicIp = HMRC_CONFIG.vendor.publicIp || "203.0.113.6";
   // In local dev the browser and server are on the same machine, so the
   // "client public IP" is the vendor public IP. Forwarding 127.0.0.1 triggers
   // the HMRC WAF with PAYLOAD_FORBIDDEN.
@@ -36,8 +38,8 @@ export async function fetchHmrc(
   // Base server-side HMRC headers
   const govHeaders: Record<string, string> = {
     "Gov-Client-Connection-Method": "WEB_APP_VIA_SERVER",
-    "Gov-Vendor-Version": "TradeDNA=1.0.0",
-    "Gov-Vendor-Product-Name": encodeValue("TradeDNA"),
+    "Gov-Vendor-Version": `${HMRC_CONFIG.vendor.productName}=${HMRC_CONFIG.vendor.version}`,
+    "Gov-Vendor-Product-Name": encodeValue(HMRC_CONFIG.vendor.productName),
     "Gov-Client-Public-IP": clientIp.split(",")[0].trim(),
     "Gov-Client-Public-IP-Timestamp": new Date().toISOString(),
     "Gov-Client-Public-Port": clientPort,
@@ -69,7 +71,7 @@ export async function fetchHmrc(
 
   const testScenario = process.env.HMRC_TEST_SCENARIO;
   const hmrcHeaders: Record<string, string> = {
-    Accept: process.env.HMRC_DECLARATIONS_ACCEPT || "application/vnd.hmrc.2.0+xml",
+    Accept: HMRC_CONFIG.accept.declarations,
     Authorization: `Bearer ${token}`,
     "X-Client-ID": process.env.HMRC_CLIENT_ID || "",
     ...govHeaders,
@@ -116,11 +118,15 @@ export async function fetchHmrc(
   const isRetryable = (status: number) => status === 429 || status === 502 || status === 503 || status === 504;
 
   if (isRetryable(hmrcResponse.status)) {
-    const delay = hmrcResponse.status === 429 ? 2000 : 1000;
+    const delay = hmrcResponse.status === 429
+      ? HMRC_CONFIG.timing.retryDelayRateLimitMs
+      : HMRC_CONFIG.timing.retryDelayServerErrorMs;
     await sleep(delay);
     hmrcResponse = await fetch(endpoint, fetchOptions);
     if (isRetryable(hmrcResponse.status)) {
-      await sleep(hmrcResponse.status === 429 ? 5000 : 3000);
+      await sleep(hmrcResponse.status === 429
+        ? HMRC_CONFIG.timing.retryDelayRateLimitSecondMs
+        : HMRC_CONFIG.timing.retryDelayServerErrorSecondMs);
       hmrcResponse = await fetch(endpoint, fetchOptions);
     }
   }

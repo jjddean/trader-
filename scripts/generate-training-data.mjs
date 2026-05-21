@@ -35,7 +35,7 @@ async function generate() {
             // Basic cleaning: remove dots from HS code and ensure it is long enough
             hsCode = hsCode.replace(/\./g, '').trim();
 
-            if (description && hsCode && hsCode.length >= 6) {
+            if (description && hsCode && hsCode.length >= 10) {
                 // Mistral Instruction Format
                 const cleanDesc = description.replace(/"/g, '""').trim();
                 const text = `"[INST] Classify this product using GIRs 1-6: ${cleanDesc} [/INST] ${hsCode}"`;

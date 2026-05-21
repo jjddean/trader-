@@ -9,8 +9,11 @@ Create a file named `train.csv` with one column named `text`.
 ```csv
 text
 "[INST] Classify this product using GIRs 1-6: Men's leather work boots, steel toe cap, rubber sole [/INST] 6403400000"
-"[INST] Classify this product using GIRs 1-6: Cotton t-shirt, short sleeve, white, 100% cotton [/INST] 6109100000"
+"[INST] Classify this product using GIRs 1-6: Cotton t-shirt, short sleeve, white, 100% cotton [/INST] 6109100010"
 ```
+> [!IMPORTANT]
+> Use UK Trade Tariff commodity codes as labels. Do not create training labels by padding 6-digit HS prefixes with zeros; the final UK digits must come from the tariff classification.
+
 > [!TIP]
 > Use the provided `scripts/generate-training-data.ts` to automatically generate this from your historical declarations.
 

@@ -62,7 +62,7 @@ async function testAgent(query) {
 
 // Ensure the user understands they need wrangler dev running
 console.log("-----------------------------------------");
-console.log("TradeDNA Agent Test Suite");
+console.log("Freightcode Agent Test Suite");
 console.log("Make sure 'npx wrangler dev --remote' is running in another terminal.");
 console.log("-----------------------------------------\n");
 

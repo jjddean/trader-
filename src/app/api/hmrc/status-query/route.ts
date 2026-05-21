@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
+import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -11,7 +12,7 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
  * Query declaration status via the Customs Declarations Information API.
  * HMRC ref: CDS End-to-End Guide > Query declaration status
  * Supports query by MRN, DUCR, or UCR.
- * Accept: application/vnd.hmrc.2.0+json (Information API uses v2.0)
+ * Accept: configured HMRC v2 JSON media type (Information API uses v2.0)
  */
 export async function GET(request: Request) {
   try {
@@ -35,8 +36,8 @@ export async function GET(request: Request) {
     }
 
     const hmrcBase = process.env.HMRC_ENVIRONMENT === "sandbox"
-      ? "https://test-api.service.hmrc.gov.uk"
-      : "https://api.service.hmrc.gov.uk";
+      ? HMRC_CONFIG.sandboxBaseUrl
+      : HMRC_CONFIG.productionBaseUrl;
 
     // Build the correct query path based on which identifier was provided
     let queryPath: string;
@@ -53,7 +54,7 @@ export async function GET(request: Request) {
       {
         method: "GET",
         headers: {
-          Accept: "application/vnd.hmrc.2.0+json",
+          Accept: HMRC_CONFIG.accept.v2Json,
         },
       },
       request,

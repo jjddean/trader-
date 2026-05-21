@@ -34,6 +34,19 @@ All config lives in `.env.local`. **Never commit this file** (`.gitignore` cover
 | `HMRC_ENVIRONMENT` | `sandbox` or `production` | Set by admin |
 | `HMRC_EORI` | Default EORI number | HMRC registration |
 | `HMRC_DECLARATIONS_ACCEPT` | API version header | Set `application/vnd.hmrc.2.0+xml` for sandbox, remove for production (defaults to v1.0) |
+| `HMRC_SANDBOX_BASE_URL` | Sandbox HMRC API base URL | HMRC Developer Hub |
+| `HMRC_PRODUCTION_BASE_URL` | Production HMRC API base URL | HMRC Developer Hub |
+| `HMRC_ACCEPT_V2_XML` | HMRC v2 XML media type | HMRC API docs |
+| `HMRC_ACCEPT_V2_JSON` | HMRC v2 JSON media type | HMRC API docs |
+| `HMRC_ACCEPT_V1_XML` | HMRC v1 XML media type | HMRC API docs |
+| `HMRC_VENDOR_PRODUCT_NAME` | Product name for Gov-Vendor headers | Set by admin |
+| `HMRC_VENDOR_VERSION` | Product version for Gov-Vendor headers | Release/versioning process |
+| `HMRC_TOKEN_EXPIRY_BUFFER_MS` | Token refresh buffer before expiry | Set by admin |
+| `HMRC_DEFAULT_TOKEN_EXPIRY_MS` | Fallback token expiry value | Set by admin |
+| `HMRC_RETRY_DELAY_RATE_LIMIT_MS` | First retry delay for HTTP 429 | Set by admin |
+| `HMRC_RETRY_DELAY_SERVER_ERROR_MS` | First retry delay for transient 5xx errors | Set by admin |
+| `HMRC_RETRY_DELAY_RATE_LIMIT_SECOND_MS` | Second retry delay for HTTP 429 | Set by admin |
+| `HMRC_RETRY_DELAY_SERVER_ERROR_SECOND_MS` | Second retry delay for transient 5xx errors | Set by admin |
 | `HMRC_REDIRECT_URI` | OAuth callback URL | Must match your deployment URL |
 | `STRIPE_SECRET_KEY` | Stripe payments | Stripe dashboard |
 | `GROQ_API_KEY` | AI inference | Groq console |
@@ -141,7 +154,7 @@ All config lives in `.env.local`. **Never commit this file** (`.gitignore` cover
 ### Rate Limiting
 - HMRC allows **3 requests/second** (upgradable to 8 via SDH Support)
 - Proactive token-bucket limiter at `src/lib/rate-limiter.ts`
-- Reactive retry on HTTP 429 with 2s → 5s backoff
+- Reactive retry on HTTP 429 with configured backoff
 
 ---
 

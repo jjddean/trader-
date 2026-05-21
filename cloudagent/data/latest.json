@@ -1,31 +1,31 @@
 [
   {
-    "hs_code": "610910",
-    "description": "T-shirts, singlets and other vests, of cotton, knitted or crocheted",
+    "hs_code": "6109100010",
+    "description": "T-shirts",
     "chapter": "61",
     "section": "XI"
   },
   {
-    "hs_code": "640319",
-    "description": "Footwear with outer soles of rubber, plastics, leather or composition leather and uppers of leather",
+    "hs_code": "6403190000",
+    "description": "Footwear: other",
     "chapter": "64",
     "section": "XII"
   },
   {
-    "hs_code": "851713",
+    "hs_code": "8517130000",
     "description": "Smartphones",
     "chapter": "85",
     "section": "XVI"
   },
   {
-    "hs_code": "090121",
-    "description": "Coffee, roasted: Not decaffeinated",
+    "hs_code": "0901210000",
+    "description": "Coffee, roasted",
     "chapter": "09",
     "section": "II"
   },
   {
-    "hs_code": "220410",
-    "description": "Sparkling wine of fresh grapes",
+    "hs_code": "2204100000",
+    "description": "Sparkling wine",
     "chapter": "22",
     "section": "IV"
   }

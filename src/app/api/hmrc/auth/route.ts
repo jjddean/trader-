@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
 
 export async function GET() {
   const clientId = process.env.HMRC_CLIENT_ID;
   const redirectUri = process.env.HMRC_REDIRECT_URI;
   const scopes = process.env.HMRC_SCOPES || "write:customs-declaration write:customs-declarations-information";
   const hmrcAuthBase = process.env.HMRC_ENVIRONMENT === "sandbox"
-    ? "https://test-api.service.hmrc.gov.uk/oauth/authorize"
-    : "https://api.service.hmrc.gov.uk/oauth/authorize";
+    ? `${HMRC_CONFIG.sandboxBaseUrl}/oauth/authorize`
+    : `${HMRC_CONFIG.productionBaseUrl}/oauth/authorize`;
 
   if (!clientId || !redirectUri) {
     return NextResponse.json({ error: "Missing HMRC environment variables" }, { status: 500 });

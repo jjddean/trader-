@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../../convex/_generated/api";
 import { fetchHmrc } from "../../../../../lib/hmrc-fetch";
+import { HMRC_CONFIG } from "../../../../../lib/hmrc-config";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -27,8 +28,8 @@ export async function POST(request: Request) {
 
     // HMRC returns an S3 upload URL and a set of form AWS headers specifically for this file
     const hmrcInitiateUrl = process.env.HMRC_ENVIRONMENT === "sandbox"
-      ? "https://test-api.service.hmrc.gov.uk/logistics/documents/initiate"
-      : "https://api.service.hmrc.gov.uk/logistics/documents/initiate";
+      ? `${HMRC_CONFIG.sandboxBaseUrl}/logistics/documents/initiate`
+      : `${HMRC_CONFIG.productionBaseUrl}/logistics/documents/initiate`;
 
     const hmrcResponse = await fetchHmrc(hmrcInitiateUrl, {
       method: "POST",

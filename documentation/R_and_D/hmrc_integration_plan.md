@@ -1,6 +1,6 @@
 # Phase 3: HMRC API Integration Layer Implementation Plan
 
-Now that the local database and frontend UI validation are complete, this phase focuses entirely on the backend orchestration layer that connects the TradeDNA Next.js server directly to HMRC's Customs Declaration Service (CDS) APIs.
+Now that the local database and frontend UI validation are complete, this phase focuses entirely on the backend orchestration layer that connects the Freightcode Next.js server directly to HMRC's Customs Declaration Service (CDS) APIs.
 
 ## User Review Required
 > [!CAUTION]

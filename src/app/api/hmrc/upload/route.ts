@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
+import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -21,7 +22,10 @@ export async function POST(request: Request) {
 
     console.log(`[HMRC Document Sync] Preparing to sync document ${storageId} for MRN ${mrn}...`);
 
-    const hmrcUploadEndpoint = process.env.HMRC_DOCUMENT_UPLOAD_URL || "https://test-api.service.hmrc.gov.uk/customs/declarations/document-upload";
+    const hmrcBase = process.env.HMRC_ENVIRONMENT === "sandbox"
+      ? HMRC_CONFIG.sandboxBaseUrl
+      : HMRC_CONFIG.productionBaseUrl;
+    const hmrcUploadEndpoint = process.env.HMRC_DOCUMENT_UPLOAD_URL || `${hmrcBase}/customs/declarations/document-upload`;
     const tokenRecord = await convex.query(api.hmrc.getToken, { userId });
     const hmrcBearer = tokenRecord?.accessToken;
 

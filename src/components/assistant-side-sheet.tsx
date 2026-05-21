@@ -33,7 +33,7 @@ export function AssistantSideSheet({ children }: { children: React.ReactNode }) 
       id: "welcome",
       role: "assistant",
       content:
-        "Hello! I'm your TradeDNA AI consultant. I can help you with DCTS eligibility, Rules of Origin, tariff classifications, and trade compliance. What would you like to know?",
+        "Hello! I'm your Freightcode AI consultant. I can help you with DCTS eligibility, Rules of Origin, tariff classifications, and trade compliance. What would you like to know?",
       timestamp: 0,
     },
   ]);

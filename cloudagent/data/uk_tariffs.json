@@ -1,30 +1,30 @@
 [
   {
-    "hs_code": "610910",
+    "hs_code": "6109100010",
     "rate": 12,
     "vat": 20,
     "measure": "Import duty 12%"
   },
   {
-    "hs_code": "640319",
+    "hs_code": "6403190000",
     "rate": 8,
     "vat": 20,
     "measure": "Import duty 8%"
   },
   {
-    "hs_code": "851713",
+    "hs_code": "8517130000",
     "rate": 0,
     "vat": 20,
     "measure": "Zero rated"
   },
   {
-    "hs_code": "090121",
+    "hs_code": "0901210000",
     "rate": 0,
     "vat": 20,
     "measure": "Zero rated"
   },
   {
-    "hs_code": "220410",
+    "hs_code": "2204100000",
     "rate": 32,
     "vat": 20,
     "measure": "Excise duty applicable"

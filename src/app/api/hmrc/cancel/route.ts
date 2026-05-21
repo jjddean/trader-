@@ -4,6 +4,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 import { xmlEscape } from "../../../../lib/xml-utils";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
+import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
 
 /**
  * POST /api/hmrc/cancel
@@ -67,8 +68,8 @@ export async function POST(request: Request) {
 </MetaData>`;
 
     const hmrcBase = process.env.HMRC_ENVIRONMENT === "sandbox"
-      ? "https://test-api.service.hmrc.gov.uk"
-      : "https://api.service.hmrc.gov.uk";
+      ? HMRC_CONFIG.sandboxBaseUrl
+      : HMRC_CONFIG.productionBaseUrl;
     const hmrcEndpoint = `${hmrcBase}/customs/declarations`;
 
     const hmrcResponse = await fetchHmrc(hmrcEndpoint, {

@@ -8,7 +8,7 @@ Integrate a specialized HS Code classification agent using Low-Rank Adaptation (
 > **Architectural Decision**: I am integrating the GIR logic as a dedicated endpoint in the `cloudagent` Worker while preserving the existing Durable Object orchestration.
 
 > [!NOTE]
-> I have created a [TRAINING_GUIDE.md](file:///c:/Users/jason/trader-app/cloudagent/TRAINING_GUIDE.md) in the `cloudagent` directory for your reference during the Colab phase.
+> The original LoRA training guide has been archived at [cloudagent/docs/archive/TRAINING_GUIDE.md](file:///c:/Users/jason/trader-app/cloudagent/docs/archive/TRAINING_GUIDE.md). Treat it as historical guidance only; UK commodity-code training labels must come from official UK Trade Tariff data, not padded 6-digit HS prefixes.
 
 ## Proposed Changes
 

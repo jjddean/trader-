@@ -4,6 +4,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 import { mapToCDS_H1, validateCdsCodeLists } from "../../../../lib/wco-mapper";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
+import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
 import { buildPayloadDebugSnapshot, renderH1Xml, validateXmlPreflight } from "../../../../lib/h1-xml-renderer";
 import { evaluateRules, activeEffects, summarizeFailures, type RuleDefinition, type ScenarioInput } from "../../../../../convex/lib/rule_engine";
 
@@ -185,8 +186,8 @@ export async function POST(request: Request) {
 
     let token = tokenRecord.accessToken;
 
-    // Check if token is expired or expiring within 5 minutes (300000 ms)
-    if (tokenRecord.expiresAt && Date.now() + 300000 > tokenRecord.expiresAt) {
+    // Check if token is expired or expiring within the configured buffer.
+    if (tokenRecord.expiresAt && Date.now() + HMRC_CONFIG.timing.tokenExpiryBufferMs > tokenRecord.expiresAt) {
       if (!tokenRecord.refreshToken) {
         return NextResponse.json({ error: "HMRC Token expired and no refresh token available. Please reconnect." }, { status: 403 });
       }
@@ -194,8 +195,8 @@ export async function POST(request: Request) {
       const clientId = process.env.HMRC_CLIENT_ID!;
       const clientSecret = process.env.HMRC_CLIENT_SECRET!;
       const hmrcBase = process.env.HMRC_ENVIRONMENT === "sandbox"
-        ? "https://test-api.service.hmrc.gov.uk"
-        : "https://api.service.hmrc.gov.uk";
+        ? HMRC_CONFIG.sandboxBaseUrl
+        : HMRC_CONFIG.productionBaseUrl;
       const tokenUrl = `${hmrcBase}/oauth/token`;
 
       const refreshBody = new URLSearchParams({
@@ -226,7 +227,7 @@ export async function POST(request: Request) {
         userId,
         accessToken: data.access_token,
         refreshToken: data.refresh_token,
-        expiresIn: data.expires_in || 14400,
+        expiresIn: data.expires_in || HMRC_CONFIG.timing.defaultTokenExpiryMs,
         eori: tokenRecord.eori
       });
     }
@@ -378,7 +379,7 @@ export async function POST(request: Request) {
           endpoint: "local-preflight",
           method: "POST",
           contentType: "application/xml; charset=UTF-8",
-          accept: process.env.HMRC_DECLARATIONS_ACCEPT || "application/vnd.hmrc.2.0+xml",
+          accept: HMRC_CONFIG.accept.declarations,
           xmlByteLength: new TextEncoder().encode(xmlPayload).length,
         },
         localPreflight: {
@@ -417,8 +418,8 @@ export async function POST(request: Request) {
 
     // 3. Fire the POST request to HMRC
     const hmrcEndpoint = process.env.HMRC_ENVIRONMENT === "sandbox"
-      ? "https://test-api.service.hmrc.gov.uk/customs/declarations"
-      : "https://api.service.hmrc.gov.uk/customs/declarations";
+      ? `${HMRC_CONFIG.sandboxBaseUrl}/customs/declarations`
+      : `${HMRC_CONFIG.productionBaseUrl}/customs/declarations`;
 
     const hmrcHeaders = {
       "Content-Type": "application/xml; charset=UTF-8",
@@ -445,7 +446,7 @@ export async function POST(request: Request) {
           endpoint: hmrcEndpoint,
           method: "POST",
           contentType: hmrcHeaders["Content-Type"],
-          accept: process.env.HMRC_DECLARATIONS_ACCEPT || "application/vnd.hmrc.2.0+xml",
+          accept: HMRC_CONFIG.accept.declarations,
           xmlByteLength: new TextEncoder().encode(xmlPayload).length,
         },
         responseEvidence: {
@@ -470,7 +471,7 @@ export async function POST(request: Request) {
           endpoint: hmrcEndpoint,
           method: "POST",
           contentType: hmrcHeaders["Content-Type"],
-          accept: process.env.HMRC_DECLARATIONS_ACCEPT || "application/vnd.hmrc.2.0+xml",
+          accept: HMRC_CONFIG.accept.declarations,
           xmlByteLength: new TextEncoder().encode(xmlPayload).length,
         },
         responseEvidence: {
@@ -515,7 +516,7 @@ export async function POST(request: Request) {
         endpoint: hmrcEndpoint,
         method: "POST",
         contentType: hmrcHeaders["Content-Type"],
-        accept: process.env.HMRC_DECLARATIONS_ACCEPT || "application/vnd.hmrc.2.0+xml",
+        accept: HMRC_CONFIG.accept.declarations,
         xmlByteLength: new TextEncoder().encode(xmlPayload).length,
       },
       responseEvidence: {

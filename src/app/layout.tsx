@@ -68,7 +68,7 @@ export default function RootLayout({
             dangerouslySetInnerHTML={{
               __html: `
                 try {
-                  var v = localStorage.getItem('tradedna-text-scale');
+                  var v = localStorage.getItem('freightcode-text-scale') || localStorage.getItem('tradedna-text-scale');
                   if (v) { document.documentElement.style.setProperty('--text-scale', v); }
                 } catch (_) {}
               `,

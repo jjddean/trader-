@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../../convex/_generated/api";
 import { fetchHmrc } from "../../../../../lib/hmrc-fetch";
+import { HMRC_CONFIG } from "../../../../../lib/hmrc-config";
 import { parseHmrcNotification } from "../../../../../lib/hmrc-notification-parser";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -34,8 +35,8 @@ export async function GET(request: Request) {
     }
 
     const hmrcBase = process.env.HMRC_ENVIRONMENT === "sandbox"
-      ? "https://test-api.service.hmrc.gov.uk"
-      : "https://api.service.hmrc.gov.uk";
+      ? HMRC_CONFIG.sandboxBaseUrl
+      : HMRC_CONFIG.productionBaseUrl;
 
     // Step 1: Get list of unpulled notification IDs for this conversation
     const listUrl = `${hmrcBase}/notifications/conversationId/${encodeURIComponent(conversationId)}/unpulled`;
@@ -43,7 +44,7 @@ export async function GET(request: Request) {
       listUrl,
       {
         headers: {
-          Accept: "application/vnd.hmrc.1.0+xml",
+          Accept: HMRC_CONFIG.accept.v1Xml,
         },
       },
       request,
@@ -85,7 +86,7 @@ export async function GET(request: Request) {
         notifUrl,
         {
           headers: {
-            Accept: "application/vnd.hmrc.1.0+xml",
+            Accept: HMRC_CONFIG.accept.v1Xml,
           },
         },
         request,
