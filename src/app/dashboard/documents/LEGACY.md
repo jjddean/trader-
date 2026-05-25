@@ -1,7 +1,7 @@
 # FreightCode Modernization & TRE Integration (March 2026)
 
 ## Overview of Recent Changes
-We have transitioned from the legacy "TradeDNA" logic to a more robust, integrated customs declaration suite. Recent updates include:
+We have transitioned from the legacy Freightcode prototype logic to a more robust, integrated customs declaration suite. Recent updates include:
 
 1. **Bug Fixes (Documents Page)**:
    - Resolved critical `ReferenceError` by implementing the missing `declarationFilter`, `typeFilter`, and `selectedDocument` state hooks.
@@ -27,9 +27,9 @@ During the audit of the `DocumentsPage`, we identified a critical `ReferenceErro
 
 ---
 
-# Legacy Tools Preservation Archive (TradeDNA Era)
+# Legacy Tools Preservation Archive (Freightcode Prototype Era)
 
-The following logic from the "TradeDNA" era has been preserved for future reference. These tools have been replaced by the modern FreightCode compliance suite but are kept here to ensure no custom business logic or edge cases are lost.
+The following legacy prototype logic has been preserved for future reference. These tools have been replaced by the modern Freightcode compliance suite but are kept here to ensure no custom business logic or edge cases are lost.
 
 ========================================================================
 LEGACY TOOLS PRESERVATION

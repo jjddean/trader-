@@ -1,6 +1,6 @@
 # Codebase Cleanliness & Performance Standards
 
-To maintain the high performance and stability of the TradeDNA application, all future modifications must adhere to these standards.
+To maintain the high performance and stability of the Freightcode application, all future modifications must adhere to these standards.
 
 ## 1. Zero-Ghost Artifacts
 - **No Orphan Tables**: Do not define database tables (e.g., in `schema.ts`) that do not have active read/write paths in the application.

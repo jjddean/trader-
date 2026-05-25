@@ -1,4 +1,4 @@
-# CLAUDE.md — TradeDNA
+# CLAUDE.md — Freightcode
 
 ## NON-NEGOTIABLE: NO INFERENCE, NO INVENTED DATA
 
@@ -62,7 +62,7 @@ If error count increases after a change → revert immediately → return to las
 
 ## What This App Is
 
-TradeDNA (deployed as freightcode.co.uk) is a UK customs declarations SaaS. Its core mission is to submit WCO-compliant XML declarations to HMRC's Customs Declaration Service (CDS) on behalf of UK importers and customs brokers. The end goal is HMRC "Recognised Software" status, gated behind the Trader Dress Rehearsal (TDR) process.
+Freightcode is a UK customs declarations SaaS. Its core mission is to submit WCO-compliant XML declarations to HMRC's Customs Declaration Service (CDS) on behalf of UK importers and customs brokers. The end goal is HMRC "Recognised Software" status, gated behind the Trader Dress Rehearsal (TDR) process.
 
 ---
 
@@ -239,10 +239,23 @@ HMRC_CLIENT_ID               # HMRC Developer Hub application client ID
 HMRC_CLIENT_SECRET           # HMRC Developer Hub application client secret
 HMRC_ENVIRONMENT             # "sandbox" | "production"
 HMRC_DECLARATIONS_ACCEPT     # "application/vnd.hmrc.1.0+xml" (sandbox/TDR)
+HMRC_SANDBOX_BASE_URL        # Sandbox HMRC API base URL
+HMRC_PRODUCTION_BASE_URL     # Production HMRC API base URL
+HMRC_ACCEPT_V2_XML           # HMRC v2 XML Accept header
+HMRC_ACCEPT_V2_JSON          # HMRC v2 JSON Accept header
+HMRC_ACCEPT_V1_XML           # HMRC v1 XML Accept header
 HMRC_EORI                    # GB-format EORI for test submissions
 HMRC_TEST_SCENARIO           # Gov-Test-Scenario header value (e.g. HAPPY_PATH)
 HMRC_WEBHOOK_AUTH_TOKEN      # Bearer token HMRC uses when pushing notifications
 HMRC_VENDOR_PUBLIC_IP        # Vendor server IP for Gov-Vendor-Public-IP header
+HMRC_VENDOR_PRODUCT_NAME     # Product name sent in Gov-Vendor headers
+HMRC_VENDOR_VERSION          # Product version sent in Gov-Vendor headers
+HMRC_TOKEN_EXPIRY_BUFFER_MS  # Refresh buffer before token expiry
+HMRC_DEFAULT_TOKEN_EXPIRY_MS # Fallback token expiry value
+HMRC_RETRY_DELAY_RATE_LIMIT_MS
+HMRC_RETRY_DELAY_SERVER_ERROR_MS
+HMRC_RETRY_DELAY_RATE_LIMIT_SECOND_MS
+HMRC_RETRY_DELAY_SERVER_ERROR_SECOND_MS
 HMRC_TEST_USER_ID            # Convex userId for token lookup in scenario runner
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 CLERK_SECRET_KEY

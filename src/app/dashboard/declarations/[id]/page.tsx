@@ -15,7 +15,7 @@ export default function CoreSchemaPage() {
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const params = useParams<{ id: string }>();
   const id = params?.id as Id<"declarations">;
-  
+
   const declaration = useQuery(
     api.declarations.getLane,
     isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && id ? { id } : "skip",
@@ -40,6 +40,8 @@ export default function CoreSchemaPage() {
     importerEori: "",
     invoiceCurrency: "",
     invoiceTotal: "",
+    incoterms: "",
+    incotermLocation: "",
     locationId: "",
     presentationOffice: "",
   });
@@ -60,6 +62,8 @@ export default function CoreSchemaPage() {
         importerEori: (d.importerEori as string) || "",
         invoiceCurrency: (d.invoiceCurrency as string) || "",
         invoiceTotal: d.invoiceTotal != null ? String(d.invoiceTotal) : "",
+        incoterms: (d.incoterms as string) || "",
+        incotermLocation: (d.incotermLocation as string) || "",
         locationId: (d.locationId as string) || "",
         presentationOffice: (d.presentationOffice as string) || "",
       });
@@ -71,23 +75,25 @@ export default function CoreSchemaPage() {
     setSaving(true);
     try {
       const invoiceTotalParsed = formData.invoiceTotal.trim() === ""
-        ? undefined
+        ? null
         : Number(formData.invoiceTotal);
       await updateDeclaration({
         id,
         eori: formData.eori.trim(),
         declarationType: formData.declarationType,
         route: formData.route,
-        dispatchCountry: formData.dispatchCountry || undefined,
-        transportMode: formData.transportMode || undefined,
-        transportId: formData.transportId.trim() || undefined,
-        transportIdType: formData.transportIdType || undefined,
-        destinationCountry: formData.destinationCountry || undefined,
-        importerEori: formData.importerEori.trim() || undefined,
-        invoiceCurrency: formData.invoiceCurrency.trim().toUpperCase() || undefined,
-        invoiceTotal: Number.isFinite(invoiceTotalParsed) ? invoiceTotalParsed : undefined,
-        locationId: formData.locationId.trim() || undefined,
-        presentationOffice: formData.presentationOffice.trim() || undefined,
+        dispatchCountry: formData.dispatchCountry,
+        transportMode: formData.transportMode,
+        transportId: formData.transportId.trim(),
+        transportIdType: formData.transportIdType,
+        destinationCountry: formData.destinationCountry,
+        importerEori: formData.importerEori.trim(),
+        invoiceCurrency: formData.invoiceCurrency.trim().toUpperCase(),
+        invoiceTotal: invoiceTotalParsed === null || Number.isFinite(invoiceTotalParsed) ? invoiceTotalParsed : null,
+        incoterms: formData.incoterms.trim().toUpperCase(),
+        incotermLocation: formData.incotermLocation.trim(),
+        locationId: formData.locationId.trim(),
+        presentationOffice: formData.presentationOffice.trim(),
       });
     } catch (e) {
       console.error("Failed to save core schema", e);
@@ -143,8 +149,6 @@ export default function CoreSchemaPage() {
               </label>
               <input
                 type="text"
-                required
-                pattern="GB\d{12}"
                 value={formData.eori}
                 onChange={(e) => setFormData({ ...formData, eori: e.target.value })}
                 placeholder="e.g. GB123456789000"
@@ -164,8 +168,6 @@ export default function CoreSchemaPage() {
               </label>
               <input
                 type="text"
-                required
-                pattern="GB\d{12}"
                 value={formData.importerEori}
                 onChange={(e) => setFormData({ ...formData, importerEori: e.target.value })}
                 placeholder="e.g. GB123456789000"
@@ -225,7 +227,6 @@ export default function CoreSchemaPage() {
                 <span className="text-red-500">*</span>
               </label>
               <select
-                required
                 value={formData.dispatchCountry}
                 onChange={(e) => setFormData({ ...formData, dispatchCountry: e.target.value })}
                 className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
@@ -248,7 +249,6 @@ export default function CoreSchemaPage() {
                 <span className="text-red-500">*</span>
               </label>
               <select
-                required
                 value={formData.destinationCountry}
                 onChange={(e) => setFormData({ ...formData, destinationCountry: e.target.value })}
                 className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
@@ -268,7 +268,6 @@ export default function CoreSchemaPage() {
               </label>
               <input
                 type="text"
-                required
                 value={formData.locationId}
                 onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
                 placeholder="e.g. GBAUFXTFXTGW"
@@ -306,8 +305,6 @@ export default function CoreSchemaPage() {
               </label>
               <input
                 type="text"
-                required
-                pattern="[A-Za-z]{3}"
                 value={formData.invoiceCurrency}
                 onChange={(e) => setFormData({ ...formData, invoiceCurrency: e.target.value.toUpperCase() })}
                 placeholder="ISO 4217 code, e.g. GBP"
@@ -333,6 +330,32 @@ export default function CoreSchemaPage() {
                 <Info className="h-3 w-3" />
                 Optional override — leave blank to derive from goods item values.
               </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Incoterms (DE 4/1)
+              </label>
+              <input
+                type="text"
+                value={formData.incoterms}
+                onChange={(e) => setFormData({ ...formData, incoterms: e.target.value.toUpperCase() })}
+                placeholder="e.g. CIF"
+                className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Incoterm Location
+              </label>
+              <input
+                type="text"
+                value={formData.incotermLocation}
+                onChange={(e) => setFormData({ ...formData, incotermLocation: e.target.value })}
+                placeholder="e.g. Felixstowe"
+                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+              />
             </div>
 
           </div>
@@ -413,6 +436,7 @@ export default function CoreSchemaPage() {
         <div className="border-t border-gray-100 bg-gray-50/50 p-4 px-6 flex justify-end">
           <button
             type="submit"
+            formNoValidate
             disabled={saving}
             className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800 disabled:opacity-50"
           >

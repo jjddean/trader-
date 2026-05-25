@@ -1,5 +1,5 @@
 /**
- * debug-payload.js — TradeDNA payload inspector (no HMRC call made)
+ * debug-payload.js — Freightcode payload inspector (no HMRC call made)
  *
  * Fetches a real declaration + items from Convex, runs the WCO mapper,
  * validates all CDS fields, and dumps the full XML so you can see exactly

@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../../convex/_generated/api";
 import { fetchHmrc } from "../../../../../lib/hmrc-fetch";
+import { HMRC_CONFIG } from "../../../../../lib/hmrc-config";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -10,7 +11,7 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
  * GET /api/hmrc/information/full?mrn={mrn}
  * Retrieve the full declaration by MRN.
  * HMRC ref: Customs Declarations Information API > Retrieve the full declaration
- * Accept: application/vnd.hmrc.2.0+json
+ * Accept: configured HMRC v2 JSON media type
  */
 export async function GET(request: Request) {
   try {
@@ -32,8 +33,8 @@ export async function GET(request: Request) {
     }
 
     const hmrcBase = process.env.HMRC_ENVIRONMENT === "sandbox"
-      ? "https://test-api.service.hmrc.gov.uk"
-      : "https://api.service.hmrc.gov.uk";
+      ? HMRC_CONFIG.sandboxBaseUrl
+      : HMRC_CONFIG.productionBaseUrl;
 
     const queryUrl = `${hmrcBase}/customs/declarations-information/mrn/${encodeURIComponent(mrn)}/full`;
 
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
       {
         method: "GET",
         headers: {
-          Accept: "application/vnd.hmrc.2.0+json",
+          Accept: HMRC_CONFIG.accept.v2Json,
         },
       },
       request,

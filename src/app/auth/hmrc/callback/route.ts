@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
+import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -35,8 +36,8 @@ export async function GET(request: Request) {
     const redirectUri = process.env.HMRC_REDIRECT_URI!;
 
     const hmrcBase = process.env.HMRC_ENVIRONMENT === "sandbox"
-      ? "https://test-api.service.hmrc.gov.uk"
-      : "https://api.service.hmrc.gov.uk";
+      ? HMRC_CONFIG.sandboxBaseUrl
+      : HMRC_CONFIG.productionBaseUrl;
     const tokenUrl = `${hmrcBase}/oauth/token`;
     console.log("EXCHANGING TOKEN WITH REDIRECT URI:", redirectUri);
     
@@ -69,7 +70,7 @@ export async function GET(request: Request) {
       userId,
       accessToken: data.access_token,
       refreshToken: data.refresh_token,
-      expiresIn: data.expires_in || 14400, // typically 4 hours for Sandbox
+      expiresIn: data.expires_in || HMRC_CONFIG.timing.defaultTokenExpiryMs,
     });
 
     return NextResponse.redirect(new URL("/dashboard?success=hmrc_connected", request.url));

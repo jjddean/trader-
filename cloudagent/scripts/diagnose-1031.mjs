@@ -4,7 +4,7 @@ import fetch from 'node-fetch';
 const NGROK_URL = 'https://7330-62-31-164-236.ngrok-free.app';
 
 async function diagnose() {
-    console.log("--- Final System Check: TradeDNA Cloudflare Agents ---");
+    console.log("--- Final System Check: Freightcode Cloudflare Agents ---");
 
     // 1. Clear history
     try {

@@ -10,7 +10,7 @@ Do **not** use these credentials in production.
 | Field | Value |
 |-------|-------|
 | User ID | `564716008843` |
-| Password | `UvyjIAG8ooEQ` |
+| Password | `` |UvyjIAG8ooEQ
 | Full Name | Yasmine Kerr |
 | Email Address | yasmine.kerr@example.com |
 | Date of Birth | 1987-12-07 |

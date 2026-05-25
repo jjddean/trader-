@@ -4,34 +4,34 @@
     "name": "Global Textiles Ltd",
     "country": "India",
     "category": "Textiles",
-    "hscode": "610910"
+    "hscode": "6109100010"
   },
   {
     "id": "c2",
     "name": "Loom & Thread Co",
     "country": "Vietnam",
     "category": "Apparel",
-    "hscode": "610910"
+    "hscode": "6109100010"
   },
   {
     "id": "c3",
     "name": "Summit Footwear",
     "country": "Indonesia",
     "category": "Footwear",
-    "hscode": "640319"
+    "hscode": "6403190000"
   },
   {
     "id": "c4",
     "name": "Nile Cotton Corp",
     "country": "Ethiopia",
     "category": "Raw Materials",
-    "hscode": "520100"
+    "hscode": "5201000000"
   },
   {
     "id": "c5",
     "name": "TechParts Nigeria",
     "country": "Nigeria",
     "category": "Electronics",
-    "hscode": "851713"
+    "hscode": "8517130000"
   }
 ]

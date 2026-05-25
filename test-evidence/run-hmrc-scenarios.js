@@ -1,5 +1,5 @@
 /**
- * TDR Scenario Runner — TradeDNA
+ * Trade Test Scenario Runner — Freightcode
  *
  * Signed decision matrix applied (2026-04-11):
  *   Lane: HS 0207129000 / CPC 4000 000 / Origin BR / Type IMA
@@ -8,7 +8,7 @@
  *
  * FIXED (2026-04-11):
  *   - GovernmentProcedure: DE 1/10 = two 2-digit codes; DE 1/11 = separate 3-digit element
- *   - Accept header: application/vnd.hmrc.1.0+xml (not 2.0)
+ *   - Accept header: application/vnd.hmrc.2.0+xml for Trade Test
  *   - dispatchCountry: BR (not GB)
  *   - Documents: N853 + Y930 + Y929 replacing invalid Y922
  *   - XML builder: iterates AdditionalDocument array (not hardcoded single element)
@@ -16,7 +16,7 @@
  *
  * Usage:
  *   node test-evidence/run-hmrc-scenarios.js           # dry-run only
- *   DRY_RUN_ONLY=false HMRC_SUBMIT_ONCE=true node ...  # live submit (TDR gate required first)
+ *   DRY_RUN_ONLY=false HMRC_SUBMIT_ONCE=true node ...  # live Trade Test submit gate required first
  */
 
 const fs = require("fs");
@@ -24,6 +24,24 @@ const path = require("path");
 require("dotenv").config({ path: ".env.local" });
 const { ConvexHttpClient } = require("convex/browser");
 const { api } = require("../convex/_generated/api");
+
+const HMRC_CONFIG = {
+  sandboxBaseUrl: process.env.HMRC_SANDBOX_BASE_URL || "https://test-api.service.hmrc.gov.uk",
+  productionBaseUrl: process.env.HMRC_PRODUCTION_BASE_URL || "https://api.service.hmrc.gov.uk",
+  accept: {
+    declarations: process.env.HMRC_DECLARATIONS_ACCEPT || "application/vnd.hmrc.2.0+xml",
+    v2Xml: process.env.HMRC_ACCEPT_V2_XML || "application/vnd.hmrc.2.0+xml",
+  },
+  vendor: {
+    publicIp: process.env.HMRC_VENDOR_PUBLIC_IP || "203.0.113.6",
+    productName: process.env.HMRC_VENDOR_PRODUCT_NAME || "Freightcode",
+    version: process.env.HMRC_VENDOR_VERSION || "1.0.0",
+  },
+  timing: {
+    tokenExpiryBufferMs: Number(process.env.HMRC_TOKEN_EXPIRY_BUFFER_MS) || 300000,
+    defaultTokenExpiryMs: Number(process.env.HMRC_DEFAULT_TOKEN_EXPIRY_MS) || 14400,
+  },
+};
 
 // ---------------------------------------------------------------------------
 // Signed document matrix — HS 0207129000 / CPC 4000 000 / Origin BR
@@ -283,14 +301,14 @@ async function getToken(client, userId) {
     throw new Error(`No HMRC token found in Convex for user ${userId}`);
   }
 
-  if (tokenRecord.expiresAt && Date.now() + 300000 > tokenRecord.expiresAt) {
+  if (tokenRecord.expiresAt && Date.now() + HMRC_CONFIG.timing.tokenExpiryBufferMs > tokenRecord.expiresAt) {
     if (!tokenRecord.refreshToken) {
       throw new Error("HMRC token expiring and no refresh token available in Convex");
     }
     const hmrcBase =
       process.env.HMRC_ENVIRONMENT === "sandbox"
-        ? "https://test-api.service.hmrc.gov.uk"
-        : "https://api.service.hmrc.gov.uk";
+        ? HMRC_CONFIG.sandboxBaseUrl
+        : HMRC_CONFIG.productionBaseUrl;
     const refreshResponse = await fetch(`${hmrcBase}/oauth/token`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -309,7 +327,7 @@ async function getToken(client, userId) {
       userId,
       accessToken: data.access_token,
       refreshToken: data.refresh_token || tokenRecord.refreshToken,
-      expiresIn: data.expires_in || 14400,
+      expiresIn: data.expires_in || HMRC_CONFIG.timing.defaultTokenExpiryMs,
       eori: tokenRecord.eori,
     });
     return data.access_token;
@@ -318,15 +336,13 @@ async function getToken(client, userId) {
   return tokenRecord.accessToken;
 }
 
-async function submitXml(xmlPayload, scenario, token) {
+async function submitXml(xmlPayload, token) {
   const endpoint =
     process.env.HMRC_ENVIRONMENT === "sandbox"
-      ? "https://test-api.service.hmrc.gov.uk/customs/declarations"
-      : "https://api.service.hmrc.gov.uk/customs/declarations";
+      ? `${HMRC_CONFIG.sandboxBaseUrl}/customs/declarations`
+      : `${HMRC_CONFIG.productionBaseUrl}/customs/declarations`;
   const now = new Date().toISOString();
-  // FIX: default to v1.0 (not 2.0) — required for CDS sandbox and TDR
-  const acceptHeader =
-    process.env.HMRC_DECLARATIONS_ACCEPT || "application/vnd.hmrc.1.0+xml";
+  const acceptHeader = HMRC_CONFIG.accept.declarations;
   const contentTypeHeader =
     process.env.HMRC_CONTENT_TYPE_HEADER || "application/xml; charset=UTF-8";
 
@@ -337,7 +353,6 @@ async function submitXml(xmlPayload, scenario, token) {
       "Content-Type": contentTypeHeader,
       Authorization: `Bearer ${token}`,
       "X-Client-ID": process.env.HMRC_CLIENT_ID,
-      "Gov-Test-Scenario": scenario,
       "Gov-Client-Connection-Method": "WEB_APP_VIA_SERVER",
       "Gov-Client-Public-IP": "62.31.164.236",
       "Gov-Client-Public-Port": "443",
@@ -351,10 +366,10 @@ async function submitXml(xmlPayload, scenario, token) {
         "Mozilla%2F5.0+(Windows+NT+10.0%3B+Win64%3B+x64)+AppleWebKit%2F537.36",
       "Gov-Client-Browser-Do-Not-Track": "false",
       "Gov-Client-Multi-Factor": "type=OTHER&timestamp=2024-01-01T00%3A00%3A00Z&unique-reference=session-test",
-      "Gov-Vendor-Version": "TradeDNA=1.0.0",
-      "Gov-Vendor-Product-Name": "TradeDNA",
-      "Gov-Vendor-Public-IP": process.env.HMRC_VENDOR_PUBLIC_IP || "203.0.113.6",
-      "Gov-Vendor-Forwarded": `by=${process.env.HMRC_VENDOR_PUBLIC_IP || "203.0.113.6"}&for=62.31.164.236`,
+      "Gov-Vendor-Version": `${HMRC_CONFIG.vendor.productName}=${HMRC_CONFIG.vendor.version}`,
+      "Gov-Vendor-Product-Name": HMRC_CONFIG.vendor.productName,
+      "Gov-Vendor-Public-IP": HMRC_CONFIG.vendor.publicIp,
+      "Gov-Vendor-Forwarded": `by=${HMRC_CONFIG.vendor.publicIp}&for=62.31.164.236`,
     },
     body: xmlPayload,
   });
@@ -370,7 +385,6 @@ async function submitXml(xmlPayload, scenario, token) {
       "Content-Type": contentTypeHeader,
       Authorization: "Bearer [REDACTED]",
       "X-Client-ID": process.env.HMRC_CLIENT_ID || "",
-      "Gov-Test-Scenario": scenario,
     },
   };
 }
@@ -382,24 +396,20 @@ function withMetaComment(meta, xml) {
 }
 
 function preflightGates(xmlPayload, eori) {
-  // FIX: default to v1.0
-  const acceptHeader =
-    process.env.HMRC_DECLARATIONS_ACCEPT || "application/vnd.hmrc.1.0+xml";
+  const acceptHeader = HMRC_CONFIG.accept.declarations;
   const contentTypeHeader =
     process.env.HMRC_CONTENT_TYPE_HEADER || "application/xml; charset=UTF-8";
   const endpoint =
     process.env.HMRC_ENVIRONMENT === "sandbox"
-      ? "https://test-api.service.hmrc.gov.uk/customs/declarations"
-      : "https://api.service.hmrc.gov.uk/customs/declarations";
+      ? `${HMRC_CONFIG.sandboxBaseUrl}/customs/declarations`
+      : `${HMRC_CONFIG.productionBaseUrl}/customs/declarations`;
 
   const checks = {
     token_present: false, // set after token fetch
     client_id_present: Boolean(process.env.HMRC_CLIENT_ID),
     environment_is_sandbox: process.env.HMRC_ENVIRONMENT === "sandbox",
-    endpoint_is_test_api: endpoint.startsWith("https://test-api.service.hmrc.gov.uk"),
-    accept_is_v1:
-      acceptHeader === "application/vnd.hmrc.1.0+xml" ||
-      acceptHeader === "application/vnd.hmrc.2.0+xml",
+    endpoint_is_test_api: endpoint.startsWith(HMRC_CONFIG.sandboxBaseUrl),
+    accept_is_v2: acceptHeader === HMRC_CONFIG.accept.v2Xml,
     content_type_is_xml: contentTypeHeader.toLowerCase().includes("application/xml"),
     xml_has_metadata_root: xmlPayload.includes("<MetaData"),
     xml_has_declaration: xmlPayload.includes("<Declaration"),
@@ -445,12 +455,12 @@ async function run() {
   const eori = process.env.HMRC_EORI || "GB449181054677";
 
   const baseDecl = {
-    _id: "tdr-fixed",
+    _id: "trade-test-fixed",
     declarationType: "H1",
     eori,
     exporterEori: "BR12345678901234",  // Brazilian exporter — must not be a UK GB EORI
     importerEori: eori,
-    lrn: `TDR-${Date.now()}`,
+    lrn: `TT-${Date.now()}`,
     ducr: `6GB${eori.replace(/^GB/i, "")}-${Date.now()}`,  // year digit = last digit of calendar year (6 for 2026); format: {digit}GB{12-digit-eori}-{ref}
     presentationOffice: "GB000051",
     totalGrossWeight: 120,
@@ -485,8 +495,7 @@ async function run() {
   };
 
   const input = {
-    key: "scenario-1-happy-path",
-    scenario: process.env.HMRC_TEST_SCENARIO || "HAPPY_PATH",
+    key: "trade-test-h1-dry-run",
     declaration: { ...baseDecl, eori },
     item: { ...itemSeed },
   };
@@ -502,15 +511,15 @@ async function run() {
     .map(([key]) => key);
   preflight.readyToSubmit = preflight.failed.length === 0;
 
-  const singleRunRequestFile = process.env.SINGLE_RUN_REQUEST_FILE || "tdr-cds-v1-request.xml";
-  const singleRunResponseFile = process.env.SINGLE_RUN_RESPONSE_FILE || "tdr-cds-v1-response.xml";
-  const dryRunReportFile = process.env.DRY_RUN_REPORT_FILE || "tdr-cds-v1-dry-run.json";
+  const singleRunRequestFile = process.env.SINGLE_RUN_REQUEST_FILE || "trade-test-cds-v2-request.xml";
+  const singleRunResponseFile = process.env.SINGLE_RUN_RESPONSE_FILE || "trade-test-cds-v2-response.xml";
+  const dryRunReportFile = process.env.DRY_RUN_REPORT_FILE || "trade-test-cds-v2-dry-run.json";
 
-  const requestMeta = `<!-- request_accept: ${preflight.acceptHeader} | request_content_type: ${preflight.contentTypeHeader} | request_authorization: Bearer [REDACTED] | request_x_client_id: ${process.env.HMRC_CLIENT_ID || ""} | request_gov_test_scenario: ${input.scenario} -->`;
+  const requestMeta = `<!-- request_accept: ${preflight.acceptHeader} | request_content_type: ${preflight.contentTypeHeader} | request_authorization: Bearer [REDACTED] | request_x_client_id: ${process.env.HMRC_CLIENT_ID || ""} | request_gov_test_scenario: ABSENT -->`;
   fs.writeFileSync(
     path.join(evidenceDir, singleRunRequestFile),
     withMetaComment(
-      { timestamp: new Date().toISOString(), status: 0, conversationId: input.scenario },
+      { timestamp: new Date().toISOString(), status: 0, conversationId: "DRY_RUN" },
       `${requestMeta}\n${xmlPayload}`,
     ),
   );
@@ -569,9 +578,9 @@ async function run() {
 
   // Live submit — only reached when DRY_RUN_ONLY=false AND HMRC_SUBMIT_ONCE=true
   const token = await getToken(client, userId);
-  const response = await submitXml(xmlPayload, input.scenario, token);
+  const response = await submitXml(xmlPayload, token);
 
-  const responseWithMeta = `<!-- request_accept: ${response.requestHeaders.Accept} | request_content_type: ${response.requestHeaders["Content-Type"]} | request_authorization: ${response.requestHeaders.Authorization} | request_x_client_id: ${response.requestHeaders["X-Client-ID"]} | request_gov_test_scenario: ${response.requestHeaders["Gov-Test-Scenario"]} -->\n${response.body || "<empty/>"}`;
+  const responseWithMeta = `<!-- request_accept: ${response.requestHeaders.Accept} | request_content_type: ${response.requestHeaders["Content-Type"]} | request_authorization: ${response.requestHeaders.Authorization} | request_x_client_id: ${response.requestHeaders["X-Client-ID"]} | request_gov_test_scenario: ABSENT -->\n${response.body || "<empty/>"}`;
 
   fs.writeFileSync(
     path.join(evidenceDir, singleRunResponseFile),
@@ -581,7 +590,7 @@ async function run() {
   const summary = [
     {
       scenario: input.key,
-      header: input.scenario,
+      header: "ABSENT",
       status: response.status,
       conversationId: response.conversationId,
       timestamp: response.timestamp,

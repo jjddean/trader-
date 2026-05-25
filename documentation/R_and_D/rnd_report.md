@@ -56,7 +56,7 @@ We researched leading UK Open Banking APIs to embed a **1-Click Settlement Butto
 By enabling massive tax movements across our platform, we evaluated the regulatory liability under the Financial Conduct Authority (FCA).
 
 ## 5.1 The "Technical Service Provider" Loophole
-Our API architecture specifically dictates that freightcode **never holds or touches the funds**. We use an FCA-regulated partner (like TrueLayer) as the Payment Initiation Service Provider (PISP). TradeDNA/freightcode only passes the invoice amount and HMRC recipient details to the partner.
+Our API architecture specifically dictates that freightcode **never holds or touches the funds**. We use an FCA-regulated partner (like TrueLayer) as the Payment Initiation Service Provider (PISP). Freightcode/freightcode only passes the invoice amount and HMRC recipient details to the partner.
 
 ## 5.2 Engaging the Regulator
 To ensure our AI Invoice Extraction and automated Open Banking workflows do not accidentally trigger heavy "Regulated Activity" requirements, we formulated a 2-part engagement plan:

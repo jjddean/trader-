@@ -1,4 +1,4 @@
-# HMRC TDR Integration Reference — TradeDNA
+# HMRC TDR Integration Reference — Freightcode
 
 > **Last updated:** 2026-04-13  
 > **Scope:** Customs Declarations API v1.0 | Trader Dress Rehearsal (TDR) | HMRC CDS  
@@ -27,7 +27,7 @@
 ## 1. Architecture Overview
 
 ```
-Browser (TradeDNA UI)
+Browser (Freightcode UI)
   └─ Clerk session → useMutation/useQuery (Convex real-time)
 
 Next.js API Routes (/src/app/api/hmrc/)

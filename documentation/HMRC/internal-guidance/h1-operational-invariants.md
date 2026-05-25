@@ -1,0 +1,41 @@
+# H1 Operational Invariants
+
+These rules protect the current HMRC CDS H1 submission path from accidental cleanup regressions.
+
+## Data Rules
+
+- Do not synthesize declaration defaults that hide missing source data.
+- Do not infer CPC or additional procedure codes from unrelated fields.
+- Do not silently substitute invoice currency, destination country, dispatch country, importer EORI, declarant EORI, presentation office, goods location, Incoterms, or Incoterm location.
+- Do not generate placeholder package blocks when package data is missing.
+- Do not auto-create additional documents to make a declaration appear complete.
+
+## Mapper Rules
+
+- Mapper output must reflect persisted Convex declaration and goods item fields.
+- Missing mapper-critical data should fail fast before live submission.
+- Additional documents must pass through from saved goods item data.
+- Exporter details must remain conditional; do not emit an overseas exporter as a fake GB or XI EORI.
+- Government procedure mapping must preserve the DE 1/10 and DE 1/11 split.
+
+## XML Rules
+
+- XML element ordering is an HMRC compatibility constraint. Do not change ordering without updating golden fixtures.
+- XML renderer behavior must be covered by fixture tests before refactor.
+- Escaping must happen at the renderer boundary for every interpolated value.
+- A live HMRC `202` without `X-Conversation-ID` is a failure state, not a success.
+
+## Notification Rules
+
+- HMRC notification records are audit evidence and must remain append-only.
+- Do not synthesize DMS notification types for operational evidence.
+- Preserve raw HMRC payloads verbatim.
+- Status should derive from HMRC notification content, not manual UI assumptions.
+
+## Change Gate
+
+Before changing mapper, XML rendering, Convex persistence, submit routes, or notification parsing:
+
+1. Confirm the change is based on the current baseline branch.
+2. Run or add golden fixture coverage for declaration input, mapper output, XML output, and DMS parsing.
+3. Confirm no invariant above is weakened.

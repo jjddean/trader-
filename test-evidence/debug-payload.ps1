@@ -1,4 +1,4 @@
-# debug-payload.ps1 — TradeDNA payload inspector
+# debug-payload.ps1 — Freightcode payload inspector
 #
 # Fetches a real declaration from Convex, runs the WCO mapper,
 # validates all CDS fields, and dumps the XML. No HMRC call made.
