@@ -2,6 +2,38 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  // --- AI Assistant Persistent Workspace ---
+  conversations: defineTable({
+    organizationId: v.string(),
+    declarationId: v.optional(v.id("declarations")),
+    createdBy: v.string(),
+    title: v.optional(v.string()),
+    status: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_declaration", ["declarationId"]),
+
+  messages: defineTable({
+    conversationId: v.id("conversations"),
+    role: v.union(v.literal("user"), v.literal("assistant"), v.literal("system")),
+    content: v.string(),
+    createdAt: v.number(),
+    streamed: v.optional(v.boolean()),
+    metadata: v.optional(v.any()),
+  })
+    .index("by_conversation", ["conversationId"]),
+
+  assistantEvents: defineTable({
+    conversationId: v.id("conversations"),
+    declarationId: v.optional(v.id("declarations")),
+    eventType: v.string(),
+    payload: v.optional(v.any()),
+    createdAt: v.number(),
+  })
+    .index("by_conversation", ["conversationId"])
+    .index("by_declaration", ["declarationId"]),
   users: defineTable({
     clerkId: v.optional(v.any()),
     email: v.optional(v.any()),

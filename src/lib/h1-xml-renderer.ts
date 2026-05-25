@@ -29,7 +29,11 @@ export function validateXmlPreflight(
     has_previous_document: xmlPayload.includes("<PreviousDocument>"),
     no_y922: !xmlPayload.includes("<TypeCode>922</TypeCode>"),
     no_empty_tags: !/<([A-Za-z][\w]*)\s*>\s*<\/\1>/.test(xmlPayload),
-    no_placeholders: !/(>\s*N\/A\s*<|>\s*TBD\s*<|>\s*PENDING-|>\s*General goods\s*<)/i.test(xmlPayload),
+    // Sentinels that leak through the UI (document requirement templates use
+    // "Excluded" when the trader skips a doc; "N/A"/"TBD"/"PENDING-" are
+    // operator-typed; "General goods" is the mapper's old fallback). All are
+    // rejected by CDS — block them at the preflight stage.
+    no_placeholders: !/(>\s*N\/A\s*<|>\s*NA\s*<|>\s*TBD\s*<|>\s*PENDING-|>\s*Excluded\s*<|>\s*None\s*<|>\s*Unknown\s*<|>\s*General goods\s*<)/i.test(xmlPayload),
   };
   if (requireAdditionalDocument) {
     checks.has_additional_document = xmlPayload.includes("<AdditionalDocument>");
@@ -118,6 +122,17 @@ export function renderH1Xml(payloadInfo: unknown): string {
       <ModeCode>${xmlEscape(btm.ModeCode || "")}</ModeCode>
     </BorderTransportMeans>`
     : "";
+  // DE 4/15 — CurrencyExchange. Required when InvoiceAmount currency is
+  // declared; RateNumeric is only mandatory when invoice currency != GBP.
+  const currencyExchange = read(d, "CurrencyExchange");
+  const currencyTypeCode = String(currencyExchange.CurrencyTypeCode ?? "").trim();
+  const currencyRate = String(currencyExchange.RateNumeric ?? "").trim();
+  const currencyExchangeXml = currencyTypeCode
+    ? `
+    <CurrencyExchange>
+      <CurrencyTypeCode>${xmlEscape(currencyTypeCode)}</CurrencyTypeCode>${currencyRate ? `\n      <RateNumeric>${xmlEscape(currencyRate)}</RateNumeric>` : ""}
+    </CurrencyExchange>`
+    : "";
   const atm = read(consignment, "ArrivalTransportMeans");
   const arrivalTransportMeansXml = atm.ID
     ? `
@@ -128,22 +143,48 @@ export function renderH1Xml(payloadInfo: unknown): string {
         </ArrivalTransportMeans>`
     : "";
   const buyer = read(gs, "Buyer");
+  const buyerName = String(buyer.Name ?? "").trim();
   const buyerXml = buyer.AddressCountryCode
     ? `
-      <Buyer>
+      <Buyer>${buyerName ? `\n        <Name>${xmlEscape(buyerName)}</Name>` : ""}
         <Address>
           <CountryCode>${xmlEscape(buyer.AddressCountryCode)}</CountryCode>
         </Address>
       </Buyer>`
     : "";
   const seller = read(gs, "Seller");
+  const sellerName = String(seller.Name ?? "").trim();
   const sellerXml = seller.AddressCountryCode
     ? `
-      <Seller>
+      <Seller>${sellerName ? `\n        <Name>${xmlEscape(sellerName)}</Name>` : ""}
         <Address>
           <CountryCode>${xmlEscape(seller.AddressCountryCode)}</CountryCode>
         </Address>
       </Seller>`
+    : "";
+  // DE 3/9 Consignee — UK receiver. Emit when an ID is available (preferred)
+  // or when a Name is supplied. Anonymous consignees are not valid.
+  const consignee = read(gs, "Consignee");
+  const consigneeId = String(consignee.ID ?? "").trim();
+  const consigneeName = String(consignee.Name ?? "").trim();
+  const consigneeXml = consigneeId
+    ? `
+      <Consignee>${consigneeName ? `\n        <Name>${xmlEscape(consigneeName)}</Name>` : ""}
+        <ID>${xmlEscape(consigneeId)}</ID>
+      </Consignee>`
+    : "";
+  // DE 3/26 Consignor — overseas sender. Anonymous (country-only) form is
+  // acceptable for CDS when no overseas EORI/identifier is known.
+  const consignor = read(gs, "Consignor");
+  const consignorCountry = String(consignor.AddressCountryCode ?? "").trim();
+  const consignorName = String(consignor.Name ?? "").trim();
+  const consignorXml = consignorCountry
+    ? `
+      <Consignor>${consignorName ? `\n        <Name>${xmlEscape(consignorName)}</Name>` : ""}
+        <Address>
+          <CountryCode>${xmlEscape(consignorCountry)}</CountryCode>
+        </Address>
+      </Consignor>`
     : "";
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -159,19 +200,16 @@ export function renderH1Xml(payloadInfo: unknown): string {
     <TypeCode>${xmlEscape(d.TypeCode)}</TypeCode>
     <GoodsItemQuantity>${xmlEscape(d.GoodsItemQuantity)}</GoodsItemQuantity>
     <DeclarationOfficeID>${xmlEscape(d.DeclarationOfficeID)}</DeclarationOfficeID>
-    <InvoiceAmount currencyID="${xmlEscape(read(d, "InvoiceAmount").currencyID)}">${xmlEscape(read(d, "InvoiceAmount").value)}</InvoiceAmount>
+    <InvoiceAmount currencyID="${xmlEscape(read(d, "InvoiceAmount").currencyID)}">${xmlEscape(read(d, "InvoiceAmount").value)}</InvoiceAmount>${currencyExchangeXml}
     <TotalGrossMassMeasure unitCode="KGM">${xmlEscape(d.TotalGrossMassMeasure)}</TotalGrossMassMeasure>
     <TotalPackageQuantity>${xmlEscape(d.TotalPackageQuantity)}</TotalPackageQuantity>${borderTransportMeansXml}
     <Declarant>
       <ID>${xmlEscape(read(d, "Declarant").ID)}</ID>
     </Declarant>${exporterXml}
-    <GoodsShipment>${buyerXml}
+    <GoodsShipment>${buyerXml}${consigneeXml}
       <Consignment>
-        <ContainerCode>${xmlEscape(consignment.ContainerCode)}</ContainerCode>${arrivalTransportMeansXml}
-        <GoodsLocation>
-          <ID>${xmlEscape(read(consignment, "GoodsLocation").ID)}</ID>
-        </GoodsLocation>
-      </Consignment>
+        <ContainerCode>${xmlEscape(consignment.ContainerCode)}</ContainerCode>${arrivalTransportMeansXml}${goodsLocationXml}
+      </Consignment>${consignorXml}
       <Destination>
         <CountryCode>${xmlEscape(read(gs, "Destination").CountryCode)}</CountryCode>
       </Destination>
@@ -198,9 +236,19 @@ export function renderH1Xml(payloadInfo: unknown): string {
             <IdentificationTypeCode>${xmlEscape(classification.IdentificationTypeCode)}</IdentificationTypeCode>
           </Classification>`).join("");
         const procedures = asArray(item.GovernmentProcedure);
-        const packaging = asArray(item.Packaging)[0]
-          ? asArray(item.Packaging)[0]
-          : { SequenceNumeric: "1", MarksNumbersID: "N/A", QuantityQuantity: "1", TypeCode: "PK" };
+        // Packaging emitted only when real data exists — no synthetic "N/A"
+        // marks, no fabricated PK fallback. validateDeclaration upstream
+        // ensures packageType and packageCount are present before we get here.
+        const packagingSource = asArray(item.Packaging)[0];
+        const packagingMarks = String(packagingSource?.MarksNumbersID ?? "").trim();
+        const packagingXml = packagingSource && packagingSource.TypeCode
+          ? `
+        <Packaging>
+          <SequenceNumeric>${xmlEscape(packagingSource.SequenceNumeric || "1")}</SequenceNumeric>${packagingMarks ? `\n          <MarksNumbersID>${xmlEscape(packagingMarks)}</MarksNumbersID>` : ""}
+          <QuantityQuantity>${xmlEscape(packagingSource.QuantityQuantity || "")}</QuantityQuantity>
+          <TypeCode>${xmlEscape(packagingSource.TypeCode || "")}</TypeCode>
+        </Packaging>`
+          : "";
         const origin = read(item, "Origin");
         const originXml = origin.CountryCode
           ? `\n        <Origin>\n          <CountryCode>${xmlEscape(origin.CountryCode)}</CountryCode>\n          <TypeCode>${xmlEscape(origin.TypeCode || "1")}</TypeCode>\n        </Origin>`
@@ -211,7 +259,7 @@ export function renderH1Xml(payloadInfo: unknown): string {
         <StatisticalValueAmount currencyID="${xmlEscape(read(item, "StatisticalValueAmount").currencyID)}">${xmlEscape(read(item, "StatisticalValueAmount").value)}</StatisticalValueAmount>
         ${additionalDocumentsXml}
         <Commodity>
-          <Description>${xmlEscape(commodity.Description || "General goods")}</Description>
+          <Description>${xmlEscape(commodity.Description || "")}</Description>
           ${classificationXml}
           <GoodsMeasure>
             <GrossMassMeasure unitCode="KGM">${xmlEscape(goodsMeasure.GrossMassMeasure || 0)}</GrossMassMeasure>
@@ -225,13 +273,7 @@ export function renderH1Xml(payloadInfo: unknown): string {
         <GovernmentProcedure>
           <CurrentCode>${xmlEscape(proc.CurrentCode)}</CurrentCode>
           ${proc.PreviousCode ? `<PreviousCode>${xmlEscape(proc.PreviousCode)}</PreviousCode>` : ""}
-        </GovernmentProcedure>`).join("")}${originXml}
-        <Packaging>
-          <SequenceNumeric>${xmlEscape(packaging.SequenceNumeric)}</SequenceNumeric>
-          <MarksNumbersID>${xmlEscape(packaging.MarksNumbersID)}</MarksNumbersID>
-          <QuantityQuantity>${xmlEscape(packaging.QuantityQuantity)}</QuantityQuantity>
-          <TypeCode>${xmlEscape(packaging.TypeCode)}</TypeCode>
-        </Packaging>
+        </GovernmentProcedure>`).join("")}${originXml}${packagingXml}
       </GovernmentAgencyGoodsItem>`;
       }).join("")}
       <Importer>

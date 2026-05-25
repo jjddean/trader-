@@ -90,6 +90,27 @@ export const saveWebhook = mutation({
         userId: declaration.userId,
         declarationId: declaration._id
       });
+
+      const eventType =
+        args.notificationType === "DMSREJ" ? "CDS_REJECTION" :
+        args.notificationType === "DMSINV" ? "VALIDATION_FAILED" :
+        args.notificationType === "DMSROG" ? "ROUTE_TO_EXAMINE" :
+        args.notificationType === "DMSACC" ? "DECLARATION_ACCEPTED" :
+        args.notificationType === "DMSCLE" ? "GOODS_CLEARED" :
+        args.notificationType;
+
+      await ctx.runMutation(internal.assistantMutations.recordDeclarationEvent, {
+        declarationId: declaration._id,
+        eventType,
+        payload: {
+          source: "hmrc_notification",
+          notificationType: args.notificationType,
+          mrn: args.mrn,
+          errorCodes: args.errorCodes || [],
+          fieldErrors: args.fieldErrors || [],
+          timestamp: args.timestamp,
+        },
+      });
     }
   }
 });

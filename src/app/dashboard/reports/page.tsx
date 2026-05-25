@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { Search, Filter, ShieldAlert, ShieldCheck, Download, Copy, FileText, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useQuery } from "convex/react";
 import { useConvexAuth } from "convex/react";
@@ -110,62 +108,66 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* Control Bar */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center justify-between border-b border-[#e9e9e7] pb-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by MRN or Broker..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none transition-colors focus:border-gray-400 md:max-w-md"
-          />
-        </div>
-        <div className="relative">
-        <Button variant="ghost" className="h-9 px-3 text-foreground" onClick={() => setShowFilters((prev) => !prev)}>
-          <Filter className="mr-2 h-4 w-4" />
-          Filter
-        </Button>
-          {showFilters && (
-            <div className="absolute right-0 top-10 z-10 w-44 rounded-md border border-gray-200 bg-white p-2 shadow-md">
-              <button
-                onClick={() => setStatusFilter("all")}
-                className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
-              >
-                All statuses
-              </button>
-              <button
-                onClick={() => setStatusFilter("Clean")}
-                className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
-              >
-                Clean
-              </button>
-              <button
-                onClick={() => setStatusFilter("Warning")}
-                className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
-              >
-                Warning
-              </button>
-              <button
-                onClick={() => setStatusFilter("Action Required")}
-                className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
-              >
-                Action Required
-              </button>
-              <button
-                onClick={() => setStatusFilter("Draft")}
-                className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
-              >
-                Draft
-              </button>
+      <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
+        <div className="border-b border-[#e9e9e7] bg-gray-50 px-5 py-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by MRN or Broker..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-4 text-[0.6875rem] font-medium tracking-normal text-gray-600 shadow-sm outline-none transition-colors focus:border-gray-400"
+              />
             </div>
-          )}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowFilters((prev) => !prev)}
+                className="flex h-9 items-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-gray-600 shadow-sm transition-colors hover:border-gray-400 hover:bg-gray-50"
+              >
+                <Filter className="h-3 w-3" />
+                Filter
+              </button>
+              {showFilters && (
+                <div className="absolute right-0 top-10 z-10 w-44 rounded-md border border-gray-200 bg-white p-2 shadow-md">
+                  <button
+                    onClick={() => setStatusFilter("all")}
+                    className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
+                  >
+                    All statuses
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter("Clean")}
+                    className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
+                  >
+                    Clean
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter("Warning")}
+                    className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
+                  >
+                    Warning
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter("Action Required")}
+                    className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
+                  >
+                    Action Required
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter("Draft")}
+                    className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
+                  >
+                    Draft
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
 
-      <Card className="bg-white shadow-none border-[#e9e9e7]">
-        <CardContent className="p-0">
           {!isLoaded || isConvexAuthLoading || (canQueryReports && reports === undefined) ? (
             <div className="flex h-40 flex-col items-center justify-center gap-2">
               <RefreshCw className="h-5 w-5 animate-spin text-gray-400" />
@@ -261,8 +263,7 @@ export default function ReportsPage() {
             </table>
           </div>
           )}
-        </CardContent>
-      </Card>
+      </div>
 
       {/* Side Sheet for Report Details */}
       <Sheet open={!!selectedReport} onOpenChange={(open) => !open && setSelectedReport(null)}>

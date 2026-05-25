@@ -1,4 +1,4 @@
-# Freightcode — TDR Execution Plan & Quality-Gated Checklist
+# TradeDNA — TDR Execution Plan & Quality-Gated Checklist
 **Version:** 1.0  
 **Date:** 2026-04-11  
 **Status:** ACTIVE — Governing document for all TDR submissions  
@@ -331,8 +331,8 @@ node test-evidence/run-hmrc-scenarios.js
 | ID | Header | Required | Status |
 |----|--------|----------|--------|
 | P3.3.1 | `Gov-Client-Connection-Method` | WEB_APP_VIA_SERVER | ⬜ |
-| P3.3.2 | `Gov-Vendor-Version` | Freightcode=1.0.0 | ⬜ |
-| P3.3.3 | `Gov-Vendor-Product-Name` | Freightcode (URL-encoded) | ⬜ |
+| P3.3.2 | `Gov-Vendor-Version` | TradeDNA=1.0.0 | ⬜ |
+| P3.3.3 | `Gov-Vendor-Product-Name` | TradeDNA (URL-encoded) | ⬜ |
 | P3.3.4 | `Gov-Client-Public-IP` | Non-empty, non-localhost | ⬜ |
 | P3.3.5 | `Gov-Client-Timezone` | UTC±HH:MM format | ⬜ |
 | P3.3.6 | `Gov-Client-Window-Size` | width=N&height=N | ⬜ |

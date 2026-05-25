@@ -62,11 +62,17 @@ function deriveGoodsLocationName(value: unknown): string {
   return raw;
 }
 
-function isBrChickenTestLane(declaration: any, item: any): boolean {
-  const dispatchCountry = String(declaration?.dispatchCountry || "").trim().toUpperCase();
-  const commodityCode = String(item?.commodityCode || item?.hsCode || "").replace(/\s+/g, "");
-  const procedureCode = String(item?.procedureCode || "").replace(/\s+/g, "");
-  return dispatchCountry === "BR" && commodityCode === "0207129000" && procedureCode.startsWith("4000");
+// Placeholder/sentinel values that occasionally leak in from the UI or document
+// requirement templates. Treat as if the field were empty — never emit to CDS.
+const PLACEHOLDER_TOKENS = new Set([
+  "N/A", "NA", "TBD", "PENDING", "EXCLUDED", "NONE", "NULL", "UNKNOWN", "-",
+]);
+function isPlaceholder(value: unknown): boolean {
+  const s = String(value ?? "").trim().toUpperCase();
+  if (!s) return true;
+  if (PLACEHOLDER_TOKENS.has(s)) return true;
+  if (s.startsWith("PENDING-")) return true;
+  return false;
 }
 
 // Async lookup signature — the route passes a function backed by the Convex
@@ -308,11 +314,25 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
         TraderAssignedReferenceID: ducr
       },
       GoodsShipment: {
-        // DE 3/24 — Buyer (UK importer). Country code is GB for imports;
-        // Name is intentionally omitted until real party data is plumbed in.
+        // DE 3/24 — Buyer (UK importer). Country code = destination; Name only
+        // emitted when supplied (placeholders are dropped, not echoed back).
         Buyer: {
           AddressCountryCode: declaration.destinationCountry || "",
-          Name: declaration.buyerName || "",
+          Name: isPlaceholder(declaration.buyerName) ? "" : String(declaration.buyerName).trim(),
+        },
+        // DE 3/9 — Consignee. Receiver of the goods in the UK. ID is the
+        // importer EORI; Name optional. Required by CDS for H1 imports —
+        // omission triggers CDS10001 against 09B.
+        Consignee: {
+          ID: String(declaration.consigneeEori || declaration.importerEori || declaration.eori || "").trim(),
+          Name: isPlaceholder(declaration.consigneeName) ? "" : String(declaration.consigneeName).trim(),
+        },
+        // DE 3/26 — Consignor. Overseas party shipping the goods. Country
+        // derived from dispatch country; Name optional. Required by CDS for
+        // H1 imports — omission triggers CDS10001 against 16A.
+        Consignor: {
+          AddressCountryCode: declaration.dispatchCountry || "",
+          Name: isPlaceholder(declaration.consignorName) ? "" : String(declaration.consignorName).trim(),
         },
         Consignment: {
            // WCO Consignment xs:sequence: ContainerCode comes BEFORE
@@ -349,11 +369,11 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
         Importer: {
            ID: String(declaration.importerEori || declaration.eori || "").trim()
         },
-        // DE 3/1 — Seller. Country derived from dispatch country (where goods
-        // shipped FROM). Name omitted until real party data is plumbed in.
+        // DE 3/1 — Seller. Country = dispatch country; Name only emitted when
+        // supplied (placeholder sentinels dropped).
         Seller: {
           AddressCountryCode: declaration.dispatchCountry || "",
-          Name: declaration.sellerName || "",
+          Name: isPlaceholder(declaration.sellerName) ? "" : String(declaration.sellerName).trim(),
         },
         // DE 2/1 — Previous documents at GoodsShipment level. Always emit at
         // least the DUCR (CategoryCode Z, TypeCode DCR) so CDS can resolve the
@@ -372,7 +392,6 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
         },
         TransactionNatureCode: declaration.transactionNatureCode || "11",
         GovernmentAgencyGoodsItem: (items || []).map((item, index) => {
-          const brChickenLane = isBrChickenTestLane(declaration, item);
           const providedDocs: unknown[] = options.omitAdditionalDocuments
             ? []
             : Array.isArray(item.additionalDocuments)
@@ -388,15 +407,19 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
           const mappedDocs = providedDocs
             .map((doc) => {
               const source = typeof doc === "object" && doc !== null ? doc as Record<string, unknown> : {};
+              const rawId = String(source.ID || source.id || source.reference || "").trim();
               const mapped: Record<string, string> = {
                 CategoryCode: String(source.CategoryCode || source.categoryCode || source.category || "").trim(),
                 TypeCode: String(source.TypeCode || source.typeCode || source.type || "").trim(),
-                ID: String(source.ID || source.id || source.reference || "").trim(),
+                ID: isPlaceholder(rawId) ? "" : rawId,
               };
               const statusCode = String(source.StatusCode || source.statusCode || "AC").trim();
               if (statusCode) mapped.StatusCode = statusCode;
               return mapped;
             })
+            // Drop any document missing a real Category/Type/ID. Placeholder IDs
+            // ("Excluded", "N/A", "TBD") are normalised to empty above so this
+            // single filter catches both genuinely-missing and leaked values.
             .filter((doc) => doc.CategoryCode && doc.TypeCode && doc.ID)
             .filter((doc) => !forbiddenSet.has(`${doc.CategoryCode}${doc.TypeCode}`.toUpperCase()));
 
@@ -432,7 +455,9 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
             Packaging: [
               {
                 SequenceNumeric: "1",
-                MarksNumbersID: item.shippingMarks || (brChickenLane ? "TEST-MARK-001" : ""),
+                // DE 6/11 — Shipping marks. Empty when none supplied; the
+                // renderer drops the element rather than synthesising "N/A".
+                MarksNumbersID: isPlaceholder(item.shippingMarks) ? "" : String(item.shippingMarks).trim(),
                 QuantityQuantity: item.packageCount || "",
                 TypeCode: item.packageType || ""
               }
@@ -456,17 +481,12 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
                 : []),
               ...(String(item.additionalProcedureCode || "").trim()
                 ? [{
-                    // DE 1/11: Additional Procedure Code. Must be supplied explicitly;
-                    // do not invent "000" because it changes the declared procedure set.
+                    // DE 1/11: Additional Procedure Code. Must come from item
+                    // data — never synthesised. validateDeclaration rejects
+                    // missing values upstream so the mapper can stay strict.
                     CurrentCode: String(item.additionalProcedureCode).trim(),
                   }]
-                : brChickenLane
-                  ? [{
-                      // Narrow TDR carve-out: keep the BR chicken debug lane moving
-                      // while preserving fail-closed behaviour for normal declarations.
-                      CurrentCode: "000",
-                    }]
-                  : [])
+                : [])
             ]
           };
         })

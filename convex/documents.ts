@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 const DOC_CODE_REGEX = /(?:^|[^A-Z0-9])([A-Z]\d{3}|\d{4})(?:[^A-Z0-9]|$)/;
 
@@ -134,6 +135,19 @@ export const saveDocument = mutation({
       );
     }
 
+    if (args.declarationId) {
+      await ctx.runMutation(internal.assistantMutations.recordDeclarationEvent, {
+        declarationId: args.declarationId,
+        eventType: "DOCUMENT_UPLOADED",
+        payload: {
+          documentId,
+          fileName: args.fileName,
+          fileType: args.fileType,
+          requirementCode: code,
+        },
+      });
+    }
+
     return documentId;
   }
 });
@@ -244,6 +258,17 @@ export const deleteDocument = mutation({
           await updateRequirementStatusForDeclaration(ctx, document.declarationId, code, "missing");
         }
       }
+
+      await ctx.runMutation(internal.assistantMutations.recordDeclarationEvent, {
+        declarationId: document.declarationId,
+        eventType: "DOCUMENT_DELETED",
+        payload: {
+          documentId: args.documentId,
+          fileName: document.fileName,
+          fileType: document.fileType,
+          requirementCode: code,
+        },
+      });
     }
     return { success: true };
   },
@@ -313,6 +338,19 @@ export const replaceDocument = mutation({
         "uploaded",
         args.documentId,
       );
+    }
+
+    if (args.declarationId) {
+      await ctx.runMutation(internal.assistantMutations.recordDeclarationEvent, {
+        declarationId: args.declarationId,
+        eventType: "DOCUMENT_REPLACED",
+        payload: {
+          documentId: args.documentId,
+          fileName: args.fileName,
+          fileType: args.fileType,
+          requirementCode: code,
+        },
+      });
     }
 
     return { success: true, documentId: args.documentId };

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { evaluateRules, type RuleDefinition, type ScenarioInput } from "./lib/rule_engine";
 
 export const listForDeclaration = query({
@@ -111,6 +112,16 @@ export const recompute = mutation({
     }
 
     const blockingFails = results.filter((r) => r.status === "fail" && r.severity === "blocking");
+    await ctx.runMutation(internal.assistantMutations.recordDeclarationEvent, {
+      declarationId: args.declarationId,
+      eventType: blockingFails.length > 0 ? "VALIDATION_FAILED" : "VALIDATION_COMPLETED",
+      payload: {
+        blockingFailures: blockingFails.length,
+        advisoryFailures: results.filter((r) => r.status === "fail" && r.severity === "advisory").length,
+        total: results.length,
+      },
+    });
+
     return {
       total: results.length,
       blockingFailures: blockingFails.length,
