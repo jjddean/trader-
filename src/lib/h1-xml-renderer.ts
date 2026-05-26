@@ -201,6 +201,16 @@ export function renderH1Xml(payloadInfo: unknown): string {
             <ID>${xmlEscape(classification.ID)}</ID>
             <IdentificationTypeCode>${xmlEscape(classification.IdentificationTypeCode)}</IdentificationTypeCode>
           </Classification>`).join("");
+        // DE 4/3 — Duty Regime Code. "100" = standard MFN (third-country) duty rate.
+        // Mandatory for H1 IMA: absence triggers CDS12070 cascade across GovernmentProcedure,
+        // CustomsValuation, InvoiceLine, and ValuationAdjustment pointers.
+        const dutyRegimeCode = String(read(commodity, "DutyTaxFee").DutyRegimeCode || "100");
+        // DE 4/14 — Item Charge Amount (invoice line value).
+        // Required when CustomsValuation.MethodCode = "1" (Transaction Value).
+        const invoiceLineAmt = read(read(commodity, "InvoiceLine"), "ItemChargeAmount");
+        const invoiceLineXml = invoiceLineAmt.value
+          ? `\n          <InvoiceLine><ItemChargeAmount currencyID="${xmlEscape(String(invoiceLineAmt.currencyID || "GBP"))}">${xmlEscape(invoiceLineAmt.value)}</ItemChargeAmount></InvoiceLine>`
+          : "";
         const procedures = asArray(item.GovernmentProcedure);
         const packaging = asArray(item.Packaging)[0]
           ? asArray(item.Packaging)[0]
@@ -217,10 +227,13 @@ export function renderH1Xml(payloadInfo: unknown): string {
         <Commodity>
           <Description>${xmlEscape(commodity.Description || "General goods")}</Description>
           ${classificationXml}
+          <DutyTaxFee>
+            <DutyRegimeCode>${xmlEscape(dutyRegimeCode)}</DutyRegimeCode>
+          </DutyTaxFee>
           <GoodsMeasure>
             <GrossMassMeasure unitCode="KGM">${xmlEscape(goodsMeasure.GrossMassMeasure || 0)}</GrossMassMeasure>
             <NetNetWeightMeasure unitCode="KGM">${xmlEscape(goodsMeasure.NetNetWeightMeasure || 0)}</NetNetWeightMeasure>
-          </GoodsMeasure>
+          </GoodsMeasure>${invoiceLineXml}
         </Commodity>
         <CustomsValuation>
           <MethodCode>${xmlEscape(read(item, "CustomsValuation").MethodCode || "1")}</MethodCode>

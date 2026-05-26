@@ -265,16 +265,22 @@ function buildXml(payloadInfo) {
         <SequenceNumeric>${xmlEscape(item.SequenceNumeric)}</SequenceNumeric>
         <StatisticalValueAmount currencyID="${xmlEscape(item.StatisticalValueAmount.currencyID)}">${xmlEscape(item.StatisticalValueAmount.value)}</StatisticalValueAmount>
         ${additionalDocsXml}
-        <Commodity>
+          <Commodity>
           <Description>${xmlEscape(item.Commodity.Description || "")}</Description>
           <Classification>
             <ID>${xmlEscape(item.Commodity.Classification[0].ID)}</ID>
             <IdentificationTypeCode>${xmlEscape(item.Commodity.Classification[0].IdentificationTypeCode)}</IdentificationTypeCode>
           </Classification>
+          <DutyTaxFee>
+            <DutyRegimeCode>100</DutyRegimeCode>
+          </DutyTaxFee>
           <GoodsMeasure>
             <GrossMassMeasure unitCode="KGM">${xmlEscape(item.Commodity.GoodsMeasure.GrossMassMeasure)}</GrossMassMeasure>
             <NetNetWeightMeasure unitCode="KGM">${xmlEscape(item.Commodity.GoodsMeasure.NetNetWeightMeasure)}</NetNetWeightMeasure>
           </GoodsMeasure>
+          <InvoiceLine>
+            <ItemChargeAmount currencyID="${xmlEscape(item.StatisticalValueAmount.currencyID || "GBP")}">${xmlEscape(item.StatisticalValueAmount.value)}</ItemChargeAmount>
+          </InvoiceLine>
         </Commodity>
         ${proceduresXml}
         <Packaging>
