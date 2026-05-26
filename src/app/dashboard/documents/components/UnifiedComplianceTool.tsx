@@ -52,8 +52,8 @@ interface ComplianceData {
   }>;
   quota?: {
     orderNumber: string;
-    balance: string;
-    isExhausted: boolean;
+    balance?: string;
+    isExhausted?: boolean;
   };
 }
 
