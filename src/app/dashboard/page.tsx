@@ -218,20 +218,28 @@ function RecentDeclarations({ declarations }: { declarations: any[] }) {
       <div className="flex-1 p-0 overflow-x-auto">
         <table className="w-full border-collapse text-left">
           <thead>
-            <tr className="bg-white border-b border-[#e9e9e7]">
-              <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Date</th>
-              <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">MRN</th>
-              <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase text-right">Value</th>
-              <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-gray-500 uppercase text-right">Duty</th>
+            <tr className="bg-gray-50 border-b border-[#e9e9e7]">
+              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">Date</th>
+              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">MRN</th>
+              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">Status</th>
+              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase text-right">Value</th>
+              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase text-right">Duty</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#e9e9e7]">
             {declarations.length > 0 ? (
-              declarations.map((decl: any) => (
-                <tr key={decl.id} className="group transition-colors hover:bg-gray-50">
-                  <td className="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">{decl.date}</td>
-                  <td className="px-6 py-4 font-mono text-[0.6875rem] text-gray-900 font-semibold">{decl.mrn}</td>
+              declarations.map((decl: any) => {
+                const isAlert = decl.status === "Rejected" || decl.status === "Action Required" || decl.status === "Invalid";
+                const isWarning = decl.status === "Draft";
+                return (
+                <tr
+                  key={decl.id}
+                  className={`group cursor-pointer transition-colors ${isAlert ? "bg-red-50/50 hover:bg-red-50" : isWarning ? "bg-amber-50/50 hover:bg-amber-50" : "hover:bg-gray-50"}`}
+                >
+                  <td className="px-6 py-4 text-[0.6875rem] text-gray-600 whitespace-nowrap">{decl.date}</td>
+                  <td className="px-6 py-4">
+                    <span className={`text-xs font-semibold transition-colors ${isAlert ? "text-red-900" : isWarning ? "text-amber-900" : "text-black"}`}>{decl.mrn}</span>
+                  </td>
                   <td className="px-6 py-4">
                     {Boolean(decl.mrn && String(decl.mrn).trim().length > 0) && (decl.status === "Cleared" || decl.status === "Accepted") ? (
                       <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
@@ -262,7 +270,8 @@ function RecentDeclarations({ declarations }: { declarations: any[] }) {
                     £{decl.duty.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
-              ))
+                );
+              })
             ) : (
               <tr>
                 <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">

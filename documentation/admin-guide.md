@@ -33,7 +33,7 @@ All config lives in `.env.local`. **Never commit this file** (`.gitignore` cover
 | `HMRC_CLIENT_SECRET` | HMRC OAuth secret | HMRC Developer Hub |
 | `HMRC_ENVIRONMENT` | `sandbox` or `production` | Set by admin |
 | `HMRC_EORI` | Default EORI number | HMRC registration |
-| `HMRC_DECLARATIONS_ACCEPT` | API version header | Set `application/vnd.hmrc.2.0+xml` for sandbox, remove for production (defaults to v1.0) |
+| `HMRC_DECLARATIONS_ACCEPT` | API version header | Set `application/vnd.hmrc.2.0+xml` (Trade Test sandbox + production; code default is v2.0) |
 | `HMRC_SANDBOX_BASE_URL` | Sandbox HMRC API base URL | HMRC Developer Hub |
 | `HMRC_PRODUCTION_BASE_URL` | Production HMRC API base URL | HMRC Developer Hub |
 | `HMRC_ACCEPT_V2_XML` | HMRC v2 XML media type | HMRC API docs |
@@ -54,13 +54,15 @@ All config lives in `.env.local`. **Never commit this file** (`.gitignore` cover
 | `TYPESENSE_API_KEY` | Search engine | Typesense Cloud |
 | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | OCR (Textract) | AWS IAM console |
 
-### Switching Environments (Sandbox → TDR → Production)
+### Switching Environments (Trade Test Sandbox → Production)
 
 1. Change `HMRC_ENVIRONMENT` to `production`
-2. Remove `HMRC_DECLARATIONS_ACCEPT` (defaults to v1.0 required by TDR/Production)  
+2. Keep `HMRC_DECLARATIONS_ACCEPT` set to `application/vnd.hmrc.2.0+xml` — both sandbox and production use v2.0
 3. Update `HMRC_CLIENT_ID` and `HMRC_CLIENT_SECRET` to production credentials
 4. Update `HMRC_REDIRECT_URI` to your production callback URL
 5. Restart the application
+
+> **Note:** TDR (Trader Dress Rehearsal) is a future phase that requires explicit HMRC allowlisting and uses v1.0 headers. It is not part of the current sandbox → production path.
 
 ---
 

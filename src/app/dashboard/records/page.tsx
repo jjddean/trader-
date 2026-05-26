@@ -71,7 +71,6 @@ export default function RecordsPage() {
   const totalDuty = (recordsData || []).filter((r: any) => r.type.includes("Duty")).reduce((acc: number, curr: any) => acc + curr.amount, 0);
   const totalPVA = (recordsData || []).filter((r: any) => r.type.includes("VAT")).reduce((acc: number, curr: any) => acc + curr.amount, 0);
   const handleExportCsv = () => {
-    if (filteredRecords.some((record: any) => !record.isAuthoritative)) return;
     const grouped = filteredRecords.reduce((acc: Record<string, { mrn: string; date: string; dutyPaid: number; vat: number }>, record: any) => {
       const key = `${record.mrn}__${record.date}`;
       if (!acc[key]) {
@@ -110,17 +109,13 @@ export default function RecordsPage() {
           <p className="mt-1 text-sm text-gray-500">
             VAT and Duty ledgers generated from your historic HMRC declarations.
           </p>
-          <p className="mt-2 inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-            Values are derived by default and switch to HMRC-confirmed when settlement figures are available.
-          </p>
         </div>
         <button
           onClick={handleExportCsv}
-          disabled={filteredRecords.some((record: any) => !record.isAuthoritative)}
-          className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300"
+          className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800"
         >
           <Download className="h-4 w-4" />
-          {filteredRecords.some((record: any) => !record.isAuthoritative) ? "EXPORT DISABLED (DERIVED)" : "Export to CSV"}
+          Export to CSV
         </button>
       </div>
 
@@ -222,13 +217,6 @@ export default function RecordsPage() {
                     <td className="px-6 py-4 text-[0.6875rem] text-gray-600">
                       <div className="flex flex-col gap-1">
                         <span>{record.method}</span>
-                        <span className={`inline-flex w-fit items-center rounded-md px-2 py-0.5 text-[0.5625rem] font-medium ${
-                          record.provenance === "hmrc_confirmed"
-                            ? "bg-green-50 text-green-700"
-                            : "bg-amber-50 text-amber-700"
-                        }`}>
-                          {record.provenance === "hmrc_confirmed" ? "hmrc_confirmed" : "derived"}
-                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -276,13 +264,10 @@ export default function RecordsPage() {
                     )}
                   </button>
                   <button
-                    disabled={!selectedRecord.isAuthoritative}
                     onClick={handleDownloadRecord}
-                    className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                    className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer"
                   >
-                    <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">
-                      {selectedRecord.isAuthoritative ? "DOWNLOAD" : "DOWNLOAD DISABLED (DERIVED)"}
-                    </span>
+                    <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">DOWNLOAD</span>
                     <Download className="h-3 w-3 text-gray-300 transition-colors group-hover:text-gray-500" />
                   </button>
                 </div>
@@ -293,9 +278,6 @@ export default function RecordsPage() {
                 {/* Transaction & Account Details Section */}
                 <section className="bg-gray-50/80 rounded-xl p-6 border border-gray-100/80 shadow-sm">
                   <h3 className="mb-6 text-sm font-semibold text-gray-900 border-b border-gray-200 pb-3">Transaction & Account Details</h3>
-                  <p className="mb-5 inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-700">
-                    {selectedRecord.provenanceLabel}
-                  </p>
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4">
                     <div>
                       <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Account Used</p>

@@ -36,6 +36,8 @@ import type * as hmrc_actions from "../hmrc_actions.js";
 import type * as hmrc_internal from "../hmrc_internal.js";
 import type * as http from "../http.js";
 import type * as ingest from "../ingest.js";
+import type * as lib_cds_h1_data_elements from "../lib/cds_h1_data_elements.js";
+import type * as lib_cds_wco_references from "../lib/cds_wco_references.js";
 import type * as lib_declaration_completeness from "../lib/declaration_completeness.js";
 import type * as lib_rule_engine from "../lib/rule_engine.js";
 import type * as lib_tariff_parser from "../lib/tariff_parser.js";
@@ -87,6 +89,8 @@ declare const fullApi: ApiFromModules<{
   hmrc_internal: typeof hmrc_internal;
   http: typeof http;
   ingest: typeof ingest;
+  "lib/cds_h1_data_elements": typeof lib_cds_h1_data_elements;
+  "lib/cds_wco_references": typeof lib_cds_wco_references;
   "lib/declaration_completeness": typeof lib_declaration_completeness;
   "lib/rule_engine": typeof lib_rule_engine;
   "lib/tariff_parser": typeof lib_tariff_parser;

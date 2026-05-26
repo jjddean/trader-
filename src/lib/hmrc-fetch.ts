@@ -98,9 +98,10 @@ export async function fetchHmrc(
     console.log(`  ${k}: ${masked}`);
   }
 
-  // Gov-Test-Scenario is a TDR (v1.0) feature. On v2.0 Trade Test, CDS runs real
-  // business logic and sending a TDR-only scenario trips the HMRC WAF
-  // (PAYLOAD_FORBIDDEN).
+  // Gov-Test-Scenario is a v1.0 sandbox feature for driving canned outcomes.
+  // The current Trade Test sandbox + production both run on v2.0, where CDS
+  // executes real business logic and rejects Gov-Test-Scenario at the WAF
+  // (PAYLOAD_FORBIDDEN). Suppress it whenever Accept is v2.0.
   const acceptHeader = String(hmrcHeaders["Accept"] || "");
   const isV2 = acceptHeader.includes("hmrc.2.0");
   if (testScenario && !isV2) {

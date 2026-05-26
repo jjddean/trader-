@@ -1,3 +1,7 @@
+> **ARCHIVED** — This checklist is for the TDR (v1.0) phase which is not the current active environment.
+> The system currently runs on **Trade Test v2.0** (sandbox) and **v2.0** (production).
+> This file is preserved for reference only. Do not use for configuration or operational decisions.
+
 # TDR Pre-Flight Checklist - CRITICAL
 
 ⚠️ **WARNING**: You only get a few chances at TDR. HMRC actively monitors and uses this to approve/reject production access. Complete this checklist BEFORE submitting to TDR.

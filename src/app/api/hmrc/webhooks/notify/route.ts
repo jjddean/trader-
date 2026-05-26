@@ -7,7 +7,8 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 /**
  * POST /api/hmrc/webhooks/notify
- * HMRC Push Notification endpoint (TDR/Production)
+ * HMRC Push Notification endpoint (Trade Test v2.0 sandbox + production).
+ * HMRC POSTs DMS* notifications here once a submitted declaration changes state.
  */
 export async function POST(request: Request) {
   try {

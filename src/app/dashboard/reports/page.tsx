@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { Search, Filter, ShieldAlert, ShieldCheck, Download, Copy, FileText, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useQuery } from "convex/react";
 import { useConvexAuth } from "convex/react";
@@ -58,7 +56,6 @@ export default function ReportsPage() {
 
   const handleDownloadReport = () => {
     if (!selectedReport) return;
-    if (!selectedReport.isAuthoritative) return;
     const data = {
       mrn: selectedReport.mrn,
       date: selectedReport.date,
@@ -104,68 +101,69 @@ export default function ReportsPage() {
           <p className="mt-1 text-sm text-gray-500">
             Historical declaration batches and compliance scoring.
           </p>
-          <p className="mt-2 inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-            Status may be HMRC-confirmed where available; financial values remain derived unless explicitly confirmed.
-          </p>
         </div>
       </div>
 
-      {/* Control Bar */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center justify-between border-b border-[#e9e9e7] pb-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by MRN or Broker..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none transition-colors focus:border-gray-400 md:max-w-md"
-          />
-        </div>
-        <div className="relative">
-        <Button variant="ghost" className="h-9 px-3 text-foreground" onClick={() => setShowFilters((prev) => !prev)}>
-          <Filter className="mr-2 h-4 w-4" />
-          Filter
-        </Button>
-          {showFilters && (
-            <div className="absolute right-0 top-10 z-10 w-44 rounded-md border border-gray-200 bg-white p-2 shadow-md">
-              <button
-                onClick={() => setStatusFilter("all")}
-                className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
-              >
-                All statuses
-              </button>
-              <button
-                onClick={() => setStatusFilter("Clean")}
-                className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
-              >
-                Clean
-              </button>
-              <button
-                onClick={() => setStatusFilter("Warning")}
-                className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
-              >
-                Warning
-              </button>
-              <button
-                onClick={() => setStatusFilter("Action Required")}
-                className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
-              >
-                Action Required
-              </button>
-              <button
-                onClick={() => setStatusFilter("Draft")}
-                className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
-              >
-                Draft
-              </button>
+      <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
+        <div className="border-b border-[#e9e9e7] bg-gray-50 px-5 py-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by MRN or Broker..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-4 text-[0.6875rem] font-medium tracking-normal text-gray-600 shadow-sm outline-none transition-colors focus:border-gray-400"
+              />
             </div>
-          )}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowFilters((prev) => !prev)}
+                className="flex h-9 items-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-gray-600 shadow-sm transition-colors hover:border-gray-400 hover:bg-gray-50"
+              >
+                <Filter className="h-3 w-3" />
+                Filter
+              </button>
+              {showFilters && (
+                <div className="absolute right-0 top-10 z-10 w-44 rounded-md border border-gray-200 bg-white p-2 shadow-md">
+                  <button
+                    onClick={() => setStatusFilter("all")}
+                    className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
+                  >
+                    All statuses
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter("Clean")}
+                    className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
+                  >
+                    Clean
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter("Warning")}
+                    className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
+                  >
+                    Warning
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter("Action Required")}
+                    className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
+                  >
+                    Action Required
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter("Draft")}
+                    className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100"
+                  >
+                    Draft
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
 
-      <Card className="bg-white shadow-none border-[#e9e9e7]">
-        <CardContent className="p-0">
           {!isLoaded || isConvexAuthLoading || (canQueryReports && reports === undefined) ? (
             <div className="flex h-40 flex-col items-center justify-center gap-2">
               <RefreshCw className="h-5 w-5 animate-spin text-gray-400" />
@@ -246,13 +244,6 @@ export default function ReportsPage() {
                             {report.status}
                           </span>
                         )}
-                        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[0.5625rem] font-medium ${
-                          report.provenance === "hmrc_confirmed"
-                            ? "bg-green-50 text-green-700"
-                            : "bg-amber-50 text-amber-700"
-                        }`}>
-                          {report.provenance === "hmrc_confirmed" ? "hmrc_confirmed" : "derived"}
-                        </span>
                       </div>
                     </td>
                   </tr>
@@ -261,8 +252,7 @@ export default function ReportsPage() {
             </table>
           </div>
           )}
-        </CardContent>
-      </Card>
+      </div>
 
       {/* Side Sheet for Report Details */}
       <Sheet open={!!selectedReport} onOpenChange={(open) => !open && setSelectedReport(null)}>
@@ -294,10 +284,8 @@ export default function ReportsPage() {
                         <Copy className="h-3 w-3 text-gray-300 transition-colors group-hover:text-gray-500" />
                     )}
                   </button>
-                  <button disabled={!selectedReport.isAuthoritative} onClick={handleDownloadReport} className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">
-                    <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">
-                      {selectedReport.isAuthoritative ? "DOWNLOAD" : "DOWNLOAD DISABLED (DERIVED)"}
-                    </span>
+                  <button onClick={handleDownloadReport} className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer">
+                    <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">DOWNLOAD</span>
                     <Download className="h-3 w-3 text-gray-300 transition-colors group-hover:text-gray-500" />
                   </button>
                 </div>
@@ -308,9 +296,6 @@ export default function ReportsPage() {
                 {/* Header Summary Section */}
                 <section className="bg-gray-50/80 rounded-xl p-6 border border-gray-100/80 shadow-sm">
                   <h3 className="mb-6 text-sm font-semibold text-gray-900 border-b border-gray-200 pb-3">Declaration Summary</h3>
-                  <p className="mb-5 inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-700">
-                    {selectedReport.provenanceLabel}
-                  </p>
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4">
                     <div>
                       <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">DUCR</p>

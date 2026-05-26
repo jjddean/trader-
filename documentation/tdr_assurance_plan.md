@@ -1,3 +1,7 @@
+> **ARCHIVED** — This assurance guide is for the TDR (v1.0) phase which is not the current active environment.
+> The system currently runs on **Trade Test v2.0** (sandbox) and **v2.0** (production).
+> This file is preserved for reference only. Do not use for configuration or operational decisions.
+
 # HMRC Trader Dress Rehearsal (TDR) Assurance Guide
 
 You are absolutely correct to be cautious. Unlike the Sandbox (Trade Test) environment where you can submit dummy or random data, Trader Dress Rehearsal (TDR) is highly controlled and actively monitored by HMRC’s Software Developer Support (SDH) team.

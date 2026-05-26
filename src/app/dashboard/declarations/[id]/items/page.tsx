@@ -134,7 +134,7 @@ export default function GoodsItemsPage() {
   const CHED_TYPES = ["853", "851", "C085", "C084"];
 
   // N + CHED types (853, 851, C085, C084) → XW (post Oct 2025 HMRC change).
-  // Y929, Y930 → XB (LPCOExemptionCode per TDR_Integration_Reference §7).
+  // Y929, Y930 → XB (HMRC LPCOExemptionCode: Y-code waivers use XB).
   // All other codes: leave blank.
   const deriveStatusCode = (category: string, type: string) => {
     if (category === "N" && CHED_TYPES.includes(type)) return "XW";

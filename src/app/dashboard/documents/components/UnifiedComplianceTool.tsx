@@ -27,6 +27,7 @@ import {
 import { countries } from "@/lib/data/countries";
 import { cn } from "@/lib/utils";
 import { docTypeName } from "@/lib/utils/document-utils";
+import { getPreferenceDecision } from "@/lib/preference-engine";
 import { api } from "../../../../../convex/_generated/api";
 
 interface UnifiedComplianceToolProps {
@@ -71,18 +72,6 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
   const [isSavingRequirements, setIsSavingRequirements] = useState(false);
   const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
 
-  const schemeMapping: Record<string, string> = {
-    "1013": "UK-EU Trade and Cooperation Agreement",
-    "JP": "UK-Japan Comprehensive Economic Partnership",
-    "CA": "UK-Canada CTPA",
-    "AU": "UK-Australia FTA",
-    "NZ": "UK-New Zealand FTA",
-    "1060": "DCTS - Standard Preferences",
-    "1061": "DCTS - Enhanced Preferences",
-    "1062": "DCTS - Comprehensive Preferences",
-    "1011": "UK Global Tariff (MFN)",
-  };
-
   const certMapping: Record<string, string> = {
     "N865": docTypeName("N865"),
     "N935": docTypeName("N935"),
@@ -99,95 +88,28 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
     setData(null);
 
     try {
-      const response = await fetch(`https://www.trade-tariff.service.gov.uk/api/v2/commodities/${commodityCode}?country=${selectedCountry}`);
-      if (!response.ok) throw new Error("Unable to fetch tariff data. Please check that the commodity code is a valid 10-digit number.");
-      
-      const json = await response.json();
-      const included = json.included || [];
+      const result = await getPreferenceDecision({ country: selectedCountry, commodityCode });
 
-      const findIncluded = (type: string, id: string) => included.find((item: any) => item.type === type && item.id === id);
-      const relevantMeasureIds = new Set(json.data.relationships.import_measures.data.map((m: any) => String(m.id)));
-      const allMeasures = included.filter((item: any) => item.type === "measure" && relevantMeasureIds.has(String(item.id)));
-      
-      const rates: any[] = [];
-      const certificatesFound = new Set<string>();
-      let mfnRateValue = 0;
-      let preferencesFound = false;
-      let activeQuota: any = null;
+      const preferencesFound = result.all.some(r => !r.isMfn);
+      const docsList: ComplianceData["documents"] = result.certificates
+        .filter(code => certMapping[code])
+        .map(code => ({
+          name: certMapping[code],
+          code,
+          status: "READY" as const,
+          type: "Proof of Origin",
+        }));
 
-      allMeasures.forEach((measure: any) => {
-        const measureTypeId = measure.relationships.measure_type.data.id;
-        const geoAreaId = measure.relationships.geographical_area.data.id;
-        const dutyExprId = measure.relationships.duty_expression?.data?.id;
-        
-        const geoArea = findIncluded("geographical_area", geoAreaId);
-        const dutyExpr = findIncluded("duty_expression", dutyExprId);
-        
-        const children = geoArea?.relationships?.children_geographical_areas?.data || [];
-        const isChild = children.some((c: any) => c.id === selectedCountry);
-        const isRelevantGeo = (geoAreaId === selectedCountry || geoAreaId === "1011" || isChild);
-
-        if (isRelevantGeo && (measureTypeId === "103" || measureTypeId === "142")) {
-          const rate = dutyExpr?.attributes?.base || "0.00 %";
-          const rateValue = parseFloat(rate.replace(/[^\d.]/g, '')) || 0;
-          const schemeName = schemeMapping[geoAreaId] || geoArea?.attributes?.description || `Scheme ${geoAreaId}`;
-
-          const isMfn = measureTypeId === "103";
-          if (isMfn) mfnRateValue = rateValue;
-          if (!isMfn) preferencesFound = true;
-
-          // EXTRACT CERTIFICATES from conditions
-          const conditionIds = measure.relationships.measure_conditions?.data?.map((c: any) => String(c.id)) || [];
-          conditionIds.forEach((cId: string) => {
-            const condition = findIncluded("measure_condition", cId);
-            const certId = condition?.relationships?.certificate?.data?.id;
-            if (certId && certMapping[certId]) certificatesFound.add(certId);
-          });
-
-          // QUOTA CHECK
-          const quotaNumber = measure.attributes.order_number;
-          if (quotaNumber) {
-            activeQuota = { orderNumber: quotaNumber };
-          }
-
-          rates.push({
-            name: schemeName,
-            rate: rate,
-            rateValue: rateValue,
-            isMfn: isMfn,
-          });
-        }
-      });
-
-      if (rates.length === 0) throw new Error("No applicable measures found for this commodity.");
-
-      const sortedRates = [...rates].sort((a, b) => a.rateValue - b.rateValue);
-      const best = sortedRates[0];
-      const savingValue = Math.max(0, mfnRateValue - best.rateValue);
-
-      const docsList = Array.from(certificatesFound).map(code => ({
-        name: certMapping[code],
-        code: code,
-        status: "READY" as "READY" | "PENDING",
-        type: "Proof of Origin"
-      }));
-
-      if (preferencesFound && !certificatesFound.has("9100")) {
+      if (preferencesFound && !result.certificates.includes("9100")) {
         docsList.push({ name: "Rules of Origin Statement", code: "9100", status: "PENDING", type: "Required" });
       }
 
       setData({
-        bestRate: {
-          scheme: best.name,
-          rate: best.rate,
-          saving: savingValue > 0 ? `Saving: ${savingValue}% vs standard rate` : best.isMfn ? "No preference saving available" : "Same as standard rate",
-          isMfn: best.isMfn
-        },
-        allRates: rates.sort((a, b) => (a.isMfn ? 1 : -1)),
+        bestRate: result.best,
+        allRates: result.all,
         documents: docsList,
-        quota: activeQuota
+        quota: result.quota ?? undefined,
       });
-
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred");
     } finally {

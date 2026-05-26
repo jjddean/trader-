@@ -11,7 +11,7 @@ Ref: [HMRC Path to Production](https://developer.service.hmrc.gov.uk/guides/cust
 - [x] Document upload flow — endpoint working
 - [x] All 27/27 internal readiness tests passing
 
-## Stage 2: Trader Dress Rehearsal (TDR) — NEXT
+## Stage 2: Trader Dress Rehearsal (TDR) — FUTURE (requires HMRC allowlisting; not currently active)
 - [x] Refactored 5 HMRC API routes to use `fetchHmrc` wrapper (Fraud Prevention Headers)
 - [x] Refactor remaining HMRC routes to use `fetchHmrc` (Compliance)
     - [x] `src/app/api/hmrc/status-query/route.ts`

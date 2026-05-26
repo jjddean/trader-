@@ -138,7 +138,7 @@ export default function AdminSetupPage() {
                 </label>
                 <div className="flex items-center gap-2">
                    <ShieldCheck className="h-4 w-4 text-green-500" />
-                   <span className="text-xs font-medium text-green-700">TDR Validated</span>
+                   <span className="text-xs font-medium text-green-700">Trade Test Validated (v2.0)</span>
                 </div>
               </div>
             </div>

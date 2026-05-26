@@ -177,7 +177,11 @@ export const DocumentsTable = React.memo(function DocumentsTable({
                       {doc.typeName} <span className="text-[0.625rem] text-gray-400 ml-1">({doc.type})</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="font-mono text-xs font-semibold text-black transition-colors group-hover:text-black">{doc.mrn}</span>
+                      {doc.mrn === "Unlinked" || doc.mrn === "Draft (Pending)" ? (
+                        <span className="text-[0.6875rem] text-gray-400">—</span>
+                      ) : (
+                        <span className="text-xs font-semibold text-black">{doc.mrn}</span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       {doc.status === 'verified' && (

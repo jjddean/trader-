@@ -2,6 +2,38 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  // --- AI Assistant Persistent Workspace ---
+  conversations: defineTable({
+    organizationId: v.string(),
+    declarationId: v.optional(v.id("declarations")),
+    createdBy: v.string(),
+    title: v.optional(v.string()),
+    status: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_declaration", ["declarationId"]),
+
+  messages: defineTable({
+    conversationId: v.id("conversations"),
+    role: v.union(v.literal("user"), v.literal("assistant"), v.literal("system")),
+    content: v.string(),
+    createdAt: v.number(),
+    streamed: v.optional(v.boolean()),
+    metadata: v.optional(v.any()),
+  })
+    .index("by_conversation", ["conversationId"]),
+
+  assistantEvents: defineTable({
+    conversationId: v.id("conversations"),
+    declarationId: v.optional(v.id("declarations")),
+    eventType: v.string(),
+    payload: v.optional(v.any()),
+    createdAt: v.number(),
+  })
+    .index("by_conversation", ["conversationId"])
+    .index("by_declaration", ["declarationId"]),
   users: defineTable({
     clerkId: v.optional(v.any()),
     email: v.optional(v.any()),
@@ -102,23 +134,6 @@ export default defineSchema({
     // DE 7/7 — Identification type of the means of transport. e.g. "11"
     // vessel name, "30" road vehicle reg, "40" flight number.
     transportIdType: v.optional(v.string()),
-    // DE 5/8 — Country of destination. ISO 3166-1 alpha-2. Mandatory for H1
-    // per Appendix 21A. Usually GB for imports but must be explicit, not
-    // defaulted by the mapper.
-    destinationCountry: v.optional(v.string()),
-    // DE 3/16 — Importer EORI. Mandatory for H1 per Appendix 21A.
-    // Distinct from declarant EORI when an agent submits on behalf.
-    importerEori: v.optional(v.string()),
-    // DE 4/11 currency for InvoiceAmount. ISO 4217. Mandatory companion to
-    // invoiceTotal — the currency must be explicit, not defaulted to GBP.
-    invoiceCurrency: v.optional(v.string()),
-    // DE 5/23 — Goods location. UN/LOCODE or HMRC-published location code
-    // (e.g. GBAUFXTFXTGW for Felixstowe authorised premises). A-mandatory.
-    locationId: v.optional(v.string()),
-    // DE 5/26 — Customs office of presentation. Conditional per Appendix
-    // 21A (only required when goods aren't at the location declared in 5/23).
-    // Stored optional; the mapper omits the XML element when blank.
-    presentationOffice: v.optional(v.string()),
   }).index("by_user", ["userId"]).index("by_mrn", ["mrn"]).index("by_conversationId", ["conversationId"]),
 
   goods_items: defineTable({

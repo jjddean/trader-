@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 
 import { countries } from "@/lib/data/countries";
+import { cn } from "@/lib/utils";
 
 export default function DeclarationsPage() {
   const { user } = useUser();
@@ -108,106 +109,150 @@ export default function DeclarationsPage() {
         </button>
       </div>
 
-      <div className="flex flex-col gap-4 md:flex-row md:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by MRN, EORI, or Status..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none transition-colors focus:border-gray-400 md:max-w-md"
-          />
+      <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
+        {/* FILTER BAR */}
+        <div className="border-b border-[#e9e9e7] bg-gray-50 px-5 py-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by MRN, EORI, or Status..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-4 text-[0.6875rem] font-medium tracking-normal text-gray-600 shadow-sm outline-none transition-colors focus:border-gray-400"
+              />
+            </div>
+            <button className="flex h-9 items-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-gray-600 shadow-sm transition-colors hover:border-gray-400 hover:bg-gray-50">
+              <Filter className="h-3 w-3" />
+              Filter
+            </button>
+          </div>
         </div>
-        <button className="flex h-9 items-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700 hover:bg-gray-50">
-          <Filter className="h-3 w-3" />
-          Filter
-        </button>
-      </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+        {/* TABLE */}
         {declarations === undefined ? (
           <div className="flex h-40 items-center justify-center">
             <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
           </div>
-        ) : filteredDeclarations && filteredDeclarations.length > 0 ? (
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-gray-200 bg-gray-50/50">
-              <tr>
-                <th className="px-6 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">MRN / LRN</th>
-                <th className="px-6 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">EORI</th>
-                <th className="px-6 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Type</th>
-                <th className="px-6 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Last Updated</th>
-                <th className="px-6 py-3 font-medium text-gray-500 uppercase tracking-wider text-[11px]">Status</th>
-                <th className="px-6 py-3 text-right font-medium text-gray-500 uppercase tracking-wider text-[11px]">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredDeclarations.map((dec: any) => (
-                <tr
-                  key={dec.declarationId}
-                  onClick={() => router.push(`/dashboard/declarations/${dec.declarationId}`)}
-                  className="group cursor-pointer transition-colors hover:bg-gray-50/50"
-                >
-                  <td className="px-6 py-4">
-                    <span className="font-mono text-xs font-semibold text-gray-900">
-                      {dec.mrn || dec.mrn || "Pending CDS"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-xs text-gray-600">{dec.eori || "Not set"}</td>
-                  <td className="px-6 py-4 text-xs text-gray-600">{dec.declarationType || "IMD"}</td>
-                  <td className="px-6 py-4 text-xs text-gray-500">
-                    {new Date(dec.lastUpdated || dec._creationTime).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4">
-                    {Boolean(dec.mrn && String(dec.mrn).trim().length > 0) && (dec.status === "Cleared" || dec.status === "Accepted") ? (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
-                        <ShieldCheck className="h-3 w-3" />
-                        {dec.status}
-                      </span>
-                    ) : dec.status === "Rejected" || dec.status === "Action Required" || dec.status === "Invalid" ? (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
-                        <ShieldAlert className="h-3 w-3" />
-                        {dec.status === "Invalid" ? "Invalid (DMSINV)" : dec.status}
-                      </span>
-                    ) : dec.status === "Draft" ? (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
-                        <FileText className="h-3 w-3" />
-                        {dec.status}
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700">
-                        <AlertCircle className="h-3 w-3" />
-                        {dec.status}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                      {dec.status === "Draft" && (
-                        <button
-                          onClick={(e) => handleDelete(e, dec.declarationId)}
-                          disabled={deletingId === dec.declarationId}
-                          className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:outline-none"
-                        >
-                          {deletingId === dec.declarationId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                        </button>
-                      )}
-                       <ArrowRight className="h-4 w-4 text-gray-400" />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         ) : (
-           <div className="flex flex-col items-center justify-center py-16 text-center">
-             <FileText className="mb-4 h-8 w-8 text-gray-300" />
-             <h3 className="text-sm font-medium text-gray-900">No declarations found</h3>
-             <p className="mt-1 text-xs text-gray-500">
-               {searchQuery ? "Try adjusting your search filters." : "Create your first declaration to get started."}
-             </p>
-           </div>
+          <div className="w-full overflow-x-auto">
+            <table className="w-full border-collapse text-left">
+              <thead>
+                <tr className="border-b border-[#e9e9e7] bg-gray-50">
+                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase w-[40%]">MRN / LRN</th>
+                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">EORI</th>
+                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">Type</th>
+                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">Status</th>
+                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase text-right w-[80px]">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#e9e9e7]">
+                {!filteredDeclarations || filteredDeclarations.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500 text-xs italic">
+                      {searchQuery
+                        ? "No declarations match these filters."
+                        : "No declarations yet. Create your first declaration to get started."}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredDeclarations.map((dec: any) => {
+                    const isAlert =
+                      dec.status === "Rejected" ||
+                      dec.status === "Action Required" ||
+                      dec.status === "Invalid";
+                    const isWarning = dec.status === "Draft";
+
+                    return (
+                    <tr
+                      key={dec.declarationId}
+                      onClick={() => router.push(`/dashboard/declarations/${dec.declarationId}`)}
+                      className={cn(
+                        "group cursor-pointer transition-colors",
+                        isAlert ? "bg-red-50/50 hover:bg-red-50" : "",
+                        isWarning ? "bg-amber-50/50 hover:bg-amber-50" : "",
+                        !isAlert && !isWarning ? "hover:bg-gray-50" : "",
+                      )}
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span
+                            className={cn(
+                              "text-xs font-semibold transition-colors",
+                              isAlert
+                                ? "text-red-900 group-hover:text-red-900"
+                                : isWarning
+                                  ? "text-amber-900 group-hover:text-amber-900"
+                                  : "text-black group-hover:text-black",
+                            )}
+                          >
+                            {dec.mrn || "Pending CDS"}
+                          </span>
+                          <span
+                            className={cn(
+                              "text-[0.625rem] mt-0.5",
+                              isAlert
+                                ? "text-red-700 font-medium"
+                                : isWarning
+                                  ? "text-amber-700 font-medium"
+                                  : "text-gray-500",
+                            )}
+                          >
+                            {isAlert
+                              ? "Action required"
+                              : isWarning
+                                ? "Awaiting submission"
+                                : new Date(dec.lastUpdated || dec._creationTime).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-[0.6875rem] text-gray-600">{dec.eori || "Not set"}</td>
+                      <td className="px-6 py-4 text-[0.6875rem] text-gray-600">{dec.declarationType || "IMD"}</td>
+                      <td className="px-6 py-4">
+                        {Boolean(dec.mrn && String(dec.mrn).trim().length > 0) && (dec.status === "Cleared" || dec.status === "Accepted") ? (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
+                            <ShieldCheck className="h-3 w-3" />
+                            {dec.status}
+                          </span>
+                        ) : dec.status === "Rejected" || dec.status === "Action Required" || dec.status === "Invalid" ? (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
+                            <ShieldAlert className="h-3 w-3" />
+                            {dec.status === "Invalid" ? "Invalid (DMSINV)" : dec.status}
+                          </span>
+                        ) : dec.status === "Draft" ? (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
+                            <FileText className="h-3 w-3" />
+                            {dec.status}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700">
+                            <AlertCircle className="h-3 w-3" />
+                            {dec.status}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                          {dec.status === "Draft" && (
+                            <button
+                              onClick={(e) => handleDelete(e, dec.declarationId)}
+                              disabled={deletingId === dec.declarationId}
+                              className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:outline-none"
+                            >
+                              {deletingId === dec.declarationId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                            </button>
+                          )}
+                          <ArrowRight className="h-4 w-4 text-gray-400" />
+                        </div>
+                      </td>
+                    </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

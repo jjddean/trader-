@@ -462,8 +462,9 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
                   }]
                 : brChickenLane
                   ? [{
-                      // Narrow TDR carve-out: keep the BR chicken debug lane moving
-                      // while preserving fail-closed behaviour for normal declarations.
+                      // Narrow Trade Test debug carve-out: keep the BR chicken
+                      // debug lane moving while preserving fail-closed behaviour
+                      // for normal declarations.
                       CurrentCode: "000",
                     }]
                   : [])

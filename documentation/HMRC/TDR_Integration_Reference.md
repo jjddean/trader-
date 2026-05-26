@@ -1,3 +1,7 @@
+> **ARCHIVED** — This document describes the TDR (v1.0) phase which is not the current active environment.
+> The system currently runs on **Trade Test v2.0** (sandbox) and **v2.0** (production).
+> This file is preserved for reference only. Do not use for configuration or operational decisions.
+
 # HMRC TDR Integration Reference — Freightcode
 
 > **Last updated:** 2026-04-13  

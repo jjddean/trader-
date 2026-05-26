@@ -62,7 +62,7 @@ If error count increases after a change → revert immediately → return to las
 
 ## What This App Is
 
-Freightcode is a UK customs declarations SaaS. Its core mission is to submit WCO-compliant XML declarations to HMRC's Customs Declaration Service (CDS) on behalf of UK importers and customs brokers. The end goal is HMRC "Recognised Software" status, gated behind the Trader Dress Rehearsal (TDR) process.
+Freightcode is a UK customs declarations SaaS. Its core mission is to submit WCO-compliant XML declarations to HMRC's Customs Declaration Service (CDS) on behalf of UK importers and customs brokers. The system currently runs on **Trade Test v2.0** (sandbox) and **v2.0** (production). The long-term goal is HMRC "Recognised Software" status, which requires passing the Trader Dress Rehearsal (TDR) process — this is a future phase, not the current active environment.
 
 ---
 
@@ -127,8 +127,8 @@ HMRC CDS (external)
 | `convex/declarations.ts` | Declaration CRUD + savings estimates + read model refresh |
 | `convex/goods_items.ts` | Items CRUD — always calls refreshReadModels() after write |
 | `convex/notifications.ts` | saveWebhook mutation — called by both push and pull routes |
-| `test-evidence/run-hmrc-scenarios.js` | Manual TDR scenario runner (dry-run + single submit) |
-| `documentation/hmrc_tdr_audit/` | 3131-rule TDR audit artefacts |
+| `test-evidence/run-hmrc-scenarios.js` | Trade Test v2.0 scenario runner (dry-run + single submit) |
+| `documentation/hmrc_tdr_audit/` | 3131-rule CDS compliance audit artefacts (generated, documentation only) |
 
 ---
 
@@ -184,18 +184,18 @@ HMRC CDS (external)
 
 ## Testing Approach
 
-### Dry-Run Gate (mandatory before any TDR submission)
+### Dry-Run Gate (mandatory before any Trade Test submission)
 ```bash
 # Dry run only — no HMRC call made
 node test-evidence/run-hmrc-scenarios.js
-# Check test-evidence/tdr-cds-v1-dry-run.json — all checks must pass
+# Check test-evidence/trade-test-cds-v2-dry-run.json — all checks must pass
 ```
 
-### Single Controlled Submit (TDR)
+### Single Controlled Submit (Trade Test v2.0)
 ```bash
 # ONE submission — requires explicit env vars
 DRY_RUN_ONLY=false HMRC_SUBMIT_ONCE=true node test-evidence/run-hmrc-scenarios.js
-# Evidence files: tdr-cds-v1-request.xml, tdr-cds-v1-response.xml, scenario-summary.json
+# Evidence files: trade-test-cds-v2-request.xml, trade-test-cds-v2-response.xml, scenario-summary.json
 ```
 
 ### Playwright (E2E)
@@ -219,12 +219,12 @@ npm run build            # Production build — must pass before deploying
 
 # Lint
 npm run lint             # ESLint across all src/ and convex/
-# ~6215 problems currently — focus on hmrc submit/notify/items flows for TDR
+# ~6215 problems currently — focus on hmrc submit/notify/items flows
 
 # Convex schema push
 npx convex deploy        # Push schema + functions to Convex cloud
 
-# TDR scenario runner
+# Trade Test v2.0 scenario runner
 node test-evidence/run-hmrc-scenarios.js                                    # dry-run
 DRY_RUN_ONLY=false HMRC_SUBMIT_ONCE=true node test-evidence/run-hmrc-scenarios.js  # live submit
 ```
@@ -238,7 +238,7 @@ NEXT_PUBLIC_CONVEX_URL       # Convex deployment URL
 HMRC_CLIENT_ID               # HMRC Developer Hub application client ID
 HMRC_CLIENT_SECRET           # HMRC Developer Hub application client secret
 HMRC_ENVIRONMENT             # "sandbox" | "production"
-HMRC_DECLARATIONS_ACCEPT     # "application/vnd.hmrc.1.0+xml" (sandbox/TDR)
+HMRC_DECLARATIONS_ACCEPT     # "application/vnd.hmrc.2.0+xml" (Trade Test sandbox + production)
 HMRC_SANDBOX_BASE_URL        # Sandbox HMRC API base URL
 HMRC_PRODUCTION_BASE_URL     # Production HMRC API base URL
 HMRC_ACCEPT_V2_XML           # HMRC v2 XML Accept header
@@ -263,10 +263,10 @@ CLERK_SECRET_KEY
 
 ---
 
-## TDR Critical Rules (DO / DO NOT)
+## CDS Submission Rules (DO / DO NOT)
 
 ### Always Do
-- Run the dry-run gate and confirm all checks pass before any TDR submission
+- Run the dry-run gate and confirm all checks pass before any Trade Test submission
 - Use `fetchHmrc()` for every HMRC API call — never bypass it
 - `xmlEscape()` every value interpolated into XML
 - Validate ownership in every Convex mutation before writing
@@ -278,10 +278,10 @@ CLERK_SECRET_KEY
 ### Never Do
 - Never call HMRC endpoints without going through `fetchHmrc()`
 - Never inject synthetic or fake DMS* notifications into the `notifications` table
-- Never submit to TDR in a loop or via automated test suites
+- Never submit in a loop or via automated test suites
 - Never hardcode HMRC tokens, client secrets, or webhook auth tokens in source files
-- Never skip the dry-run preflight gate before a TDR submission
-- Never submit more than 5 declarations in a single TDR session
+- Never skip the dry-run preflight gate before a submission
+- Never submit more than 5 declarations in a single controlled test session
 - Never use `ExportCountry.ID = "GB"` on an import from overseas — must be the actual dispatch country
 - Never mix test-evidence artifacts (synthetic status) with HMRC-derived status on the dashboard
 - Never patch the `notifications` table rows — treat them as immutable append-only records
@@ -289,11 +289,14 @@ CLERK_SECRET_KEY
 
 ---
 
-## TDR Status (as of 2026-04-09)
+## Trade Test Status (as of 2026-04-09)
 
-- **Current standing:** Not pass-ready — blocked on CDS12050 business-rule rejection
+- **Current environment:** Trade Test v2.0 (sandbox) — NOT TDR
+- **Current standing:** Blocked on CDS12050 business-rule rejection
 - **Root cause:** Declaration content non-compliance — document context mismatch for current commodity/procedure/origin lane (HS 0207129000, CPC 4000 000, origin BR) — specifically 42A/67A/68A/70A additional document requirements
 - **Infrastructure status:** Transport, auth, webhook, and schema are stable
 - **Immediate path:** Data correction → signed tariff-document matrix → dry-run pass → one controlled submit → full notification evidence chain (DMSACC → DMSCLE)
 - **Evidence governance:** Authoritative status must derive only from HMRC events; synthetic notifications must never enter the notification store
-- **TDR contacts:** TDRcommunications@hmrc.gov.uk, SoftwareDeveloperSupport@hmrc.gov.uk
+- **HMRC contacts:** TDRcommunications@hmrc.gov.uk, SoftwareDeveloperSupport@hmrc.gov.uk
+
+> **Future roadmap:** TDR (Trader Dress Rehearsal) is the eventual path to HMRC "Recognised Software" status. It uses v1.0 headers and requires explicit HMRC allowlisting. This is a future phase — do not apply TDR configuration to the current Trade Test environment.

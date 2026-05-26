@@ -1,3 +1,7 @@
+> **ARCHIVED** — This execution plan is for the TDR (v1.0) phase which is not the current active environment.
+> The system currently runs on **Trade Test v2.0** (sandbox) and **v2.0** (production).
+> This file is preserved for reference only. Do not use for configuration or operational decisions.
+
 # Freightcode — TDR Execution Plan & Quality-Gated Checklist
 **Version:** 1.0  
 **Date:** 2026-04-11  

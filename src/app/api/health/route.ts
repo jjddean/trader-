@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 
 /**
  * GET /api/health
- * Health check endpoint for monitoring.
- * HMRC TDR Readiness Pillar 4: Go Live & Support
+ * Health check endpoint for monitoring. Reports HMRC environment and which
+ * core service env vars are populated (Convex, HMRC, Clerk).
  */
 export async function GET() {
   return NextResponse.json({
