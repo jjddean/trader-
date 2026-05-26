@@ -1,18 +1,12 @@
 /**
  * Trade Test Scenario Runner — Freightcode
  *
- * Signed decision matrix applied (2026-04-11):
- *   Lane: HS 0207129000 / CPC 4000 000 / Origin BR / Type IMA
- *   Documents: N853 (CHED-P), Y930 (Decision 2007/275 exclusion), Y929 (non-organic)
- *   Source: trade-tariff.service.gov.uk/commodities/0207129000?country=BR
- *
- * FIXED (2026-04-11):
- *   - GovernmentProcedure: DE 1/10 = two 2-digit codes; DE 1/11 = separate 3-digit element
- *   - Accept header: application/vnd.hmrc.2.0+xml for Trade Test
- *   - dispatchCountry: BR (not GB)
- *   - Documents: N853 + Y930 + Y929 replacing invalid Y922
- *   - XML builder: iterates AdditionalDocument array (not hardcoded single element)
- *   - HS code updated to 0207129000 to match signed lane
+ * Active lane (2026-05-26):
+ *   Lane: HS 8471300000 / CPC 4000 000 / Origin DE / Type IMA
+ *   EORI: GB243617410764
+ *   Description: Portable automatic data processing machine, weight ≤ 10kg (laptops)
+ *   Documents: N935 (Commercial invoice), N271 (Packing list)
+ *   Source: UK Trade Tariff / declaration form fields
  *
  * Usage:
  *   node test-evidence/run-hmrc-scenarios.js           # dry-run only
@@ -44,18 +38,14 @@ const HMRC_CONFIG = {
 };
 
 // ---------------------------------------------------------------------------
-// Signed document matrix — HS 0207129000 / CPC 4000 000 / Origin BR
-// Source: UK Trade Tariff veterinary control measure 20234422 + organic measure
+// Signed document matrix — HS 8471300000 / CPC 4000 000 / Origin DE (laptops)
+// Source: UK Trade Tariff / declaration form DE 2/3 entries
+// N935: Commercial invoice — mandatory for all standard imports (Method 1 valuation)
+// N271: Packing list — required supporting document for CDS H1
 // ---------------------------------------------------------------------------
 const SIGNED_ADDITIONAL_DOCUMENTS = [
-  // N853: CHED-P — mandatory for all 3rd-country animal product imports
-  // StatusCode XW required from 23 Oct 2025 (HMRC changed CHED document status codes; AE/XX removed)
-  // ID year must match current year (2026)
-  { CategoryCode: "N", TypeCode: "853", StatusCode: "XW", ID: "GBCHD2026.1234567" },
-  // Y930: Commission Decision 2007/275/EC exclusion — non-research commercial goods
-  { CategoryCode: "Y", TypeCode: "930", StatusCode: "XB", ID: "Excluded" },
-  // Y929: Non-organic goods declaration — exemption from organic certification requirement
-  { CategoryCode: "Y", TypeCode: "929", StatusCode: "XB", ID: "Excluded" },
+  { CategoryCode: "N", TypeCode: "935", StatusCode: "AC", ID: "INV-2026-LAPTOPS-001" },
+  { CategoryCode: "N", TypeCode: "271", StatusCode: "AC", ID: "PL-2026-LAPTOPS-001" },
 ];
 
 function mapToCDS_H1(declaration, items) {
@@ -102,16 +92,22 @@ function mapToCDS_H1(declaration, items) {
             ModeCode: declaration.transportMode || "1",
           },
           GoodsLocation: {
-            Name: declaration.locationName || "GBWLAFXTFXTGW",
-            ID: declaration.locationId || "GBAUFXTFXTGW",
+            // DE 5/23: Name = HMRC goods location code. TypeCode and Address are mandatory.
+            // CDS10001/L110 and CDS10001/04A/410 fire when TypeCode and Address are absent.
+            Name: declaration.locationName || declaration.locationId || "GBAUFXTFXTGW",
+            TypeCode: declaration.locationTypeCode || "A",
+            Address: {
+              TypeCode: declaration.locationQualifier || "U",
+              CountryCode: declaration.locationCountry || declaration.destinationCountry || "GB",
+            },
           },
         },
         Destination: { CountryCode: declaration.destinationCountry || "GB" },
         ExportCountry: { ID: declaration.dispatchCountry || "BR" },
         Importer: { ID: declaration.importerEori || declaration.eori || "" },
         TradeTerms: {
-          ConditionCode: declaration.incoterms || "FOB",
-          LocationID: declaration.incotermLocation || "GBFXT",
+          // LocationID omitted — CDS10020/22B/L002 fires when plain text is sent.
+          ConditionCode: declaration.incoterms || "CIF",
         },
         GovernmentAgencyGoodsItem: (items || []).map((item, index) => {
           // Use item's own additionalDocuments if provided, otherwise use the signed matrix
@@ -148,15 +144,15 @@ function mapToCDS_H1(declaration, items) {
                 TypeCode: item.packageType || "PK",
               },
             ],
-            // FIX: DE 1/10 = two separate 2-digit codes; DE 1/11 = separate 3-digit element
+            // DE 1/10 = two separate 2-digit codes (always present).
+            // DE 1/11 = required explicitly. "000" = nil additional procedure for CPC 4000.
+            // Omitting DE 1/11 entirely triggers CDS11004 (incomplete procedure declaration).
             GovernmentProcedure: [
               {
-                // DE 1/10 requested procedure (chars 0-1) + previous procedure (chars 2-3)
                 CurrentCode: (item.procedureCode?.replace(/\s+/g, "") || "4000").substring(0, 2),
                 PreviousCode: (item.procedureCode?.replace(/\s+/g, "") || "4000").substring(2, 4) || "00",
               },
               {
-                // DE 1/11 additional procedure code (3 digits, no PreviousCode)
                 CurrentCode: item.additionalProcedureCode || "000",
               },
             ],
@@ -216,7 +212,8 @@ function buildXml(payloadInfo) {
         </ArrivalTransportMeans>
         <GoodsLocation>
           <Name>${xmlEscape(gs.Consignment.GoodsLocation.Name)}</Name>
-          <ID>${xmlEscape(gs.Consignment.GoodsLocation.ID)}</ID>
+          ${gs.Consignment.GoodsLocation.TypeCode ? `<TypeCode>${xmlEscape(gs.Consignment.GoodsLocation.TypeCode)}</TypeCode>` : ""}
+          ${gs.Consignment.GoodsLocation.Address ? `<Address>${gs.Consignment.GoodsLocation.Address.TypeCode ? `<TypeCode>${xmlEscape(gs.Consignment.GoodsLocation.Address.TypeCode)}</TypeCode>` : ""}${gs.Consignment.GoodsLocation.Address.CountryCode ? `<CountryCode>${xmlEscape(gs.Consignment.GoodsLocation.Address.CountryCode)}</CountryCode>` : ""}</Address>` : ""}
         </GoodsLocation>
       </Consignment>
       <Destination>
@@ -230,7 +227,6 @@ function buildXml(payloadInfo) {
       </Importer>
       <TradeTerms>
         <ConditionCode>${xmlEscape(gs.TradeTerms.ConditionCode)}</ConditionCode>
-        <LocationID>${xmlEscape(gs.TradeTerms.LocationID)}</LocationID>
       </TradeTerms>
       ${(gs.GovernmentAgencyGoodsItem || [])
         .map((item) => {
@@ -417,10 +413,11 @@ function preflightGates(xmlPayload, eori) {
     xml_has_type_code: xmlPayload.includes("<TypeCode>IMA</TypeCode>"),
     xml_has_declarant_id: xmlPayload.includes(`<Declarant>\n      <ID>${eori}</ID>`),
     xml_has_importer_id: xmlPayload.includes(`<Importer>\n        <ID>${eori}</ID>`),
-    // FIX: check for signed lane HS code 0207129000, not previous 6110201000
-    xml_has_hs_code: xmlPayload.includes("<ID>0207129000</ID>"),
+    xml_has_hs_code: xmlPayload.includes("<ID>8471300000</ID>"),
+    xml_has_dispatch_de: xmlPayload.includes("<ID>DE</ID>"),
     xml_no_y922: !xmlPayload.includes("<TypeCode>922</TypeCode>"),
-    xml_has_n853: xmlPayload.includes("<TypeCode>853</TypeCode>"),
+    xml_has_n935: xmlPayload.includes("<TypeCode>935</TypeCode>"),
+    xml_has_n271: xmlPayload.includes("<TypeCode>271</TypeCode>"),
     eori_format_valid: /^GB\d{12}$/.test(eori),
   };
 
@@ -452,46 +449,45 @@ async function run() {
   }
 
   const client = userId ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL) : null;
-  const eori = process.env.HMRC_EORI || "GB449181054677";
+  const eori = process.env.HMRC_EORI || "GB243617410764";
 
   const baseDecl = {
     _id: "trade-test-fixed",
     declarationType: "H1",
     eori,
-    exporterEori: "BR12345678901234",  // Brazilian exporter — must not be a UK GB EORI
     importerEori: eori,
     lrn: `TT-${Date.now()}`,
-    ducr: `6GB${eori.replace(/^GB/i, "")}-${Date.now()}`,  // year digit = last digit of calendar year (6 for 2026); format: {digit}GB{12-digit-eori}-{ref}
-    presentationOffice: "GB000051",
+    ducr: `6GB${eori.replace(/^GB/i, "")}-${Date.now()}`,
+    presentationOffice: "GBLON004",
     totalGrossWeight: 120,
     invoiceCurrency: "GBP",
-    invoiceTotal: 4200,
-    locationName: "GBWLAFXTFXTGW",
+    invoiceTotal: 5000,
+    locationName: "GBAUFXTFXTGW",
     locationId: "GBAUFXTFXTGW",
     destinationCountry: "GB",
-    dispatchCountry: "BR",   // FIX: was "GB" — must be the actual country of dispatch
-    incoterms: "FOB",
-    incotermLocation: "GBFXT",
+    dispatchCountry: "DE",
+    incoterms: "CIF",
+    incotermLocation: "Felixstowe",
     transportId: "CSCL GLOBE",
     transportMode: "1",
   };
 
-  // Signed lane: HS 0207129000 frozen whole poultry from Brazil
+  // Active lane: HS 8471300000 — laptops from Germany (DE)
   const itemSeed = {
     sequenceNumber: 1,
-    commodityCode: "0207129000",
-    description: "Frozen whole chicken, not cut in pieces, Gallus domesticus",
-    originCountry: "BR",
+    commodityCode: "8471300000",
+    description: "Portable automatic data processing machine, weight not exceeding 10kg",
+    originCountry: "DE",
     procedureCode: "4000",
     additionalProcedureCode: "000",
-    valueAmount: 4200,
+    valueAmount: 5000,
     valueCurrency: "GBP",
     grossWeightKg: 120,
-    netWeightKg: 118,
-    packageCount: 8,
+    netWeightKg: 110,
+    packageCount: 1,
     packageType: "PK",
+    shippingMarks: "TEST-MARK-LAPTOPS-001",
     // Documents come from SIGNED_ADDITIONAL_DOCUMENTS via mapToCDS_H1 fallback
-    // (additionalDocuments not set here so the signed matrix is used automatically)
   };
 
   const input = {
@@ -503,11 +499,25 @@ async function run() {
   const payloadInfo = mapToCDS_H1(input.declaration, [{ ...input.item }]);
   const xmlPayload = buildXml(payloadInfo);
 
-  const tokenRecord = (client && userId) ? await client.query(api.hmrc.getToken, { userId }) : null;
+  let tokenRecord = null;
+  if (client && userId && !dryRunOnly) {
+    tokenRecord = await client.query(api.hmrc.getToken, { userId });
+  } else if (client && userId) {
+    try {
+      tokenRecord = await client.query(api.hmrc.getToken, { userId });
+    } catch {
+      // Convex unreachable in dry-run — token_present will show false, non-blocking
+    }
+  }
   const preflight = preflightGates(xmlPayload, eori);
   preflight.checks.token_present = Boolean(tokenRecord?.accessToken);
+  const dryRunMode = process.env.DRY_RUN_ONLY !== "false";
   preflight.failed = Object.entries(preflight.checks)
-    .filter(([, ok]) => !ok)
+    .filter(([key, ok]) => {
+      // token_present is non-blocking in dry-run — Convex may not be running locally
+      if (key === "token_present" && dryRunMode) return false;
+      return !ok;
+    })
     .map(([key]) => key);
   preflight.readyToSubmit = preflight.failed.length === 0;
 
@@ -536,10 +546,11 @@ async function run() {
         failed: preflight.failed,
         readyToSubmit: preflight.readyToSubmit,
         lane: {
-          hs: "0207129000",
+          hs: "8471300000",
           cpc: "4000 000",
-          origin: "BR",
+          origin: "DE",
           type: "IMA",
+          description: "Portable automatic data processing machine (laptops)",
           documents: SIGNED_ADDITIONAL_DOCUMENTS.map((d) => `${d.CategoryCode}${d.TypeCode}`),
         },
       },

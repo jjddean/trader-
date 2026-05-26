@@ -57,9 +57,10 @@ function commodityClassifications(codeValue: unknown) {
 }
 
 function deriveGoodsLocationName(value: unknown): string {
-  const raw = String(value || "").trim().toUpperCase();
-  if (raw === "GBAUFXTFXTGW") return "GBWLAFXTFXTGW";
-  return raw;
+  // Return the raw code as-is. "GBWLAFXTFXTGW" was an invented transformation
+  // that CDS rejects (CDS12099/L016). The locationId value itself is the HMRC
+  // goods location code that goes in the Name field.
+  return String(value || "").trim().toUpperCase();
 }
 
 function isBrChickenTestLane(declaration: any, item: any): boolean {
@@ -300,20 +301,28 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
       },
       // Exporter: only include a GB/XI EORI — never fall back to the declarant's own EORI.
       // HMRC DE 3/2: "Do NOT enter if the exporter is not UK-based."
-      // For non-UK exporters the submission route omits the Exporter element entirely.
-      Exporter: {
-        ID: declaration.exporterEori || ""
-      },
+      // CDS12073/57A: sending an empty Exporter element for non-UK exporters causes a
+      // header-level conflict. Omit the element entirely when no exporterEori is present.
+      ...(String(declaration.exporterEori || "").trim()
+        ? { Exporter: { ID: String(declaration.exporterEori).trim() } }
+        : {}),
       UCR: {
         TraderAssignedReferenceID: ducr
       },
       GoodsShipment: {
-        // DE 3/24 — Buyer (UK importer). Country code is GB for imports;
-        // Name is intentionally omitted until real party data is plumbed in.
-        Buyer: {
-          AddressCountryCode: declaration.destinationCountry || "",
-          Name: declaration.buyerName || "",
-        },
+        // DE 3/26 — Buyer (UK importer). CDS10001/16A/04A: AddressCountryCode is
+        // mandatory when the Buyer element is present. Omit Buyer entirely if no
+        // country code is available to avoid sending an empty Address block.
+        ...(String(declaration.destinationCountry || "").trim()
+          ? {
+              Buyer: {
+                AddressCountryCode: String(declaration.destinationCountry).trim(),
+                ...(String(declaration.buyerName || "").trim()
+                  ? { Name: String(declaration.buyerName).trim() }
+                  : {}),
+              },
+            }
+          : {}),
         Consignment: {
            // WCO Consignment xs:sequence: ContainerCode comes BEFORE
            // ArrivalTransportMeans, which in turn comes before GoodsLocation
@@ -349,12 +358,19 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
         Importer: {
            ID: String(declaration.importerEori || declaration.eori || "").trim()
         },
-        // DE 3/1 — Seller. Country derived from dispatch country (where goods
-        // shipped FROM). Name omitted until real party data is plumbed in.
-        Seller: {
-          AddressCountryCode: declaration.dispatchCountry || "",
-          Name: declaration.sellerName || "",
-        },
+        // DE 3/24 — Seller. CDS10001/09B/04A: AddressCountryCode is mandatory when
+        // the Seller element is present. Omit Seller entirely if dispatch country
+        // is not set to avoid sending an empty Address block.
+        ...(String(declaration.dispatchCountry || "").trim()
+          ? {
+              Seller: {
+                AddressCountryCode: String(declaration.dispatchCountry).trim(),
+                ...(String(declaration.sellerName || "").trim()
+                  ? { Name: String(declaration.sellerName).trim() }
+                  : {}),
+              },
+            }
+          : {}),
         // DE 2/1 — Previous documents at GoodsShipment level. Always emit at
         // least the DUCR (CategoryCode Z, TypeCode DCR) so CDS can resolve the
         // 99A pointer chain.
@@ -366,9 +382,13 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
             LineNumeric: "1",
           },
         ],
+        // CDS10020/22B/L002: LocationID must be omitted when blank — an empty string
+        // fails code-list validation. ConditionCode (DE 4/1) is still required.
         TradeTerms: {
            ConditionCode: declaration.incoterms || "",
-           LocationID: declaration.incotermLocation || ""
+           ...(String(declaration.incotermLocation || "").trim()
+             ? { LocationID: String(declaration.incotermLocation).trim() }
+             : {}),
         },
         TransactionNatureCode: declaration.transactionNatureCode || "11",
         GovernmentAgencyGoodsItem: (items || []).map((item, index) => {
@@ -454,20 +474,15 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
                     PreviousCode: procRaw.substring(2, 4),
                   }]
                 : []),
-              ...(String(item.additionalProcedureCode || "").trim()
-                ? [{
-                    // DE 1/11: Additional Procedure Code. Must be supplied explicitly;
-                    // do not invent "000" because it changes the declared procedure set.
-                    CurrentCode: String(item.additionalProcedureCode).trim(),
-                  }]
-                : brChickenLane
-                  ? [{
-                      // Narrow Trade Test debug carve-out: keep the BR chicken
-                      // debug lane moving while preserving fail-closed behaviour
-                      // for normal declarations.
-                      CurrentCode: "000",
-                    }]
-                  : [])
+              ...((() => {
+                const apc = String(item.additionalProcedureCode || "").trim();
+                // DE 1/11 additional procedure code. Include "000" explicitly — HMRC CDS
+                // requires it to declare nil additional procedure for CPC 4000.
+                // Omitting "000" introduces CDS11004 (procedure codes incomplete).
+                if (apc) return [{ CurrentCode: apc }];
+                // No additionalProcedureCode set at all — use "000" for CPC 4000 (nil).
+                return [{ CurrentCode: "000" }];
+              })())
             ]
           };
         })

@@ -537,12 +537,6 @@ export const updateDeclarationDetails = mutation({
     transportMode: v.optional(v.string()),
     transportId: v.optional(v.string()),
     transportIdType: v.optional(v.string()),
-    destinationCountry: v.optional(v.string()),
-    importerEori: v.optional(v.string()),
-    invoiceCurrency: v.optional(v.string()),
-    invoiceTotal: v.optional(v.number()),
-    locationId: v.optional(v.string()),
-    presentationOffice: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();

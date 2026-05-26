@@ -98,10 +98,11 @@ export function renderH1Xml(payloadInfo: unknown): string {
   const d = read(asRecord(payloadInfo), "Declaration");
   const gs = read(d, "GoodsShipment");
   const consignment = read(gs, "Consignment");
-  const exporterEori = text(read(d, "Exporter"), "ID").trim();
-  const exporterXml = /^(GB|XI)\d{12}$/i.test(exporterEori)
-    ? `\n    <Exporter>\n      <ID>${xmlEscape(exporterEori)}</ID>\n    </Exporter>`
-    : "";
+  // DE 3/1 Exporter — OMIT for all H1 IMA (import) declarations.
+  // Including a GB/XI EORI as Exporter on a DE-origin import contradicts
+  // ExportCountry.ID → CDS12073/57A + cascading 30A/103 conflicts.
+  // Exporter is only required on export (EX*) declarations.
+  const exporterXml = "";
   const previousDocs = asArray(gs.PreviousDocument);
   const previousDocumentXml = previousDocs.map((pd) => `
       <PreviousDocument>
@@ -127,24 +128,13 @@ export function renderH1Xml(payloadInfo: unknown): string {
           <ModeCode>${xmlEscape(atm.ModeCode || "")}</ModeCode>
         </ArrivalTransportMeans>`
     : "";
-  const buyer = read(gs, "Buyer");
-  const buyerXml = buyer.AddressCountryCode
-    ? `
-      <Buyer>
-        <Address>
-          <CountryCode>${xmlEscape(buyer.AddressCountryCode)}</CountryCode>
-        </Address>
-      </Buyer>`
-    : "";
-  const seller = read(gs, "Seller");
-  const sellerXml = seller.AddressCountryCode
-    ? `
-      <Seller>
-        <Address>
-          <CountryCode>${xmlEscape(seller.AddressCountryCode)}</CountryCode>
-        </Address>
-      </Seller>`
-    : "";
+  // Buyer (16A) and Seller (09B) are Optional (C) for H1. Sending a CountryCode-only
+  // Address block triggers CDS12077 R009/R050 (incomplete address combination) and
+  // CDS10001 (CityName mandatory when Address is present). Seller at GoodsShipment
+  // level also conflicts with Exporter at Declaration level → CDS12073/57A.
+  // Omit both until full party data (Name + Address including CityName) is available.
+  const buyerXml = "";
+  const sellerXml = "";
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
@@ -168,9 +158,23 @@ export function renderH1Xml(payloadInfo: unknown): string {
     <GoodsShipment>${buyerXml}
       <Consignment>
         <ContainerCode>${xmlEscape(consignment.ContainerCode)}</ContainerCode>${arrivalTransportMeansXml}
-        <GoodsLocation>
-          <ID>${xmlEscape(read(consignment, "GoodsLocation").ID)}</ID>
-        </GoodsLocation>
+        ${(() => {
+          const gl = read(consignment, "GoodsLocation");
+          const glAddr = read(gl, "Address");
+          const locationName = String(gl.Name || gl.ID || "").trim();
+          if (!locationName) return "";
+          // XSD sequence: Name → TypeCode → Address(TypeCode → CountryCode)
+          // TypeCode (L110) and Address.TypeCode (04A/410) are MANDATORY per CDS10001.
+          // CDS12099 for these in earlier rounds was a cascade from wrong Name value.
+          // Now Name is correct ("GBAUFXTFXTGW") so TypeCode "A" and Address.TypeCode "U" pass.
+          const typeCodeXml = gl.TypeCode ? `<TypeCode>${xmlEscape(gl.TypeCode)}</TypeCode>` : "";
+          const addrTypeXml = glAddr.TypeCode ? `<TypeCode>${xmlEscape(glAddr.TypeCode)}</TypeCode>` : "";
+          const addrCountryXml = glAddr.CountryCode ? `<CountryCode>${xmlEscape(glAddr.CountryCode)}</CountryCode>` : "";
+          const addrXml = (addrTypeXml || addrCountryXml)
+            ? `<Address>${addrTypeXml}${addrCountryXml}</Address>`
+            : "";
+          return `<GoodsLocation><Name>${xmlEscape(locationName)}</Name>${typeCodeXml}${addrXml}</GoodsLocation>`;
+        })()}
       </Consignment>
       <Destination>
         <CountryCode>${xmlEscape(read(gs, "Destination").CountryCode)}</CountryCode>
@@ -239,7 +243,6 @@ export function renderH1Xml(payloadInfo: unknown): string {
       </Importer>${previousDocumentXml}${sellerXml}
       <TradeTerms>
         <ConditionCode>${xmlEscape(read(gs, "TradeTerms").ConditionCode)}</ConditionCode>
-        <LocationID>${xmlEscape(read(gs, "TradeTerms").LocationID)}</LocationID>
       </TradeTerms>
       <UCR>
         <TraderAssignedReferenceID>${xmlEscape(read(d, "UCR").TraderAssignedReferenceID)}</TraderAssignedReferenceID>

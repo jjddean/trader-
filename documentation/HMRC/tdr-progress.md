@@ -2,7 +2,11 @@
 
 **Goal:** Get a single declaration through the v2.0 Trade Test as **DMSACC → DMSCLE** (no DMSREJ), proving end-to-end submission validity.
 
-**Current stage:** Document context (02A) — curated rules layer in place; need to promote BR/02071290/4000 lane to enriched mode, stub the 4 required docs, dry-run, resubmit.
+**Active lane:** HS 8471300000 / CPC 4000 000 / Origin DE / EORI GB243617410764
+**Description:** Portable automatic data processing machine, weight ≤ 10kg (laptops from Germany)
+**Documents:** N935 (commercial invoice, AC), N271 (packing list, AC)
+
+**Current stage:** Lane updated to DE/laptops. Scenario runner wired. Run dry-run to confirm preflight, then submit.
 
 ---
 
