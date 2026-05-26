@@ -74,8 +74,25 @@ function mapToCDS_H1(declaration, items) {
         CurrencyTypeCode: declaration.invoiceCurrency || "GBP",
       },
       Declarant: { ID: declaration.eori || "" },
-      // Only include Exporter when a valid GB/XI EORI is present — HMRC DE 3/2: "Do NOT enter if exporter is not UK-based"
-      Exporter: /^(GB|XI)\d{12}$/i.test(declaration.exporterEori || "") ? { ID: declaration.exporterEori } : null,
+      // DE 3/1 Exporter: GB/XI EORI only for intra-UK flows. For overseas imports use Name+Address.
+      // CDS12073/57A fires when ExportCountry.ID references a foreign country with no Exporter anchor.
+      Exporter: (() => {
+        const dispatch = String(declaration.dispatchCountry || "").trim().toUpperCase();
+        const eori = String(declaration.exporterEori || "").trim();
+        if (/^(GB|XI)\d{12}$/i.test(eori) && (dispatch === "GB" || dispatch === "XI")) return { ID: eori };
+        if (dispatch && dispatch !== "GB" && dispatch !== "XI") {
+          return {
+            Name: String(declaration.exporterName || "").trim() || "Test Exporter",
+            Address: {
+              CityName: String(declaration.exporterCity || "").trim(),
+              CountryCode: dispatch,
+              Line: String(declaration.exporterLine || "").trim(),
+              PostcodeID: String(declaration.exporterPostcode || "").trim(),
+            },
+          };
+        }
+        return null;
+      })(),
       UCR: {
         TraderAssignedReferenceID:
           declaration.ducr ||
@@ -94,7 +111,8 @@ function mapToCDS_H1(declaration, items) {
           GoodsLocation: {
             // DE 5/23: Name = HMRC goods location code. TypeCode and Address are mandatory.
             // CDS10001/L110 and CDS10001/04A/410 fire when TypeCode and Address are absent.
-            Name: declaration.locationName || declaration.locationId || "GBAUFXTFXTGW",
+            // DE 5/23: Name must be the exact HMRC goods location code from Appendix 16.
+            Name: String(declaration.locationId || "").trim().toUpperCase() || "GBAUFXTFXTGW",
             TypeCode: declaration.locationTypeCode || "A",
             Address: {
               TypeCode: declaration.locationQualifier || "U",
@@ -198,7 +216,9 @@ function buildXml(payloadInfo) {
     <Declarant>
       <ID>${xmlEscape(d.Declarant.ID)}</ID>
     </Declarant>
-    ${d.Exporter ? `<Exporter>\n      <ID>${xmlEscape(d.Exporter.ID)}</ID>\n    </Exporter>` : ""}
+    ${d.Exporter ? (d.Exporter.ID
+      ? `\n    <Exporter>\n      <ID>${xmlEscape(d.Exporter.ID)}</ID>\n    </Exporter>`
+      : `\n    <Exporter>\n      <Name>${xmlEscape(d.Exporter.Name || "Exporter")}</Name>\n      <Address>${d.Exporter.Address?.CityName ? `\n        <CityName>${xmlEscape(d.Exporter.Address.CityName)}</CityName>` : ""}\n        <CountryCode>${xmlEscape(d.Exporter.Address?.CountryCode || "")}</CountryCode>${d.Exporter.Address?.Line ? `\n        <Line>${xmlEscape(d.Exporter.Address.Line)}</Line>` : ""}${d.Exporter.Address?.PostcodeID ? `\n        <PostcodeID>${xmlEscape(d.Exporter.Address.PostcodeID)}</PostcodeID>` : ""}\n      </Address>\n    </Exporter>`) : ""}
     <GoodsShipment>
       <UCR>
         <TraderAssignedReferenceID>${xmlEscape(d.UCR.TraderAssignedReferenceID)}</TraderAssignedReferenceID>
@@ -267,28 +287,39 @@ function buildXml(payloadInfo) {
         ${additionalDocsXml}
           <Commodity>
           <Description>${xmlEscape(item.Commodity.Description || "")}</Description>
-          <Classification>
-            <ID>${xmlEscape(item.Commodity.Classification[0].ID)}</ID>
-            <IdentificationTypeCode>${xmlEscape(item.Commodity.Classification[0].IdentificationTypeCode)}</IdentificationTypeCode>
-          </Classification>
+          ${(Array.isArray(item.Commodity.Classification) ? item.Commodity.Classification : [item.Commodity.Classification]).map(cls => `<Classification>
+            <ID>${xmlEscape(cls.ID)}</ID>
+            <IdentificationTypeCode>${xmlEscape(cls.IdentificationTypeCode)}</IdentificationTypeCode>
+          </Classification>`).join("\n          ")}
           <DutyTaxFee>
-            <DutyRegimeCode>100</DutyRegimeCode>
+            <DutyRegimeCode>${xmlEscape(item.Commodity.DutyTaxFee?.DutyRegimeCode || "100")}</DutyRegimeCode>
+            <TypeCode>A00</TypeCode>
+          </DutyTaxFee>
+          <DutyTaxFee>
+            <TypeCode>B00</TypeCode>
           </DutyTaxFee>
           <GoodsMeasure>
             <GrossMassMeasure unitCode="KGM">${xmlEscape(item.Commodity.GoodsMeasure.GrossMassMeasure)}</GrossMassMeasure>
             <NetNetWeightMeasure unitCode="KGM">${xmlEscape(item.Commodity.GoodsMeasure.NetNetWeightMeasure)}</NetNetWeightMeasure>
           </GoodsMeasure>
           <InvoiceLine>
-            <ItemChargeAmount currencyID="${xmlEscape(item.StatisticalValueAmount.currencyID || "GBP")}">${xmlEscape(item.StatisticalValueAmount.value)}</ItemChargeAmount>
+            <ItemChargeAmount currencyID="${xmlEscape(item.Commodity.InvoiceLine?.ItemChargeAmount?.currencyID || item.StatisticalValueAmount.currencyID || "GBP")}">${xmlEscape(item.Commodity.InvoiceLine?.ItemChargeAmount?.value || item.StatisticalValueAmount.value)}</ItemChargeAmount>
           </InvoiceLine>
         </Commodity>
+        <CustomsValuation>
+          <MethodCode>${xmlEscape(item.CustomsValuation?.MethodCode || "1")}</MethodCode>
+        </CustomsValuation>
         ${proceduresXml}
+        ${item.Origin ? `<Origin>\n          <CountryCode>${xmlEscape(item.Origin.CountryCode)}</CountryCode>\n          <TypeCode>${xmlEscape(item.Origin.TypeCode || "1")}</TypeCode>\n        </Origin>` : ""}
         <Packaging>
           <SequenceNumeric>${xmlEscape(pkg.SequenceNumeric)}</SequenceNumeric>
           <MarksNumbersID>${xmlEscape(pkg.MarksNumbersID)}</MarksNumbersID>
           <QuantityQuantity>${xmlEscape(pkg.QuantityQuantity)}</QuantityQuantity>
           <TypeCode>${xmlEscape(pkg.TypeCode)}</TypeCode>
         </Packaging>
+        <ValuationAdjustment>
+          <AdditionCode>0000</AdditionCode>
+        </ValuationAdjustment>
       </GovernmentAgencyGoodsItem>`;
         })
         .join("")}

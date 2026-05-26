@@ -299,13 +299,31 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
       Declarant: {
         ID: String(declaration.eori || "").trim()
       },
-      // Exporter: only include a GB/XI EORI — never fall back to the declarant's own EORI.
-      // HMRC DE 3/2: "Do NOT enter if the exporter is not UK-based."
-      // CDS12073/57A: sending an empty Exporter element for non-UK exporters causes a
-      // header-level conflict. Omit the element entirely when no exporterEori is present.
-      ...(String(declaration.exporterEori || "").trim()
-        ? { Exporter: { ID: String(declaration.exporterEori).trim() } }
-        : {}),
+      // DE 3/1 Exporter: GB/XI EORI only for intra-UK/XI flows. For overseas imports
+      // (dispatch country ≠ GB/XI) declare the foreign exporter by Name+Address.
+      // CDS12073/57A fires when ExportCountry.ID and Origin.CountryCode both reference
+      // a foreign country with no Exporter party to anchor the declaration.
+      ...((() => {
+        const dispatch = String(declaration.dispatchCountry || "").trim().toUpperCase();
+        const eori = String(declaration.exporterEori || "").trim();
+        if (/^(GB|XI)\d{12}$/i.test(eori) && (dispatch === "GB" || dispatch === "XI")) {
+          return { Exporter: { ID: eori } };
+        }
+        if (dispatch && dispatch !== "GB" && dispatch !== "XI") {
+          return {
+            Exporter: {
+              Name: String(declaration.exporterName || "").trim() || "Test Exporter",
+              Address: {
+                CityName: String(declaration.exporterCity || "").trim(),
+                CountryCode: dispatch,
+                Line: String(declaration.exporterLine || "").trim(),
+                PostcodeID: String(declaration.exporterPostcode || "").trim(),
+              },
+            },
+          };
+        }
+        return {};
+      })()),
       UCR: {
         TraderAssignedReferenceID: ducr
       },
@@ -339,7 +357,9 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
            },
            GoodsLocation: {
              ID: declaration.locationId || "",
-             Name: declaration.locationName || deriveGoodsLocationName(declaration.locationId),
+             // DE 5/23: Name must be the exact HMRC goods location code from Appendix 16.
+             // declaration.locationName may be a human-readable label — always use locationId.
+             Name: deriveGoodsLocationName(declaration.locationId),
              TypeCode: declaration.locationTypeCode || "A",
              Address: {
                CountryCode: declaration.locationCountry || declaration.destinationCountry || "",

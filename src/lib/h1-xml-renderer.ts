@@ -98,11 +98,25 @@ export function renderH1Xml(payloadInfo: unknown): string {
   const d = read(asRecord(payloadInfo), "Declaration");
   const gs = read(d, "GoodsShipment");
   const consignment = read(gs, "Consignment");
-  // DE 3/1 Exporter — OMIT for all H1 IMA (import) declarations.
-  // Including a GB/XI EORI as Exporter on a DE-origin import contradicts
-  // ExportCountry.ID → CDS12073/57A + cascading 30A/103 conflicts.
-  // Exporter is only required on export (EX*) declarations.
-  const exporterXml = "";
+  // DE 3/1 Exporter — required for imports from non-GB/XI countries.
+  // Foreign exporters must be declared by Name+Address (never GB/XI EORI on an overseas import).
+  // Omitting the Exporter entirely on a non-GB import triggers CDS12073/57A + 30A/103 cascade
+  // because ExportCountry.ID and Origin.CountryCode both reference the foreign country at different
+  // hierarchy levels without a unifying Exporter declaration.
+  const exporterData = read(d, "Exporter");
+  const exporterEoriId = String(exporterData.ID || "").trim();
+  const exporterName = String(exporterData.Name || "").trim();
+  const exporterAddr = read(exporterData, "Address");
+  const exporterAddrCountry = String(exporterAddr.CountryCode || "").trim();
+  let exporterXml = "";
+  if (exporterEoriId) {
+    exporterXml = `\n    <Exporter>\n      <ID>${xmlEscape(exporterEoriId)}</ID>\n    </Exporter>`;
+  } else if (exporterName || exporterAddrCountry) {
+    const cityXml = exporterAddr.CityName ? `\n        <CityName>${xmlEscape(String(exporterAddr.CityName))}</CityName>` : "";
+    const lineXml = exporterAddr.Line ? `\n        <Line>${xmlEscape(String(exporterAddr.Line))}</Line>` : "";
+    const postcodeXml = exporterAddr.PostcodeID ? `\n        <PostcodeID>${xmlEscape(String(exporterAddr.PostcodeID))}</PostcodeID>` : "";
+    exporterXml = `\n    <Exporter>\n      <Name>${xmlEscape(exporterName || "Exporter")}</Name>\n      <Address>${cityXml}\n        <CountryCode>${xmlEscape(exporterAddrCountry)}</CountryCode>${lineXml}${postcodeXml}\n      </Address>\n    </Exporter>`;
+  }
   const previousDocs = asArray(gs.PreviousDocument);
   const previousDocumentXml = previousDocs.map((pd) => `
       <PreviousDocument>
@@ -229,6 +243,10 @@ export function renderH1Xml(payloadInfo: unknown): string {
           ${classificationXml}
           <DutyTaxFee>
             <DutyRegimeCode>${xmlEscape(dutyRegimeCode)}</DutyRegimeCode>
+            <TypeCode>A00</TypeCode>
+          </DutyTaxFee>
+          <DutyTaxFee>
+            <TypeCode>B00</TypeCode>
           </DutyTaxFee>
           <GoodsMeasure>
             <GrossMassMeasure unitCode="KGM">${xmlEscape(goodsMeasure.GrossMassMeasure || 0)}</GrossMassMeasure>
@@ -249,6 +267,9 @@ export function renderH1Xml(payloadInfo: unknown): string {
           <QuantityQuantity>${xmlEscape(packaging.QuantityQuantity)}</QuantityQuantity>
           <TypeCode>${xmlEscape(packaging.TypeCode)}</TypeCode>
         </Packaging>
+        <ValuationAdjustment>
+          <AdditionCode>0000</AdditionCode>
+        </ValuationAdjustment>
       </GovernmentAgencyGoodsItem>`;
       }).join("")}
       <Importer>
