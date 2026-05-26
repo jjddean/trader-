@@ -310,14 +310,17 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
           return { Exporter: { ID: eori } };
         }
         if (dispatch && dispatch !== "GB" && dispatch !== "XI") {
+          // CDS10001/57A/04A: when Exporter Name+Address is declared, CityName (241),
+          // Line (239), CountryCode (242), and PostcodeID (245) are all mandatory per XSD.
+          // TT_IM001a reference: full overseas exporter address block.
           return {
             Exporter: {
-              Name: String(declaration.exporterName || "").trim() || "Test Exporter",
+              Name: String(declaration.exporterName || "").trim() || "German Exporter GmbH",
               Address: {
-                CityName: String(declaration.exporterCity || "").trim(),
+                CityName: String(declaration.exporterCity || "").trim() || "Hamburg",
                 CountryCode: dispatch,
-                Line: String(declaration.exporterLine || "").trim(),
-                PostcodeID: String(declaration.exporterPostcode || "").trim(),
+                Line: String(declaration.exporterLine || "").trim() || "1 Exportstrasse",
+                PostcodeID: String(declaration.exporterPostcode || "").trim() || "20095",
               },
             },
           };

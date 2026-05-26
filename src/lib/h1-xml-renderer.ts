@@ -112,10 +112,8 @@ export function renderH1Xml(payloadInfo: unknown): string {
   if (exporterEoriId) {
     exporterXml = `\n    <Exporter>\n      <ID>${xmlEscape(exporterEoriId)}</ID>\n    </Exporter>`;
   } else if (exporterName || exporterAddrCountry) {
-    const cityXml = exporterAddr.CityName ? `\n        <CityName>${xmlEscape(String(exporterAddr.CityName))}</CityName>` : "";
-    const lineXml = exporterAddr.Line ? `\n        <Line>${xmlEscape(String(exporterAddr.Line))}</Line>` : "";
-    const postcodeXml = exporterAddr.PostcodeID ? `\n        <PostcodeID>${xmlEscape(String(exporterAddr.PostcodeID))}</PostcodeID>` : "";
-    exporterXml = `\n    <Exporter>\n      <Name>${xmlEscape(exporterName || "Exporter")}</Name>\n      <Address>${cityXml}\n        <CountryCode>${xmlEscape(exporterAddrCountry)}</CountryCode>${lineXml}${postcodeXml}\n      </Address>\n    </Exporter>`;
+    // XSD sequence: CityName → CountryCode → Line → PostcodeID (all mandatory when Address present).
+    exporterXml = `\n    <Exporter>\n      <Name>${xmlEscape(exporterName || "Exporter")}</Name>\n      <Address>\n        <CityName>${xmlEscape(String(exporterAddr.CityName || ""))}</CityName>\n        <CountryCode>${xmlEscape(exporterAddrCountry)}</CountryCode>\n        <Line>${xmlEscape(String(exporterAddr.Line || ""))}</Line>\n        <PostcodeID>${xmlEscape(String(exporterAddr.PostcodeID || ""))}</PostcodeID>\n      </Address>\n    </Exporter>`;
   }
   const previousDocs = asArray(gs.PreviousDocument);
   const previousDocumentXml = previousDocs.map((pd) => `

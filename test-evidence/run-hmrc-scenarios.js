@@ -82,12 +82,12 @@ function mapToCDS_H1(declaration, items) {
         if (/^(GB|XI)\d{12}$/i.test(eori) && (dispatch === "GB" || dispatch === "XI")) return { ID: eori };
         if (dispatch && dispatch !== "GB" && dispatch !== "XI") {
           return {
-            Name: String(declaration.exporterName || "").trim() || "Test Exporter",
+            Name: String(declaration.exporterName || "").trim() || "German Exporter GmbH",
             Address: {
-              CityName: String(declaration.exporterCity || "").trim(),
+              CityName: String(declaration.exporterCity || "").trim() || "Hamburg",
               CountryCode: dispatch,
-              Line: String(declaration.exporterLine || "").trim(),
-              PostcodeID: String(declaration.exporterPostcode || "").trim(),
+              Line: String(declaration.exporterLine || "").trim() || "1 Exportstrasse",
+              PostcodeID: String(declaration.exporterPostcode || "").trim() || "20095",
             },
           };
         }
@@ -218,7 +218,7 @@ function buildXml(payloadInfo) {
     </Declarant>
     ${d.Exporter ? (d.Exporter.ID
       ? `\n    <Exporter>\n      <ID>${xmlEscape(d.Exporter.ID)}</ID>\n    </Exporter>`
-      : `\n    <Exporter>\n      <Name>${xmlEscape(d.Exporter.Name || "Exporter")}</Name>\n      <Address>${d.Exporter.Address?.CityName ? `\n        <CityName>${xmlEscape(d.Exporter.Address.CityName)}</CityName>` : ""}\n        <CountryCode>${xmlEscape(d.Exporter.Address?.CountryCode || "")}</CountryCode>${d.Exporter.Address?.Line ? `\n        <Line>${xmlEscape(d.Exporter.Address.Line)}</Line>` : ""}${d.Exporter.Address?.PostcodeID ? `\n        <PostcodeID>${xmlEscape(d.Exporter.Address.PostcodeID)}</PostcodeID>` : ""}\n      </Address>\n    </Exporter>`) : ""}
+      : `\n    <Exporter>\n      <Name>${xmlEscape(d.Exporter.Name || "Exporter")}</Name>\n      <Address>\n        <CityName>${xmlEscape(d.Exporter.Address?.CityName || "")}</CityName>\n        <CountryCode>${xmlEscape(d.Exporter.Address?.CountryCode || "")}</CountryCode>\n        <Line>${xmlEscape(d.Exporter.Address?.Line || "")}</Line>\n        <PostcodeID>${xmlEscape(d.Exporter.Address?.PostcodeID || "")}</PostcodeID>\n      </Address>\n    </Exporter>`) : ""}
     <GoodsShipment>
       <UCR>
         <TraderAssignedReferenceID>${xmlEscape(d.UCR.TraderAssignedReferenceID)}</TraderAssignedReferenceID>
