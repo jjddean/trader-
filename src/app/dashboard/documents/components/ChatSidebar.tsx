@@ -15,7 +15,7 @@ export default function ChatSidebar({ declarationId }: ChatSidebarProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 1. Live stream chat history context parameters natively from Convex
-  const contextData = useQuery(api.assistantQueries.getDeclarationContextForAI, {
+  const contextData = useQuery(api.assistantQueries.getAssistantContext, {
     declarationId,
   });
   
