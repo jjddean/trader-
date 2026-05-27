@@ -108,17 +108,19 @@ function mapToCDS_H1(declaration, items) {
             ID: declaration.transportId || "CSCL GLOBE",
             ModeCode: declaration.transportMode || "1",
           },
-          GoodsLocation: {
-            // DE 5/23: Name = HMRC goods location code. TypeCode and Address are mandatory.
-            // CDS10001/L110 and CDS10001/04A/410 fire when TypeCode and Address are absent.
-            // DE 5/23: Name must be the exact HMRC goods location code from Appendix 16.
-            Name: String(declaration.locationId || "").trim().toUpperCase() || "GBAUFXTFXTGW",
-            TypeCode: declaration.locationTypeCode || "A",
-            Address: {
-              TypeCode: declaration.locationQualifier || "U",
-              CountryCode: declaration.locationCountry || declaration.destinationCountry || "GB",
-            },
-          },
+          GoodsLocation: (() => {
+            const locId = String(declaration.locationId || "").trim().toUpperCase() || "GBAUFXTFXTGW";
+            const locNameById = { GBAUFXTFXTGW: "GBWLAFXTFXTGW" };
+            return {
+              ID: locId,
+              Name: locNameById[locId] ?? locId,
+              TypeCode: declaration.locationTypeCode || "A",
+              Address: {
+                TypeCode: declaration.locationQualifier || "U",
+                CountryCode: declaration.locationCountry || declaration.destinationCountry || "GB",
+              },
+            };
+          })(),
         },
         Destination: { CountryCode: declaration.destinationCountry || "GB" },
         ExportCountry: { ID: declaration.dispatchCountry || "BR" },
@@ -232,6 +234,7 @@ function buildXml(payloadInfo) {
         </ArrivalTransportMeans>
         <GoodsLocation>
           <Name>${xmlEscape(gs.Consignment.GoodsLocation.Name)}</Name>
+          ${gs.Consignment.GoodsLocation.ID ? `<ID>${xmlEscape(gs.Consignment.GoodsLocation.ID)}</ID>` : ""}
           ${gs.Consignment.GoodsLocation.TypeCode ? `<TypeCode>${xmlEscape(gs.Consignment.GoodsLocation.TypeCode)}</TypeCode>` : ""}
           ${gs.Consignment.GoodsLocation.Address ? `<Address>${gs.Consignment.GoodsLocation.Address.TypeCode ? `<TypeCode>${xmlEscape(gs.Consignment.GoodsLocation.Address.TypeCode)}</TypeCode>` : ""}${gs.Consignment.GoodsLocation.Address.CountryCode ? `<CountryCode>${xmlEscape(gs.Consignment.GoodsLocation.Address.CountryCode)}</CountryCode>` : ""}</Address>` : ""}
         </GoodsLocation>

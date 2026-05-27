@@ -56,11 +56,16 @@ function commodityClassifications(codeValue: unknown) {
   return code ? [{ ID: code, IdentificationTypeCode: "TSP" }] : [];
 }
 
-function deriveGoodsLocationName(value: unknown): string {
-  // Return the raw code as-is. "GBWLAFXTFXTGW" was an invented transformation
-  // that CDS rejects (CDS12099/L016). The locationId value itself is the HMRC
-  // goods location code that goes in the Name field.
-  return String(value || "").trim().toUpperCase();
+// DE 5/23 — Goods location uses two codes: Identification (ID) and Name (L016).
+// For Felixstowe, TDR_Integration_Reference.md: ID=GBAUFXTFXTGW, Name=GBWLAFXTFXTGW.
+// Sending locationId in both fields triggers CDS12099 (invalid combination).
+const GOODS_LOCATION_NAME_BY_ID: Record<string, string> = {
+  GBAUFXTFXTGW: "GBWLAFXTFXTGW",
+};
+
+function deriveGoodsLocationName(locationId: unknown): string {
+  const id = String(locationId || "").trim().toUpperCase();
+  return GOODS_LOCATION_NAME_BY_ID[id] ?? id;
 }
 
 function isBrChickenTestLane(declaration: any, item: any): boolean {
@@ -359,16 +364,13 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
              ModeCode: declaration.transportMode || "",
            },
            GoodsLocation: {
-             ID: declaration.locationId || "",
-             // DE 5/23: Name must be the exact HMRC goods location code from Appendix 16.
-             // declaration.locationName may be a human-readable label — always use locationId.
+             ID: String(declaration.locationId || "").trim().toUpperCase(),
              Name: deriveGoodsLocationName(declaration.locationId),
              TypeCode: declaration.locationTypeCode || "A",
+             // TT_IM001a: Address is TypeCode (qualifier) + CountryCode only — no Line/Postcode.
              Address: {
-               CountryCode: declaration.locationCountry || declaration.destinationCountry || "",
-               Line: declaration.locationLine || declaration.locationId || "",
-               PostcodeID: declaration.locationPostcode || "",
                TypeCode: declaration.locationQualifier || "U",
+               CountryCode: declaration.locationCountry || declaration.destinationCountry || "GB",
              },
            }
         },

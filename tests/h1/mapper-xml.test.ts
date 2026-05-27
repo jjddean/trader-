@@ -61,6 +61,7 @@ describe("H1 mapper and XML renderer", () => {
     assert.equal(shipment.ExportCountry.ID, "DE");
     assert.equal(shipment.Importer.ID, "GB243617410764");
     assert.equal(shipment.Consignment.GoodsLocation.ID, "GBAUFXTFXTGW");
+    assert.equal(shipment.Consignment.GoodsLocation.Name, "GBWLAFXTFXTGW");
     assert.equal(shipment.Consignment.ArrivalTransportMeans.ID, "CSCLGLOBE");
     assert.equal(shipment.TradeTerms.ConditionCode, "CIF");
     assert.equal(shipment.TradeTerms.LocationID, "Felixstowe");
