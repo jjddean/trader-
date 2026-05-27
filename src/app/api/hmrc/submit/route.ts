@@ -6,6 +6,7 @@ import { mapToCDS_H1, validateCdsCodeLists } from "../../../../lib/wco-mapper";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
 import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
 import { buildPayloadDebugSnapshot, renderH1Xml, validateXmlPreflight } from "../../../../lib/h1-xml-renderer";
+import { validateGoodsLocationForSubmit } from "../../../../lib/goods-location";
 import { evaluateRules, activeEffects, summarizeFailures, type RuleDefinition, type ScenarioInput } from "../../../../../convex/lib/rule_engine";
 
 type SubmitItemInput = {
@@ -34,6 +35,7 @@ type SubmitDeclarationInput = {
   dispatchCountry?: string;
   destinationCountry?: string;
   locationId?: string;
+  goodsLocationKind?: string;
   goodsLocationTypeCode?: string;
   goodsLocationQualifier?: string;
   transportMode?: string;
@@ -72,9 +74,7 @@ function validateDeclaration(lane: SubmitDeclarationInput, items: SubmitItemInpu
   if (!lane?.eori) errors.push("Missing declarant EORI");
   if (!lane?.dispatchCountry) errors.push("Missing dispatch country (DE 5/14)");
   if (!lane?.destinationCountry) errors.push("Missing destination country (DE 5/8)");
-  if (!lane?.locationId) errors.push("Missing goods location (DE 5/23)");
-  if (!lane?.goodsLocationTypeCode) errors.push("Missing goods location type (DE 5/23)");
-  if (!lane?.goodsLocationQualifier) errors.push("Missing goods location qualifier (DE 5/23)");
+  errors.push(...validateGoodsLocationForSubmit(lane || {}));
   if (!lane?.transportMode) errors.push("Missing transport mode (DE 7/4)");
   if (!lane?.transportId) errors.push("Missing transport identity (DE 7/9)");
   if (!lane?.transportIdType) errors.push("Missing transport identity type (DE 7/7)");

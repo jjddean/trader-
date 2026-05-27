@@ -1,4 +1,5 @@
 import { countries } from "./data/countries";
+import { resolveGoodsLocationForXml } from "./goods-location";
 
 // validateCdsFields was deleted. The submit route already runs evaluateRules
 // from convex/lib/rule_engine.ts before mapping — that is the single source
@@ -58,18 +59,6 @@ function commodityClassifications(codeValue: unknown) {
   return code ? [{ ID: code, IdentificationTypeCode: "TSP" }] : [];
 }
 
-// DE 5/23 — Goods location uses two codes: Identification (ID) and Name (L016).
-// For Felixstowe, TDR_Integration_Reference.md: ID=GBAUFXTFXTGW, Name=GBWLAFXTFXTGW.
-// Sending locationId in both fields triggers CDS12099 (invalid combination).
-const GOODS_LOCATION_NAME_BY_ID: Record<string, string> = {
-  GBAUFXTFXTGW: "GBWLAFXTFXTGW",
-};
-
-function deriveGoodsLocationName(locationId: unknown): string {
-  const id = String(locationId || "").trim().toUpperCase();
-  return GOODS_LOCATION_NAME_BY_ID[id] ?? id;
-}
-
 function normalizeCountryCode(value: unknown): string {
   const raw = String(value || "").trim();
   if (!raw) return "";
@@ -86,26 +75,8 @@ function normalizeCountryCode(value: unknown): string {
   return "";
 }
 
-interface ResolvedGoodsLocation {
-  ID: string;
-  Name: string;
-  TypeCode: string;
-  Address: { TypeCode: string; CountryCode: string };
-}
-
-function resolveGoodsLocation(declaration: any): ResolvedGoodsLocation {
-  const id = String(declaration.locationId || "").trim().toUpperCase();
-  const name = deriveGoodsLocationName(id);
-  const typeCode = String(declaration.goodsLocationTypeCode || declaration.locationTypeCode || "").trim().toUpperCase();
-  const qualifier = String(declaration.goodsLocationQualifier || declaration.locationQualifier || "").trim().toUpperCase();
-  const countryCode = normalizeCountryCode(declaration.destinationCountry);
-
-  return {
-    ID: id,
-    Name: name,
-    TypeCode: typeCode,
-    Address: { TypeCode: qualifier, CountryCode: countryCode },
-  };
+function resolveGoodsLocation(declaration: any) {
+  return resolveGoodsLocationForXml(declaration, normalizeCountryCode);
 }
 
 function isBrChickenTestLane(declaration: any, item: any): boolean {

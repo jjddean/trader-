@@ -7,6 +7,7 @@ export const HMRC_CONFIG = {
     v2Xml: process.env.HMRC_ACCEPT_V2_XML || "application/vnd.hmrc.2.0+xml",
     v2Json: process.env.HMRC_ACCEPT_V2_JSON || "application/vnd.hmrc.2.0+json",
     v1Xml: process.env.HMRC_ACCEPT_V1_XML || "application/vnd.hmrc.1.0+xml",
+    v1Json: process.env.HMRC_ACCEPT_V1_JSON || "application/vnd.hmrc.1.0+json",
   },
 
   vendor: {

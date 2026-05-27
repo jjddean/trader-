@@ -110,6 +110,8 @@ export default defineSchema({
     importerEori: v.optional(v.any()),
     presentationOffice: v.optional(v.any()),
     locationId: v.optional(v.any()),
+    /** port_unlocode | address — drives auto-mapped CDS type/qualifier (not free-text A/U). */
+    goodsLocationKind: v.optional(v.any()),
     goodsLocationTypeCode: v.optional(v.any()),
     goodsLocationQualifier: v.optional(v.any()),
     invoiceCurrency: v.optional(v.any()),

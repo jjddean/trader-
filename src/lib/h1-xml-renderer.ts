@@ -176,7 +176,7 @@ export function renderH1Xml(payloadInfo: unknown): string {
           const locationId = String(gl.ID || "").trim();
           if (!locationName && !locationId) return "";
           // XSD sequence (64A): Name (L016) → ID (L017) → TypeCode (L110) → Address (04A).
-          // DE 5/23 Felixstowe: Name=GBWLAFXTFXTGW, ID=GBAUFXTFXTGW (TDR_Integration_Reference.md).
+          // DE 5/23: Name = identification suffix; TypeCode + Address/TypeCode + CountryCode required (M*).
           const nameXml = locationName ? `<Name>${xmlEscape(locationName)}</Name>` : "";
           const idXml = locationId ? `<ID>${xmlEscape(locationId)}</ID>` : "";
           const typeCodeXml = gl.TypeCode ? `<TypeCode>${xmlEscape(gl.TypeCode)}</TypeCode>` : "";

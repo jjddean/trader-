@@ -95,10 +95,24 @@ export const saveWebhook = mutation({
 });
 
 export const getWebhooks = query({
-  args: { mrn: v.optional(v.string()), conversationId: v.optional(v.string()) },
+  args: {
+    mrn: v.optional(v.string()),
+    conversationId: v.optional(v.string()),
+    declarationId: v.optional(v.id("declarations")),
+  },
   handler: async (ctx, args) => {
     const seen = new Set<string>();
     const results: any[] = [];
+
+    if (args.declarationId) {
+      const declResults = await ctx.db
+        .query("notifications")
+        .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId!))
+        .take(100);
+      for (const n of declResults) {
+        if (!seen.has(n._id)) { seen.add(n._id); results.push(n); }
+      }
+    }
 
     if (args.conversationId) {
       const convResults = await ctx.db
@@ -110,9 +124,8 @@ export const getWebhooks = query({
       }
     }
 
-    // Only query by mrn if conversationId produced nothing — avoids a second index scan when
-    // conversationId is the authoritative link (post-submission normal path).
-    if (args.mrn && args.mrn !== "UNKNOWN" && results.length === 0) {
+    // Same MRN across resubmits — bell already shows these; timeline must too.
+    if (args.mrn && args.mrn !== "UNKNOWN") {
       const mrnResults = await ctx.db
         .query("notifications")
         .withIndex("by_mrn", (q) => q.eq("mrn", args.mrn!))

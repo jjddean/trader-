@@ -6,6 +6,19 @@ import { parseHmrcNotification } from "../../../../../lib/hmrc-notification-pars
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 /**
+ * GET /api/hmrc/webhooks/notify?challenge=...
+ * HMRC Developer Hub validates Push/Callback URLs with a challenge query param.
+ * Must return 200 and JSON { "challenge": "<same value>" } within 20 seconds.
+ */
+export async function GET(request: Request) {
+  const challenge = new URL(request.url).searchParams.get("challenge");
+  if (!challenge) {
+    return NextResponse.json({ error: "Missing challenge query parameter" }, { status: 400 });
+  }
+  return NextResponse.json({ challenge });
+}
+
+/**
  * POST /api/hmrc/webhooks/notify
  * HMRC Push Notification endpoint (Trade Test v2.0 sandbox + production).
  * HMRC POSTs DMS* notifications here once a submitted declaration changes state.

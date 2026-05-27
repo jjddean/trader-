@@ -104,7 +104,9 @@ export async function fetchHmrc(
   // (PAYLOAD_FORBIDDEN). Suppress it whenever Accept is v2.0.
   const acceptHeader = String(hmrcHeaders["Accept"] || "");
   const isV2 = acceptHeader.includes("hmrc.2.0");
-  if (testScenario && !isV2) {
+  const isNotificationsApi = endpoint.includes("/notifications/");
+  // Gov-Test-Scenario is for declaration sandbox only — sending it on pull/push APIs returns 400.
+  if (testScenario && !isV2 && !isNotificationsApi) {
     hmrcHeaders["Gov-Test-Scenario"] = testScenario;
   }
 

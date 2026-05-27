@@ -109,27 +109,18 @@ function mapToCDS_H1(declaration, items) {
             ModeCode: declaration.transportMode || "1",
           },
           GoodsLocation: (() => {
-            const locId = String(declaration.locationId || "").trim().toUpperCase() || "GBAUFXTFXTGW";
-            const locNameById = { GBAUFXTFXTGW: "GBWLAFXTFXTGW" };
-            if (locNameById[locId]) {
-              return {
-                ID: locId,
-                Name: locNameById[locId],
-                TypeCode: declaration.locationTypeCode || "B",
-                Address: {
-                  TypeCode: declaration.locationQualifier || "U",
-                  CountryCode: declaration.locationCountry || "GB",
-                },
-              };
-            }
+            const consolidated = String(declaration.locationId || "").trim().toUpperCase() || "GBAUFXTFXTGW";
+            const countryCode = String(declaration.locationCountry || declaration.destinationCountry || "GB").trim().toUpperCase();
+            const typeCode = String(declaration.goodsLocationTypeCode || "A").trim().toUpperCase();
+            const qualifier = String(declaration.goodsLocationQualifier || "U").trim().toUpperCase();
+            let identification = consolidated;
+            if (countryCode && identification.startsWith(countryCode)) identification = identification.slice(countryCode.length);
+            if (typeCode && identification.startsWith(typeCode)) identification = identification.slice(1);
+            if (qualifier && identification.startsWith(qualifier)) identification = identification.slice(1);
             return {
-              ID: locId,
-              Name: locNameById[locId] ?? locId,
-              TypeCode: declaration.locationTypeCode || "A",
-              Address: {
-                TypeCode: declaration.locationQualifier || "U",
-                CountryCode: declaration.locationCountry || declaration.destinationCountry || "GB",
-              },
+              Name: identification,
+              TypeCode: typeCode,
+              Address: { TypeCode: qualifier, CountryCode: countryCode },
             };
           })(),
         },
@@ -513,8 +504,10 @@ async function run() {
     totalGrossWeight: 120,
     invoiceCurrency: "GBP",
     invoiceTotal: 5000,
-    locationName: "GBAUFXTFXTGW",
     locationId: "GBAUFXTFXTGW",
+    goodsLocationKind: "port_unlocode",
+    goodsLocationTypeCode: "A",
+    goodsLocationQualifier: "U",
     destinationCountry: "GB",
     dispatchCountry: "DE",
     incoterms: "CIF",

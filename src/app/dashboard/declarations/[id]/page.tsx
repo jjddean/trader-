@@ -9,6 +9,12 @@ import { Id } from "../../../../../convex/_generated/dataModel";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Loader2, Info } from "lucide-react";
 import { countries } from "@/lib/data/countries";
+import {
+  cdsCodesForGoodsLocationKind,
+  GOODS_LOCATION_KIND_OPTIONS,
+  inferGoodsLocationKind,
+  type GoodsLocationKind,
+} from "@/lib/goods-location";
 
 export default function CoreSchemaPage() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -42,9 +48,8 @@ export default function CoreSchemaPage() {
     invoiceTotal: "",
     incoterms: "",
     incotermLocation: "",
+    goodsLocationKind: "" as GoodsLocationKind | "",
     locationId: "",
-    goodsLocationTypeCode: "",
-    goodsLocationQualifier: "",
     presentationOffice: "",
   });
 
@@ -66,9 +71,13 @@ export default function CoreSchemaPage() {
         invoiceTotal: d.invoiceTotal != null ? String(d.invoiceTotal) : "",
         incoterms: (d.incoterms as string) || "",
         incotermLocation: (d.incotermLocation as string) || "",
+        goodsLocationKind:
+          inferGoodsLocationKind({
+            goodsLocationKind: d.goodsLocationKind,
+            goodsLocationTypeCode: d.goodsLocationTypeCode,
+            goodsLocationQualifier: d.goodsLocationQualifier,
+          }) || "",
         locationId: (d.locationId as string) || "",
-        goodsLocationTypeCode: (d.goodsLocationTypeCode as string) || "",
-        goodsLocationQualifier: (d.goodsLocationQualifier as string) || "",
         presentationOffice: (d.presentationOffice as string) || "",
       });
     }
@@ -96,9 +105,19 @@ export default function CoreSchemaPage() {
         invoiceTotal: invoiceTotalParsed === null || Number.isFinite(invoiceTotalParsed) ? invoiceTotalParsed : null,
         incoterms: formData.incoterms.trim().toUpperCase(),
         incotermLocation: formData.incotermLocation.trim(),
+        goodsLocationKind: formData.goodsLocationKind || undefined,
         locationId: formData.locationId.trim(),
-        goodsLocationTypeCode: formData.goodsLocationTypeCode.trim().toUpperCase(),
-        goodsLocationQualifier: formData.goodsLocationQualifier.trim().toUpperCase(),
+        ...(formData.goodsLocationKind
+          ? (() => {
+              const cds = cdsCodesForGoodsLocationKind(formData.goodsLocationKind);
+              return cds
+                ? {
+                    goodsLocationTypeCode: cds.typeCode,
+                    goodsLocationQualifier: cds.qualifier,
+                  }
+                : {};
+            })()
+          : {}),
         presentationOffice: formData.presentationOffice.trim(),
       });
     } catch (e) {
@@ -266,52 +285,60 @@ export default function CoreSchemaPage() {
               </select>
             </div>
 
-            {/* Goods Location — DE 5/23. A-mandatory per Appendix 21A. */}
+            {/* DE 5/23 — kind drives CDS type/qualifier; raw A/U/V must not be typed manually. */}
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
-                Goods Location (DE 5/23)
+                Goods location method (DE 5/23)
+                <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.goodsLocationKind}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    goodsLocationKind: e.target.value as GoodsLocationKind | "",
+                  })
+                }
+                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+              >
+                <option value="">Select how the location is identified</option>
+                {GOODS_LOCATION_KIND_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              {formData.goodsLocationKind === "port_unlocode" && (
+                <p className="text-[10px] text-gray-500">
+                  CDS: designated location (type A) + UN/LOCODE identifier (qualifier U). Codes are set
+                  automatically — do not enter A/B or U/V manually.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+                Goods location code (DE 5/23)
                 <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.locationId}
                 onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
-                placeholder="e.g. GBAUFXTFXTGW"
-                className="w-full rounded-md border border-gray-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                placeholder={
+                  formData.goodsLocationKind === "port_unlocode"
+                    ? "e.g. GBAUFXTFXTGW"
+                    : "Appendix 16 consolidated code"
+                }
+                disabled={!formData.goodsLocationKind}
+                className="w-full rounded-md border border-gray-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50 disabled:bg-gray-50"
               />
               <p className="text-[10px] text-gray-400 flex items-center gap-1">
                 <Info className="h-3 w-3" />
-                UN/LOCODE or HMRC location code. No default.
+                {formData.goodsLocationKind === "port_unlocode"
+                  ? "Full HMRC port code from Appendix 16 (includes GB + type + UN/LOCODE qualifier)."
+                  : "Select a location method first, then enter the matching Appendix 16 code."}
               </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
-                  Goods Location Type
-                  <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.goodsLocationTypeCode}
-                  onChange={(e) => setFormData({ ...formData, goodsLocationTypeCode: e.target.value })}
-                  placeholder="e.g. A / B"
-                  className="w-full rounded-md border border-gray-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
-                  Goods Location Qualifier
-                  <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.goodsLocationQualifier}
-                  onChange={(e) => setFormData({ ...formData, goodsLocationQualifier: e.target.value })}
-                  placeholder="e.g. U / V"
-                  className="w-full rounded-md border border-gray-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
-                />
-              </div>
             </div>
 
             {/* Presentation Office — DE 5/26. Conditional per Appendix 21A. */}
