@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-16T17:26:35.940Z",
+  "timestamp": "2026-05-27T19:24:31.418Z",
   "mode": "DRY_RUN_ONLY",
   "submitEnabled": false,
   "endpoint": "https://test-api.service.hmrc.gov.uk/customs/declarations",
@@ -17,21 +17,23 @@
     "xml_has_declarant_id": true,
     "xml_has_importer_id": true,
     "xml_has_hs_code": true,
+    "xml_has_dispatch_de": true,
     "xml_no_y922": true,
-    "xml_has_n853": true,
+    "xml_has_n935": true,
+    "xml_has_n271": true,
     "eori_format_valid": true
   },
   "failed": [],
   "readyToSubmit": true,
   "lane": {
-    "hs": "0207129000",
+    "hs": "8471300000",
     "cpc": "4000 000",
-    "origin": "BR",
+    "origin": "DE",
     "type": "IMA",
+    "description": "Portable automatic data processing machine (laptops)",
     "documents": [
-      "N853",
-      "Y930",
-      "Y929"
+      "N935",
+      "N271"
     ]
   }
 }

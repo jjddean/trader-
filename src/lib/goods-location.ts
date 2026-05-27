@@ -51,8 +51,13 @@ export function normalizeGoodsLocationKind(value: unknown): GoodsLocationKind | 
 
 export function inferGoodsLocationKind(declaration: {
   goodsLocationKind?: unknown;
+  locationId?: unknown;
 }): GoodsLocationKind | "" {
-  return normalizeGoodsLocationKind(declaration.goodsLocationKind);
+  const explicit = normalizeGoodsLocationKind(declaration.goodsLocationKind);
+  if (explicit) return explicit;
+  const locationId = String(declaration.locationId || "").trim().toUpperCase();
+  if (locationId && PORT_LOCATION_NAME_BY_ID[locationId]) return "port";
+  return "";
 }
 
 /** PORT mode — Name + ID only. */
@@ -78,6 +83,16 @@ export function resolveGoodsLocationForXml(declaration: {
   if (kind === "port") {
     const port = resolvePortGoodsLocation(locationId);
     if (port) return port;
+    // PORT selected but ID not in map: still emit Name+ID using the same code for both
+    // so XML stays in PORT shape (Name + ID only). Preflight validation will flag this.
+    if (locationId) {
+      return {
+        Name: locationId,
+        ID: locationId,
+        TypeCode: "",
+        Address: { TypeCode: "", CountryCode: "" },
+      };
+    }
   }
 
   return {

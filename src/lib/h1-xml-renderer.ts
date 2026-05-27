@@ -170,22 +170,15 @@ export function renderH1Xml(payloadInfo: unknown): string {
       <Consignment>
         <ContainerCode>${xmlEscape(consignment.ContainerCode)}</ContainerCode>${arrivalTransportMeansXml}
         ${(() => {
+          // DE 5/23 PORT-only hard gate: emit Name + ID exclusively.
+          // L110 (TypeCode) and 04A (Address) are NEVER emitted here.
           const gl = read(consignment, "GoodsLocation");
-          const glAddr = read(gl, "Address");
           const locationName = String(gl.Name || "").trim();
           const locationId = String(gl.ID || "").trim();
           if (!locationName && !locationId) return "";
-          // XSD sequence (64A): Name (L016) → ID (L017) → TypeCode (L110) → Address (04A).
-          // DE 5/23 PORT mode: Name + ID only — omit empty TypeCode and Address.
           const nameXml = locationName ? `<Name>${xmlEscape(locationName)}</Name>` : "";
           const idXml = locationId ? `<ID>${xmlEscape(locationId)}</ID>` : "";
-          const typeCodeXml = gl.TypeCode ? `<TypeCode>${xmlEscape(gl.TypeCode)}</TypeCode>` : "";
-          const addrTypeXml = glAddr.TypeCode ? `<TypeCode>${xmlEscape(glAddr.TypeCode)}</TypeCode>` : "";
-          const addrCountryXml = glAddr.CountryCode ? `<CountryCode>${xmlEscape(glAddr.CountryCode)}</CountryCode>` : "";
-          const addrXml = (addrTypeXml || addrCountryXml)
-            ? `<Address>${addrTypeXml}${addrCountryXml}</Address>`
-            : "";
-          return `<GoodsLocation>${nameXml}${idXml}${typeCodeXml}${addrXml}</GoodsLocation>`;
+          return `<GoodsLocation>${nameXml}${idXml}</GoodsLocation>`;
         })()}
       </Consignment>
       <Destination>

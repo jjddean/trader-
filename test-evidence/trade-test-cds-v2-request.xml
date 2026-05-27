@@ -1,4 +1,4 @@
-<!-- timestamp: 2026-05-16T17:26:35.937Z | http_status: 0 | conversation_id: DRY_RUN -->
+<!-- timestamp: 2026-05-27T19:24:31.416Z | http_status: 0 | conversation_id: DRY_RUN -->
 <!-- request_accept: application/vnd.hmrc.2.0+xml | request_content_type: application/xml; charset=UTF-8 | request_authorization: Bearer [REDACTED] | request_x_client_id: ZSoA1lpJi8FyuzSsncFrOZKpmrNe | request_gov_test_scenario: ABSENT -->
 <?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
@@ -9,13 +9,13 @@
   <AgencyAssignedCustomizationVersionCode>v2.1</AgencyAssignedCustomizationVersionCode>
   <Declaration xmlns="urn:wco:datamodel:WCO:DEC-DMS:2" xmlns:clm63055="urn:un:unece:uncefact:codelist:standard:UNECE:AgencyIdentificationCode:D12B" xmlns:ds="urn:wco:datamodel:WCO:MetaData_DS-DMS:2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2 ../DocumentMetaData_2_DMS.xsd ">
     <FunctionCode>9</FunctionCode>
-    <FunctionalReferenceID>TT-1778952395631</FunctionalReferenceID>
+    <FunctionalReferenceID>TT-1779909871108</FunctionalReferenceID>
     <TypeCode>IMA</TypeCode>
     <GoodsItemQuantity>1</GoodsItemQuantity>
-    <DeclarationOfficeID>GB000051</DeclarationOfficeID>
-    <InvoiceAmount currencyID="GBP">4200</InvoiceAmount>
+    <DeclarationOfficeID></DeclarationOfficeID>
+    <InvoiceAmount currencyID="GBP">5000</InvoiceAmount>
     <TotalGrossMassMeasure unitCode="KGM">120</TotalGrossMassMeasure>
-    <TotalPackageQuantity>8</TotalPackageQuantity>
+    <TotalPackageQuantity>1</TotalPackageQuantity>
     <CurrencyExchange>
       <CurrencyTypeCode>GBP</CurrencyTypeCode>
     </CurrencyExchange>
@@ -23,9 +23,18 @@
       <ID>GB243617410764</ID>
     </Declarant>
     
+    <Exporter>
+      <Name>German Exporter GmbH</Name>
+      <Address>
+        <CityName>Hamburg</CityName>
+        <CountryCode>DE</CountryCode>
+        <Line>1 Exportstrasse</Line>
+        <PostcodeID>20095</PostcodeID>
+      </Address>
+    </Exporter>
     <GoodsShipment>
       <UCR>
-        <TraderAssignedReferenceID>6GB243617410764-1778952395631</TraderAssignedReferenceID>
+        <TraderAssignedReferenceID>6GB243617410764-1779909871108</TraderAssignedReferenceID>
       </UCR>
       <Consignment>
         <ContainerCode>0</ContainerCode>
@@ -37,55 +46,63 @@
         <GoodsLocation>
           <Name>GBWLAFXTFXTGW</Name>
           <ID>GBAUFXTFXTGW</ID>
+          
+          
         </GoodsLocation>
       </Consignment>
       <Destination>
         <CountryCode>GB</CountryCode>
       </Destination>
       <ExportCountry>
-        <ID>BR</ID>
+        <ID>DE</ID>
       </ExportCountry>
       <Importer>
         <ID>GB243617410764</ID>
       </Importer>
       <TradeTerms>
-        <ConditionCode>FOB</ConditionCode>
-        <LocationID>GBFXT</LocationID>
+        <ConditionCode>CIF</ConditionCode>
       </TradeTerms>
       
       <GovernmentAgencyGoodsItem>
         <SequenceNumeric>1</SequenceNumeric>
-        <StatisticalValueAmount currencyID="GBP">4200</StatisticalValueAmount>
+        <StatisticalValueAmount currencyID="GBP">5000</StatisticalValueAmount>
         
         <AdditionalDocument>
           <CategoryCode>N</CategoryCode>
-          <ID>GBCHD2026.1234567</ID>
-          <TypeCode>853</TypeCode>
-          <LPCOExemptionCode>XW</LPCOExemptionCode>
+          <ID>INV-2026-LAPTOPS-001</ID>
+          <TypeCode>935</TypeCode>
+          <LPCOExemptionCode>AC</LPCOExemptionCode>
         </AdditionalDocument>
         <AdditionalDocument>
-          <CategoryCode>Y</CategoryCode>
-          <ID>Excluded</ID>
-          <TypeCode>930</TypeCode>
-          <LPCOExemptionCode>XB</LPCOExemptionCode>
+          <CategoryCode>N</CategoryCode>
+          <ID>PL-2026-LAPTOPS-001</ID>
+          <TypeCode>271</TypeCode>
+          <LPCOExemptionCode>AC</LPCOExemptionCode>
         </AdditionalDocument>
-        <AdditionalDocument>
-          <CategoryCode>Y</CategoryCode>
-          <ID>Excluded</ID>
-          <TypeCode>929</TypeCode>
-          <LPCOExemptionCode>XB</LPCOExemptionCode>
-        </AdditionalDocument>
-        <Commodity>
-          <Description>Frozen whole chicken, not cut in pieces, Gallus domesticus</Description>
+          <Commodity>
+          <Description>Portable automatic data processing machine, weight not exceeding 10kg</Description>
           <Classification>
-            <ID>0207129000</ID>
+            <ID>8471300000</ID>
             <IdentificationTypeCode>TSP</IdentificationTypeCode>
           </Classification>
+          <DutyTaxFee>
+            <DutyRegimeCode>100</DutyRegimeCode>
+            <TypeCode>A00</TypeCode>
+          </DutyTaxFee>
+          <DutyTaxFee>
+            <TypeCode>B00</TypeCode>
+          </DutyTaxFee>
           <GoodsMeasure>
             <GrossMassMeasure unitCode="KGM">120</GrossMassMeasure>
-            <NetNetWeightMeasure unitCode="KGM">118</NetNetWeightMeasure>
+            <NetNetWeightMeasure unitCode="KGM">110</NetNetWeightMeasure>
           </GoodsMeasure>
+          <InvoiceLine>
+            <ItemChargeAmount currencyID="GBP">5000</ItemChargeAmount>
+          </InvoiceLine>
         </Commodity>
+        <CustomsValuation>
+          <MethodCode>1</MethodCode>
+        </CustomsValuation>
         
         <GovernmentProcedure>
           <CurrentCode>40</CurrentCode>
@@ -95,12 +112,16 @@
           <CurrentCode>000</CurrentCode>
           
         </GovernmentProcedure>
+        
         <Packaging>
           <SequenceNumeric>1</SequenceNumeric>
-          <MarksNumbersID>N/A</MarksNumbersID>
-          <QuantityQuantity>8</QuantityQuantity>
+          <MarksNumbersID>TEST-MARK-LAPTOPS-001</MarksNumbersID>
+          <QuantityQuantity>1</QuantityQuantity>
           <TypeCode>PK</TypeCode>
         </Packaging>
+        <ValuationAdjustment>
+          <AdditionCode>0000</AdditionCode>
+        </ValuationAdjustment>
       </GovernmentAgencyGoodsItem>
     </GoodsShipment>
   </Declaration>
