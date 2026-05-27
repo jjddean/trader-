@@ -1,3 +1,5 @@
+import { countries } from "./data/countries";
+
 // validateCdsFields was deleted. The submit route already runs evaluateRules
 // from convex/lib/rule_engine.ts before mapping — that is the single source
 // of validation. Adding a new check = adding a rule to rule_definitions
@@ -69,15 +71,19 @@ function deriveGoodsLocationName(locationId: unknown): string {
 }
 
 function normalizeCountryCode(value: unknown): string {
-  const raw = String(value || "").trim().toUpperCase();
+  const raw = String(value || "").trim();
   if (!raw) return "";
-  // Accept values like "DE", "DE - Germany", "Germany (DE)" (best-effort).
-  if (/^[A-Z]{2}$/.test(raw)) return raw;
-  const m1 = raw.match(/^([A-Z]{2})\b/);
-  if (m1) return m1[1];
-  const m2 = raw.match(/\b([A-Z]{2})\b/);
-  if (m2) return m2[1];
-  return raw;
+  const upper = raw.toUpperCase();
+  if (/^[A-Z]{2}$/.test(upper)) return upper;
+  const prefix = upper.match(/^([A-Z]{2})\b/);
+  if (prefix) return prefix[1];
+  const paren = upper.match(/\(([A-Z]{2})\)/);
+  if (paren) return paren[1];
+  const byName = countries.find(
+    (c) => c.name.toUpperCase() === upper || c.code.toUpperCase() === upper,
+  );
+  if (byName) return byName.code;
+  return "";
 }
 
 interface ResolvedGoodsLocation {
@@ -343,7 +349,7 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
       // CDS12073/57A fires when ExportCountry.ID and Origin.CountryCode both reference
       // a foreign country with no Exporter party to anchor the declaration.
       ...((() => {
-        const dispatch = String(declaration.dispatchCountry || "").trim().toUpperCase();
+        const dispatch = normalizeCountryCode(declaration.dispatchCountry);
         const eori = String(declaration.exporterEori || "").trim();
         if (/^(GB|XI)\d{12}$/i.test(eori) && (dispatch === "GB" || dispatch === "XI")) {
           return { Exporter: { ID: eori } };
@@ -490,7 +496,8 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
             ...((() => {
               const origin = normalizeCountryCode(item.originCountry);
               const dispatch = normalizeCountryCode(declaration.dispatchCountry);
-              if (!origin || (dispatch && origin === dispatch)) return {};
+              // DE 5/16 at item duplicates DE 5/14 ExportCountry when same country (CDS12073/103).
+              if (!origin || !dispatch || origin === dispatch) return {};
               return {
                 Origin: {
                   CountryCode: origin,
