@@ -227,12 +227,7 @@ function buildXml(payloadInfo) {
           <IdentificationTypeCode>${xmlEscape(gs.Consignment.BorderTransportMeans.IdentificationTypeCode)}</IdentificationTypeCode>
           <ModeCode>${xmlEscape(gs.Consignment.BorderTransportMeans.ModeCode)}</ModeCode>
         </ArrivalTransportMeans>
-        <GoodsLocation>
-          <Name>${xmlEscape(gs.Consignment.GoodsLocation.Name)}</Name>
-          ${gs.Consignment.GoodsLocation.ID ? `<ID>${xmlEscape(gs.Consignment.GoodsLocation.ID)}</ID>` : ""}
-          ${gs.Consignment.GoodsLocation.TypeCode ? `<TypeCode>${xmlEscape(gs.Consignment.GoodsLocation.TypeCode)}</TypeCode>` : ""}
-          ${gs.Consignment.GoodsLocation.Address ? `<Address>${gs.Consignment.GoodsLocation.Address.TypeCode ? `<TypeCode>${xmlEscape(gs.Consignment.GoodsLocation.Address.TypeCode)}</TypeCode>` : ""}${gs.Consignment.GoodsLocation.Address.CountryCode ? `<CountryCode>${xmlEscape(gs.Consignment.GoodsLocation.Address.CountryCode)}</CountryCode>` : ""}</Address>` : ""}
-        </GoodsLocation>
+        <GoodsLocation><Name>${xmlEscape(gs.Consignment.GoodsLocation.Name)}</Name>${gs.Consignment.GoodsLocation.ID ? `<ID>${xmlEscape(gs.Consignment.GoodsLocation.ID)}</ID>` : ""}</GoodsLocation>
       </Consignment>
       <Destination>
         <CountryCode>${xmlEscape(gs.Destination.CountryCode)}</CountryCode>
