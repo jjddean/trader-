@@ -110,6 +110,8 @@ export default defineSchema({
     importerEori: v.optional(v.any()),
     presentationOffice: v.optional(v.any()),
     locationId: v.optional(v.any()),
+    goodsLocationTypeCode: v.optional(v.any()),
+    goodsLocationQualifier: v.optional(v.any()),
     invoiceCurrency: v.optional(v.any()),
     savingsEstimate: v.optional(v.any()),
     tier: v.optional(v.any()),

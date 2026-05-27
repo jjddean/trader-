@@ -80,6 +80,28 @@ function normalizeCountryCode(value: unknown): string {
   return raw;
 }
 
+interface ResolvedGoodsLocation {
+  ID: string;
+  Name: string;
+  TypeCode: string;
+  Address: { TypeCode: string; CountryCode: string };
+}
+
+function resolveGoodsLocation(declaration: any): ResolvedGoodsLocation {
+  const id = String(declaration.locationId || "").trim().toUpperCase();
+  const name = deriveGoodsLocationName(id);
+  const typeCode = String(declaration.goodsLocationTypeCode || declaration.locationTypeCode || "").trim().toUpperCase();
+  const qualifier = String(declaration.goodsLocationQualifier || declaration.locationQualifier || "").trim().toUpperCase();
+  const countryCode = normalizeCountryCode(declaration.destinationCountry);
+
+  return {
+    ID: id,
+    Name: name,
+    TypeCode: typeCode,
+    Address: { TypeCode: qualifier, CountryCode: countryCode },
+  };
+}
+
 function isBrChickenTestLane(declaration: any, item: any): boolean {
   const dispatchCountry = String(declaration?.dispatchCountry || "").trim().toUpperCase();
   const commodityCode = String(item?.commodityCode || item?.hsCode || "").replace(/\s+/g, "");
@@ -365,34 +387,7 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
              IdentificationTypeCode: declaration.transportIdType || "",
              ModeCode: declaration.transportMode || "",
            },
-           GoodsLocation: (() => {
-             const locId = String(declaration.locationId || "").trim().toUpperCase();
-             const locName = deriveGoodsLocationName(declaration.locationId);
-             // Felixstowe (GBAUFXTFXTGW):
-             // - Omitting TypeCode/Address triggers CDS10001 at 64A/L110 and 64A/04A/410.
-             // - Using the old default combo triggered CDS12099.
-             // For known Felixstowe lane: force a stable TypeCode + Address qualifier.
-             if (GOODS_LOCATION_NAME_BY_ID[locId]) {
-               return {
-                 ID: locId,
-                 Name: locName,
-                 TypeCode: String(declaration.locationTypeCode || "").trim() || "B",
-                 Address: {
-                   TypeCode: String(declaration.locationQualifier || "").trim() || "U",
-                   CountryCode: String(declaration.locationCountry || "").trim() || "GB",
-                 },
-               };
-             }
-             return {
-               ID: locId,
-               Name: locName,
-               TypeCode: declaration.locationTypeCode || "A",
-               Address: {
-                 TypeCode: declaration.locationQualifier || "U",
-                 CountryCode: declaration.locationCountry || declaration.destinationCountry || "GB",
-               },
-             };
-           })(),
+           GoodsLocation: resolveGoodsLocation(declaration),
         },
         Destination: {
            CountryCode: normalizeCountryCode(declaration.destinationCountry)

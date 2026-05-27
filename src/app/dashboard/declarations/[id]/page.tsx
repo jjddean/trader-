@@ -43,6 +43,8 @@ export default function CoreSchemaPage() {
     incoterms: "",
     incotermLocation: "",
     locationId: "",
+    goodsLocationTypeCode: "",
+    goodsLocationQualifier: "",
     presentationOffice: "",
   });
 
@@ -65,6 +67,8 @@ export default function CoreSchemaPage() {
         incoterms: (d.incoterms as string) || "",
         incotermLocation: (d.incotermLocation as string) || "",
         locationId: (d.locationId as string) || "",
+        goodsLocationTypeCode: (d.goodsLocationTypeCode as string) || "",
+        goodsLocationQualifier: (d.goodsLocationQualifier as string) || "",
         presentationOffice: (d.presentationOffice as string) || "",
       });
     }
@@ -93,6 +97,8 @@ export default function CoreSchemaPage() {
         incoterms: formData.incoterms.trim().toUpperCase(),
         incotermLocation: formData.incotermLocation.trim(),
         locationId: formData.locationId.trim(),
+        goodsLocationTypeCode: formData.goodsLocationTypeCode.trim().toUpperCase(),
+        goodsLocationQualifier: formData.goodsLocationQualifier.trim().toUpperCase(),
         presentationOffice: formData.presentationOffice.trim(),
       });
     } catch (e) {
@@ -277,6 +283,35 @@ export default function CoreSchemaPage() {
                 <Info className="h-3 w-3" />
                 UN/LOCODE or HMRC location code. No default.
               </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+                  Goods Location Type
+                  <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.goodsLocationTypeCode}
+                  onChange={(e) => setFormData({ ...formData, goodsLocationTypeCode: e.target.value })}
+                  placeholder="e.g. A / B"
+                  className="w-full rounded-md border border-gray-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+                  Goods Location Qualifier
+                  <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.goodsLocationQualifier}
+                  onChange={(e) => setFormData({ ...formData, goodsLocationQualifier: e.target.value })}
+                  placeholder="e.g. U / V"
+                  className="w-full rounded-md border border-gray-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                />
+              </div>
             </div>
 
             {/* Presentation Office — DE 5/26. Conditional per Appendix 21A. */}

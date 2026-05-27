@@ -71,6 +71,8 @@ function validateDeclaration(lane: SubmitDeclarationInput, items: SubmitItemInpu
   if (!lane?.dispatchCountry) errors.push("Missing dispatch country (DE 5/14)");
   if (!lane?.destinationCountry) errors.push("Missing destination country (DE 5/8)");
   if (!lane?.locationId) errors.push("Missing goods location (DE 5/23)");
+  if (!lane?.goodsLocationTypeCode) errors.push("Missing goods location type (DE 5/23)");
+  if (!lane?.goodsLocationQualifier) errors.push("Missing goods location qualifier (DE 5/23)");
   if (!lane?.transportMode) errors.push("Missing transport mode (DE 7/4)");
   if (!lane?.transportId) errors.push("Missing transport identity (DE 7/9)");
   if (!lane?.transportIdType) errors.push("Missing transport identity type (DE 7/7)");
