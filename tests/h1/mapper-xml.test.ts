@@ -13,7 +13,7 @@ describe("H1 mapper and XML renderer", () => {
     route: "Route 1",
     destinationCountry: "GB",
     dispatchCountry: "DE",
-    presentationOffice: "GBLON004",
+    presentationOffice: "",
     locationId: "GBAUFXTFXTGW",
     invoiceCurrency: "GBP",
     invoiceTotal: 2500,
@@ -51,7 +51,7 @@ describe("H1 mapper and XML renderer", () => {
     const shipment = mapped.GoodsShipment;
     const item = shipment.GovernmentAgencyGoodsItem[0];
 
-    assert.equal(mapped.DeclarationOfficeID, "GBLON004");
+    assert.equal(mapped.DeclarationOfficeID, "GB000051");
     assert.equal(mapped.InvoiceAmount.currencyID, "GBP");
     assert.equal(mapped.InvoiceAmount.value, "2500.00");
     assert.equal(mapped.BorderTransportMeans.ID, "CSCLGLOBE");
@@ -86,7 +86,8 @@ describe("H1 mapper and XML renderer", () => {
     assert.equal(preflight.valid, true);
     assert.match(xml, /<WCODataModelVersionCode>3\.6<\/WCODataModelVersionCode>/);
     assert.match(xml, /<TypeCode>IMA<\/TypeCode>/);
-    assert.match(xml, /<DeclarationOfficeID>GBLON004<\/DeclarationOfficeID>/);
+    assert.doesNotMatch(xml, /<DeclarationOfficeID>/);
+    assert.doesNotMatch(xml, /<Origin>/);
     assert.match(xml, /<InvoiceAmount currencyID="GBP">2500\.00<\/InvoiceAmount>/);
     assert.match(xml, /<ID>CSCLGLOBE<\/ID>/);
     assert.match(xml, /<CountryCode>GB<\/CountryCode>/);

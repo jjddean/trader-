@@ -68,6 +68,18 @@ function deriveGoodsLocationName(locationId: unknown): string {
   return GOODS_LOCATION_NAME_BY_ID[id] ?? id;
 }
 
+function normalizeCountryCode(value: unknown): string {
+  const raw = String(value || "").trim().toUpperCase();
+  if (!raw) return "";
+  // Accept values like "DE", "DE - Germany", "Germany (DE)" (best-effort).
+  if (/^[A-Z]{2}$/.test(raw)) return raw;
+  const m1 = raw.match(/^([A-Z]{2})\b/);
+  if (m1) return m1[1];
+  const m2 = raw.match(/\b([A-Z]{2})\b/);
+  if (m2) return m2[1];
+  return raw;
+}
+
 function isBrChickenTestLane(declaration: any, item: any): boolean {
   const dispatchCountry = String(declaration?.dispatchCountry || "").trim().toUpperCase();
   const commodityCode = String(item?.commodityCode || item?.hsCode || "").replace(/\s+/g, "");
@@ -336,19 +348,9 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
         TraderAssignedReferenceID: ducr
       },
       GoodsShipment: {
-        // DE 3/26 — Buyer (UK importer). CDS10001/16A/04A: AddressCountryCode is
-        // mandatory when the Buyer element is present. Omit Buyer entirely if no
-        // country code is available to avoid sending an empty Address block.
-        ...(String(declaration.destinationCountry || "").trim()
-          ? {
-              Buyer: {
-                AddressCountryCode: String(declaration.destinationCountry).trim(),
-                ...(String(declaration.buyerName || "").trim()
-                  ? { Name: String(declaration.buyerName).trim() }
-                  : {}),
-              },
-            }
-          : {}),
+        // DE 3/26 Buyer and DE 3/24 Seller are omitted from XML (h1-xml-renderer).
+        // Incomplete Address-only blocks trigger CDS12077/CDS10001; Seller with the
+        // same country as Exporter triggers CDS12092/CDS12073 (cds_error_codes.ts).
         Consignment: {
            // WCO Consignment xs:sequence: ContainerCode comes BEFORE
            // ArrivalTransportMeans, which in turn comes before GoodsLocation
@@ -363,39 +365,44 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
              IdentificationTypeCode: declaration.transportIdType || "",
              ModeCode: declaration.transportMode || "",
            },
-           GoodsLocation: {
-             ID: String(declaration.locationId || "").trim().toUpperCase(),
-             Name: deriveGoodsLocationName(declaration.locationId),
-             TypeCode: declaration.locationTypeCode || "A",
-             // TT_IM001a: Address is TypeCode (qualifier) + CountryCode only — no Line/Postcode.
-             Address: {
-               TypeCode: declaration.locationQualifier || "U",
-               CountryCode: declaration.locationCountry || declaration.destinationCountry || "GB",
-             },
-           }
+           GoodsLocation: (() => {
+             const locId = String(declaration.locationId || "").trim().toUpperCase();
+             const locName = deriveGoodsLocationName(declaration.locationId);
+             // Felixstowe (GBAUFXTFXTGW):
+             // - Omitting TypeCode/Address triggers CDS10001 at 64A/L110 and 64A/04A/410.
+             // - Using the old default combo triggered CDS12099.
+             // For known Felixstowe lane: force a stable TypeCode + Address qualifier.
+             if (GOODS_LOCATION_NAME_BY_ID[locId]) {
+               return {
+                 ID: locId,
+                 Name: locName,
+                 TypeCode: String(declaration.locationTypeCode || "").trim() || "B",
+                 Address: {
+                   TypeCode: String(declaration.locationQualifier || "").trim() || "U",
+                   CountryCode: String(declaration.locationCountry || "").trim() || "GB",
+                 },
+               };
+             }
+             return {
+               ID: locId,
+               Name: locName,
+               TypeCode: declaration.locationTypeCode || "A",
+               Address: {
+                 TypeCode: declaration.locationQualifier || "U",
+                 CountryCode: declaration.locationCountry || declaration.destinationCountry || "GB",
+               },
+             };
+           })(),
         },
         Destination: {
-           CountryCode: declaration.destinationCountry || ""
+           CountryCode: normalizeCountryCode(declaration.destinationCountry)
         },
         ExportCountry: {
-           ID: declaration.dispatchCountry || ""
+           ID: normalizeCountryCode(declaration.dispatchCountry)
         },
         Importer: {
            ID: String(declaration.importerEori || declaration.eori || "").trim()
         },
-        // DE 3/24 — Seller. CDS10001/09B/04A: AddressCountryCode is mandatory when
-        // the Seller element is present. Omit Seller entirely if dispatch country
-        // is not set to avoid sending an empty Address block.
-        ...(String(declaration.dispatchCountry || "").trim()
-          ? {
-              Seller: {
-                AddressCountryCode: String(declaration.dispatchCountry).trim(),
-                ...(String(declaration.sellerName || "").trim()
-                  ? { Name: String(declaration.sellerName).trim() }
-                  : {}),
-              },
-            }
-          : {}),
         // DE 2/1 — Previous documents at GoodsShipment level. Always emit at
         // least the DUCR (CategoryCode Z, TypeCode DCR) so CDS can resolve the
         // 99A pointer chain.
@@ -482,14 +489,20 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
                 TypeCode: item.packageType || ""
               }
             ],
-            // DE 5/16: Country of Origin — mandatory for most H1 imports.
-            // TypeCode "1" = non-preferential origin declaration.
-            ...(item.originCountry ? {
-              Origin: {
-                CountryCode: item.originCountry,
-                TypeCode: "1"
-              }
-            } : {}),
+            // DE 5/16 Origin — omit when origin equals dispatch (DE 5/14 / ExportCountry).
+            // ExportCountry + foreign Exporter already declare the third country;
+            // repeating Origin at item level triggers CDS12073/103 at 67A + 68A.
+            ...((() => {
+              const origin = normalizeCountryCode(item.originCountry);
+              const dispatch = normalizeCountryCode(declaration.dispatchCountry);
+              if (!origin || (dispatch && origin === dispatch)) return {};
+              return {
+                Origin: {
+                  CountryCode: origin,
+                  TypeCode: "1",
+                },
+              };
+            })()),
             GovernmentProcedure: [
               ...(/^\d{4}$/.test(procRaw)
                 ? [{

@@ -60,7 +60,7 @@ function mapToCDS_H1(declaration, items) {
       TypeCode: "IMA",
       FunctionalReferenceID: declaration.lrn || `FC-${declaration._id || "manual"}`,
       GoodsItemQuantity: items.length || 1,
-      DeclarationOfficeID: declaration.presentationOffice || "GB000051",
+      DeclarationOfficeID: declaration.presentationOffice || "",
       TotalGrossMassMeasure: declaration.totalGrossWeight || totalGrossWeight,
       TotalPackageQuantity: items.reduce(
         (acc, item) => acc + (parseInt(item.packageCount) || 1),
@@ -111,6 +111,17 @@ function mapToCDS_H1(declaration, items) {
           GoodsLocation: (() => {
             const locId = String(declaration.locationId || "").trim().toUpperCase() || "GBAUFXTFXTGW";
             const locNameById = { GBAUFXTFXTGW: "GBWLAFXTFXTGW" };
+            if (locNameById[locId]) {
+              return {
+                ID: locId,
+                Name: locNameById[locId],
+                TypeCode: declaration.locationTypeCode || "B",
+                Address: {
+                  TypeCode: declaration.locationQualifier || "U",
+                  CountryCode: declaration.locationCountry || "GB",
+                },
+              };
+            }
             return {
               ID: locId,
               Name: locNameById[locId] ?? locId,
@@ -498,7 +509,7 @@ async function run() {
     importerEori: eori,
     lrn: `TT-${Date.now()}`,
     ducr: `6GB${eori.replace(/^GB/i, "")}-${Date.now()}`,
-    presentationOffice: "GBLON004",
+    presentationOffice: "",
     totalGrossWeight: 120,
     invoiceCurrency: "GBP",
     invoiceTotal: 5000,
