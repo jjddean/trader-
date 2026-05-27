@@ -34,6 +34,8 @@ type SubmitDeclarationInput = {
   dispatchCountry?: string;
   destinationCountry?: string;
   locationId?: string;
+  goodsLocationTypeCode?: string;
+  goodsLocationQualifier?: string;
   transportMode?: string;
   transportId?: string;
   transportIdType?: string;
