@@ -109,19 +109,12 @@ function mapToCDS_H1(declaration, items) {
             ModeCode: declaration.transportMode || "1",
           },
           GoodsLocation: (() => {
-            const consolidated = String(declaration.locationId || "").trim().toUpperCase() || "GBAUFXTFXTGW";
-            const countryCode = String(declaration.locationCountry || declaration.destinationCountry || "GB").trim().toUpperCase();
-            const typeCode = String(declaration.goodsLocationTypeCode || "A").trim().toUpperCase();
-            const qualifier = String(declaration.goodsLocationQualifier || "U").trim().toUpperCase();
-            let identification = consolidated;
-            if (countryCode && identification.startsWith(countryCode)) identification = identification.slice(countryCode.length);
-            if (typeCode && identification.startsWith(typeCode)) identification = identification.slice(1);
-            if (qualifier && identification.startsWith(qualifier)) identification = identification.slice(1);
-            return {
-              Name: identification,
-              TypeCode: typeCode,
-              Address: { TypeCode: qualifier, CountryCode: countryCode },
-            };
+            const id = String(declaration.locationId || "").trim().toUpperCase() || "GBAUFXTFXTGW";
+            const nameById = { GBAUFXTFXTGW: "GBWLAFXTFXTGW" };
+            if ((declaration.goodsLocationKind === "port" || declaration.goodsLocationKind === "port_unlocode") && nameById[id]) {
+              return { Name: nameById[id], ID: id };
+            }
+            return { Name: id, ID: id };
           })(),
         },
         Destination: { CountryCode: declaration.destinationCountry || "GB" },
@@ -505,9 +498,7 @@ async function run() {
     invoiceCurrency: "GBP",
     invoiceTotal: 5000,
     locationId: "GBAUFXTFXTGW",
-    goodsLocationKind: "port_unlocode",
-    goodsLocationTypeCode: "A",
-    goodsLocationQualifier: "U",
+    goodsLocationKind: "port",
     destinationCountry: "GB",
     dispatchCountry: "DE",
     incoterms: "CIF",

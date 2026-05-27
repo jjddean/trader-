@@ -10,9 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save, Loader2, Info } from "lucide-react";
 import { countries } from "@/lib/data/countries";
 import {
-  cdsCodesForGoodsLocationKind,
   GOODS_LOCATION_KIND_OPTIONS,
   inferGoodsLocationKind,
+  PORT_LOCATION_NAME_BY_ID,
   type GoodsLocationKind,
 } from "@/lib/goods-location";
 
@@ -71,12 +71,7 @@ export default function CoreSchemaPage() {
         invoiceTotal: d.invoiceTotal != null ? String(d.invoiceTotal) : "",
         incoterms: (d.incoterms as string) || "",
         incotermLocation: (d.incotermLocation as string) || "",
-        goodsLocationKind:
-          inferGoodsLocationKind({
-            goodsLocationKind: d.goodsLocationKind,
-            goodsLocationTypeCode: d.goodsLocationTypeCode,
-            goodsLocationQualifier: d.goodsLocationQualifier,
-          }) || "",
+        goodsLocationKind: inferGoodsLocationKind({ goodsLocationKind: d.goodsLocationKind }) || "",
         locationId: (d.locationId as string) || "",
         presentationOffice: (d.presentationOffice as string) || "",
       });
@@ -107,17 +102,6 @@ export default function CoreSchemaPage() {
         incotermLocation: formData.incotermLocation.trim(),
         goodsLocationKind: formData.goodsLocationKind || undefined,
         locationId: formData.locationId.trim(),
-        ...(formData.goodsLocationKind
-          ? (() => {
-              const cds = cdsCodesForGoodsLocationKind(formData.goodsLocationKind);
-              return cds
-                ? {
-                    goodsLocationTypeCode: cds.typeCode,
-                    goodsLocationQualifier: cds.qualifier,
-                  }
-                : {};
-            })()
-          : {}),
         presentationOffice: formData.presentationOffice.trim(),
       });
     } catch (e) {
@@ -285,7 +269,7 @@ export default function CoreSchemaPage() {
               </select>
             </div>
 
-            {/* DE 5/23 — kind drives CDS type/qualifier; raw A/U/V must not be typed manually. */}
+            {/* DE 5/23 — PORT = Name+ID only; ADDRESS = separate mode (not mixed). */}
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
                 Goods location method (DE 5/23)
@@ -308,10 +292,9 @@ export default function CoreSchemaPage() {
                   </option>
                 ))}
               </select>
-              {formData.goodsLocationKind === "port_unlocode" && (
+              {formData.goodsLocationKind === "port" && (
                 <p className="text-[10px] text-gray-500">
-                  CDS: designated location (type A) + UN/LOCODE identifier (qualifier U). Codes are set
-                  automatically — do not enter A/B or U/V manually.
+                  Port mode submits Name + ID only. Type A / qualifier U are not sent in XML.
                 </p>
               )}
             </div>
@@ -326,18 +309,18 @@ export default function CoreSchemaPage() {
                 value={formData.locationId}
                 onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
                 placeholder={
-                  formData.goodsLocationKind === "port_unlocode"
-                    ? "e.g. GBAUFXTFXTGW"
-                    : "Appendix 16 consolidated code"
+                  formData.goodsLocationKind === "port"
+                    ? "e.g. GBAUFXTFXTGW (ID)"
+                    : "Appendix 16 code"
                 }
                 disabled={!formData.goodsLocationKind}
                 className="w-full rounded-md border border-gray-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50 disabled:bg-gray-50"
               />
               <p className="text-[10px] text-gray-400 flex items-center gap-1">
                 <Info className="h-3 w-3" />
-                {formData.goodsLocationKind === "port_unlocode"
-                  ? "Full HMRC port code from Appendix 16 (includes GB + type + UN/LOCODE qualifier)."
-                  : "Select a location method first, then enter the matching Appendix 16 code."}
+                {formData.goodsLocationKind === "port"
+                  ? `Port ID (e.g. GBAUFXTFXTGW). Name is derived (${PORT_LOCATION_NAME_BY_ID.GBAUFXTFXTGW ?? "see mapping"}).`
+                  : "Select Port or Address first."}
               </p>
             </div>
 

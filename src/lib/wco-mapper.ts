@@ -76,7 +76,7 @@ function normalizeCountryCode(value: unknown): string {
 }
 
 function resolveGoodsLocation(declaration: any) {
-  return resolveGoodsLocationForXml(declaration, normalizeCountryCode);
+  return resolveGoodsLocationForXml(declaration);
 }
 
 function isBrChickenTestLane(declaration: any, item: any): boolean {
@@ -388,11 +388,9 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
         ],
         // CDS10020/22B/L002: LocationID must be omitted when blank — an empty string
         // fails code-list validation. ConditionCode (DE 4/1) is still required.
+        // CDS10020/22B/L002: LocationID must be a valid code, not free text (e.g. "Felixstowe").
         TradeTerms: {
            ConditionCode: declaration.incoterms || "",
-           ...(String(declaration.incotermLocation || "").trim()
-             ? { LocationID: String(declaration.incotermLocation).trim() }
-             : {}),
         },
         TransactionNatureCode: declaration.transactionNatureCode || "11",
         GovernmentAgencyGoodsItem: (items || []).map((item, index) => {

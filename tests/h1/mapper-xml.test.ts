@@ -15,9 +15,7 @@ describe("H1 mapper and XML renderer", () => {
     dispatchCountry: "DE",
     presentationOffice: "",
     locationId: "GBAUFXTFXTGW",
-    goodsLocationKind: "port_unlocode",
-    goodsLocationTypeCode: "A",
-    goodsLocationQualifier: "U",
+    goodsLocationKind: "port",
     invoiceCurrency: "GBP",
     invoiceTotal: 2500,
     incoterms: "CIF",
@@ -63,11 +61,9 @@ describe("H1 mapper and XML renderer", () => {
     assert.equal(shipment.Destination.CountryCode, "GB");
     assert.equal(shipment.ExportCountry.ID, "DE");
     assert.equal(shipment.Importer.ID, "GB243617410764");
-    assert.equal(shipment.Consignment.GoodsLocation.ID, "");
-    assert.equal(shipment.Consignment.GoodsLocation.Name, "FXTFXTGW");
-    assert.equal(shipment.Consignment.GoodsLocation.TypeCode, "A");
-    assert.equal(shipment.Consignment.GoodsLocation.Address.TypeCode, "U");
-    assert.equal(shipment.Consignment.GoodsLocation.Address.CountryCode, "GB");
+    assert.equal(shipment.Consignment.GoodsLocation.ID, "GBAUFXTFXTGW");
+    assert.equal(shipment.Consignment.GoodsLocation.Name, "GBWLAFXTFXTGW");
+    assert.equal(shipment.Consignment.GoodsLocation.TypeCode, "");
     assert.equal(shipment.Consignment.ArrivalTransportMeans.ID, "CSCLGLOBE");
     assert.equal(shipment.TradeTerms.ConditionCode, "CIF");
     assert.equal(shipment.TradeTerms.LocationID, "Felixstowe");
@@ -96,8 +92,9 @@ describe("H1 mapper and XML renderer", () => {
     assert.doesNotMatch(xml, /<Origin>/);
     assert.match(xml, /<InvoiceAmount currencyID="GBP">2500\.00<\/InvoiceAmount>/);
     assert.match(xml, /<ID>CSCLGLOBE<\/ID>/);
-    assert.match(xml, /<Name>FXTFXTGW<\/Name>/);
-    assert.match(xml, /<GoodsLocation>[\s\S]*<TypeCode>A<\/TypeCode>[\s\S]*<Address>[\s\S]*<TypeCode>U<\/TypeCode>/);
+    assert.match(xml, /<Name>GBWLAFXTFXTGW<\/Name>/);
+    assert.match(xml, /<ID>GBAUFXTFXTGW<\/ID>/);
+    assert.doesNotMatch(xml, /<GoodsLocation>[\s\S]*<TypeCode>A<\/TypeCode>/);
     assert.match(xml, /<CountryCode>GB<\/CountryCode>/);
     assert.match(xml, /<ID>DE<\/ID>/);
     assert.match(xml, /<IdentificationTypeCode>TSP<\/IdentificationTypeCode>/);
