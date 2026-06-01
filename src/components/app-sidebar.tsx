@@ -101,6 +101,34 @@ export function AppSidebar() {
                     pathname === subItem.href || (subItem.href !== "/dashboard" && pathname.startsWith(subItem.href))
                   );
 
+                  // Radix Collapsible generates unstable ids on SSR — render after mount only.
+                  if (!mounted) {
+                    return (
+                      <SidebarMenuItem key={item.label}>
+                        <SidebarMenuButton
+                          tooltip={item.label}
+                          className={cn(
+                            "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal text-gray-500",
+                          )}
+                        >
+                          <Icon className="h-3.5 w-3.5 text-gray-400" />
+                          <span className="flex-1">{item.label}</span>
+                        </SidebarMenuButton>
+                        <SidebarMenuSub className="ml-5 border-l border-gray-200 pl-2">
+                          {item.items?.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.label}>
+                              <SidebarMenuSubButton asChild className="px-2 py-1 text-xs font-normal text-gray-500">
+                                <Link href={subItem.href}>
+                                  <span>{subItem.label}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </SidebarMenuItem>
+                    );
+                  }
+
                   return (
                     <Collapsible
                       key={item.label}

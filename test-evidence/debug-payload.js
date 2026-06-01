@@ -34,6 +34,32 @@ function xmlEscape(value) {
     .replace(/'/g, "&apos;");
 }
 
+/** DE 5/23 split — must match src/lib/goods-location.ts (see spec/de-5-23-goods-location.md). */
+function splitConsolidatedLocationCode(code) {
+  const clean = String(code || "").trim().toUpperCase();
+  if (clean.length < 5) return null;
+  return {
+    country: clean.slice(0, 2),
+    typeCode: clean.slice(2, 3),
+    qualifierCode: clean.slice(3, 4),
+    codedId: clean.slice(4),
+  };
+}
+
+function resolveGoodsLocation(declaration) {
+  const locationId = String(declaration.locationId || "GBAUFXTFXTFXT").trim().toUpperCase();
+  const split = splitConsolidatedLocationCode(locationId);
+  if (!split) {
+    return { Name: "", ID: locationId, TypeCode: "", Address: null };
+  }
+  return {
+    Name: "",
+    ID: split.codedId,
+    TypeCode: split.typeCode,
+    Address: { TypeCode: split.qualifierCode, CountryCode: split.country },
+  };
+}
+
 function mapToCDS_H1(declaration, items) {
   const totalGrossWeight =
     items.reduce((acc, item) => acc + (parseFloat(item.grossWeightKg) || 0), 0) || 100;
@@ -73,10 +99,7 @@ function mapToCDS_H1(declaration, items) {
             ID: declaration.transportId || "CSCL GLOBE",
             ModeCode: declaration.transportMode || "1",
           },
-          GoodsLocation: {
-            Name: declaration.locationName || "GBWLAFXTFXTGW",
-            ID: declaration.locationId || "GBAUFXTFXTGW",
-          },
+          GoodsLocation: resolveGoodsLocation(declaration),
         },
         Destination: { CountryCode: declaration.destinationCountry || "GB" },
         ExportCountry: { ID: declaration.dispatchCountry || "" },
@@ -182,10 +205,17 @@ function buildXml(p) {
           <IdentificationTypeCode>${xmlEscape(gs.Consignment.BorderTransportMeans.IdentificationTypeCode)}</IdentificationTypeCode>
           <ModeCode>${xmlEscape(gs.Consignment.BorderTransportMeans.ModeCode)}</ModeCode>
         </ArrivalTransportMeans>
-        <GoodsLocation>
-          <Name>${xmlEscape(gs.Consignment.GoodsLocation.Name)}</Name>
-          <ID>${xmlEscape(gs.Consignment.GoodsLocation.ID)}</ID>
-        </GoodsLocation>
+        ${(() => {
+          const gl = gs.Consignment.GoodsLocation || {};
+          const idXml = gl.ID ? `<ID>${xmlEscape(gl.ID)}</ID>` : "";
+          const typeXml = gl.TypeCode ? `<TypeCode>${xmlEscape(gl.TypeCode)}</TypeCode>` : "";
+          const addr = gl.Address;
+          const addressXml =
+            addr && (addr.TypeCode || addr.CountryCode)
+              ? `<Address>${addr.TypeCode ? `<TypeCode>${xmlEscape(addr.TypeCode)}</TypeCode>` : ""}${addr.CountryCode ? `<CountryCode>${xmlEscape(addr.CountryCode)}</CountryCode>` : ""}</Address>`
+              : "";
+          return `<GoodsLocation>${idXml}${typeXml}${addressXml}</GoodsLocation>`;
+        })()}
       </Consignment>
       <Destination>
         <CountryCode>${xmlEscape(gs.Destination.CountryCode)}</CountryCode>
@@ -280,6 +310,16 @@ function validate(declaration, items, xml) {
     issues.push("Dispatch country (DE 5/14) is blank — set the country goods were shipped FROM");
   } else if (dispatch.toUpperCase() === "GB") {
     issues.push('Dispatch country is "GB" — must be the actual country of export, never GB for an import');
+  }
+
+  const locationId = String(declaration.locationId || "").trim().toUpperCase();
+  if (locationId === "GBAUFXTFXTGW" || locationId === "GBWLAFXTFXTGW") {
+    issues.push(
+      `Goods location "${locationId}" is invalid — use GBAUFXTFXTFXT (Appendix 16C ODS). See spec/lane.md.`,
+    );
+  }
+  if (locationId && !splitConsolidatedLocationCode(locationId)) {
+    issues.push(`Goods location "${locationId}" cannot be split into Country+Type+Qualifier+CodedID`);
   }
 
   if (!xml.includes("<AdditionalDocument>")) {

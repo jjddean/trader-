@@ -33,7 +33,7 @@ export default function HsCodesPage() {
       <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">Using the lookup</h2>
       <ul className="space-y-3 mb-6 text-[15px] text-slate-700">
         <li><strong>1.</strong> Go to <strong>Compliance → HS Code Lookup</strong> in the sidebar.</li>
-        <li><strong>2.</strong> Type a keyword (e.g. &quot;frozen chicken&quot;) or a partial code (e.g. &quot;0207&quot;) into the search box.</li>
+        <li><strong>2.</strong> Type a keyword (e.g. &quot;laptop&quot;) or a partial code (e.g. &quot;8471&quot;) into the search box.</li>
         <li><strong>3.</strong> Results are returned from the UK Trade Tariff in real time. Each result shows the full 10-digit code, description, and applicable duty rate.</li>
         <li><strong>4.</strong> Click a result to copy the code or use it directly in a declaration.</li>
       </ul>

@@ -1,4 +1,4 @@
-<!-- timestamp: 2026-05-27T19:25:15.197Z | http_status: 0 | conversation_id: DRY_RUN -->
+<!-- timestamp: 2026-05-31T22:42:44.783Z | http_status: 0 | conversation_id: DRY_RUN -->
 <!-- request_accept: application/vnd.hmrc.2.0+xml | request_content_type: application/xml; charset=UTF-8 | request_authorization: Bearer [REDACTED] | request_x_client_id: ZSoA1lpJi8FyuzSsncFrOZKpmrNe | request_gov_test_scenario: ABSENT -->
 <?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
@@ -9,20 +9,20 @@
   <AgencyAssignedCustomizationVersionCode>v2.1</AgencyAssignedCustomizationVersionCode>
   <Declaration xmlns="urn:wco:datamodel:WCO:DEC-DMS:2" xmlns:clm63055="urn:un:unece:uncefact:codelist:standard:UNECE:AgencyIdentificationCode:D12B" xmlns:ds="urn:wco:datamodel:WCO:MetaData_DS-DMS:2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2 ../DocumentMetaData_2_DMS.xsd ">
     <FunctionCode>9</FunctionCode>
-    <FunctionalReferenceID>TT-1779909914904</FunctionalReferenceID>
+    <FunctionalReferenceID>TT-1780267364417</FunctionalReferenceID>
     <TypeCode>IMA</TypeCode>
     <GoodsItemQuantity>1</GoodsItemQuantity>
-    <DeclarationOfficeID></DeclarationOfficeID>
-    <InvoiceAmount currencyID="GBP">5000</InvoiceAmount>
-    <TotalGrossMassMeasure unitCode="KGM">120</TotalGrossMassMeasure>
+    <InvoiceAmount currencyID="GBP">5000.00</InvoiceAmount>
+    <TotalGrossMassMeasure unitCode="KGM">120.000</TotalGrossMassMeasure>
     <TotalPackageQuantity>1</TotalPackageQuantity>
-    <CurrencyExchange>
-      <CurrencyTypeCode>GBP</CurrencyTypeCode>
-    </CurrencyExchange>
+    <BorderTransportMeans>
+      <ID>CSCLGLOBE</ID>
+      <IdentificationTypeCode>11</IdentificationTypeCode>
+      <ModeCode>1</ModeCode>
+    </BorderTransportMeans>
     <Declarant>
       <ID>GB243617410764</ID>
     </Declarant>
-    
     <Exporter>
       <Name>German Exporter GmbH</Name>
       <Address>
@@ -33,17 +33,14 @@
       </Address>
     </Exporter>
     <GoodsShipment>
-      <UCR>
-        <TraderAssignedReferenceID>6GB243617410764-1779909914904</TraderAssignedReferenceID>
-      </UCR>
       <Consignment>
         <ContainerCode>0</ContainerCode>
         <ArrivalTransportMeans>
-          <ID>CSCL GLOBE</ID>
+          <ID>CSCLGLOBE</ID>
           <IdentificationTypeCode>11</IdentificationTypeCode>
           <ModeCode>1</ModeCode>
         </ArrivalTransportMeans>
-        <GoodsLocation><Name>GBWLAFXTFXTGW</Name><ID>GBAUFXTFXTGW</ID></GoodsLocation>
+        <GoodsLocation><Name>FXTFXTFXT</Name><TypeCode>A</TypeCode><Address><TypeCode>U</TypeCode><CountryCode>GB</CountryCode></Address></GoodsLocation>
       </Consignment>
       <Destination>
         <CountryCode>GB</CountryCode>
@@ -51,16 +48,10 @@
       <ExportCountry>
         <ID>DE</ID>
       </ExportCountry>
-      <Importer>
-        <ID>GB243617410764</ID>
-      </Importer>
-      <TradeTerms>
-        <ConditionCode>CIF</ConditionCode>
-      </TradeTerms>
       
       <GovernmentAgencyGoodsItem>
         <SequenceNumeric>1</SequenceNumeric>
-        <StatisticalValueAmount currencyID="GBP">5000</StatisticalValueAmount>
+        <StatisticalValueAmount currencyID="GBP">5000.00</StatisticalValueAmount>
         
         <AdditionalDocument>
           <CategoryCode>N</CategoryCode>
@@ -74,11 +65,21 @@
           <TypeCode>271</TypeCode>
           <LPCOExemptionCode>AC</LPCOExemptionCode>
         </AdditionalDocument>
-          <Commodity>
+        
+        <AdditionalInformation>
+          <StatementCode>00500</StatementCode>
+          <StatementDescription>Importer</StatementDescription>
+        </AdditionalInformation>
+        <Commodity>
           <Description>Portable automatic data processing machine, weight not exceeding 10kg</Description>
+          
           <Classification>
-            <ID>8471300000</ID>
+            <ID>84713000</ID>
             <IdentificationTypeCode>TSP</IdentificationTypeCode>
+          </Classification>
+          <Classification>
+            <ID>00</ID>
+            <IdentificationTypeCode>TRC</IdentificationTypeCode>
           </Classification>
           <DutyTaxFee>
             <DutyRegimeCode>100</DutyRegimeCode>
@@ -88,12 +89,10 @@
             <TypeCode>B00</TypeCode>
           </DutyTaxFee>
           <GoodsMeasure>
-            <GrossMassMeasure unitCode="KGM">120</GrossMassMeasure>
-            <NetNetWeightMeasure unitCode="KGM">110</NetNetWeightMeasure>
+            <GrossMassMeasure unitCode="KGM">120.000</GrossMassMeasure>
+            <NetNetWeightMeasure unitCode="KGM">110.000</NetNetWeightMeasure>
           </GoodsMeasure>
-          <InvoiceLine>
-            <ItemChargeAmount currencyID="GBP">5000</ItemChargeAmount>
-          </InvoiceLine>
+          <InvoiceLine><ItemChargeAmount currencyID="GBP">5000.00</ItemChargeAmount></InvoiceLine>
         </Commodity>
         <CustomsValuation>
           <MethodCode>1</MethodCode>
@@ -107,7 +106,10 @@
           <CurrentCode>000</CurrentCode>
           
         </GovernmentProcedure>
-        
+        <Origin>
+          <CountryCode>DE</CountryCode>
+          <TypeCode>1</TypeCode>
+        </Origin>
         <Packaging>
           <SequenceNumeric>1</SequenceNumeric>
           <MarksNumbersID>TEST-MARK-LAPTOPS-001</MarksNumbersID>
@@ -118,6 +120,22 @@
           <AdditionCode>0000</AdditionCode>
         </ValuationAdjustment>
       </GovernmentAgencyGoodsItem>
+      <Importer>
+        <ID>GB243617410764</ID>
+      </Importer>
+      <PreviousDocument>
+        <CategoryCode>Z</CategoryCode>
+        <ID>6GB243617410764-1780267364417</ID>
+        <TypeCode>DCR</TypeCode>
+        <LineNumeric>1</LineNumeric>
+      </PreviousDocument>
+      <TradeTerms>
+        <ConditionCode>CIF</ConditionCode>
+        <LocationID>GBFELIXSTOWE</LocationID>
+      </TradeTerms>
+      <UCR>
+        <TraderAssignedReferenceID>6GB243617410764-1780267364417</TraderAssignedReferenceID>
+      </UCR>
     </GoodsShipment>
   </Declaration>
 </MetaData>

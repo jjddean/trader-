@@ -20,10 +20,15 @@ export default function StatusTimelinePage() {
     isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && id ? { id } : "skip",
   );
   
-  // Fetch real-time webhook notifications using MRN or Conversation ID
   const notifications = useQuery(
-    api.notifications.getWebhooks, 
-    declaration ? { mrn: declaration.mrn, conversationId: declaration.conversationId } : "skip"
+    api.notifications.getWebhooks,
+    declaration
+      ? {
+          declarationId: id,
+          conversationId: declaration.conversationId,
+          mrn: declaration.mrn,
+        }
+      : "skip",
   );
 
   const [nextStepsOpen, setNextStepsOpen] = useState(false);

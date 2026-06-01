@@ -294,7 +294,7 @@ export default function CoreSchemaPage() {
               </select>
               {formData.goodsLocationKind === "port" && (
                 <p className="text-[10px] text-gray-500">
-                  Port mode submits Name + ID only. Type A / qualifier U are not sent in XML.
+                  Port mode splits the Appendix 16C code into XML: chars 1–2 → Address.CountryCode, char 3 → TypeCode, char 4 → Address.TypeCode, remainder → Name (see spec/de-5-23-goods-location.md).
                 </p>
               )}
             </div>
@@ -310,7 +310,7 @@ export default function CoreSchemaPage() {
                 onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
                 placeholder={
                   formData.goodsLocationKind === "port"
-                    ? "e.g. GBAUFXTFXTGW (ID)"
+                    ? "e.g. GBAUFXTFXTFXT (Felixstowe)"
                     : "Appendix 16 code"
                 }
                 disabled={!formData.goodsLocationKind}
@@ -319,7 +319,7 @@ export default function CoreSchemaPage() {
               <p className="text-[10px] text-gray-400 flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 {formData.goodsLocationKind === "port"
-                  ? `Port ID (e.g. GBAUFXTFXTGW). Name is derived (${PORT_LOCATION_NAME_BY_ID.GBAUFXTFXTGW ?? "see mapping"}).`
+                  ? `Appendix 16C code (e.g. GBAUFXTFXTFXT for Felixstowe). Source: spec/hmrc-mirror/appendix-16c-maritime.psv.`
                   : "Select Port or Address first."}
               </p>
             </div>
@@ -392,15 +392,19 @@ export default function CoreSchemaPage() {
 
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                Incoterm Location
+                Incoterm location (DE 4/1)
               </label>
               <input
                 type="text"
                 value={formData.incotermLocation}
                 onChange={(e) => setFormData({ ...formData, incotermLocation: e.target.value })}
-                placeholder="e.g. Felixstowe"
+                placeholder="e.g. Felixstowe or GBFXT"
                 className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
               />
+              <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                <Info className="h-3 w-3" />
+                Required with CIF for method-1 valuation. Mapper sends GB + place (e.g. Felixstowe → GBFELIXSTOWE) per Group 4.
+              </p>
             </div>
 
           </div>
@@ -436,7 +440,7 @@ export default function CoreSchemaPage() {
 
               <div className="space-y-2">
                 <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
-                  Identification Type (DE 7/7)
+                  Identification Type (DE 7/9)
                   <span className="text-red-500">*</span>
                 </label>
                 <select

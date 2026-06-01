@@ -54,13 +54,13 @@ export default function DeclarationsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            <tr><td className="px-4 py-3">Commodity code</td><td className="px-4 py-3 font-mono text-[13px]">DE 6/14</td><td className="px-4 py-3">0207129000</td></tr>
+            <tr><td className="px-4 py-3">Commodity code</td><td className="px-4 py-3 font-mono text-[13px]">DE 6/14</td><td className="px-4 py-3">8471300000</td></tr>
             <tr><td className="px-4 py-3">Procedure code</td><td className="px-4 py-3 font-mono text-[13px]">DE 1/10</td><td className="px-4 py-3">4000</td></tr>
             <tr><td className="px-4 py-3">Additional procedure</td><td className="px-4 py-3 font-mono text-[13px]">DE 1/11</td><td className="px-4 py-3">000</td></tr>
-            <tr><td className="px-4 py-3">Origin country</td><td className="px-4 py-3 font-mono text-[13px]">DE 5/16</td><td className="px-4 py-3">BR</td></tr>
-            <tr><td className="px-4 py-3">Gross weight (KG)</td><td className="px-4 py-3 font-mono text-[13px]">DE 6/5</td><td className="px-4 py-3">25.5</td></tr>
-            <tr><td className="px-4 py-3">Net weight (KG)</td><td className="px-4 py-3 font-mono text-[13px]">DE 6/1</td><td className="px-4 py-3">22.0</td></tr>
-            <tr><td className="px-4 py-3">Supporting documents</td><td className="px-4 py-3 font-mono text-[13px]">DE 2/3</td><td className="px-4 py-3">N853, Y930</td></tr>
+            <tr><td className="px-4 py-3">Origin country</td><td className="px-4 py-3 font-mono text-[13px]">DE 5/15</td><td className="px-4 py-3">DE</td></tr>
+            <tr><td className="px-4 py-3">Gross weight (KG)</td><td className="px-4 py-3 font-mono text-[13px]">DE 6/5</td><td className="px-4 py-3">2.5</td></tr>
+            <tr><td className="px-4 py-3">Net weight (KG)</td><td className="px-4 py-3 font-mono text-[13px]">DE 6/1</td><td className="px-4 py-3">2.0</td></tr>
+            <tr><td className="px-4 py-3">Supporting documents</td><td className="px-4 py-3 font-mono text-[13px]">DE 2/3</td><td className="px-4 py-3">N935, N271 (AC)</td></tr>
           </tbody>
         </table>
       </div>

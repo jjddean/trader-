@@ -16,8 +16,13 @@
 const fs = require("fs");
 const path = require("path");
 require("dotenv").config({ path: ".env.local" });
+const { register } = require("tsx/cjs/api");
 const { ConvexHttpClient } = require("convex/browser");
 const { api } = require("../convex/_generated/api");
+
+register();
+const { mapToCDS_H1: appMapToCDS_H1 } = require("../src/lib/wco-mapper.ts");
+const { renderH1Xml: appRenderH1Xml } = require("../src/lib/h1-xml-renderer.ts");
 
 const HMRC_CONFIG = {
   sandboxBaseUrl: process.env.HMRC_SANDBOX_BASE_URL || "https://test-api.service.hmrc.gov.uk",
@@ -109,12 +114,18 @@ function mapToCDS_H1(declaration, items) {
             ModeCode: declaration.transportMode || "1",
           },
           GoodsLocation: (() => {
-            const id = String(declaration.locationId || "").trim().toUpperCase() || "GBAUFXTFXTGW";
-            const nameById = { GBAUFXTFXTGW: "GBWLAFXTFXTGW" };
-            if ((declaration.goodsLocationKind === "port" || declaration.goodsLocationKind === "port_unlocode") && nameById[id]) {
-              return { Name: nameById[id], ID: id };
-            }
-            return { Name: id, ID: id };
+            // DE 5/23 split shape — INFERENCE revised 2026-05-28 10:30.
+            // CountryCode is inside Address per XSD validator (BAD_REQUEST 2026-05-27).
+            const code = String(declaration.locationId || "").trim().toUpperCase() || "GBAUFXTFXTFXT";
+            if (code.length < 5) return { ID: code };
+            return {
+              ID: code.slice(4),
+              TypeCode: code.slice(2, 3),
+              Address: {
+                TypeCode: code.slice(3, 4),
+                CountryCode: code.slice(0, 2),
+              },
+            };
           })(),
         },
         Destination: { CountryCode: declaration.destinationCountry || "GB" },
@@ -159,6 +170,10 @@ function mapToCDS_H1(declaration, items) {
                 TypeCode: item.packageType || "PK",
               },
             ],
+            // DE 5/15 always mandatory per Group 5.
+            ...(item.originCountry
+              ? { Origin: { CountryCode: String(item.originCountry).toUpperCase(), TypeCode: "1" } }
+              : {}),
             // DE 1/10 = two separate 2-digit codes (always present).
             // DE 1/11 = required explicitly. "000" = nil additional procedure for CPC 4000.
             // Omitting DE 1/11 entirely triggers CDS11004 (incomplete procedure declaration).
@@ -227,7 +242,21 @@ function buildXml(payloadInfo) {
           <IdentificationTypeCode>${xmlEscape(gs.Consignment.BorderTransportMeans.IdentificationTypeCode)}</IdentificationTypeCode>
           <ModeCode>${xmlEscape(gs.Consignment.BorderTransportMeans.ModeCode)}</ModeCode>
         </ArrivalTransportMeans>
-        <GoodsLocation><Name>${xmlEscape(gs.Consignment.GoodsLocation.Name)}</Name>${gs.Consignment.GoodsLocation.ID ? `<ID>${xmlEscape(gs.Consignment.GoodsLocation.ID)}</ID>` : ""}</GoodsLocation>
+        ${(() => {
+          const gl = gs.Consignment.GoodsLocation || {};
+          const id = String(gl.ID || "").trim();
+          const typeCode = String(gl.TypeCode || "").trim();
+          const addr = gl.Address || {};
+          const addrType = String(addr.TypeCode || "").trim();
+          const addrCountry = String(addr.CountryCode || "").trim();
+          if (!id && !typeCode && !addrType && !addrCountry) return "";
+          const idXml = id ? `<ID>${xmlEscape(id)}</ID>` : "";
+          const tcXml = typeCode ? `<TypeCode>${xmlEscape(typeCode)}</TypeCode>` : "";
+          const addrXml = (addrType || addrCountry)
+            ? `<Address>${addrType ? `<TypeCode>${xmlEscape(addrType)}</TypeCode>` : ""}${addrCountry ? `<CountryCode>${xmlEscape(addrCountry)}</CountryCode>` : ""}</Address>`
+            : "";
+          return `<GoodsLocation>${idXml}${tcXml}${addrXml}</GoodsLocation>`;
+        })()}
       </Consignment>
       <Destination>
         <CountryCode>${xmlEscape(gs.Destination.CountryCode)}</CountryCode>
@@ -443,12 +472,14 @@ function preflightGates(xmlPayload, eori) {
     xml_has_type_code: xmlPayload.includes("<TypeCode>IMA</TypeCode>"),
     xml_has_declarant_id: xmlPayload.includes(`<Declarant>\n      <ID>${eori}</ID>`),
     xml_has_importer_id: xmlPayload.includes(`<Importer>\n        <ID>${eori}</ID>`),
-    xml_has_hs_code: xmlPayload.includes("<ID>8471300000</ID>"),
+    xml_has_hs_code: xmlPayload.includes("<ID>8471300000</ID>") ||
+      (xmlPayload.includes("<ID>84713000</ID>") && xmlPayload.includes("<ID>00</ID>")),
     xml_has_dispatch_de: xmlPayload.includes("<ID>DE</ID>"),
     xml_no_y922: !xmlPayload.includes("<TypeCode>922</TypeCode>"),
     xml_has_n935: xmlPayload.includes("<TypeCode>935</TypeCode>"),
     xml_has_n271: xmlPayload.includes("<TypeCode>271</TypeCode>"),
     eori_format_valid: /^GB\d{12}$/.test(eori),
+    xml_no_empty_tags: !/<([A-Za-z][\w]*)\s*>\s*<\/\1>/.test(xmlPayload),
   };
 
   const failed = Object.entries(checks)
@@ -484,6 +515,7 @@ async function run() {
   const baseDecl = {
     _id: "trade-test-fixed",
     declarationType: "H1",
+    route: "import",
     eori,
     importerEori: eori,
     lrn: `TT-${Date.now()}`,
@@ -492,13 +524,15 @@ async function run() {
     totalGrossWeight: 120,
     invoiceCurrency: "GBP",
     invoiceTotal: 5000,
-    locationId: "GBAUFXTFXTGW",
+    // Source: spec/hmrc-mirror/appendix-16c-felixstowe.md (Appendix 16C ODS 2026-05-18)
+    locationId: "GBAUFXTFXTFXT",
     goodsLocationKind: "port",
     destinationCountry: "GB",
     dispatchCountry: "DE",
     incoterms: "CIF",
     incotermLocation: "Felixstowe",
     transportId: "CSCL GLOBE",
+    transportIdType: "11",
     transportMode: "1",
   };
 
@@ -517,7 +551,7 @@ async function run() {
     packageCount: 1,
     packageType: "PK",
     shippingMarks: "TEST-MARK-LAPTOPS-001",
-    // Documents come from SIGNED_ADDITIONAL_DOCUMENTS via mapToCDS_H1 fallback
+    additionalDocuments: SIGNED_ADDITIONAL_DOCUMENTS,
   };
 
   const input = {
@@ -526,8 +560,8 @@ async function run() {
     item: { ...itemSeed },
   };
 
-  const payloadInfo = mapToCDS_H1(input.declaration, [{ ...input.item }]);
-  const xmlPayload = buildXml(payloadInfo);
+  const payloadInfo = appMapToCDS_H1(input.declaration, [{ ...input.item }]);
+  const xmlPayload = appRenderH1Xml(payloadInfo);
 
   let tokenRecord = null;
   if (client && userId && !dryRunOnly) {

@@ -319,7 +319,7 @@ export const proposeCuratedFromRejection = mutation({
 export const upsertCuratedFromRejection = internalMutation({
   args: {
     docCode: v.string(),                    // e.g. "D006"
-    commodityPrefix: v.optional(v.string()),// e.g. "02071290"
+    commodityPrefix: v.optional(v.string()),// e.g. "84713000"
     originCountry: v.optional(v.string()),  // e.g. "BR"
     procedureCode: v.optional(v.string()),  // e.g. "4000"
     severity: v.optional(v.string()),       // defaults to "blocking"

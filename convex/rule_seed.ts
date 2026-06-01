@@ -141,7 +141,7 @@ const RULES: SeedRule[] = [
 // re-running this script after a trim doesn't leave stale rules enabled.
 //
 // NOTE: D006/D028/D031/360 were retired as guesses, then RE-INSTATED below
-// as CURATED rules after CDS empirically rejected an HS 0207129000 / BR /
+// Legacy BR chicken lane only — not active lane (see spec/lane.md). CURATED rules after CDS empirically rejected HS 0207129000 / BR /
 // CPC 4000 submission for missing exactly those codes (TDR rejection,
 // 2026-04-26). The new CURATED-* IDs supersede the retired CPC-4000-* IDs.
 const RETIRED_RULE_IDS: string[] = [

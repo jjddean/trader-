@@ -18,15 +18,15 @@ const input = {
   declaration: {
     declarationType: "A",
     route: "import",
-    dispatchCountry: "BR",
+    dispatchCountry: "DE",
     transportMode: "1",
     mode: "enriched",
     invoiceTotal: 1000,
   },
   items: [
     {
-      commodityCode: "0207129000",
-      originCountry: "BR",
+      commodityCode: "8471300000",
+      originCountry: "DE",
       procedureCode: "4000",
       additionalProcedureCode: "000",
       valuationMethod: "1",

@@ -1,8 +1,20 @@
 /**
- * DE 5/23 — two mutually exclusive XML modes (never combine).
+ * DE 5/23 — Location of Goods.
  *
- * PORT:   GoodsLocation/Name + GoodsLocation/ID only — no L110, no Address/410.
- * ADDRESS: not implemented (requires cited type/qualifier mapping).
+ * Field format (HMRC Group 5 completion guide, retrieved 2026-05-27):
+ *   Country a2 + Type of location a1 + Qualifier of the identification a1
+ *   + Coded Identification of location an..35 + Additional identifier n..3
+ *
+ * The consolidated code from Appendix 16C column 3 (e.g. GBAUFXTFXTFXT) is
+ * decomposed into the four sub-components above and rendered into WCO 64A.
+ *
+ * Element split below is **INFERRED**, not HMRC-cited. Source-of-truth:
+ *   - HMRC completion-guide field format (cited)
+ *   - DMSREJ pointer chain L016 / L110 / 04A / 04A/410 on the missing-element
+ *     errors against the previous Name+ID-only shape (negative evidence only)
+ *   - WCO Data Model element semantics (reference only)
+ * Inference accepted by project owner 2026-05-27 in lieu of HMRC SDS contact.
+ * See spec/de-5-23-goods-location.md.
  */
 
 export type GoodsLocationKind = "port" | "address";
@@ -15,12 +27,12 @@ export const GOODS_LOCATION_KIND_OPTIONS: ReadonlyArray<{
   {
     value: "port",
     label: "Port / airport",
-    description: "Appendix 16 port code — XML uses Name + ID only.",
+    description: "Appendix 16C maritime port code (e.g. GBAUFXTFXTFXT for Felixstowe).",
   },
   {
     value: "address",
     label: "Address-based location",
-    description: "Not available yet — requires separate CDS mapping.",
+    description: "Not implemented — requires separate Appendix 16J mapping.",
   },
 ] as const;
 
@@ -28,18 +40,37 @@ export const GOODS_LOCATION_KIND_OPTIONS: ReadonlyArray<{
 const LEGACY_PORT_KIND = "port_unlocode";
 
 /**
- * Appendix 16 port rows where Name ≠ ID (project evidence + archive XML).
- * Key = GoodsLocation/ID, value = GoodsLocation/Name.
+ * Known Appendix 16C consolidated codes for this project's lanes.
+ * Source: spec/hmrc-mirror/appendix-16c-maritime.psv (ODS published 2026-05-18).
+ * Extend by quoting the ODS row in spec/hmrc-mirror/.
+ */
+export const KNOWN_APPENDIX_16C_CODES: Readonly<Record<string, string>> = {
+  GBAUFXTFXTFXT: "Felixstowe Dock & Railway Company T/A Port of Felixstowe",
+};
+
+/**
+ * Kept for backwards compatibility with UI components that still import this.
+ * The Name=ID identity mapping reflects the current ODS structure: a single
+ * consolidated code per port, no separate friendly name.
  */
 export const PORT_LOCATION_NAME_BY_ID: Readonly<Record<string, string>> = {
-  GBAUFXTFXTGW: "GBWLAFXTFXTGW",
+  GBAUFXTFXTFXT: "GBAUFXTFXTFXT",
 };
 
 export interface ResolvedGoodsLocationXml {
-  Name: string;
+  /** WCO 64A/ID — Additional identifier, only used when qualifier requires one. */
   ID: string;
+  /** WCO 64A/Name — Identification of Location (positions 5+ of the consolidated code). */
+  Name: string;
+  /** WCO 64A/L110 — Type of location (position 3). */
   TypeCode: string;
-  Address: { TypeCode: string; CountryCode: string };
+  /** WCO 64A/04A — Address sub-element. */
+  Address: {
+    /** WCO 64A/04A/410 — Qualifier of identification (position 4). */
+    TypeCode: string;
+    /** WCO 64A/04A/L016 — Country (positions 1-2). */
+    CountryCode: string;
+  };
 }
 
 export function normalizeGoodsLocationKind(value: unknown): GoodsLocationKind | "" {
@@ -56,20 +87,42 @@ export function inferGoodsLocationKind(declaration: {
   const explicit = normalizeGoodsLocationKind(declaration.goodsLocationKind);
   if (explicit) return explicit;
   const locationId = String(declaration.locationId || "").trim().toUpperCase();
-  if (locationId && PORT_LOCATION_NAME_BY_ID[locationId]) return "port";
+  if (locationId && KNOWN_APPENDIX_16C_CODES[locationId]) return "port";
   return "";
 }
 
-/** PORT mode — Name + ID only. */
-export function resolvePortGoodsLocation(locationId: string): ResolvedGoodsLocationXml | null {
-  const id = locationId.trim().toUpperCase();
-  const name = PORT_LOCATION_NAME_BY_ID[id];
-  if (!name) return null;
+/**
+ * Decompose an Appendix 16C consolidated code into its four field-format
+ * components. Returns null if the code is too short to split.
+ */
+export function splitConsolidatedLocationCode(code: string): {
+  country: string;
+  typeCode: string;
+  qualifierCode: string;
+  codedId: string;
+} | null {
+  const clean = code.trim().toUpperCase();
+  if (clean.length < 5) return null;
   return {
-    Name: name,
-    ID: id,
-    TypeCode: "",
-    Address: { TypeCode: "", CountryCode: "" },
+    country: clean.slice(0, 2),
+    typeCode: clean.slice(2, 3),
+    qualifierCode: clean.slice(3, 4),
+    codedId: clean.slice(4),
+  };
+}
+
+/** PORT mode — emit the split shape per the inferred mapping. */
+export function resolvePortGoodsLocation(locationId: string): ResolvedGoodsLocationXml | null {
+  const split = splitConsolidatedLocationCode(locationId);
+  if (!split) return null;
+  return {
+    Name: split.codedId,
+    ID: "",
+    TypeCode: split.typeCode,
+    Address: {
+      TypeCode: split.qualifierCode,
+      CountryCode: split.country,
+    },
   };
 }
 
@@ -80,19 +133,9 @@ export function resolveGoodsLocationForXml(declaration: {
   const kind = inferGoodsLocationKind(declaration);
   const locationId = String(declaration.locationId || "").trim().toUpperCase();
 
-  if (kind === "port") {
-    const port = resolvePortGoodsLocation(locationId);
-    if (port) return port;
-    // PORT selected but ID not in map: still emit Name+ID using the same code for both
-    // so XML stays in PORT shape (Name + ID only). Preflight validation will flag this.
-    if (locationId) {
-      return {
-        Name: locationId,
-        ID: locationId,
-        TypeCode: "",
-        Address: { TypeCode: "", CountryCode: "" },
-      };
-    }
+  if (kind === "port" && locationId) {
+    const resolved = resolvePortGoodsLocation(locationId);
+    if (resolved) return resolved;
   }
 
   return {
@@ -118,14 +161,21 @@ export function validateGoodsLocationForSubmit(declaration: {
   }
 
   if (kind === "address") {
-    errors.push("Address-based goods location is not configured — use Port for this lane");
+    errors.push("Address-based goods location is not implemented — use Port for this lane");
     return errors;
   }
 
-  if (kind === "port" && !PORT_LOCATION_NAME_BY_ID[locationId]) {
+  if (kind === "port" && locationId && !KNOWN_APPENDIX_16C_CODES[locationId]) {
     errors.push(
-      `Unknown port location ID "${locationId}" — no Name mapping (DE 5/23). Known: ${Object.keys(PORT_LOCATION_NAME_BY_ID).join(", ")}`,
+      `Unknown Appendix 16C code "${locationId}" (DE 5/23). Known: ${Object.keys(KNOWN_APPENDIX_16C_CODES).join(", ")}`,
     );
+  }
+
+  if (kind === "port" && locationId) {
+    const split = splitConsolidatedLocationCode(locationId);
+    if (!split || split.country.length !== 2 || !split.typeCode || !split.qualifierCode || !split.codedId) {
+      errors.push(`Goods location code "${locationId}" cannot be decomposed into Country+Type+Qualifier+CodedID`);
+    }
   }
 
   return errors;

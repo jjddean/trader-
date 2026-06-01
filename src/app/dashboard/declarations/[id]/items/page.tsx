@@ -55,6 +55,8 @@ export default function GoodsItemsPage() {
   const [docEdits, setDocEdits] = useState<Record<string, Array<{ code: string; ref: string }>>>({});
   // Prevent re-initialising slots the user is actively editing
   const docEditsTouched = useRef<Set<string>>(new Set());
+  const docDebounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const [docSaveState, setDocSaveState] = useState<Record<string, "idle" | "saving" | "saved" | "error">>({});
 
   // Batch pending field updates per item — flushed as a single updateItem call after 600ms idle.
   // Prevents one mutation per field blur (e.g. tabbing through 8 fields = 8 mutations → 1).
@@ -120,7 +122,7 @@ export default function GoodsItemsPage() {
           // Always seed >= 6 slots so the editor has room for new entries, but
           // never truncate existing docs — earlier hardcoded length of 6 was
           // dropping AdditionalDocument rows >= index 6 on save.
-          const slotCount = Math.max(6, docs.length);
+          const slotCount = Math.max(2, docs.length);
           next[id] = Array.from({ length: slotCount }, (_, i) => ({
             code: docs[i] ? `${docs[i].CategoryCode}${docs[i].TypeCode}` : "",
             ref: docs[i]?.ID || "",
@@ -142,22 +144,85 @@ export default function GoodsItemsPage() {
     return "";
   };
 
+  /** Persist only real documents — lane uses N935 + N271 (AC). */
+  const slotsToValidDocs = (slots: Array<{ code: string; ref: string }>) => {
+    const seen = new Set<string>();
+    return slots
+      .map((slot) => {
+        const raw = slot.code.replace(/\s+/g, "").trim().toUpperCase();
+        const category = raw.slice(0, 1);
+        const type = raw.slice(1);
+        return {
+          CategoryCode: category,
+          TypeCode: type,
+          ID: slot.ref.trim(),
+          StatusCode: raw ? deriveStatusCode(category, type) : "",
+        };
+      })
+      .filter((doc) => doc.CategoryCode && doc.TypeCode && doc.ID)
+      .filter((doc) => !/^excluded$/i.test(doc.ID))
+      .filter((doc) => {
+        const key = `${doc.CategoryCode}${doc.TypeCode}`.toUpperCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  };
+
   const DOC_SLOT_HINTS: Array<{ label: string; code: string; ref: string }> = [
-    { label: "CHED-P (live-animal / POAO)", code: "N853", ref: "GBCHD2026.1234567" },
-    { label: "Organic statement waiver", code: "Y929", ref: "Excluded" },
-    { label: "Non-organic statement", code: "Y930", ref: "Excluded" },
     { label: "Commercial invoice", code: "N935", ref: "INV-2026-04112" },
     { label: "Packing list", code: "N271", ref: "PL-2026-04112" },
-    { label: "Spare slot", code: "", ref: "" },
   ];
 
-  const emptySlots = () => [0, 1, 2, 3, 4, 5].map(() => ({ code: "", ref: "" }));
+  const emptySlots = () => [0, 1].map(() => ({ code: "", ref: "" }));
 
-  const handleDocChange = (itemId: string, slotIndex: number, part: "code" | "ref", value: string) => {
+  const persistDocuments = async (item: GoodsItemRow, slots: Array<{ code: string; ref: string }>) => {
+    const itemId = item._id as string;
+    setDocSaveState((prev) => ({ ...prev, [itemId]: "saving" }));
+    try {
+      const validDocs = slotsToValidDocs(slots);
+      await updateItem({ id: item._id, additionalDocuments: validDocs });
+      setDocSaveState((prev) => ({ ...prev, [itemId]: "saved" }));
+      window.setTimeout(() => {
+        setDocSaveState((prev) => (prev[itemId] === "saved" ? { ...prev, [itemId]: "idle" } : prev));
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to save documents:", err);
+      setDocSaveState((prev) => ({ ...prev, [itemId]: "error" }));
+    }
+  };
+
+  const scheduleDocPersist = (item: GoodsItemRow, slots: Array<{ code: string; ref: string }>) => {
+    const itemId = item._id as string;
+    clearTimeout(docDebounceTimers.current[itemId]);
+    docDebounceTimers.current[itemId] = setTimeout(() => {
+      void persistDocuments(item, slots);
+    }, 600);
+  };
+
+  useEffect(() => {
+    return () => {
+      for (const timer of Object.values(docDebounceTimers.current)) {
+        clearTimeout(timer);
+      }
+      for (const timer of Object.values(debounceTimers.current)) {
+        clearTimeout(timer);
+      }
+    };
+  }, []);
+
+  const handleDocChange = (
+    item: GoodsItemRow,
+    slotIndex: number,
+    part: "code" | "ref",
+    value: string,
+  ) => {
+    const itemId = item._id as string;
     docEditsTouched.current.add(itemId);
-    setDocEdits(prev => {
+    setDocEdits((prev) => {
       const current = prev[itemId] ?? emptySlots();
-      const updated = current.map((slot, i) => i === slotIndex ? { ...slot, [part]: value } : slot);
+      const updated = current.map((slot, i) => (i === slotIndex ? { ...slot, [part]: value } : slot));
+      scheduleDocPersist(item, updated);
       return { ...prev, [itemId]: updated };
     });
   };
@@ -176,49 +241,15 @@ export default function GoodsItemsPage() {
     const next = (docEdits[itemId] ?? emptySlots()).filter((_, i) => i !== slotIndex);
     setDocEdits(prev => ({ ...prev, [itemId]: next }));
     // Persist immediately — removal isn't covered by the onBlur path.
-    try {
-      const validDocs = next
-        .map(slot => {
-          const raw = slot.code.replace(/\s+/g, "").trim().toUpperCase();
-          const category = raw.slice(0, 1);
-          const type = raw.slice(1);
-          return {
-            CategoryCode: category,
-            TypeCode: type,
-            ID: slot.ref.trim(),
-            StatusCode: raw ? deriveStatusCode(category, type) : "",
-          };
-        })
-        .filter(doc => doc.CategoryCode && doc.TypeCode && doc.ID);
-      await updateItem({ id: item._id, additionalDocuments: validDocs });
-    } catch (err) {
-      console.error("Failed to remove document slot:", err);
-    }
+    await persistDocuments(item, next);
   };
 
   const handleDocBlur = async (item: GoodsItemRow) => {
     const itemId = item._id as string;
     const slots = docEdits[itemId];
     if (!slots) return;
-    try {
-      const validDocs = slots
-        .map(slot => {
-          const raw = slot.code.replace(/\s+/g, "").trim().toUpperCase();
-          const category = raw.slice(0, 1);
-          const type = raw.slice(1);
-          return {
-            CategoryCode: category,
-            TypeCode: type,
-            ID: slot.ref.trim(),
-            StatusCode: raw ? deriveStatusCode(category, type) : "",
-          };
-        })
-        .filter(doc => doc.CategoryCode && doc.TypeCode && doc.ID);
-      await updateItem({ id: item._id, additionalDocuments: validDocs });
-      docEditsTouched.current.delete(itemId);
-    } catch (err) {
-      console.error("Failed to save documents:", err);
-    }
+    clearTimeout(docDebounceTimers.current[itemId]);
+    await persistDocuments(item, slots);
   };
 
   const handleItemFieldBlur = (
@@ -474,7 +505,7 @@ export default function GoodsItemsPage() {
                       pattern="\d{10}"
                       defaultValue={String(item.commodityCode ?? "")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "commodityCode", e.target.value)}
-                      placeholder="e.g. 0207129000"
+                      placeholder="e.g. 8471300000"
                       className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 font-mono text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
                   </div>
@@ -598,10 +629,34 @@ export default function GoodsItemsPage() {
                 </div>
 
                 <div className="border-t border-gray-100 px-4 py-4">
-                  <div className="mb-3 flex items-baseline justify-between">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-600">Additional Documents (DE 2/3)</h4>
-                    <span className="text-[10px] text-gray-400">Status code auto-derived: N+CHED → XW · Y929/Y930 → XB</span>
+                    <div className="flex items-center gap-2">
+                      {docSaveState[item._id as string] === "saving" && (
+                        <span className="text-[10px] text-gray-500">Saving…</span>
+                      )}
+                      {docSaveState[item._id as string] === "saved" && (
+                        <span className="text-[10px] text-green-600">Saved</span>
+                      )}
+                      {docSaveState[item._id as string] === "error" && (
+                        <span className="text-[10px] text-red-600">Save failed</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const slotsNow = docEdits[item._id as string] ?? emptySlots();
+                          void persistDocuments(item as GoodsItemRow, slotsNow);
+                        }}
+                        className="h-7 rounded-md border border-gray-200 bg-white px-2 text-[10px] font-medium text-gray-700 hover:border-blue-400 hover:text-blue-600"
+                      >
+                        Save documents
+                      </button>
+                    </div>
                   </div>
+                  <p className="mb-1 text-[10px] text-gray-400">Lane: one N935 + one N271. Auto-saves ~600ms after edits.</p>
+                  <p className="mb-2 text-[10px] text-amber-700">
+                    Remove duplicate N935/N271 rows and Y-slots with reference &quot;Excluded&quot; — only the first of each code is saved; Excluded is not sent to CDS.
+                  </p>
                   <div className="space-y-2">
                     {(slots ?? emptySlots()).map((slot, slotIdx) => {
                       const hint = DOC_SLOT_HINTS[slotIdx] ?? { label: "Additional document", code: "", ref: "" };
@@ -613,7 +668,7 @@ export default function GoodsItemsPage() {
                           <input
                             type="text"
                             value={slot.code}
-                            onChange={(e) => handleDocChange(item._id as string, slotIdx, "code", e.target.value)}
+                            onChange={(e) => handleDocChange(item as GoodsItemRow, slotIdx, "code", e.target.value)}
                             onBlur={() => handleDocBlur(item)}
                             placeholder={hint.code || "e.g. D006"}
                             className="col-span-3 h-9 rounded-md border border-gray-200 bg-white px-2 font-mono text-xs uppercase text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 sm:col-span-2"
@@ -621,7 +676,7 @@ export default function GoodsItemsPage() {
                           <input
                             type="text"
                             value={slot.ref}
-                            onChange={(e) => handleDocChange(item._id as string, slotIdx, "ref", e.target.value)}
+                            onChange={(e) => handleDocChange(item as GoodsItemRow, slotIdx, "ref", e.target.value)}
                             onBlur={() => handleDocBlur(item)}
                             placeholder={hint.ref || "Reference"}
                             className="col-span-8 h-9 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 sm:col-span-6"
@@ -703,7 +758,7 @@ export default function GoodsItemsPage() {
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="e.g. Frozen plucked chickens"
+                placeholder="e.g. Laptop, weight not exceeding 10 kg"
                 className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none"
               />
             </div>

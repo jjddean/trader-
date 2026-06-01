@@ -45,12 +45,13 @@
 - [ ] **CDS12100 / 22B 090** — Seller country — *blocked on confirming `dispatchCountry` value on the lane*
 
 ### ⏳ Lane data verification (blocking tasks)
-- [ ] Confirm `dispatchCountry === "BR"` on the test declaration
-- [ ] Confirm `transportId`, `transportIdType`, `transportMode` values populated and sensible
+- [ ] Confirm `dispatchCountry === "DE"` and item `originCountry === "DE"` on the test declaration
+- [ ] Confirm `locationId === "GBAUFXTFXTFXT"` (Appendix 16C ODS — not `GBAUFXTFXTGW`)
+- [ ] Confirm `transportId`, `transportMode` populated (maritime lane: mode 1, vessel name)
 
-### ⛔ Deferred — needs commercial data + UK Tariff API (Stage 2)
+### ⛔ Deferred — converge remaining DMSREJ (see `spec/errors-handled.md`)
 - [ ] **04A / 16A / 09B** — Charge/deduction valuation breakdown (R009, R050)
-- [ ] **02A** — Document context (D006, D031, D028, 360 — CDS77002, CDS77005, CDS12070)
+- [ ] **02A / 03A** — Additional information (CDS12056)
 - [ ] **70A 166** — Additional procedure code (DE 1/11)
 - [ ] **41A 122 / 188 / 371** — Supplementary units, location qualifier
 - [ ] **79A 112** — Additional supply chain actor

@@ -79,11 +79,33 @@ function resolveGoodsLocation(declaration: any) {
   return resolveGoodsLocationForXml(declaration);
 }
 
-function isBrChickenTestLane(declaration: any, item: any): boolean {
-  const dispatchCountry = String(declaration?.dispatchCountry || "").trim().toUpperCase();
-  const commodityCode = String(item?.commodityCode || item?.hsCode || "").replace(/\s+/g, "");
-  const procedureCode = String(item?.procedureCode || "").replace(/\s+/g, "");
-  return dispatchCountry === "BR" && commodityCode === "0207129000" && procedureCode.startsWith("4000");
+/**
+ * DE 4/1 second component — location up to which incoterms apply.
+ * Source: Group 4 completion guide (retrieved 2026-05-31) — for method 1 declarations
+ * the delivery terms code must be provided; location is country a2 + place name when
+ * no UN/LOCODE exists (e.g. CIFGBCanewdon), or GB-prefixed UN/LOCODE from Appendix 16I.
+ */
+export function resolveTradeTermsLocationId(declaration: {
+  incoterms?: unknown;
+  incotermLocation?: unknown;
+  destinationCountry?: unknown;
+}): string {
+  const incoterm = String(declaration.incoterms || "").trim().toUpperCase();
+  if (!incoterm) return "";
+
+  const dest = normalizeCountryCode(declaration.destinationCountry) || "GB";
+  const raw = String(declaration.incotermLocation || "").trim();
+  if (raw) {
+    const compact = raw.toUpperCase().replace(/\s+/g, "");
+    if (/^GB[A-Z0-9]{2,35}$/.test(compact)) return compact;
+    if (/^[A-Z]{3,17}$/.test(compact)) return `${dest}${compact}`;
+    const alnum = raw.replace(/[^A-Za-z0-9]/g, "");
+    if (alnum) return `${dest}${alnum}`;
+  }
+
+  // CIF to GB: default place name when trader has not entered a coded location.
+  if (incoterm === "CIF" && dest === "GB") return "GBFELIXSTOWE";
+  return "";
 }
 
 // Async lookup signature — the route passes a function backed by the Convex
@@ -285,6 +307,9 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
     throw new Error("Declaration is missing eori or _id; cannot derive DUCR.");
   }
   const ducr = declaration.ducr || `${new Date().getFullYear() % 10}GB${String(declaration.eori).trim().replace(/^GB/i, "")}-${declaration._id.substring(0,6).toUpperCase()}`;
+  const declarantEori = String(declaration.eori || "").trim();
+  const importerEori = String(declaration.importerEori || declaration.eori || "").trim();
+  const isSelfRepresentation = declarantEori && importerEori && declarantEori === importerEori;
 
   return {
     Declaration: {
@@ -389,12 +414,16 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
         // CDS10020/22B/L002: LocationID must be omitted when blank — an empty string
         // fails code-list validation. ConditionCode (DE 4/1) is still required.
         // CDS10020/22B/L002: LocationID must be a valid code, not free text (e.g. "Felixstowe").
-        TradeTerms: {
-           ConditionCode: declaration.incoterms || "",
-        },
+        TradeTerms: (() => {
+          const conditionCode = declaration.incoterms || "";
+          const locationId = resolveTradeTermsLocationId(declaration);
+          return {
+            ConditionCode: conditionCode,
+            ...(locationId ? { LocationID: locationId } : {}),
+          };
+        })(),
         TransactionNatureCode: declaration.transactionNatureCode || "11",
         GovernmentAgencyGoodsItem: (items || []).map((item, index) => {
-          const brChickenLane = isBrChickenTestLane(declaration, item);
           const providedDocs: unknown[] = options.omitAdditionalDocuments
             ? []
             : Array.isArray(item.additionalDocuments)
@@ -425,6 +454,17 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
           const procRaw = String(item.procedureCode || "").replace(/\s+/g, '');
           return {
             SequenceNumeric: item.sequenceNumber || index + 1,
+            ...(isSelfRepresentation
+              ? {
+                  AdditionalInformation: [
+                    {
+                      // Appendix 4A 00500 — spec/hmrc-mirror/appendix-4a-00500.md
+                      StatementCode: "00500",
+                      StatementDescription: "Importer",
+                    },
+                  ],
+                }
+              : {}),
             ...(mappedDocs.length > 0 ? { AdditionalDocument: mappedDocs } : {}),
             StatisticalValueAmount: {
               currencyID: item.valueCurrency || "",
@@ -454,19 +494,20 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
             Packaging: [
               {
                 SequenceNumeric: "1",
-                MarksNumbersID: item.shippingMarks || (brChickenLane ? "TEST-MARK-001" : ""),
+                MarksNumbersID: item.shippingMarks || "",
                 QuantityQuantity: item.packageCount || "",
                 TypeCode: item.packageType || ""
               }
             ],
-            // DE 5/16 Origin — omit when origin equals dispatch (DE 5/14 / ExportCountry).
-            // ExportCountry + foreign Exporter already declare the third country;
-            // repeating Origin at item level triggers CDS12073/103 at 67A + 68A.
+            // DE 5/15 Country of Origin — always mandatory (HMRC Group 5 verbatim:
+            // "This data element is always mandatory.").
+            // Source: spec/hmrc-mirror/group-5-completion-guide.md.
+            // Prior conditional omit-when-origin=dispatch logic was uncited inference
+            // and contradicted Group 5; DMSREJ 2026-05-27 20:32 confirmed CDS12073
+            // fires at 67A/103 + 68A/103 WITH Origin omitted, so omission did not help.
             ...((() => {
               const origin = normalizeCountryCode(item.originCountry);
-              const dispatch = normalizeCountryCode(declaration.dispatchCountry);
-              // DE 5/16 at item duplicates DE 5/14 ExportCountry when same country (CDS12073/103).
-              if (!origin || !dispatch || origin === dispatch) return {};
+              if (!origin) return {};
               return {
                 Origin: {
                   CountryCode: origin,

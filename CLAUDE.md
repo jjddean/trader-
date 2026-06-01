@@ -2,7 +2,13 @@
 
 ## NON-NEGOTIABLE: NO INFERENCE, NO INVENTED DATA
 
-Before stating any claim about how this codebase behaves, you must have read the relevant file in this session. If you haven't, say "I haven't read X yet" and either read it or stop. Do not propose mechanisms, diagnoses, or fixes from screenshots, error messages, or inference. Every validation rule must cite a source: Appendix 21A row, CDS error code from the .ods list, HMRC GitHub schema, or explicit user instruction. No citation, no rule. If you find yourself writing "likely", "probably", "I think", "this means" — stop and read instead.
+Before stating any claim about how this codebase behaves, you must have read the relevant file in this session. If you haven't, say "I haven't read X yet" and either read it or stop. Do not propose mechanisms, diagnoses, or fixes from screenshots, error messages, or inference. Every validation rule must cite a source: `spec/` entry (HMRC URL + retrieval date + verbatim text), Appendix 21A row, CDS error code from the .ods list, HMRC XSD validation response, or explicit user instruction. No citation, no rule. If you find yourself writing "likely", "probably", "I think", "this means" — stop and read instead.
+
+**Authoritative spec:** `spec/README.md` — index, source policy, mapper change protocol. Per-DE files under `spec/de-*.md`. Verbatim HMRC mirrors under `spec/hmrc-mirror/`. DMSREJ history: `spec/errors-handled.md`. Active lane: `spec/lane.md`.
+
+**Unofficial until re-validated against HMRC:** `documentation/HMRC/`, `convex/lib/cds_h1_data_elements.ts`, `convex/lib/cds_wco_references.ts`, `src/lib/cds_error_codes.ts`, `test-evidence/archive-pre-p0/*.xml`.
+
+**DMSREJ** is negative evidence only. **First DMSACC (0 errors)** → freeze request XML as `spec/passing-payload.xml` and copy to `test-evidence/passing/` for regression baseline.
 
 ---
 
@@ -14,10 +20,10 @@ Success = HMRC CDS returns no errors.
 Failure = Any CDSxxxx validation code present.
 
 ### 1. MINIMAL VALID FIRST
-- Always construct the smallest possible valid declaration.
-- Exactly: 1 goods item (68A), 1 document (70A) → invoice only.
-- Do NOT include: additional information (99B), authorisations (64A), multiple documents, preference claims, special procedures.
-- Never build a "complete" declaration first.
+- Always construct the smallest possible valid declaration for the **active lane** in `spec/lane.md`.
+- Default bootstrap: 1 goods item (68A), 1 document (70A) → invoice only (N935).
+- Do NOT add until spec-cited or DMSREJ proves required: additional information (99B), authorisations (64A), extra documents, preference claims, special procedures.
+- The **current Trade Test lane** may already include more than bootstrap (e.g. N935 + N271) — do not strip documented lane fields to force bootstrap; converge errors without removing spec/lane.md values unless a rejection proves them invalid.
 
 ### 2. NEVER PATCH — ALWAYS REBUILD
 - Do NOT modify existing payloads.
@@ -25,26 +31,48 @@ Failure = Any CDSxxxx validation code present.
 - Old payloads are considered contaminated.
 
 ### 3. STRICT ERROR REDUCTION LOOP
-On rejection: Group → Identify root cause category → Fix ONLY that category → Resubmit. Never fix multiple categories at once. Categories: CDS100xx (core/header), CDS1207x (goods item), CDS11004/CDS77002 (documents), CDS12005/CDS10020 (authorisations).
+On rejection: Record in `spec/errors-handled.md` → Group → Identify root cause category → Fix ONLY that category → Resubmit. Never fix multiple categories at once.
+
+| Category | Typical codes |
+|----------|----------------|
+| Core / header / XSD | CDS100xx, HMRC `BAD_REQUEST` / `xml_validation_error` |
+| Goods item / origin / valuation | CDS1207x, CDS12077 |
+| Documents | CDS11004, CDS77002 |
+| Goods location DE 5/23 | CDS10001, CDS12099, CDS12070 on 64A |
+| Parties / country linkage | CDS12073, CDS12056 |
+| Named CDS rules (unsourced in Vol 3) | CDS12005 (R123, R038, etc.) |
 
 ### 4. NO GUESSING (HARD RULE)
-Every field must map to: CDS Declaration Completion Instructions OR official HMRC code lists (.ods). If mapping is unknown → STOP and report missing mapping. Do NOT invent: document codes, procedure codes, additional info, authorisations.
+Every field must map to: `spec/` (HMRC URL + retrieval date + verbatim text), Tariff Vol 3 completion guide, or official HMRC code lists (.ods). If mapping is unknown → STOP and report missing mapping. Do NOT invent: document codes, procedure codes, additional info, authorisations, XML element placement.
+
+**Inference exception:** Only when the user explicitly approves inference for a specific DE (e.g. DE 5/23 split). Document as `INFERENCE` in the relevant `spec/de-*.md` with DMSREJ/XSD evidence — never claim HMRC citation.
 
 ### 5. DOCUMENT DISCIPLINE (CRITICAL)
-70A rules: only 1 document in minimal phase, must be valid for CPC + commodity. Forbidden: Y codes, multiple 02A sequences, mixing document types. If CDS11004 or CDS77002 occurs → remove documents, rebuild clean.
+70A / DE 2/3: each document code must have a row in Appendix 5A (Union/National) for the lane. Union codes before National on the same item. Status codes only where Appendix 5A column permits.
+
+Active lane documents: see `spec/lane.md` (currently N935 + N271 with status AC — verify in Appendix 5A ODS).
+
+If CDS11004 or CDS77002 → fix document code/status/reference per Appendix 5A; do not add Y codes or extra documents without spec citation.
 
 ### 6. GOODS ITEM RULES
-68A must include: commodity code (valid), procedure code (simple import), origin country, weight > 0, value > 0. Constraints: exactly 1 item, no repeated sequences, no conditional fields unless required.
+68A must include: commodity code (valid), procedure code (4000 + 000 for current lane), **origin country DE 5/15 always mandatory** (Group 5), weight > 0, value > 0, packaging (DE 6/9–6/11). Exactly 1 item for current lane unless spec expands.
 
 ### 7. HEADER + PARTIES
-42A + 57A must include: declarant (valid EORI), importer (valid EORI), LRN, office of presentation, location ID, currency. Missing any → CDS10001 / CDS10002.
+42A + 57A must include: declarant EORI (DE 3/18), importer EORI (DE 3/16), LRN, goods location (DE 5/23 per `spec/de-5-23-goods-location.md`), dispatch/export (DE 5/14), destination (DE 5/8), invoice currency on amounts.
+
+Foreign exporter (DE 3/1): Name + Address when dispatch ≠ GB/XI — see `spec/de-3-x-parties.md`. Seller/Buyer (DE 3/24, 3/26) are optional (D) — omitted by mapper unless spec requires.
 
 ### 8. FORBIDDEN BEHAVIOUR
 The agent MUST NOT: add fields "to see if it works", increase payload complexity after failure, duplicate structures, mix header-level and item-level data incorrectly, attempt full compliance builds before minimal passes.
 
 ### 9. SUCCESS PATH
-Phase 1 → minimal declaration passes (0 errors).
-Phase 2 → add ONE feature at a time (additional document, additional info, preference, authorisation). Each addition must pass before the next is added.
+**Phase A — Structural validation (current):** DMSREJ count → 0 on Trade Test. XSD must pass before CDS business rules run.
+
+**Phase B — Operational (after first DMSACC):** MRN issued → notifications (DMSACC, DMSRCV, DMSREQ, DMSCLE, etc.) → status from HMRC events only.
+
+**Phase C — Regression:** Freeze accepted request XML as `spec/passing-payload.xml` + `test-evidence/passing/` — baseline for mapper and dry-run.
+
+Phase 2 (post–0-error lane): add ONE feature at a time (extra document, additional info, preference, authorisation). Each addition must pass before the next is added.
 
 ### 10. OUTPUT FORMAT (MANDATORY)
 Every response must include:
@@ -153,6 +181,8 @@ HMRC CDS (external)
 - Log `X-Conversation-ID` on every submission — this is the primary HMRC tracking handle
 
 ### XML Generation
+- Read `spec/de-*.md` for the DE being changed before editing `wco-mapper.ts` or `h1-xml-renderer.ts`
+- DE 5/23: `src/lib/goods-location.ts` splits Appendix 16C consolidated codes; renderer emits split shape — see `spec/de-5-23-goods-location.md`
 - `xmlEscape()` must wrap every interpolated value in XML templates — no exceptions
 - GovernmentProcedure encoding (CDS DE 1/10 and DE 1/11):
   - DE 1/10: TWO `<GovernmentProcedure>` elements — `<CurrentCode>` = first 2 chars, `<PreviousCode>` = chars 3-4
@@ -286,16 +316,18 @@ CLERK_SECRET_KEY
 - Never mix test-evidence artifacts (synthetic status) with HMRC-derived status on the dashboard
 - Never patch the `notifications` table rows — treat them as immutable append-only records
 - Never run `git push --force` to main
+- Never use invalid Appendix 16C codes — verify against `spec/hmrc-mirror/appendix-16c-maritime.psv` (Felixstowe = `GBAUFXTFXTFXT`, not `GBAUFXTFXTGW`)
 
 ---
 
-## Trade Test Status (as of 2026-04-09)
+## Trade Test Status (as of 2026-05-28)
 
 - **Current environment:** Trade Test v2.0 (sandbox) — NOT TDR
-- **Current standing:** Blocked on CDS12050 business-rule rejection
-- **Root cause:** Declaration content non-compliance — document context mismatch for current commodity/procedure/origin lane (HS 0207129000, CPC 4000 000, origin BR) — specifically 42A/67A/68A/70A additional document requirements
-- **Infrastructure status:** Transport, auth, webhook, and schema are stable
-- **Immediate path:** Data correction → signed tariff-document matrix → dry-run pass → one controlled submit → full notification evidence chain (DMSACC → DMSCLE)
+- **Active lane:** See `spec/lane.md` — HS 8471300000, CPC 4000 000, dispatch/origin DE, port **GBAUFXTFXTFXT** (Felixstowe, Appendix 16C ODS 2026-05-18)
+- **Phase:** Business-rule validation — converging DMSREJ count (was 11–12 → 8 → 6 → **4** as of 2026-05-31 FC-MPUBBYAS; XSD + GoodsLocation + DE 2/2 `00500` stable)
+- **DE 5/23:** Consolidated code split to `ID` + `TypeCode` + `Address(TypeCode, CountryCode)` — inference in `spec/de-5-23-goods-location.md`; XSD rejected top-level `CountryCode`
+- **Infrastructure status:** Transport, auth, webhook, and XSD preflight are stable
+- **Immediate path:** Fix CDS12073 (`67A`/`68A` TagID 103 = `CountryCode`) → defer R123/R038 until cited → first **DMSACC** → freeze `spec/passing-payload.xml`
 - **Evidence governance:** Authoritative status must derive only from HMRC events; synthetic notifications must never enter the notification store
 - **HMRC contacts:** TDRcommunications@hmrc.gov.uk, SoftwareDeveloperSupport@hmrc.gov.uk
 

@@ -12,7 +12,7 @@ const TARIFF_BASE = "https://www.trade-tariff.service.gov.uk/uk/api/commodities"
 // the next refresh can disable rules that no longer appear in the API.
 //
 // Invoke from CLI:
-//   npx convex run actions/tariff:refreshCommodity '{"commodityCode":"0207129000"}'
+//   npx convex run actions/tariff:refreshCommodity '{"commodityCode":"8471300000"}'
 export const refreshCommodity = internalAction({
   args: { commodityCode: v.string() },
   handler: async (ctx, args) => {

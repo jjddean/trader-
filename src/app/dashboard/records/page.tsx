@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Search, Building2, Landmark, CheckCircle2, Copy, ChevronRight } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useRouter } from "next/navigation";
+import { Download, Search, Building2, Landmark, CheckCircle2, Copy, ChevronRight, Printer } from "lucide-react";
+import { openFinancialRecordPrint } from "@/lib/print-sheet";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import Link from "next/link";
 import { useQuery } from "convex/react";
@@ -12,6 +13,7 @@ import { RefreshCw } from "lucide-react";
 
 export default function RecordsPage() {
   const { user } = useUser();
+  const router = useRouter();
   const recordsData = useQuery(api.declarations.getFinancialRecords, user?.id ? {} : "skip");
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,9 +66,18 @@ export default function RecordsPage() {
     URL.revokeObjectURL(url);
   };
 
-  const filteredRecords = (recordsData || []).filter((record: any) =>
-    !searchQuery || record.mrn?.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const filteredRecords = (recordsData || []).filter((record: any) => {
+    const term = searchQuery.toLowerCase();
+    if (!term) return true;
+
+    return (
+      record.mrn?.toLowerCase().includes(term) ||
+      record.date?.toLowerCase().includes(term) ||
+      record.type?.toLowerCase().includes(term) ||
+      record.method?.toLowerCase().includes(term) ||
+      record.accountNumber?.toLowerCase().includes(term)
+    );
+  });
 
   const totalDuty = (recordsData || []).filter((r: any) => r.type.includes("Duty")).reduce((acc: number, curr: any) => acc + curr.amount, 0);
   const totalPVA = (recordsData || []).filter((r: any) => r.type.includes("VAT")).reduce((acc: number, curr: any) => acc + curr.amount, 0);
@@ -149,34 +160,37 @@ export default function RecordsPage() {
       </div>
 
       {/* Ledger Table Section */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 pb-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search ledger by MRN..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none transition-colors focus:border-gray-400"
-          />
+      <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
+        <div className="border-b border-[#e9e9e7] bg-gray-50 px-5 py-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by MRN, Date, Tax Type, or Payment Method..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-4 text-[0.6875rem] font-medium tracking-normal text-gray-600 shadow-sm outline-none transition-colors focus:border-gray-400"
+            />
+          </div>
         </div>
-      </div>
 
-      <Card className="bg-white shadow-none border-[#e9e9e7]">
-        <CardContent className="p-0">
-          {recordsData === undefined ? (
-            <div className="flex h-40 flex-col items-center justify-center gap-2">
-              <RefreshCw className="h-5 w-5 animate-spin text-gray-400" />
-              <p className="text-xs text-gray-400">Loading Financial Records...</p>
-            </div>
-          ) : filteredRecords.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Landmark className="mb-4 h-8 w-8 text-gray-300" />
-              <p className="text-sm font-medium text-gray-500">No financial ledgers generated yet.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left">
+        {recordsData === undefined ? (
+          <div className="flex h-40 flex-col items-center justify-center gap-2">
+            <RefreshCw className="h-5 w-5 animate-spin text-gray-400" />
+            <p className="text-xs text-gray-400">Loading Financial Records...</p>
+          </div>
+        ) : filteredRecords.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Landmark className="mb-4 h-8 w-8 text-gray-300" />
+            <p className="text-sm font-medium text-gray-500">
+              {searchQuery
+                ? "No financial records match these filters."
+                : "No financial ledgers generated yet."}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="bg-gray-50 border-b border-[#e9e9e7]">
                   <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">Declaration MRN</th>
@@ -229,9 +243,8 @@ export default function RecordsPage() {
               </tbody>
             </table>
           </div>
-          )}
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
       {/* Side Sheet for Financial Record Details */}
       <Sheet open={!!selectedRecord} onOpenChange={(open) => !open && setSelectedRecord(null)}>
@@ -262,6 +275,13 @@ export default function RecordsPage() {
                     ) : (
                         <Copy className="h-3 w-3 text-gray-300 transition-colors group-hover:text-gray-500" />
                     )}
+                  </button>
+                  <button
+                    onClick={() => openFinancialRecordPrint(router, selectedRecord)}
+                    className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer"
+                  >
+                    <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">PRINT</span>
+                    <Printer className="h-3 w-3 text-gray-300 transition-colors group-hover:text-gray-500" />
                   </button>
                   <button
                     onClick={handleDownloadRecord}

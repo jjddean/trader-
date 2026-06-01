@@ -75,11 +75,16 @@ export default function SubmitPage() {
         consignment?: {
           arrivalTransportMeans?: { ID?: string; IdentificationTypeCode?: string; ModeCode?: string } | null;
           goodsLocationId?: string;
+          goodsLocationName?: string;
+          goodsLocationTypeCode?: string;
+          goodsLocationAddressTypeCode?: string;
+          goodsLocationCountryCode?: string;
         };
       };
       items?: Array<{
         sequenceNumeric?: string;
         governmentProcedures?: Array<{ CurrentCode?: string; PreviousCode?: string }>;
+        additionalInformation?: Array<{ StatementCode?: string; StatementDescription?: string; StatementTypeCode?: string }>;
         additionalDocuments?: Array<{ CategoryCode?: string; TypeCode?: string; ID?: string; StatusCode?: string }>;
         packaging?: Array<{ MarksNumbersID?: string; QuantityQuantity?: string; TypeCode?: string }>;
         origin?: { CountryCode?: string; TypeCode?: string } | null;
@@ -137,6 +142,13 @@ export default function SubmitPage() {
   
   // Generate the WCO payload for preview
   const wcoPayloadPreview = isReady ? mapToCDS_H1(declaration, items) : null;
+  const debugGoodsLocation = dryRunResult?.payloadDebug?.goodsShipment?.consignment;
+  const goodsLocationDisplay = [
+    debugGoodsLocation?.goodsLocationCountryCode,
+    debugGoodsLocation?.goodsLocationTypeCode,
+    debugGoodsLocation?.goodsLocationAddressTypeCode,
+    debugGoodsLocation?.goodsLocationName || debugGoodsLocation?.goodsLocationId,
+  ].filter(Boolean).join(" / ");
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -462,7 +474,7 @@ export default function SubmitPage() {
                           <div>ATM ID: {dryRunResult.payloadDebug.goodsShipment?.consignment?.arrivalTransportMeans?.ID || "—"}</div>
                           <div>ATM Type: {dryRunResult.payloadDebug.goodsShipment?.consignment?.arrivalTransportMeans?.IdentificationTypeCode || "—"}</div>
                           <div>ATM Mode: {dryRunResult.payloadDebug.goodsShipment?.consignment?.arrivalTransportMeans?.ModeCode || "—"}</div>
-                          <div>Goods Location: {dryRunResult.payloadDebug.goodsShipment?.consignment?.goodsLocationId || "—"}</div>
+                          <div>Goods Location: {goodsLocationDisplay || "—"}</div>
                         </div>
                       </div>
 
@@ -489,6 +501,15 @@ export default function SubmitPage() {
                           <span className="font-mono text-gray-700">
                             {(item.governmentProcedures || [])
                               .map((proc) => proc.PreviousCode ? `${proc.CurrentCode}/${proc.PreviousCode}` : `${proc.CurrentCode}`)
+                              .join(", ") || "—"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">Additional Information:</span>{" "}
+                          <span className="font-mono text-gray-700">
+                            {(item.additionalInformation || [])
+                              .map((ai) => ai.StatementCode)
+                              .filter(Boolean)
                               .join(", ") || "—"}
                           </span>
                         </div>

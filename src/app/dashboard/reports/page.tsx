@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Filter, ShieldAlert, ShieldCheck, Download, Copy, FileText, CheckCircle2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, Filter, ShieldAlert, ShieldCheck, Download, Copy, FileText, CheckCircle2, Printer } from "lucide-react";
+import { openCustomsReportPrint } from "@/lib/print-sheet";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useQuery } from "convex/react";
 import { useConvexAuth } from "convex/react";
@@ -10,6 +12,7 @@ import { useAuth, useUser } from "@clerk/nextjs";
 import { RefreshCw } from "lucide-react";
 
 export default function ReportsPage() {
+  const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const { user } = useUser();
@@ -283,6 +286,13 @@ export default function ReportsPage() {
                     ) : (
                         <Copy className="h-3 w-3 text-gray-300 transition-colors group-hover:text-gray-500" />
                     )}
+                  </button>
+                  <button
+                    onClick={() => openCustomsReportPrint(router, selectedReport)}
+                    className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer"
+                  >
+                    <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">PRINT</span>
+                    <Printer className="h-3 w-3 text-gray-300 transition-colors group-hover:text-gray-500" />
                   </button>
                   <button onClick={handleDownloadReport} className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer">
                     <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">DOWNLOAD</span>

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-05-27T19:25:15.202Z",
+  "timestamp": "2026-05-31T22:42:44.790Z",
   "mode": "DRY_RUN_ONLY",
   "submitEnabled": false,
   "endpoint": "https://test-api.service.hmrc.gov.uk/customs/declarations",
@@ -21,7 +21,8 @@
     "xml_no_y922": true,
     "xml_has_n935": true,
     "xml_has_n271": true,
-    "eori_format_valid": true
+    "eori_format_valid": true,
+    "xml_no_empty_tags": true
   },
   "failed": [],
   "readyToSubmit": true,

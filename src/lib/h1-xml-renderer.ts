@@ -48,6 +48,8 @@ export function buildPayloadDebugSnapshot(payloadInfo: unknown) {
   const shipment = read(declaration, "GoodsShipment");
   const goodsItems = asArray(shipment.GovernmentAgencyGoodsItem);
   const consignment = read(shipment, "Consignment");
+  const goodsLocation = read(consignment, "GoodsLocation");
+  const goodsLocationAddress = read(goodsLocation, "Address");
 
   return {
     declaration: {
@@ -73,7 +75,11 @@ export function buildPayloadDebugSnapshot(payloadInfo: unknown) {
       previousDocuments: asArray(shipment.PreviousDocument),
       consignment: {
         containerCode: text(consignment, "ContainerCode"),
-        goodsLocationId: text(read(consignment, "GoodsLocation"), "ID"),
+        goodsLocationId: text(goodsLocation, "ID"),
+        goodsLocationName: text(goodsLocation, "Name"),
+        goodsLocationTypeCode: text(goodsLocation, "TypeCode"),
+        goodsLocationAddressTypeCode: text(goodsLocationAddress, "TypeCode"),
+        goodsLocationCountryCode: text(goodsLocationAddress, "CountryCode"),
         arrivalTransportMeans: consignment.ArrivalTransportMeans || null,
       },
     },
@@ -87,6 +93,7 @@ export function buildPayloadDebugSnapshot(payloadInfo: unknown) {
       },
       customsValuation: item.CustomsValuation || null,
       governmentProcedures: asArray(item.GovernmentProcedure),
+      additionalInformation: asArray(item.AdditionalInformation),
       additionalDocuments: asArray(item.AdditionalDocument),
       packaging: asArray(item.Packaging),
       origin: item.Origin || null,
@@ -170,15 +177,28 @@ export function renderH1Xml(payloadInfo: unknown): string {
       <Consignment>
         <ContainerCode>${xmlEscape(consignment.ContainerCode)}</ContainerCode>${arrivalTransportMeansXml}
         ${(() => {
-          // DE 5/23 PORT-only hard gate: emit Name + ID exclusively.
-          // L110 (TypeCode) and 04A (Address) are NEVER emitted here.
+          // DE 5/23 split shape — INFERENCE revised 2026-05-28 10:30.
+          // HMRC XSD validator (BAD_REQUEST 2026-05-27 evening) confirmed:
+          //   "Invalid content was found starting with element 'CountryCode'.
+          //    One of '{Address}' is expected."
+          // So CountryCode at GoodsLocation root is NOT in the WCO XSD.
+          // DMSREJ 2026-05-31 then showed ID was being treated as the optional
+          // additional identifier; the coded location belongs in Name.
           const gl = read(consignment, "GoodsLocation");
-          const locationName = String(gl.Name || "").trim();
-          const locationId = String(gl.ID || "").trim();
-          if (!locationName && !locationId) return "";
-          const nameXml = locationName ? `<Name>${xmlEscape(locationName)}</Name>` : "";
-          const idXml = locationId ? `<ID>${xmlEscape(locationId)}</ID>` : "";
-          return `<GoodsLocation>${nameXml}${idXml}</GoodsLocation>`;
+          const id = String(gl.ID || "").trim();
+          const name = String(gl.Name || "").trim();
+          const typeCode = String(gl.TypeCode || "").trim();
+          const addr = asRecord(gl.Address);
+          const addrTypeCode = String(addr.TypeCode || "").trim();
+          const addrCountry = String(addr.CountryCode || "").trim();
+          if (!id && !name && !typeCode && !addrTypeCode && !addrCountry) return "";
+          const idXml = id ? `<ID>${xmlEscape(id)}</ID>` : "";
+          const nameXml = name ? `<Name>${xmlEscape(name)}</Name>` : "";
+          const typeXml = typeCode ? `<TypeCode>${xmlEscape(typeCode)}</TypeCode>` : "";
+          const addressXml = (addrTypeCode || addrCountry)
+            ? `<Address>${addrTypeCode ? `<TypeCode>${xmlEscape(addrTypeCode)}</TypeCode>` : ""}${addrCountry ? `<CountryCode>${xmlEscape(addrCountry)}</CountryCode>` : ""}</Address>`
+            : "";
+          return `<GoodsLocation>${idXml}${nameXml}${typeXml}${addressXml}</GoodsLocation>`;
         })()}
       </Consignment>
       <Destination>
@@ -190,6 +210,13 @@ export function renderH1Xml(payloadInfo: unknown): string {
       ${asArray(gs.GovernmentAgencyGoodsItem).map((item) => {
         const commodity = read(item, "Commodity");
         const goodsMeasure = read(commodity, "GoodsMeasure");
+        const additionalInformation = asArray(item.AdditionalInformation);
+        const additionalInformationXml = additionalInformation
+          .map((ai) => `
+        <AdditionalInformation>
+          <StatementCode>${xmlEscape(ai.StatementCode || "")}</StatementCode>${ai.StatementDescription ? `\n          <StatementDescription>${xmlEscape(ai.StatementDescription)}</StatementDescription>` : ""}${ai.StatementTypeCode ? `\n          <StatementTypeCode>${xmlEscape(ai.StatementTypeCode)}</StatementTypeCode>` : ""}
+        </AdditionalInformation>`)
+          .join("");
         const additionalDocuments = asArray(item.AdditionalDocument);
         const additionalDocumentsXml = additionalDocuments
           .map((doc) => `
@@ -229,6 +256,7 @@ export function renderH1Xml(payloadInfo: unknown): string {
         <SequenceNumeric>${xmlEscape(item.SequenceNumeric)}</SequenceNumeric>
         <StatisticalValueAmount currencyID="${xmlEscape(read(item, "StatisticalValueAmount").currencyID)}">${xmlEscape(read(item, "StatisticalValueAmount").value)}</StatisticalValueAmount>
         ${additionalDocumentsXml}
+        ${additionalInformationXml}
         <Commodity>
           <Description>${xmlEscape(commodity.Description || "General goods")}</Description>
           ${classificationXml}
@@ -267,7 +295,7 @@ export function renderH1Xml(payloadInfo: unknown): string {
         <ID>${xmlEscape(read(gs, "Importer").ID)}</ID>
       </Importer>${previousDocumentXml}${sellerXml}
       <TradeTerms>
-        <ConditionCode>${xmlEscape(read(gs, "TradeTerms").ConditionCode)}</ConditionCode>
+        <ConditionCode>${xmlEscape(read(gs, "TradeTerms").ConditionCode)}</ConditionCode>${String(read(gs, "TradeTerms").LocationID || "").trim() ? `\n        <LocationID>${xmlEscape(read(gs, "TradeTerms").LocationID)}</LocationID>` : ""}
       </TradeTerms>
       <UCR>
         <TraderAssignedReferenceID>${xmlEscape(read(d, "UCR").TraderAssignedReferenceID)}</TraderAssignedReferenceID>

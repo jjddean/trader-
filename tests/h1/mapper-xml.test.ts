@@ -14,7 +14,8 @@ describe("H1 mapper and XML renderer", () => {
     destinationCountry: "GB",
     dispatchCountry: "DE",
     presentationOffice: "",
-    locationId: "GBAUFXTFXTGW",
+    // Source: spec/hmrc-mirror/appendix-16c-felixstowe.md (Appendix 16C ODS 2026-05-18)
+    locationId: "GBAUFXTFXTFXT",
     goodsLocationKind: "port",
     invoiceCurrency: "GBP",
     invoiceTotal: 2500,
@@ -52,7 +53,7 @@ describe("H1 mapper and XML renderer", () => {
     const shipment = mapped.GoodsShipment;
     const item = shipment.GovernmentAgencyGoodsItem[0];
 
-    assert.equal(mapped.DeclarationOfficeID, "GB000051");
+    assert.equal(mapped.DeclarationOfficeID, "");
     assert.equal(mapped.InvoiceAmount.currencyID, "GBP");
     assert.equal(mapped.InvoiceAmount.value, "2500.00");
     assert.equal(mapped.BorderTransportMeans.ID, "CSCLGLOBE");
@@ -61,12 +62,14 @@ describe("H1 mapper and XML renderer", () => {
     assert.equal(shipment.Destination.CountryCode, "GB");
     assert.equal(shipment.ExportCountry.ID, "DE");
     assert.equal(shipment.Importer.ID, "GB243617410764");
-    assert.equal(shipment.Consignment.GoodsLocation.ID, "GBAUFXTFXTGW");
-    assert.equal(shipment.Consignment.GoodsLocation.Name, "GBWLAFXTFXTGW");
-    assert.equal(shipment.Consignment.GoodsLocation.TypeCode, "");
+    assert.equal(shipment.Consignment.GoodsLocation.ID, "");
+    assert.equal(shipment.Consignment.GoodsLocation.Name, "FXTFXTFXT");
+    assert.equal(shipment.Consignment.GoodsLocation.TypeCode, "A");
+    assert.equal(shipment.Consignment.GoodsLocation.Address.TypeCode, "U");
+    assert.equal(shipment.Consignment.GoodsLocation.Address.CountryCode, "GB");
     assert.equal(shipment.Consignment.ArrivalTransportMeans.ID, "CSCLGLOBE");
     assert.equal(shipment.TradeTerms.ConditionCode, "CIF");
-    assert.equal(shipment.TradeTerms.LocationID, "Felixstowe");
+    assert.equal(shipment.TradeTerms.LocationID, "GBFELIXSTOWE");
     assert.deepEqual(item.Commodity.Classification, [
       { ID: "61091000", IdentificationTypeCode: "TSP" },
       { ID: "10", IdentificationTypeCode: "TRC" },
@@ -74,6 +77,9 @@ describe("H1 mapper and XML renderer", () => {
     assert.deepEqual(item.GovernmentProcedure, [
       { CurrentCode: "40", PreviousCode: "00" },
       { CurrentCode: "000" },
+    ]);
+    assert.deepEqual(item.AdditionalInformation, [
+      { StatementCode: "00500", StatementDescription: "Importer" },
     ]);
     assert.deepEqual(item.AdditionalDocument, [
       { CategoryCode: "N", TypeCode: "935", ID: "INV-2026-0001", StatusCode: "AC" },
@@ -89,12 +95,12 @@ describe("H1 mapper and XML renderer", () => {
     assert.match(xml, /<WCODataModelVersionCode>3\.6<\/WCODataModelVersionCode>/);
     assert.match(xml, /<TypeCode>IMA<\/TypeCode>/);
     assert.doesNotMatch(xml, /<DeclarationOfficeID>/);
-    assert.doesNotMatch(xml, /<Origin>/);
+    // DE 5/15 always mandatory per Group 5 — emit Origin whenever item.originCountry is set.
+    assert.match(xml, /<Origin>\s*<CountryCode>DE<\/CountryCode>\s*<TypeCode>1<\/TypeCode>\s*<\/Origin>/);
     assert.match(xml, /<InvoiceAmount currencyID="GBP">2500\.00<\/InvoiceAmount>/);
     assert.match(xml, /<ID>CSCLGLOBE<\/ID>/);
-    assert.match(xml, /<Name>GBWLAFXTFXTGW<\/Name>/);
-    assert.match(xml, /<ID>GBAUFXTFXTGW<\/ID>/);
-    assert.doesNotMatch(xml, /<GoodsLocation>[\s\S]*<TypeCode>A<\/TypeCode>/);
+    assert.match(xml, /<GoodsLocation><Name>FXTFXTFXT<\/Name><TypeCode>A<\/TypeCode><Address><TypeCode>U<\/TypeCode><CountryCode>GB<\/CountryCode><\/Address><\/GoodsLocation>/);
+    assert.doesNotMatch(xml, /<GoodsLocation>[\s\S]*<ID>FXTFXTFXT<\/ID>/);
     assert.match(xml, /<CountryCode>GB<\/CountryCode>/);
     assert.match(xml, /<ID>DE<\/ID>/);
     assert.match(xml, /<IdentificationTypeCode>TSP<\/IdentificationTypeCode>/);
@@ -103,6 +109,12 @@ describe("H1 mapper and XML renderer", () => {
     assert.match(xml, /<CurrentCode>40<\/CurrentCode>/);
     assert.match(xml, /<PreviousCode>00<\/PreviousCode>/);
     assert.match(xml, /<CurrentCode>000<\/CurrentCode>/);
+    assert.match(xml, /<TradeTerms>\s*<ConditionCode>CIF<\/ConditionCode>\s*<LocationID>GBFELIXSTOWE<\/LocationID>\s*<\/TradeTerms>/);
+    assert.match(
+      xml,
+      /<AdditionalInformation>\s*<StatementCode>00500<\/StatementCode>\s*<StatementDescription>Importer<\/StatementDescription>\s*<\/AdditionalInformation>/,
+    );
+    assert.match(xml, /<AdditionalDocument>[\s\S]*<TypeCode>935<\/TypeCode>[\s\S]*<\/AdditionalDocument>\s*<AdditionalInformation>/);
     assert.match(xml, /<CategoryCode>N<\/CategoryCode>/);
     assert.match(xml, /<TypeCode>935<\/TypeCode>/);
     assert.doesNotMatch(xml, /<TypeCode>922<\/TypeCode>/);

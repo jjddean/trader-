@@ -35,12 +35,17 @@ const SUGGESTED_QUERIES = [
 ];
 
 export function AssistantSideSheet({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const pathname = usePathname();
   const declarationId = useMemo(() => {
     const match = pathname.match(/\/dashboard\/declarations\/([^/]+)/);
@@ -145,6 +150,10 @@ export function AssistantSideSheet({ children }: { children: React.ReactNode }) 
     }
     return { icon: Clock, label: eventType.replaceAll("_", " "), tone: "text-gray-700 bg-gray-50 border-gray-200" };
   };
+
+  if (!mounted) {
+    return <>{children}</>;
+  }
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>

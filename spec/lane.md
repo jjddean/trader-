@@ -1,0 +1,42 @@
+# Active Lane
+
+| Field | Value | Source |
+|-------|-------|--------|
+| Declaration category | H1 | Appendix 21A |
+| Declaration type (DE 1/1) | IM | Group 1 |
+| Additional declaration type (DE 1/2) | A (standard frontier, goods arrived) | Group 1 — TBD verify |
+| Procedure (DE 1/10) | 4000 | Appendix 1 — release for free circulation |
+| Additional procedure (DE 1/11) | 000 | Appendix 2 — none |
+| Commodity (DE 6/14) | 8471300000 | UK Integrated Online Tariff |
+| Description | Portable automatic data processing machine, weight not exceeding 10kg | n/a |
+| Dispatch country (DE 5/14) | DE | Appendix 13 |
+| Destination country (DE 5/8) | GB | Appendix 13 |
+| Origin country (DE 5/15) | DE | Appendix 13 |
+| Goods location (DE 5/23) | **GBAUFXTFXTFXT** — Felixstowe Dock & Railway Company T/A Port of Felixstowe | Appendix 16C ODS 2026-05-18, column 3 (see `hmrc-mirror/appendix-16c-felixstowe.md`) |
+| Customs office of presentation (DE 5/26) | GBLON004 | Appendix 14 — UK COL |
+| Transport mode at border (DE 7/4) | 1 (Maritime) | Group 7 |
+| Transport identity type (DE 7/9) | 11 (Name of sea-going vessel) | Group 7 |
+| Transport identity number (DE 7/9) | CSCL GLOBE | trader input |
+| Container (DE 7/2) | 0 (not containerised — TBD verify) | Group 7 |
+| Incoterms (DE 4/1) | CIF + location GBFELIXSTOWE (or GB-prefixed UN/LOCODE) | Group 4 — both components mandatory for method 1 |
+| Invoice currency (DE 4/10) | GBP | Appendix 11 |
+| Invoice total (DE 4/11) | 5000.00 GBP | trader input |
+| Declarant EORI (DE 3/18) | GB243617410764 | trader |
+| Importer EORI (DE 3/16) | GB243617410764 | trader |
+| Exporter (DE 3/1) | foreign — Name + Address (no GB/XI EORI) | Group 3 — pending verification |
+
+## Documents claimed for this lane
+
+| Code | Type | Status | Notes |
+|------|------|--------|-------|
+| N935 | Commercial invoice | AC (pending verify) | Appendix 5A |
+| N271 | Packing list | AC (pending verify) | Appendix 5A |
+
+## Outstanding lane verification
+
+| Item | Open question |
+|------|---------------|
+| ~~GBAUFXTFXTGW~~ | **RESOLVED 2026-05-27**: code `GBAUFXTFXTGW` is NOT in Appendix 16C ODS (2026-05-18). The correct code for Felixstowe is `GBAUFXTFXTFXT`. All prior submissions using `GBAUFXTFXTGW` were submitting an invalid Appendix 16C code. Source: `hmrc-mirror/appendix-16c-felixstowe.md`. |
+| Additional declaration type | A vs Y/Z — depends on supplementary vs frontier arrival |
+| Document set for HS 8471300000 + CPC 4000 | Whether N935 alone suffices, or whether Y codes are needed for export controls (dual use, encryption) |
+| DE 3/1 Exporter rule | Confirm Name+Address mandatory format for foreign exporter from Group 3 |
