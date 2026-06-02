@@ -122,4 +122,4 @@
 | CDS12005 / R123 | 57B (`Declarant/ID`, DE 3/18) | Declarant EORI rule — WCOID `57B` = `Declarant`, not transport; rule text not in Tariff Vol 3 |
 | CDS12073 | header/item conflict | DE 7/x duplicated at header and item where not permitted |
 
-R123 rule text not published in Tariff Vol 3 — needs CDS error code list source (separate Appendix).
+R123 on pointer `57B` is **Declarant/ID** (DE 3/18), not transport — see `spec/errors-handled.md` **R123 investigation**. Tariff Vol 3 does not publish the named CDS rule condition; needs HMRC CDS error code definitions list.

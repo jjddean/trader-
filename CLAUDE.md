@@ -327,7 +327,7 @@ CLERK_SECRET_KEY
 - **Phase:** Business-rule validation — converging DMSREJ count (was 11–12 → 8 → 6 → **4** as of 2026-05-31 FC-MPUBBYAS; XSD + GoodsLocation + DE 2/2 `00500` stable)
 - **DE 5/23:** Consolidated code split to `ID` + `TypeCode` + `Address(TypeCode, CountryCode)` — inference in `spec/de-5-23-goods-location.md`; XSD rejected top-level `CountryCode`
 - **Infrastructure status:** Transport, auth, webhook, and XSD preflight are stable
-- **Immediate path:** Fix CDS12073 (`67A`/`68A` TagID 103 = `CountryCode`) → defer R123/R038 until cited → first **DMSACC** → freeze `spec/passing-payload.xml`
+- **Immediate path:** Fix CDS12073 — `67A`/`68A` TagID **103** = `TransactionNatureCode` (DE 8/5); renderer must emit mapper JSON → defer R123/R038 → first **DMSACC** → freeze `spec/passing-payload.xml`
 - **Evidence governance:** Authoritative status must derive only from HMRC events; synthetic notifications must never enter the notification store
 - **HMRC contacts:** TDRcommunications@hmrc.gov.uk, SoftwareDeveloperSupport@hmrc.gov.uk
 

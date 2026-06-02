@@ -3,7 +3,7 @@
  *
  * Active lane (2026-05-26):
  *   Lane: HS 8471300000 / CPC 4000 000 / Origin DE / Type IMA
- *   EORI: GB243617410764
+ *   EORI: GB553202734852 (Trade Test Data Library)
  *   Description: Portable automatic data processing machine, weight ≤ 10kg (laptops)
  *   Documents: N935 (Commercial invoice), N271 (Packing list)
  *   Source: UK Trade Tariff / declaration form fields
@@ -510,7 +510,7 @@ async function run() {
   }
 
   const client = userId ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL) : null;
-  const eori = process.env.HMRC_EORI || "GB243617410764";
+  const eori = process.env.HMRC_EORI || "GB553202734852";
 
   const baseDecl = {
     _id: "trade-test-fixed",

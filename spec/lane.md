@@ -21,8 +21,8 @@
 | Incoterms (DE 4/1) | CIF + location GBFELIXSTOWE (or GB-prefixed UN/LOCODE) | Group 4 — both components mandatory for method 1 |
 | Invoice currency (DE 4/10) | GBP | Appendix 11 |
 | Invoice total (DE 4/11) | 5000.00 GBP | trader input |
-| Declarant EORI (DE 3/18) | GB243617410764 | trader |
-| Importer EORI (DE 3/16) | GB243617410764 | trader |
+| Declarant EORI (DE 3/18) | GB553202734852 | Trade Test Data Library — `spec/hmrc-mirror/trade-test-data-library.md` |
+| Importer EORI (DE 3/16) | GB553202734852 | same — Dev Hub–only EORIs fail CDS12005 (FC-MPWQSJ97) |
 | Exporter (DE 3/1) | foreign — Name + Address (no GB/XI EORI) | Group 3 — pending verification |
 
 ## Documents claimed for this lane

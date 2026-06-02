@@ -34,10 +34,10 @@ Reading notes [12], [12a]–[12u]: see Appendix 21 reading notes — pending pas
 |----|-------|--------|
 | 3/1 Exporter | Name + Address (foreign) | Group 3 conditionality pending |
 | 3/2 Exporter EORI | omitted (no GB/XI EORI) | TBD |
-| 3/15 Importer | GB243617410764 (or omit if 3/16 alone) | TBD |
-| 3/16 Importer EORI | GB243617410764 | per lane |
+| 3/15 Importer | GB553202734852 (or omit if 3/16 alone) | TBD |
+| 3/16 Importer EORI | GB553202734852 | Trade Test Data Library — `spec/hmrc-mirror/trade-test-data-library.md` |
 | 3/17 Declarant | omit (Declarant EORI in 3/18) | C — optional |
-| 3/18 Declarant EORI | GB243617410764 | A — mandatory |
+| 3/18 Declarant EORI | GB553202734852 | A — mandatory; must be **recognised** by CDS (Group 3) |
 | 3/19 Representative | TBD — depends on self-rep vs broker | reading note [12b] |
 | 3/21 Representative status | TBD | reading note [12c] |
 | 3/24 Seller | TBD — depends on Incoterm / valuation | reading note [12d] |
@@ -50,7 +50,7 @@ Sources:
 - Group 3 completion guide — https://www.gov.uk/government/publications/cds-uk-trade-tariff-volume-3-import-declaration-completion-guide/group-3-parties (retrieved 2026-05-31)
 - Appendix 4A row `00500` — `spec/hmrc-mirror/appendix-4a-00500.md` (ODS retrieved 2026-05-31)
 
-For the current lane the declarant EORI and importer EORI are both `GB243617410764`; this is self-representation. Representative (`05A`, DE 3/19–3/21) remains omitted.
+For the current lane the declarant EORI and importer EORI are both `GB553202734852` (Trade Test Data Library profile); this is self-representation. Representative (`05A`, DE 3/19–3/21) remains omitted.
 
 Required DE 2/2 at item level (`GovernmentAgencyGoodsItem/AdditionalInformation`):
 
@@ -67,4 +67,4 @@ DMSREJ `CDS12070` on `03A/225`–`226` (FC-MPUAL5NT) = `StatementCode` without p
 |------|---------|---------|
 | CDS12005 / R038 | 74A (`Importer/ID`, DE 3/16) | Importer EORI business rule — rule text not in Tariff Vol 3; see `errors-handled.md` |
 | CDS12073 | 57A / 67A 103 / 68A 103 | Country duplicated between Exporter / ExportCountry / Origin / Buyer — Group 3 reading notes will resolve |
-| CDS12005 / R123 | 57B | Transport rule (not party — see DE 7/x) |
+| CDS12005 / R123 | 57B (`Declarant/ID`, DE 3/18) | Party ID rule — TagID R123 = `Declarant/ID` (`cds_wco_references.ts`); see `errors-handled.md` **R123 investigation** |

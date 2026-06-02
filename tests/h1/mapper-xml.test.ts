@@ -7,8 +7,8 @@ import { mapToCDS_H1 } from "../../src/lib/wco-mapper";
 describe("H1 mapper and XML renderer", () => {
   const declaration = {
     _id: "kn7baselineh1sandbox",
-    eori: "GB243617410764",
-    importerEori: "GB243617410764",
+    eori: "GB553202734852",
+    importerEori: "GB553202734852",
     declarationType: "H1",
     route: "Route 1",
     destinationCountry: "GB",
@@ -61,7 +61,7 @@ describe("H1 mapper and XML renderer", () => {
     assert.equal(mapped.BorderTransportMeans.ModeCode, "1");
     assert.equal(shipment.Destination.CountryCode, "GB");
     assert.equal(shipment.ExportCountry.ID, "DE");
-    assert.equal(shipment.Importer.ID, "GB243617410764");
+    assert.equal(shipment.Importer.ID, "GB553202734852");
     assert.equal(shipment.Consignment.GoodsLocation.ID, "");
     assert.equal(shipment.Consignment.GoodsLocation.Name, "FXTFXTFXT");
     assert.equal(shipment.Consignment.GoodsLocation.TypeCode, "A");
@@ -70,6 +70,7 @@ describe("H1 mapper and XML renderer", () => {
     assert.equal(shipment.Consignment.ArrivalTransportMeans.ID, "CSCLGLOBE");
     assert.equal(shipment.TradeTerms.ConditionCode, "CIF");
     assert.equal(shipment.TradeTerms.LocationID, "GBFELIXSTOWE");
+    assert.equal(shipment.TransactionNatureCode, "11");
     assert.deepEqual(item.Commodity.Classification, [
       { ID: "61091000", IdentificationTypeCode: "TSP" },
       { ID: "10", IdentificationTypeCode: "TRC" },
@@ -109,6 +110,7 @@ describe("H1 mapper and XML renderer", () => {
     assert.match(xml, /<CurrentCode>40<\/CurrentCode>/);
     assert.match(xml, /<PreviousCode>00<\/PreviousCode>/);
     assert.match(xml, /<CurrentCode>000<\/CurrentCode>/);
+    assert.match(xml, /<GoodsShipment>\s*<TransactionNatureCode>11<\/TransactionNatureCode>\s*<Consignment>/);
     assert.match(xml, /<TradeTerms>\s*<ConditionCode>CIF<\/ConditionCode>\s*<LocationID>GBFELIXSTOWE<\/LocationID>\s*<\/TradeTerms>/);
     assert.match(
       xml,

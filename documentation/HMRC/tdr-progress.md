@@ -2,7 +2,7 @@
 
 **Goal:** Get a single declaration through the v2.0 Trade Test as **DMSACC → DMSCLE** (no DMSREJ), proving end-to-end submission validity.
 
-**Active lane:** HS 8471300000 / CPC 4000 000 / Origin DE / EORI GB243617410764
+**Active lane:** HS 8471300000 / CPC 4000 000 / Origin DE / EORI GB553202734852 (Trade Test Data Library)
 **Description:** Portable automatic data processing machine, weight ≤ 10kg (laptops from Germany)
 **Documents:** N935 (commercial invoice, AC), N271 (packing list, AC)
 

@@ -81,7 +81,10 @@ Every WCOID here was read directly from `<WCOID>` annotations in the XSD — not
 
 | TagID | Field | Element |
 |---|---|---|
-| `103` | `CountryCode` | Address / ExportCountry / Origin |
+| `103` | **`TransactionNatureCode`** (DE 8/5) | `GoodsShipment` (67A) and `GovernmentAgencyGoodsItem` (68A) — source: `convex/lib/cds_wco_references.ts` rows 1329–1331, 2159–2161. **Not** `CountryCode`. |
+| `242` | `CountryCode` | `GoodsLocation/Address/CountryCode` |
+| `063` | `CountryCode` | `Origin/CountryCode` |
+| `465` | `CountryCode` | `Destination/CountryCode` |
 | `112` | Item invoice amount | InvoiceLine |
 | `122` | Method code or charge type | CustomsValuation |
 | `164` | DutyTaxFee code | DutyTaxFee |

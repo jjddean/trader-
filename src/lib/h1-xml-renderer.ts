@@ -154,6 +154,12 @@ export function renderH1Xml(payloadInfo: unknown): string {
   // Omit both until full party data (Name + Address including CityName) is available.
   const buyerXml = "";
   const sellerXml = "";
+  // DE 8/5 — WCOID 103 at 67A (cds_wco_references.ts). Mapper always sets default "11".
+  // XSD GoodsShipment sequence: TransactionNatureCode before Consignment (WCO_DEC_2_DMS.xsd).
+  const transactionNatureCode = String(gs.TransactionNatureCode || "").trim();
+  const transactionNatureXml = transactionNatureCode
+    ? `\n      <TransactionNatureCode>${xmlEscape(transactionNatureCode)}</TransactionNatureCode>`
+    : "";
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
@@ -173,7 +179,7 @@ export function renderH1Xml(payloadInfo: unknown): string {
     <Declarant>
       <ID>${xmlEscape(read(d, "Declarant").ID)}</ID>
     </Declarant>${exporterXml}
-    <GoodsShipment>${buyerXml}
+    <GoodsShipment>${buyerXml}${transactionNatureXml}
       <Consignment>
         <ContainerCode>${xmlEscape(consignment.ContainerCode)}</ContainerCode>${arrivalTransportMeansXml}
         ${(() => {
