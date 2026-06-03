@@ -7,8 +7,8 @@ import { mapToCDS_H1 } from "../../src/lib/wco-mapper";
 describe("H1 mapper and XML renderer", () => {
   const declaration = {
     _id: "kn7baselineh1sandbox",
-    eori: "GB553202734852",
-    importerEori: "GB553202734852",
+    eori: "GB531765313922",
+    importerEori: "GB531765313922",
     declarationType: "H1",
     route: "Route 1",
     destinationCountry: "GB",
@@ -61,7 +61,7 @@ describe("H1 mapper and XML renderer", () => {
     assert.equal(mapped.BorderTransportMeans.ModeCode, "1");
     assert.equal(shipment.Destination.CountryCode, "GB");
     assert.equal(shipment.ExportCountry.ID, "DE");
-    assert.equal(shipment.Importer.ID, "GB553202734852");
+    assert.equal(shipment.Importer.ID, "GB531765313922");
     assert.equal(shipment.Consignment.GoodsLocation.ID, "");
     assert.equal(shipment.Consignment.GoodsLocation.Name, "FXTFXTFXT");
     assert.equal(shipment.Consignment.GoodsLocation.TypeCode, "A");
@@ -120,5 +120,21 @@ describe("H1 mapper and XML renderer", () => {
     assert.match(xml, /<CategoryCode>N<\/CategoryCode>/);
     assert.match(xml, /<TypeCode>935<\/TypeCode>/);
     assert.doesNotMatch(xml, /<TypeCode>922<\/TypeCode>/);
+  });
+
+  it("emits TariffQuantity (DE 6/2, NAR p/st) when supplementaryUnitQty is set", () => {
+    const laptopItems = [
+      {
+        ...items[0],
+        commodityCode: "8471300000",
+        description: "Portable automatic data processing machine",
+        supplementaryUnitQty: 10,
+        supplementaryUnitCode: "NAR",
+        packageCount: 1,
+        packageType: "PK",
+      },
+    ];
+    const xml = renderH1Xml(mapToCDS_H1(declaration, laptopItems));
+    assert.match(xml, /<TariffQuantity unitCode="NAR">10<\/TariffQuantity>/);
   });
 });

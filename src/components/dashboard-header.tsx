@@ -17,6 +17,7 @@ function timeAgo(dateString: string) {
   return `${Math.round(diffHours / 24)} days ago`;
 }
 import { cn } from "@/lib/utils";
+import { getNotificationDisplay } from "@/lib/notification-labels";
 import { GlobalSearchOverlay } from "./global-search-overlay";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AssistantSideSheet } from "@/components/assistant-side-sheet";
@@ -229,17 +230,31 @@ export const DashboardHeader = ({
                   <div className="p-4 text-center text-[11px] text-gray-400">You're all caught up!</div>
                 ) : (
                   notifications.map((n: any, idx: number) => {
+                    const display = getNotificationDisplay(n.notificationType);
                     let Icon = Zap;
                     let bgColor = "bg-blue-50";
                     let iconColor = "text-blue-600";
-                    let title = n.notificationType;
+                    let title = display.title;
 
-                    if (title === "CLEARED") { Icon = CheckCircle2; bgColor = "bg-green-50"; iconColor = "text-green-600"; title = "Clearance Received"; }
-                    if (title === "ACCEPTED") { Icon = CheckCircle2; bgColor = "bg-green-50"; iconColor = "text-green-600"; title = "Declaration Accepted"; }
-                    if (title === "REJECTED") { Icon = XCircle; bgColor = "bg-red-50"; iconColor = "text-red-600"; title = "Declaration Rejected"; }
-                    if (title === "HELD") { Icon = Clock; bgColor = "bg-amber-50"; iconColor = "text-amber-600"; title = "Goods Held"; }
-                    if (title === "GOODS_ARRIVED") { Icon = Package; bgColor = "bg-blue-50"; iconColor = "text-blue-600"; title = "Goods Arrived"; }
-                    if (title === "DOCUMENTS_REQUIRED") { Icon = FileText; bgColor = "bg-amber-50"; iconColor = "text-amber-600"; title = "Documents Required"; }
+                    if (display.tone === "success") {
+                      Icon = CheckCircle2;
+                      bgColor = "bg-green-50";
+                      iconColor = "text-green-600";
+                    } else if (display.tone === "danger") {
+                      Icon = XCircle;
+                      bgColor = "bg-red-50";
+                      iconColor = "text-red-600";
+                    } else if (display.tone === "warning") {
+                      Icon = Clock;
+                      bgColor = "bg-amber-50";
+                      iconColor = "text-amber-600";
+                    } else if (n.notificationType === "GOODS_ARRIVED") {
+                      Icon = Package;
+                    } else if (n.notificationType === "DOCUMENTS_REQUIRED") {
+                      Icon = FileText;
+                      bgColor = "bg-amber-50";
+                      iconColor = "text-amber-600";
+                    }
 
                     return (
                       <React.Fragment key={n._id}>
@@ -256,6 +271,9 @@ export const DashboardHeader = ({
                             </div>
                             <p className="text-[11px] leading-relaxed text-gray-500">
                               MRN: <span className="font-medium text-gray-700">{n.mrn || "Pending"}</span>
+                              {display.subtitle ? (
+                                <span className="block text-[10px] text-gray-400 mt-0.5">{display.subtitle}</span>
+                              ) : null}
                             </p>
                           </div>
                         </DropdownMenuItem>

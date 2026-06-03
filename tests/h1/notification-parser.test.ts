@@ -20,6 +20,52 @@ describe("HMRC DMS notification parser", () => {
     assert.deepEqual(parsed.fieldErrors, []);
   });
 
+  it("maps NameCode 4 with FunctionCode 13 to DMSTAX", () => {
+    const parsed = parseHmrcNotification(`
+      <Response>
+        <FunctionCode>13</FunctionCode>
+        <Status><NameCode>4</NameCode></Status>
+        <Declaration><ID>26GB63M1I0RQFCVAR4</ID></Declaration>
+      </Response>
+    `);
+    assert.equal(parsed.notificationType, "DMSTAX");
+  });
+
+  it("maps FunctionCode 13 and NameCode 67 to DMSTAX (tax calculation)", () => {
+    const parsed = parseHmrcNotification(`
+      <Response>
+        <FunctionCode>13</FunctionCode>
+        <Status><NameCode>67</NameCode></Status>
+        <Declaration>
+          <ID>26GB63M1I0RQFCVAR4</ID>
+          <FunctionalReferenceID>FC-MPYAJ7RN</FunctionalReferenceID>
+        </Declaration>
+      </Response>
+    `);
+
+    assert.equal(parsed.notificationType, "DMSTAX");
+    assert.equal(parsed.mrn, "26GB63M1I0RQFCVAR4");
+    assert.deepEqual(parsed.errorCodes, []);
+  });
+
+  it("extracts CDS13000 from DMSACC smart Error (ValidationCode)", () => {
+    const parsed = parseHmrcNotification(`
+      <Response>
+        <FunctionCode>01</FunctionCode>
+        <Error>
+          <Description>Value per kilo appears too low for this commodity</Description>
+          <ValidationCode>CDS13000</ValidationCode>
+          <Pointer><DocumentSectionCode>68A</DocumentSectionCode><SequenceNumeric>1</SequenceNumeric></Pointer>
+        </Error>
+        <Declaration><ID>26GB63M1I0RQFCVAR4</ID></Declaration>
+      </Response>
+    `);
+
+    assert.equal(parsed.notificationType, "DMSACC");
+    assert.deepEqual(parsed.errorCodes, ["CDS13000"]);
+    assert.equal(parsed.fieldErrors[0]?.reason, "Value per kilo appears too low for this commodity");
+  });
+
   it("extracts DMSREJ field-level errors from FunctionalError blocks", () => {
     const parsed = parseHmrcNotification(`
       <Notification>

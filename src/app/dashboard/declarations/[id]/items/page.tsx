@@ -57,26 +57,50 @@ export default function GoodsItemsPage() {
   const docEditsTouched = useRef<Set<string>>(new Set());
   const docDebounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const [docSaveState, setDocSaveState] = useState<Record<string, "idle" | "saving" | "saved" | "error">>({});
+  const [itemSaveError, setItemSaveError] = useState<string | null>(null);
 
-  // Batch pending field updates per item — flushed as a single updateItem call after 600ms idle.
-  // Prevents one mutation per field blur (e.g. tabbing through 8 fields = 8 mutations → 1).
+  // Batch pending field updates per item — flushed after 600ms idle OR immediately on blur.
   const pendingUpdates = useRef<Record<string, Record<string, unknown>>>({});
   const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const flushInFlight = useRef<Record<string, boolean>>({});
+
+  const omitUndefined = (updates: Record<string, unknown>) =>
+    Object.fromEntries(Object.entries(updates).filter(([, v]) => v !== undefined));
+
+  const flushItemUpdates = async (itemId: string) => {
+    clearTimeout(debounceTimers.current[itemId]);
+    const updates = pendingUpdates.current[itemId];
+    if (!updates || Object.keys(updates).length === 0) return;
+    if (flushInFlight.current[itemId]) return;
+
+    const payload = omitUndefined(updates);
+    if (Object.keys(payload).length === 0) {
+      delete pendingUpdates.current[itemId];
+      return;
+    }
+
+    delete pendingUpdates.current[itemId];
+    flushInFlight.current[itemId] = true;
+    setItemSaveError(null);
+    try {
+      await updateItem({ id: itemId as Id<"goods_items">, ...payload });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to save item";
+      console.error("Failed to save item updates:", err);
+      setItemSaveError(message);
+      pendingUpdates.current[itemId] = { ...payload, ...pendingUpdates.current[itemId] };
+    } finally {
+      flushInFlight.current[itemId] = false;
+    }
+  };
 
   const scheduleUpdate = (itemId: string, field: string, value: unknown) => {
     if (!pendingUpdates.current[itemId]) pendingUpdates.current[itemId] = {};
     pendingUpdates.current[itemId][field] = value;
 
     clearTimeout(debounceTimers.current[itemId]);
-    debounceTimers.current[itemId] = setTimeout(async () => {
-      const updates = pendingUpdates.current[itemId];
-      if (!updates || Object.keys(updates).length === 0) return;
-      delete pendingUpdates.current[itemId];
-      try {
-        await updateItem({ id: itemId as Id<"goods_items">, ...updates } as any);
-      } catch (err) {
-        console.error("Failed to save item updates:", err);
-      }
+    debounceTimers.current[itemId] = setTimeout(() => {
+      void flushItemUpdates(itemId);
     }, 600);
   };
 
@@ -254,7 +278,7 @@ export default function GoodsItemsPage() {
 
   const handleItemFieldBlur = (
     itemId: Id<"goods_items">,
-    field: "description" | "commodityCode" | "originCountry" | "valueAmount" | "procedureCode" | "additionalProcedureCode" | "grossWeightKg" | "netWeightKg" | "shippingMarks" | "packageCount" | "packageType",
+    field: "description" | "commodityCode" | "originCountry" | "valueAmount" | "procedureCode" | "additionalProcedureCode" | "grossWeightKg" | "netWeightKg" | "supplementaryUnitQty" | "shippingMarks" | "packageCount" | "packageType",
     value: string,
   ) => {
     // Format normalisation only — NO field-rule validation here.
@@ -265,24 +289,26 @@ export default function GoodsItemsPage() {
 
     if (field === "commodityCode") {
       scheduleUpdate(itemId, "commodityCode", trimmed);
-      return;
-    }
-    if (field === "originCountry" || field === "packageType") {
+    } else if (field === "originCountry" || field === "packageType") {
       scheduleUpdate(itemId, field, trimmed.toUpperCase());
-      return;
-    }
-    if (field === "valueAmount" || field === "grossWeightKg" || field === "netWeightKg") {
+    } else if (field === "supplementaryUnitQty") {
+      // Empty or zero → undefined (DE 6/2 must be > 0 for tariff-measured commodities).
+      const parsed = trimmed === "" ? undefined : Number(trimmed);
+      const qty = parsed != null && parsed > 0 ? parsed : undefined;
+      scheduleUpdate(itemId, field, qty);
+      if (qty != null) scheduleUpdate(itemId, "supplementaryUnitCode", "NAR");
+    } else if (field === "valueAmount" || field === "grossWeightKg" || field === "netWeightKg") {
       // Empty input → undefined (not 0). Don't invent a value the user didn't supply.
       const parsed = trimmed === "" ? undefined : Number(trimmed);
       scheduleUpdate(itemId, field, parsed);
-      return;
-    }
-    if (field === "packageCount") {
+    } else if (field === "packageCount") {
       const parsed = trimmed === "" ? undefined : parseInt(trimmed, 10);
-      scheduleUpdate(itemId, field, parsed);
-      return;
+      const count = parsed != null && parsed > 0 ? parsed : undefined;
+      scheduleUpdate(itemId, field, count);
+    } else {
+      scheduleUpdate(itemId, field, trimmed);
     }
-    scheduleUpdate(itemId, field, trimmed);
+    void flushItemUpdates(itemId);
   };
 
   const handleManualAdd = async () => {
@@ -445,6 +471,15 @@ export default function GoodsItemsPage() {
         </div>
       )}
 
+      {itemSaveError && (
+        <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+          <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+          <p>
+            <strong>Could not save item:</strong> {itemSaveError}
+          </p>
+        </div>
+      )}
+
       {/* Mandatory Human-in-the-Loop Review Banner */}
       {items.length > 0 && (
          <div className="flex items-center gap-2 rounded-md bg-yellow-50 p-3 text-xs text-yellow-800 border border-yellow-200">
@@ -587,6 +622,28 @@ export default function GoodsItemsPage() {
                       onBlur={(e) => handleItemFieldBlur(item._id, "netWeightKg", e.target.value)}
                       placeholder="0.000"
                       className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                      Supp. units (DE 6/2) p/st <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      key={`${item._id}-su-${String((item as Record<string, unknown>).supplementaryUnitQty ?? "")}`}
+                      type="number"
+                      required
+                      min="0.000001"
+                      step="1"
+                      defaultValue={
+                        (item as Record<string, unknown>).supplementaryUnitQty != null
+                          ? Number((item as Record<string, unknown>).supplementaryUnitQty)
+                          : ""
+                      }
+                      onBlur={(e) => handleItemFieldBlur(item._id, "supplementaryUnitQty", e.target.value)}
+                      placeholder="e.g. 10 (number of laptops)"
+                      title="Number of items (not packages). Required for HS 8471300000 per UK tariff."
+                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
                   </div>
 

@@ -155,6 +155,10 @@ export default defineSchema({
     additionalDocuments: v.optional(v.any()),
     additionalProcedureCode: v.optional(v.any()),
     shippingMarks: v.optional(v.any()),
+    // DE 6/2 — supplementary units (TariffQuantity). Required when tariff instructs (e.g. 8471300000 → p/st).
+    supplementaryUnitQty: v.optional(v.number()),
+    // Appendix 20 / UK Tariff Data Standard: NAR = number of items (p/st).
+    supplementaryUnitCode: v.optional(v.string()),
     // DE 6/10 — number of packages. Mandatory per Appendix 21A H1.
     packageCount: v.optional(v.number()),
     // DE 6/9 — package type code (PK, BX, CT, etc.). Mandatory per Appendix 21A H1.

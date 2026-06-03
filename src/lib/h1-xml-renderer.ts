@@ -216,6 +216,11 @@ export function renderH1Xml(payloadInfo: unknown): string {
       ${asArray(gs.GovernmentAgencyGoodsItem).map((item) => {
         const commodity = read(item, "Commodity");
         const goodsMeasure = read(commodity, "GoodsMeasure");
+        const tariffQty = goodsMeasure.TariffQuantity;
+        const tariffQtyXml =
+          tariffQty != null && String(tariffQty).trim() !== ""
+            ? `\n            <TariffQuantity unitCode="${xmlEscape(String(goodsMeasure.TariffQuantityUnitCode || "NAR"))}">${xmlEscape(tariffQty)}</TariffQuantity>`
+            : "";
         const additionalInformation = asArray(item.AdditionalInformation);
         const additionalInformationXml = additionalInformation
           .map((ai) => `
@@ -275,7 +280,7 @@ export function renderH1Xml(payloadInfo: unknown): string {
           </DutyTaxFee>
           <GoodsMeasure>
             <GrossMassMeasure unitCode="KGM">${xmlEscape(goodsMeasure.GrossMassMeasure || 0)}</GrossMassMeasure>
-            <NetNetWeightMeasure unitCode="KGM">${xmlEscape(goodsMeasure.NetNetWeightMeasure || 0)}</NetNetWeightMeasure>
+            <NetNetWeightMeasure unitCode="KGM">${xmlEscape(goodsMeasure.NetNetWeightMeasure || 0)}</NetNetWeightMeasure>${tariffQtyXml}
           </GoodsMeasure>${invoiceLineXml}
         </Commodity>
         <CustomsValuation>

@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const REFERENCE_MRN = "24GBDMSATEST000001";
+// Legacy archive EORI (test-evidence/archive-pre-p0/) — not the active laptop lane.
 const EORI = "GB553202734852";
 
 function xmlEscape(value) {

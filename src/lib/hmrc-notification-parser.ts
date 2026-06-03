@@ -5,6 +5,8 @@
 
 const DMS_TYPES = ["DMSCLE", "DMSACC", "DMSREJ", "DMSROG", "DMSINV", "DMSTAX", "DMSCTL", "DMSRES", "DMSRCV", "DMSREQ", "DMSQRY", "DMSDOC", "DMSNOTFN", "DMSSUB", "DMSUB"];
 
+// HMRC CDS End-to-End Service Guide — notification FunctionCode → DMS type.
+// Note: FunctionCode 13 on a *declaration request* is amend/cancel; on a *response* it is DMSTAX.
 const FUNCTION_CODE_MAP: Record<string, string> = {
   "01": "DMSACC",
   "02": "DMSINV",
@@ -17,8 +19,14 @@ const FUNCTION_CODE_MAP: Record<string, string> = {
   "09": "DMSACC",
   "10": "DMSDOC",
   "11": "DMSCLE",
-  "13": "DMSREJ",
+  "13": "DMSTAX",
   "14": "DMSINV",
+};
+
+/** Numeric <NameCode> on RES tax notifications when FunctionCode is absent from fallback. */
+const NAME_CODE_MAP: Record<string, string> = {
+  "4": "DMSTAX",
+  "67": "DMSTAX",
 };
 
 export interface ParsedNotification {
@@ -37,16 +45,27 @@ export function parseHmrcNotification(rawPayload: string): ParsedNotification {
     if (upper.includes(t)) { notificationType = t; break; }
   }
 
-  // 2. <NameCode> element
+  const functionCodeMatch = rawPayload.match(
+    /<(?:[^>]*:)?FunctionCode[^>]*>(\d+)<\/(?:[^>]*:)?FunctionCode>/i,
+  );
+  const functionCode = functionCodeMatch?.[1]?.trim() || "";
+
+  // 2. <NameCode> — prefer FunctionCode when NameCode is numeric (4/67 tax subtypes)
   if (notificationType === "UNKNOWN") {
     const m = rawPayload.match(/<(?:[^>]*:)?NameCode[^>]*>([^<]+)<\/(?:[^>]*:)?NameCode>/i);
-    if (m?.[1]) notificationType = m[1].trim().toUpperCase();
+    if (m?.[1]) {
+      const code = m[1].trim().toUpperCase();
+      if (/^\d+$/.test(code) && functionCode && FUNCTION_CODE_MAP[functionCode]) {
+        notificationType = FUNCTION_CODE_MAP[functionCode];
+      } else {
+        notificationType = NAME_CODE_MAP[code] || code;
+      }
+    }
   }
 
-  // 3. <FunctionCode> numeric fallback (extended map)
-  if (notificationType === "UNKNOWN") {
-    const m = rawPayload.match(/<(?:[^>]*:)?FunctionCode[^>]*>(\d+)<\/(?:[^>]*:)?FunctionCode>/i);
-    if (m?.[1]) notificationType = FUNCTION_CODE_MAP[m[1]] || `FUNC_${m[1]}`;
+  // 3. <FunctionCode> fallback
+  if (notificationType === "UNKNOWN" && functionCode) {
+    notificationType = FUNCTION_CODE_MAP[functionCode] || `FUNC_${functionCode}`;
   }
 
   // MRN — try <ID> tag with 18-char CDS format first, then bare regex
@@ -76,15 +95,24 @@ export function parseHmrcNotification(rawPayload: string): ParsedNotification {
     }
   }
 
-  // Also check <Error> elements (alternative HMRC error format)
-  if (errorCodes.length === 0) {
-    const errorRegex = /<(?:[^>]*:)?Error[^>]*>([\s\S]*?)<\/(?:[^>]*:)?Error>/gi;
-    while ((errMatch = errorRegex.exec(rawPayload)) !== null) {
-      const block = errMatch[1];
-      const code = block.match(/<(?:[^>]*:)?(?:Code|ErrorCode)[^>]*>([^<]+)<\/(?:[^>]*:)?(?:Code|ErrorCode)>/i)?.[1]?.trim() || "";
-      const reason = block.match(/<(?:[^>]*:)?(?:Description|Reason|Text)[^>]*>([^<]+)<\/(?:[^>]*:)?(?:Description|Reason|Text)>/i)?.[1]?.trim() || "";
-      if (code && !errorCodes.includes(code)) errorCodes.push(code);
-      if (reason) fieldErrors.push({ field: "Declaration", code: code || undefined, reason });
+  // <Error> blocks on DMSACC (smart credibility checks use ValidationCode, not ErrorCode)
+  const errorRegex = /<(?:[^>]*:)?Error[^>]*>([\s\S]*?)<\/(?:[^>]*:)?Error>/gi;
+  while ((errMatch = errorRegex.exec(rawPayload)) !== null) {
+    const block = errMatch[1];
+    const code =
+      block.match(/<(?:[^>]*:)?(?:ValidationCode|ErrorCode|Code)[^>]*>([^<]+)<\/(?:[^>]*:)?(?:ValidationCode|ErrorCode|Code)>/i)?.[1]?.trim() || "";
+    const reason = block.match(/<(?:[^>]*:)?(?:Description|Reason|Text)[^>]*>([^<]+)<\/(?:[^>]*:)?(?:Description|Reason|Text)>/i)?.[1]?.trim() || "";
+    const sectionPointers = [...block.matchAll(/<(?:[^>]*:)?DocumentSectionCode[^>]*>([^<]+)<\/(?:[^>]*:)?DocumentSectionCode>/gi)]
+      .map((m) => m[1]?.trim())
+      .filter(Boolean);
+    const seq = block.match(/<(?:[^>]*:)?SequenceNumeric[^>]*>(\d+)<\/(?:[^>]*:)?SequenceNumeric>/i)?.[1];
+    const field =
+      sectionPointers.length > 0
+        ? sectionPointers.join("/") + (seq ? ` item ${seq}` : "")
+        : "Declaration";
+    if (code && !errorCodes.includes(code)) errorCodes.push(code);
+    if (code || reason) {
+      fieldErrors.push({ field, code: code || undefined, reason: reason || code });
     }
   }
 

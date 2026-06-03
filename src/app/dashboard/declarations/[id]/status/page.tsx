@@ -7,6 +7,7 @@ import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { Activity, Clock, CheckCircle2, XCircle, Loader2, ShieldCheck, ShieldAlert, FileText, AlertCircle } from "lucide-react";
+import { normalizeNotificationType, getNotificationDisplay } from "@/lib/notification-labels";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
 export default function StatusTimelinePage() {
@@ -46,6 +47,7 @@ export default function StatusTimelinePage() {
   }
 
   const isSubmitted = declaration.status !== "Draft";
+
   const notificationMeta: Record<string, { title: string; color: string; icon: "success" | "warning" | "danger" | "info"; detail: string }> = {
     DMSUB:  { title: "Declaration received by HMRC", color: "bg-blue-500",  icon: "info",    detail: "Declaration has been received and queued by HMRC." },
     DMSSUB: { title: "Declaration received by HMRC", color: "bg-blue-500",  icon: "info",    detail: "Declaration has been received and queued by HMRC." },
@@ -64,7 +66,20 @@ export default function StatusTimelinePage() {
     DMSNOTFN: { title: "General notification",        color: "bg-blue-500",  icon: "info",    detail: "HMRC sent a general status notification." },
   };
 
-  const latestNotificationType = notifications?.[0]?.notificationType || "DMSUB";
+  const metaForNotification = (rawType: string) => {
+    const type = normalizeNotificationType(rawType);
+    if (notificationMeta[type]) return { ...notificationMeta[type], normalizedType: type };
+    const display = getNotificationDisplay(rawType);
+    return {
+      title: display.title,
+      color: display.tone === "success" ? "bg-green-500" : display.tone === "danger" ? "bg-red-500" : display.tone === "warning" ? "bg-amber-500" : "bg-blue-500",
+      icon: display.tone === "success" ? "success" as const : display.tone === "danger" ? "danger" as const : display.tone === "warning" ? "warning" as const : "info" as const,
+      detail: display.subtitle || "HMRC sent a status update.",
+      normalizedType: type,
+    };
+  };
+
+  const latestNotificationType = normalizeNotificationType(notifications?.[0]?.notificationType) || "DMSUB";
 
   return (
     <div className="space-y-6">
@@ -150,27 +165,27 @@ export default function StatusTimelinePage() {
                   </div>
                 </div>
 
-                {(notifications || []).map((notif: any) => (
+                {(notifications || []).map((notif: any) => {
+                  const meta = metaForNotification(notif.notificationType);
+                  return (
                   <div key={notif._id} className="relative">
-                    <div className={`absolute -left-6 top-1 h-3 w-3 rounded-full border-2 border-white ${
-                      notificationMeta[notif.notificationType]?.color || "bg-blue-500"
-                    }`} />
+                    <div className={`absolute -left-6 top-1 h-3 w-3 rounded-full border-2 border-white ${meta.color}`} />
                     <div className="flex flex-col gap-1 mt-1">
                       <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                         {new Date(notif.timestamp).toLocaleString()}
                       </p>
                       <div className="flex items-center gap-2">
                          <p className="text-sm font-medium text-gray-900">
-                           {notificationMeta[notif.notificationType]?.title || `Status Update (${notif.notificationType})`}
+                           {meta.title}
                          </p>
-                         {notificationMeta[notif.notificationType]?.icon === "success" && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                         {notificationMeta[notif.notificationType]?.icon === "danger" && <XCircle className="h-4 w-4 text-red-500" />}
-                         {notificationMeta[notif.notificationType]?.icon === "warning" && <AlertCircle className="h-4 w-4 text-amber-500" />}
+                         {meta.icon === "success" && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                         {meta.icon === "danger" && <XCircle className="h-4 w-4 text-red-500" />}
+                         {meta.icon === "warning" && <AlertCircle className="h-4 w-4 text-amber-500" />}
                       </div>
                       <p className="text-xs text-gray-600">
-                        {notificationMeta[notif.notificationType]?.detail || "HMRC sent a status update."}
+                        {meta.detail}
                       </p>
-                      {(notif.notificationType === "DMSREJ" || notif.notificationType === "DMSINV") && Array.isArray(notif.fieldErrors) && notif.fieldErrors.length > 0 && (
+                      {(meta.normalizedType === "DMSREJ" || meta.normalizedType === "DMSINV") && Array.isArray(notif.fieldErrors) && notif.fieldErrors.length > 0 && (
                         <div className="rounded border border-red-200 bg-red-50 p-2 text-xs text-red-800">
                           {notif.fieldErrors.map((fieldError: { field: string; code?: string; reason: string }, idx: number) => (
                             <p key={`${notif._id}-err-${idx}`} className="break-words">
@@ -179,7 +194,7 @@ export default function StatusTimelinePage() {
                           ))}
                         </div>
                       )}
-                      {(notif.notificationType === "DMSREJ" || notif.notificationType === "DMSINV") && (!Array.isArray(notif.fieldErrors) || notif.fieldErrors.length === 0) && Array.isArray(notif.errorCodes) && notif.errorCodes.length > 0 && (
+                      {(meta.normalizedType === "DMSREJ" || meta.normalizedType === "DMSINV") && (!Array.isArray(notif.fieldErrors) || notif.fieldErrors.length === 0) && Array.isArray(notif.errorCodes) && notif.errorCodes.length > 0 && (
                         <p className="text-xs text-red-700 break-words">
                           {notif.errorCodes.join(", ")}
                         </p>
@@ -192,7 +207,8 @@ export default function StatusTimelinePage() {
                       </details>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
                 
                 {declaration.status !== "Cleared" && (
                    <div className="relative pt-4 cursor-pointer group" onClick={() => setNextStepsOpen(true)}>

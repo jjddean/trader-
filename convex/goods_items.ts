@@ -131,6 +131,8 @@ export const addItem = mutation({
     valueCurrency: v.optional(v.string()),
     grossWeightKg: v.optional(v.number()),
     netWeightKg: v.optional(v.number()),
+    supplementaryUnitQty: v.optional(v.number()),
+    supplementaryUnitCode: v.optional(v.string()),
     shippingMarks: v.optional(v.string()),
     packageCount: v.optional(v.number()),
     packageType: v.optional(v.string()),
@@ -195,6 +197,8 @@ export const updateItem = mutation({
     valueCurrency: v.optional(v.string()),
     grossWeightKg: v.optional(v.number()),
     netWeightKg: v.optional(v.number()),
+    supplementaryUnitQty: v.optional(v.number()),
+    supplementaryUnitCode: v.optional(v.string()),
     shippingMarks: v.optional(v.string()),
     packageCount: v.optional(v.number()),
     packageType: v.optional(v.string()),
@@ -222,8 +226,11 @@ export const updateItem = mutation({
     }
 
     const { id, ...updates } = args;
+    const patch = Object.fromEntries(
+      Object.entries(updates).filter(([, value]) => value !== undefined),
+    );
     await ctx.db.patch(id, {
-      ...updates,
+      ...patch,
       ownerId: identity.subject,
     });
     await refreshReadModels(ctx, existing.declarationId);

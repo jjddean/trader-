@@ -3,7 +3,7 @@
  *
  * Active lane (2026-05-26):
  *   Lane: HS 8471300000 / CPC 4000 000 / Origin DE / Type IMA
- *   EORI: GB553202734852 (Trade Test Data Library)
+ *   EORI: GB553202734852 (TDL on declaration — experiment; OAuth Romwan)
  *   Description: Portable automatic data processing machine, weight ≤ 10kg (laptops)
  *   Documents: N935 (Commercial invoice), N271 (Packing list)
  *   Source: UK Trade Tariff / declaration form fields
@@ -510,7 +510,7 @@ async function run() {
   }
 
   const client = userId ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL) : null;
-  const eori = process.env.HMRC_EORI || "GB553202734852";
+  const eori = process.env.HMRC_EORI || "GB531765313922";
 
   const baseDecl = {
     _id: "trade-test-fixed",
@@ -548,6 +548,8 @@ async function run() {
     valueCurrency: "GBP",
     grossWeightKg: 120,
     netWeightKg: 110,
+    supplementaryUnitQty: 1,
+    supplementaryUnitCode: "NAR",
     packageCount: 1,
     packageType: "PK",
     shippingMarks: "TEST-MARK-LAPTOPS-001",

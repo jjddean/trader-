@@ -1,4 +1,4 @@
-<!-- timestamp: 2026-06-01T19:02:54.386Z | http_status: 0 | conversation_id: DRY_RUN -->
+<!-- timestamp: 2026-06-03T16:20:27.978Z | http_status: 0 | conversation_id: DRY_RUN -->
 <!-- request_accept: application/vnd.hmrc.2.0+xml | request_content_type: application/xml; charset=UTF-8 | request_authorization: Bearer [REDACTED] | request_x_client_id: ZSoA1lpJi8FyuzSsncFrOZKpmrNe | request_gov_test_scenario: ABSENT -->
 <?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
@@ -9,7 +9,7 @@
   <AgencyAssignedCustomizationVersionCode>v2.1</AgencyAssignedCustomizationVersionCode>
   <Declaration xmlns="urn:wco:datamodel:WCO:DEC-DMS:2" xmlns:clm63055="urn:un:unece:uncefact:codelist:standard:UNECE:AgencyIdentificationCode:D12B" xmlns:ds="urn:wco:datamodel:WCO:MetaData_DS-DMS:2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2 ../DocumentMetaData_2_DMS.xsd ">
     <FunctionCode>9</FunctionCode>
-    <FunctionalReferenceID>TT-1780340563722</FunctionalReferenceID>
+    <FunctionalReferenceID>TT-1780503627706</FunctionalReferenceID>
     <TypeCode>IMA</TypeCode>
     <GoodsItemQuantity>1</GoodsItemQuantity>
     <InvoiceAmount currencyID="GBP">5000.00</InvoiceAmount>
@@ -21,7 +21,7 @@
       <ModeCode>1</ModeCode>
     </BorderTransportMeans>
     <Declarant>
-      <ID>GB243617410764</ID>
+      <ID>GB553202734852</ID>
     </Declarant>
     <Exporter>
       <Name>German Exporter GmbH</Name>
@@ -92,6 +92,7 @@
           <GoodsMeasure>
             <GrossMassMeasure unitCode="KGM">120.000</GrossMassMeasure>
             <NetNetWeightMeasure unitCode="KGM">110.000</NetNetWeightMeasure>
+            <TariffQuantity unitCode="NAR">1</TariffQuantity>
           </GoodsMeasure>
           <InvoiceLine><ItemChargeAmount currencyID="GBP">5000.00</ItemChargeAmount></InvoiceLine>
         </Commodity>
@@ -122,11 +123,11 @@
         </ValuationAdjustment>
       </GovernmentAgencyGoodsItem>
       <Importer>
-        <ID>GB243617410764</ID>
+        <ID>GB553202734852</ID>
       </Importer>
       <PreviousDocument>
         <CategoryCode>Z</CategoryCode>
-        <ID>6GB243617410764-1780340563722</ID>
+        <ID>6GB553202734852-1780503627706</ID>
         <TypeCode>DCR</TypeCode>
         <LineNumeric>1</LineNumeric>
       </PreviousDocument>
@@ -135,7 +136,7 @@
         <LocationID>GBFELIXSTOWE</LocationID>
       </TradeTerms>
       <UCR>
-        <TraderAssignedReferenceID>6GB243617410764-1780340563722</TraderAssignedReferenceID>
+        <TraderAssignedReferenceID>6GB553202734852-1780503627706</TraderAssignedReferenceID>
       </UCR>
     </GoodsShipment>
   </Declaration>

@@ -54,7 +54,7 @@ Self-representation (same guide):
 | FC-MPVNPBLP | `GB243617410764` (Dev Hub test user) | 2× CDS12005 R123 + R038 |
 | FC-MPWQSJ97 | `GB531765313922` (Dev Hub test user) | **Same** 2× CDS12005 |
 
-Payload shape is correct (00500 + Importer, TransactionNatureCode, etc.). **Developer Hub–generated EORIs are not “recognised” in Trade Test CDS** unless they are **Test Data Library** profiles loaded into Trade Test.
+Payload shape is correct (00500 + Importer, TransactionNatureCode, etc.). Submitted EORIs (`GB243617410764`, `GB531765313922`) are **not listed** in the TDL spreadsheet; CDS returns CDS12005 (“not recognised”) on Declarant/Importer. **Inference only:** Trade Test may require TDL-loaded party IDs — **not proven** that re-creating the test user with TDL `eoriNumber` fixes CDS12005 (same create-test-user service whether UI or API).
 
 **Trade Test Data Library** (cover sheet abstract, `trade-test-data-library-cover.csv`):
 
@@ -64,14 +64,15 @@ Payload shape is correct (00500 + Importer, TransactionNatureCode, etc.). **Deve
 
 > To use an **EORI from the Test Data Library**, provide it as part of the request [when creating a test user].
 
-## Cited fix (Trade Test v2.0)
+## Retracted “fix” (was overstated)
 
-1. Choose a **Test Data Library EORI** (project archive used `GB553202734852` — see `test-evidence/run-additional-scenarios.js`, `test-evidence/archive-pre-p0/`; TDL changelog V23.0 lists this EORI).
-2. Create sandbox test user via **Create Test User API** with `serviceNames: ["customs-services"]` and `eoriNumber: "GB553202734852"` (or another TDL EORI).
-3. OAuth as that user; set declaration **Declarant + Importer** and `HMRC_EORI` to the **same TDL EORI**.
-4. Submit uses `X-Submitter-Identifier: {lane.eori}` (`src/app/api/hmrc/submit/route.ts` → `fetchHmrc`).
+Earlier notes claimed: *re-create via Create Test User API (not web) + `customs-services` + TDL `eoriNumber` → clears CDS12005.*
 
-Do **not** use arbitrary Dev Hub Individual → Create EORIs for Trade Test party fields.
+**Correction:** Developer Hub UI and Create Test User API are the **same** `api-platform-test-user` service. That advice is **not** a distinct remedy. **Never tested** here: create user with TDL `eoriNumber` → submit → DMSACC.
+
+**Unverified experiment (user must confirm before any HMRC call):** pick an EORI from the current TDL sheet, create test user with `customs-services` (+ `eoriNumber` if supported), OAuth, align Declarant/Importer/`HMRC_EORI`, one submit.
+
+`X-Submitter-Identifier` is set from `lane.eori` in `src/app/api/hmrc/submit/route.ts` → `fetchHmrc`.
 
 ## Submitter header (verified in code)
 

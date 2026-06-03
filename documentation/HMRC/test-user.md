@@ -69,11 +69,12 @@ Used through FC-MPVNPBLP; CDS12005 R123/R038 on EORI `GB243617410764`.
 
 ## Notes
 
-- **Trade Test party IDs:** Use a **Test Data Library** EORI, not a Dev Hub–only EORI. See `spec/hmrc-mirror/trade-test-data-library.md` and `spec/hmrc-mirror/cds12005-party-id.md`. Lane default: `GB553202734852`.
-- Create sandbox user via API: `{ "serviceNames": ["customs-services"], "eoriNumber": "GB553202734852" }` then OAuth with returned credentials.
-- Set `.env.local` `HMRC_EORI` to match declaration Declarant/Importer; restart dev; re-run OAuth after any EORI change.
+- **OAuth (unchanged):** Romwan Lee — `GB531765313922` (`user_3Ab42qRLt6cchUas7LDrkJx11kM` in `.env.local`).
+- **Declaration experiment:** Declarant + Importer + `HMRC_EORI` = `GB553202734852` (TDL-listed); OAuth token still Romwan — tests whether CDS12005 clears without changing login.
+- **CDS12005:** Romwan/Yasmine EORIs fail party validation on Trade Test (FC-MPVNPBLP, FC-MPWQSJ97). See `spec/hmrc-mirror/cds12005-party-id.md`. **Retracted:** advice that “re-create via Create Test User API (not the web page) with TDL `eoriNumber`” is a separate fix — web and API are the same service.
+- **`GB553202734852`:** historical archive/TDL reference only (`test-evidence/archive-pre-p0/`) — **not in use** on the active laptop lane.
 
-### Dev Hub users (not recognised on Trade Test for party DEs)
+### Sandbox test users tried (CDS12005 on DE 3/18 + 3/16)
 
 | User | EORI | Result |
 |------|------|--------|

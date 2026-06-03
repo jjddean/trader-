@@ -42,6 +42,25 @@ function formatAmount(value: unknown): string {
   return (isFinite(n) && n > 0 ? n : 0).toFixed(2);
 }
 
+// DE 6/2 — supplementary units (n..16,6 per Group 6). Must be > 0 when declared.
+function formatSupplementaryQty(value: unknown): string | null {
+  const n = parseFloat(String(value ?? ""));
+  if (!isFinite(n) || n <= 0) return null;
+  const fixed = n.toFixed(6);
+  return fixed.replace(/\.?0+$/, "") || "0";
+}
+
+/** UK tariff p/st → measurement unit code NAR (UK Tariff Data Standard). */
+export const SUPPLEMENTARY_UNIT_CODE_PST = "NAR";
+
+/** Commodity codes in active lane that require DE 6/2 per UK Integrated Online Tariff. */
+export const HS_REQUIRES_SUPPLEMENTARY_UNIT = new Set(["8471300000"]);
+
+export function commodityRequiresSupplementaryUnit(commodityCode: unknown): boolean {
+  const normalized = String(commodityCode ?? "").replace(/\D/g, "");
+  return HS_REQUIRES_SUPPLEMENTARY_UNIT.has(normalized);
+}
+
 // Strip ALL whitespace from transport identifiers (DE 7/9). CDS R123 rejects
 // vessel/wagon IDs containing spaces.
 function stripTransportId(value: unknown): string {
@@ -479,6 +498,15 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
               GoodsMeasure: {
                 GrossMassMeasure: formatMass(item.grossWeightKg),
                 NetNetWeightMeasure: clampNetToGross(item.netWeightKg ?? item.grossWeightKg, item.grossWeightKg),
+                ...((): Record<string, string> => {
+                  const qty = formatSupplementaryQty(item.supplementaryUnitQty);
+                  if (!qty) return {};
+                  const unitCode = String(item.supplementaryUnitCode || SUPPLEMENTARY_UNIT_CODE_PST).trim() || SUPPLEMENTARY_UNIT_CODE_PST;
+                  return {
+                    TariffQuantity: qty,
+                    TariffQuantityUnitCode: unitCode,
+                  };
+                })(),
               },
               InvoiceLine: {
                 ItemChargeAmount: {

@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
-import { mapToCDS_H1, validateCdsCodeLists } from "../../../../lib/wco-mapper";
+import { commodityRequiresSupplementaryUnit, mapToCDS_H1, validateCdsCodeLists } from "../../../../lib/wco-mapper";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
 import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
 import { buildPayloadDebugSnapshot, renderH1Xml, validateXmlPreflight } from "../../../../lib/h1-xml-renderer";
 import { validateGoodsLocationForSubmit } from "../../../../lib/goods-location";
+import { schedulePostSubmitNotificationPulls } from "../../../../lib/hmrc-pull-notifications";
 import { evaluateRules, activeEffects, summarizeFailures, type RuleDefinition, type ScenarioInput } from "../../../../../convex/lib/rule_engine";
 
 type SubmitItemInput = {
@@ -18,6 +19,8 @@ type SubmitItemInput = {
   valuationMethod?: string;
   valueAmount?: number | string;
   grossWeightKg?: number | string;
+  supplementaryUnitQty?: number | string;
+  supplementaryUnitCode?: string;
   packageType?: string;
   packageCount?: number | string;
   preferenceCode?: string;
@@ -97,6 +100,12 @@ function validateDeclaration(lane: SubmitDeclarationInput, items: SubmitItemInpu
     if (!it?.packageType) errors.push(`Item ${i}: missing package type (DE 6/9)`);
     const pc = parseInt(String(it?.packageCount ?? ""));
     if (!Number.isFinite(pc) || pc < 1) errors.push(`Item ${i}: package count must be >= 1`);
+    if (commodityRequiresSupplementaryUnit(it?.commodityCode)) {
+      const su = parseFloat(String(it?.supplementaryUnitQty ?? ""));
+      if (!Number.isFinite(su) || su <= 0) {
+        errors.push(`Item ${i}: supplementary units (DE 6/2, p/st) required for commodity ${it.commodityCode}`);
+      }
+    }
   }
   return errors;
 }
@@ -492,6 +501,13 @@ export async function POST(request: Request) {
       id: declarationId,
       status: "Processing",
       conversationId
+    });
+
+    schedulePostSubmitNotificationPulls({
+      conversationId,
+      accessToken: token,
+      request,
+      convex,
     });
 
     // 5. Audit Log Entry (non-critical, don't crash submission on failure)

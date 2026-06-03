@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-06-01T19:02:54.392Z",
-  "mode": "DRY_RUN_ONLY",
-  "submitEnabled": false,
+  "timestamp": "2026-06-03T16:20:27.980Z",
+  "mode": "SUBMIT_ALLOWED",
+  "submitEnabled": true,
   "endpoint": "https://test-api.service.hmrc.gov.uk/customs/declarations",
   "checks": {
-    "token_present": false,
+    "token_present": true,
     "client_id_present": true,
     "environment_is_sandbox": true,
     "endpoint_is_test_api": true,

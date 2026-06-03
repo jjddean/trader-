@@ -23,7 +23,8 @@ Source policy: DMSREJ is negative evidence only. This file tracks which spec sec
 | 2026-05-31 21:49 | FC-MPUBBYAS | 26GB5ZMU8G20OLOAR5 | **4** | App submit after Appendix 4A fix: `00500` + `StatementDescription` **Importer**. **CDS12070 on `03A` cleared** (both `225`/`226` gone). **CDS12056 still clear.** Unchanged: 2× CDS12073 (`42A/67A/103`; `42A/67A/68A/103`), 2× CDS12005 (`42A/57B/R123`; `42A/67A/74A/R038`). FunctionalReferenceID `826601ca815a4457804e41e9eac05d09`. |
 | 2026-06-01 00:15 | FC-MPUGJ6M8 | 26GB5ZS1HTC883LAR0 | **4** | App submit after DE 4/1 `TradeTerms/LocationID` `GBFELIXSTOWE`. **No error-count change.** Same 2× CDS12073 (`42A/67A/103`; `42A/67A/68A/103`), 2× CDS12005 (`42A/57B/R123`; `42A/67A/74A/R038`). FunctionalReferenceID `c76aef075e63481cb8a6cb3549ea67e8`. XML inspection: see conversation 2026-06-01 — all `CountryCode`/`ExportCountry`/`Origin` fields unchanged vs FC-MPUBBYAS. |
 | 2026-06-01 20:23 | FC-MPVNPBLP | 26GB60Z7LNJXBB7AR9 | **2** | App submit after renderer emits `GoodsShipment/TransactionNatureCode` **11** (DE 8/5, WCOID 103). **CDS12073 cleared** (both `67A/103` and `68A/103` gone). Unchanged: 2× CDS12005 (`42A/57B/R123`; `42A/67A/74A/R038`). FunctionalReferenceID `eb9f9750e5a9415ab1d84f3383969434`. EORI `GB243617410764`. |
-| 2026-06-02 14:38 | FC-MPWQSJ97 | 26GB622ATBJB8W5AR2 | **2** | App submit with Dev Hub EORI `GB531765313922` (Romwan Lee). **Same 2× CDS12005** R123 + R038. Payload verified: Declarant + Importer = `GB531765313922`, 00500 + Importer, TransactionNatureCode 11. **Conclusion:** Dev Hub–generated EORIs are not Trade Test–recognised party IDs — use **Test Data Library** EORI (`spec/hmrc-mirror/cds12005-party-id.md`). FunctionalReferenceID `1fa4163e11dc4a47abe0d01e133ecfb7`. |
+| 2026-06-02 14:38 | FC-MPWQSJ97 | 26GB622ATBJB8W5AR2 | **2** | App submit with EORI `GB531765313922` (Romwan Lee). **Same 2× CDS12005** R123 + R038. Payload verified: Declarant + Importer = `GB531765313922`, 00500 + Importer, TransactionNatureCode 11. EORI not in TDL spreadsheet. FunctionalReferenceID `1fa4163e11dc4a47abe0d01e133ecfb7`. |
+| 2026-06-03 16:07 | FC-MPY9FFEE | 26GB63KXPPOH5QLAR0 | **1** | TDL EORI `GB553202734852` on parties (Romwan OAuth). **CDS12005 cleared.** New: **CDS40011** — missing DE 6/2 `TariffQuantity` (Tag 130) for HS 8471300000 / p/st. FunctionalReferenceID `81dc30327a5c402fb15d204a9bcf51f0`. |
 
 ## Code → spec section
 
@@ -53,10 +54,11 @@ Source policy: DMSREJ is negative evidence only. This file tracks which spec sec
 | Phase | Scope |
 |-------|--------|
 | **Done** | CDS12073 — `TransactionNatureCode` renderer fix (FC-MPVNPBLP: 4 → **2** errors) |
-| **Done** | CDS12005 investigation — Dev Hub EORIs rejected; cited fix = **Trade Test Data Library EORI** (`spec/hmrc-mirror/cds12005-party-id.md`) |
-| **Now** | Switch to TDL EORI `GB553202734852`, Create Test User API with `eoriNumber`, re-OAuth, one submit |
+| **Done** | CDS12005 investigation — Romwan/Yasmine EORIs not in TDL; same 2× CDS12005 (`spec/hmrc-mirror/cds12005-party-id.md`) |
+| **Done** | CDS12005 cleared — TDL EORI `GB553202734852` on declaration (FC-MPY9FFEE) |
+| **Now** | CDS40011 — DE 6/2 supplementary units (p/st, unit NAR) for HS 8471300000 |
 
-**Lane EORI:** `GB553202734852` per `spec/lane.md` + `spec/hmrc-mirror/trade-test-data-library.md`.
+**Lane EORI:** `GB531765313922` (Romwan Lee) per `spec/lane.md` + `documentation/HMRC/test-user.md`.
 
 **CDS12073 closed:** DMSREJ Tag **103** = `GoodsShipment/TransactionNatureCode` (not `CountryCode`). Do not revisit Origin / ExportCountry / Destination / GoodsLocation for this code.
 
@@ -215,7 +217,7 @@ Group 3 completion guide text for *when* an EORI is “not permitted in this DE�
 
 ### Next step (one category)
 
-1. **Create test user** via [Create Test User API](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/api-platform-test-user/1.0): `{ "serviceNames": ["customs-services"], "eoriNumber": "GB553202734852" }` (Customs Declarations API v2.0 — TDL EORI in request).
+1. **Unverified:** create test user with `customs-services` (+ optional TDL `eoriNumber` per Customs Declarations API setup text) — **same service** as Developer Hub UI; does not clear CDS12005 until proven by submit. Or contact SDST with LRN/MRN/DMSREJ.
 2. Update `.env.local` `HMRC_EORI`, declaration Declarant + Importer, **re-OAuth** as new user.
 3. **One submit** — expect CDS12005 to clear if TDL EORI is the only gap.
 

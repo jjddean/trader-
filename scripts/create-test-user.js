@@ -1,10 +1,12 @@
 /**
- * Create an HMRC sandbox test user (organisation) via the Create Test User API.
+ * Create an HMRC sandbox test user via the Create Test User API.
  *
  * Usage:
- *   node scripts/create-test-user.js
+ *   HMRC_TEST_USER_EORI=GBxxxxxxxxxxxx node scripts/create-test-user.js
+ *   HMRC_TEST_USER_EORI=GBxxxxxxxxxxxx node scripts/create-test-user.js --individual
  *
  * Reads HMRC_CLIENT_ID and HMRC_CLIENT_SECRET from .env.local (never hardcoded).
+ * HMRC_TEST_USER_EORI is required — pick a value from the CDS Test Data Library spreadsheet.
  */
 
 const path = require("path");
@@ -12,6 +14,9 @@ require("dotenv").config({ path: path.join(__dirname, "..", ".env.local") });
 
 const HMRC_BASE =
   process.env.HMRC_SANDBOX_BASE_URL || "https://test-api.service.hmrc.gov.uk";
+
+const TDL_EORI = process.env.HMRC_TEST_USER_EORI?.trim();
+const useIndividual = process.argv.includes("--individual");
 
 async function getClientCredentialsToken() {
   const clientId = process.env.HMRC_CLIENT_ID;
@@ -55,8 +60,12 @@ async function getClientCredentialsToken() {
   return data.access_token;
 }
 
-async function createOrganisationTestUser(accessToken) {
-  const res = await fetch(`${HMRC_BASE}/create-test-user/organisations`, {
+async function createTestUser(accessToken) {
+  const endpoint = useIndividual
+    ? `${HMRC_BASE}/create-test-user/individuals`
+    : `${HMRC_BASE}/create-test-user/organisations`;
+
+  const res = await fetch(endpoint, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -65,6 +74,7 @@ async function createOrganisationTestUser(accessToken) {
     },
     body: JSON.stringify({
       serviceNames: ["customs-services"],
+      eoriNumber: TDL_EORI,
     }),
   });
 
@@ -84,12 +94,20 @@ async function createOrganisationTestUser(accessToken) {
 }
 
 async function main() {
+  if (!TDL_EORI) {
+    throw new Error(
+      "Set HMRC_TEST_USER_EORI to a Test Data Library EORI before running (see spec/hmrc-mirror/trade-test-data-library.md).",
+    );
+  }
+
   console.log("Requesting client credentials token...");
   const accessToken = await getClientCredentialsToken();
   console.log("Token obtained.\n");
 
-  console.log("Creating organisation test user (customs-services)...");
-  const user = await createOrganisationTestUser(accessToken);
+  console.log(
+    `Creating ${useIndividual ? "individual" : "organisation"} test user (customs-services, eoriNumber=${TDL_EORI})...`,
+  );
+  const user = await createTestUser(accessToken);
 
   console.log("=== Create Test User API response ===\n");
   console.log(JSON.stringify(user, null, 2));
