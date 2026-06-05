@@ -165,6 +165,25 @@ function isReviewStatus(status: string | undefined) {
   return status === "Action Required" || status === "Rejected" || status === "Invalid";
 }
 
+async function effectiveDeclarationStatus(
+  ctx: any,
+  declarationId: unknown,
+  declaration: { status?: string | null; mrn?: string | null },
+): Promise<string> {
+  const notificationRows = await ctx.db
+    .query("notifications")
+    .withIndex("by_declaration", (q: { eq: (field: string, value: unknown) => unknown }) =>
+      q.eq("declarationId", declarationId),
+    )
+    .take(100);
+
+  return replayDeclarationStatus(
+    String(declaration.status ?? "Draft"),
+    declaration.mrn,
+    notificationRows as Parameters<typeof replayDeclarationStatus>[2],
+  );
+}
+
 async function recomputeDashboardSummaryByUser(ctx: any, userId: string) {
   const previews = await ctx.db
     .query("declaration_preview")
@@ -234,10 +253,12 @@ async function upsertDeclarationPreviewByDeclaration(ctx: any, declarationId: an
     items: items as Array<Record<string, unknown>>,
   });
 
+  const replayedStatus = await effectiveDeclarationStatus(ctx, declarationId, declaration);
+
   const nextPreview = {
     declarationId,
     userId: declarationUserId,
-    status: String(declaration.status || "Draft"),
+    status: replayedStatus,
     totalItems: items.length,
     totalValue,
     mrn: declaration.mrn ? String(declaration.mrn) : undefined,
@@ -713,16 +734,32 @@ export const getMyDeclarationCounts = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return { total: 0, reviewCount: 0 };
 
-    const summary = await ctx.db
-      .query("dashboard_summary")
+    const previews = await ctx.db
+      .query("declaration_preview")
       .withIndex("by_user", (q) => q.eq("userId", identity.subject))
-      .first();
+      .take(500);
 
-    if (!summary) {
-      return { total: 0, reviewCount: 0 };
+    if (previews.length === 0) {
+      const summary = await ctx.db
+        .query("dashboard_summary")
+        .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+        .first();
+      if (!summary) return { total: 0, reviewCount: 0 };
+      return { total: summary.totalDeclarations, reviewCount: summary.reviewCount };
     }
 
-    return { total: summary.totalDeclarations, reviewCount: summary.reviewCount };
+    let reviewCount = 0;
+    for (const preview of previews) {
+      const declaration = await ctx.db.get(preview.declarationId);
+      if (!declaration || !("userId" in declaration)) continue;
+      const status = await effectiveDeclarationStatus(ctx, preview.declarationId, {
+        status: declaration.status,
+        mrn: declaration.mrn,
+      });
+      if (isReviewStatus(status)) reviewCount += 1;
+    }
+
+    return { total: previews.length, reviewCount };
   },
 });
 
@@ -773,8 +810,18 @@ export const getDeclarationPreviews = query({
       .order("desc")
       .take(200);
 
+    const enrichPreview = async (preview: (typeof previews)[number]) => {
+      const declaration = await ctx.db.get(preview.declarationId);
+      if (!declaration || !("userId" in declaration)) return preview;
+      const status = await effectiveDeclarationStatus(ctx, preview.declarationId, {
+        status: declaration.status,
+        mrn: declaration.mrn,
+      });
+      return { ...preview, status };
+    };
+
     if (previews.length > 0) {
-      return previews;
+      return Promise.all(previews.map(enrichPreview));
     }
 
     const declarations = await ctx.db
@@ -783,17 +830,26 @@ export const getDeclarationPreviews = query({
       .order("desc")
       .take(200);
 
-    return declarations.map((declaration) => ({
-      declarationId: declaration._id,
-      userId: identity.subject,
-      status: String(declaration.status || "Draft"),
-      totalItems: 0,
-      totalValue: 0,
-      mrn: declaration.mrn ? String(declaration.mrn) : undefined,
-      eori: declaration.eori ? String(declaration.eori) : undefined,
-      declarationType: declaration.declarationType ? String(declaration.declarationType) : undefined,
-      lastUpdated: Number(declaration.lastUpdated || declaration.created || declaration._creationTime || 0),
-    }));
+    return Promise.all(
+      declarations.map(async (declaration) => {
+        const status = await effectiveDeclarationStatus(ctx, declaration._id, declaration);
+        return {
+          declarationId: declaration._id,
+          userId: identity.subject,
+          status,
+          totalItems: 0,
+          totalValue: 0,
+          mrn: declaration.mrn ? String(declaration.mrn) : undefined,
+          eori: declaration.eori ? String(declaration.eori) : undefined,
+          declarationType: declaration.declarationType
+            ? String(declaration.declarationType)
+            : undefined,
+          lastUpdated: Number(
+            declaration.lastUpdated || declaration.created || declaration._creationTime || 0,
+          ),
+        };
+      }),
+    );
   },
 });
 

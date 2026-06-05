@@ -165,7 +165,9 @@ export default function DeclarationsPage() {
                     const isWarning = dec.status === "Draft";
                     const isPositive =
                       Boolean(dec.mrn && String(dec.mrn).trim().length > 0) &&
-                      (dec.status === "Cleared" || dec.status === "Accepted");
+                      (dec.status === "Cleared" ||
+                        dec.status === "Accepted" ||
+                        dec.status === "Amended");
 
                     return (
                     <tr
@@ -214,7 +216,9 @@ export default function DeclarationsPage() {
                                 : isPositive
                                   ? dec.status === "Cleared"
                                     ? "Cleared by HMRC"
-                                    : "Accepted by HMRC"
+                                    : dec.status === "Amended"
+                                      ? "Amended"
+                                      : "Accepted by HMRC"
                                   : new Date(dec.lastUpdated || dec._creationTime).toLocaleDateString()}
                           </span>
                         </div>
@@ -222,7 +226,10 @@ export default function DeclarationsPage() {
                       <td className="px-6 py-4 text-[0.6875rem] text-gray-600">{dec.eori || "Not set"}</td>
                       <td className="px-6 py-4 text-[0.6875rem] text-gray-600">{dec.declarationType || "IMD"}</td>
                       <td className="px-6 py-4">
-                        {Boolean(dec.mrn && String(dec.mrn).trim().length > 0) && (dec.status === "Cleared" || dec.status === "Accepted") ? (
+                        {Boolean(dec.mrn && String(dec.mrn).trim().length > 0) &&
+                        (dec.status === "Cleared" ||
+                          dec.status === "Accepted" ||
+                          dec.status === "Amended") ? (
                           <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
                             <ShieldCheck className="h-3 w-3" />
                             {dec.status}

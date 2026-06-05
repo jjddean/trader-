@@ -241,7 +241,10 @@ function RecentDeclarations({ declarations }: { declarations: any[] }) {
                     <span className={`text-xs font-semibold transition-colors ${isAlert ? "text-red-900" : isWarning ? "text-amber-900" : "text-black"}`}>{decl.mrn}</span>
                   </td>
                   <td className="px-6 py-4">
-                    {Boolean(decl.mrn && String(decl.mrn).trim().length > 0) && (decl.status === "Cleared" || decl.status === "Accepted") ? (
+                    {Boolean(decl.mrn && String(decl.mrn).trim().length > 0) &&
+                    (decl.status === "Cleared" ||
+                      decl.status === "Accepted" ||
+                      decl.status === "Amended") ? (
                       <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
                         <ShieldCheck className="h-3 w-3" />
                         {decl.status}
