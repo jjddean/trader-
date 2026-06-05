@@ -108,7 +108,7 @@ xml = replaceOnce(
   xml,
   '<text:span text:style-name="T31">:</text:span></text:p></text:list-item></text:list><text:p text:style-name="P32"/>',
   '<text:span text:style-name="T31">:</text:span></text:p></text:list-item></text:list>' +
-    fillParagraph("P32", "Pending"),
+    fillParagraph("P32", "Pending — production application ID to follow when HMRC issues credentials"),
   "Production ID",
 );
 xml = replaceOnce(
@@ -128,7 +128,10 @@ xml = replaceOnce(
   xml,
   "If using Push, please provide the<text:s/>Production<text:s/>callback URL/s:</text:p></text:list-item></text:list><text:p text:style-name=\"P41\"/>",
   'If using Push, please provide the<text:s/>Production<text:s/>callback URL/s:</text:p></text:list-item></text:list>' +
-    fillParagraph("P41", "TBD production URL. Sandbox ngrok push webhook validated 2026-06-04"),
+    fillParagraph(
+      "P41",
+      "https://www.freightcode.co.uk/api/hmrc/webhooks/notify (sandbox test only: ngrok validated 2026-06-04)",
+    ),
   "Callback",
 );
 

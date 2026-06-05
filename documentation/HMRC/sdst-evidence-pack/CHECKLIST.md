@@ -1,34 +1,37 @@
 # Master checklist — CDS production + optional SS-GB
 
-Copy values from completed rows into `forms/CDS-Production-Checklist-v1.2.odt`.  
-Evidence files live in this pack only (`evidence/`).
+Copy values from completed rows into `forms/CDS-Production-Checklist-v1.2-FILLED.odt`.  
+Evidence files live in this pack only (`evidence/`).  
+Regenerate ODT: `node test-evidence/fill-cds-odt.js` (LibreOffice closed).
 
 **Legend:** `[x]` done · `[ ]` open · `[-]` not applicable
 
+**SDST deadline:** email completed ODT by **2026-06-19** (14 days from last sandbox test 2026-06-05).
+
 ---
 
-## CDS — Application & admin (`forms/CDS-Production-Checklist-v1.2.odt`)
+## CDS — Application & admin (`forms/CDS-Production-Checklist-v1.2-FILLED.odt`)
 
 ### §1 Application details → `evidence/01-application-details.md`
 
-- [ ] Organisation name filled in ODT + `01-application-details.md` *(Freightcode — confirm legal name)*
+- [x] Organisation name — **Freightcode** (in ODT)
 - [x] Sandbox application name + ID — **freightcode** / `b74874e9-957e-4a40-b426-0cde839f8a45`
-- [ ] Production application name + ID — **freightcode** requested; ID pending until credentials issued
-- [ ] Deployment model (SaaS vs on-premise)
-- [x] Notification model: **push** — sandbox `https://cf94-62-31-164-236.ngrok-free.app/api/hmrc/webhooks/notify`
-- [ ] Production callback URL(s) (no ngrok for prod)
+- [x] Production application name — **freightcode**; ID **Pending** (in ODT)
+- [x] Deployment model — **SaaS** (in ODT)
+- [x] Notification model — **Push**; sandbox ngrok validated 2026-06-04
+- [x] Production callback URL — `https://www.freightcode.co.uk/api/hmrc/webhooks/notify` (in ODT)
 
 ### §2 Rate limit
 
-- [x] Selected **3 rps** (declared for Freightcode)
+- [x] Selected **3 rps** (tick in ODT)
 
 ### §3 APIs in use
 
-- [x] Customs Declarations API — in product
-- [x] Customs Declarations Information API — in product (`GET` status by MRN route exists)
-- [ ] Customs Inventory Linking Exports — **[-]** unless export ILE in scope
-- [ ] Bulk Data File List — **[-]** unless tariff bulk download in scope
-- [ ] TT or TDR evidence attached in ODT for **each** API ticked above
+- [x] Customs Declarations API — tick + §4 evidence in ODT
+- [x] Customs Declarations Information API — tick + §5.2 evidence in ODT
+- [-] Customs Inventory Linking Exports — N/A (CDS-only product)
+- [-] Bulk Data File List — N/A
+- [x] Trade Test v2.0 evidence referenced in ODT (not TDR)
 
 ---
 
@@ -36,19 +39,13 @@ Evidence files live in this pack only (`evidence/`).
 
 | # | Endpoint | Status | Evidence folder / files |
 |---|----------|--------|-------------------------|
-| 4.1 | `POST /customs/declarations` (submit) | **[x]** | `evidence/02-submit/` + `scenario-1-happy-path.md` — DMSACC/DMSTAX (`FC-MPYAJ7RN`, `FC-MQ031D1B`); see `TRADE-TEST-REALITY.md` |
-| 4.2 | `POST /customs/declarations/cancellation-requests` | **[x]** | `evidence/04-cancel/` — `26GB656DZN0FE7LAR0`, **`26GB65EJN3BYSELAR9`** (DMSINV FC02) |
-| 4.3 | `POST /customs/declarations/file-upload` (initiate) | **[x]** | `evidence/06-file-upload/` — HTTP 200, ref `218eaeb7-…` |
-| 4.4 | `POST /customs/declarations/amend` | **[x]** | `evidence/05-amend/` — `26GB664W3BLIFZFAR4`, DMSRES FC07, VersionID 2, GBP 8000 |
-| 4.5 | `POST /customs/declarations/arrival-notification` | [-] | Only if product scope includes arrival |
+| 4.1 | `POST /customs/declarations` (submit) | **[x]** | `evidence/02-submit/` — MRN `26GB63M1I0RQFCVAR4`, conv `68edb212-…` |
+| 4.2 | `POST /customs/declarations/cancellation-requests` | **[x]** | `evidence/04-cancel/` — `26GB656DZN0FE7LAR0` DMSINV FC02 |
+| 4.3 | `POST /customs/declarations/file-upload` (initiate) | **[x]** | `evidence/06-file-upload/` — conv `e8aba099-…`, ref `218eaeb7-…` |
+| 4.4 | `POST /customs/declarations/amend` | **[x]** | `evidence/05-amend/` — `26GB664W3BLIFZFAR4` DMSRES FC07 |
+| 4.5 | `POST /customs/declarations/arrival-notification` | **[-]** | Out of product scope |
 
-### §4.1 submit — acceptance criteria met
-
-- [x] HMRC returned **DMSACC** with **0** CDS validation errors
-- [x] Request XML archived in pack
-- [x] Notification audit written (`evidence/03-notifications/audit.md`)
-- [x] TT accept path documented — **DMSACC + DMSTAX**; DMSCLE not required on accept-only (`TRADE-TEST-REALITY.md`)
-- [x] Submit **X-Conversation-ID** `68edb212-5c4a-4ef7-9223-f55630c5859e` in `LOG.md` (copy to ODT)
+All §4 rows ticked **Yes** with Client ID / MRN / LRN / timestamp / conversation ID in **FILLED.odt**.
 
 ---
 
@@ -56,27 +53,26 @@ Evidence files live in this pack only (`evidence/`).
 
 ### Push / pull notifications
 
-- [x] Push webhook configured (Developer Hub metadata)
-- [x] DMSACC + DMSTAX observed on passing MRN (`evidence/03-notifications/`)
-- [ ] Pull notifications API exercised with evidence → `evidence/08-pull-notifications/`
-- [ ] Additional notification types in product scope documented in `audit.md` when seen live
+- [x] Push webhook configured (Developer Hub)
+- [x] DMSACC + DMSTAX observed (`evidence/03-notifications/`)
+- [ ] Pull notifications API exercised → `evidence/08-pull-notifications/` *(optional for SDST if push-only)*
 
 ### §5.2 Customs Declarations Information
 
 | Endpoint | Status | Evidence |
 |----------|--------|----------|
-| `GET .../mrn/{mrn}/status` | **[x]** | `evidence/07-status-query/` — HTTP 200, ICS 22, Accept `application/vnd.hmrc.1.0+xml` |
-| `GET .../ducr/{ducr}/status` | [-] | If not used |
-| `GET .../ucr/{ucr}/status` | [-] | If not used |
-| `GET .../inventory-reference/.../status` | [-] | If not used |
+| `GET .../mrn/{mrn}/status` | **[x]** | `evidence/07-status-query/` — ICS 22; in ODT |
+| `GET .../ducr/{ducr}/status` | **[-]** | Not used |
+| `GET .../ucr/{ucr}/status` | **[-]** | Not used |
+| `GET .../inventory-reference/.../status` | **[-]** | Not used |
 
 ---
 
 ## CDS — Submit to SDST
 
-- [ ] All `[ ]` rows above completed or marked N/A in ODT
-- [ ] `forms/CDS-Production-Checklist-v1.2.odt` filled with correlation IDs / MRNs / timestamps from **LOG.md**
-- [ ] Completed ODT sent to SDST within **14 days** of last sandbox test (per checklist footer)
+- [x] `forms/CDS-Production-Checklist-v1.2-FILLED.odt` generated from **LOG.md** (`fill-cds-odt.js`)
+- [ ] LibreOffice review — all **5 pages** checked before send
+- [ ] Completed ODT emailed to **SDSTeam@HMRC.gov.uk** (by **2026-06-19**)
 
 ---
 
@@ -93,21 +89,23 @@ Evidence files live in this pack only (`evidence/`).
 
 Reference only; detail in `spec/pre-tdr-checklist.md`.
 
-- [x] Notification status precedence (DMSACC, DMSCLE, DMSROG, etc.) — unit tests in `tests/h1/`
-- [ ] Cancel / amend / upload flows tested end-to-end in app UI
-- [ ] Status query returns 200 with valid token (fix any 401 from dashboard)
+- [x] Notification status precedence — `tests/h1/`
+- [x] CDS file-upload route wired to real HMRC API (`main` `10e7486`)
+- [x] Fetch timeout + rate limiter wired (`hmrc-fetch.ts`)
+- [ ] Cancel / amend / upload tested end-to-end in **app UI** (manual smoke)
+- [ ] Production webhook registered in HMRC Developer Hub for prod URL
 
 ---
 
 ## Quick progress
 
-| CDS ODT sections | Approx. complete |
-|------------------|------------------|
-| §1 Admin | 0% — fields empty |
-| §2 Rate limit | 0% |
-| §3 APIs | ~50% — ticks yes, evidence bundle incomplete |
-| §4 Endpoints | ~20% — submit only |
-| §5.2 Status | 0% |
-| Return ODT | 0% |
+| CDS ODT sections | Status |
+|------------------|--------|
+| §1 Admin | **Done** in FILLED.odt |
+| §2 Rate limit | **Done** — 3 rps |
+| §3 APIs | **Done** — Declarations + Information |
+| §4 Endpoints | **Done** — submit, cancel, upload, amend |
+| §5.2 Status | **Done** — MRN status |
+| Email SDST | **Open** — review then send |
 
-**Overall CDS pack readiness: ~30%** (submit + partial notifications).
+**Overall CDS pack readiness: ~90%** — pending SDST email + optional pull-notifications evidence.
