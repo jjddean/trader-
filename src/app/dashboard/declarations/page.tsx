@@ -163,11 +163,11 @@ export default function DeclarationsPage() {
                       dec.status === "Action Required" ||
                       dec.status === "Invalid";
                     const isWarning = dec.status === "Draft";
-                    const isPositive =
-                      Boolean(dec.mrn && String(dec.mrn).trim().length > 0) &&
-                      (dec.status === "Cleared" ||
-                        dec.status === "Accepted" ||
-                        dec.status === "Amended");
+                    const hasMrn = Boolean(dec.mrn && String(dec.mrn).trim().length > 0);
+                    const isCleared = hasMrn && dec.status === "Cleared";
+                    const isAcceptedOrAmended =
+                      hasMrn &&
+                      (dec.status === "Accepted" || dec.status === "Amended");
 
                     return (
                     <tr
@@ -177,8 +177,11 @@ export default function DeclarationsPage() {
                         "group cursor-pointer transition-colors",
                         isAlert ? "bg-red-50/50 hover:bg-red-50" : "",
                         isWarning ? "bg-amber-50/50 hover:bg-amber-50" : "",
-                        isPositive ? "bg-green-50/50 hover:bg-green-50" : "",
-                        !isAlert && !isWarning && !isPositive ? "hover:bg-gray-50" : "",
+                        isCleared ? "bg-green-50/50 hover:bg-green-50" : "",
+                        isAcceptedOrAmended ? "bg-blue-50/50 hover:bg-blue-50" : "",
+                        !isAlert && !isWarning && !isCleared && !isAcceptedOrAmended
+                          ? "hover:bg-gray-50"
+                          : "",
                       )}
                     >
                       <td className="px-6 py-4">
@@ -190,9 +193,11 @@ export default function DeclarationsPage() {
                                 ? "text-red-900 group-hover:text-red-900"
                                 : isWarning
                                   ? "text-amber-900 group-hover:text-amber-900"
-                                  : isPositive
+                                  : isCleared
                                     ? "text-green-900 group-hover:text-green-900"
-                                    : "text-black group-hover:text-black",
+                                    : isAcceptedOrAmended
+                                      ? "text-blue-900 group-hover:text-blue-900"
+                                      : "text-black group-hover:text-black",
                             )}
                           >
                             {dec.mrn || "Pending CDS"}
@@ -204,33 +209,37 @@ export default function DeclarationsPage() {
                                 ? "text-red-700 font-medium"
                                 : isWarning
                                   ? "text-amber-700 font-medium"
-                                  : isPositive
+                                  : isCleared
                                     ? "text-green-700 font-medium"
-                                    : "text-gray-500",
+                                    : isAcceptedOrAmended
+                                      ? "text-blue-700 font-medium"
+                                      : "text-gray-500",
                             )}
                           >
                             {isAlert
                               ? "Action required"
                               : isWarning
                                 ? "Awaiting submission"
-                                : isPositive
-                                  ? dec.status === "Cleared"
-                                    ? "Cleared by HMRC"
-                                    : dec.status === "Amended"
+                                : isCleared
+                                  ? "Cleared by HMRC"
+                                  : isAcceptedOrAmended
+                                    ? dec.status === "Amended"
                                       ? "Amended"
                                       : "Accepted by HMRC"
-                                  : new Date(dec.lastUpdated || dec._creationTime).toLocaleDateString()}
+                                    : new Date(dec.lastUpdated || dec._creationTime).toLocaleDateString()}
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-[0.6875rem] text-gray-600">{dec.eori || "Not set"}</td>
                       <td className="px-6 py-4 text-[0.6875rem] text-gray-600">{dec.declarationType || "IMD"}</td>
                       <td className="px-6 py-4">
-                        {Boolean(dec.mrn && String(dec.mrn).trim().length > 0) &&
-                        (dec.status === "Cleared" ||
-                          dec.status === "Accepted" ||
-                          dec.status === "Amended") ? (
+                        {isCleared ? (
                           <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
+                            <ShieldCheck className="h-3 w-3" />
+                            {dec.status}
+                          </span>
+                        ) : isAcceptedOrAmended ? (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700">
                             <ShieldCheck className="h-3 w-3" />
                             {dec.status}
                           </span>

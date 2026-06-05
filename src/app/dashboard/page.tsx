@@ -231,21 +231,28 @@ function RecentDeclarations({ declarations }: { declarations: any[] }) {
               declarations.map((decl: any) => {
                 const isAlert = decl.status === "Rejected" || decl.status === "Action Required" || decl.status === "Invalid";
                 const isWarning = decl.status === "Draft";
+                const hasMrn = Boolean(decl.mrn && String(decl.mrn).trim().length > 0);
+                const isCleared = hasMrn && decl.status === "Cleared";
+                const isAcceptedOrAmended =
+                  hasMrn &&
+                  (decl.status === "Accepted" || decl.status === "Amended");
                 return (
                 <tr
                   key={decl.id}
-                  className={`group cursor-pointer transition-colors ${isAlert ? "bg-red-50/50 hover:bg-red-50" : isWarning ? "bg-amber-50/50 hover:bg-amber-50" : "hover:bg-gray-50"}`}
+                  className={`group cursor-pointer transition-colors ${isAlert ? "bg-red-50/50 hover:bg-red-50" : isWarning ? "bg-amber-50/50 hover:bg-amber-50" : isCleared ? "bg-green-50/50 hover:bg-green-50" : isAcceptedOrAmended ? "bg-blue-50/50 hover:bg-blue-50" : "hover:bg-gray-50"}`}
                 >
                   <td className="px-6 py-4 text-[0.6875rem] text-gray-600 whitespace-nowrap">{decl.date}</td>
                   <td className="px-6 py-4">
-                    <span className={`text-xs font-semibold transition-colors ${isAlert ? "text-red-900" : isWarning ? "text-amber-900" : "text-black"}`}>{decl.mrn}</span>
+                    <span className={`text-xs font-semibold transition-colors ${isAlert ? "text-red-900" : isWarning ? "text-amber-900" : isCleared ? "text-green-900" : isAcceptedOrAmended ? "text-blue-900" : "text-black"}`}>{decl.mrn}</span>
                   </td>
                   <td className="px-6 py-4">
-                    {Boolean(decl.mrn && String(decl.mrn).trim().length > 0) &&
-                    (decl.status === "Cleared" ||
-                      decl.status === "Accepted" ||
-                      decl.status === "Amended") ? (
+                    {isCleared ? (
                       <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
+                        <ShieldCheck className="h-3 w-3" />
+                        {decl.status}
+                      </span>
+                    ) : isAcceptedOrAmended ? (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700">
                         <ShieldCheck className="h-3 w-3" />
                         {decl.status}
                       </span>

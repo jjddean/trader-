@@ -83,11 +83,10 @@ export default function DeclarationWorkspaceLayout({
       : declaration.status === "Amended"
         ? "Amended"
         : declaration.status;
-  const isPositiveStatus =
+  const isClearedStatus = hasMrn && declaration.status === "Cleared";
+  const isAcceptedOrAmendedStatus =
     hasMrn &&
-    (declaration.status === "Cleared" ||
-      declaration.status === "Accepted" ||
-      declaration.status === "Amended");
+    (declaration.status === "Accepted" || declaration.status === "Amended");
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       {/* Workspace Header */}
@@ -105,8 +104,13 @@ export default function DeclarationWorkspaceLayout({
                 <h1 className="text-lg font-semibold tracking-tight text-gray-900">
                   {declarationTitle}
                 </h1>
-                {isPositiveStatus ? (
+                {isClearedStatus ? (
                   <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
+                    <ShieldCheck className="h-3 w-3" />
+                    {headerStatus}
+                  </span>
+                ) : isAcceptedOrAmendedStatus ? (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700">
                     <ShieldCheck className="h-3 w-3" />
                     {headerStatus}
                   </span>
