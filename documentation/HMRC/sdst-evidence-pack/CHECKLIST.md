@@ -54,8 +54,8 @@ All §4 rows ticked **Yes** with Client ID / MRN / LRN / timestamp / conversatio
 ### Push / pull notifications
 
 - [x] Push webhook configured (Developer Hub)
-- [x] DMSACC + DMSTAX observed (`evidence/03-notifications/`)
-- [ ] Pull notifications API exercised → `evidence/08-pull-notifications/` *(optional for SDST if push-only)*
+- [x] DMSACC + DMSTAX observed (`evidence/03-notifications/`) — **§5 satisfied for Push**
+- [-] Pull notifications API — **N/A for this return** (ODT §1: **Push**; push evidence archived; pull is fallback in product only, not declared on checklist)
 
 ### §5.2 Customs Declarations Information
 
@@ -106,6 +106,6 @@ Reference only; detail in `spec/pre-tdr-checklist.md`.
 | §3 APIs | **Done** — Declarations + Information |
 | §4 Endpoints | **Done** — submit, cancel, upload, amend |
 | §5.2 Status | **Done** — MRN status |
-| Email SDST | **Open** — review then send |
+| Email SDST | **Open** — review ODT, then send |
 
-**Overall CDS pack readiness: ~90%** — pending SDST email + optional pull-notifications evidence.
+**Overall CDS pack readiness: ~95%** — LibreOffice review + email SDST by **2026-06-19**.
