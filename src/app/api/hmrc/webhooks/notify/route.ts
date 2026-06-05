@@ -6,14 +6,29 @@ import { parseHmrcNotification } from "../../../../../lib/hmrc-notification-pars
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 /**
+ * HEAD /api/hmrc/webhooks/notify
+ * Tunnel/load-balancer probes (ngrok, Cloudflare) — not HMRC validation.
+ */
+export async function HEAD() {
+  return new Response(null, { status: 200 });
+}
+
+/**
  * GET /api/hmrc/webhooks/notify?challenge=...
  * HMRC Developer Hub validates Push/Callback URLs with a challenge query param.
  * Must return 200 and JSON { "challenge": "<same value>" } within 20 seconds.
+ * GET without ?challenge= returns 400 (browser/tunnel probes are not Hub validation).
  */
 export async function GET(request: Request) {
   const challenge = new URL(request.url).searchParams.get("challenge");
   if (!challenge) {
-    return NextResponse.json({ error: "Missing challenge query parameter" }, { status: 400 });
+    return NextResponse.json(
+      {
+        error: "Missing challenge query parameter",
+        hint: "HMRC Hub validation uses GET ?challenge=<value> — echo it in JSON.",
+      },
+      { status: 400 },
+    );
   }
   return NextResponse.json({ challenge });
 }

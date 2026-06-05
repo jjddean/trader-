@@ -1,0 +1,35 @@
+<!-- DMSACC excerpt — FC-MPYAJ7RN / 26GB63M1I0RQFCVAR4 (2026-06-03T16:38:39Z)
+     FunctionCode 01 = accepted. CDS13000 is advisory (ValidationCode), not DMSREJ.
+     Full notification stored in Convex notifications table (immutable audit). -->
+<Response xmlns="urn:wco:datamodel:WCO:RES-DMS:2">
+  <FunctionCode>01</FunctionCode>
+  <IssueDateTime>
+    <DateTimeString formatCode="304">20260603163839Z</DateTimeString>
+  </IssueDateTime>
+  <AdditionalInformation>
+    <StatementCode>smartErrorMsg</StatementCode>
+    <StatementDescription>Value per kilo appears too low for this commodity</StatementDescription>
+  </AdditionalInformation>
+  <Error>
+    <Description>Value per kilo appears too low for this commodity</Description>
+    <ValidationCode>CDS13000</ValidationCode>
+    <Pointer>
+      <DocumentSectionCode>42A</DocumentSectionCode>
+    </Pointer>
+    <Pointer>
+      <DocumentSectionCode>67A</DocumentSectionCode>
+    </Pointer>
+    <Pointer>
+      <DocumentSectionCode>68A</DocumentSectionCode>
+      <SequenceNumeric>1</SequenceNumeric>
+    </Pointer>
+  </Error>
+  <Declaration>
+    <ID>26GB63M1I0RQFCVAR4</ID>
+    <FunctionalReferenceID>FC-MPYAJ7RN</FunctionalReferenceID>
+    <AcceptanceDateTime>
+      <DateTimeString formatCode="304">20260603163833Z</DateTimeString>
+    </AcceptanceDateTime>
+    <VersionID>1</VersionID>
+  </Declaration>
+</Response>

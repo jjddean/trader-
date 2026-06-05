@@ -1,0 +1,19 @@
+<!-- FC-MPYAJ7RN cancel attempt 2026-06-04T16:14:36Z — CDS12015 @ 42A D014 -->
+<!-- User paste / notification store — representative rejection response -->
+<MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
+  <Response xmlns="urn:wco:datamodel:WCO:RES-DMS:2">
+    <FunctionCode>03</FunctionCode>
+    <FunctionalReferenceID>791529df958e428284b2da49a8308348</FunctionalReferenceID>
+    <Error>
+      <ValidationCode>CDS12015</ValidationCode>
+      <Pointer>
+        <DocumentSectionCode>42A</DocumentSectionCode>
+        <TagID>D014</TagID>
+      </Pointer>
+    </Error>
+    <Declaration>
+      <FunctionalReferenceID>FC-MPYAJ7RN</FunctionalReferenceID>
+      <ID>26GB63M1I0RQFCVAR4</ID>
+    </Declaration>
+  </Response>
+</MetaData>

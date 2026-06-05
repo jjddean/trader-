@@ -1,25 +1,26 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { ConvexHttpClient } from "convex/browser";
-import { api } from "../../../../../convex/_generated/api";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
 import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
-
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+import { getAuthenticatedConvex } from "../../../../lib/hmrc-route-session";
+import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
+import { informationAcceptHeader, parseDeclarationStatusXml } from "../../../../lib/hmrc-information";
 
 /**
  * GET /api/hmrc/status-query?mrn={mrn}
  * Query declaration status via the Customs Declarations Information API.
  * HMRC ref: CDS End-to-End Guide > Query declaration status
  * Supports query by MRN, DUCR, or UCR.
- * Accept: configured HMRC v2 JSON media type (Information API uses v2.0)
+ * Trade Test: Accept application/vnd.hmrc.1.0+xml
  */
 export async function GET(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const clerkAuth = await auth();
+    const session = await getAuthenticatedConvex(clerkAuth);
+    if ("error" in session) {
+      return session.error;
     }
+    const { convex, userId } = session;
 
     const { searchParams } = new URL(request.url);
     const mrn = searchParams.get("mrn");
@@ -30,16 +31,18 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Provide mrn, ducr, or ucr query parameter" }, { status: 400 });
     }
 
-    const tokenRecord = await convex.query(api.hmrc.getToken, { userId });
-    if (!tokenRecord?.accessToken) {
-      return NextResponse.json({ error: "HMRC OAuth Token not found." }, { status: 403 });
+    const tokenResult = await resolveHmrcAccessToken(convex, userId);
+    if ("error" in tokenResult) {
+      return tokenResult.error;
     }
 
-    const hmrcBase = process.env.HMRC_ENVIRONMENT === "sandbox"
-      ? HMRC_CONFIG.sandboxBaseUrl
-      : HMRC_CONFIG.productionBaseUrl;
+    const hmrcBase =
+      process.env.HMRC_ENVIRONMENT === "sandbox"
+        ? HMRC_CONFIG.sandboxBaseUrl
+        : HMRC_CONFIG.productionBaseUrl;
 
-    // Build the correct query path based on which identifier was provided
+    const accept = informationAcceptHeader();
+
     let queryPath: string;
     if (mrn) {
       queryPath = `/customs/declarations-information/mrn/${encodeURIComponent(mrn)}/status`;
@@ -54,26 +57,48 @@ export async function GET(request: Request) {
       {
         method: "GET",
         headers: {
-          Accept: HMRC_CONFIG.accept.v2Json,
+          Accept: accept,
         },
       },
       request,
-      tokenRecord.accessToken
+      tokenResult.token,
     );
 
+    const bodyText = await hmrcResponse.text();
+
     if (!hmrcResponse.ok) {
-      const errorText = await hmrcResponse.text();
-      console.error("HMRC Status Query Error:", hmrcResponse.status, errorText);
+      console.error("HMRC Status Query Error:", hmrcResponse.status, bodyText);
       return NextResponse.json(
-        { error: "HMRC status query failed", details: errorText },
-        { status: hmrcResponse.status }
+        { error: "HMRC status query failed", details: bodyText },
+        { status: hmrcResponse.status },
       );
     }
 
-    const data = await hmrcResponse.json();
-    return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+    const conversationId = hmrcResponse.headers.get("X-Conversation-ID");
+
+    if (accept.includes("+json")) {
+      const data = JSON.parse(bodyText);
+      return NextResponse.json({ success: true, data, conversationId });
+    }
+
+    const parsed = parseDeclarationStatusXml(bodyText);
+    return NextResponse.json({
+      success: true,
+      conversationId,
+      data: {
+        status: parsed.ics ? `ICS ${parsed.ics}` : "unknown",
+        mrn: parsed.mrn,
+        ics: parsed.ics,
+        roe: parsed.roe,
+        versionId: parsed.versionId,
+        typeCode: parsed.typeCode,
+        rawXml: bodyText,
+        parsed,
+      },
+    });
+  } catch (error: unknown) {
     console.error("Status query crash:", error);
-    return NextResponse.json({ error: "Internal Server Error", message: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ error: "Internal Server Error", message }, { status: 500 });
   }
 }

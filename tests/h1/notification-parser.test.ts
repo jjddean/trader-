@@ -66,6 +66,49 @@ describe("HMRC DMS notification parser", () => {
     assert.equal(parsed.fieldErrors[0]?.reason, "Value per kilo appears too low for this commodity");
   });
 
+  it("maps FunctionCode 11 to DMSCLE", () => {
+    const parsed = parseHmrcNotification(`
+      <Response>
+        <FunctionCode>11</FunctionCode>
+        <Declaration>
+          <ID>26GB63M1I0RQFCVAR4</ID>
+          <FunctionalReferenceID>FC-MPYAJ7RN</FunctionalReferenceID>
+        </Declaration>
+      </Response>
+    `);
+    assert.equal(parsed.notificationType, "DMSCLE");
+    assert.equal(parsed.mrn, "26GB63M1I0RQFCVAR4");
+  });
+
+  it("maps FunctionCode 04 to DMSROG", () => {
+    const parsed = parseHmrcNotification(`<Response><FunctionCode>04</FunctionCode></Response>`);
+    assert.equal(parsed.notificationType, "DMSROG");
+  });
+
+  it("maps FunctionCode 07 to DMSCTL", () => {
+    const parsed = parseHmrcNotification(`<Response><FunctionCode>07</FunctionCode></Response>`);
+    assert.equal(parsed.notificationType, "DMSCTL");
+  });
+
+  it("maps FunctionCode 02 to DMSINV", () => {
+    const parsed = parseHmrcNotification(`
+      <Response>
+        <FunctionCode>02</FunctionCode>
+        <FunctionalError>
+          <ErrorCode>CDS10001</ErrorCode>
+          <ErrorReason>Mandatory data element missing</ErrorReason>
+        </FunctionalError>
+      </Response>
+    `);
+    assert.equal(parsed.notificationType, "DMSINV");
+    assert.deepEqual(parsed.errorCodes, ["CDS10001"]);
+  });
+
+  it("maps FunctionCode 08 to DMSRES", () => {
+    const parsed = parseHmrcNotification(`<Response><FunctionCode>08</FunctionCode></Response>`);
+    assert.equal(parsed.notificationType, "DMSRES");
+  });
+
   it("extracts DMSREJ field-level errors from FunctionalError blocks", () => {
     const parsed = parseHmrcNotification(`
       <Notification>

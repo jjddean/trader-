@@ -60,6 +60,7 @@ export default function RootLayout({
   return (
     <ClerkProvider
       signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
       waitlistUrl="/"
     >
       <html lang="en" suppressHydrationWarning>

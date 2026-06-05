@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
+  <WCODataModelVersionCode>3.6</WCODataModelVersionCode>
+  <WCOTypeName>DEC</WCOTypeName>
+  <ResponsibleCountryCode>GB</ResponsibleCountryCode>
+  <ResponsibleAgencyName>HMRC</ResponsibleAgencyName>
+  <AgencyAssignedCustomizationVersionCode>v2.1</AgencyAssignedCustomizationVersionCode>
+  <Declaration xmlns="urn:wco:datamodel:WCO:DEC-DMS:2" xmlns:ds="urn:wco:datamodel:WCO:MetaData_DS-DMS:2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <FunctionCode>13</FunctionCode>
+    <FunctionalReferenceID>FC-MPYAJ7RN</FunctionalReferenceID>
+    <ID>26GB63M1I0RQFCVAR4</ID>
+    <TypeCode>INV</TypeCode>
+    <Declarant><ID>GB553202734852</ID></Declarant>
+  </Declaration>
+</MetaData>

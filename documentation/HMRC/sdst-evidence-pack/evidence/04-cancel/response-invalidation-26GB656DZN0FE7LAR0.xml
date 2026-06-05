@@ -1,0 +1,17 @@
+<!-- HMRC response after successful cancel — MRN 26GB656DZN0FE7LAR0, cancel LRN CX-kn73a2vpts1b6j7tsfy7ct7mms832vkx -->
+<!-- Conversation: 5a46d731-2020-4c95-810c-cc83b40d36a3 | UI status: Invalid (DMSINV) -->
+<_2:MetaData xmlns:_2="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2"><_2:WCODataModelVersionCode>3.6</_2:WCODataModelVersionCode><_2:WCOTypeName>RES</_2:WCOTypeName><_2:ResponsibleCountryCode/><_2:ResponsibleAgencyName/><_2:AgencyAssignedCustomizationCode/><_2:AgencyAssignedCustomizationVersionCode/><_2_1:Response xmlns:_2_1="urn:wco:datamodel:WCO:RES-DMS:2">
+      <_2_1:FunctionCode>10</_2_1:FunctionCode>
+      <_2_1:FunctionalReferenceID>8b1eb93001204f46b07840f6390c9817</_2_1:FunctionalReferenceID>
+      <_2_1:IssueDateTime>
+        <_2_2:DateTimeString formatCode="304" xmlns:_2_2="urn:wco:datamodel:WCO:Response_DS:DMS:2">20260604185609Z</_2_2:DateTimeString>
+      </_2_1:IssueDateTime>
+      <_2_1:Declaration>
+        <_2_1:CancellationDateTime>
+          <_2_2:DateTimeString formatCode="304" xmlns:_2_2="urn:wco:datamodel:WCO:Response_DS:DMS:2">20260604185609Z</_2_2:DateTimeString>
+        </_2_1:CancellationDateTime>
+        <_2_1:FunctionalReferenceID>FC-MPZUVPRD</_2_1:FunctionalReferenceID>
+        <_2_1:ID>26GB656DZN0FE7LAR0</_2_1:ID>
+        <_2_1:VersionID>1</_2_1:VersionID>
+      </_2_1:Declaration>
+    </_2_1:Response></_2:MetaData>

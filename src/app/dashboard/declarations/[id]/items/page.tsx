@@ -21,11 +21,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { countries } from "@/lib/data/countries";
+import { DeclarationModePromote } from "@/components/declaration-mode-promote";
 
 export default function GoodsItemsPage() {
   const params = useParams<{ id: string }>();
   const declarationId = params?.id as Id<"declarations">;
-  
+
+  const declaration = useQuery(
+    api.declarations.getLane,
+    declarationId ? { id: declarationId } : "skip",
+  );
   const items = useQuery(api.goods_items.getItems, declarationId ? { declarationId } : "skip");
   const addItem = useMutation(api.goods_items.addItem);
   const removeItem = useMutation(api.goods_items.removeItem);
@@ -468,6 +473,13 @@ export default function GoodsItemsPage() {
               </li>
             ))}
           </ul>
+          {declarationId && completeness && (
+            <DeclarationModePromote
+              declarationId={declarationId}
+              declarationMode={(declaration as { mode?: string } | undefined)?.mode}
+              missing={completeness.missing}
+            />
+          )}
         </div>
       )}
 

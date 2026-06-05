@@ -1,0 +1,28 @@
+<!-- Post-cancel DMSCLE (FC 11) — NOT Scenario 1 clearance evidence.
+     MRN: 26GB65AQTKWFMT6AR3 | Cancel LRN: CX-kn73a2vpts1b6j7tsfy7ct7mms832vkx
+     IssueDateTime: 20260604210050Z (2026-06-04T21:00:50Z) -->
+<_2:MetaData xmlns:_2="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
+  <_2:WCODataModelVersionCode>3.6</_2:WCODataModelVersionCode>
+  <_2:WCOTypeName>RES</_2:WCOTypeName>
+  <_2:ResponsibleCountryCode/>
+  <_2:ResponsibleAgencyName/>
+  <_2:AgencyAssignedCustomizationCode/>
+  <_2:AgencyAssignedCustomizationVersionCode/>
+  <_2_1:Response xmlns:_2_1="urn:wco:datamodel:WCO:RES-DMS:2">
+    <_2_1:FunctionCode>11</_2_1:FunctionCode>
+    <_2_1:FunctionalReferenceID>5071807d054346ea88721fee4cdb7cae</_2_1:FunctionalReferenceID>
+    <_2_1:IssueDateTime>
+      <_2_2:DateTimeString formatCode="304" xmlns:_2_2="urn:wco:datamodel:WCO:Response_DS:DMS:2">20260604210050Z</_2_2:DateTimeString>
+    </_2_1:IssueDateTime>
+    <_2_1:AdditionalInformation>
+      <_2_1:StatementTypeCode>AFB</_2_1:StatementTypeCode>
+    </_2_1:AdditionalInformation>
+    <_2_1:Status>
+      <_2_1:NameCode>39</_2_1:NameCode>
+    </_2_1:Status>
+    <_2_1:Declaration>
+      <_2_1:FunctionalReferenceID>CX-kn73a2vpts1b6j7tsfy7ct7mms832vkx</_2_1:FunctionalReferenceID>
+      <_2_1:ID>26GB65AQTKWFMT6AR3</_2_1:ID>
+    </_2_1:Declaration>
+  </_2_1:Response>
+</_2:MetaData>

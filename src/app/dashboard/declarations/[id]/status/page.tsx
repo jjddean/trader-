@@ -6,12 +6,20 @@ import { useQuery, useConvexAuth } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
-import { Activity, Clock, CheckCircle2, XCircle, Loader2, ShieldCheck, ShieldAlert, FileText, AlertCircle } from "lucide-react";
+import { Activity, Clock, CheckCircle2, XCircle, Loader2, ShieldCheck, ShieldAlert, FileText, AlertCircle, RefreshCw } from "lucide-react";
 import { normalizeNotificationType, getNotificationDisplay } from "@/lib/notification-labels";
+import {
+  declarationHasInvalidationAccepted,
+  isInvalidationAccepted,
+  resolveDeclarationCdsBadge,
+  resolveTimelineNotificationMeta,
+  type CdsBadgeTone,
+} from "@/lib/notification-context";
+import { generateClientFraudHeaders } from "@/lib/hmrc-fraud-headers";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
 export default function StatusTimelinePage() {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn, userId } = useAuth();
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const params = useParams<{ id: string }>();
   const id = params?.id as Id<"declarations">;
@@ -33,6 +41,51 @@ export default function StatusTimelinePage() {
   );
 
   const [nextStepsOpen, setNextStepsOpen] = useState(false);
+  const [hmrcBusy, setHmrcBusy] = useState(false);
+  const [hmrcMessage, setHmrcMessage] = useState<string | null>(null);
+  const [hmrcMessageOk, setHmrcMessageOk] = useState(false);
+
+  const hmrcFetchInit = (): RequestInit => ({
+    headers: generateClientFraudHeaders(userId || undefined),
+  });
+
+  async function runHmrcAction(label: string, run: () => Promise<Response>) {
+    setHmrcBusy(true);
+    setHmrcMessage(null);
+    setHmrcMessageOk(false);
+    try {
+      const res = await run();
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const detail =
+          typeof body.details === "string"
+            ? body.details.slice(0, 280)
+            : body.details
+              ? JSON.stringify(body.details).slice(0, 280)
+              : "";
+        setHmrcMessage(
+          `${label} failed (${res.status}): ${body.error || body.message || "unknown"}` +
+            (detail ? ` — ${detail}` : ""),
+        );
+        setHmrcMessageOk(false);
+        return;
+      }
+      setHmrcMessageOk(true);
+      setHmrcMessage(
+        `${label} OK (${res.status})` +
+          (body.conversationId ? ` — conversation ${body.conversationId}` : "") +
+          (label === "Cancel" ? " — await HMRC notification (DMSINV FC 02 = success)" : "") +
+          (label === "Amend" ? " — await HMRC notification on this conversation" : "") +
+          (body.saved != null ? ` — ${body.saved} notification(s) saved` : "") +
+          (body.data?.status ? ` — HMRC status: ${body.data.status}` : ""),
+      );
+    } catch (e) {
+      setHmrcMessage(`${label} error: ${e instanceof Error ? e.message : "unknown"}`);
+      setHmrcMessageOk(false);
+    } finally {
+      setHmrcBusy(false);
+    }
+  }
 
   if (!isLoaded || isConvexAuthLoading || declaration === undefined) {
     return (
@@ -52,7 +105,7 @@ export default function StatusTimelinePage() {
     DMSUB:  { title: "Declaration received by HMRC", color: "bg-blue-500",  icon: "info",    detail: "Declaration has been received and queued by HMRC." },
     DMSSUB: { title: "Declaration received by HMRC", color: "bg-blue-500",  icon: "info",    detail: "Declaration has been received and queued by HMRC." },
     DMSACC: { title: "Declaration accepted",          color: "bg-green-500", icon: "success", detail: "Declaration passed initial controls and is accepted." },
-    DMSCLE: { title: "Goods cleared",                 color: "bg-green-500", icon: "success", detail: "Goods are cleared for release." },
+    DMSCLE: { title: "Clearance event (DMSCLE)",      color: "bg-blue-500",  icon: "info",    detail: "HMRC clearance event on the timeline (see label for Trade Test meaning)." },
     DMSROG: { title: "Route to examine",              color: "bg-amber-500", icon: "warning", detail: "HMRC routed this declaration for examination. Action required." },
     DMSREJ: { title: "Declaration rejected",          color: "bg-red-500",   icon: "danger",  detail: "HMRC rejected the declaration. Review error codes and amend." },
     DMSINV: { title: "Declaration invalid",           color: "bg-red-500",   icon: "danger",  detail: "HMRC returned field-level validation errors." },
@@ -66,20 +119,76 @@ export default function StatusTimelinePage() {
     DMSNOTFN: { title: "General notification",        color: "bg-blue-500",  icon: "info",    detail: "HMRC sent a general status notification." },
   };
 
-  const metaForNotification = (rawType: string) => {
-    const type = normalizeNotificationType(rawType);
-    if (notificationMeta[type]) return { ...notificationMeta[type], normalizedType: type };
-    const display = getNotificationDisplay(rawType);
-    return {
+  const notifContext = (notif: { rawPayload?: string; fieldErrors?: unknown; errorCodes?: string[]; notificationType?: string }) => ({
+    rawPayload: notif.rawPayload,
+    fieldErrors: Array.isArray(notif.fieldErrors) ? notif.fieldErrors : undefined,
+    errorCodes: Array.isArray(notif.errorCodes) ? notif.errorCodes : undefined,
+    notificationType: notif.notificationType ?? "",
+  });
+
+  const metaForNotification = (notif: {
+    rawPayload?: string;
+    fieldErrors?: Array<{ field: string; code?: string; reason: string }>;
+    errorCodes?: string[];
+    notificationType?: string;
+  }) => {
+    const type = normalizeNotificationType(notif.notificationType);
+    const preset = notificationMeta[type];
+    if (preset) {
+      return resolveTimelineNotificationMeta(notifContext(notif), {
+        title: preset.title,
+        detail: preset.detail,
+        color: preset.color,
+        icon: preset.icon,
+        normalizedType: type,
+      });
+    }
+    const display = getNotificationDisplay(notif.notificationType);
+    return resolveTimelineNotificationMeta(notifContext(notif), {
       title: display.title,
-      color: display.tone === "success" ? "bg-green-500" : display.tone === "danger" ? "bg-red-500" : display.tone === "warning" ? "bg-amber-500" : "bg-blue-500",
-      icon: display.tone === "success" ? "success" as const : display.tone === "danger" ? "danger" as const : display.tone === "warning" ? "warning" as const : "info" as const,
       detail: display.subtitle || "HMRC sent a status update.",
+      color:
+        display.tone === "success"
+          ? "bg-green-500"
+          : display.tone === "danger"
+            ? "bg-red-500"
+            : display.tone === "warning"
+              ? "bg-amber-500"
+              : "bg-blue-500",
+      icon:
+        display.tone === "success"
+          ? "success"
+          : display.tone === "danger"
+            ? "danger"
+            : display.tone === "warning"
+              ? "warning"
+              : "info",
       normalizedType: type,
-    };
+    });
   };
 
-  const latestNotificationType = normalizeNotificationType(notifications?.[0]?.notificationType) || "DMSUB";
+  const latestNotif = notifications?.[0];
+  const latestCtx = latestNotif ? notifContext(latestNotif) : null;
+  const latestNotificationType = normalizeNotificationType(latestNotif?.notificationType) || "DMSUB";
+  const latestIsInvalidationSuccess = latestCtx ? isInvalidationAccepted(latestCtx) : false;
+
+  const cdsBadge = resolveDeclarationCdsBadge(
+    declaration.status,
+    (notifications || []).map((n: { rawPayload?: string; fieldErrors?: unknown; errorCodes?: string[]; notificationType?: string }) =>
+      notifContext(n),
+    ),
+  );
+
+  const cdsBadgeClass: Record<CdsBadgeTone, string> = {
+    success: "bg-green-100 text-green-700",
+    danger: "bg-red-100 text-red-700",
+    warning: "bg-amber-100 text-amber-700",
+    info: "bg-blue-100 text-blue-700",
+    neutral: "bg-gray-100 text-gray-700",
+  };
+
+  const hmrcActionBtnClass =
+    "inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 text-xs font-normal text-gray-800 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40";
 
   return (
     <div className="space-y-6">
@@ -101,6 +210,116 @@ export default function StatusTimelinePage() {
           </div>
         ) : (
           <div className="space-y-8">
+            {declaration.conversationId && (
+              <div className="space-y-3 border-b border-gray-100 pb-6">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={hmrcBusy}
+                    className={hmrcActionBtnClass}
+                    onClick={() =>
+                      runHmrcAction("Pull notifications", () =>
+                        fetch(
+                          `/api/hmrc/notifications/pull?conversationId=${encodeURIComponent(declaration.conversationId!)}`,
+                          hmrcFetchInit(),
+                        ),
+                      )
+                    }
+                  >
+                    {hmrcBusy ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-500" />
+                    ) : (
+                      <RefreshCw className="h-3.5 w-3.5 text-blue-600" />
+                    )}
+                    Pull notifications
+                  </button>
+                  {declaration.mrn && (
+                    <button
+                      type="button"
+                      disabled={hmrcBusy}
+                      className={hmrcActionBtnClass}
+                      onClick={() =>
+                        runHmrcAction("Status query", () =>
+                          fetch(
+                            `/api/hmrc/status-query?mrn=${encodeURIComponent(declaration.mrn!)}`,
+                            hmrcFetchInit(),
+                          ),
+                        )
+                      }
+                    >
+                      Query HMRC status
+                    </button>
+                  )}
+                  {declaration.mrn && declaration.status === "Accepted" && (
+                    <>
+                      <button
+                        type="button"
+                        disabled={hmrcBusy}
+                        className={hmrcActionBtnClass}
+                        onClick={() => {
+                          if (!confirm("Submit amendment to HMRC for this MRN?")) return;
+                          const fraud = generateClientFraudHeaders(userId || undefined);
+                          runHmrcAction("Amend", () =>
+                            fetch("/api/hmrc/amend", {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                                ...fraud,
+                              },
+                              body: JSON.stringify({ declarationId: id, mrn: declaration.mrn }),
+                            }),
+                          );
+                        }}
+                      >
+                        Amend
+                      </button>
+                      <button
+                        type="button"
+                        disabled={hmrcBusy}
+                        className={`${hmrcActionBtnClass} border-red-200 text-red-700 hover:bg-red-50`}
+                        onClick={() => {
+                          if (!confirm("Request cancellation (invalidation) for this MRN?")) return;
+                          const reason = window.prompt(
+                            "Cancellation reason (blank = code 1; or exact HMRC text for codes 1–3):",
+                            "",
+                          );
+                          if (reason === null) return;
+                          const fraud = generateClientFraudHeaders(userId || undefined);
+                          runHmrcAction("Cancel", () =>
+                            fetch("/api/hmrc/cancel", {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                                ...fraud,
+                              },
+                              body: JSON.stringify({
+                                declarationId: id,
+                                mrn: declaration.mrn,
+                                reason: reason.trim(),
+                              }),
+                            }),
+                          );
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  )}
+                </div>
+                {hmrcMessage && (
+                  <p
+                    className={`rounded-md border p-3 text-xs ${
+                      hmrcMessageOk
+                        ? "border-green-200 bg-green-50 text-green-800"
+                        : "border-red-200 bg-red-50 text-red-800"
+                    }`}
+                  >
+                    {hmrcMessage}
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="rounded-lg bg-gray-50 p-4 border border-gray-100">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">
@@ -116,24 +335,24 @@ export default function StatusTimelinePage() {
                   CDS Status
                 </p>
                 <div>
-                  {Boolean(declaration.mrn && String(declaration.mrn).trim().length > 0) && (declaration.status === "Cleared" || declaration.status === "Accepted") ? (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
-                      <ShieldCheck className="h-3 w-3" />
-                      {declaration.status === "Accepted" ? "Accepted (DMSACC)" : "Cleared (DMSCLE)"}
-                    </span>
-                  ) : declaration.status === "Rejected" || declaration.status === "Action Required" || declaration.status === "Invalid" ? (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
-                      <ShieldAlert className="h-3 w-3" />
-                      {declaration.status === "Rejected" ? "Rejected (DMSREJ)" : declaration.status === "Invalid" ? "Invalid (DMSINV)" : declaration.status}
-                    </span>
-                  ) : declaration.status === "Draft" ? (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
-                      <FileText className="h-3 w-3" />
-                      {declaration.status}
+                  {declaration.mrn && String(declaration.mrn).trim().length > 0 ? (
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[0.625rem] font-medium ${cdsBadgeClass[cdsBadge.tone]}`}
+                    >
+                      {cdsBadge.tone === "success" ? (
+                        <ShieldCheck className="h-3 w-3" />
+                      ) : cdsBadge.tone === "danger" ? (
+                        <ShieldAlert className="h-3 w-3" />
+                      ) : cdsBadge.tone === "neutral" ? (
+                        <FileText className="h-3 w-3" />
+                      ) : (
+                        <AlertCircle className="h-3 w-3" />
+                      )}
+                      {cdsBadge.label}
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700">
-                      <AlertCircle className="h-3 w-3" />
+                    <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
+                      <FileText className="h-3 w-3" />
                       {declaration.status}
                     </span>
                   )}
@@ -166,7 +385,7 @@ export default function StatusTimelinePage() {
                 </div>
 
                 {(notifications || []).map((notif: any) => {
-                  const meta = metaForNotification(notif.notificationType);
+                  const meta = metaForNotification(notif);
                   return (
                   <div key={notif._id} className="relative">
                     <div className={`absolute -left-6 top-1 h-3 w-3 rounded-full border-2 border-white ${meta.color}`} />
@@ -185,7 +404,7 @@ export default function StatusTimelinePage() {
                       <p className="text-xs text-gray-600">
                         {meta.detail}
                       </p>
-                      {(meta.normalizedType === "DMSREJ" || meta.normalizedType === "DMSINV") && Array.isArray(notif.fieldErrors) && notif.fieldErrors.length > 0 && (
+                      {meta.showFieldErrors && Array.isArray(notif.fieldErrors) && notif.fieldErrors.length > 0 && (
                         <div className="rounded border border-red-200 bg-red-50 p-2 text-xs text-red-800">
                           {notif.fieldErrors.map((fieldError: { field: string; code?: string; reason: string }, idx: number) => (
                             <p key={`${notif._id}-err-${idx}`} className="break-words">
@@ -194,7 +413,7 @@ export default function StatusTimelinePage() {
                           ))}
                         </div>
                       )}
-                      {(meta.normalizedType === "DMSREJ" || meta.normalizedType === "DMSINV") && (!Array.isArray(notif.fieldErrors) || notif.fieldErrors.length === 0) && Array.isArray(notif.errorCodes) && notif.errorCodes.length > 0 && (
+                      {meta.showFieldErrors && (!Array.isArray(notif.fieldErrors) || notif.fieldErrors.length === 0) && Array.isArray(notif.errorCodes) && notif.errorCodes.length > 0 && (
                         <p className="text-xs text-red-700 break-words">
                           {notif.errorCodes.join(", ")}
                         </p>
@@ -296,39 +515,66 @@ export default function StatusTimelinePage() {
                 </>
               )}
 
-              {(latestNotificationType === "DMSREJ" || latestNotificationType === "DMSINV") && (
-                <>
-                  <div className="space-y-4">
-                    <p className="text-sm text-gray-600">The declaration was rejected by HMRC validation.</p>
-                    
-                    <div>
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Error codes received</h4>
-                      <p className="text-sm font-mono bg-red-50 text-red-700 p-2 rounded border border-red-100">
-                        {notifications?.[0]?.errorCodes?.join(", ") || notifications?.[0]?.fieldErrors?.map((e: any) => e.code || e.reason).join(", ") || "Unknown Error"}
-                      </p>
-                    </div>
-
-                    <div>
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Which fields to fix</h4>
-                      {notifications?.[0]?.fieldErrors?.length > 0 ? (
-                         <ul className="text-sm text-gray-700 list-disc pl-4 space-y-1">
-                           {notifications?.[0]?.fieldErrors?.map((err: any, idx: number) => (
-                             <li key={idx}><strong>{err.field}</strong>: {err.reason}</li>
-                           ))}
-                         </ul>
-                      ) : (
-                         <p className="text-sm text-gray-700">Check the raw XML payload for specific validation failures against the WCO schema.</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">How to amend</h4>
-                      <p className="text-sm text-gray-700">
-                        Return to the <strong>Core Schema</strong> tab to correct the highlighted fields, then click <strong>Resubmit Declaration</strong>. The new payload will overwrite the rejected submission.
-                      </p>
-                    </div>
+              {latestIsInvalidationSuccess && (
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    HMRC accepted your <strong>cancellation (invalidation)</strong> request. The declaration is cancelled — no further import processing.
+                  </p>
+                  <div className="rounded-lg border border-green-100 bg-green-50 p-4">
+                    <p className="text-xs text-green-800">
+                      Proof is <strong>FunctionCode 02</strong> (DMSINV) with your <strong>CX-</strong> cancel LRN, not FunctionCode 11 (DMSCLE).
+                    </p>
                   </div>
-                </>
+                </div>
+              )}
+
+              {!latestIsInvalidationSuccess && (latestNotificationType === "DMSREJ" || latestNotificationType === "DMSINV") && (
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    {latestNotificationType === "DMSINV"
+                      ? "The declaration failed HMRC validation."
+                      : "HMRC rejected this message (declaration or cancellation)."}
+                  </p>
+
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Error codes received</h4>
+                    <p className="text-sm font-mono bg-red-50 text-red-700 p-2 rounded border border-red-100">
+                      {notifications?.[0]?.errorCodes?.join(", ") ||
+                        notifications?.[0]?.fieldErrors?.map((e: { code?: string; reason: string }) => e.code || e.reason).join(", ") ||
+                        "Unknown Error"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Which fields to fix</h4>
+                    {notifications?.[0]?.fieldErrors?.length > 0 ? (
+                      <ul className="text-sm text-gray-700 list-disc pl-4 space-y-1">
+                        {notifications?.[0]?.fieldErrors?.map((err: { field: string; reason: string }, idx: number) => (
+                          <li key={idx}>
+                            <strong>{err.field}</strong>: {err.reason}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-gray-700">
+                        Check the raw XML payload for CDS codes and pointers (e.g. 06A for cancel XML).
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Next step</h4>
+                    <p className="text-sm text-gray-700">
+                      {declarationHasInvalidationAccepted(
+                        (notifications || []).map((n: { rawPayload?: string; fieldErrors?: unknown; errorCodes?: string[]; notificationType?: string }) =>
+                          notifContext(n),
+                        ),
+                      )
+                        ? "Cancellation already succeeded on another notification — ignore duplicate DMSREJ if on cancel XML."
+                        : "Fix fields on Core Schema and resubmit, or fix cancel XML per evidence pack §4.2."}
+                    </p>
+                  </div>
+                </div>
               )}
 
               {latestNotificationType === "DMSUB" && (

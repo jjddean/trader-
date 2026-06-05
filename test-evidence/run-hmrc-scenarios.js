@@ -548,7 +548,7 @@ async function run() {
     valueCurrency: "GBP",
     grossWeightKg: 120,
     netWeightKg: 110,
-    supplementaryUnitQty: 1,
+    supplementaryUnitQty: 10,
     supplementaryUnitCode: "NAR",
     packageCount: 1,
     packageType: "PK",

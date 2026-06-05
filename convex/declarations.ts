@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { evaluateCompleteness } from "./lib/declaration_completeness";
+import { replayDeclarationStatus } from "./lib/replay_declaration_status";
 import type { RuleDefinition } from "./lib/rule_engine";
 
 const preferenceCountries = new Set(["BD", "PK", "LK", "KE", "GH", "NG", "TZ", "UG", "ZM", "ZW"]);
@@ -365,7 +366,19 @@ export const getLane = query({
     if (!declaration || declaration.userId !== identity.subject) {
       throw new Error("Unauthorized: You do not own this declaration.");
     }
-    return declaration;
+
+    const notificationRows = await ctx.db
+      .query("notifications")
+      .withIndex("by_declaration", (q) => q.eq("declarationId", args.id))
+      .take(100);
+
+    const status = replayDeclarationStatus(
+      String(declaration.status ?? "Draft"),
+      declaration.mrn,
+      notificationRows,
+    );
+
+    return { ...declaration, status };
   },
 });
 
@@ -578,6 +591,26 @@ export const updateDeclarationDetails = mutation({
       lastUpdated: Date.now(),
     });
     await upsertDeclarationPreviewByDeclaration(ctx, args.id);
+  },
+});
+
+export const setDeclarationMode = mutation({
+  args: {
+    id: v.id("declarations"),
+    mode: v.union(v.literal("minimal"), v.literal("enriched")),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const existing = await ctx.db.get(args.id);
+    if (!existing || existing.userId !== identity.subject) {
+      throw new Error("Unauthorized");
+    }
+
+    await ctx.db.patch(args.id, { mode: args.mode, lastUpdated: Date.now() });
+    await upsertDeclarationPreviewByDeclaration(ctx, args.id);
+    return { mode: args.mode };
   },
 });
 

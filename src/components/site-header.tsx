@@ -2,15 +2,11 @@
 
 import Link from "next/link";
 import { ArrowRight, Menu, X } from "lucide-react";
-import { useAuth, UserButton, Waitlist } from "@clerk/nextjs";
+import { SignInButton, SignUpButton, useAuth, UserButton } from "@clerk/nextjs";
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+
+const authButtonClass =
+  "h-[32px] rounded-md px-[12px] md:px-[16px] text-[13px] font-medium transition-colors flex items-center justify-center whitespace-nowrap shadow-sm";
 
 export const navigation = [
   { name: "Solutions", href: "/solutions" },
@@ -56,12 +52,24 @@ export function SiteHeader() {
         <div className="flex items-center gap-[12px] md:gap-[24px]">
           <div className="flex items-center gap-4">
             {!isSignedIn ? (
-              <Link
-                href="/sign-in"
-                className="h-[32px] rounded-md border border-transparent bg-[#111827] px-[12px] md:px-[16px] text-[13px] font-medium text-white transition-colors hover:bg-slate-800 flex items-center justify-center whitespace-nowrap shadow-sm"
-              >
-                Sign In
-              </Link>
+              <div className="hidden items-center gap-2 sm:flex">
+                <SignInButton mode="modal">
+                  <button
+                    type="button"
+                    className={`${authButtonClass} border border-slate-200 bg-white text-slate-700 hover:bg-slate-50`}
+                  >
+                    Sign In
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button
+                    type="button"
+                    className={`${authButtonClass} border border-transparent bg-[#111827] text-white hover:bg-slate-800`}
+                  >
+                    Sign Up
+                  </button>
+                </SignUpButton>
+              </div>
             ) : (
               <div className="flex items-center gap-4">
                 <Link
@@ -103,7 +111,7 @@ export function SiteHeader() {
                 {item.name}
               </Link>
             ))}
-            {isSignedIn && (
+            {isSignedIn ? (
               <Link
                 href="/dashboard"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -111,6 +119,27 @@ export function SiteHeader() {
               >
                 Dashboard
               </Link>
+            ) : (
+              <div className="flex flex-col gap-1 border-t border-slate-100 pt-2 mt-2">
+                <SignInButton mode="modal">
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex h-12 w-full items-center px-4 text-[14px] font-medium text-slate-600 hover:text-slate-900"
+                  >
+                    Sign In
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex h-12 w-full items-center px-4 text-[14px] font-medium text-slate-900 hover:text-slate-700"
+                  >
+                    Sign Up
+                  </button>
+                </SignUpButton>
+              </div>
             )}
           </nav>
         </div>

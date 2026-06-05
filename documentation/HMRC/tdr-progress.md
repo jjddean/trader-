@@ -62,8 +62,8 @@
 - [ ] **67A 103 / 68A 103** — Country-context tag
 
 ### 🎯 Final acceptance
-- [ ] Single submit returns DMSACC (no errors in Response)
-- [ ] Status notification chain: DMSACC → DMSCLE
+- [x] Single submit returns DMSACC (FC-MPYAJ7RN — 0 validation errors; CDS13000 advisory only)
+- [x] Status notification chain: DMSACC → DMSCLE on `26GB63M1I0RQFCVAR4` (`2026-06-04T18:56:07Z`, SDST pack `scenario-1-happy-path.md`)
 - [ ] Evidence captured: request XML, response XML, conversation ID
 
 ---

@@ -25,6 +25,7 @@ Source policy: DMSREJ is negative evidence only. This file tracks which spec sec
 | 2026-06-01 20:23 | FC-MPVNPBLP | 26GB60Z7LNJXBB7AR9 | **2** | App submit after renderer emits `GoodsShipment/TransactionNatureCode` **11** (DE 8/5, WCOID 103). **CDS12073 cleared** (both `67A/103` and `68A/103` gone). Unchanged: 2× CDS12005 (`42A/57B/R123`; `42A/67A/74A/R038`). FunctionalReferenceID `eb9f9750e5a9415ab1d84f3383969434`. EORI `GB243617410764`. |
 | 2026-06-02 14:38 | FC-MPWQSJ97 | 26GB622ATBJB8W5AR2 | **2** | App submit with EORI `GB531765313922` (Romwan Lee). **Same 2× CDS12005** R123 + R038. Payload verified: Declarant + Importer = `GB531765313922`, 00500 + Importer, TransactionNatureCode 11. EORI not in TDL spreadsheet. FunctionalReferenceID `1fa4163e11dc4a47abe0d01e133ecfb7`. |
 | 2026-06-03 16:07 | FC-MPY9FFEE | 26GB63KXPPOH5QLAR0 | **1** | TDL EORI `GB553202734852` on parties (Romwan OAuth). **CDS12005 cleared.** New: **CDS40011** — missing DE 6/2 `TariffQuantity` (Tag 130) for HS 8471300000 / p/st. FunctionalReferenceID `81dc30327a5c402fb15d204a9bcf51f0`. |
+| 2026-06-03 16:38 | FC-MPYAJ7RN | 26GB63M1I0RQFCVAR4 | **0** | **DMSACC** (FunctionCode `01`). TDL EORI + DE 6/2 `TariffQuantity` 10 NAR — **CDS40011 cleared.** Advisory **CDS13000** only (value per kilo — smart check, non-blocking). DMSTAX ×2 followed; **DMSCLE pending.** Freeze: `spec/passing-payload.xml`. |
 
 ## Code → spec section
 
@@ -47,18 +48,19 @@ Source policy: DMSREJ is negative evidence only. This file tracks which spec sec
 | CDS12099 | 64A / L016 / L110 / 04A / 410 | `de-5-23-goods-location.md` — invalid combination for DE 5/23 |
 | CDS77002 | 02A | `de-2-3-documents.md` (status code missing) |
 
-## Active workstream (2 errors — FC-MPWQSJ97)
+## Active workstream — **DMSACC achieved** (FC-MPYAJ7RN)
 
-**Gate:** One error category per submit. No XML without cited HMRC source. No HMRC SDS. Freeze `passing-payload.xml` on first DMSACC.
+**Gate:** `spec/passing-payload.xml` frozen 2026-06-03. Next: **DMSCLE** on same MRN (async); optional CDS13000 tuning on *new* submit only.
 
 | Phase | Scope |
 |-------|--------|
-| **Done** | CDS12073 — `TransactionNatureCode` renderer fix (FC-MPVNPBLP: 4 → **2** errors) |
-| **Done** | CDS12005 investigation — Romwan/Yasmine EORIs not in TDL; same 2× CDS12005 (`spec/hmrc-mirror/cds12005-party-id.md`) |
-| **Done** | CDS12005 cleared — TDL EORI `GB553202734852` on declaration (FC-MPY9FFEE) |
-| **Now** | CDS40011 — DE 6/2 supplementary units (p/st, unit NAR) for HS 8471300000 |
+| **Done** | CDS12073 — `TransactionNatureCode` renderer fix |
+| **Done** | CDS12005 — TDL EORI `GB553202734852` on parties |
+| **Done** | CDS40011 — DE 6/2 `TariffQuantity` 10 / NAR |
+| **Done** | DMSACC — 0 validation errors; MRN `26GB63M1I0RQFCVAR4` |
+| **Now** | Wait for **DMSCLE**; monitor webhook/pull |
 
-**Lane EORI:** `GB531765313922` (Romwan Lee) per `spec/lane.md` + `documentation/HMRC/test-user.md`.
+**Lane EORI (parties):** `GB553202734852` (TDL). **OAuth:** Romwan `GB531765313922` — `documentation/HMRC/test-user.md`.
 
 **CDS12073 closed:** DMSREJ Tag **103** = `GoodsShipment/TransactionNatureCode` (not `CountryCode`). Do not revisit Origin / ExportCountry / Destination / GoodsLocation for this code.
 

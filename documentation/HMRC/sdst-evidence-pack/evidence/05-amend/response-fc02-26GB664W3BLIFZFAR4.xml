@@ -1,0 +1,14 @@
+<!-- Amendment response FC 02 — AM-kn7ce59… / 26GB664W3BLIFZFAR4 (2026-06-05T11:07:36Z)
+     No ValidationCode/Error in payload. Not CDS13000 reject.
+     TT_IM002b amend SUCCESS = DMSRES FC 07 (reference-TT_IM002b_DMSRES.xml) — not yet seen on this MRN. -->
+<_2:MetaData xmlns:_2="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2"><_2:WCODataModelVersionCode>3.6</_2:WCODataModelVersionCode><_2:WCOTypeName>RES</_2:WCOTypeName><_2:ResponsibleCountryCode/><_2:ResponsibleAgencyName/><_2:AgencyAssignedCustomizationCode/><_2:AgencyAssignedCustomizationVersionCode/><_2_1:Response xmlns:_2_1="urn:wco:datamodel:WCO:RES-DMS:2">
+      <_2_1:FunctionCode>02</_2_1:FunctionCode>
+      <_2_1:FunctionalReferenceID>30a62b0056794c25ab0fa7b2751654f2</_2_1:FunctionalReferenceID>
+      <_2_1:IssueDateTime>
+        <_2_2:DateTimeString formatCode="304" xmlns:_2_2="urn:wco:datamodel:WCO:Response_DS:DMS:2">20260605110736Z</_2_2:DateTimeString>
+      </_2_1:IssueDateTime>
+      <_2_1:Declaration>
+        <_2_1:FunctionalReferenceID>AM-kn7ce59qgf4szvq174agcnm4ns880s39</_2_1:FunctionalReferenceID>
+        <_2_1:ID>26GB664W3BLIFZFAR4</_2_1:ID>
+      </_2_1:Declaration>
+    </_2_1:Response></_2:MetaData>

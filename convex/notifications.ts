@@ -1,6 +1,13 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { api, internal } from "./_generated/api";
+import {
+  isAmendmentAccepted,
+  isAmendmentRejected,
+  isInvalidationAccepted,
+  isPostCancelClearance,
+} from "./lib/notification_dms_context";
+import { statusAfterNotification } from "./lib/notification_status";
 
 export const saveWebhook = mutation({
   args: {
@@ -47,48 +54,81 @@ export const saveWebhook = mutation({
     }
 
     if (declaration) {
-      let newStatus = declaration.status;
+      const declMrn = String(declaration.mrn ?? "").trim();
+      const notifMrn = String(args.mrn ?? "").trim();
+      const mrnMismatch =
+        declMrn.length > 0 &&
+        notifMrn.length > 0 &&
+        notifMrn !== "UNKNOWN" &&
+        notifMrn !== declMrn;
+
       const hasResolvedMrn =
         (args.mrn && args.mrn !== "UNKNOWN") ||
         (declaration.mrn && String(declaration.mrn).trim().length > 0);
-      if (args.notificationType === "DMSUB") newStatus = "Submitted";
-      if (args.notificationType === "DMSACC") newStatus = hasResolvedMrn ? "Accepted" : "Submitted";
-      if (args.notificationType === "DMSCLE") newStatus = hasResolvedMrn ? "Cleared" : "Submitted";
-      if (args.notificationType === "DMSROG") newStatus = "Action Required";
-      if (args.notificationType === "DMSREJ") newStatus = "Rejected";
-      if (args.notificationType === "DMSINV") newStatus = "Invalid";
-
-      const patchObj: Record<string, string | number> = {
-        status: newStatus,
-        lastUpdated: Date.now()
-      };
-
-      // Always sync the CDS-assigned MRN back to the declaration when HMRC provides one.
-      // Overwrite any locally-set draft MRN so the declaration MRN matches what CDS issued.
-      if (args.mrn && args.mrn !== "UNKNOWN") {
-        patchObj.mrn = args.mrn;
-      }
-
-      await ctx.db.patch(declaration._id, patchObj);
-
-      await ctx.runMutation(internal.declarations.upsertDeclarationPreview, {
-        declarationId: declaration._id,
+      const amendRejected = isAmendmentRejected({
+        notificationType: args.notificationType,
+        rawPayload: args.rawPayload,
+        fieldErrors: args.fieldErrors,
+        errorCodes: args.errorCodes,
       });
+      const amendAccepted = isAmendmentAccepted({
+        notificationType: args.notificationType,
+        rawPayload: args.rawPayload,
+        fieldErrors: args.fieldErrors,
+        errorCodes: args.errorCodes,
+      });
+      const invAccepted = isInvalidationAccepted({
+        notificationType: args.notificationType,
+        rawPayload: args.rawPayload,
+        fieldErrors: args.fieldErrors,
+        errorCodes: args.errorCodes,
+      });
+      const postCancelCle = isPostCancelClearance({
+        notificationType: args.notificationType,
+        rawPayload: args.rawPayload,
+      });
+      if (!mrnMismatch) {
+        const newStatus = statusAfterNotification({
+          currentStatus: declaration.status,
+          notificationType: args.notificationType,
+          hasResolvedMrn,
+          isAmendmentRejected: amendRejected,
+          isAmendmentAccepted: amendAccepted,
+          isInvalidationAccepted: invAccepted,
+          isPostCancelClearance: postCancelCle,
+        });
 
-      await ctx.runMutation(api.audit.logAction, {
-        userId: declaration.userId,
-        action: "declaration_status_updated",
-        metadata: {
-          declarationId: declaration._id,
-          mrn: args.mrn,
-          newStatus: newStatus,
-          notificationType: args.notificationType
+        const patchObj: Record<string, string | number> = {
+          status: newStatus,
+          lastUpdated: Date.now(),
+        };
+
+        // Always sync the CDS-assigned MRN back to the declaration when HMRC provides one.
+        if (args.mrn && args.mrn !== "UNKNOWN") {
+          patchObj.mrn = args.mrn;
         }
-      });
+
+        await ctx.db.patch(declaration._id, patchObj);
+
+        await ctx.runMutation(internal.declarations.upsertDeclarationPreview, {
+          declarationId: declaration._id,
+        });
+
+        await ctx.runMutation(api.audit.logAction, {
+          userId: declaration.userId,
+          action: "declaration_status_updated",
+          metadata: {
+            declarationId: declaration._id,
+            mrn: args.mrn,
+            newStatus: newStatus,
+            notificationType: args.notificationType,
+          },
+        });
+      }
 
       await ctx.db.patch(notificationId, {
         userId: declaration.userId,
-        declarationId: declaration._id
+        declarationId: declaration._id,
       });
     }
   }
@@ -124,7 +164,6 @@ export const getWebhooks = query({
       }
     }
 
-    // Same MRN across resubmits — bell already shows these; timeline must too.
     if (args.mrn && args.mrn !== "UNKNOWN") {
       const mrnResults = await ctx.db
         .query("notifications")
@@ -135,7 +174,13 @@ export const getWebhooks = query({
       }
     }
 
-    return results.sort(
+    const currentMrn = args.mrn?.trim();
+    const scoped =
+      currentMrn && currentMrn !== "UNKNOWN"
+        ? results.filter((n) => String(n.mrn ?? "").trim() === currentMrn)
+        : results;
+
+    return scoped.sort(
       (a, b) => new Date(String(b.timestamp || 0)).getTime() - new Date(String(a.timestamp || 0)).getTime()
     );
   },

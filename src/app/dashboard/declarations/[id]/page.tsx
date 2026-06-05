@@ -15,6 +15,7 @@ import {
   PORT_LOCATION_NAME_BY_ID,
   type GoodsLocationKind,
 } from "@/lib/goods-location";
+import { DeclarationModePromote } from "@/components/declaration-mode-promote";
 
 export default function CoreSchemaPage() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -142,6 +143,11 @@ export default function CoreSchemaPage() {
               </li>
             ))}
           </ul>
+          <DeclarationModePromote
+            declarationId={id}
+            declarationMode={(declaration as { mode?: string }).mode}
+            missing={completeness.missing}
+          />
         </div>
       )}
 

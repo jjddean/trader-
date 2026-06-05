@@ -91,7 +91,7 @@ Built only from HMRC primary sources. No paraphrased or inferred content.
 | `de-5-23-goods-location.md` | partial (XML inference documented) | Group 5 + Appendix 16C ODS + DMSREJ/XSD |
 | `de-7-x-transport.md` | full | Group 7 |
 | `errors-handled.md` | tracking | DMSREJ corpus |
-| `passing-payload.xml` | **pending first DMSACC** | known-good lane XML |
+| `passing-payload.xml` | **frozen 2026-06-03** | DMSACC baseline (FC-MPYAJ7RN) |
 | `hmrc-mirror/` | verbatim mirror dir | gov.uk pages |
 
 ---

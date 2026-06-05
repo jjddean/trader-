@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { ConvexHttpClient } from "convex/browser";
-import { api } from "../../../../../../convex/_generated/api";
 import { pullHmrcNotificationsForConversation } from "../../../../../lib/hmrc-pull-notifications";
-
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+import { getAuthenticatedConvex } from "../../../../../lib/hmrc-route-session";
+import { resolveHmrcAccessToken } from "../../../../../lib/hmrc-token";
 
 /**
  * GET /api/hmrc/notifications/pull?conversationId={id}
@@ -15,10 +13,12 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
  */
 export async function GET(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const clerkAuth = await auth();
+    const session = await getAuthenticatedConvex(clerkAuth);
+    if ("error" in session) {
+      return session.error;
     }
+    const { convex, userId } = session;
 
     const { searchParams } = new URL(request.url);
     const conversationId = searchParams.get("conversationId");
@@ -27,14 +27,14 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Missing conversationId query parameter" }, { status: 400 });
     }
 
-    const tokenRecord = await convex.query(api.hmrc.getToken, { userId });
-    if (!tokenRecord?.accessToken) {
-      return NextResponse.json({ error: "HMRC OAuth Token not found." }, { status: 403 });
+    const tokenResult = await resolveHmrcAccessToken(convex, userId);
+    if ("error" in tokenResult) {
+      return tokenResult.error;
     }
 
     const result = await pullHmrcNotificationsForConversation({
       conversationId,
-      accessToken: tokenRecord.accessToken,
+      accessToken: tokenResult.token,
       request,
       convex,
     });

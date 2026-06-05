@@ -103,10 +103,7 @@ export function LandingPageContent() {
                   Open Dashboard <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Link>
               ) : (
-                <>
-                  <WaitlistForm />
-                  <p className="text-[12px] text-slate-400">Free during beta. No credit card required.</p>
-                </>
+                <WaitlistForm />
               )}
             </div>
           </div>

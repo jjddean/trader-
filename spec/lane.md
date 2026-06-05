@@ -1,4 +1,4 @@
-# Active Lane
+# Active Lane — **passing configuration** (DMSACC 2026-06-03)
 
 | Field | Value | Source |
 |-------|-------|--------|
@@ -21,17 +21,25 @@
 | Incoterms (DE 4/1) | CIF + location GBFELIXSTOWE (or GB-prefixed UN/LOCODE) | Group 4 — both components mandatory for method 1 |
 | Invoice currency (DE 4/10) | GBP | Appendix 11 |
 | Invoice total (DE 4/11) | 5000.00 GBP | trader input |
-| Supplementary units (DE 6/2) | qty + unit **NAR** (p/st) | UK tariff 8471300000 — number of items, not packages |
-| Declarant EORI (DE 3/18) | GB553202734852 | **Experiment:** TDL EORI on declaration; OAuth stays Romwan (`GB531765313922`) |
-| Importer EORI (DE 3/16) | GB553202734852 | same — one submit to test CDS12005 vs TDL-listed party ID |
+| Supplementary units (DE 6/2) | **10** + unit **NAR** (p/st) | UK tariff 8471300000 — cleared CDS40011 on FC-MPYAJ7RN |
+| Declarant EORI (DE 3/18) | GB553202734852 | TDL-listed; OAuth Romwan (`GB531765313922`) |
+| Importer EORI (DE 3/16) | GB553202734852 | same |
+| Passing LRN / MRN | FC-MPYAJ7RN / 26GB63M1I0RQFCVAR4 | DMSACC — baseline XML `spec/passing-payload.xml` |
 | Exporter (DE 3/1) | foreign — Name + Address (no GB/XI EORI) | Group 3 — pending verification |
 
 ## Documents claimed for this lane
 
 | Code | Type | Status | Notes |
 |------|------|--------|-------|
-| N935 | Commercial invoice | AC (pending verify) | Appendix 5A |
-| N271 | Packing list | AC (pending verify) | Appendix 5A |
+| N935 | Commercial invoice | AC | Verified on DMSACC FC-MPYAJ7RN |
+| N271 | Packing list | AC | Verified on DMSACC FC-MPYAJ7RN |
+
+## Acceptance notes
+
+- **DMSACC** 2026-06-03 — **0** CDS validation errors; MRN issued.
+- **Advisory:** CDS13000 (value per kilo credibility) — non-blocking; tune gross/net vs £5000 on next submit if desired.
+- **Follow-on:** DMSTAX ×2 (NameCode 67, 4); **DMSCLE** not on this MRN — handler + pull UI ready (`test-evidence/passing/notification-audit-FC-MPYAJ7RN.md`).
+- **Regression baseline:** `spec/passing-payload.xml`, `test-evidence/passing/`.
 
 ## Outstanding lane verification
 

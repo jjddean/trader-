@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hmrc:FileUploadRequest xmlns:hmrc="hmrc:fileupload">
+  <hmrc:DeclarationID>26GB664W3BLIFZFAR4</hmrc:DeclarationID>
+  <hmrc:FileGroupSize>1</hmrc:FileGroupSize>
+  <hmrc:Files>
+    <hmrc:File>
+      <hmrc:FileSequenceNo>1</hmrc:FileSequenceNo>
+      <hmrc:DocumentType>invoice</hmrc:DocumentType>
+    </hmrc:File>
+  </hmrc:Files>
+</hmrc:FileUploadRequest>

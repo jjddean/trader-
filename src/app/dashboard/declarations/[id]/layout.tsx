@@ -76,8 +76,18 @@ export default function DeclarationWorkspaceLayout({
   }
   const declarationTitle = declaration.mrn && String(declaration.mrn).trim().length > 0 ? declaration.mrn : "Draft CDS Entry";
   const hasMrn = Boolean(declaration.mrn && String(declaration.mrn).trim().length > 0);
-  const isPositiveStatus = hasMrn && (declaration.status === "Cleared" || declaration.status === "Accepted");
-
+  // Header uses stored status; sandbox DMSCLE must not imply "Cleared" (see notification_status.ts).
+  const headerStatus =
+    declaration.status === "Cleared"
+      ? "Accepted"
+      : declaration.status === "Amended"
+        ? "Amended"
+        : declaration.status;
+  const isPositiveStatus =
+    hasMrn &&
+    (declaration.status === "Cleared" ||
+      declaration.status === "Accepted" ||
+      declaration.status === "Amended");
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       {/* Workspace Header */}
@@ -98,7 +108,7 @@ export default function DeclarationWorkspaceLayout({
                 {isPositiveStatus ? (
                   <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
                     <ShieldCheck className="h-3 w-3" />
-                    {declaration.status}
+                    {headerStatus}
                   </span>
                 ) : declaration.status === "Rejected" || declaration.status === "Action Required" || declaration.status === "Invalid" ? (
                   <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">

@@ -1,0 +1,27 @@
+{
+  "status": "DMSACC",
+  "lrn": "FC-MPYAJ7RN",
+  "mrn": "26GB63M1I0RQFCVAR4",
+  "acceptanceDateTime": "2026-06-03T16:38:33Z",
+  "partiesEori": "GB553202734852",
+  "oauthEori": "GB531765313922",
+  "lane": {
+    "hs": "8471300000",
+    "cpc": "4000/000",
+    "origin": "DE",
+    "dispatch": "DE",
+    "goodsLocation": "GBAUFXTFXTFXT",
+    "documents": ["N935", "N271"],
+    "supplementaryUnitQty": 10,
+    "supplementaryUnitCode": "NAR"
+  },
+  "cdsValidationErrors": 0,
+  "advisoryCodes": ["CDS13000"],
+  "followOnNotifications": ["DMSTAX", "DMSTAX"],
+  "dmscle": "2026-06-04T18:56:07Z",
+  "scenario1HappyPath": "evidence/03-notifications/scenario-1-happy-path.md",
+  "baselineXml": "spec/passing-payload.xml",
+  "frozenAt": "2026-06-03T20:28:22Z",
+  "dryRunConversationId": "b3139925-9dd2-474f-8618-d813e60429f5",
+  "notes": "Request XML frozen from dry-run runner (same mapper/renderer as app). App LRN differs (FC-* vs TT-*)."
+}
