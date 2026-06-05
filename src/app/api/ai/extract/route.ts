@@ -2,6 +2,25 @@ import { NextResponse } from "next/server";
 import Groq from "groq-sdk";
 import { TextractClient, DetectDocumentTextCommand } from "@aws-sdk/client-textract";
 
+async function extractTextWithTextract(buffer: Buffer): Promise<string> {
+  const client = new TextractClient({
+    region: process.env.AWS_REGION || "eu-west-2",
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string,
+    },
+  });
+  const response = await client.send(
+    new DetectDocumentTextCommand({
+      Document: { Bytes: buffer },
+    }),
+  );
+  if (!response.Blocks) return "";
+  return response.Blocks.filter((b) => b.BlockType === "LINE")
+    .map((b) => b.Text)
+    .join("\n");
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -16,46 +35,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Groq API Key not configured" }, { status: 500 });
     }
 
-    // 1. Extract raw text from the uploaded PDF using AWS Textract
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    
-    let rawText = "";
-    const mimeType = file.type || "";
 
+    let rawText = "";
     try {
-      if (mimeType.includes("pdf") || file.name.toLowerCase().endsWith(".pdf")) {
-        // PDF-parse handles digital PDFs natively and synchronously
-        const pdfParse = require("pdf-parse");
-        const pdfResult = await pdfParse(buffer);
-        rawText = pdfResult.text;
-      } else {
-        // Fallback to AWS Textract OCR for images (PNG/JPG)
-        const client = new TextractClient({
-          region: process.env.AWS_REGION || "eu-west-2",
-          credentials: {
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string,
-          }
-        });
-        const command = new DetectDocumentTextCommand({
-          Document: { Bytes: buffer }
-        });
-        const response = await client.send(command);
-        if (response.Blocks) {
-          rawText = response.Blocks.filter(b => b.BlockType === "LINE").map(b => b.Text).join("\n");
-        }
-      }
-    } catch (parseError: any) {
-      console.error("AWS Textract / PDF Parse Error:", parseError);
-      return NextResponse.json({ error: "Failed to parse document. Please upload a standard digital PDF or a clear PNG/JPEG image.", details: parseError.message }, { status: 400 });
+      rawText = await extractTextWithTextract(buffer);
+    } catch (parseError: unknown) {
+      const message = parseError instanceof Error ? parseError.message : "parse failed";
+      console.error("AWS Textract Error:", parseError);
+      return NextResponse.json(
+        {
+          error:
+            "Failed to parse document via Textract. Upload a clear PNG/JPEG or a single-page PDF.",
+          details: message,
+        },
+        { status: 400 },
+      );
     }
 
     if (!rawText || rawText.trim() === "") {
       return NextResponse.json({ error: "No readable text found in the document via Textract" }, { status: 400 });
     }
 
-    // 2. Feed the raw text into Groq Llama for structured OCR extraction
     const groq = new Groq({ apiKey: groqApiKey });
     const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
@@ -71,12 +73,12 @@ export async function POST(request: Request) {
           - "originCountry": (string, the 2-letter ISO country code of origin, try to infer from the invoice header, default to "GB")
           - "valueAmount": (number, the total price/value for that line item)
           - "valueCurrency": (string, 3-letter currency code, e.g. "USD", "GBP", "EUR")
-          DO NOT include markdown code blocks.`
+          DO NOT include markdown code blocks.`,
         },
         {
           role: "user",
-          content: `Here is the raw invoice text:\n\n${rawText}`
-        }
+          content: `Here is the raw invoice text:\n\n${rawText}`,
+        },
       ],
       model: model,
       temperature: 0.1,
@@ -84,7 +86,7 @@ export async function POST(request: Request) {
     });
 
     const responseContent = completion.choices[0]?.message?.content || "{}";
-    
+
     let parsedResponse;
     try {
       parsedResponse = JSON.parse(responseContent);
@@ -94,9 +96,9 @@ export async function POST(request: Request) {
 
     const extractedItems = parsedResponse.items || [];
     return NextResponse.json({ items: extractedItems, rawText });
-
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("AI Extractor Error:", error);
-    return NextResponse.json({ error: "Internal Server Error", details: error.message, stack: error.stack }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ error: "Internal Server Error", details: message }, { status: 500 });
   }
 }

@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { ConvexHttpClient } from "convex/browser";
-import { api } from "../../../../../../convex/_generated/api";
 import { fetchHmrc } from "../../../../../lib/hmrc-fetch";
 import { HMRC_CONFIG } from "../../../../../lib/hmrc-config";
-
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+import { getAuthenticatedConvex } from "../../../../../lib/hmrc-route-session";
+import { resolveHmrcAccessToken } from "../../../../../lib/hmrc-token";
 
 /**
  * GET /api/hmrc/information/version?mrn={mrn}
@@ -15,10 +13,12 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
  */
 export async function GET(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const clerkAuth = await auth();
+    const session = await getAuthenticatedConvex(clerkAuth);
+    if ("error" in session) {
+      return session.error;
     }
+    const { convex, userId } = session;
 
     const { searchParams } = new URL(request.url);
     const mrn = searchParams.get("mrn");
@@ -27,14 +27,15 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Missing mrn query parameter" }, { status: 400 });
     }
 
-    const tokenRecord = await convex.query(api.hmrc.getToken, { userId });
-    if (!tokenRecord?.accessToken) {
-      return NextResponse.json({ error: "HMRC OAuth Token not found." }, { status: 403 });
+    const tokenResult = await resolveHmrcAccessToken(convex, userId);
+    if ("error" in tokenResult) {
+      return tokenResult.error;
     }
 
-    const hmrcBase = process.env.HMRC_ENVIRONMENT === "sandbox"
-      ? HMRC_CONFIG.sandboxBaseUrl
-      : HMRC_CONFIG.productionBaseUrl;
+    const hmrcBase =
+      process.env.HMRC_ENVIRONMENT === "sandbox"
+        ? HMRC_CONFIG.sandboxBaseUrl
+        : HMRC_CONFIG.productionBaseUrl;
 
     const queryUrl = `${hmrcBase}/customs/declarations-information/mrn/${encodeURIComponent(mrn)}/version`;
 
@@ -47,7 +48,7 @@ export async function GET(request: Request) {
         },
       },
       request,
-      tokenRecord.accessToken
+      tokenResult.token,
     );
 
     if (!hmrcResponse.ok) {
@@ -55,14 +56,15 @@ export async function GET(request: Request) {
       console.error("HMRC Version Query Error:", hmrcResponse.status, errorText);
       return NextResponse.json(
         { error: "HMRC version query failed", details: errorText },
-        { status: hmrcResponse.status }
+        { status: hmrcResponse.status },
       );
     }
 
     const data = await hmrcResponse.json();
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Version query crash:", error);
-    return NextResponse.json({ error: "Internal Server Error", message: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ error: "Internal Server Error", message }, { status: 500 });
   }
 }

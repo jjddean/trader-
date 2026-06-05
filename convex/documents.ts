@@ -64,6 +64,8 @@ export const trackUpload = mutation({
     fileSize: v.number(),
     documentType: v.string(),
     uploadStatus: v.string(),
+    hmrcUploadReference: v.optional(v.string()),
+    hmrcConversationId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();

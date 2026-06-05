@@ -5,6 +5,7 @@ import { fetchHmrc } from "../../../../lib/hmrc-fetch";
 import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
 import { getAuthenticatedConvex } from "../../../../lib/hmrc-route-session";
 import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
+import { logHmrcAudit } from "../../../../lib/audit-log";
 import { buildInvalidationXml } from "../../../../lib/hmrc-invalidation-xml";
 
 /**
@@ -95,6 +96,14 @@ export async function POST(request: Request) {
       id: declarationId,
       status: "Cancellation Requested",
       conversationId: conversationId || undefined,
+    });
+
+    await logHmrcAudit(convex, userId, "declaration_cancel_requested", {
+      declarationId,
+      mrn,
+      conversationId,
+      cancelLrn,
+      hmrcStatus: hmrcResponse.status,
     });
 
     return NextResponse.json({

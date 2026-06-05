@@ -1,5 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
+import type { Doc, Id } from "./_generated/dataModel";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { evaluateCompleteness } from "./lib/declaration_completeness";
 import { replayDeclarationStatus } from "./lib/replay_declaration_status";
 import type { RuleDefinition } from "./lib/rule_engine";
@@ -165,16 +167,16 @@ function isReviewStatus(status: string | undefined) {
   return status === "Action Required" || status === "Rejected" || status === "Invalid";
 }
 
+type DeclarationStatusSource = Pick<Doc<"declarations">, "status" | "mrn">;
+
 async function effectiveDeclarationStatus(
-  ctx: any,
-  declarationId: unknown,
-  declaration: { status?: string | null; mrn?: string | null },
+  ctx: Pick<QueryCtx, "db">,
+  declarationId: Id<"declarations">,
+  declaration: DeclarationStatusSource,
 ): Promise<string> {
   const notificationRows = await ctx.db
     .query("notifications")
-    .withIndex("by_declaration", (q: { eq: (field: string, value: unknown) => unknown }) =>
-      q.eq("declarationId", declarationId),
-    )
+    .withIndex("by_declaration", (q) => q.eq("declarationId", declarationId))
     .take(100);
 
   return replayDeclarationStatus(
@@ -217,7 +219,10 @@ async function recomputeDashboardSummaryByUser(ctx: any, userId: string) {
   }
 }
 
-async function upsertDeclarationPreviewByDeclaration(ctx: any, declarationId: any) {
+async function upsertDeclarationPreviewByDeclaration(
+  ctx: MutationCtx,
+  declarationId: Id<"declarations">,
+) {
   const declaration = await ctx.db.get(declarationId);
   const existingPreview = await ctx.db
     .query("declaration_preview")
@@ -253,7 +258,10 @@ async function upsertDeclarationPreviewByDeclaration(ctx: any, declarationId: an
     items: items as Array<Record<string, unknown>>,
   });
 
-  const replayedStatus = await effectiveDeclarationStatus(ctx, declarationId, declaration);
+  const replayedStatus = await effectiveDeclarationStatus(ctx, declarationId, {
+    status: declaration.status,
+    mrn: declaration.mrn,
+  });
 
   const nextPreview = {
     declarationId,
@@ -751,7 +759,7 @@ export const getMyDeclarationCounts = query({
     let reviewCount = 0;
     for (const preview of previews) {
       const declaration = await ctx.db.get(preview.declarationId);
-      if (!declaration || !("userId" in declaration)) continue;
+      if (!declaration) continue;
       const status = await effectiveDeclarationStatus(ctx, preview.declarationId, {
         status: declaration.status,
         mrn: declaration.mrn,
@@ -812,7 +820,7 @@ export const getDeclarationPreviews = query({
 
     const enrichPreview = async (preview: (typeof previews)[number]) => {
       const declaration = await ctx.db.get(preview.declarationId);
-      if (!declaration || !("userId" in declaration)) return preview;
+      if (!declaration) return preview;
       const status = await effectiveDeclarationStatus(ctx, preview.declarationId, {
         status: declaration.status,
         mrn: declaration.mrn,
@@ -832,7 +840,10 @@ export const getDeclarationPreviews = query({
 
     return Promise.all(
       declarations.map(async (declaration) => {
-        const status = await effectiveDeclarationStatus(ctx, declaration._id, declaration);
+        const status = await effectiveDeclarationStatus(ctx, declaration._id, {
+          status: declaration.status,
+          mrn: declaration.mrn,
+        });
         return {
           declarationId: declaration._id,
           userId: identity.subject,

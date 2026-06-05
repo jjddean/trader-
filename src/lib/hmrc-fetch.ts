@@ -1,4 +1,5 @@
 import { HMRC_CONFIG } from "@/lib/hmrc-config";
+import { hmrcLimiter } from "@/lib/rate-limiter";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -115,7 +116,30 @@ export async function fetchHmrc(
     headers: hmrcHeaders,
   };
 
-  let hmrcResponse = await fetch(endpoint, fetchOptions);
+  const timeoutMs = HMRC_CONFIG.timing.fetchTimeoutMs;
+  const callerSignal = options.signal;
+  const timeoutSignal =
+    typeof AbortSignal !== "undefined" && "timeout" in AbortSignal
+      ? AbortSignal.timeout(timeoutMs)
+      : undefined;
+  const signal =
+    callerSignal && timeoutSignal
+      ? AbortSignal.any([callerSignal, timeoutSignal])
+      : callerSignal ?? timeoutSignal;
+
+  const fetchWithTimeout = async () => {
+    await hmrcLimiter.waitForSlot();
+    try {
+      return await fetch(endpoint, signal ? { ...fetchOptions, signal } : fetchOptions);
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === "TimeoutError") {
+        throw new Error(`HMRC request timed out after ${timeoutMs}ms`);
+      }
+      throw error;
+    }
+  };
+
+  let hmrcResponse = await fetchWithTimeout();
 
   // Retry on rate limit (429) and transient server errors (502/503/504)
   const isRetryable = (status: number) => status === 429 || status === 502 || status === 503 || status === 504;
@@ -125,12 +149,12 @@ export async function fetchHmrc(
       ? HMRC_CONFIG.timing.retryDelayRateLimitMs
       : HMRC_CONFIG.timing.retryDelayServerErrorMs;
     await sleep(delay);
-    hmrcResponse = await fetch(endpoint, fetchOptions);
+    hmrcResponse = await fetchWithTimeout();
     if (isRetryable(hmrcResponse.status)) {
       await sleep(hmrcResponse.status === 429
         ? HMRC_CONFIG.timing.retryDelayRateLimitSecondMs
         : HMRC_CONFIG.timing.retryDelayServerErrorSecondMs);
-      hmrcResponse = await fetch(endpoint, fetchOptions);
+      hmrcResponse = await fetchWithTimeout();
     }
   }
 

@@ -67,8 +67,13 @@ export default function DocumentsPage() {
 
       const initiateData = await initiateRes.json();
       const uploadParams = initiateData.uploadParameters || {};
-      const s3Url = uploadParams.href || uploadParams.uploadUrl;
+      const s3Url = uploadParams.href;
       const s3Fields: Record<string, string> = uploadParams.fields || {};
+
+      if (!s3Url || Object.keys(s3Fields).length === 0) {
+        setUploadError("HMRC did not return S3 upload parameters.");
+        return;
+      }
 
       const s3FormData = new FormData();
       Object.keys(s3Fields).forEach((key) => s3FormData.append(key, s3Fields[key]));
@@ -96,34 +101,14 @@ export default function DocumentsPage() {
         return;
       }
 
-      const storageId = s3Fields["x-amz-meta-receipt-id"] || `amz-${Date.now()}`;
-
-      const uploadRes = await fetch("/api/hmrc/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          storageId,
-          mrn: declaration.mrn,
-          documentType: "Commercial_Invoice",
-        }),
-      });
-
-      if (uploadRes.status === 410) {
-        setUploadError("XML mapping URL expired. Please retry.");
-        return;
-      }
-      if (!uploadRes.ok) {
-        const uploadData = await uploadRes.json().catch(() => ({}));
-        setUploadError(uploadData?.error || "Secure mapping sync failed.");
-        return;
-      }
-
       await trackUpload({
         declarationId: id,
         fileName: file.name,
         fileSize: file.size,
-        documentType: "Commercial_Invoice",
-        uploadStatus: "Clean",
+        documentType: initiateData.documentType || "invoice",
+        uploadStatus: "uploaded",
+        hmrcUploadReference: initiateData.uploadReference || undefined,
+        hmrcConversationId: initiateData.conversationId || undefined,
       });
 
       setUploadedFiles((prev) => [

@@ -17,6 +17,8 @@
  * See spec/de-5-23-goods-location.md.
  */
 
+import { APPENDIX_16C_MARITIME_CODES } from "./generated/appendix-16c-codes";
+
 export type GoodsLocationKind = "port" | "address";
 
 export const GOODS_LOCATION_KIND_OPTIONS: ReadonlyArray<{
@@ -40,13 +42,10 @@ export const GOODS_LOCATION_KIND_OPTIONS: ReadonlyArray<{
 const LEGACY_PORT_KIND = "port_unlocode";
 
 /**
- * Known Appendix 16C consolidated codes for this project's lanes.
- * Source: spec/hmrc-mirror/appendix-16c-maritime.psv (ODS published 2026-05-18).
- * Extend by quoting the ODS row in spec/hmrc-mirror/.
+ * Known Appendix 16C consolidated codes — generated from spec/hmrc-mirror/appendix-16c-maritime.psv.
+ * Regenerate: node scripts/build-appendix-16c-codes.js
  */
-export const KNOWN_APPENDIX_16C_CODES: Readonly<Record<string, string>> = {
-  GBAUFXTFXTFXT: "Felixstowe Dock & Railway Company T/A Port of Felixstowe",
-};
+export const KNOWN_APPENDIX_16C_CODES: Readonly<Record<string, string>> = APPENDIX_16C_MARITIME_CODES;
 
 /**
  * Kept for backwards compatibility with UI components that still import this.

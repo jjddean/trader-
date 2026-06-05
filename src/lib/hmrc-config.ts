@@ -19,6 +19,8 @@ export const HMRC_CONFIG = {
   timing: {
     tokenExpiryBufferMs: Number(process.env.HMRC_TOKEN_EXPIRY_BUFFER_MS) || 300000,
     defaultTokenExpiryMs: Number(process.env.HMRC_DEFAULT_TOKEN_EXPIRY_MS) || 14400,
+    fetchTimeoutMs: Number(process.env.HMRC_FETCH_TIMEOUT_MS) || 30000,
+    rateLimitRps: Number(process.env.HMRC_RATE_LIMIT_RPS) || 3,
     retryDelayRateLimitMs: Number(process.env.HMRC_RETRY_DELAY_RATE_LIMIT_MS) || 2000,
     retryDelayServerErrorMs: Number(process.env.HMRC_RETRY_DELAY_SERVER_ERROR_MS) || 1000,
     retryDelayRateLimitSecondMs: Number(process.env.HMRC_RETRY_DELAY_RATE_LIMIT_SECOND_MS) || 5000,

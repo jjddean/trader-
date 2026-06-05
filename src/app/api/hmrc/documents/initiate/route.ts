@@ -1,73 +1,132 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../../convex/_generated/api";
+import { Id } from "../../../../../../convex/_generated/dataModel";
 import { fetchHmrc } from "../../../../../lib/hmrc-fetch";
 import { HMRC_CONFIG } from "../../../../../lib/hmrc-config";
+import {
+  buildFileUploadRequestXml,
+  parseFileUploadResponse,
+} from "../../../../../lib/hmrc-file-upload";
+import { getAuthenticatedConvex } from "../../../../../lib/hmrc-route-session";
+import { resolveHmrcAccessToken } from "../../../../../lib/hmrc-token";
+import { logHmrcAudit } from "../../../../../lib/audit-log";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-
+/**
+ * POST /api/hmrc/documents/initiate
+ * CDS §4.3 — POST /customs/declarations/file-upload → S3 presigned POST fields.
+ */
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const clerkAuth = await auth();
+    const session = await getAuthenticatedConvex(clerkAuth);
+    if ("error" in session) {
+      return session.error;
     }
+    const { convex, userId } = session;
 
-    const { declarationId, fileName, fileSize } = await request.json();
+    const { declarationId, fileName, fileSize, documentType } = await request.json();
     if (!declarationId || !fileName || !fileSize) {
       return NextResponse.json({ error: "Missing required document metadata" }, { status: 400 });
     }
 
-    // Ping HMRC Secure Document Upload API to initiate an upload session
-    const tokenRecord = await convex.query(api.hmrc.getToken, { userId });
-    
-    if (!tokenRecord || !tokenRecord.accessToken) {
-      return NextResponse.json({ error: "HMRC OAuth Token not found." }, { status: 403 });
+    const lane = await convex.query(api.declarations.getLane, {
+      id: declarationId as Id<"declarations">,
+    });
+    if (!lane || (lane.userId !== userId && process.env.HMRC_ENVIRONMENT !== "sandbox")) {
+      return NextResponse.json({ error: "Declaration not found or unauthorized" }, { status: 404 });
     }
 
-    // HMRC returns an S3 upload URL and a set of form AWS headers specifically for this file
-    const hmrcInitiateUrl = process.env.HMRC_ENVIRONMENT === "sandbox"
-      ? `${HMRC_CONFIG.sandboxBaseUrl}/logistics/documents/initiate`
-      : `${HMRC_CONFIG.productionBaseUrl}/logistics/documents/initiate`;
+    const mrn = String(lane.mrn || "").trim();
+    if (!mrn) {
+      return NextResponse.json(
+        { error: "Declaration must have an MRN before CDS file upload" },
+        { status: 400 },
+      );
+    }
 
-    const hmrcResponse = await fetchHmrc(hmrcInitiateUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const eori = String(lane.eori || "").trim();
+    if (!/^GB\d{12}$/.test(eori)) {
+      return NextResponse.json(
+        { error: "Declarant EORI on the declaration is missing or invalid (expected GB+12 digits)." },
+        { status: 400 },
+      );
+    }
+
+    const tokenResult = await resolveHmrcAccessToken(convex, userId);
+    if ("error" in tokenResult) {
+      return tokenResult.error;
+    }
+
+    const hmrcBase =
+      process.env.HMRC_ENVIRONMENT === "sandbox"
+        ? HMRC_CONFIG.sandboxBaseUrl
+        : HMRC_CONFIG.productionBaseUrl;
+    const initiateUrl = `${hmrcBase}/customs/declarations/file-upload`;
+    const docType = typeof documentType === "string" && documentType.trim() ? documentType.trim() : "invoice";
+    const requestXml = buildFileUploadRequestXml({ mrn, documentType: docType });
+
+    const hmrcResponse = await fetchHmrc(
+      initiateUrl,
+      {
+        method: "POST",
+        headers: {
+          Accept: HMRC_CONFIG.accept.declarations,
+          "Content-Type": "application/xml; charset=UTF-8",
+          "X-Eori-Identifier": eori,
+        },
+        body: requestXml,
       },
-      body: JSON.stringify({
-        "document": {
-          "fileName": fileName,
-          "fileSize": fileSize
-        }
-      })
-    }, request, tokenRecord.accessToken);
+      request,
+      tokenResult.token,
+      eori,
+    );
 
-    if (!hmrcResponse.ok) {
-      const errorText = await hmrcResponse.text();
-      return NextResponse.json({ error: "HMRC Sandbox SDE Initiate Failed - Missing or Invalid Credentials", details: errorText }, { status: hmrcResponse.status });
+    if (hmrcResponse.status === 429) {
+      return NextResponse.json({ error: "HMRC rate limit reached" }, { status: 429 });
     }
-    
-    const parsedHMRC = await hmrcResponse.json();
 
-    // Log intention to upload in our Convex database
-    await convex.mutation(api.documents.trackUpload, {
+    const bodyText = await hmrcResponse.text();
+    if (!hmrcResponse.ok) {
+      return NextResponse.json(
+        { error: "HMRC file-upload initiate failed", details: bodyText },
+        { status: hmrcResponse.status },
+      );
+    }
+
+    const parsed = parseFileUploadResponse(bodyText);
+    if (!parsed.uploadHref || !parsed.hasUploadFields) {
+      return NextResponse.json(
+        { error: "HMRC file-upload response missing S3 upload metadata", details: bodyText },
+        { status: 502 },
+      );
+    }
+
+    const conversationId = hmrcResponse.headers.get("X-Conversation-ID");
+    await logHmrcAudit(convex, userId, "cds_file_upload_initiated", {
       declarationId,
+      mrn,
       fileName,
       fileSize,
-      documentType: "trade_document", // default generic classification
-      uploadStatus: "pending"
+      documentType: docType,
+      conversationId,
+      uploadReference: parsed.reference,
     });
 
-    // Return the payload to the frontend so it can perform the direct S3 POST
-    return NextResponse.json({ 
-      success: true, 
-      uploadParameters: parsedHMRC.uploadRequest || parsedHMRC
+    return NextResponse.json({
+      success: true,
+      conversationId,
+      uploadReference: parsed.reference,
+      uploadParameters: {
+        href: parsed.uploadHref,
+        fields: parsed.fields,
+      },
+      fileName,
+      fileSize,
+      documentType: docType,
     });
-
-  } catch (error: any) {
-    console.error("Document initiate crash:", error);
+  } catch (error: unknown) {
+    console.error("CDS file-upload initiate crash:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

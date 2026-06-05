@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { api } from "../../../../../convex/_generated/api";
-import { buildAmendmentXml } from "../../../../lib/hmrc-amendment-xml";
+import { buildAmendmentXmlFromChange, type AmendmentChangeKind } from "../../../../lib/hmrc-amendment-xml";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
 import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
 import { getAuthenticatedConvex } from "../../../../lib/hmrc-route-session";
 import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
+import { logHmrcAudit } from "../../../../lib/audit-log";
 
 /**
  * POST /api/hmrc/amend
@@ -20,7 +21,8 @@ export async function POST(request: Request) {
     }
     const { convex, userId } = session;
 
-    const { declarationId, mrn } = await request.json();
+    const { declarationId, mrn, changeKind, itemSequence, statementDescription, changeReasonCode } =
+      await request.json();
     if (!declarationId || !mrn) {
       return NextResponse.json({ error: "Missing declarationId or mrn" }, { status: 400 });
     }
@@ -46,9 +48,9 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    if (status !== "Accepted") {
+    if (status !== "Accepted" && status !== "Amended") {
       return NextResponse.json(
-        { error: `Declaration must be Accepted before amend (current: ${status || "unknown"}).` },
+        { error: `Declaration must be Accepted or Amended before amend (current: ${status || "unknown"}).` },
         { status: 400 },
       );
     }
@@ -63,31 +65,64 @@ export async function POST(request: Request) {
       return tokenResult.error;
     }
 
-    const firstItem = items[0] as { valueAmount?: number | string; sequence?: number };
-    const rawAmount = parseFloat(String(firstItem.valueAmount ?? ""));
-    if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
-      return NextResponse.json(
-        {
-          error:
-            "Set a positive item value on Goods Items before amend (amends DE 4/14 ItemChargeAmount per TT_IM002b).",
-        },
-        { status: 400 },
-      );
-    }
+    const firstItem = items[0] as {
+      valueAmount?: number | string;
+      grossWeightKg?: number | string;
+      sequence?: number;
+    };
+    const kind = (changeKind as AmendmentChangeKind) || "itemChargeAmount";
+    const seq = parseInt(String(itemSequence ?? firstItem.sequence ?? "1"), 10) || 1;
 
     const rawId = String(declarationId);
     const amendLrn =
       `AM-${rawId}`.length <= 35 ? `AM-${rawId}` : `AM-${rawId.slice(-32)}`;
 
-    const xmlPayload = buildAmendmentXml({
-      amendLrn,
-      mrn: String(mrn).trim(),
-      statementDescription: "Amending item price as a mistake was made on the declaration.",
-      changeReasonCode: "21",
-      itemSequence: parseInt(String(firstItem.sequence ?? "1"), 10) || 1,
-      itemChargeAmount: rawAmount.toFixed(2),
-      currencyId: String(lane.invoiceCurrency || "GBP"),
-    });
+    let xmlPayload: string;
+    if (kind === "grossMass") {
+      const rawMass = parseFloat(String(firstItem.grossWeightKg ?? ""));
+      if (!Number.isFinite(rawMass) || rawMass <= 0) {
+        return NextResponse.json(
+          { error: "Set a positive gross weight on Goods Items before gross-mass amend." },
+          { status: 400 },
+        );
+      }
+      xmlPayload = buildAmendmentXmlFromChange({
+        changeKind: "grossMass",
+        amendLrn,
+        mrn: String(mrn).trim(),
+        statementDescription:
+          typeof statementDescription === "string" && statementDescription.trim()
+            ? statementDescription.trim()
+            : "Correcting gross mass on the declaration.",
+        changeReasonCode: typeof changeReasonCode === "string" ? changeReasonCode : "21",
+        itemSequence: seq,
+        grossMassKg: rawMass.toFixed(3).replace(/\.?0+$/, ""),
+      });
+    } else {
+      const rawAmount = parseFloat(String(firstItem.valueAmount ?? ""));
+      if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
+        return NextResponse.json(
+          {
+            error:
+              "Set a positive item value on Goods Items before amend (amends DE 4/14 ItemChargeAmount per TT_IM002b).",
+          },
+          { status: 400 },
+        );
+      }
+      xmlPayload = buildAmendmentXmlFromChange({
+        changeKind: "itemChargeAmount",
+        amendLrn,
+        mrn: String(mrn).trim(),
+        statementDescription:
+          typeof statementDescription === "string" && statementDescription.trim()
+            ? statementDescription.trim()
+            : "Amending item price as a mistake was made on the declaration.",
+        changeReasonCode: typeof changeReasonCode === "string" ? changeReasonCode : "21",
+        itemSequence: seq,
+        itemChargeAmount: rawAmount.toFixed(2),
+        currencyId: String(lane.invoiceCurrency || "GBP"),
+      });
+    }
 
     const hmrcBase =
       process.env.HMRC_ENVIRONMENT === "sandbox"
@@ -123,6 +158,15 @@ export async function POST(request: Request) {
       id: declarationId,
       status: "Amendment Processing",
       conversationId: conversationId || undefined,
+    });
+
+    await logHmrcAudit(convex, userId, "declaration_amended", {
+      declarationId,
+      mrn: String(mrn).trim(),
+      changeKind: kind,
+      conversationId,
+      amendLrn,
+      hmrcStatus: hmrcResponse.status,
     });
 
     const httpStatus = hmrcResponse.status === 202 ? 202 : 200;

@@ -4,7 +4,7 @@
  * Uses a sliding-window token bucket approach.
  */
 
-class HmrcRateLimiter {
+export class HmrcRateLimiter {
   private timestamps: number[] = [];
   private readonly maxRequests: number;
   private readonly windowMs: number;
@@ -36,4 +36,7 @@ class HmrcRateLimiter {
 }
 
 /** Singleton rate limiter — shared across all HMRC API routes */
-export const hmrcLimiter = new HmrcRateLimiter();
+export const hmrcLimiter = new HmrcRateLimiter(
+  Number(process.env.HMRC_RATE_LIMIT_RPS) || 3,
+  1000,
+);

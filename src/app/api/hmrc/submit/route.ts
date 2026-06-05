@@ -5,9 +5,12 @@ import { api } from "../../../../../convex/_generated/api";
 import { commodityRequiresSupplementaryUnit, mapToCDS_H1, validateCdsCodeLists } from "../../../../lib/wco-mapper";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
 import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
+import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
 import { buildPayloadDebugSnapshot, renderH1Xml, validateXmlPreflight } from "../../../../lib/h1-xml-renderer";
 import { validateGoodsLocationForSubmit } from "../../../../lib/goods-location";
+import { validateGoodsItemSequences } from "../../../../lib/submit-goods-items";
 import { schedulePostSubmitNotificationPulls } from "../../../../lib/hmrc-pull-notifications";
+import { logHmrcAudit } from "../../../../lib/audit-log";
 import { evaluateRules, activeEffects, summarizeFailures, type RuleDefinition, type ScenarioInput } from "../../../../../convex/lib/rule_engine";
 
 type SubmitItemInput = {
@@ -86,6 +89,7 @@ function validateDeclaration(lane: SubmitDeclarationInput, items: SubmitItemInpu
     errors.push("No goods items");
     return errors;
   }
+  errors.push(...validateGoodsItemSequences(items));
   for (let i = 0; i < items.length; i++) {
     const it = items[i];
     if (!it?.commodityCode) errors.push(`Item ${i}: missing commodity code (DE 6/14)`);
@@ -176,13 +180,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No goods items found for declaration" }, { status: 400 });
     }
 
-    if (items.length !== 1) {
-      return NextResponse.json(
-        { error: `Single-item lock: expected 1 goods item, got ${items.length}` },
-        { status: 400 },
-      );
-    }
-
     const baselineErrors = validateDeclaration(lane, items);
     if (baselineErrors.length > 0) {
       return NextResponse.json(
@@ -191,59 +188,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const tokenRecord = await convex.query(api.hmrc.getToken, { userId });
-
-    if (!tokenRecord || !tokenRecord.accessToken) {
-      return NextResponse.json({ error: "HMRC OAuth Token not found. Please connect your account." }, { status: 403 });
+    const tokenResult = await resolveHmrcAccessToken(convex, userId);
+    if ("error" in tokenResult) {
+      return tokenResult.error;
     }
-
-    let token = tokenRecord.accessToken;
-
-    // Check if token is expired or expiring within the configured buffer.
-    if (tokenRecord.expiresAt && Date.now() + HMRC_CONFIG.timing.tokenExpiryBufferMs > tokenRecord.expiresAt) {
-      if (!tokenRecord.refreshToken) {
-        return NextResponse.json({ error: "HMRC Token expired and no refresh token available. Please reconnect." }, { status: 403 });
-      }
-
-      const clientId = process.env.HMRC_CLIENT_ID!;
-      const clientSecret = process.env.HMRC_CLIENT_SECRET!;
-      const hmrcBase = process.env.HMRC_ENVIRONMENT === "sandbox"
-        ? HMRC_CONFIG.sandboxBaseUrl
-        : HMRC_CONFIG.productionBaseUrl;
-      const tokenUrl = `${hmrcBase}/oauth/token`;
-
-      const refreshBody = new URLSearchParams({
-        client_secret: clientSecret,
-        client_id: clientId,
-        grant_type: "refresh_token",
-        refresh_token: tokenRecord.refreshToken,
-      });
-
-      const refreshResponse = await fetch(tokenUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: refreshBody.toString(),
-      });
-
-      if (!refreshResponse.ok) {
-        const errorText = await refreshResponse.text();
-        return NextResponse.json({ error: "Failed to refresh HMRC token. Please reconnect.", details: errorText }, { status: 403 });
-      }
-
-      const data = await refreshResponse.json();
-      token = data.access_token;
-
-      // Update token in Convex
-      await convex.mutation(api.hmrc.saveToken, {
-        userId,
-        accessToken: data.access_token,
-        refreshToken: data.refresh_token,
-        expiresIn: data.expires_in || HMRC_CONFIG.timing.defaultTokenExpiryMs,
-        eori: tokenRecord.eori
-      });
-    }
+    const token = tokenResult.token;
 
     // Rule engine runs BEFORE mapping so its forbidden-document list can
     // shape the emitted XML. Pure JS — safe to run before the auth/network
@@ -511,21 +460,13 @@ export async function POST(request: Request) {
     });
 
     // 5. Audit Log Entry (non-critical, don't crash submission on failure)
-    try {
-      await convex.mutation(api.audit.logAction, {
-        userId,
-        action: "declaration_submitted",
-        metadata: {
-          declarationId,
-          mrn: lane.mrn || "Draft",
-          environment: process.env.HMRC_ENVIRONMENT || "sandbox",
-          conversationId,
-          hmrcStatus: hmrcResponse.status,
-        }
-      });
-    } catch (auditErr) {
-      console.warn("[AUDIT] Failed to log submission (non-critical):", auditErr);
-    }
+    await logHmrcAudit(convex, userId, "declaration_submitted", {
+      declarationId,
+      mrn: lane.mrn || "Draft",
+      environment: process.env.HMRC_ENVIRONMENT || "sandbox",
+      conversationId,
+      hmrcStatus: hmrcResponse.status,
+    });
 
     return NextResponse.json({
       success: true,
