@@ -41,15 +41,17 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const authHeader = request.headers.get("Authorization") || "";
-    const expectedToken =
+    const expectedToken = (
       process.env.HMRC_WEBHOOK_AUTH_TOKEN ||
       process.env.HMRC_CDS_CALLBACK_TOKEN ||
       process.env.HMRC_CDS_BEARER_TOKEN ||
-      "";
-    const receivedToken = authHeader.replace(/^Bearer\s+/i, "");
+      ""
+    ).trim();
+    const receivedToken = authHeader.replace(/^Bearer\s+/i, "").trim();
     const authMatches =
       expectedToken.length > 0 &&
-      (authHeader === expectedToken || receivedToken === expectedToken);
+      (receivedToken === expectedToken ||
+        authHeader.trim() === `Bearer ${expectedToken}`);
 
     if (expectedToken.length === 0) {
       console.error("[HMRC-WEBHOOK] Missing webhook auth token configuration.");
