@@ -3,8 +3,8 @@
     "scenario": "trade-test-h1-dry-run",
     "header": "ABSENT",
     "status": 202,
-    "conversationId": "73d86e43-50b9-4f27-82b7-8f0ecb38be56",
-    "timestamp": "2026-06-05T16:26:44.745Z",
+    "conversationId": "71559558-9aed-40ef-bdda-c5f8156a647d",
+    "timestamp": "2026-06-06T10:51:26.272Z",
     "lane": {
       "hs": "8471300000",
       "origin": "DE",

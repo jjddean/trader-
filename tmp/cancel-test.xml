@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
+  <WCODataModelVersionCode>3.6</WCODataModelVersionCode>
+  <WCOTypeName>DEC</WCOTypeName>
+  <ResponsibleCountryCode>GB</ResponsibleCountryCode>
+  <ResponsibleAgencyName>HMRC</ResponsibleAgencyName>
+  <AgencyAssignedCustomizationVersionCode>v2.1</AgencyAssignedCustomizationVersionCode>
+  <Declaration xmlns="urn:wco:datamodel:WCO:DEC-DMS:2" xmlns:ds="urn:wco:datamodel:WCO:MetaData_DS-DMS:2">
+    <FunctionCode>13</FunctionCode>
+    <FunctionalReferenceID>CX-test</FunctionalReferenceID>
+    <ID>26GB654XN89Y5IMAR8</ID>
+    <TypeCode>INV</TypeCode>
+    <AdditionalInformation>
+      <StatementDescription>Declaration is no longer required</StatementDescription>
+      <StatementTypeCode>AES</StatementTypeCode>
+      <Pointer>
+        <SequenceNumeric>1</SequenceNumeric>
+        <DocumentSectionCode>42A</DocumentSectionCode>
+      </Pointer>
+    </AdditionalInformation>
+    <Amendment>
+      <ChangeReasonCode>1</ChangeReasonCode>
+    </Amendment>
+    <Declarant>
+      <ID>GB553202734852</ID>
+    </Declarant>
+  </Declaration>
+</MetaData>

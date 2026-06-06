@@ -1,14 +1,15 @@
-<!-- DMSCLE — FC-MPYAJ7RN / 26GB63M1I0RQFCVAR4
-     Observed in app: 04/06/2026 19:56:07 UK (2026-06-04T18:56:07Z)
-     FunctionCode 11 = goods cleared for release (DMSCLE).
-     TODO: Replace this stub with the full raw payload from Customs Status Timeline → View Raw XML Payload. -->
-<Response xmlns="urn:wco:datamodel:WCO:RES-DMS:2">
-  <FunctionCode>11</FunctionCode>
-  <IssueDateTime>
-    <DateTimeString formatCode="304">20260604185607Z</DateTimeString>
-  </IssueDateTime>
-  <Declaration>
-    <ID>26GB63M1I0RQFCVAR4</ID>
-    <FunctionalReferenceID>FC-MPYAJ7RN</FunctionalReferenceID>
-  </Declaration>
-</Response>
+<!-- NOT EVIDENCE. This was a hand-written stub, never a real HMRC payload.
+     Corrected 2026-06-06.
+
+     Trade Test v2.0 does NOT emit a genuine "goods cleared" DMSCLE on an
+     accept-only MRN (26GB63M1I0RQFCVAR4). The accept path ends at
+     DMSACC (FC 01) -> DMSTAX (FC 13). No DMSCLE was received for it.
+
+     The only FC 11 ever observed was post-cancel lifecycle noise (fired the
+     same second as DMSINV) on a cancelled MRN -- see
+     ../04-cancel/response-dmscle-26GB65AQTKWFMT6AR3.xml -- which is explicitly
+     NOT clearance evidence.
+
+     Authoritative source: ./TRADE-TEST-REALITY.md
+     Do not use a DMSCLE for SDST 4.1 submit evidence; use DMSACC + 0 blocking
+     errors + request XML. -->

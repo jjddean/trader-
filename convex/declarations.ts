@@ -4,6 +4,8 @@ import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { evaluateCompleteness } from "./lib/declaration_completeness";
 import { replayDeclarationStatus } from "./lib/replay_declaration_status";
+import { collectDeclarationNotifications } from "./lib/collect_declaration_notifications";
+import { resolveDeclarationCdsBadge } from "./lib/cds_badge";
 import type { RuleDefinition } from "./lib/rule_engine";
 
 const preferenceCountries = new Set(["BD", "PK", "LK", "KE", "GH", "NG", "TZ", "UG", "ZM", "ZW"]);
@@ -172,17 +174,18 @@ type DeclarationStatusSource = Pick<Doc<"declarations">, "status" | "mrn">;
 async function effectiveDeclarationStatus(
   ctx: Pick<QueryCtx, "db">,
   declarationId: Id<"declarations">,
-  declaration: DeclarationStatusSource,
+  declaration: DeclarationStatusSource & { conversationId?: string | null },
 ): Promise<string> {
-  const notificationRows = await ctx.db
-    .query("notifications")
-    .withIndex("by_declaration", (q) => q.eq("declarationId", declarationId))
-    .take(100);
+  const notificationRows = await collectDeclarationNotifications(ctx.db, {
+    declarationId,
+    conversationId: declaration.conversationId,
+    mrn: declaration.mrn,
+  });
 
   return replayDeclarationStatus(
     String(declaration.status ?? "Draft"),
     declaration.mrn,
-    notificationRows as Parameters<typeof replayDeclarationStatus>[2],
+    notificationRows,
   );
 }
 
@@ -261,6 +264,7 @@ async function upsertDeclarationPreviewByDeclaration(
   const replayedStatus = await effectiveDeclarationStatus(ctx, declarationId, {
     status: declaration.status,
     mrn: declaration.mrn,
+    conversationId: declaration.conversationId,
   });
 
   const nextPreview = {
@@ -396,10 +400,11 @@ export const getLane = query({
       throw new Error("Unauthorized: You do not own this declaration.");
     }
 
-    const notificationRows = await ctx.db
-      .query("notifications")
-      .withIndex("by_declaration", (q) => q.eq("declarationId", args.id))
-      .take(100);
+    const notificationRows = await collectDeclarationNotifications(ctx.db, {
+      declarationId: args.id,
+      conversationId: declaration.conversationId,
+      mrn: declaration.mrn,
+    });
 
     const status = replayDeclarationStatus(
       String(declaration.status ?? "Draft"),
@@ -407,7 +412,9 @@ export const getLane = query({
       notificationRows,
     );
 
-    return { ...declaration, status };
+    const cdsBadge = resolveDeclarationCdsBadge(status, notificationRows);
+
+    return { ...declaration, status, cdsBadgeLabel: cdsBadge.label, cdsBadgeTone: cdsBadge.tone };
   },
 });
 
@@ -539,7 +546,8 @@ export const updateDeclarationStatus = mutation({
   args: {
     id: v.id("declarations"),
     status: v.string(),
-    conversationId: v.optional(v.string())
+    conversationId: v.optional(v.string()),
+    mrn: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -555,6 +563,9 @@ export const updateDeclarationStatus = mutation({
       lastUpdated: Date.now(),
     };
     if (args.conversationId) patchObj.conversationId = args.conversationId;
+    // Clearing the MRN on re-submit (mrn: "") is intentional — HMRC assigns a
+    // fresh MRN via DMSACC, so an empty string must overwrite the old value.
+    if (args.mrn !== undefined) patchObj.mrn = args.mrn;
 
     await ctx.db.patch(args.id, patchObj);
     await upsertDeclarationPreviewByDeclaration(ctx, args.id);
@@ -763,6 +774,7 @@ export const getMyDeclarationCounts = query({
       const status = await effectiveDeclarationStatus(ctx, preview.declarationId, {
         status: declaration.status,
         mrn: declaration.mrn,
+        conversationId: declaration.conversationId,
       });
       if (isReviewStatus(status)) reviewCount += 1;
     }
@@ -824,6 +836,7 @@ export const getDeclarationPreviews = query({
       const status = await effectiveDeclarationStatus(ctx, preview.declarationId, {
         status: declaration.status,
         mrn: declaration.mrn,
+        conversationId: declaration.conversationId,
       });
       return { ...preview, status };
     };
@@ -843,6 +856,7 @@ export const getDeclarationPreviews = query({
         const status = await effectiveDeclarationStatus(ctx, declaration._id, {
           status: declaration.status,
           mrn: declaration.mrn,
+          conversationId: declaration.conversationId,
         });
         return {
           declarationId: declaration._id,

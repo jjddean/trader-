@@ -9,6 +9,19 @@ import {
   isPostCancelClearance as isPostCancelClearanceCore,
   type DmsNotificationContext,
 } from "../../convex/lib/notification_dms_context";
+import {
+  declarationHasAmendmentRejected,
+  declarationHasInvalidationAccepted,
+  resolveDeclarationCdsBadge,
+  type CdsBadgeTone,
+} from "../../convex/lib/cds_badge";
+
+export type { CdsBadgeTone };
+export {
+  declarationHasAmendmentRejected,
+  declarationHasInvalidationAccepted,
+  resolveDeclarationCdsBadge,
+};
 
 function isTradeTestClient(): boolean {
   return (process.env.NEXT_PUBLIC_HMRC_ENV || "sandbox") === "sandbox";
@@ -154,47 +167,4 @@ export function resolveTimelineNotificationMeta(
       (normalizedType === "DMSINV" &&
         (hasFieldErrors || hasErrorCodes || /<(?:[^>]*:)?FunctionalError/i.test(raw))),
   };
-}
-
-export function declarationHasInvalidationAccepted(
-  notifications: NotificationRowContext[] | undefined,
-): boolean {
-  return (notifications ?? []).some((n) => isInvalidationAccepted(n));
-}
-
-export function declarationHasAmendmentRejected(
-  notifications: NotificationRowContext[] | undefined,
-): boolean {
-  return (notifications ?? []).some((n) => isAmendmentRejected(n));
-}
-
-export type CdsBadgeTone = "success" | "danger" | "warning" | "info" | "neutral";
-
-export function resolveDeclarationCdsBadge(
-  status: string,
-  notifications: NotificationRowContext[] | undefined,
-): { label: string; tone: CdsBadgeTone } {
-  const amendAccepted = (notifications ?? []).some((n) => isAmendmentAccepted(n));
-  const amendRejected = declarationHasAmendmentRejected(notifications);
-  const cancelAccepted = declarationHasInvalidationAccepted(notifications);
-
-  if (amendAccepted) {
-    return { label: "Amended (DMSRES)", tone: "success" };
-  }
-  if (amendRejected && !cancelAccepted) {
-    return { label: "Accepted — amend rejected", tone: "warning" };
-  }
-  if (cancelAccepted) {
-    return { label: "Cancelled (DMSINV)", tone: "success" };
-  }
-  if (status === "Cleared") {
-    return { label: "Accepted (clearance event)", tone: "info" };
-  }
-  if (status === "Amended") return { label: "Amended (DMSRES)", tone: "success" };
-  if (status === "Accepted") return { label: "Accepted (DMSACC)", tone: "success" };
-  if (status === "Rejected") return { label: "Rejected (DMSREJ)", tone: "danger" };
-  if (status === "Invalid") return { label: "Invalid (DMSINV)", tone: "danger" };
-  if (status === "Action Required") return { label: status, tone: "warning" };
-  if (status === "Draft") return { label: status, tone: "neutral" };
-  return { label: status, tone: "info" };
 }

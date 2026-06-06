@@ -91,4 +91,28 @@ describe("notification DMS context", () => {
     );
     process.env.HMRC_ENVIRONMENT = originalHmrcEnv;
   });
+
+  it("replays cancel DMSINV from MRN-scoped notification to Invalid", () => {
+    const cancelInv = `
+      <Response><FunctionCode>02</FunctionCode>
+      <Declaration>
+        <FunctionalReferenceID>CX-kn73a2vpts1b6j7tsfy7ct7mms832vkx</FunctionalReferenceID>
+        <ID>26GB65AQTKWFMT6AR3</ID>
+        <CancellationDateTime>2026-06-06T02:20:00Z</CancellationDateTime>
+      </Declaration>
+      </Response>`;
+    const status = replayDeclarationStatus(
+      "Processing",
+      "26GB65AQTKWFMT6AR3",
+      [
+        {
+          mrn: "26GB65AQTKWFMT6AR3",
+          notificationType: "DMSINV",
+          rawPayload: cancelInv,
+          timestamp: "2026-06-06T02:20:54Z",
+        },
+      ],
+    );
+    assert.equal(status, "Invalid");
+  });
 });

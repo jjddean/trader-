@@ -449,7 +449,8 @@ export async function POST(request: Request) {
     await convex.mutation(api.declarations.updateDeclarationStatus, {
       id: declarationId,
       status: "Processing",
-      conversationId
+      conversationId,
+      mrn: "", // clear old MRN — HMRC assigns a fresh one via DMSACC
     });
 
     schedulePostSubmitNotificationPulls({

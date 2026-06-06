@@ -6,7 +6,7 @@ import { useQuery, useConvexAuth } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
-import { Activity, Clock, CheckCircle2, XCircle, Loader2, ShieldCheck, ShieldAlert, FileText, AlertCircle, RefreshCw } from "lucide-react";
+import { Activity, Clock, CheckCircle2, XCircle, Loader2, ShieldCheck, ShieldAlert, FileText, AlertCircle, RefreshCw, ChevronDown } from "lucide-react";
 import { normalizeNotificationType, getNotificationDisplay } from "@/lib/notification-labels";
 import {
   declarationHasInvalidationAccepted,
@@ -41,6 +41,7 @@ export default function StatusTimelinePage() {
   );
 
   const [nextStepsOpen, setNextStepsOpen] = useState(false);
+  const [amendMenuOpen, setAmendMenuOpen] = useState(false);
   const [hmrcBusy, setHmrcBusy] = useState(false);
   const [hmrcMessage, setHmrcMessage] = useState<string | null>(null);
   const [hmrcMessageOk, setHmrcMessageOk] = useState(false);
@@ -96,10 +97,59 @@ export default function StatusTimelinePage() {
   }
 
   if (!declaration) {
-    return null;
+    return (
+      <div className="flex justify-center py-12">
+        <p className="text-sm text-gray-500">Declaration not found.</p>
+      </div>
+    );
   }
 
   const isSubmitted = declaration.status !== "Draft";
+
+  const AMEND_OPTIONS: Array<{ label: string; changeKind: string; wcoPath?: string; header?: boolean }> = [
+    { label: "Item price (DE 4/14)", changeKind: "itemChargeAmount" },
+    { label: "Gross mass (DE 6/5)", changeKind: "grossMass" },
+    {
+      label: "Nature of transaction (DE 8/5)",
+      changeKind: "headerField",
+      wcoPath: "Declaration/GoodsShipment/TransactionNatureCode",
+      header: true,
+    },
+    {
+      label: "Country of destination (DE 5/8)",
+      changeKind: "headerField",
+      wcoPath: "Declaration/GoodsShipment/Destination/CountryCode",
+      header: true,
+    },
+  ];
+
+  function runAmend(opt: (typeof AMEND_OPTIONS)[number]) {
+    if (!declaration?.mrn) return;
+    setAmendMenuOpen(false);
+    let value: string | undefined;
+    if (opt.header) {
+      const entered = window.prompt(`New value for ${opt.label}:`, "");
+      if (entered === null) return;
+      value = entered.trim();
+      if (!value) return;
+    } else if (!confirm(`Submit ${opt.label} amendment to HMRC for this MRN?`)) {
+      return;
+    }
+    const fraud = generateClientFraudHeaders(userId || undefined);
+    runHmrcAction("Amend", () =>
+      fetch("/api/hmrc/amend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...fraud },
+        body: JSON.stringify({
+          declarationId: id,
+          mrn: declaration.mrn,
+          changeKind: opt.changeKind,
+          wcoPath: opt.wcoPath,
+          value,
+        }),
+      }),
+    );
+  }
 
   const notificationMeta: Record<string, { title: string; color: string; icon: "success" | "warning" | "danger" | "info"; detail: string }> = {
     DMSUB:  { title: "Declaration received by HMRC", color: "bg-blue-500",  icon: "info",    detail: "Declaration has been received and queued by HMRC." },
@@ -119,8 +169,13 @@ export default function StatusTimelinePage() {
     DMSNOTFN: { title: "General notification",        color: "bg-blue-500",  icon: "info",    detail: "HMRC sent a general status notification." },
   };
 
-  const notifContext = (notif: { rawPayload?: string; fieldErrors?: unknown; errorCodes?: string[]; notificationType?: string }) => ({
-    rawPayload: notif.rawPayload,
+  const notifContext = (notif: {
+    rawPayload?: string | null;
+    fieldErrors?: unknown;
+    errorCodes?: string[];
+    notificationType?: string | null;
+  }) => ({
+    rawPayload: notif.rawPayload ?? undefined,
     fieldErrors: Array.isArray(notif.fieldErrors) ? notif.fieldErrors : undefined,
     errorCodes: Array.isArray(notif.errorCodes) ? notif.errorCodes : undefined,
     notificationType: notif.notificationType ?? "",
@@ -174,9 +229,7 @@ export default function StatusTimelinePage() {
 
   const cdsBadge = resolveDeclarationCdsBadge(
     declaration.status,
-    (notifications || []).map((n: { rawPayload?: string; fieldErrors?: unknown; errorCodes?: string[]; notificationType?: string }) =>
-      notifContext(n),
-    ),
+    (notifications || []).map((n) => notifContext(n)),
   );
 
   const cdsBadgeClass: Record<CdsBadgeTone, string> = {
@@ -252,27 +305,32 @@ export default function StatusTimelinePage() {
                   )}
                   {declaration.mrn && declaration.status === "Accepted" && (
                     <>
-                      <button
-                        type="button"
-                        disabled={hmrcBusy}
-                        className={hmrcActionBtnClass}
-                        onClick={() => {
-                          if (!confirm("Submit amendment to HMRC for this MRN?")) return;
-                          const fraud = generateClientFraudHeaders(userId || undefined);
-                          runHmrcAction("Amend", () =>
-                            fetch("/api/hmrc/amend", {
-                              method: "POST",
-                              headers: {
-                                "Content-Type": "application/json",
-                                ...fraud,
-                              },
-                              body: JSON.stringify({ declarationId: id, mrn: declaration.mrn }),
-                            }),
-                          );
-                        }}
-                      >
-                        Amend
-                      </button>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          disabled={hmrcBusy}
+                          className={hmrcActionBtnClass}
+                          onClick={() => setAmendMenuOpen((open) => !open)}
+                        >
+                          Amend
+                          <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
+                        </button>
+                        {amendMenuOpen && (
+                          <div className="absolute left-0 top-full z-10 mt-1 w-60 rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+                            {AMEND_OPTIONS.map((opt) => (
+                              <button
+                                key={opt.label}
+                                type="button"
+                                disabled={hmrcBusy}
+                                className="block w-full px-3 py-1.5 text-left text-xs text-gray-800 hover:bg-gray-100 disabled:opacity-40"
+                                onClick={() => runAmend(opt)}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                       <button
                         type="button"
                         disabled={hmrcBusy}
@@ -547,7 +605,7 @@ export default function StatusTimelinePage() {
 
                   <div>
                     <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Which fields to fix</h4>
-                    {notifications?.[0]?.fieldErrors?.length > 0 ? (
+                    {(notifications?.[0]?.fieldErrors?.length ?? 0) > 0 ? (
                       <ul className="text-sm text-gray-700 list-disc pl-4 space-y-1">
                         {notifications?.[0]?.fieldErrors?.map((err: { field: string; reason: string }, idx: number) => (
                           <li key={idx}>
@@ -566,9 +624,7 @@ export default function StatusTimelinePage() {
                     <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Next step</h4>
                     <p className="text-sm text-gray-700">
                       {declarationHasInvalidationAccepted(
-                        (notifications || []).map((n: { rawPayload?: string; fieldErrors?: unknown; errorCodes?: string[]; notificationType?: string }) =>
-                          notifContext(n),
-                        ),
+                        (notifications || []).map((n) => notifContext(n)),
                       )
                         ? "Cancellation already succeeded on another notification — ignore duplicate DMSREJ if on cancel XML."
                         : "Fix fields on Core Schema and resubmit, or fix cancel XML per evidence pack §4.2."}

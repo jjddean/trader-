@@ -5,7 +5,7 @@ import { xmlEscape } from "./xml-utils";
  * Source: HMRC TT_IM002b_Amendment.xml (hmrc/customs-declarations annotated samples).
  */
 
-export type AmendmentChangeKind = "itemChargeAmount" | "grossMass";
+export type AmendmentChangeKind = "itemChargeAmount" | "grossMass" | "headerField";
 
 export interface AmendmentBaseArgs {
   amendLrn: string;
@@ -26,7 +26,24 @@ export type GrossMassChange = AmendmentBaseArgs & {
   grossMassKg: string;
 };
 
-export type AmendmentChange = ItemChargeAmountChange | GrossMassChange;
+/**
+ * Generic header-level amendment. The pointer chain and TagID are NOT hand-written:
+ * they are derived from the HMRC CDS WCO reference table (cds_wco_references.ts) via
+ * deriveHeaderAmendment() and passed in here, so element placement is spec-sourced,
+ * not invented. The same derivation reproduces the HMRC-validated item-charge chain.
+ */
+export type HeaderFieldChange = AmendmentBaseArgs & {
+  changeKind: "headerField";
+  /** Ordered ancestor container DocumentSectionCodes (e.g. ["42A","67A"]). */
+  pointerSections: string[];
+  /** Leaf WCO TagID carried on the final pointer (e.g. "103"). */
+  leafTagId: string;
+  /** Element path below <Declaration> to the leaf (e.g. ["GoodsShipment","TransactionNatureCode"]). */
+  fragmentPath: string[];
+  value: string;
+};
+
+export type AmendmentChange = ItemChargeAmountChange | GrossMassChange | HeaderFieldChange;
 
 const ITEM_CHARGE_TAG_ID = "112";
 const ITEM_CHARGE_SECTION = "79A";
@@ -42,7 +59,21 @@ function pointerXml(sequence: number, section: string, tagId?: string): string {
       </Pointer>`;
 }
 
+function nestedFragmentXml(fragmentPath: string[], value: string): string {
+  let inner = xmlEscape(value);
+  for (let i = fragmentPath.length - 1; i >= 0; i--) {
+    const tag = fragmentPath[i];
+    inner = `<${tag}>${inner}</${tag}>`;
+  }
+  return `
+    ${inner}`;
+}
+
 function goodsShipmentFragment(change: AmendmentChange, seq: number): string {
+  if (change.changeKind === "headerField") {
+    return nestedFragmentXml(change.fragmentPath, change.value);
+  }
+
   if (change.changeKind === "itemChargeAmount") {
     const currency = (change.currencyId || "GBP").trim();
     return `
@@ -72,6 +103,16 @@ function goodsShipmentFragment(change: AmendmentChange, seq: number): string {
 }
 
 function amendmentPointers(change: AmendmentChange, seq: number): string {
+  if (change.changeKind === "headerField") {
+    return change.pointerSections
+      .map((section, idx) =>
+        idx === change.pointerSections.length - 1
+          ? pointerXml(1, section, change.leafTagId)
+          : pointerXml(1, section),
+      )
+      .join("");
+  }
+
   if (change.changeKind === "itemChargeAmount") {
     return (
       pointerXml(1, "42A") +

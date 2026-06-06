@@ -8,6 +8,7 @@ import {
   isPostCancelClearance,
 } from "./lib/notification_dms_context";
 import { statusAfterNotification } from "./lib/notification_status";
+import { collectDeclarationNotifications } from "./lib/collect_declaration_notifications";
 
 export const saveWebhook = mutation({
   args: {
@@ -36,6 +37,7 @@ export const saveWebhook = mutation({
     });
 
     let declaration = null;
+    let foundByConversationId = false;
 
     // Look up by conversationId first — most reliable link after 202
     if (args.conversationId && args.conversationId !== "UNKNOWN") {
@@ -43,6 +45,7 @@ export const saveWebhook = mutation({
         .query("declarations")
         .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
         .first();
+      if (declaration) foundByConversationId = true;
     }
 
     // Fall back to MRN lookup (for notifications where conversationId isn't stored yet)
@@ -56,7 +59,11 @@ export const saveWebhook = mutation({
     if (declaration) {
       const declMrn = String(declaration.mrn ?? "").trim();
       const notifMrn = String(args.mrn ?? "").trim();
+      // conversationId is the authoritative link after a 202. When the
+      // declaration was found that way, a new HMRC-assigned MRN must always be
+      // trusted (re-submit assigns a fresh MRN). Only guard MRN-fallback lookups.
       const mrnMismatch =
+        !foundByConversationId &&
         declMrn.length > 0 &&
         notifMrn.length > 0 &&
         notifMrn !== "UNKNOWN" &&
@@ -141,48 +148,11 @@ export const getWebhooks = query({
     declarationId: v.optional(v.id("declarations")),
   },
   handler: async (ctx, args) => {
-    const seen = new Set<string>();
-    const results: any[] = [];
-
-    if (args.declarationId) {
-      const declResults = await ctx.db
-        .query("notifications")
-        .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId!))
-        .take(100);
-      for (const n of declResults) {
-        if (!seen.has(n._id)) { seen.add(n._id); results.push(n); }
-      }
-    }
-
-    if (args.conversationId) {
-      const convResults = await ctx.db
-        .query("notifications")
-        .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId!))
-        .take(100);
-      for (const n of convResults) {
-        if (!seen.has(n._id)) { seen.add(n._id); results.push(n); }
-      }
-    }
-
-    if (args.mrn && args.mrn !== "UNKNOWN") {
-      const mrnResults = await ctx.db
-        .query("notifications")
-        .withIndex("by_mrn", (q) => q.eq("mrn", args.mrn!))
-        .take(100);
-      for (const n of mrnResults) {
-        if (!seen.has(n._id)) { seen.add(n._id); results.push(n); }
-      }
-    }
-
-    const currentMrn = args.mrn?.trim();
-    const scoped =
-      currentMrn && currentMrn !== "UNKNOWN"
-        ? results.filter((n) => String(n.mrn ?? "").trim() === currentMrn)
-        : results;
-
-    return scoped.sort(
-      (a, b) => new Date(String(b.timestamp || 0)).getTime() - new Date(String(a.timestamp || 0)).getTime()
-    );
+    return collectDeclarationNotifications(ctx.db, {
+      declarationId: args.declarationId,
+      conversationId: args.conversationId,
+      mrn: args.mrn,
+    });
   },
 });
 

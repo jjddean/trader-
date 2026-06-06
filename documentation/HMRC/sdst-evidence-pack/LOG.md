@@ -19,6 +19,7 @@ Add one row per controlled HMRC test. Copy **Conversation ID**, **MRN**, and **t
 | 2026-06-05 | Submit | *(LRN from UI)* | 26GB664W3BLIFZFAR4 | *(submit conv)* | DMSACC + DMSTAX — **not cancelled**; ghost Cancelled badge = old notif on same declaration row (fixed: MRN filter) | |
 | 2026-06-05 | Amend (COR) | AM-kn7ce59… / FC-MQ0TDTJA | 26GB664W3BLIFZFAR4 | 01382a81-5000-408f-9c99-5215852f5758 | HTTP 202 → **DMSRES FC07** `11:12:02Z`; **VersionID 2**; GBP 8000 | `evidence/05-amend/summary.md` |
 | 2026-06-05 | File upload initiate | — | 26GB664W3BLIFZFAR4 | **e8aba099-acee-438e-be25-2d4c713b9d99** | HTTP 200; ref `218eaeb7-6639-408c-9907-328033abce6c` | `evidence/06-file-upload/` |
+| 2026-06-06 | Amend (COR) | AM-kn7ce59… | 26GB67PH78363HRAR7 | 57efd48c-694e-418d-a903-75a245fc135b | HTTP 202 → **DMSINV** FC03 `14:00:26Z`; **CDS12015** @ 42A/D014 (MRN state not amendable — amended same second as submit). Route now sends X-Submitter-Identifier. Structural validation passed. | — |
 | 2026-06-04 | Status by MRN | — | 26GB63M1I0RQFCVAR4 | 2a9e80a9-1b65-4541-8077-73d2492357f4 | HTTP 200, ICS 22, ROE 6 | `evidence/07-status-query/` |
 | | Pull notifications | | | | | `evidence/08-pull-notifications/` |
 

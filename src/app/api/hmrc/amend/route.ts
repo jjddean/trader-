@@ -2,11 +2,24 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { api } from "../../../../../convex/_generated/api";
 import { buildAmendmentXmlFromChange, type AmendmentChangeKind } from "../../../../lib/hmrc-amendment-xml";
+import { deriveHeaderAmendment } from "../../../../lib/hmrc-amendment-pointers";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
 import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
 import { getAuthenticatedConvex } from "../../../../lib/hmrc-route-session";
 import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
 import { logHmrcAudit } from "../../../../lib/audit-log";
+
+/**
+ * Curated header-level (DE) fields permitted for amendment. The pointer chain is
+ * NOT defined here — it is derived from the HMRC WCO reference table at runtime.
+ * This allowlist only bounds which header fields the route will act on.
+ * Header amendments are structurally spec-derived; first HMRC DMSRES confirmation
+ * is still pending (Phase 2 — add one feature, confirm before the next).
+ */
+const HEADER_AMENDMENT_FIELDS: Record<string, { de: string; label: string }> = {
+  "Declaration/GoodsShipment/TransactionNatureCode": { de: "8/5", label: "Nature of transaction" },
+  "Declaration/GoodsShipment/Destination/CountryCode": { de: "5/8", label: "Country of destination" },
+};
 
 /**
  * POST /api/hmrc/amend
@@ -21,7 +34,7 @@ export async function POST(request: Request) {
     }
     const { convex, userId } = session;
 
-    const { declarationId, mrn, changeKind, itemSequence, statementDescription, changeReasonCode } =
+    const { declarationId, mrn, changeKind, itemSequence, statementDescription, changeReasonCode, wcoPath, value } =
       await request.json();
     if (!declarationId || !mrn) {
       return NextResponse.json({ error: "Missing declarationId or mrn" }, { status: 400 });
@@ -32,6 +45,7 @@ export async function POST(request: Request) {
       status?: string;
       lrn?: string;
       invoiceCurrency?: string;
+      eori?: string;
     } | null;
     if (!lane) {
       return NextResponse.json({ error: "Declaration not found" }, { status: 404 });
@@ -60,6 +74,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No goods items on declaration; cannot build amendment XML." }, { status: 400 });
     }
 
+    const eori = String(lane.eori || "").trim();
+    if (!/^GB\d{12}$/.test(eori)) {
+      return NextResponse.json(
+        { error: "Declarant EORI on the declaration is missing or invalid (expected GB+12 digits)." },
+        { status: 400 },
+      );
+    }
+
     const tokenResult = await resolveHmrcAccessToken(convex, userId);
     if ("error" in tokenResult) {
       return tokenResult.error;
@@ -78,7 +100,47 @@ export async function POST(request: Request) {
       `AM-${rawId}`.length <= 35 ? `AM-${rawId}` : `AM-${rawId.slice(-32)}`;
 
     let xmlPayload: string;
-    if (kind === "grossMass") {
+    if (kind === "headerField") {
+      const path = String(wcoPath || "");
+      const fieldValue = String(value ?? "").trim();
+      if (!HEADER_AMENDMENT_FIELDS[path]) {
+        return NextResponse.json(
+          {
+            error: "Unsupported header amendment field",
+            supported: Object.keys(HEADER_AMENDMENT_FIELDS),
+          },
+          { status: 400 },
+        );
+      }
+      if (!fieldValue) {
+        return NextResponse.json(
+          { error: `Provide a value for ${HEADER_AMENDMENT_FIELDS[path].label} (DE ${HEADER_AMENDMENT_FIELDS[path].de}).` },
+          { status: 400 },
+        );
+      }
+      const derived = deriveHeaderAmendment(path);
+      if (!derived) {
+        return NextResponse.json(
+          { error: `No CDS WCO reference row for ${path}; cannot derive amendment pointers.` },
+          { status: 400 },
+        );
+      }
+      xmlPayload = buildAmendmentXmlFromChange({
+        changeKind: "headerField",
+        amendLrn,
+        mrn: String(mrn).trim(),
+        statementDescription:
+          typeof statementDescription === "string" && statementDescription.trim()
+            ? statementDescription.trim()
+            : `Amending ${HEADER_AMENDMENT_FIELDS[path].label} (DE ${HEADER_AMENDMENT_FIELDS[path].de}) on the declaration.`,
+        changeReasonCode: typeof changeReasonCode === "string" ? changeReasonCode : "21",
+        itemSequence: 1,
+        pointerSections: derived.pointerSections,
+        leafTagId: derived.leafTagId,
+        fragmentPath: derived.fragmentPath,
+        value: fieldValue,
+      });
+    } else if (kind === "grossMass") {
       const rawMass = parseFloat(String(firstItem.grossWeightKg ?? ""));
       if (!Number.isFinite(rawMass) || rawMass <= 0) {
         return NextResponse.json(
@@ -138,6 +200,7 @@ export async function POST(request: Request) {
       },
       request,
       tokenResult.token,
+      eori,
     );
 
     if (hmrcResponse.status === 429) {

@@ -63,8 +63,10 @@
 
 ### 🎯 Final acceptance
 - [x] Single submit returns DMSACC (FC-MPYAJ7RN — 0 validation errors; CDS13000 advisory only)
-- [x] Status notification chain: DMSACC → DMSCLE on `26GB63M1I0RQFCVAR4` (`2026-06-04T18:56:07Z`, SDST pack `scenario-1-happy-path.md`)
+- [x] Status notification chain (accept path): DMSACC → DMSTAX on `26GB63M1I0RQFCVAR4` (submit `2026-06-03T16:38:33Z`, conversation `68edb212-5c4a-4ef7-9223-f55630c5859e`)
 - [ ] Evidence captured: request XML, response XML, conversation ID
+
+> **DMSCLE note (corrected):** Trade Test v2.0 does **not** emit a genuine "goods cleared" DMSCLE on an accept-only MRN. The accept path ends at DMSACC → DMSTAX. The only FC 11 ever seen was post-cancel lifecycle noise (same second as DMSINV) — **not** clearance. Authoritative: `sdst-evidence-pack/evidence/03-notifications/TRADE-TEST-REALITY.md`. Do not block the pack on DMSCLE after submit.
 
 ---
 
