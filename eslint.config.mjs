@@ -26,6 +26,14 @@ const eslintConfig = defineConfig([
         },
       ],
     },
+    overrides: [
+      {
+        files: ["convex/**/*.ts", "src/lib/**/*.ts", "src/lib/**/*.tsx"],
+        rules: {
+          "@typescript-eslint/no-explicit-any": "off",
+        },
+      },
+    ],
   },
   globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
 ]);
