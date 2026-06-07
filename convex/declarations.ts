@@ -595,6 +595,7 @@ export const updateDeclarationStatus = mutation({
       lastUpdated: Date.now(),
     };
     if (args.conversationId) patchObj.conversationId = args.conversationId;
+    if (args.status === "Processing" && args.conversationId) patchObj.submittedAt = Date.now();
     // Clearing the MRN on re-submit (mrn: "") is intentional — HMRC assigns a
     // fresh MRN via DMSACC, so an empty string must overwrite the old value.
     if (args.mrn !== undefined) patchObj.mrn = args.mrn;

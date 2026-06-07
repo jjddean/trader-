@@ -226,6 +226,7 @@ export default function StatusTimelinePage() {
   const latestCtx = latestNotif ? notifContext(latestNotif) : null;
   const latestNotificationType = normalizeNotificationType(latestNotif?.notificationType) || "DMSUB";
   const latestIsInvalidationSuccess = latestCtx ? isInvalidationAccepted(latestCtx) : false;
+  const submittedAt = declaration.submittedAt || declaration.created || declaration._creationTime;
 
   const cdsBadge = resolveDeclarationCdsBadge(
     declaration.status,
@@ -435,7 +436,7 @@ export default function StatusTimelinePage() {
                   <div className="absolute -left-6 top-1 h-3 w-3 rounded-full border-2 border-white bg-blue-500" />
                   <div className="flex flex-col gap-1">
                     <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      {new Date(declaration.lastUpdated || declaration._creationTime).toLocaleString()}
+                      {new Date(submittedAt).toLocaleString()}
                     </p>
                     <p className="text-sm font-medium text-gray-900">Declaration Submitted</p>
                     <p className="text-xs text-gray-600">Payload successfully validated and stored by HMRC Hub.</p>

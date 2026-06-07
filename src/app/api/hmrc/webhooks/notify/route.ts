@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../../convex/_generated/api";
 import { parseHmrcNotification } from "../../../../../lib/hmrc-notification-parser";
+import { buildHmrcNotificationIdempotencyKey } from "../../../../../lib/hmrc-notification-idempotency";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -71,6 +72,7 @@ export async function POST(request: Request) {
 
     const { notificationType, mrn, errorCodes, fieldErrors } = parseHmrcNotification(rawPayload);
     console.log(`[HMRC-WEBHOOK] Parsed: type=${notificationType}, mrn=${mrn}, errorCodes=${errorCodes.join(",") || "none"}`);
+    const idempotencyKey = buildHmrcNotificationIdempotencyKey(rawPayload);
 
     // Save to Convex for the dashboard to pick up
     await convex.mutation(api.notifications.saveWebhook, {
@@ -80,6 +82,8 @@ export async function POST(request: Request) {
       fieldErrors,
       errorCodes,
       rawPayload,
+      idempotencyKey,
+      source: "push",
       timestamp: new Date().toISOString(),
     });
 
