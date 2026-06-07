@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalMutation, mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { evaluateCompleteness } from "./lib/declaration_completeness";
@@ -316,6 +316,38 @@ async function upsertDeclarationPreviewByDeclaration(
     });
   }
 }
+
+export const getStuckProcessingDeclarations = internalQuery({
+  args: { olderThanMs: v.number() },
+  handler: async (ctx, args) => {
+    const cutoff = Date.now() - args.olderThanMs;
+    const rows = await ctx.db
+      .query("declarations")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("status"), "Processing"),
+          q.lt(q.field("lastUpdated"), cutoff),
+        )
+      )
+      .take(50);
+    return rows.map((r) => ({
+      _id: r._id as string,
+      userId: String(r.userId ?? ""),
+      conversationId: r.conversationId as string | null | undefined,
+    }));
+  },
+});
+
+export const getHmrcTokenForUser = internalQuery({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const token = await ctx.db
+      .query("hmrc_tokens")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+    return token ? { accessToken: String(token.accessToken ?? "") } : null;
+  },
+});
 
 export const recomputeDashboardSummary = internalMutation({
   args: { userId: v.string() },

@@ -10,4 +10,11 @@ crons.daily(
   internal.actions.currency.syncExchangeRates,
 );
 
+// Recover stuck declarations periodically
+crons.interval(
+  "recover-stuck-declarations",
+  { minutes: 15 },
+  internal.actions.recoverStuckDeclarations.run,
+);
+
 export default crons;

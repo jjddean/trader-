@@ -25,6 +25,19 @@ export const saveWebhook = mutation({
     timestamp: v.string(),
   },
   handler: async (ctx, args) => {
+    // Dedup: skip insert if an identical notification already exists
+    if (args.conversationId && args.notificationType && args.timestamp) {
+      const existing = await ctx.db
+        .query("notifications")
+        .withIndex("by_conv_type_ts", (q) =>
+          q.eq("conversationId", args.conversationId)
+           .eq("notificationType", args.notificationType)
+           .eq("timestamp", args.timestamp)
+        )
+        .first();
+      if (existing) return existing._id;
+    }
+
     const notificationId = await ctx.db.insert("notifications", {
       mrn: args.mrn,
       conversationId: args.conversationId,

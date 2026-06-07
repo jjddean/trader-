@@ -43,6 +43,12 @@ export default function DashboardPage() {
     ? `Expires ${new Date(hmrcToken.expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
     : "—";
 
+  // Feature toggles: allow hiding specific dashboard cards via public env vars.
+  // Set NEXT_PUBLIC_DASH_SHOW_DUTY_BY_HS=false to hide the Duty by HS Code chart.
+  // Set NEXT_PUBLIC_DASH_SHOW_OVERPAYMENTS=false to hide the Potential Overpayments card.
+  const showDutyByHs = process.env.NEXT_PUBLIC_DASH_SHOW_DUTY_BY_HS !== "false";
+  const showOverpayments = process.env.NEXT_PUBLIC_DASH_SHOW_OVERPAYMENTS !== "false";
+
 
   return (
     <div className="space-y-8 p-8 max-w-7xl mx-auto">
@@ -79,10 +85,10 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
             {/* 2. CHART */}
-            <DutyByHsChart data={stats.chartData} />
+            {showDutyByHs && <DutyByHsChart data={stats.chartData} />}
 
             {/* 4. AUDITS (STATIC UNTIL WIRING) */}
-            <ActionableAudits overpayments={stats.overpayments || []} />
+            {showOverpayments && <ActionableAudits overpayments={stats.overpayments || []} />}
           </div>
 
           {/* 3. RECENT DECLARATIONS */}

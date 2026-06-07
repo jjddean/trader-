@@ -223,7 +223,7 @@ export default defineSchema({
     processed: v.optional(v.any()),
     userId: v.optional(v.any()),
     declarationId: v.optional(v.any()),
-  }).index("by_mrn", ["mrn"]).index("by_user", ["userId"]).index("by_conversationId", ["conversationId"]).index("by_declaration", ["declarationId"]),
+  }).index("by_mrn", ["mrn"]).index("by_user", ["userId"]).index("by_conversationId", ["conversationId"]).index("by_declaration", ["declarationId"]).index("by_conv_type_ts", ["conversationId", "notificationType", "timestamp"]),
 
   dashboard_summary: defineTable({
     userId: v.string(),
