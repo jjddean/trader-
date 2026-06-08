@@ -139,6 +139,16 @@ export default function SubmitPage() {
     .map((req: any) => String(req.code || "UNKNOWN"));
 
   const isReady = !missingEori && !noItems && !missingHS && missingBlockingRequirements.length === 0;
+
+  const LIVE_HMRC_STATUSES = new Set([
+    "Processing",
+    "Accepted",
+    "Amended",
+    "Amendment Processing",
+    "Cancellation Requested",
+  ]);
+  const declarationStatus = String(declaration?.status ?? "Draft");
+  const isLiveDeclaration = LIVE_HMRC_STATUSES.has(declarationStatus);
   
   // Generate the WCO payload for preview
   const wcoPayloadPreview = isReady ? mapToCDS_H1(declaration, items) : null;
@@ -185,6 +195,12 @@ export default function SubmitPage() {
 
       if (!res.ok) {
         console.log("HMRC validation details:", data.details, data.fields);
+        if (res.status === 409 && data.code === "SUBMIT_BLOCKED") {
+          throw new Error(
+            data.error ||
+              "This declaration is already live with HMRC. Use Amend on the Status page, or create a new declaration.",
+          );
+        }
         const fieldErrors = Array.isArray(data.fields)
           ? data.fields
               .map((fieldErr: { field?: string; reason?: string }) => `${fieldErr.field || "unknown"}: ${fieldErr.reason || "Validation error"}`)
@@ -194,9 +210,11 @@ export default function SubmitPage() {
           ? `${data.error}\n\n${data.details}`
           : fieldErrors
             ? `${data.error || "Validation failed"}\n\n${fieldErrors}`
-          : (data.message
-              ? `${data.error || "Request failed"}\n\n${data.message}`
-              : `${data.error || "HMRC API rejected the submission payload."}\n\nHTTP ${res.status}`);
+          : data.error
+            ? String(data.error)
+            : data.message
+              ? String(data.message)
+              : `Request failed (HTTP ${res.status})`;
         throw new Error(errorMessage);
       }
 
@@ -310,11 +328,12 @@ export default function SubmitPage() {
               <h3 className="text-sm font-semibold text-gray-900">Pre-flight Validation</h3>
             </div>
             <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${
-              isReady && dryRunPassed ? "bg-green-100 text-green-700"
+              isLiveDeclaration ? "bg-blue-100 text-blue-700"
+              : isReady && dryRunPassed ? "bg-green-100 text-green-700"
               : isReady ? "bg-amber-100 text-amber-700"
               : "bg-red-100 text-red-700"
             }`}>
-              {isReady && dryRunPassed ? "Ready to Submit" : isReady ? "Awaiting Dry Run" : "Action Required"}
+              {isLiveDeclaration ? `Live — ${declarationStatus}` : isReady && dryRunPassed ? "Ready to Submit" : isReady ? "Awaiting Dry Run" : "Action Required"}
             </span>
           </div>
 
@@ -374,10 +393,31 @@ export default function SubmitPage() {
             </li>
           </ul>
 
+          {isLiveDeclaration && (
+            <div className="rounded-md border border-blue-200 bg-blue-50 p-4">
+              <h4 className="text-xs font-bold text-blue-800 uppercase tracking-widest mb-1">
+                Already submitted — {declarationStatus}
+              </h4>
+              <p className="text-sm text-blue-900">
+                This declaration is live with HMRC and cannot be submitted again. Open the{" "}
+                <button
+                  type="button"
+                  className="font-medium underline underline-offset-2"
+                  onClick={() => router.push(`/dashboard/declarations/${declarationId}/status`)}
+                >
+                  Status
+                </button>{" "}
+                tab to amend or pull notifications.
+              </p>
+            </div>
+          )}
+
           {error && (
             <div className="rounded-md border border-red-200 bg-red-50 p-4">
-               <h4 className="text-xs font-bold text-red-800 uppercase tracking-widest mb-1">HMRC API Error</h4>
-               <p className="text-sm text-red-700 font-mono whitespace-pre-wrap">{error}</p>
+               <h4 className="text-xs font-bold text-red-800 uppercase tracking-widest mb-1">
+                 {error.includes("cannot submit") || error.includes("Amend a live") ? "Submission blocked" : "HMRC API Error"}
+               </h4>
+               <p className="text-sm text-red-700 whitespace-pre-wrap">{error}</p>
             </div>
           )}
 
@@ -591,7 +631,7 @@ export default function SubmitPage() {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!isReady || !dryRunPassed || isSubmitting || isDryRunning}
+            disabled={!isReady || !dryRunPassed || isSubmitting || isDryRunning || isLiveDeclaration}
             className="flex w-full h-8 rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
           >
             {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-4 w-4 text-green-400" />}

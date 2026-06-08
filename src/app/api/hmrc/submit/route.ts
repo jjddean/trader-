@@ -394,8 +394,14 @@ export async function POST(request: Request) {
     } catch (claimErr: unknown) {
       const msg = claimErr instanceof Error ? claimErr.message : String(claimErr);
       if (msg.includes("SUBMIT_BLOCKED")) {
+        // Convex wraps mutation errors across lines — use [\s\S] not . so the
+        // prefix "[Request ID: …] Server Error\nUncaught Error:" is stripped.
+        const clean = msg.replace(/^[\s\S]*SUBMIT_BLOCKED:\s*/, "").trim().split("\n")[0].trim();
         return NextResponse.json(
-          { error: msg.replace(/^.*SUBMIT_BLOCKED:\s*/, "").trim() || "Declaration cannot be submitted in its current state." },
+          {
+            error: clean || "Declaration cannot be submitted in its current state.",
+            code: "SUBMIT_BLOCKED",
+          },
           { status: 409 },
         );
       }
