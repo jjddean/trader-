@@ -267,6 +267,18 @@ export async function POST(request: Request) {
 
     await recordAmendEvidence("accepted", hmrcResponse.status, conversationId);
 
+    if (conversationId) {
+      try {
+        await convex.mutation(api.hmrc.scheduleNotificationPulls, {
+          declarationId,
+          conversationId,
+        });
+      } catch (schedErr: unknown) {
+        const m = schedErr instanceof Error ? schedErr.message : String(schedErr);
+        console.warn("[AMEND] Failed to schedule notification pulls (non-critical):", m);
+      }
+    }
+
     await logHmrcAudit(convex, userId, "declaration_amended", {
       declarationId,
       mrn: String(mrn).trim(),

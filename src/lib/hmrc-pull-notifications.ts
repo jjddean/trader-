@@ -140,19 +140,18 @@ export async function pullHmrcNotificationsForConversation(params: {
   return { conversationId, total: notificationIds.length, saved };
 }
 
-/** Fire delayed pulls — DMSREJ often arrives seconds after the 202. */
-export function schedulePostSubmitNotificationPulls(params: {
+/**
+ * @deprecated Use api.hmrc.scheduleNotificationPulls (Convex scheduler) instead.
+ * In-process setTimeout is unreliable on serverless — Vercel may terminate the
+ * function before delayed pulls run.
+ */
+export function schedulePostSubmitNotificationPulls(_params: {
   conversationId: string;
   accessToken: string;
   request: Request;
   convex: ConvexHttpClient;
 }): void {
-  const delaysMs = [0, 4000, 12000, 30000];
-  for (const delayMs of delaysMs) {
-    setTimeout(() => {
-      pullHmrcNotificationsForConversation(params).catch((err) => {
-        console.warn(`[HMRC-PULL] Delayed pull (${delayMs}ms) failed:`, err);
-      });
-    }, delayMs);
-  }
+  console.warn(
+    "[HMRC-PULL] schedulePostSubmitNotificationPulls is deprecated — use api.hmrc.scheduleNotificationPulls",
+  );
 }

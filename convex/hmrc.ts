@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 export const saveToken = mutation({
   args: {
@@ -123,5 +124,33 @@ export const getToken = query({
       .query("hmrc_tokens")
       .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .first();
+  },
+});
+
+/** Schedule delayed notification pulls via Convex (reliable on serverless — not setTimeout). */
+export const scheduleNotificationPulls = mutation({
+  args: {
+    declarationId: v.id("declarations"),
+    conversationId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const decl = await ctx.db.get(args.declarationId);
+    if (!decl || decl.userId !== identity.subject) {
+      throw new Error("Unauthorized");
+    }
+
+    const delaysMs = [0, 4000, 12000, 30000];
+    for (const delayMs of delaysMs) {
+      await ctx.scheduler.runAfter(delayMs, internal.hmrc_actions.pullNotificationsScheduled, {
+        userId: identity.subject,
+        conversationId: args.conversationId,
+        source: delayMs === 0 ? "scheduled_immediate" : `scheduled_${delayMs}ms`,
+      });
+    }
+    return null;
   },
 });

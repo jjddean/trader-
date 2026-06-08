@@ -10,7 +10,7 @@ crons.daily(
   internal.actions.currency.syncExchangeRates,
 );
 
-// Recover stuck declarations hourly (pull notifications and attempt resubmit)
+// Recover stuck declarations hourly (pull unpulled notifications + persist)
 crons.hourly(
   "recover-stuck-declarations",
   { minuteUTC: 10 },

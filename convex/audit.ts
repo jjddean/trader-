@@ -37,6 +37,36 @@ export const getMyLogs = query({
   },
 });
 
+/** Owner-scoped audit rows for one declaration (metadata.declarationId match). */
+export const getDeclarationAuditLogs = query({
+  args: {
+    declarationId: v.id("declarations"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const decl = await ctx.db.get(args.declarationId);
+    if (!decl || decl.userId !== identity.subject) return [];
+
+    const logs = await ctx.db
+      .query("auditLogs")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .order("desc")
+      .take(500);
+
+    const target = String(args.declarationId);
+    return logs
+      .filter((log) => {
+        const details = log.details;
+        if (!details || typeof details !== "object") return false;
+        return String((details as { declarationId?: string }).declarationId ?? "") === target;
+      })
+      .slice(0, args.limit ?? 50);
+  },
+});
+
 export const getRecentLogs = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();

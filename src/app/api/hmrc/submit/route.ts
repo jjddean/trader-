@@ -9,7 +9,6 @@ import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
 import { buildPayloadDebugSnapshot, renderH1Xml, validateXmlPreflight } from "../../../../lib/h1-xml-renderer";
 import { validateGoodsLocationForSubmit } from "../../../../lib/goods-location";
 import { validateGoodsItemSequences } from "../../../../lib/submit-goods-items";
-import { schedulePostSubmitNotificationPulls } from "../../../../lib/hmrc-pull-notifications";
 import { logHmrcAudit } from "../../../../lib/audit-log";
 import { evaluateRules, activeEffects, summarizeFailures, type RuleDefinition, type ScenarioInput } from "../../../../../convex/lib/rule_engine";
 
@@ -562,12 +561,16 @@ export async function POST(request: Request) {
 
     await recordSubmissionEvidence("accepted", hmrcResponse.status, conversationId);
 
-    schedulePostSubmitNotificationPulls({
-      conversationId,
-      accessToken: token,
-      request,
-      convex,
-    });
+    // Convex-scheduled pulls survive serverless (Vercel kills in-process setTimeout).
+    try {
+      await convex.mutation(api.hmrc.scheduleNotificationPulls, {
+        declarationId,
+        conversationId,
+      });
+    } catch (schedErr: unknown) {
+      const m = schedErr instanceof Error ? schedErr.message : String(schedErr);
+      console.warn("[SUBMIT] Failed to schedule notification pulls (non-critical):", m);
+    }
 
     // Audit Log Entry (logHmrcAudit is internally non-fatal)
     await logHmrcAudit(convex, userId, "declaration_submitted", {

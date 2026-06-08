@@ -40,7 +40,19 @@ export default function StatusTimelinePage() {
       : "skip",
   );
 
+  const submissions = useQuery(
+    api.submissions.getSubmissions,
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && id ? { declarationId: id } : "skip",
+  );
+
+  const auditLogs = useQuery(
+    api.audit.getDeclarationAuditLogs,
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && id ? { declarationId: id } : "skip",
+  );
+
   const [nextStepsOpen, setNextStepsOpen] = useState(false);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [expandedSubmissionId, setExpandedSubmissionId] = useState<string | null>(null);
   const [amendMenuOpen, setAmendMenuOpen] = useState(false);
   const [hmrcBusy, setHmrcBusy] = useState(false);
   const [hmrcMessage, setHmrcMessage] = useState<string | null>(null);
@@ -502,6 +514,144 @@ export default function StatusTimelinePage() {
           </div>
         )}
       </div>
+
+      {isSubmitted && (
+        <div className="rounded-xl border border-gray-200 bg-white p-6">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between text-left"
+            onClick={() => setEvidenceOpen((o) => !o)}
+          >
+            <div>
+              <h3 className="text-sm font-medium text-gray-900">Submission evidence &amp; audit</h3>
+              <p className="mt-0.5 text-xs text-gray-500">
+                Immutable request XML, LRNs, and HMRC lifecycle audit rows for this declaration.
+              </p>
+            </div>
+            <ChevronDown
+              className={`h-4 w-4 text-gray-500 transition-transform ${evidenceOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {evidenceOpen && (
+            <div className="mt-6 space-y-8 border-t border-gray-100 pt-6">
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">
+                  HMRC requests sent ({submissions?.length ?? 0})
+                </h4>
+                {!submissions || submissions.length === 0 ? (
+                  <p className="text-xs text-gray-500">No submission evidence recorded yet.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {submissions.map((sub: {
+                      _id: string;
+                      operation?: string;
+                      outcome?: string;
+                      lrn?: string;
+                      conversationId?: string;
+                      hmrcStatus?: number;
+                      createdAt?: number;
+                      requestXml?: string;
+                    }) => (
+                      <div key={sub._id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          <span className="rounded bg-white px-2 py-0.5 font-medium text-gray-800 border border-gray-200">
+                            {sub.operation || "submit"}
+                          </span>
+                          <span
+                            className={`rounded px-2 py-0.5 font-medium ${
+                              sub.outcome === "accepted"
+                                ? "bg-green-100 text-green-800"
+                                : sub.outcome === "rejected"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-amber-100 text-amber-800"
+                            }`}
+                          >
+                            {sub.outcome || "unknown"}
+                          </span>
+                          {sub.hmrcStatus != null && (
+                            <span className="text-gray-500">HTTP {sub.hmrcStatus}</span>
+                          )}
+                          {sub.lrn && (
+                            <span className="font-mono text-gray-600">LRN {sub.lrn}</span>
+                          )}
+                          {sub.conversationId && (
+                            <span className="font-mono text-gray-500 truncate max-w-[12rem]" title={sub.conversationId}>
+                              {sub.conversationId}
+                            </span>
+                          )}
+                          <span className="text-gray-400 ml-auto">
+                            {sub.createdAt
+                              ? new Date(sub.createdAt).toLocaleString("en-GB")
+                              : ""}
+                          </span>
+                        </div>
+                        {sub.requestXml && (
+                          <details
+                            className="mt-2"
+                            open={expandedSubmissionId === sub._id}
+                            onToggle={(e) => {
+                              if ((e.target as HTMLDetailsElement).open) {
+                                setExpandedSubmissionId(sub._id);
+                              } else if (expandedSubmissionId === sub._id) {
+                                setExpandedSubmissionId(null);
+                              }
+                            }}
+                          >
+                            <summary className="cursor-pointer text-[10px] font-mono font-semibold text-gray-500 hover:text-gray-900">
+                              View request XML
+                            </summary>
+                            <pre className="mt-2 max-h-64 overflow-auto rounded bg-gray-900 p-2 font-mono text-[10px] text-green-400 whitespace-pre-wrap">
+                              {sub.requestXml}
+                            </pre>
+                          </details>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">
+                  Audit trail ({auditLogs?.length ?? 0})
+                </h4>
+                {!auditLogs || auditLogs.length === 0 ? (
+                  <p className="text-xs text-gray-500">No audit rows for this declaration yet.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {auditLogs.map((log: {
+                      _id: string;
+                      action?: string;
+                      timestamp?: number;
+                      details?: Record<string, unknown>;
+                    }) => (
+                      <li
+                        key={log._id}
+                        className="rounded border border-gray-100 bg-white px-3 py-2 text-xs"
+                      >
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium text-gray-900">{log.action}</span>
+                          <span className="text-gray-400">
+                            {log.timestamp
+                              ? new Date(log.timestamp).toLocaleString("en-GB")
+                              : ""}
+                          </span>
+                        </div>
+                        {log.details && Object.keys(log.details).length > 0 && (
+                          <pre className="mt-1 max-h-24 overflow-auto font-mono text-[10px] text-gray-600 whitespace-pre-wrap">
+                            {JSON.stringify(log.details, null, 2)}
+                          </pre>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <Sheet open={nextStepsOpen} onOpenChange={setNextStepsOpen}>
         <SheetContent side="right" className="overflow-y-auto sm:max-w-md w-full p-0">

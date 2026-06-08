@@ -324,6 +324,13 @@ export const recomputeDashboardSummary = internalMutation({
   },
 });
 
+/** HMRC intermediate states that should receive notification recovery if stale. */
+const STUCK_HMRC_STATUSES = new Set([
+  "processing",
+  "amendment processing",
+  "cancellation requested",
+]);
+
 export const getStuckProcessingDeclarations = internalQuery({
   args: { olderThanMs: v.number() },
   returns: v.array(
@@ -331,6 +338,7 @@ export const getStuckProcessingDeclarations = internalQuery({
       _id: v.id("declarations"),
       userId: v.optional(v.string()),
       conversationId: v.optional(v.string()),
+      status: v.optional(v.string()),
       lastUpdated: v.optional(v.number()),
     }),
   ),
@@ -338,8 +346,18 @@ export const getStuckProcessingDeclarations = internalQuery({
     const cutoff = Date.now() - args.olderThanMs;
     const rows = await ctx.db.query("declarations").take(5000);
     const stuck = rows
-      .filter((r: any) => String(r.status || "").toLowerCase() === "processing" && Number(r.lastUpdated || r.created || 0) < cutoff)
-      .map((r: any) => ({ _id: r._id, userId: r.userId || undefined, conversationId: r.conversationId || undefined, lastUpdated: Number(r.lastUpdated || r.created || 0) }));
+      .filter(
+        (r: any) =>
+          STUCK_HMRC_STATUSES.has(String(r.status || "").toLowerCase()) &&
+          Number(r.lastUpdated || r.created || 0) < cutoff,
+      )
+      .map((r: any) => ({
+        _id: r._id,
+        userId: r.userId || undefined,
+        conversationId: r.conversationId || undefined,
+        status: r.status || undefined,
+        lastUpdated: Number(r.lastUpdated || r.created || 0),
+      }));
     return stuck;
   },
 });
@@ -354,6 +372,32 @@ export const getHmrcTokenForUser = internalQuery({
       .first();
     if (!row) return null;
     return { accessToken: row.accessToken };
+  },
+});
+
+export const getHmrcTokenRowForUser = internalQuery({
+  args: { userId: v.string() },
+  returns: v.union(
+    v.object({
+      accessToken: v.optional(v.string()),
+      refreshToken: v.optional(v.string()),
+      expiresAt: v.optional(v.number()),
+      eori: v.optional(v.string()),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("hmrc_tokens")
+      .withIndex("by_user", (q: any) => q.eq("userId", args.userId))
+      .first();
+    if (!row) return null;
+    return {
+      accessToken: row.accessToken,
+      refreshToken: row.refreshToken,
+      expiresAt: row.expiresAt,
+      eori: row.eori,
+    };
   },
 });
 

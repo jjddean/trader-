@@ -140,6 +140,18 @@ export async function POST(request: Request) {
 
     await recordCancelEvidence("accepted", hmrcResponse.status, conversationId);
 
+    if (conversationId) {
+      try {
+        await convex.mutation(api.hmrc.scheduleNotificationPulls, {
+          declarationId,
+          conversationId,
+        });
+      } catch (schedErr: unknown) {
+        const m = schedErr instanceof Error ? schedErr.message : String(schedErr);
+        console.warn("[CANCEL] Failed to schedule notification pulls (non-critical):", m);
+      }
+    }
+
     await logHmrcAudit(convex, userId, "declaration_cancel_requested", {
       declarationId,
       mrn,
