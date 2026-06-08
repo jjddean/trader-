@@ -5,7 +5,7 @@ import { internal } from "../_generated/api";
 
 const STUCK_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
 
-export const run = internalAction({
+export const recoverStuckDeclarations = internalAction({
   args: {},
   handler: async (ctx) => {
     // 1. Find declarations stuck in Processing
