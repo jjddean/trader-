@@ -3,19 +3,25 @@ import { mutation, query } from "./_generated/server";
 
 export const saveToken = mutation({
   args: {
-    userId: v.string(), // Clerk userId
+    userId: v.optional(v.string()), // Clerk userId — cross-checked against the authenticated identity
     accessToken: v.string(),
     refreshToken: v.optional(v.string()),
     expiresIn: v.number(),
     eori: v.optional(v.string())
   },
   handler: async (ctx, args) => {
+    // HMRC tokens are credentials — writes MUST be authenticated. The caller's
+    // Convex identity is authoritative; a supplied userId may only match it,
+    // never override it (previously an unauthenticated caller could plant
+    // tokens under any userId).
     const identity = await ctx.auth.getUserIdentity();
-    const effectiveUserId = identity?.subject || args.userId;
-
-    if (!effectiveUserId) {
-      throw new Error("Unauthenticated: No user identity or userId provided");
+    if (!identity) {
+      throw new Error("Unauthenticated: HMRC token writes require an authenticated session");
     }
+    if (args.userId && args.userId !== identity.subject) {
+      throw new Error("Forbidden: cannot write HMRC tokens for another user");
+    }
+    const effectiveUserId = identity.subject;
 
     const expiresAt = Date.now() + args.expiresIn * 1000;
     
@@ -106,14 +112,16 @@ export const disconnectToken = mutation({
 export const getToken = query({
   args: { userId: v.optional(v.string()) },
   handler: async (ctx, args) => {
+    // Token rows contain access AND refresh tokens — never serve them to an
+    // unauthenticated caller, and never to a caller asking for another user's
+    // tokens. The authenticated identity is the only key we trust.
     const identity = await ctx.auth.getUserIdentity();
-    const effectiveUserId = identity?.subject || args.userId;
-    
-    if (!effectiveUserId) return null;
+    if (!identity) return null;
+    if (args.userId && args.userId !== identity.subject) return null;
 
     return await ctx.db
       .query("hmrc_tokens")
-      .withIndex("by_user", (q) => q.eq("userId", effectiveUserId))
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .first();
   },
 });

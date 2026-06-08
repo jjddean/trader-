@@ -115,7 +115,7 @@ export async function pullHmrcNotificationsForConversation(params: {
 
     const notifBody = await notifResponse.text();
     const payload = extractNotificationPayload(notifBody);
-    const { notificationType, mrn, errorCodes, fieldErrors } = parseHmrcNotification(payload);
+    const { notificationType, mrn, errorCodes, fieldErrors, issueDateTime } = parseHmrcNotification(payload);
     const idempotencyKey = buildHmrcNotificationIdempotencyKey(payload);
     console.log(
       `[HMRC-PULL] Parsed: type=${notificationType}, mrn=${mrn}, errorCodes=${errorCodes.join(",") || "none"}`,
@@ -130,6 +130,7 @@ export async function pullHmrcNotificationsForConversation(params: {
       rawPayload: payload,
       idempotencyKey,
       hmrcNotificationId: notifId,
+      issueDateTime,
       source: "pull",
       timestamp: new Date().toISOString(),
     });

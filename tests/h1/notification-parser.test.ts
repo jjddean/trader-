@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { parseHmrcNotification } from "../../src/lib/hmrc-notification-parser";
+import { parseHmrcNotification, hmrc304ToIso } from "../../src/lib/hmrc-notification-parser";
 
 describe("HMRC DMS notification parser", () => {
   it("extracts DMSACC and MRN from accepted notification XML", () => {
@@ -134,5 +134,30 @@ describe("HMRC DMS notification parser", () => {
         reason: "Commodity code is not valid for the declared procedure.",
       },
     ]);
+  });
+
+  it("extracts HMRC IssueDateTime (formatCode 304) as ISO", () => {
+    const parsed = parseHmrcNotification(`
+      <_2_1:Response xmlns:_2_1="urn:wco:datamodel:WCO:RES-DMS:2">
+        <_2_1:FunctionCode>09</_2_1:FunctionCode>
+        <_2_1:IssueDateTime>
+          <_2_2:DateTimeString formatCode="304" xmlns:_2_2="urn:wco:datamodel:WCO:Response_DS:DMS:2">20260606140026Z</_2_2:DateTimeString>
+        </_2_1:IssueDateTime>
+        <_2_1:Declaration><_2_1:ID>26GB1234567890ABCD</_2_1:ID></_2_1:Declaration>
+      </_2_1:Response>
+    `);
+    assert.equal(parsed.issueDateTime, "2026-06-06T14:00:26Z");
+  });
+
+  it("leaves issueDateTime undefined when no IssueDateTime present", () => {
+    const parsed = parseHmrcNotification(`<Response><FunctionCode>08</FunctionCode></Response>`);
+    assert.equal(parsed.issueDateTime, undefined);
+  });
+
+  it("hmrc304ToIso parses valid 304 datetime and rejects junk", () => {
+    assert.equal(hmrc304ToIso("20260606140026Z"), "2026-06-06T14:00:26Z");
+    assert.equal(hmrc304ToIso(""), undefined);
+    assert.equal(hmrc304ToIso("not-a-date"), undefined);
+    assert.equal(hmrc304ToIso(null), undefined);
   });
 });

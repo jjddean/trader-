@@ -52,6 +52,7 @@ import type * as rule_definitions from "../rule_definitions.js";
 import type * as rule_seed from "../rule_seed.js";
 import type * as seed_reference_data from "../seed_reference_data.js";
 import type * as stripe_webhooks from "../stripe_webhooks.js";
+import type * as submissions from "../submissions.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as tariff_internal from "../tariff_internal.js";
 import type * as users from "../users.js";
@@ -110,6 +111,7 @@ declare const fullApi: ApiFromModules<{
   rule_seed: typeof rule_seed;
   seed_reference_data: typeof seed_reference_data;
   stripe_webhooks: typeof stripe_webhooks;
+  submissions: typeof submissions;
   subscriptions: typeof subscriptions;
   tariff_internal: typeof tariff_internal;
   users: typeof users;

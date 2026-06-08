@@ -575,6 +575,46 @@ export const deleteDeclaration = mutation({
   },
 });
 
+/**
+ * Atomically claim a declaration for submission. Prevents duplicate *live*
+ * declarations caused by double-clicks or concurrent POSTs: the status is
+ * read and flipped to "Processing" in one transaction, so a second call while
+ * the first is in flight is rejected. Live declarations (Accepted/Amended)
+ * must be amended, not re-submitted. Returns the prior status/MRN so the route
+ * can revert if the HMRC call fails.
+ */
+export const beginSubmission = mutation({
+  args: { id: v.id("declarations") },
+  returns: v.object({ prevStatus: v.string(), prevMrn: v.string() }),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const existing = await ctx.db.get(args.id);
+    if (!existing || existing.userId !== identity.subject) {
+      throw new Error("Unauthorized");
+    }
+
+    const status = String(existing.status ?? "Draft");
+    const blocked = [
+      "Processing",
+      "Accepted",
+      "Amended",
+      "Amendment Processing",
+      "Cancellation Requested",
+    ];
+    if (blocked.includes(status)) {
+      throw new Error(
+        `SUBMIT_BLOCKED: declaration is "${status}" — cannot submit. Amend a live declaration, or wait for the in-flight submission to finish.`,
+      );
+    }
+
+    await ctx.db.patch(args.id, { status: "Processing", lastUpdated: Date.now() });
+    await upsertDeclarationPreviewByDeclaration(ctx, args.id);
+    return { prevStatus: status, prevMrn: String(existing.mrn ?? "") };
+  },
+});
+
 export const updateDeclarationStatus = mutation({
   args: {
     id: v.id("declarations"),

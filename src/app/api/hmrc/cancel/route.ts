@@ -78,13 +78,53 @@ export async function POST(request: Request) {
       eori,
     );
 
+    const recordCancelEvidence = async (
+      outcome: "accepted" | "rejected" | "error",
+      hmrcStatus: number,
+      convId: string | null,
+    ) => {
+      try {
+        await convex.mutation(api.submissions.recordSubmission, {
+          declarationId,
+          operation: "cancel",
+          outcome,
+          conversationId: convId || undefined,
+          lrn: cancelLrn,
+          eori,
+          priorMrn: String(mrn).trim() || undefined,
+          hmrcStatus,
+          requestXml: xmlPayload,
+          declarationSnapshot: lane,
+        });
+      } catch (evErr: unknown) {
+        const m = evErr instanceof Error ? evErr.message : String(evErr);
+        console.warn("[CANCEL] Failed to record submission evidence (non-critical):", m);
+      }
+    };
+
     if (hmrcResponse.status === 429) {
+      await recordCancelEvidence("error", 429, null);
+      await logHmrcAudit(convex, userId, "declaration_cancel_failed", {
+        declarationId,
+        mrn,
+        reason: "rate_limited",
+        hmrcStatus: 429,
+      });
       return NextResponse.json({ error: "HMRC rate limit reached" }, { status: 429 });
     }
 
     if (!hmrcResponse.ok) {
       const errorText = await hmrcResponse.text();
       console.error("HMRC Cancellation Error:", hmrcResponse.status, errorText);
+      await recordCancelEvidence("rejected", hmrcResponse.status, hmrcResponse.headers.get("X-Conversation-ID"));
+      await logHmrcAudit(convex, userId, "declaration_cancel_failed", {
+        declarationId,
+        mrn,
+        reason: "hmrc_rejected",
+        hmrcStatus: hmrcResponse.status,
+        conversationId: hmrcResponse.headers.get("X-Conversation-ID") || null,
+        details: errorText.slice(0, 2000),
+      });
       return NextResponse.json(
         { error: "HMRC rejected cancellation", details: errorText },
         { status: hmrcResponse.status },
@@ -97,6 +137,8 @@ export async function POST(request: Request) {
       status: "Cancellation Requested",
       conversationId: conversationId || undefined,
     });
+
+    await recordCancelEvidence("accepted", hmrcResponse.status, conversationId);
 
     await logHmrcAudit(convex, userId, "declaration_cancel_requested", {
       declarationId,

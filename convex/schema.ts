@@ -220,6 +220,8 @@ export default defineSchema({
     hmrcNotificationId: v.optional(v.string()),
     source: v.optional(v.string()),
     timestamp: v.optional(v.any()),
+    // HMRC IssueDateTime (ISO) — authoritative ordering, independent of receipt time.
+    issueDateTime: v.optional(v.string()),
     notificationType: v.optional(v.any()),
     errorCodes: v.optional(v.any()),
     fieldErrors: v.optional(v.any()),
@@ -233,7 +235,8 @@ export default defineSchema({
     .index("by_conversationId", ["conversationId"])
     .index("by_declaration", ["declarationId"])
     .index("by_conv_type_ts", ["conversationId", "notificationType", "timestamp"]) // used for dedupe
-    .index("by_idempotencyKey", ["idempotencyKey"]),
+    .index("by_idempotencyKey", ["idempotencyKey"])
+    .index("by_hmrcNotificationId", ["hmrcNotificationId"]),
 
   dashboard_summary: defineTable({
     userId: v.string(),
@@ -429,5 +432,29 @@ export default defineSchema({
   })
     .index("by_declaration", ["declarationId"])
     .index("by_declaration_status", ["declarationId", "status"])
+    .index("by_user", ["userId"]),
+
+  // Immutable, append-only evidence of every request sent to HMRC. Captures the
+  // exact request XML, the LRN used, and a point-in-time snapshot of the
+  // declaration + items AS SUBMITTED — so a submission can be reconstructed for
+  // audit even after the editable declaration/goods_items rows change. Never
+  // patched or deleted.
+  submissions: defineTable({
+    declarationId: v.id("declarations"),
+    userId: v.string(),
+    operation: v.string(), // "submit" | "amend" | "cancel"
+    outcome: v.optional(v.string()), // "accepted" | "rejected" | "error"
+    conversationId: v.optional(v.string()),
+    lrn: v.optional(v.string()),
+    eori: v.optional(v.string()),
+    priorMrn: v.optional(v.string()),
+    hmrcStatus: v.optional(v.number()),
+    requestXml: v.string(),
+    declarationSnapshot: v.optional(v.any()),
+    itemsSnapshot: v.optional(v.any()),
+    createdAt: v.number(),
+  })
+    .index("by_declaration", ["declarationId"])
+    .index("by_conversationId", ["conversationId"])
     .index("by_user", ["userId"]),
 });

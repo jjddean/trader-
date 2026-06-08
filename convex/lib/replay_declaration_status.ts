@@ -13,6 +13,15 @@ export interface NotificationRowForReplay {
   fieldErrors?: Array<{ field: string; reason: string; code?: string }>;
   errorCodes?: string[];
   timestamp?: string | number;
+  /** HMRC IssueDateTime (ISO) — authoritative order when present. */
+  issueDateTime?: string | null;
+}
+
+/** HMRC IssueDateTime is authoritative; fall back to local receipt timestamp. */
+function replayOrderKey(n: NotificationRowForReplay): number {
+  const issue = new Date(String(n.issueDateTime ?? "")).getTime();
+  if (Number.isFinite(issue)) return issue;
+  return new Date(String(n.timestamp ?? 0)).getTime();
 }
 
 /** Replay HMRC notifications (current MRN only) to derive display status. */
@@ -26,10 +35,7 @@ export function replayDeclarationStatus(
     ? notifications.filter((n) => String(n.mrn ?? "").trim() === currentMrn)
     : notifications;
 
-  const ordered = [...scoped].sort(
-    (a, b) =>
-      new Date(String(a.timestamp ?? 0)).getTime() - new Date(String(b.timestamp ?? 0)).getTime(),
-  );
+  const ordered = [...scoped].sort((a, b) => replayOrderKey(a) - replayOrderKey(b));
 
   let status = storedStatus || "Draft";
   for (const n of ordered) {

@@ -34,6 +34,23 @@ export interface ParsedNotification {
   mrn: string;
   errorCodes: string[];
   fieldErrors: Array<{ field: string; code?: string; reason: string }>;
+  /** HMRC IssueDateTime as ISO-8601, when present — authoritative timeline order. */
+  issueDateTime?: string;
+}
+
+/**
+ * Converts an HMRC formatCode="304" datetime (CCYYMMDDHHMMSSZ, optional ms/tz)
+ * to ISO-8601. Returns undefined if it can't be parsed — callers fall back to
+ * the local receipt timestamp.
+ */
+export function hmrc304ToIso(raw: string | null | undefined): string | undefined {
+  const s = String(raw ?? "").trim();
+  const m = s.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/);
+  if (!m) return undefined;
+  const [, y, mo, d, h, mi, sec] = m;
+  const iso = `${y}-${mo}-${d}T${h}:${mi}:${sec}Z`;
+  const t = new Date(iso).getTime();
+  return Number.isFinite(t) ? iso : undefined;
 }
 
 export function parseHmrcNotification(rawPayload: string): ParsedNotification {
@@ -116,5 +133,11 @@ export function parseHmrcNotification(rawPayload: string): ParsedNotification {
     }
   }
 
-  return { notificationType, mrn, errorCodes, fieldErrors };
+  // IssueDateTime (HMRC formatCode 304) → ISO for authoritative timeline order.
+  const issueDateTimeRaw = rawPayload.match(
+    /<(?:[^>]*:)?IssueDateTime[^>]*>[\s\S]*?<(?:[^>]*:)?DateTimeString[^>]*>([^<]+)<\/(?:[^>]*:)?DateTimeString>/i,
+  )?.[1];
+  const issueDateTime = hmrc304ToIso(issueDateTimeRaw);
+
+  return { notificationType, mrn, errorCodes, fieldErrors, issueDateTime };
 }

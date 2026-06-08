@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     console.log(`[HMRC-WEBHOOK] Received authorized notification for Conversation ID: ${conversationId}`);
     console.log(`[HMRC-WEBHOOK] Payload preview: ${rawPayload.substring(0, 500)}`);
 
-    const { notificationType, mrn, errorCodes, fieldErrors } = parseHmrcNotification(rawPayload);
+    const { notificationType, mrn, errorCodes, fieldErrors, issueDateTime } = parseHmrcNotification(rawPayload);
     console.log(`[HMRC-WEBHOOK] Parsed: type=${notificationType}, mrn=${mrn}, errorCodes=${errorCodes.join(",") || "none"}`);
     const idempotencyKey = buildHmrcNotificationIdempotencyKey(rawPayload);
 
@@ -83,6 +83,7 @@ export async function POST(request: Request) {
       errorCodes,
       rawPayload,
       idempotencyKey,
+      issueDateTime,
       source: "push",
       timestamp: new Date().toISOString(),
     });

@@ -53,10 +53,13 @@ export async function resolveHmrcAccessToken(
     });
 
     if (!refreshResponse.ok) {
+      // Log the raw HMRC response server-side only — never return it to the
+      // client, as it can expose OAuth/token internals.
       const errorText = await refreshResponse.text();
+      console.error("[HMRC] Token refresh failed:", refreshResponse.status, errorText);
       return {
         error: NextResponse.json(
-          { error: "Failed to refresh HMRC token. Please reconnect.", details: errorText },
+          { error: "Failed to refresh HMRC token. Please reconnect." },
           { status: 403 },
         ),
       };

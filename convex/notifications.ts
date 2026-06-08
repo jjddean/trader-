@@ -26,8 +26,25 @@ export const saveWebhook = mutation({
     timestamp: v.string(),
     source: v.optional(v.string()),
     hmrcNotificationId: v.optional(v.string()),
+    issueDateTime: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Dedupe by HMRC notificationId first — stable across push/pull channels.
+    if (args.hmrcNotificationId) {
+      const existingByNotifId = await ctx.db
+        .query("notifications")
+        .withIndex("by_hmrcNotificationId", (q) => q.eq("hmrcNotificationId", args.hmrcNotificationId))
+        .first();
+      if (existingByNotifId) {
+        await ctx.runMutation(api.audit.logAction, {
+          userId: existingByNotifId.userId || "",
+          action: "notification_dedup",
+          metadata: { reason: "hmrcNotificationId", id: existingByNotifId._id, incoming: { conversationId: args.conversationId, notificationType: args.notificationType } },
+        });
+        return existingByNotifId._id;
+      }
+    }
+
     // Dedupe by idempotency key if provided
     if (args.idempotencyKey) {
       const existingByIdemp = await ctx.db
@@ -69,6 +86,7 @@ export const saveWebhook = mutation({
       hmrcNotificationId: args.hmrcNotificationId,
       source: args.source,
       timestamp: args.timestamp,
+      issueDateTime: args.issueDateTime,
       notificationType: args.notificationType,
       errorCodes: args.errorCodes || [],
       fieldErrors: args.fieldErrors || [],

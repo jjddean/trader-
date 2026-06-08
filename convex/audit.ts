@@ -20,6 +20,23 @@ export const logAction = mutation({
   },
 });
 
+// Owner-scoped audit retrieval. Unlike getRecentLogs/getOldLogs (which require
+// an admin `role` claim that the standard Clerk JWT may not carry), this lets a
+// signed-in user read THEIR OWN audit trail — so submission evidence is always
+// retrievable through the app, not just by an admin.
+export const getMyLogs = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+    return await ctx.db
+      .query("auditLogs")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .order("desc")
+      .take(args.limit ?? 200);
+  },
+});
+
 export const getRecentLogs = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();

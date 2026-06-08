@@ -10,6 +10,15 @@ export interface CollectedNotification {
   fieldErrors?: Array<{ field: string; reason: string; code?: string }>;
   errorCodes?: string[];
   timestamp?: string | number;
+  /** HMRC IssueDateTime (ISO) — authoritative order when present. */
+  issueDateTime?: string | null;
+}
+
+/** HMRC IssueDateTime is authoritative; fall back to local receipt timestamp. */
+function orderKey(n: CollectedNotification): number {
+  const issue = new Date(String(n.issueDateTime ?? "")).getTime();
+  if (Number.isFinite(issue)) return issue;
+  return new Date(String(n.timestamp ?? 0)).getTime();
 }
 
 /** Same merge logic as notifications.getWebhooks — declaration + conversation + MRN. */
@@ -78,8 +87,5 @@ export async function collectDeclarationNotifications(
       ? results.filter((n) => String(n.mrn ?? "").trim() === mrn || !String(n.mrn ?? "").trim())
       : results;
 
-  return scoped.sort(
-    (a, b) =>
-      new Date(String(b.timestamp ?? 0)).getTime() - new Date(String(a.timestamp ?? 0)).getTime(),
-  );
+  return scoped.sort((a, b) => orderKey(b) - orderKey(a));
 }

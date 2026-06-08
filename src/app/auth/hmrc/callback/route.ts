@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
-
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -20,16 +19,33 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // Resolve userId: prefer state parameter (set by /api/hmrc/auth), fall back to env var
+  // The signed-in Clerk session is the authority for whose tokens these are —
+  // not the OAuth `state` (which is attacker-controllable and was previously
+  // trusted directly, allowing token linking to an arbitrary user). The state
+  // userId is only used to detect a session/state mismatch (CSRF guard).
+  const clerkAuth = await auth();
+  const sessionUserId = clerkAuth.userId;
   const state = searchParams.get("state") || "";
   const userIdFromState = state.includes(".") ? state.split(".").slice(1).join(".") : null;
-  const userId = userIdFromState || process.env.HMRC_TEST_USER_ID || null;
 
   try {
-    if (!userId) {
-      console.error("No userId available — set HMRC_TEST_USER_ID in .env.local");
-      return NextResponse.redirect(new URL("/dashboard?error=unauthorized", request.url));
+    if (!sessionUserId) {
+      console.error("HMRC callback without an authenticated Clerk session — refusing to link tokens.");
+      return NextResponse.redirect(new URL("/dashboard?error=login_required", request.url));
     }
+    if (userIdFromState && userIdFromState !== sessionUserId) {
+      console.error("HMRC callback state/session mismatch — possible CSRF; refusing.");
+      return NextResponse.redirect(new URL("/dashboard?error=state_mismatch", request.url));
+    }
+    const userId = sessionUserId;
+
+    const convexToken = await clerkAuth.getToken({ template: "convex" });
+    if (!convexToken) {
+      console.error("HMRC callback: no Convex token for session — cannot persist tokens.");
+      return NextResponse.redirect(new URL("/dashboard?error=login_required", request.url));
+    }
+    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+    convex.setAuth(convexToken);
 
     const clientId = process.env.HMRC_CLIENT_ID!;
     const clientSecret = process.env.HMRC_CLIENT_SECRET!;

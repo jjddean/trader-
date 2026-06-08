@@ -275,13 +275,20 @@ export async function POST(request: Request) {
     // cds_code_lists table is empty (seed not run yet) the lookup returns
     // every value as missing — degrade gracefully by treating an empty list
     // as "validation skipped" rather than blocking every submission.
+    // NOTE: this degradation is fail-OPEN. Both "list not seeded" and "lookup
+    // errored" let codes through unvalidated — but they are now logged loudly
+    // instead of swallowed silently, so a missing seed can't hide unnoticed.
     const codeListErrors = await validateCdsCodeLists(payloadInfo, items, async (listName, values) => {
       try {
-        const result = await convex.query(api.cds_codes.validateCodes, { listName, values });
         const seeded = await convex.query(api.cds_codes.listCodes, { listName, limit: 1 });
-        if (!seeded || seeded.length === 0) return [];
+        if (!seeded || seeded.length === 0) {
+          console.warn(`[SUBMIT] Code list '${listName}' is not seeded — skipping validation for ${values.length} value(s) (fail-open).`);
+          return [];
+        }
+        const result = await convex.query(api.cds_codes.validateCodes, { listName, values });
         return result?.missing ?? [];
-      } catch {
+      } catch (lookupErr) {
+        console.error(`[SUBMIT] Code-list lookup for '${listName}' failed — codes left unvalidated (fail-open):`, lookupErr);
         return [];
       }
     });
@@ -378,7 +385,71 @@ export async function POST(request: Request) {
       });
     }
 
-    // 3. Fire the POST request to HMRC
+    // 3. Atomically claim the declaration so a double-click / concurrent POST
+    //    cannot create two live declarations (each submit mints a fresh LRN, so
+    //    HMRC would NOT dedupe them). beginSubmission flips status to Processing
+    //    in one transaction and rejects if already in-flight or live.
+    let claim: { prevStatus: string; prevMrn: string };
+    try {
+      claim = await convex.mutation(api.declarations.beginSubmission, { id: declarationId });
+    } catch (claimErr: unknown) {
+      const msg = claimErr instanceof Error ? claimErr.message : String(claimErr);
+      if (msg.includes("SUBMIT_BLOCKED")) {
+        return NextResponse.json(
+          { error: msg.replace(/^.*SUBMIT_BLOCKED:\s*/, "").trim() || "Declaration cannot be submitted in its current state." },
+          { status: 409 },
+        );
+      }
+      throw claimErr;
+    }
+
+    // Revert the claim so the user can retry after a failed HMRC call.
+    const revertClaim = async () => {
+      try {
+        await convex.mutation(api.declarations.updateDeclarationStatus, {
+          id: declarationId,
+          status: claim.prevStatus,
+          mrn: claim.prevMrn,
+        });
+      } catch (revertErr: unknown) {
+        const m = revertErr instanceof Error ? revertErr.message : String(revertErr);
+        console.warn("[SUBMIT] Failed to revert claim after HMRC failure (non-critical):", m);
+      }
+    };
+
+    // Append-only audit evidence: the exact XML sent, the LRN used, and an
+    // as-submitted snapshot of the declaration + items. Written for every
+    // attempt that reached HMRC (accepted or rejected) so a submission can be
+    // reconstructed later even after the editable rows change. Best-effort:
+    // never let an evidence-write failure change the HMRC outcome the caller sees.
+    const submittedLrn = (payloadInfo as { Declaration?: { FunctionalReferenceID?: string } })
+      ?.Declaration?.FunctionalReferenceID;
+    const recordSubmissionEvidence = async (
+      outcome: "accepted" | "rejected" | "error",
+      hmrcStatus: number,
+      convId: string | null,
+    ) => {
+      try {
+        await convex.mutation(api.submissions.recordSubmission, {
+          declarationId,
+          operation: "submit",
+          outcome,
+          conversationId: convId || undefined,
+          lrn: submittedLrn,
+          eori: String(lane.eori || ""),
+          priorMrn: claim.prevMrn || undefined,
+          hmrcStatus,
+          requestXml: xmlPayload,
+          declarationSnapshot: lane,
+          itemsSnapshot: items,
+        });
+      } catch (evErr: unknown) {
+        const m = evErr instanceof Error ? evErr.message : String(evErr);
+        console.warn("[SUBMIT] Failed to record submission evidence (non-critical):", m);
+      }
+    };
+
+    // 4. Fire the POST request to HMRC
     const hmrcEndpoint = process.env.HMRC_ENVIRONMENT === "sandbox"
       ? `${HMRC_CONFIG.sandboxBaseUrl}/customs/declarations`
       : `${HMRC_CONFIG.productionBaseUrl}/customs/declarations`;
@@ -394,12 +465,30 @@ export async function POST(request: Request) {
     }, request, token, lane.eori);
 
     if (hmrcResponse.status === 429) {
+      await revertClaim();
+      await recordSubmissionEvidence("error", 429, null);
+      await logHmrcAudit(convex, userId, "declaration_submit_failed", {
+        declarationId,
+        reason: "rate_limited",
+        hmrcStatus: 429,
+        environment: process.env.HMRC_ENVIRONMENT || "sandbox",
+      });
       return NextResponse.json({ error: "HMRC rate limit reached, please try again shortly" }, { status: 429 });
     }
 
     if (!hmrcResponse.ok) {
       const errorText = await hmrcResponse.text();
       console.error("HMRC API Submission Error:", hmrcResponse.status, errorText);
+      await revertClaim();
+      await recordSubmissionEvidence("rejected", hmrcResponse.status, hmrcResponse.headers.get("X-Conversation-ID"));
+      await logHmrcAudit(convex, userId, "declaration_submit_failed", {
+        declarationId,
+        reason: "hmrc_rejected",
+        hmrcStatus: hmrcResponse.status,
+        conversationId: hmrcResponse.headers.get("X-Conversation-ID") || null,
+        details: errorText.slice(0, 2000),
+        environment: process.env.HMRC_ENVIRONMENT || "sandbox",
+      });
       return NextResponse.json({
         error: "HMRC Sandbox Rejected Payload",
         details: errorText,
@@ -420,11 +509,19 @@ export async function POST(request: Request) {
       }, { status: hmrcResponse.status });
     }
 
-    // 4. Handle Synchronous Accepted Response (202)
+    // 5. Handle Synchronous Accepted Response (202)
     const conversationId = hmrcResponse.headers.get("X-Conversation-ID");
     const responseText = await hmrcResponse.text();
     if (!conversationId) {
       console.error("HMRC accepted response missing X-Conversation-ID", { status: hmrcResponse.status, responseText });
+      await revertClaim();
+      await recordSubmissionEvidence("error", hmrcResponse.status, null);
+      await logHmrcAudit(convex, userId, "declaration_submit_failed", {
+        declarationId,
+        reason: "missing_conversation_id",
+        hmrcStatus: hmrcResponse.status,
+        environment: process.env.HMRC_ENVIRONMENT || "sandbox",
+      });
       return NextResponse.json({
         error: "HMRC accepted response missing X-Conversation-ID",
         hmrcStatus: hmrcResponse.status,
@@ -445,13 +542,25 @@ export async function POST(request: Request) {
       }, { status: 502 });
     }
 
-    // Update declaration status to Processing
-    await convex.mutation(api.declarations.updateDeclarationStatus, {
-      id: declarationId,
-      status: "Processing",
-      conversationId,
-      mrn: "", // clear old MRN — HMRC assigns a fresh one via DMSACC
-    });
+    // HMRC has accepted (202). From here a Convex error must NOT surface as a
+    // 500 — that would make the caller believe the submit failed and retry,
+    // creating a duplicate live declaration. Persist best-effort and report
+    // success regardless, flagging if the status write didn't land.
+    let statusPersisted = true;
+    try {
+      await convex.mutation(api.declarations.updateDeclarationStatus, {
+        id: declarationId,
+        status: "Processing",
+        conversationId,
+        mrn: "", // clear old MRN — HMRC assigns a fresh one via DMSACC
+      });
+    } catch (statusErr: unknown) {
+      statusPersisted = false;
+      const m = statusErr instanceof Error ? statusErr.message : String(statusErr);
+      console.error("[SUBMIT] HMRC accepted (202) but status persist failed:", m);
+    }
+
+    await recordSubmissionEvidence("accepted", hmrcResponse.status, conversationId);
 
     schedulePostSubmitNotificationPulls({
       conversationId,
@@ -460,18 +569,19 @@ export async function POST(request: Request) {
       convex,
     });
 
-    // 5. Audit Log Entry (non-critical, don't crash submission on failure)
+    // Audit Log Entry (logHmrcAudit is internally non-fatal)
     await logHmrcAudit(convex, userId, "declaration_submitted", {
       declarationId,
-      mrn: lane.mrn || "Draft",
       environment: process.env.HMRC_ENVIRONMENT || "sandbox",
       conversationId,
       hmrcStatus: hmrcResponse.status,
+      statusPersisted,
     });
 
     return NextResponse.json({
       success: true,
       status: "Processing",
+      statusPersisted,
       conversationId,
       hmrcStatus: hmrcResponse.status,
       requestEvidence: {
