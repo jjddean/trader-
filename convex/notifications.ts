@@ -15,6 +15,7 @@ export const saveWebhook = mutation({
     mrn: v.string(),
     conversationId: v.string(),
     notificationType: v.string(),
+    idempotencyKey: v.optional(v.string()),
     errorCodes: v.optional(v.array(v.string())),
     fieldErrors: v.optional(v.array(v.object({
       field: v.string(),
@@ -22,75 +23,56 @@ export const saveWebhook = mutation({
       reason: v.string(),
     }))),
     rawPayload: v.string(),
-    idempotencyKey: v.optional(v.string()),
-    hmrcNotificationId: v.optional(v.string()),
-    source: v.optional(v.string()),
     timestamp: v.string(),
+    source: v.optional(v.string()),
+    hmrcNotificationId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Dedupe by idempotency key if provided
     if (args.idempotencyKey) {
-      const existing = await ctx.db
+      const existingByIdemp = await ctx.db
         .query("notifications")
         .withIndex("by_idempotencyKey", (q) => q.eq("idempotencyKey", args.idempotencyKey))
         .first();
-      if (existing) {
+      if (existingByIdemp) {
         await ctx.runMutation(api.audit.logAction, {
-          userId: "system",
-          action: "notification_dedupe_skipped",
-          metadata: {
-            reason: "idempotencyKey",
-            idempotencyKey: args.idempotencyKey,
-            existingNotificationId: existing._id,
-            hmrcNotificationId: args.hmrcNotificationId,
-            source: args.source,
-            conversationId: args.conversationId,
-            notificationType: args.notificationType,
-            timestamp: args.timestamp,
-          },
+          userId: existingByIdemp.userId || "",
+          action: "notification_dedup",
+          metadata: { reason: "idempotencyKey", id: existingByIdemp._id, incoming: { conversationId: args.conversationId, notificationType: args.notificationType } },
         });
-        return existing._id;
+        return existingByIdemp._id;
       }
     }
 
-    // Dedup: skip insert if an identical notification already exists
+    // Dedupe by conversationId + type + timestamp
     if (args.conversationId && args.notificationType && args.timestamp) {
-      const existing = await ctx.db
+      const existingByConv = await ctx.db
         .query("notifications")
         .withIndex("by_conv_type_ts", (q) =>
-          q.eq("conversationId", args.conversationId)
-           .eq("notificationType", args.notificationType)
-           .eq("timestamp", args.timestamp)
+          q.eq("conversationId", args.conversationId).eq("notificationType", args.notificationType).eq("timestamp", args.timestamp),
         )
         .first();
-      if (existing) {
+      if (existingByConv) {
         await ctx.runMutation(api.audit.logAction, {
-          userId: "system",
-          action: "notification_dedupe_skipped",
-          metadata: {
-            reason: "conv_type_ts",
-            existingNotificationId: existing._id,
-            hmrcNotificationId: args.hmrcNotificationId,
-            source: args.source,
-            conversationId: args.conversationId,
-            notificationType: args.notificationType,
-            timestamp: args.timestamp,
-          },
+          userId: existingByConv.userId || "",
+          action: "notification_dedup",
+          metadata: { reason: "conv_type_ts", id: existingByConv._id, incoming: { idempotencyKey: args.idempotencyKey } },
         });
-        return existing._id;
+        return existingByConv._id;
       }
     }
 
     const notificationId = await ctx.db.insert("notifications", {
       mrn: args.mrn,
       conversationId: args.conversationId,
+      idempotencyKey: args.idempotencyKey,
+      hmrcNotificationId: args.hmrcNotificationId,
+      source: args.source,
       timestamp: args.timestamp,
       notificationType: args.notificationType,
       errorCodes: args.errorCodes || [],
       fieldErrors: args.fieldErrors || [],
       rawPayload: args.rawPayload,
-      idempotencyKey: args.idempotencyKey,
-      hmrcNotificationId: args.hmrcNotificationId,
-      source: args.source,
       processed: false,
     });
 

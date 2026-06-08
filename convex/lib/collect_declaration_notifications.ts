@@ -55,22 +55,6 @@ export async function collectDeclarationNotifications(
         ),
       );
     }
-    // Also include MRN-only notifications when we have a conversationId.
-    // Some HMRC notifications (e.g., DMSCLE) may arrive with only an MRN
-    // and no conversationId; excluding them loses timeline entries. We
-    // therefore fetch by_mrn and include rows that do NOT have a
-    // conversationId (MRN-only), avoiding replay of older conversation-scoped rows.
-    if (mrn && mrn !== "UNKNOWN") {
-      const mrnResults = await db
-        .query("notifications")
-        .withIndex("by_mrn", (q) => q.eq("mrn", mrn))
-        .take(100);
-      push(
-        (mrnResults as CollectedNotification[]).filter(
-          (n) => !String(n.conversationId ?? "").trim(),
-        ),
-      );
-    }
   } else {
     if (args.declarationId) {
       const declResults = await db
@@ -89,11 +73,10 @@ export async function collectDeclarationNotifications(
     }
   }
 
-  const scoped = (args.declarationId || conversationId)
-    ? results
-    : mrn && mrn !== "UNKNOWN"
-    ? results.filter((n) => String(n.mrn ?? "").trim() === mrn || !String(n.mrn ?? "").trim())
-    : results;
+  const scoped =
+    mrn && mrn !== "UNKNOWN"
+      ? results.filter((n) => String(n.mrn ?? "").trim() === mrn || !String(n.mrn ?? "").trim())
+      : results;
 
   return scoped.sort(
     (a, b) =>

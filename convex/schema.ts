@@ -57,6 +57,7 @@ export default defineSchema({
     storagePath: v.optional(v.any()), // e.g., "/hs/latest.json"
     storageUrl: v.optional(v.any()), // Optional full URL if not using a proxy
     lastUpdated: v.optional(v.any()),
+    submittedAt: v.optional(v.any()),
   }).index("by_name", ["name"]),
 
   hmrc_tokens: defineTable({
@@ -97,7 +98,6 @@ export default defineSchema({
     eori: v.optional(v.any()),
     mrn: v.optional(v.any()),
     created: v.optional(v.any()),
-    submittedAt: v.optional(v.any()),
     lastUpdated: v.optional(v.any()),
     conversationId: v.optional(v.any()),
     declarationType: v.optional(v.any()),
@@ -216,18 +216,24 @@ export default defineSchema({
   notifications: defineTable({
     mrn: v.optional(v.any()),
     conversationId: v.optional(v.any()),
+    idempotencyKey: v.optional(v.string()),
+    hmrcNotificationId: v.optional(v.string()),
+    source: v.optional(v.string()),
     timestamp: v.optional(v.any()),
     notificationType: v.optional(v.any()),
     errorCodes: v.optional(v.any()),
     fieldErrors: v.optional(v.any()),
     rawPayload: v.optional(v.any()),
-    idempotencyKey: v.optional(v.any()),
-    hmrcNotificationId: v.optional(v.any()),
-    source: v.optional(v.any()),
     processed: v.optional(v.any()),
     userId: v.optional(v.any()),
     declarationId: v.optional(v.any()),
-  }).index("by_mrn", ["mrn"]).index("by_user", ["userId"]).index("by_conversationId", ["conversationId"]).index("by_declaration", ["declarationId"]).index("by_conv_type_ts", ["conversationId", "notificationType", "timestamp"]).index("by_idempotencyKey", ["idempotencyKey"]),
+  })
+    .index("by_mrn", ["mrn"])
+    .index("by_user", ["userId"])
+    .index("by_conversationId", ["conversationId"])
+    .index("by_declaration", ["declarationId"])
+    .index("by_conv_type_ts", ["conversationId", "notificationType", "timestamp"]) // used for dedupe
+    .index("by_idempotencyKey", ["idempotencyKey"]),
 
   dashboard_summary: defineTable({
     userId: v.string(),

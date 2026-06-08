@@ -317,42 +317,43 @@ async function upsertDeclarationPreviewByDeclaration(
   }
 }
 
+export const recomputeDashboardSummary = internalMutation({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    await recomputeDashboardSummaryByUser(ctx, args.userId);
+  },
+});
+
 export const getStuckProcessingDeclarations = internalQuery({
   args: { olderThanMs: v.number() },
+  returns: v.array(
+    v.object({
+      _id: v.id("declarations"),
+      userId: v.optional(v.string()),
+      conversationId: v.optional(v.string()),
+      lastUpdated: v.optional(v.number()),
+    }),
+  ),
   handler: async (ctx, args) => {
     const cutoff = Date.now() - args.olderThanMs;
-    const rows = await ctx.db
-      .query("declarations")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("status"), "Processing"),
-          q.lt(q.field("lastUpdated"), cutoff),
-        )
-      )
-      .take(50);
-    return rows.map((r) => ({
-      _id: r._id as string,
-      userId: String(r.userId ?? ""),
-      conversationId: r.conversationId as string | null | undefined,
-    }));
+    const rows = await ctx.db.query("declarations").take(5000);
+    const stuck = rows
+      .filter((r: any) => String(r.status || "").toLowerCase() === "processing" && Number(r.lastUpdated || r.created || 0) < cutoff)
+      .map((r: any) => ({ _id: r._id, userId: r.userId || undefined, conversationId: r.conversationId || undefined, lastUpdated: Number(r.lastUpdated || r.created || 0) }));
+    return stuck;
   },
 });
 
 export const getHmrcTokenForUser = internalQuery({
   args: { userId: v.string() },
+  returns: v.union(v.object({ accessToken: v.optional(v.string()) }), v.null()),
   handler: async (ctx, args) => {
-    const token = await ctx.db
+    const row = await ctx.db
       .query("hmrc_tokens")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q: any) => q.eq("userId", args.userId))
       .first();
-    return token ? { accessToken: String(token.accessToken ?? "") } : null;
-  },
-});
-
-export const recomputeDashboardSummary = internalMutation({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
-    await recomputeDashboardSummaryByUser(ctx, args.userId);
+    if (!row) return null;
+    return { accessToken: row.accessToken };
   },
 });
 
@@ -595,7 +596,6 @@ export const updateDeclarationStatus = mutation({
       lastUpdated: Date.now(),
     };
     if (args.conversationId) patchObj.conversationId = args.conversationId;
-    if (args.status === "Processing" && args.conversationId) patchObj.submittedAt = Date.now();
     // Clearing the MRN on re-submit (mrn: "") is intentional — HMRC assigns a
     // fresh MRN via DMSACC, so an empty string must overwrite the old value.
     if (args.mrn !== undefined) patchObj.mrn = args.mrn;
@@ -655,12 +655,6 @@ export const updateDeclarationDetails = mutation({
       ...(args.transportMode !== undefined ? { transportMode: args.transportMode } : {}),
       ...(args.transportId !== undefined ? { transportId: args.transportId } : {}),
       ...(args.transportIdType !== undefined ? { transportIdType: args.transportIdType } : {}),
-      ...(args.destinationCountry !== undefined ? { destinationCountry: args.destinationCountry } : {}),
-      ...(args.importerEori !== undefined ? { importerEori: args.importerEori } : {}),
-      ...(args.invoiceCurrency !== undefined ? { invoiceCurrency: args.invoiceCurrency } : {}),
-      ...(args.invoiceTotal !== undefined ? { invoiceTotal: args.invoiceTotal } : {}),
-      ...(args.locationId !== undefined ? { locationId: args.locationId } : {}),
-      ...(args.presentationOffice !== undefined ? { presentationOffice: args.presentationOffice } : {}),
       lastUpdated: Date.now(),
     });
     await upsertDeclarationPreviewByDeclaration(ctx, args.id);

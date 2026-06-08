@@ -12,7 +12,6 @@ import type * as actions_cds_codes from "../actions/cds_codes.js";
 import type * as actions_companies from "../actions/companies.js";
 import type * as actions_currency from "../actions/currency.js";
 import type * as actions_hmrc from "../actions/hmrc.js";
-import type * as actions_recoverStuckDeclarations from "../actions/recoverStuckDeclarations.js";
 import type * as actions_stripe from "../actions/stripe.js";
 import type * as actions_tariff from "../actions/tariff.js";
 import type * as admin_subscriptions from "../admin_subscriptions.js";
@@ -71,7 +70,6 @@ declare const fullApi: ApiFromModules<{
   "actions/companies": typeof actions_companies;
   "actions/currency": typeof actions_currency;
   "actions/hmrc": typeof actions_hmrc;
-  "actions/recoverStuckDeclarations": typeof actions_recoverStuckDeclarations;
   "actions/stripe": typeof actions_stripe;
   "actions/tariff": typeof actions_tariff;
   admin_subscriptions: typeof admin_subscriptions;

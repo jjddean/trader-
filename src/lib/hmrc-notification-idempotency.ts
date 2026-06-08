@@ -1,9 +1,11 @@
-import { createHash } from "node:crypto";
+import { createHash } from "crypto";
 
-function normalizePayload(rawPayload: string): string {
-  return rawPayload.replace(/\r\n/g, "\n").trim();
+// Build a stable idempotency key for an HMRC notification payload.
+// Uses SHA-256 of the trimmed payload so identical payloads map to the same key.
+export function buildHmrcNotificationIdempotencyKey(rawPayload: string | null | undefined): string {
+  const normalized = (rawPayload || "").trim();
+  const hash = createHash("sha256").update(normalized, "utf8").digest("hex");
+  return `hmrc:${hash}`;
 }
 
-export function buildHmrcNotificationIdempotencyKey(rawPayload: string): string {
-  return createHash("sha256").update(normalizePayload(rawPayload), "utf8").digest("hex");
-}
+export default buildHmrcNotificationIdempotencyKey;
