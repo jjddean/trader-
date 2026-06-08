@@ -22,9 +22,64 @@ export const saveWebhook = mutation({
       reason: v.string(),
     }))),
     rawPayload: v.string(),
+    idempotencyKey: v.optional(v.string()),
+    hmrcNotificationId: v.optional(v.string()),
+    source: v.optional(v.string()),
     timestamp: v.string(),
   },
   handler: async (ctx, args) => {
+    if (args.idempotencyKey) {
+      const existing = await ctx.db
+        .query("notifications")
+        .withIndex("by_idempotencyKey", (q) => q.eq("idempotencyKey", args.idempotencyKey))
+        .first();
+      if (existing) {
+        await ctx.runMutation(api.audit.logAction, {
+          userId: "system",
+          action: "notification_dedupe_skipped",
+          metadata: {
+            reason: "idempotencyKey",
+            idempotencyKey: args.idempotencyKey,
+            existingNotificationId: existing._id,
+            hmrcNotificationId: args.hmrcNotificationId,
+            source: args.source,
+            conversationId: args.conversationId,
+            notificationType: args.notificationType,
+            timestamp: args.timestamp,
+          },
+        });
+        return existing._id;
+      }
+    }
+
+    // Dedup: skip insert if an identical notification already exists
+    if (args.conversationId && args.notificationType && args.timestamp) {
+      const existing = await ctx.db
+        .query("notifications")
+        .withIndex("by_conv_type_ts", (q) =>
+          q.eq("conversationId", args.conversationId)
+           .eq("notificationType", args.notificationType)
+           .eq("timestamp", args.timestamp)
+        )
+        .first();
+      if (existing) {
+        await ctx.runMutation(api.audit.logAction, {
+          userId: "system",
+          action: "notification_dedupe_skipped",
+          metadata: {
+            reason: "conv_type_ts",
+            existingNotificationId: existing._id,
+            hmrcNotificationId: args.hmrcNotificationId,
+            source: args.source,
+            conversationId: args.conversationId,
+            notificationType: args.notificationType,
+            timestamp: args.timestamp,
+          },
+        });
+        return existing._id;
+      }
+    }
+
     const notificationId = await ctx.db.insert("notifications", {
       mrn: args.mrn,
       conversationId: args.conversationId,
@@ -33,6 +88,9 @@ export const saveWebhook = mutation({
       errorCodes: args.errorCodes || [],
       fieldErrors: args.fieldErrors || [],
       rawPayload: args.rawPayload,
+      idempotencyKey: args.idempotencyKey,
+      hmrcNotificationId: args.hmrcNotificationId,
+      source: args.source,
       processed: false,
     });
 

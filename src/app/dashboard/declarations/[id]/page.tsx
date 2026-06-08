@@ -200,14 +200,11 @@ export default function CoreSchemaPage() {
                 Declaration Category
                 <span className="text-red-500">*</span>
               </label>
-              <Select
-                value={formData.declarationType}
-                onValueChange={(val) => setFormData({ ...formData, declarationType: val })}
-              >
-                <SelectTrigger className="w-full text-sm">
-                  <SelectValue placeholder="Select type" />
+              <Select value={formData.declarationType} onValueChange={(v) => setFormData({ ...formData, declarationType: v })}>
+                <SelectTrigger className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+                  <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper">
                   <SelectItem value="H1">H1 (Release for Free Circulation)</SelectItem>
                 </SelectContent>
               </Select>
@@ -218,14 +215,11 @@ export default function CoreSchemaPage() {
               <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                 Customs Routing
               </label>
-              <Select
-                value={formData.route}
-                onValueChange={(val) => setFormData({ ...formData, route: val })}
-              >
-                <SelectTrigger className="w-full text-sm">
-                  <SelectValue placeholder="Select route" />
+              <Select value={formData.route} onValueChange={(v) => setFormData({ ...formData, route: v })}>
+                <SelectTrigger className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+                  <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent position="popper">
                   <SelectItem value="Route 1">Route 1 (Documentary Check)</SelectItem>
                   <SelectItem value="Route 2">Route 2 (Physical Exam)</SelectItem>
                   <SelectItem value="Route 6">Route 6 (Direct Clearance)</SelectItem>
@@ -241,16 +235,16 @@ export default function CoreSchemaPage() {
                 Dispatch Country (DE 5/14)
                 <span className="text-red-500">*</span>
               </label>
-              <select
-                value={formData.dispatchCountry}
-                onChange={(e) => setFormData({ ...formData, dispatchCountry: e.target.value })}
-                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
-              >
-                <option value="">Country goods shipped FROM</option>
-                {countries.map((c) => (
-                  <option key={c.code} value={c.code}>{c.name} ({c.code})</option>
-                ))}
-              </select>
+              <Select value={formData.dispatchCountry} onValueChange={(v) => setFormData({ ...formData, dispatchCountry: v })}>
+                <SelectTrigger className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+                  <SelectValue placeholder="Country goods shipped FROM" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="max-h-[300px]">
+                  {countries.map((c) => (
+                    <SelectItem key={c.code} value={c.code} className="text-xs">{c.name} ({c.code})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <p className="text-[10px] text-gray-400 flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 Country goods were shipped FROM — never GB for a third-country import.
@@ -263,16 +257,16 @@ export default function CoreSchemaPage() {
                 Destination Country (DE 5/8)
                 <span className="text-red-500">*</span>
               </label>
-              <select
-                value={formData.destinationCountry}
-                onChange={(e) => setFormData({ ...formData, destinationCountry: e.target.value })}
-                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
-              >
-                <option value="">Country goods shipped TO</option>
-                {countries.map((c) => (
-                  <option key={c.code} value={c.code}>{c.name} ({c.code})</option>
-                ))}
-              </select>
+              <Select value={formData.destinationCountry} onValueChange={(v) => setFormData({ ...formData, destinationCountry: v })}>
+                <SelectTrigger className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+                  <SelectValue placeholder="Country goods shipped TO" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="max-h-[300px]">
+                  {countries.map((c) => (
+                    <SelectItem key={c.code} value={c.code} className="text-xs">{c.name} ({c.code})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* DE 5/23 — PORT = Name+ID only; ADDRESS = separate mode (not mixed). */}
@@ -281,23 +275,16 @@ export default function CoreSchemaPage() {
                 Goods location method (DE 5/23)
                 <span className="text-red-500">*</span>
               </label>
-              <select
-                value={formData.goodsLocationKind}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    goodsLocationKind: e.target.value as GoodsLocationKind | "",
-                  })
-                }
-                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
-              >
-                <option value="">Select how the location is identified</option>
-                {GOODS_LOCATION_KIND_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+              <Select value={formData.goodsLocationKind} onValueChange={(v) => setFormData({ ...formData, goodsLocationKind: v as GoodsLocationKind | "" })}>
+                <SelectTrigger className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+                  <SelectValue placeholder="Select how the location is identified" />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  {GOODS_LOCATION_KIND_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {formData.goodsLocationKind === "port" && (
                 <p className="text-[10px] text-gray-500">
                   Port mode splits the Appendix 16C code into XML: chars 1–2 → Address.CountryCode, char 3 → TypeCode, char 4 → Address.TypeCode, remainder → Name (see spec/de-5-23-goods-location.md).
@@ -426,22 +413,21 @@ export default function CoreSchemaPage() {
                   Transport Mode (DE 7/4)
                   <span className="text-red-500">*</span>
                 </label>
-                <select
-                  required
-                  value={formData.transportMode}
-                  onChange={(e) => setFormData({ ...formData, transportMode: e.target.value })}
-                  className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
-                >
-                  <option value="">Select mode</option>
-                  <option value="1">1 — Sea</option>
-                  <option value="2">2 — Rail</option>
-                  <option value="3">3 — Road</option>
-                  <option value="4">4 — Air</option>
-                  <option value="5">5 — Postal</option>
-                  <option value="7">7 — Fixed transport installations</option>
-                  <option value="8">8 — Inland waterway</option>
-                  <option value="9">9 — Mode unknown</option>
-                </select>
+                <Select value={formData.transportMode} onValueChange={(v) => setFormData({ ...formData, transportMode: v })}>
+                  <SelectTrigger className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+                    <SelectValue placeholder="Select mode" />
+                  </SelectTrigger>
+                  <SelectContent position="popper">
+                    <SelectItem value="1">1 — Sea</SelectItem>
+                    <SelectItem value="2">2 — Rail</SelectItem>
+                    <SelectItem value="3">3 — Road</SelectItem>
+                    <SelectItem value="4">4 — Air</SelectItem>
+                    <SelectItem value="5">5 — Postal</SelectItem>
+                    <SelectItem value="7">7 — Fixed transport installations</SelectItem>
+                    <SelectItem value="8">8 — Inland waterway</SelectItem>
+                    <SelectItem value="9">9 — Mode unknown</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -449,20 +435,19 @@ export default function CoreSchemaPage() {
                   Identification Type (DE 7/9)
                   <span className="text-red-500">*</span>
                 </label>
-                <select
-                  required
-                  value={formData.transportIdType}
-                  onChange={(e) => setFormData({ ...formData, transportIdType: e.target.value })}
-                  className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
-                >
-                  <option value="">Select identifier type</option>
-                  <option value="10">10 — IMO ship identification number</option>
-                  <option value="11">11 — Name of seagoing vessel</option>
-                  <option value="20">20 — Wagon number</option>
-                  <option value="30">30 — Vehicle registration number</option>
-                  <option value="40">40 — IATA flight number</option>
-                  <option value="41">41 — Registration of aircraft</option>
-                </select>
+                <Select value={formData.transportIdType} onValueChange={(v) => setFormData({ ...formData, transportIdType: v })}>
+                  <SelectTrigger className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+                    <SelectValue placeholder="Select identifier type" />
+                  </SelectTrigger>
+                  <SelectContent position="popper">
+                    <SelectItem value="10">10 — IMO ship identification number</SelectItem>
+                    <SelectItem value="11">11 — Name of seagoing vessel</SelectItem>
+                    <SelectItem value="20">20 — Wagon number</SelectItem>
+                    <SelectItem value="30">30 — Vehicle registration number</SelectItem>
+                    <SelectItem value="40">40 — IATA flight number</SelectItem>
+                    <SelectItem value="41">41 — Registration of aircraft</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">

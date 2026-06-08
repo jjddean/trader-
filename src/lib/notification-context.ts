@@ -1,4 +1,3 @@
-import { normalizeNotificationType } from "./notification-labels";
 import {
   hasAmendLrnInPayload,
   hasCancelLrnInPayload,

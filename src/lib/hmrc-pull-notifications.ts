@@ -3,6 +3,7 @@ import { api } from "../../convex/_generated/api";
 import { fetchHmrc } from "./hmrc-fetch";
 import { HMRC_CONFIG } from "./hmrc-config";
 import { parseHmrcNotification } from "./hmrc-notification-parser";
+import { buildHmrcNotificationIdempotencyKey } from "./hmrc-notification-idempotency";
 
 export type PullNotificationsResult = {
   conversationId: string;
@@ -115,6 +116,7 @@ export async function pullHmrcNotificationsForConversation(params: {
     const notifBody = await notifResponse.text();
     const payload = extractNotificationPayload(notifBody);
     const { notificationType, mrn, errorCodes, fieldErrors } = parseHmrcNotification(payload);
+    const idempotencyKey = buildHmrcNotificationIdempotencyKey(payload);
     console.log(
       `[HMRC-PULL] Parsed: type=${notificationType}, mrn=${mrn}, errorCodes=${errorCodes.join(",") || "none"}`,
     );
@@ -126,6 +128,9 @@ export async function pullHmrcNotificationsForConversation(params: {
       fieldErrors,
       errorCodes,
       rawPayload: payload,
+      idempotencyKey,
+      hmrcNotificationId: notifId,
+      source: "pull",
       timestamp: new Date().toISOString(),
     });
     saved += 1;
