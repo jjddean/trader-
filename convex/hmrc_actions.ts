@@ -1,6 +1,28 @@
+"use node";
+
+import { createHash } from "crypto";
 import { action, internalAction } from "./_generated/server";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
+import { pullHmrcNotificationsServer, type PullSaveArgs } from "./lib/hmrc_pull_runtime";
+import { resolveAccessTokenForUser } from "./lib/hmrc_token_refresh";
+import type { ActionCtx } from "./_generated/server";
+
+/** SHA-256 of trimmed payload — must match src/lib/hmrc-notification-idempotency.ts */
+function buildHmrcNotificationIdempotencyKey(rawPayload: string): string {
+    const normalized = rawPayload.trim();
+    const hash = createHash("sha256").update(normalized, "utf8").digest("hex");
+    return `hmrc:${hash}`;
+}
+
+function makeSavePulledNotification(ctx: ActionCtx) {
+    return async (saveArgs: PullSaveArgs) => {
+        await ctx.runMutation(api.notifications.saveWebhook, {
+            ...saveArgs,
+            idempotencyKey: buildHmrcNotificationIdempotencyKey(saveArgs.rawPayload),
+        });
+    };
+}
 
 export const searchHSCode = action({
     args: {
@@ -8,8 +30,6 @@ export const searchHSCode = action({
     },
     handler: async (ctx, args) => {
         try {
-            // The UK Trade Tariff v2 endpoints for search are public data.
-            // Documentation: https://api.trade-tariff.service.gov.uk/
             const url = `https://api.trade-tariff.service.gov.uk/uk/api/v2/search`;
             
             const response = await fetch(`${url}?q=${encodeURIComponent(args.query)}`, {
@@ -42,45 +62,106 @@ export const searchHSCode = action({
     },
 });
 
+/** Scheduled/cron pull — persists notifications via saveWebhook. */
+export const pullNotificationsScheduled = internalAction({
+    args: {
+        userId: v.string(),
+        conversationId: v.string(),
+        source: v.string(),
+    },
+    returns: v.object({
+        conversationId: v.string(),
+        total: v.number(),
+        saved: v.number(),
+    }),
+    handler: async (ctx, args) => {
+        const token = await resolveAccessTokenForUser(ctx, args.userId);
+        if (!token) {
+            console.warn(`[HMRC-PULL-SCHEDULED] No token for user ${args.userId}`);
+            return { conversationId: args.conversationId, total: 0, saved: 0 };
+        }
+
+        const result = await pullHmrcNotificationsServer(
+            args.conversationId,
+            token,
+            args.source,
+            makeSavePulledNotification(ctx),
+        );
+
+        if (result.saved > 0) {
+            console.log(
+                `[HMRC-PULL-SCHEDULED] ${args.source}: saved ${result.saved}/${result.total} for ${args.conversationId}`,
+            );
+        }
+        return result;
+    },
+});
+
 export const recoverStuckDeclarations = internalAction({
     args: {},
+    returns: v.object({
+        scanned: v.number(),
+        pulled: v.number(),
+        saved: v.number(),
+        skippedNoConversation: v.number(),
+        skippedNoToken: v.number(),
+    }),
     handler: async (ctx) => {
-        const STUCK_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
-        const stuckDeclarations: Array<{ _id: string; userId: string; conversationId?: string | null }> =
-            await ctx.runQuery(internal.declarations.getStuckProcessingDeclarations, { olderThanMs: STUCK_THRESHOLD_MS });
+        const STUCK_THRESHOLD_MS = 30 * 60 * 1000;
+        const stuckDeclarations: Array<{
+            _id: string;
+            userId?: string;
+            conversationId?: string | null;
+            status?: string;
+        }> = await ctx.runQuery(internal.declarations.getStuckProcessingDeclarations, {
+            olderThanMs: STUCK_THRESHOLD_MS,
+        });
 
-        if (stuckDeclarations.length === 0) return null;
-
-        const HMRC_ENVIRONMENT = process.env.HMRC_ENVIRONMENT || "sandbox";
-        const hmrcBase =
-            HMRC_ENVIRONMENT === "sandbox" ? "https://test-api.service.hmrc.gov.uk" : "https://api.service.hmrc.gov.uk";
+        let pulled = 0;
+        let saved = 0;
+        let skippedNoConversation = 0;
+        let skippedNoToken = 0;
 
         for (const decl of stuckDeclarations) {
-            if (!decl.conversationId) continue;
+            if (!decl.conversationId || !decl.userId) {
+                skippedNoConversation += 1;
+                continue;
+            }
 
-            const tokenRow: { accessToken?: string } | null = await ctx.runQuery(internal.declarations.getHmrcTokenForUser, {
-                userId: decl.userId,
-            });
-            if (!tokenRow?.accessToken) continue;
+            const token = await resolveAccessTokenForUser(ctx, decl.userId);
+            if (!token) {
+                skippedNoToken += 1;
+                console.warn(`[RECOVER] No token for declaration ${decl._id} (user ${decl.userId})`);
+                continue;
+            }
 
             try {
-                const listUrl = `${hmrcBase}/customs/declarations/notifications/${encodeURIComponent(decl.conversationId)}`;
-                const res = await fetch(listUrl, {
-                    headers: {
-                        Authorization: `Bearer ${tokenRow.accessToken}`,
-                        Accept: "application/vnd.hmrc.1.0+xml",
-                    },
-                });
-                if (!res.ok) {
-                    console.warn(`[RECOVER] Pull failed for ${decl._id}: ${res.status}`);
-                } else {
-                    console.log(`[RECOVER] Pulled notifications for stuck declaration ${decl._id}`);
-                }
+                const result = await pullHmrcNotificationsServer(
+                    decl.conversationId,
+                    token,
+                    "cron_recover",
+                    makeSavePulledNotification(ctx),
+                );
+                pulled += 1;
+                saved += result.saved;
+                console.log(
+                    `[RECOVER] ${decl._id} (${decl.status}): saved ${result.saved}/${result.total} notifications`,
+                );
             } catch (err) {
                 console.warn(`[RECOVER] Error for ${decl._id}:`, err);
             }
         }
 
-        return null;
+        const summary = {
+            scanned: stuckDeclarations.length,
+            pulled,
+            saved,
+            skippedNoConversation,
+            skippedNoToken,
+        };
+        if (summary.scanned > 0) {
+            console.log("[RECOVER] Summary:", JSON.stringify(summary));
+        }
+        return summary;
     },
 });
