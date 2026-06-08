@@ -10,13 +10,11 @@ crons.daily(
   internal.actions.currency.syncExchangeRates,
 );
 
-// Recover stuck declarations periodically
-crons.interval(
+// Recover stuck declarations hourly (pull notifications and attempt resubmit)
+crons.hourly(
   "recover-stuck-declarations",
-  { minutes: 15 },
-  // Use the generated function reference (module.function) so Convex
-  // treats this as a function reference in the cron graph.
-  internal.actions.recoverStuckDeclarations.recoverStuckDeclarations,
+  { minuteUTC: 10 },
+  internal.hmrc_actions.recoverStuckDeclarations,
 );
 
 export default crons;

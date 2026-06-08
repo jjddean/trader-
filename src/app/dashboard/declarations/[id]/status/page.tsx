@@ -226,7 +226,7 @@ export default function StatusTimelinePage() {
   const latestCtx = latestNotif ? notifContext(latestNotif) : null;
   const latestNotificationType = normalizeNotificationType(latestNotif?.notificationType) || "DMSUB";
   const latestIsInvalidationSuccess = latestCtx ? isInvalidationAccepted(latestCtx) : false;
-  const submittedAt = declaration.submittedAt || declaration.created || declaration._creationTime;
+  const submittedAt = (declaration as any).submittedAt || declaration.created || declaration._creationTime;
 
   const cdsBadge = resolveDeclarationCdsBadge(
     declaration.status,
