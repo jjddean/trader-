@@ -434,6 +434,8 @@ export default function GoodsItemsPage() {
     );
   }
 
+  const itemList = items ?? [];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -514,7 +516,7 @@ export default function GoodsItemsPage() {
       )}
 
       {/* Mandatory Human-in-the-Loop Review Banner */}
-      {items.length > 0 && (
+      {itemList.length > 0 && (
          <div className="flex items-center gap-2 rounded-md bg-yellow-50 p-3 text-xs text-yellow-800 border border-yellow-200">
           <InfoIcon className="h-4 w-4 text-yellow-600" />
           <p>
@@ -523,9 +525,9 @@ export default function GoodsItemsPage() {
          </div>
       )}
 
-      {items.length > 0 ? (
+      {itemList.length > 0 ? (
         <div className="space-y-4">
-          {items.map((item: GoodsItemRow, index: number) => {
+          {itemList.map((item: GoodsItemRow, index: number) => {
             const slots = docEdits[item._id as string];
             return (
               <div key={item._id} className="rounded-xl border border-gray-200 bg-white">
