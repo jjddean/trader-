@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
 
-const FORMS = path.join(process.cwd(), "documentation/HMRC/sdst-evidence-pack/forms");
+const FORMS = path.join(process.cwd(), "docs/hmrc/ARCHIVE/trade-test/sdst-evidence-pack/forms");
 const WORK = path.join(FORMS, "odt-debug");
 if (fs.existsSync(WORK)) fs.rmSync(WORK, { recursive: true });
 fs.mkdirSync(WORK, { recursive: true });

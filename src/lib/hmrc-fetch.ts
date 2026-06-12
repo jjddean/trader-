@@ -1,4 +1,4 @@
-import { HMRC_CONFIG } from "@/lib/hmrc-config";
+import { HMRC_CONFIG, declarationsAcceptHeader } from "@/lib/hmrc-config";
 import { hmrcLimiter } from "@/lib/rate-limiter";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -72,7 +72,7 @@ export async function fetchHmrc(
 
   const testScenario = process.env.HMRC_TEST_SCENARIO;
   const hmrcHeaders: Record<string, string> = {
-    Accept: HMRC_CONFIG.accept.declarations,
+    Accept: declarationsAcceptHeader(),
     Authorization: `Bearer ${token}`,
     "X-Client-ID": process.env.HMRC_CLIENT_ID || "",
     ...govHeaders,
@@ -99,15 +99,12 @@ export async function fetchHmrc(
     console.log(`  ${k}: ${masked}`);
   }
 
-  // Gov-Test-Scenario is a v1.0 sandbox feature for driving canned outcomes.
-  // The current Trade Test sandbox + production both run on v2.0, where CDS
-  // executes real business logic and rejects Gov-Test-Scenario at the WAF
-  // (PAYLOAD_FORBIDDEN). Suppress it whenever Accept is v2.0.
+  // Gov-Test-Scenario is Trade Test sandbox only. TDR/production reject it.
   const acceptHeader = String(hmrcHeaders["Accept"] || "");
   const isV2 = acceptHeader.includes("hmrc.2.0");
   const isNotificationsApi = endpoint.includes("/notifications/");
-  // Gov-Test-Scenario is for declaration sandbox only — sending it on pull/push APIs returns 400.
-  if (testScenario && !isV2 && !isNotificationsApi) {
+  const isProduction = process.env.HMRC_ENVIRONMENT === "production";
+  if (testScenario && !isV2 && !isNotificationsApi && !isProduction) {
     hmrcHeaders["Gov-Test-Scenario"] = testScenario;
   }
 

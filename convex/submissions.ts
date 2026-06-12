@@ -1,5 +1,31 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
+import type { QueryCtx } from "./_generated/server";
+import { internalQuery, mutation, query } from "./_generated/server";
+
+async function distinctConversationIdsForDeclaration(
+  db: QueryCtx["db"],
+  declarationId: Id<"declarations">,
+): Promise<string[]> {
+  const decl = await db.get(declarationId);
+  if (!decl) return [];
+
+  const ids = new Set<string>();
+  const add = (id: unknown) => {
+    const s = String(id ?? "").trim();
+    if (s) ids.add(s);
+  };
+
+  add(decl.conversationId);
+
+  const subs = await db
+    .query("submissions")
+    .withIndex("by_declaration", (q) => q.eq("declarationId", declarationId))
+    .take(100);
+  for (const row of subs) add(row.conversationId);
+
+  return [...ids];
+}
 
 /**
  * Append-only record of a request sent to HMRC (submit / amend / cancel).
@@ -45,6 +71,28 @@ export const recordSubmission = mutation({
       itemsSnapshot: args.itemsSnapshot,
       createdAt: Date.now(),
     });
+  },
+});
+
+/** Distinct HMRC conversation IDs for pull (submit + amend + cancel on this declaration). */
+export const getDistinctConversationIds = query({
+  args: { declarationId: v.id("declarations") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const decl = await ctx.db.get(args.declarationId);
+    if (!decl || decl.userId !== identity.subject) return [];
+
+    return distinctConversationIdsForDeclaration(ctx.db, args.declarationId);
+  },
+});
+
+/** Scheduler/cron — no auth; only call from trusted internal actions. */
+export const getDistinctConversationIdsInternal = internalQuery({
+  args: { declarationId: v.id("declarations") },
+  handler: async (ctx, args) => {
+    return distinctConversationIdsForDeclaration(ctx.db, args.declarationId);
   },
 });
 

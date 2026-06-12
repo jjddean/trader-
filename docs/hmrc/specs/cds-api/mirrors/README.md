@@ -37,5 +37,5 @@ When re-fetching:
 
 1. Replace the file verbatim.
 2. Update the "Retrieved" date here.
-3. Diff against the previous version — note any rule change in the corresponding `spec/de-*.md` file.
+3. Diff against the previous version — note any rule change in the corresponding `docs/hmrc/ACTIVE/tdr/mapping/de-*.md` file.
 4. Never edit a mirror file by hand.

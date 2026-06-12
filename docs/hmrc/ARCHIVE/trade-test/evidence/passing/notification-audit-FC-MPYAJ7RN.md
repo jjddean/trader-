@@ -20,5 +20,5 @@
 
 ## Conclusion
 
-- **Submit proof:** DMSACC + DMSTAX (`documentation/HMRC/sdst-evidence-pack/evidence/03-notifications/TRADE-TEST-REALITY.md`).
+- **Submit proof:** DMSACC + DMSTAX (`docs/hmrc/ARCHIVE/trade-test/sdst-evidence-pack/evidence/03-notifications/TRADE-TEST-REALITY.md`).
 - **DMSCLE handler:** unit tests + webhook parser (`tests/h1/notification-parser.test.ts`); live FC 11 tied to cancel in TT, not goods clearance on accept.

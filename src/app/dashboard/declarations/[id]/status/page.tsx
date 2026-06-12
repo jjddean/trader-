@@ -9,6 +9,8 @@ import { Id } from "../../../../../../convex/_generated/dataModel";
 import { Activity, Clock, CheckCircle2, XCircle, Loader2, ShieldCheck, ShieldAlert, FileText, AlertCircle, RefreshCw, ChevronDown } from "lucide-react";
 import { normalizeNotificationType, getNotificationDisplay } from "@/lib/notification-labels";
 import {
+  declarationHasAmendStateBlocked,
+  declarationHasImportDmscle,
   declarationHasInvalidationAccepted,
   isInvalidationAccepted,
   resolveDeclarationCdsBadge,
@@ -62,7 +64,11 @@ export default function StatusTimelinePage() {
     headers: generateClientFraudHeaders(userId || undefined),
   });
 
-  async function runHmrcAction(label: string, run: () => Promise<Response>) {
+  async function runHmrcAction(
+    label: string,
+    run: () => Promise<Response>,
+    onSuccess?: (body: Record<string, unknown>) => void,
+  ) {
     setHmrcBusy(true);
     setHmrcMessage(null);
     setHmrcMessageOk(false);
@@ -88,10 +94,24 @@ export default function StatusTimelinePage() {
         `${label} OK (${res.status})` +
           (body.conversationId ? ` — conversation ${body.conversationId}` : "") +
           (label === "Cancel" ? " — await HMRC notification (DMSINV FC 02 = success)" : "") +
-          (label === "Amend" ? " — await HMRC notification on this conversation" : "") +
-          (body.saved != null ? ` — ${body.saved} notification(s) saved` : "") +
+          (label === "Amend"
+            ? " — stay on this Status tab; pull notifications for DMSRES or DMSINV"
+            : "") +
+          (body.saved != null
+            ? ` — ${body.saved} notification(s) saved` +
+              (typeof body.total === "number" && body.total > body.saved
+                ? ` (${body.total} in HMRC queue)`
+                : "") +
+              (Array.isArray(body.conversations) && body.conversations.length > 1
+                ? ` across ${body.conversations.length} conversations`
+                : "") +
+              (body.saved === 0
+                ? " — queue empty or already pulled (check timeline below)"
+                : "")
+            : "") +
           (body.data?.status ? ` — HMRC status: ${body.data.status}` : ""),
       );
+      onSuccess?.(body as Record<string, unknown>);
     } catch (e) {
       setHmrcMessage(`${label} error: ${e instanceof Error ? e.message : "unknown"}`);
       setHmrcMessageOk(false);
@@ -148,18 +168,32 @@ export default function StatusTimelinePage() {
       return;
     }
     const fraud = generateClientFraudHeaders(userId || undefined);
-    runHmrcAction("Amend", () =>
-      fetch("/api/hmrc/amend", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...fraud },
-        body: JSON.stringify({
-          declarationId: id,
-          mrn: declaration.mrn,
-          changeKind: opt.changeKind,
-          wcoPath: opt.wcoPath,
-          value,
+    runHmrcAction(
+      "Amend",
+      () =>
+        fetch("/api/hmrc/amend", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...fraud },
+          body: JSON.stringify({
+            declarationId: id,
+            mrn: declaration.mrn,
+            changeKind: opt.changeKind,
+            wcoPath: opt.wcoPath,
+            value,
+          }),
         }),
-      }),
+      (body) => {
+        const convId =
+          typeof body.conversationId === "string" && body.conversationId.trim()
+            ? body.conversationId.trim()
+            : declaration.conversationId;
+        void fetch(
+          `/api/hmrc/notifications/pull?declarationId=${encodeURIComponent(id)}${
+            convId ? `&conversationId=${encodeURIComponent(convId)}` : ""
+          }`,
+          hmrcFetchInit(),
+        );
+      },
     );
   }
 
@@ -192,6 +226,16 @@ export default function StatusTimelinePage() {
     errorCodes: Array.isArray(notif.errorCodes) ? notif.errorCodes : undefined,
     notificationType: notif.notificationType ?? "",
   });
+
+  const mrnBlockedByClearance = declarationHasImportDmscle((notifications ?? []).map(notifContext));
+  const mrnBlockedByCds12015 = declarationHasAmendStateBlocked((notifications ?? []).map(notifContext));
+  const mrnBlockedForAmend = mrnBlockedByClearance || mrnBlockedByCds12015;
+
+  const canAmendOrCancel =
+    Boolean(declaration.mrn) &&
+    !mrnBlockedForAmend &&
+    (declaration.status === "Accepted" || declaration.status === "Amended");
+  const amendInFlight = declaration.status === "Amendment Processing";
 
   const metaForNotification = (notif: {
     rawPayload?: string;
@@ -276,8 +320,7 @@ export default function StatusTimelinePage() {
           </div>
         ) : (
           <div className="space-y-8">
-            {declaration.conversationId && (
-              <div className="space-y-3 border-b border-gray-100 pb-6">
+            <div className="space-y-3 border-b border-gray-100 pb-6">
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
@@ -286,7 +329,7 @@ export default function StatusTimelinePage() {
                     onClick={() =>
                       runHmrcAction("Pull notifications", () =>
                         fetch(
-                          `/api/hmrc/notifications/pull?conversationId=${encodeURIComponent(declaration.conversationId!)}`,
+                          `/api/hmrc/notifications/pull?declarationId=${encodeURIComponent(id)}`,
                           hmrcFetchInit(),
                         ),
                       )
@@ -316,7 +359,7 @@ export default function StatusTimelinePage() {
                       Query HMRC status
                     </button>
                   )}
-                  {declaration.mrn && declaration.status === "Accepted" && (
+                  {canAmendOrCancel && (
                     <>
                       <div className="relative">
                         <button
@@ -377,6 +420,26 @@ export default function StatusTimelinePage() {
                     </>
                   )}
                 </div>
+                {amendInFlight && (
+                  <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                    Amendment processing — use <strong>Pull notifications</strong> below. Do not use the
+                    Submission tab (step 3); live declarations are amended here on Status only.
+                  </p>
+                )}
+                {mrnBlockedByClearance && (
+                  <p className="rounded-md border border-gray-200 bg-gray-50 p-3 text-xs text-gray-800">
+                    <strong>DMSCLE on this MRN</strong> — HMRC treats the declaration as cleared. Amend and
+                    cancel are disabled (retries return CDS12015). Submit a new declaration and amend before
+                    clearance for TDR evidence.
+                  </p>
+                )}
+                {mrnBlockedByCds12015 && !mrnBlockedByClearance && (
+                  <p className="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-900">
+                    <strong>CDS12015 — this MRN cannot be amended.</strong> HMRC rejected amend because the
+                    declaration is cleared or locked. Do not retry on this MRN — create a new declaration,
+                    submit, then amend within a few minutes of DMSACC.
+                  </p>
+                )}
                 {hmrcMessage && (
                   <p
                     className={`rounded-md border p-3 text-xs ${
@@ -389,7 +452,6 @@ export default function StatusTimelinePage() {
                   </p>
                 )}
               </div>
-            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="rounded-lg bg-gray-50 p-4 border border-gray-100">

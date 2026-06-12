@@ -76,7 +76,7 @@ The **ODS file is authoritative**: column 3 = location code.
 
 The repo has used `GBAUFXTFXTGW` for this lane. **That code does not exist anywhere in the current Appendix 16C ODS.** Searched: `Select-String -Pattern "GBAUFXTFXTGW"` returns zero matches. All prior DMSREJ responses against that code are therefore against a non-existent location code, which alone explains CDS rejections regardless of XML shape.
 
-**Required action:** update mapper + UI + Convex to use `GBAUFXTFXTFXT`. Cite `spec/hmrc-mirror/appendix-16c-felixstowe.md`.
+**Required action:** update mapper + UI + Convex to use `GBAUFXTFXTFXT`. Cite `docs/hmrc/specs/cds-api/mirrors/appendix-16c-felixstowe.md`.
 
 ## XML shape — INFERENCE (accepted 2026-05-27)
 

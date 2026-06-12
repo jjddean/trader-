@@ -70,7 +70,7 @@ This runbook covers common support scenarios for the FreightCode Customs Declara
 | Code | Meaning | Resolution |
 |------|---------|------------|
 | CDS12014 | Invalid commodity code | Verify 10-digit HS code against UK Trade Tariff |
-| CDS12015 | Invalid EORI | Check EORI format (GB + 12 digits) and HMRC registration |
+| CDS12015 | Declaration state blocks request | MRN cleared or not amendable/cancellable — see `42A`/D014 (`Declaration/ID`). Not an EORI format error. Submit fresh MRN and amend before DMSCLE. Archive: `ARCHIVE/trade-test/sdst-evidence-pack/evidence/04-cancel/HOWTO.md` |
 | CDS12006 | Invalid procedure code | Verify CPC format (4-digit current + 3-digit previous) |
 | CDS10020 | Missing mandatory field | Check payload against WCO DMS schema |
 | INVALID_CREDENTIALS | OAuth token invalid | Reconnect HMRC OAuth via Settings |
@@ -79,14 +79,11 @@ This runbook covers common support scenarios for the FreightCode Customs Declara
 
 ## 5. Environment Configuration
 
-| Setting | Sandbox | TDR/Production |
-|---------|---------|----------------|
-| `HMRC_ENVIRONMENT` | `sandbox` | `production` |
-| `HMRC_DECLARATIONS_ACCEPT` | `application/vnd.hmrc.2.0+xml` | Code default is v2.0; keep set explicitly in both environments |
-| Token URL | `test-api.service.hmrc.gov.uk` | `api.service.hmrc.gov.uk` |
-| Declaration URL | `test-api.service.hmrc.gov.uk` | `api.service.hmrc.gov.uk` |
+See `docs/hmrc/ACTIVE/tdr/environment-matrix.md`.
 
-**To switch to Production:** Set `HMRC_ENVIRONMENT=production` and keep `HMRC_DECLARATIONS_ACCEPT=application/vnd.hmrc.2.0+xml` (v2.0 is used in both environments).
+**Active:** TDR — `HMRC_ENVIRONMENT=production`, Declarations `application/vnd.hmrc.1.0+xml`
+
+**Archived:** Trade Test sandbox — `docs/hmrc/ARCHIVE/trade-test/` (do not use for active config)
 
 ---
 

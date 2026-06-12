@@ -139,6 +139,14 @@ export default defineSchema({
     // DE 7/7 — Identification type of the means of transport. e.g. "11"
     // vessel name, "30" road vehicle reg, "40" flight number.
     transportIdType: v.optional(v.string()),
+    // DE 3/1 — overseas exporter Name+Address when dispatch ≠ GB/XI.
+    exporterName: v.optional(v.string()),
+    exporterCity: v.optional(v.string()),
+    exporterLine: v.optional(v.string()),
+    exporterPostcode: v.optional(v.string()),
+    exporterEori: v.optional(v.string()),
+    // DE 8/5 — GoodsShipment/TransactionNatureCode (WCOID 103).
+    transactionNatureCode: v.optional(v.string()),
   }).index("by_user", ["userId"]).index("by_mrn", ["mrn"]).index("by_conversationId", ["conversationId"]),
 
   goods_items: defineTable({

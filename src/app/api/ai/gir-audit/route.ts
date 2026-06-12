@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { cloudagentBaseUrl } from "@/lib/cloudagent-client";
 
 interface GIRResponse {
   correctHsCode?: string;
@@ -82,7 +83,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const cloudagentUrl = process.env.CLOUDAGENT_GIR_ENDPOINT || "https://cloudagent.workers.dev/classify-gir";
+    const base = cloudagentBaseUrl();
+    const cloudagentUrl =
+      process.env.CLOUDAGENT_GIR_ENDPOINT || (base ? `${base}/classify-gir` : "");
+
+    if (!cloudagentUrl) {
+      return NextResponse.json(
+        buildFallbackResponse(declaredHsCode, "AGENT_URL is not configured"),
+      );
+    }
 
     let response: Response;
     try {

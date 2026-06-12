@@ -58,10 +58,18 @@ export async function collectDeclarationNotifications(
         .query("notifications")
         .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId!))
         .take(100);
+      // Include same-MRN rows from other conversations (e.g. DMSACC on submit conv after
+      // declaration.conversationId was overwritten by amend). Still exclude stale MRNs via scoped filter.
       push(
-        (declResults as CollectedNotification[]).filter(
-          (n) => String(n.conversationId ?? "").trim() === conversationId,
-        ),
+        (declResults as CollectedNotification[]).filter((n) => {
+          const nConv = String(n.conversationId ?? "").trim();
+          if (nConv === conversationId) return true;
+          if (mrn && mrn !== "UNKNOWN") {
+            const nMrn = String(n.mrn ?? "").trim();
+            return nMrn === mrn || nMrn === "";
+          }
+          return false;
+        }),
       );
     }
   } else {
@@ -80,6 +88,15 @@ export async function collectDeclarationNotifications(
         .take(100);
       push(mrnResults as CollectedNotification[]);
     }
+  }
+
+  // Catch rows linked only by MRN (e.g. submit-conversation pull before declarationId was patched).
+  if (mrn && mrn !== "UNKNOWN") {
+    const mrnResults = await db
+      .query("notifications")
+      .withIndex("by_mrn", (q) => q.eq("mrn", mrn))
+      .take(100);
+    push(mrnResults as CollectedNotification[]);
   }
 
   const scoped =

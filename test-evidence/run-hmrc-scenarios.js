@@ -23,13 +23,14 @@ const { api } = require("../convex/_generated/api");
 register();
 const { mapToCDS_H1: appMapToCDS_H1 } = require("../src/lib/wco-mapper.ts");
 const { renderH1Xml: appRenderH1Xml } = require("../src/lib/h1-xml-renderer.ts");
+const { declarationsAcceptHeader, hmrcPhase } = require("../src/lib/hmrc-config.ts");
 
 const HMRC_CONFIG = {
   sandboxBaseUrl: process.env.HMRC_SANDBOX_BASE_URL || "https://test-api.service.hmrc.gov.uk",
   productionBaseUrl: process.env.HMRC_PRODUCTION_BASE_URL || "https://api.service.hmrc.gov.uk",
   accept: {
-    declarations: process.env.HMRC_DECLARATIONS_ACCEPT || "application/vnd.hmrc.2.0+xml",
     v2Xml: process.env.HMRC_ACCEPT_V2_XML || "application/vnd.hmrc.2.0+xml",
+    v1Xml: process.env.HMRC_ACCEPT_V1_XML || "application/vnd.hmrc.1.0+xml",
   },
   vendor: {
     publicIp: process.env.HMRC_VENDOR_PUBLIC_IP || "203.0.113.6",
@@ -53,302 +54,6 @@ const SIGNED_ADDITIONAL_DOCUMENTS = [
   { CategoryCode: "N", TypeCode: "271", StatusCode: "AC", ID: "PL-2026-LAPTOPS-001" },
 ];
 
-function mapToCDS_H1(declaration, items) {
-  const totalGrossWeight =
-    items.reduce((acc, item) => acc + (parseFloat(item.grossWeightKg) || 0), 0) || 100;
-  const invoiceTotal =
-    items.reduce((acc, item) => acc + (parseFloat(item.valueAmount) || 0), 0) || 1000;
-
-  return {
-    Declaration: {
-      FunctionCode: "9",
-      TypeCode: "IMA",
-      FunctionalReferenceID: declaration.lrn || `FC-${declaration._id || "manual"}`,
-      GoodsItemQuantity: items.length || 1,
-      DeclarationOfficeID: declaration.presentationOffice || "",
-      TotalGrossMassMeasure: declaration.totalGrossWeight || totalGrossWeight,
-      TotalPackageQuantity: items.reduce(
-        (acc, item) => acc + (parseInt(item.packageCount) || 1),
-        0,
-      ),
-      InvoiceAmount: {
-        currencyID: declaration.invoiceCurrency || "GBP",
-        value: declaration.invoiceTotal || invoiceTotal,
-      },
-      CurrencyExchange: {
-        CurrencyTypeCode: declaration.invoiceCurrency || "GBP",
-      },
-      Declarant: { ID: declaration.eori || "" },
-      // DE 3/1 Exporter: GB/XI EORI only for intra-UK flows. For overseas imports use Name+Address.
-      // CDS12073/57A fires when ExportCountry.ID references a foreign country with no Exporter anchor.
-      Exporter: (() => {
-        const dispatch = String(declaration.dispatchCountry || "").trim().toUpperCase();
-        const eori = String(declaration.exporterEori || "").trim();
-        if (/^(GB|XI)\d{12}$/i.test(eori) && (dispatch === "GB" || dispatch === "XI")) return { ID: eori };
-        if (dispatch && dispatch !== "GB" && dispatch !== "XI") {
-          return {
-            Name: String(declaration.exporterName || "").trim() || "German Exporter GmbH",
-            Address: {
-              CityName: String(declaration.exporterCity || "").trim() || "Hamburg",
-              CountryCode: dispatch,
-              Line: String(declaration.exporterLine || "").trim() || "1 Exportstrasse",
-              PostcodeID: String(declaration.exporterPostcode || "").trim() || "20095",
-            },
-          };
-        }
-        return null;
-      })(),
-      UCR: {
-        TraderAssignedReferenceID:
-          declaration.ducr ||
-          `${new Date().getFullYear() % 10}GB${(declaration.eori || "GB449181054677").replace(/^GB/i, "")}-${String(declaration._id || "manual")
-            .substring(0, 6)
-            .toUpperCase()}`,
-      },
-      GoodsShipment: {
-        Consignment: {
-          ContainerCode: "0",
-          BorderTransportMeans: {
-            IdentificationTypeCode: "11",
-            ID: declaration.transportId || "CSCL GLOBE",
-            ModeCode: declaration.transportMode || "1",
-          },
-          GoodsLocation: (() => {
-            // DE 5/23 split shape — INFERENCE revised 2026-05-28 10:30.
-            // CountryCode is inside Address per XSD validator (BAD_REQUEST 2026-05-27).
-            const code = String(declaration.locationId || "").trim().toUpperCase() || "GBAUFXTFXTFXT";
-            if (code.length < 5) return { ID: code };
-            return {
-              ID: code.slice(4),
-              TypeCode: code.slice(2, 3),
-              Address: {
-                TypeCode: code.slice(3, 4),
-                CountryCode: code.slice(0, 2),
-              },
-            };
-          })(),
-        },
-        Destination: { CountryCode: declaration.destinationCountry || "GB" },
-        ExportCountry: { ID: declaration.dispatchCountry || "BR" },
-        Importer: { ID: declaration.importerEori || declaration.eori || "" },
-        TradeTerms: {
-          // LocationID omitted — CDS10020/22B/L002 fires when plain text is sent.
-          ConditionCode: declaration.incoterms || "CIF",
-        },
-        GovernmentAgencyGoodsItem: (items || []).map((item, index) => {
-          // Use item's own additionalDocuments if provided, otherwise use the signed matrix
-          const docs =
-            Array.isArray(item.additionalDocuments) && item.additionalDocuments.length > 0
-              ? item.additionalDocuments
-              : SIGNED_ADDITIONAL_DOCUMENTS;
-
-          return {
-            SequenceNumeric: item.sequenceNumber || index + 1,
-            AdditionalDocument: docs,
-            StatisticalValueAmount: {
-              currencyID: item.valueCurrency || "GBP",
-              value: item.valueAmount || 0,
-            },
-            Commodity: {
-              Description: item.description || "",
-              Classification: [
-                {
-                  ID: item.commodityCode || item.hsCode || "",
-                  IdentificationTypeCode: "TSP",
-                },
-              ],
-              GoodsMeasure: {
-                GrossMassMeasure: item.grossWeightKg || 10,
-                NetNetWeightMeasure: item.netWeightKg || 9,
-              },
-            },
-            Packaging: [
-              {
-                SequenceNumeric: "1",
-                MarksNumbersID: item.shippingMarks || "N/A",
-                QuantityQuantity: item.packageCount || "1",
-                TypeCode: item.packageType || "PK",
-              },
-            ],
-            // DE 5/15 always mandatory per Group 5.
-            ...(item.originCountry
-              ? { Origin: { CountryCode: String(item.originCountry).toUpperCase(), TypeCode: "1" } }
-              : {}),
-            // DE 1/10 = two separate 2-digit codes (always present).
-            // DE 1/11 = required explicitly. "000" = nil additional procedure for CPC 4000.
-            // Omitting DE 1/11 entirely triggers CDS11004 (incomplete procedure declaration).
-            GovernmentProcedure: [
-              {
-                CurrentCode: (item.procedureCode?.replace(/\s+/g, "") || "4000").substring(0, 2),
-                PreviousCode: (item.procedureCode?.replace(/\s+/g, "") || "4000").substring(2, 4) || "00",
-              },
-              {
-                CurrentCode: item.additionalProcedureCode || "000",
-              },
-            ],
-          };
-        }),
-      },
-    },
-  };
-}
-
-function xmlEscape(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
-function buildXml(payloadInfo) {
-  const d = payloadInfo.Declaration;
-  const gs = d.GoodsShipment;
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
-  <WCODataModelVersionCode>3.6</WCODataModelVersionCode>
-  <WCOTypeName>DEC</WCOTypeName>
-  <ResponsibleCountryCode>GB</ResponsibleCountryCode>
-  <ResponsibleAgencyName>HMRC</ResponsibleAgencyName>
-  <AgencyAssignedCustomizationVersionCode>v2.1</AgencyAssignedCustomizationVersionCode>
-  <Declaration xmlns="urn:wco:datamodel:WCO:DEC-DMS:2" xmlns:clm63055="urn:un:unece:uncefact:codelist:standard:UNECE:AgencyIdentificationCode:D12B" xmlns:ds="urn:wco:datamodel:WCO:MetaData_DS-DMS:2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2 ../DocumentMetaData_2_DMS.xsd ">
-    <FunctionCode>${xmlEscape(d.FunctionCode)}</FunctionCode>
-    <FunctionalReferenceID>${xmlEscape(d.FunctionalReferenceID)}</FunctionalReferenceID>
-    <TypeCode>${xmlEscape(d.TypeCode)}</TypeCode>
-    <GoodsItemQuantity>${xmlEscape(d.GoodsItemQuantity)}</GoodsItemQuantity>
-    <DeclarationOfficeID>${xmlEscape(d.DeclarationOfficeID)}</DeclarationOfficeID>
-    <InvoiceAmount currencyID="${xmlEscape(d.InvoiceAmount.currencyID)}">${xmlEscape(d.InvoiceAmount.value)}</InvoiceAmount>
-    <TotalGrossMassMeasure unitCode="KGM">${xmlEscape(d.TotalGrossMassMeasure)}</TotalGrossMassMeasure>
-    <TotalPackageQuantity>${xmlEscape(d.TotalPackageQuantity)}</TotalPackageQuantity>
-    <CurrencyExchange>
-      <CurrencyTypeCode>${xmlEscape(d.CurrencyExchange.CurrencyTypeCode)}</CurrencyTypeCode>
-    </CurrencyExchange>
-    <Declarant>
-      <ID>${xmlEscape(d.Declarant.ID)}</ID>
-    </Declarant>
-    ${d.Exporter ? (d.Exporter.ID
-      ? `\n    <Exporter>\n      <ID>${xmlEscape(d.Exporter.ID)}</ID>\n    </Exporter>`
-      : `\n    <Exporter>\n      <Name>${xmlEscape(d.Exporter.Name || "Exporter")}</Name>\n      <Address>\n        <CityName>${xmlEscape(d.Exporter.Address?.CityName || "")}</CityName>\n        <CountryCode>${xmlEscape(d.Exporter.Address?.CountryCode || "")}</CountryCode>\n        <Line>${xmlEscape(d.Exporter.Address?.Line || "")}</Line>\n        <PostcodeID>${xmlEscape(d.Exporter.Address?.PostcodeID || "")}</PostcodeID>\n      </Address>\n    </Exporter>`) : ""}
-    <GoodsShipment>
-      <UCR>
-        <TraderAssignedReferenceID>${xmlEscape(d.UCR.TraderAssignedReferenceID)}</TraderAssignedReferenceID>
-      </UCR>
-      <Consignment>
-        <ContainerCode>${xmlEscape(gs.Consignment.ContainerCode)}</ContainerCode>
-        <ArrivalTransportMeans>
-          <ID>${xmlEscape(gs.Consignment.BorderTransportMeans.ID)}</ID>
-          <IdentificationTypeCode>${xmlEscape(gs.Consignment.BorderTransportMeans.IdentificationTypeCode)}</IdentificationTypeCode>
-          <ModeCode>${xmlEscape(gs.Consignment.BorderTransportMeans.ModeCode)}</ModeCode>
-        </ArrivalTransportMeans>
-        ${(() => {
-          const gl = gs.Consignment.GoodsLocation || {};
-          const id = String(gl.ID || "").trim();
-          const typeCode = String(gl.TypeCode || "").trim();
-          const addr = gl.Address || {};
-          const addrType = String(addr.TypeCode || "").trim();
-          const addrCountry = String(addr.CountryCode || "").trim();
-          if (!id && !typeCode && !addrType && !addrCountry) return "";
-          const idXml = id ? `<ID>${xmlEscape(id)}</ID>` : "";
-          const tcXml = typeCode ? `<TypeCode>${xmlEscape(typeCode)}</TypeCode>` : "";
-          const addrXml = (addrType || addrCountry)
-            ? `<Address>${addrType ? `<TypeCode>${xmlEscape(addrType)}</TypeCode>` : ""}${addrCountry ? `<CountryCode>${xmlEscape(addrCountry)}</CountryCode>` : ""}</Address>`
-            : "";
-          return `<GoodsLocation>${idXml}${tcXml}${addrXml}</GoodsLocation>`;
-        })()}
-      </Consignment>
-      <Destination>
-        <CountryCode>${xmlEscape(gs.Destination.CountryCode)}</CountryCode>
-      </Destination>
-      <ExportCountry>
-        <ID>${xmlEscape(gs.ExportCountry.ID)}</ID>
-      </ExportCountry>
-      <Importer>
-        <ID>${xmlEscape(gs.Importer.ID)}</ID>
-      </Importer>
-      <TradeTerms>
-        <ConditionCode>${xmlEscape(gs.TradeTerms.ConditionCode)}</ConditionCode>
-      </TradeTerms>
-      ${(gs.GovernmentAgencyGoodsItem || [])
-        .map((item) => {
-          const docs = Array.isArray(item.AdditionalDocument) ? item.AdditionalDocument : [];
-          const additionalDocsXml = docs
-            .map(
-              (doc) => `
-        <AdditionalDocument>
-          <CategoryCode>${xmlEscape(doc.CategoryCode || "")}</CategoryCode>
-          <ID>${xmlEscape(doc.ID || "")}</ID>
-          <TypeCode>${xmlEscape(doc.TypeCode || "")}</TypeCode>
-          ${doc.StatusCode ? `<LPCOExemptionCode>${xmlEscape(doc.StatusCode)}</LPCOExemptionCode>` : ""}
-        </AdditionalDocument>`,
-            )
-            .join("");
-
-          const procedures = Array.isArray(item.GovernmentProcedure)
-            ? item.GovernmentProcedure
-            : [];
-          const proceduresXml = procedures
-            .map(
-              (proc) => `
-        <GovernmentProcedure>
-          <CurrentCode>${xmlEscape(proc.CurrentCode)}</CurrentCode>
-          ${proc.PreviousCode ? `<PreviousCode>${xmlEscape(proc.PreviousCode)}</PreviousCode>` : ""}
-        </GovernmentProcedure>`,
-            )
-            .join("");
-
-          const pkg = Array.isArray(item.Packaging) && item.Packaging[0]
-            ? item.Packaging[0]
-            : { SequenceNumeric: "1", MarksNumbersID: "N/A", QuantityQuantity: "1", TypeCode: "PK" };
-
-          return `
-      <GovernmentAgencyGoodsItem>
-        <SequenceNumeric>${xmlEscape(item.SequenceNumeric)}</SequenceNumeric>
-        <StatisticalValueAmount currencyID="${xmlEscape(item.StatisticalValueAmount.currencyID)}">${xmlEscape(item.StatisticalValueAmount.value)}</StatisticalValueAmount>
-        ${additionalDocsXml}
-          <Commodity>
-          <Description>${xmlEscape(item.Commodity.Description || "")}</Description>
-          ${(Array.isArray(item.Commodity.Classification) ? item.Commodity.Classification : [item.Commodity.Classification]).map(cls => `<Classification>
-            <ID>${xmlEscape(cls.ID)}</ID>
-            <IdentificationTypeCode>${xmlEscape(cls.IdentificationTypeCode)}</IdentificationTypeCode>
-          </Classification>`).join("\n          ")}
-          <DutyTaxFee>
-            <DutyRegimeCode>${xmlEscape(item.Commodity.DutyTaxFee?.DutyRegimeCode || "100")}</DutyRegimeCode>
-            <TypeCode>A00</TypeCode>
-          </DutyTaxFee>
-          <DutyTaxFee>
-            <TypeCode>B00</TypeCode>
-          </DutyTaxFee>
-          <GoodsMeasure>
-            <GrossMassMeasure unitCode="KGM">${xmlEscape(item.Commodity.GoodsMeasure.GrossMassMeasure)}</GrossMassMeasure>
-            <NetNetWeightMeasure unitCode="KGM">${xmlEscape(item.Commodity.GoodsMeasure.NetNetWeightMeasure)}</NetNetWeightMeasure>
-          </GoodsMeasure>
-          <InvoiceLine>
-            <ItemChargeAmount currencyID="${xmlEscape(item.Commodity.InvoiceLine?.ItemChargeAmount?.currencyID || item.StatisticalValueAmount.currencyID || "GBP")}">${xmlEscape(item.Commodity.InvoiceLine?.ItemChargeAmount?.value || item.StatisticalValueAmount.value)}</ItemChargeAmount>
-          </InvoiceLine>
-        </Commodity>
-        <CustomsValuation>
-          <MethodCode>${xmlEscape(item.CustomsValuation?.MethodCode || "1")}</MethodCode>
-        </CustomsValuation>
-        ${proceduresXml}
-        ${item.Origin ? `<Origin>\n          <CountryCode>${xmlEscape(item.Origin.CountryCode)}</CountryCode>\n          <TypeCode>${xmlEscape(item.Origin.TypeCode || "1")}</TypeCode>\n        </Origin>` : ""}
-        <Packaging>
-          <SequenceNumeric>${xmlEscape(pkg.SequenceNumeric)}</SequenceNumeric>
-          <MarksNumbersID>${xmlEscape(pkg.MarksNumbersID)}</MarksNumbersID>
-          <QuantityQuantity>${xmlEscape(pkg.QuantityQuantity)}</QuantityQuantity>
-          <TypeCode>${xmlEscape(pkg.TypeCode)}</TypeCode>
-        </Packaging>
-        <ValuationAdjustment>
-          <AdditionCode>0000</AdditionCode>
-        </ValuationAdjustment>
-      </GovernmentAgencyGoodsItem>`;
-        })
-        .join("")}
-    </GoodsShipment>
-  </Declaration>
-</MetaData>`;
-}
 
 async function getToken(client, userId) {
   const tokenRecord = await client.query(api.hmrc.getToken, { userId });
@@ -397,7 +102,7 @@ async function submitXml(xmlPayload, token) {
       ? `${HMRC_CONFIG.sandboxBaseUrl}/customs/declarations`
       : `${HMRC_CONFIG.productionBaseUrl}/customs/declarations`;
   const now = new Date().toISOString();
-  const acceptHeader = HMRC_CONFIG.accept.declarations;
+  const acceptHeader = declarationsAcceptHeader();
   const contentTypeHeader =
     process.env.HMRC_CONTENT_TYPE_HEADER || "application/xml; charset=UTF-8";
 
@@ -451,20 +156,21 @@ function withMetaComment(meta, xml) {
 }
 
 function preflightGates(xmlPayload, eori) {
-  const acceptHeader = HMRC_CONFIG.accept.declarations;
+  const acceptHeader = declarationsAcceptHeader();
   const contentTypeHeader =
     process.env.HMRC_CONTENT_TYPE_HEADER || "application/xml; charset=UTF-8";
-  const endpoint =
-    process.env.HMRC_ENVIRONMENT === "sandbox"
-      ? `${HMRC_CONFIG.sandboxBaseUrl}/customs/declarations`
-      : `${HMRC_CONFIG.productionBaseUrl}/customs/declarations`;
+  const isSandbox = process.env.HMRC_ENVIRONMENT === "sandbox";
+  const isTdr = (process.env.NEXT_PUBLIC_HMRC_ENV || "").toLowerCase() === "tdr"
+    || acceptHeader === HMRC_CONFIG.accept.v1Xml;
+  const isTradeTest = !isTdr && isSandbox && acceptHeader === HMRC_CONFIG.accept.v2Xml;
+  const isCdsLive = !isSandbox && acceptHeader === HMRC_CONFIG.accept.v2Xml;
+  const endpoint = isSandbox
+    ? `${HMRC_CONFIG.sandboxBaseUrl}/customs/declarations`
+    : `${HMRC_CONFIG.productionBaseUrl}/customs/declarations`;
 
-  const checks = {
+  const structuralChecks = {
     token_present: false, // set after token fetch
     client_id_present: Boolean(process.env.HMRC_CLIENT_ID),
-    environment_is_sandbox: process.env.HMRC_ENVIRONMENT === "sandbox",
-    endpoint_is_test_api: endpoint.startsWith(HMRC_CONFIG.sandboxBaseUrl),
-    accept_is_v2: acceptHeader === HMRC_CONFIG.accept.v2Xml,
     content_type_is_xml: contentTypeHeader.toLowerCase().includes("application/xml"),
     xml_has_metadata_root: xmlPayload.includes("<MetaData"),
     xml_has_declaration: xmlPayload.includes("<Declaration"),
@@ -482,6 +188,31 @@ function preflightGates(xmlPayload, eori) {
     xml_no_empty_tags: !/<([A-Za-z][\w]*)\s*>\s*<\/\1>/.test(xmlPayload),
   };
 
+  const phaseChecks = isTradeTest
+    ? {
+        phase_is_trade_test: isTradeTest,
+        environment_is_sandbox: isSandbox,
+        endpoint_is_test_api: endpoint.startsWith(HMRC_CONFIG.sandboxBaseUrl),
+        accept_is_v2: acceptHeader === HMRC_CONFIG.accept.v2Xml,
+      }
+    : isTdr
+      ? {
+          phase_is_tdr: isTdr,
+          accept_is_v1: acceptHeader === HMRC_CONFIG.accept.v1Xml,
+          environment_is_sandbox: isSandbox,
+          endpoint_matches_host: isSandbox
+            ? endpoint.startsWith(HMRC_CONFIG.sandboxBaseUrl)
+            : endpoint.startsWith(HMRC_CONFIG.productionBaseUrl),
+        }
+      : {
+          phase_is_cds_live: isCdsLive,
+          environment_is_production: !isSandbox,
+          endpoint_is_production_api: endpoint.startsWith(HMRC_CONFIG.productionBaseUrl),
+          accept_is_v2: acceptHeader === HMRC_CONFIG.accept.v2Xml,
+        };
+
+  const checks = { ...structuralChecks, ...phaseChecks };
+
   const failed = Object.entries(checks)
     .filter(([, ok]) => !ok)
     .map(([key]) => key);
@@ -497,7 +228,7 @@ function preflightGates(xmlPayload, eori) {
 }
 
 async function run() {
-  const evidenceDir = path.join(process.cwd(), "test-evidence");
+  const evidenceDir = path.join(process.cwd(), "docs/hmrc/ARCHIVE/trade-test/evidence");
   fs.mkdirSync(evidenceDir, { recursive: true });
 
   const dryRunOnly = process.env.DRY_RUN_ONLY !== "false";
@@ -524,13 +255,18 @@ async function run() {
     totalGrossWeight: 120,
     invoiceCurrency: "GBP",
     invoiceTotal: 5000,
-    // Source: spec/hmrc-mirror/appendix-16c-felixstowe.md (Appendix 16C ODS 2026-05-18)
+    // Source: docs/hmrc/specs/cds-api/mirrors/appendix-16c-felixstowe.md (Appendix 16C ODS 2026-05-18)
     locationId: "GBAUFXTFXTFXT",
     goodsLocationKind: "port",
     destinationCountry: "GB",
     dispatchCountry: "DE",
+    exporterName: "Acme Export GmbH",
+    exporterCity: "Hamburg",
+    exporterLine: "1 Hafenstrasse",
+    exporterPostcode: "20095",
     incoterms: "CIF",
     incotermLocation: "Felixstowe",
+    transactionNatureCode: "11",
     transportId: "CSCL GLOBE",
     transportIdType: "11",
     transportMode: "1",

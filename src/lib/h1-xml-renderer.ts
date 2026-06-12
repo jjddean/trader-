@@ -29,7 +29,14 @@ export function validateXmlPreflight(
     has_previous_document: xmlPayload.includes("<PreviousDocument>"),
     no_y922: !xmlPayload.includes("<TypeCode>922</TypeCode>"),
     no_empty_tags: !/<([A-Za-z][\w]*)\s*>\s*<\/\1>/.test(xmlPayload),
-    no_placeholders: !/(>\s*N\/A\s*<|>\s*TBD\s*<|>\s*PENDING-|>\s*General goods\s*<)/i.test(xmlPayload),
+    // N/A is valid in DE 6/11 MarksNumbersID (see trade-test scenario XML evidence).
+    no_placeholders: (() => {
+      const withoutAllowedMarks = xmlPayload.replace(
+        /<MarksNumbersID>N\/A<\/MarksNumbersID>/g,
+        "",
+      );
+      return !/(>\s*N\/A\s*<|>\s*TBD\s*<|>\s*PENDING-|>\s*General goods\s*<)/i.test(withoutAllowedMarks);
+    })(),
   };
   if (requireAdditionalDocument) {
     checks.has_additional_document = xmlPayload.includes("<AdditionalDocument>");
@@ -118,9 +125,15 @@ export function renderH1Xml(payloadInfo: unknown): string {
   let exporterXml = "";
   if (exporterEoriId) {
     exporterXml = `\n    <Exporter>\n      <ID>${xmlEscape(exporterEoriId)}</ID>\n    </Exporter>`;
-  } else if (exporterName || exporterAddrCountry) {
+  } else if (
+    exporterName
+    && exporterAddrCountry
+    && String(exporterAddr.CityName || "").trim()
+    && String(exporterAddr.Line || "").trim()
+    && String(exporterAddr.PostcodeID || "").trim()
+  ) {
     // XSD sequence: CityName → CountryCode → Line → PostcodeID (all mandatory when Address present).
-    exporterXml = `\n    <Exporter>\n      <Name>${xmlEscape(exporterName || "Exporter")}</Name>\n      <Address>\n        <CityName>${xmlEscape(String(exporterAddr.CityName || ""))}</CityName>\n        <CountryCode>${xmlEscape(exporterAddrCountry)}</CountryCode>\n        <Line>${xmlEscape(String(exporterAddr.Line || ""))}</Line>\n        <PostcodeID>${xmlEscape(String(exporterAddr.PostcodeID || ""))}</PostcodeID>\n      </Address>\n    </Exporter>`;
+    exporterXml = `\n    <Exporter>\n      <Name>${xmlEscape(exporterName)}</Name>\n      <Address>\n        <CityName>${xmlEscape(String(exporterAddr.CityName))}</CityName>\n        <CountryCode>${xmlEscape(exporterAddrCountry)}</CountryCode>\n        <Line>${xmlEscape(String(exporterAddr.Line))}</Line>\n        <PostcodeID>${xmlEscape(String(exporterAddr.PostcodeID))}</PostcodeID>\n      </Address>\n    </Exporter>`;
   }
   const previousDocs = asArray(gs.PreviousDocument);
   const previousDocumentXml = previousDocs.map((pd) => `
@@ -154,7 +167,7 @@ export function renderH1Xml(payloadInfo: unknown): string {
   // Omit both until full party data (Name + Address including CityName) is available.
   const buyerXml = "";
   const sellerXml = "";
-  // DE 8/5 — WCOID 103 at 67A (cds_wco_references.ts). Mapper always sets default "11".
+  // DE 8/5 — WCOID 103 at 67A (cds_wco_references.ts). Mapper requires explicit value.
   // XSD GoodsShipment sequence: TransactionNatureCode before Consignment (WCO_DEC_2_DMS.xsd).
   const transactionNatureCode = String(gs.TransactionNatureCode || "").trim();
   const transactionNatureXml = transactionNatureCode
@@ -223,20 +236,30 @@ export function renderH1Xml(payloadInfo: unknown): string {
             : "";
         const additionalInformation = asArray(item.AdditionalInformation);
         const additionalInformationXml = additionalInformation
-          .map((ai) => `
+          .map((ai) => {
+            const code = String(ai.StatementCode || "").trim();
+            if (!code) return "";
+            return `
         <AdditionalInformation>
-          <StatementCode>${xmlEscape(ai.StatementCode || "")}</StatementCode>${ai.StatementDescription ? `\n          <StatementDescription>${xmlEscape(ai.StatementDescription)}</StatementDescription>` : ""}${ai.StatementTypeCode ? `\n          <StatementTypeCode>${xmlEscape(ai.StatementTypeCode)}</StatementTypeCode>` : ""}
-        </AdditionalInformation>`)
+          <StatementCode>${xmlEscape(code)}</StatementCode>${ai.StatementDescription ? `\n          <StatementDescription>${xmlEscape(ai.StatementDescription)}</StatementDescription>` : ""}${ai.StatementTypeCode ? `\n          <StatementTypeCode>${xmlEscape(ai.StatementTypeCode)}</StatementTypeCode>` : ""}
+        </AdditionalInformation>`;
+          })
           .join("");
         const additionalDocuments = asArray(item.AdditionalDocument);
         const additionalDocumentsXml = additionalDocuments
-          .map((doc) => `
+          .map((doc) => {
+            const category = String(doc?.CategoryCode || "").trim();
+            const docId = String(doc?.ID || "").trim();
+            const type = String(doc?.TypeCode || "").trim();
+            if (!category || !docId || !type) return "";
+            return `
         <AdditionalDocument>
-          <CategoryCode>${xmlEscape(doc?.CategoryCode || "")}</CategoryCode>
-          <ID>${xmlEscape(doc?.ID || "")}</ID>
-          <TypeCode>${xmlEscape(doc?.TypeCode || "")}</TypeCode>
+          <CategoryCode>${xmlEscape(category)}</CategoryCode>
+          <ID>${xmlEscape(docId)}</ID>
+          <TypeCode>${xmlEscape(type)}</TypeCode>
           ${doc?.StatusCode ? `<LPCOExemptionCode>${xmlEscape(doc.StatusCode)}</LPCOExemptionCode>` : ""}
-        </AdditionalDocument>`)
+        </AdditionalDocument>`;
+          })
           .join("");
         const classifications = asArray(commodity.Classification);
         const classificationXml = classifications.map((classification) => `
@@ -258,6 +281,10 @@ export function renderH1Xml(payloadInfo: unknown): string {
         const packaging = asArray(item.Packaging)[0]
           ? asArray(item.Packaging)[0]
           : { SequenceNumeric: "1", MarksNumbersID: "N/A", QuantityQuantity: "1", TypeCode: "PK" };
+        const marksNumbersId = String(packaging.MarksNumbersID || "").trim();
+        const marksNumbersXml = marksNumbersId
+          ? `\n          <MarksNumbersID>${xmlEscape(marksNumbersId)}</MarksNumbersID>`
+          : "";
         const origin = read(item, "Origin");
         const originXml = origin.CountryCode
           ? `\n        <Origin>\n          <CountryCode>${xmlEscape(origin.CountryCode)}</CountryCode>\n          <TypeCode>${xmlEscape(origin.TypeCode || "1")}</TypeCode>\n        </Origin>`
@@ -292,14 +319,16 @@ export function renderH1Xml(payloadInfo: unknown): string {
           ${proc.PreviousCode ? `<PreviousCode>${xmlEscape(proc.PreviousCode)}</PreviousCode>` : ""}
         </GovernmentProcedure>`).join("")}${originXml}
         <Packaging>
-          <SequenceNumeric>${xmlEscape(packaging.SequenceNumeric)}</SequenceNumeric>
-          <MarksNumbersID>${xmlEscape(packaging.MarksNumbersID)}</MarksNumbersID>
+          <SequenceNumeric>${xmlEscape(packaging.SequenceNumeric)}</SequenceNumeric>${marksNumbersXml}
           <QuantityQuantity>${xmlEscape(packaging.QuantityQuantity)}</QuantityQuantity>
           <TypeCode>${xmlEscape(packaging.TypeCode)}</TypeCode>
-        </Packaging>
-        <ValuationAdjustment>
-          <AdditionCode>0000</AdditionCode>
-        </ValuationAdjustment>
+        </Packaging>${(() => {
+          const adj = read(item, "ValuationAdjustment");
+          const code = String(adj.AdditionCode || "").trim();
+          return code
+            ? `\n        <ValuationAdjustment>\n          <AdditionCode>${xmlEscape(code)}</AdditionCode>\n        </ValuationAdjustment>`
+            : "";
+        })()}
       </GovernmentAgencyGoodsItem>`;
       }).join("")}
       <Importer>

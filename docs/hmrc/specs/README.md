@@ -1,7 +1,6 @@
-# Freightcode CDS Spec
+# HMRC official mirrors (data only)
 
-Authoritative specification for Freightcode's CDS XML output.
-Built only from HMRC primary sources. No paraphrased or inferred content.
+**Behaviour is defined in `docs/hmrc/ACTIVE/tdr/AGENT-SPEC.md` only.** This directory holds verbatim HMRC source copies.
 
 ---
 
@@ -9,10 +8,10 @@ Built only from HMRC primary sources. No paraphrased or inferred content.
 
 | | |
 |--|--|
-| Spec version | 0.1.0 |
-| Created | 2026-05-27 |
-| Active environment | Trade Test v2.0 (sandbox) |
-| Lane | See `lane.md` |
+| Catalogue version | 0.2.0 |
+| Updated | 2026-06-08 |
+| Active environment | TDR — see `docs/hmrc/ACTIVE/tdr/environment-matrix.md` |
+| Archived environment | Trade Test v2.0 — `docs/hmrc/ARCHIVE/trade-test/` |
 
 ---
 
@@ -22,7 +21,6 @@ Built only from HMRC primary sources. No paraphrased or inferred content.
 2. **WCO Data Model 3.6** is reference for XML element meaning only — never for HMRC-valid combinations.
 3. **DMSREJ** is negative evidence only — proves a structure failed; does not prove an alternative is valid.
 4. **In-repo paraphrased docs** are unofficial:
-   - `documentation/HMRC/` — paraphrased
    - `convex/lib/cds_h1_data_elements.ts` — extracted obligation flags only
    - `convex/lib/cds_wco_references.ts` — WCO meaning only
    - `src/lib/cds_error_codes.ts` — paraphrased

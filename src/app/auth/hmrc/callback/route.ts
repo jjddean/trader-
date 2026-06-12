@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
+import { hmrcOAuthBaseUrl, hmrcOAuthCredentials } from "../../../../lib/hmrc-oauth";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -47,13 +48,10 @@ export async function GET(request: Request) {
     const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
     convex.setAuth(convexToken);
 
-    const clientId = process.env.HMRC_CLIENT_ID!;
-    const clientSecret = process.env.HMRC_CLIENT_SECRET!;
+    const { clientId, clientSecret } = hmrcOAuthCredentials();
     const redirectUri = process.env.HMRC_REDIRECT_URI!;
 
-    const hmrcBase = process.env.HMRC_ENVIRONMENT === "sandbox"
-      ? HMRC_CONFIG.sandboxBaseUrl
-      : HMRC_CONFIG.productionBaseUrl;
+    const hmrcBase = hmrcOAuthBaseUrl();
     const tokenUrl = `${hmrcBase}/oauth/token`;
     console.log("EXCHANGING TOKEN WITH REDIRECT URI:", redirectUri);
     

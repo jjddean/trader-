@@ -1,9 +1,25 @@
 import { xmlEscape } from "./xml-utils";
+import { deriveHeaderAmendment } from "./hmrc-amendment-pointers";
 
 /**
  * CDS amendment (FunctionCode 13, TypeCode COR).
  * Source: HMRC TT_IM002b_Amendment.xml (hmrc/customs-declarations annotated samples).
  */
+
+const ITEM_CHARGE_WCO_PATH =
+  "Declaration/GoodsShipment/GovernmentAgencyGoodsItem/Commodity/InvoiceLine/ItemChargeAmount";
+const GROSS_MASS_WCO_PATH =
+  "Declaration/GoodsShipment/GovernmentAgencyGoodsItem/Commodity/GoodsMeasure/GrossMassMeasure";
+const INVOICE_AMOUNT_WCO_PATH = "Declaration/InvoiceAmount";
+
+/** FunctionalReferenceID for amend messages (max 35 chars). AM- prefix for DMSRES context. */
+export function buildAmendFunctionalReferenceId(declarationId: string): string {
+  const id = String(declarationId).replace(/[^a-z0-9]/gi, "");
+  const uniq = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`.toUpperCase().slice(-6);
+  const maxIdLen = 35 - 3 - 1 - uniq.length;
+  const idPart = id.length > maxIdLen ? id.slice(-maxIdLen) : id;
+  return `AM-${idPart}-${uniq}`.slice(0, 35);
+}
 
 export type AmendmentChangeKind = "itemChargeAmount" | "grossMass" | "headerField";
 
@@ -44,11 +60,6 @@ export type HeaderFieldChange = AmendmentBaseArgs & {
 };
 
 export type AmendmentChange = ItemChargeAmountChange | GrossMassChange | HeaderFieldChange;
-
-const ITEM_CHARGE_TAG_ID = "112";
-const ITEM_CHARGE_SECTION = "79A";
-const GROSS_MASS_TAG_ID = "126";
-const GROSS_MASS_SECTION = "126";
 
 function pointerXml(sequence: number, section: string, tagId?: string): string {
   const tag = tagId ? `\n        <TagID>${xmlEscape(tagId)}</TagID>` : "";
@@ -102,34 +113,47 @@ function goodsShipmentFragment(change: AmendmentChange, seq: number): string {
     </GoodsShipment>`;
 }
 
+function buildDerivedItemPointers(wcoPath: string, itemSequence: number): string {
+  const derived = deriveHeaderAmendment(wcoPath);
+  if (!derived) {
+    throw new Error(`No CDS WCO reference row for ${wcoPath}; cannot derive amendment pointers.`);
+  }
+  return derived.pointerSections
+    .map((section, idx) => {
+      const isLast = idx === derived.pointerSections.length - 1;
+      const sequence = section === "68A" ? itemSequence : 1;
+      return pointerXml(sequence, section, isLast ? derived.leafTagId : undefined);
+    })
+    .join("");
+}
+
+function buildDerivedHeaderPointers(pointerSections: string[], leafTagId: string): string {
+  return pointerSections
+    .map((section, idx) =>
+      idx === pointerSections.length - 1
+        ? pointerXml(1, section, leafTagId)
+        : pointerXml(1, section),
+    )
+    .join("");
+}
+
+function amendmentBlock(changeReasonCode: string, pointers: string): string {
+  return `
+    <Amendment>
+      <ChangeReasonCode>${xmlEscape(changeReasonCode)}</ChangeReasonCode>${pointers}
+    </Amendment>`;
+}
+
 function amendmentPointers(change: AmendmentChange, seq: number): string {
   if (change.changeKind === "headerField") {
-    return change.pointerSections
-      .map((section, idx) =>
-        idx === change.pointerSections.length - 1
-          ? pointerXml(1, section, change.leafTagId)
-          : pointerXml(1, section),
-      )
-      .join("");
+    return buildDerivedHeaderPointers(change.pointerSections, change.leafTagId);
   }
 
   if (change.changeKind === "itemChargeAmount") {
-    return (
-      pointerXml(1, "42A") +
-      pointerXml(1, "67A") +
-      pointerXml(seq, "68A") +
-      pointerXml(1, "23A") +
-      pointerXml(1, ITEM_CHARGE_SECTION, ITEM_CHARGE_TAG_ID)
-    );
+    return buildDerivedItemPointers(ITEM_CHARGE_WCO_PATH, seq);
   }
 
-  return (
-    pointerXml(1, "42A") +
-    pointerXml(1, "67A") +
-    pointerXml(seq, "68A") +
-    pointerXml(1, "23A") +
-    pointerXml(1, GROSS_MASS_SECTION, GROSS_MASS_TAG_ID)
-  );
+  return buildDerivedItemPointers(GROSS_MASS_WCO_PATH, seq);
 }
 
 /** @deprecated Use buildAmendmentXmlFromChange */
@@ -154,11 +178,64 @@ export function buildAmendmentXml(args: {
   });
 }
 
+function invoiceAmountFragment(currencyId: string, amount: string): string {
+  const currency = currencyId.trim() || "GBP";
+  return `
+    <InvoiceAmount currencyID="${xmlEscape(currency)}">${xmlEscape(amount.trim())}</InvoiceAmount>`;
+}
+
+function declarationFragments(change: AmendmentChange, seq: number): string {
+  return goodsShipmentFragment(change, seq);
+}
+
+function preAdditionalInformationFragment(change: AmendmentChange): string {
+  if (change.changeKind !== "itemChargeAmount") {
+    return "";
+  }
+  return invoiceAmountFragment(change.currencyId || "GBP", change.itemChargeAmount);
+}
+
+function aesAdditionalInformationBlock(statementDescription: string, amendmentSequence: number): string {
+  return `
+    <AdditionalInformation>
+      <StatementDescription>${xmlEscape(statementDescription)}</StatementDescription>
+      <StatementTypeCode>AES</StatementTypeCode>${pointerXml(1, "42A")}${pointerXml(amendmentSequence, "06A")}
+    </AdditionalInformation>`;
+}
+
+function additionalInformationBlocks(change: AmendmentChange): string {
+  const text = change.statementDescription;
+  if (change.changeKind === "itemChargeAmount") {
+    // One AES block per Amendment (06A seq 1..n). TT_IM002b uses seq 1 for a single 06A.
+    // Cancel evidence: CDS10001 on 03A/225 when a second 06A lacks a linked StatementDescription.
+    return aesAdditionalInformationBlock(text, 1) + aesAdditionalInformationBlock(text, 2);
+  }
+  return aesAdditionalInformationBlock(text, 1);
+}
+
+function amendmentBlocks(change: AmendmentChange, seq: number): string {
+  const reason = change.changeReasonCode;
+  if (change.changeKind !== "itemChargeAmount") {
+    return amendmentBlock(reason, amendmentPointers(change, seq));
+  }
+
+  const invoiceDerived = deriveHeaderAmendment(INVOICE_AMOUNT_WCO_PATH);
+  if (!invoiceDerived) {
+    throw new Error(`No CDS WCO reference row for ${INVOICE_AMOUNT_WCO_PATH}; cannot co-amend DE 4/11.`);
+  }
+
+  return (
+    amendmentBlock(reason, amendmentPointers(change, seq)) +
+    amendmentBlock(reason, buildDerivedHeaderPointers(invoiceDerived.pointerSections, invoiceDerived.leafTagId))
+  );
+}
+
 export function buildAmendmentXmlFromChange(change: AmendmentChange): string {
   const seq = Math.max(1, change.itemSequence);
-  const aesPointers = pointerXml(1, "42A") + pointerXml(1, "06A");
-  const amendFieldPointers = amendmentPointers(change, seq);
-  const goodsShipment = goodsShipmentFragment(change, seq);
+  const preAes = preAdditionalInformationFragment(change);
+  const aesBlocks = additionalInformationBlocks(change);
+  const amendments = amendmentBlocks(change, seq);
+  const fragments = declarationFragments(change, seq);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
@@ -171,14 +248,7 @@ export function buildAmendmentXmlFromChange(change: AmendmentChange): string {
     <FunctionCode>13</FunctionCode>
     <FunctionalReferenceID>${xmlEscape(change.amendLrn)}</FunctionalReferenceID>
     <ID>${xmlEscape(change.mrn)}</ID>
-    <TypeCode>COR</TypeCode>
-    <AdditionalInformation>
-      <StatementDescription>${xmlEscape(change.statementDescription)}</StatementDescription>
-      <StatementTypeCode>AES</StatementTypeCode>${aesPointers}
-    </AdditionalInformation>
-    <Amendment>
-      <ChangeReasonCode>${xmlEscape(change.changeReasonCode)}</ChangeReasonCode>${amendFieldPointers}
-    </Amendment>${goodsShipment}
+    <TypeCode>COR</TypeCode>${preAes}${aesBlocks}${amendments}${fragments}
   </Declaration>
 </MetaData>`;
 }

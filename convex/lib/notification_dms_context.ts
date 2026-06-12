@@ -36,6 +36,15 @@ function hasValidationErrors(ctx: DmsNotificationContext): boolean {
   return hasFunctionalErrors(rawPayload(ctx));
 }
 
+/** FC 02 / DMSINV with AM- LRN and no validation errors — amend received, not declaration invalid. */
+export function isAmendmentAcknowledged(ctx: DmsNotificationContext): boolean {
+  if (ctx.notificationType?.toUpperCase() !== "DMSINV") return false;
+  const raw = rawPayload(ctx);
+  if (!hasAmendLrnInPayload(raw)) return false;
+  if (hasCancelLrnInPayload(raw) || hasCancellationDateTime(raw)) return false;
+  return !hasValidationErrors(ctx);
+}
+
 /** Amendment rejected — AM- LRN + validation errors (e.g. CDS13000). AM- alone is not enough. */
 export function isAmendmentRejected(ctx: DmsNotificationContext): boolean {
   const type = ctx.notificationType?.toUpperCase() || "";
@@ -80,4 +89,26 @@ export function isDmscleLifecycleOnly(ctx: DmsNotificationContext): boolean {
   if (ctx.notificationType?.toUpperCase() !== "DMSCLE") return false;
   if (isPostCancelClearance(ctx)) return true;
   return process.env.HMRC_ENVIRONMENT === "sandbox";
+}
+
+/** Import-path DMSCLE (not post-cancel noise). HMRC treats these MRNs as non-amendable (CDS12015). */
+export function isImportDmscleEvent(ctx: DmsNotificationContext): boolean {
+  if (ctx.notificationType?.toUpperCase() !== "DMSCLE") return false;
+  return !isPostCancelClearance(ctx);
+}
+
+export function declarationHasImportDmscle(notifications: DmsNotificationContext[]): boolean {
+  return notifications.some(isImportDmscleEvent);
+}
+
+/** CDS12015 on an amend message — HMRC will reject further amends on this MRN. */
+export function declarationHasAmendStateBlocked(notifications: DmsNotificationContext[]): boolean {
+  return notifications.some(
+    (n) => isAmendmentRejected(n) && hasCds12015StateError(n),
+  );
+}
+
+export function hasCds12015StateError(ctx: DmsNotificationContext): boolean {
+  if ((ctx.errorCodes ?? []).includes("CDS12015")) return true;
+  return /<(?:[^>]*:)?ValidationCode>\s*CDS12015\s*</i.test(rawPayload(ctx));
 }

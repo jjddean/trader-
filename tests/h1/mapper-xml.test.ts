@@ -14,13 +14,18 @@ describe("H1 mapper and XML renderer", () => {
     destinationCountry: "GB",
     dispatchCountry: "DE",
     presentationOffice: "",
-    // Source: spec/hmrc-mirror/appendix-16c-felixstowe.md (Appendix 16C ODS 2026-05-18)
+    exporterName: "Acme Export GmbH",
+    exporterCity: "Hamburg",
+    exporterLine: "1 Hafenstrasse",
+    exporterPostcode: "20095",
+    // Source: docs/hmrc/specs/cds-api/mirrors/appendix-16c-felixstowe.md (Appendix 16C ODS 2026-05-18)
     locationId: "GBAUFXTFXTFXT",
     goodsLocationKind: "port",
     invoiceCurrency: "GBP",
     invoiceTotal: 2500,
     incoterms: "CIF",
     incotermLocation: "Felixstowe",
+    transactionNatureCode: "11",
     transportMode: "1",
     transportIdType: "11",
     transportId: "CSCL GLOBE",
@@ -112,6 +117,7 @@ describe("H1 mapper and XML renderer", () => {
     assert.match(xml, /<CurrentCode>000<\/CurrentCode>/);
     assert.match(xml, /<GoodsShipment>\s*<TransactionNatureCode>11<\/TransactionNatureCode>\s*<Consignment>/);
     assert.match(xml, /<TradeTerms>\s*<ConditionCode>CIF<\/ConditionCode>\s*<LocationID>GBFELIXSTOWE<\/LocationID>\s*<\/TradeTerms>/);
+    assert.match(xml, /<ValuationAdjustment>\s*<AdditionCode>0000<\/AdditionCode>\s*<\/ValuationAdjustment>/);
     assert.match(
       xml,
       /<AdditionalInformation>\s*<StatementCode>00500<\/StatementCode>\s*<StatementDescription>Importer<\/StatementDescription>\s*<\/AdditionalInformation>/,
@@ -120,6 +126,16 @@ describe("H1 mapper and XML renderer", () => {
     assert.match(xml, /<CategoryCode>N<\/CategoryCode>/);
     assert.match(xml, /<TypeCode>935<\/TypeCode>/);
     assert.doesNotMatch(xml, /<TypeCode>922<\/TypeCode>/);
+    assert.doesNotMatch(xml, /<([A-Za-z][\w]*)\s*>\s*<\/\1>/);
+  });
+
+  it("preflight passes when shipping marks are blank (mapper defaults to N/A)", () => {
+    const payload = mapToCDS_H1(declaration, [{ ...items[0], shippingMarks: "" }]);
+    const xml = renderH1Xml(payload);
+    const preflight = validateXmlPreflight(xml, declaration.eori);
+
+    assert.equal(preflight.valid, true);
+    assert.match(xml, /<MarksNumbersID>N\/A<\/MarksNumbersID>/);
   });
 
   it("emits TariffQuantity (DE 6/2, NAR p/st) when supplementaryUnitQty is set", () => {
@@ -136,5 +152,24 @@ describe("H1 mapper and XML renderer", () => {
     ];
     const xml = renderH1Xml(mapToCDS_H1(declaration, laptopItems));
     assert.match(xml, /<TariffQuantity unitCode="NAR">10<\/TariffQuantity>/);
+  });
+
+  it("throws when transaction nature code is missing", () => {
+    assert.throws(
+      () => mapToCDS_H1({ ...declaration, transactionNatureCode: "" }, items),
+      /Missing transaction nature code/,
+    );
+  });
+
+  it("throws when overseas exporter address is missing", () => {
+    assert.throws(
+      () => mapToCDS_H1({ ...declaration, exporterName: "" }, items),
+      /Missing Exporter name/,
+    );
+  });
+
+  it("omits ValuationAdjustment for FOB incoterms (CDS12100)", () => {
+    const xml = renderH1Xml(mapToCDS_H1({ ...declaration, incoterms: "FOB" }, items));
+    assert.doesNotMatch(xml, /<ValuationAdjustment>/);
   });
 });

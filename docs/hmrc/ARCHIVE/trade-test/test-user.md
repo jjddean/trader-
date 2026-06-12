@@ -71,7 +71,7 @@ Used through FC-MPVNPBLP; CDS12005 R123/R038 on EORI `GB243617410764`.
 
 - **OAuth (unchanged):** Romwan Lee — `GB531765313922` (`user_3Ab42qRLt6cchUas7LDrkJx11kM` in `.env.local`).
 - **Declaration experiment:** Declarant + Importer + `HMRC_EORI` = `GB553202734852` (TDL-listed); OAuth token still Romwan — tests whether CDS12005 clears without changing login.
-- **CDS12005:** Romwan/Yasmine EORIs fail party validation on Trade Test (FC-MPVNPBLP, FC-MPWQSJ97). See `spec/hmrc-mirror/cds12005-party-id.md`. **Retracted:** advice that “re-create via Create Test User API (not the web page) with TDL `eoriNumber`” is a separate fix — web and API are the same service.
+- **CDS12005:** Romwan/Yasmine EORIs fail party validation on Trade Test (FC-MPVNPBLP, FC-MPWQSJ97). See `docs/hmrc/specs/cds-api/mirrors/cds12005-party-id.md`. **Retracted:** advice that “re-create via Create Test User API (not the web page) with TDL `eoriNumber`” is a separate fix — web and API are the same service.
 - **`GB553202734852`:** historical archive/TDL reference only (`test-evidence/archive-pre-p0/`) — **not in use** on the active laptop lane.
 
 ### Sandbox test users tried (CDS12005 on DE 3/18 + 3/16)

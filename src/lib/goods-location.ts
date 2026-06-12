@@ -14,7 +14,7 @@
  *     errors against the previous Name+ID-only shape (negative evidence only)
  *   - WCO Data Model element semantics (reference only)
  * Inference accepted by project owner 2026-05-27 in lieu of HMRC SDS contact.
- * See spec/de-5-23-goods-location.md.
+ * See docs/hmrc/ACTIVE/tdr/mapping/de-5-23-goods-location.md.
  */
 
 import { APPENDIX_16C_MARITIME_CODES } from "./generated/appendix-16c-codes";
@@ -42,7 +42,7 @@ export const GOODS_LOCATION_KIND_OPTIONS: ReadonlyArray<{
 const LEGACY_PORT_KIND = "port_unlocode";
 
 /**
- * Known Appendix 16C consolidated codes — generated from spec/hmrc-mirror/appendix-16c-maritime.psv.
+ * Known Appendix 16C consolidated codes — generated from docs/hmrc/specs/cds-api/mirrors/appendix-16c-maritime.psv.
  * Regenerate: node scripts/build-appendix-16c-codes.js
  */
 export const KNOWN_APPENDIX_16C_CODES: Readonly<Record<string, string>> = APPENDIX_16C_MARITIME_CODES;

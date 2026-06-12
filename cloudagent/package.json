@@ -1,6 +1,11 @@
 {
     "name": "freightcode-agent",
     "version": "1.0.0",
+    "scripts": {
+        "deploy": "node scripts/deploy.mjs",
+        "deploy:oauth": "node scripts/deploy.mjs --oauth",
+        "dev": "wrangler dev"
+    },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20240529.0",
         "typescript": "^5.4.5",

@@ -19,6 +19,7 @@ import {
   DropdownMenuItem 
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { ClientOnly } from "@/components/client-only";
 import { DOCUMENT_TYPES } from "@/lib/utils/document-utils";
 
 interface DocumentsTableProps {
@@ -57,66 +58,78 @@ export const DocumentsTable = React.memo(function DocumentsTable({
     });
   }, [documents, declarationFilter, typeFilter]);
 
+  const filterSkeleton = (
+    <>
+      <div className="h-9 w-full animate-pulse rounded-md border border-gray-200 bg-gray-100" />
+      <div className="h-9 w-full animate-pulse rounded-md border border-gray-200 bg-gray-100" />
+      <div className="h-9 w-full animate-pulse rounded-md border border-gray-200 bg-gray-100" />
+    </>
+  );
+
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
       {/* FILTER BAR */}
       <div className="border-b border-[#e9e9e7] bg-gray-50 px-5 py-4">
         <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-4">
-          <Select value={declarationFilter} onValueChange={onDeclarationFilterChange}>
-            <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[0.6875rem] font-medium tracking-normal text-gray-600">
-              <SelectValue placeholder="All declarations" />
-            </SelectTrigger>
-            <SelectContent position="popper" className="z-[100] max-h-[300px]">
-              <SelectItem value="all" className="text-[0.6875rem]">All declarations</SelectItem>
-              {allDeclarationOptions.map((decl) => (
-                <SelectItem key={decl.id} value={decl.id} className="font-mono text-[0.6875rem]">
-                  {decl.mrn}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <ClientOnly fallback={filterSkeleton}>
+            <div className="contents">
+              <Select value={declarationFilter} onValueChange={onDeclarationFilterChange}>
+                <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[0.6875rem] font-medium tracking-normal text-gray-600">
+                  <SelectValue placeholder="All declarations" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="z-[100] max-h-[300px]">
+                  <SelectItem value="all" className="text-[0.6875rem]">All declarations</SelectItem>
+                  {allDeclarationOptions.map((decl) => (
+                    <SelectItem key={decl.id} value={decl.id} className="font-mono text-[0.6875rem]">
+                      {decl.mrn}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-          <Select value={typeFilter} onValueChange={onTypeFilterChange}>
-            <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[0.6875rem] font-medium tracking-normal text-gray-600">
-              <SelectValue placeholder="All types" />
-            </SelectTrigger>
-            <SelectContent position="popper" className="z-[100] max-h-[300px]">
-              <SelectItem value="all" className="text-[0.6875rem]">All types</SelectItem>
-              {DOCUMENT_TYPES.map((type) => (
-                <SelectItem key={type.code} value={type.name} className="text-[0.6875rem]">
-                  {type.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <Select value={typeFilter} onValueChange={onTypeFilterChange}>
+                <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[0.6875rem] font-medium tracking-normal text-gray-600">
+                  <SelectValue placeholder="All types" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="z-[100] max-h-[300px]">
+                  <SelectItem value="all" className="text-[0.6875rem]">All types</SelectItem>
+                  {DOCUMENT_TYPES.map((type) => (
+                    <SelectItem key={type.code} value={type.name} className="text-[0.6875rem]">
+                      {type.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger className="flex h-9 w-full items-center justify-between rounded-md border border-gray-200 bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-gray-600 transition-colors hover:border-gray-400 focus:outline-none shadow-sm">
-              <span>Compliance Tools</span>
-              <ChevronDown className="h-4 w-4 text-gray-400" />
-            </DropdownMenuTrigger>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex h-9 w-full items-center justify-between rounded-md border border-gray-200 bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-gray-600 transition-colors hover:border-gray-400 focus:outline-none shadow-sm">
+                  <span>Compliance Tools</span>
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                </DropdownMenuTrigger>
 
-            <DropdownMenuContent className="z-[100] min-w-[12rem] overflow-hidden rounded-lg border border-gray-100 bg-white shadow-lg" align="end">
-              <DropdownMenuItem 
-                onClick={() => onActiveToolChange("preference")}
-                className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-[0.6875rem] text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
-              >
-                Preference Checker
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => onActiveToolChange("roo")}
-                className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-[0.6875rem] text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
-              >
-                Rules of Origin
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => onActiveToolChange("landed")}
-                className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-[0.6875rem] text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
-              >
-                Landed Cost Calculator
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuContent className="z-[100] min-w-[12rem] overflow-hidden rounded-lg border border-gray-100 bg-white shadow-lg" align="end">
+                  <DropdownMenuItem 
+                    onClick={() => onActiveToolChange("preference")}
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-[0.6875rem] text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
+                  >
+                    Preference Checker
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => onActiveToolChange("roo")}
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-[0.6875rem] text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
+                  >
+                    Rules of Origin
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => onActiveToolChange("landed")}
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-[0.6875rem] text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
+                  >
+                    Landed Cost Calculator
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </ClientOnly>
 
           <Button
             variant="ghost"

@@ -1,3 +1,2 @@
-<!-- timestamp: 2026-06-06T10:51:26.272Z | http_status: 202 | conversation_id: 71559558-9aed-40ef-bdda-c5f8156a647d -->
-<!-- request_accept: application/vnd.hmrc.2.0+xml | request_content_type: application/xml; charset=UTF-8 | request_authorization: Bearer [REDACTED] | request_x_client_id: ZSoA1lpJi8FyuzSsncFrOZKpmrNe | request_gov_test_scenario: ABSENT -->
-<empty/>
+<!-- timestamp: 2026-06-11T18:22:11.815Z | http_status: 0 | conversation_id: N/A -->
+<dryRunOnly>true</dryRunOnly>

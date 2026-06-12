@@ -1,5 +1,6 @@
 import {
   isAmendmentAccepted,
+  isAmendmentAcknowledged,
   isAmendmentRejected,
   isInvalidationAccepted,
   isPostCancelClearance,
@@ -52,6 +53,7 @@ export function replayDeclarationStatus(
       hasResolvedMrn,
       isAmendmentRejected: isAmendmentRejected(ctx),
       isAmendmentAccepted: isAmendmentAccepted(ctx),
+      isAmendmentAcknowledged: isAmendmentAcknowledged(ctx),
       isInvalidationAccepted: isInvalidationAccepted(ctx),
       isPostCancelClearance: isPostCancelClearance(ctx),
     });

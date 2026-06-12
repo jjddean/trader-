@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
@@ -16,6 +16,36 @@ import {
   type GoodsLocationKind,
 } from "@/lib/goods-location";
 import { DeclarationModePromote } from "@/components/declaration-mode-promote";
+
+const TRANSPORT_MODE_OPTIONS = [
+  { value: "1", label: "1 — Sea" },
+  { value: "2", label: "2 — Rail" },
+  { value: "3", label: "3 — Road" },
+  { value: "4", label: "4 — Air" },
+  { value: "5", label: "5 — Postal" },
+  { value: "7", label: "7 — Fixed transport installations" },
+  { value: "8", label: "8 — Inland waterway" },
+  { value: "9", label: "9 — Mode unknown" },
+] as const;
+
+const TRANSPORT_ID_TYPE_OPTIONS = [
+  { value: "10", label: "10 — IMO ship identification number" },
+  { value: "11", label: "11 — Name of seagoing vessel" },
+  { value: "20", label: "20 — Wagon number" },
+  { value: "30", label: "30 — Vehicle registration number" },
+  { value: "40", label: "40 — IATA flight number" },
+  { value: "41", label: "41 — Registration of aircraft" },
+] as const;
+
+function normalizeTransportIdType(value: unknown): string {
+  if (value == null || value === "") return "";
+  const raw = String(value).trim();
+  const code = raw.match(/^(\d{2})/)?.[1];
+  return code ?? raw;
+}
+
+const selectFieldClassName =
+  "w-full rounded-md border border-gray-200 bg-white p-2.5 text-sm outline-none transition-colors focus:border-blue-500";
 
 export default function CoreSchemaPage() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -35,6 +65,10 @@ export default function CoreSchemaPage() {
   );
 
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  // Hydrate once per declaration id — getLane re-reuns on status/badge updates.
+  const hydratedForIdRef = useRef<string | null>(null);
   const [formData, setFormData] = useState({
     eori: "",
     declarationType: "H1",
@@ -52,37 +86,76 @@ export default function CoreSchemaPage() {
     goodsLocationKind: "" as GoodsLocationKind | "",
     locationId: "",
     presentationOffice: "",
+    exporterName: "",
+    exporterCity: "",
+    exporterLine: "",
+    exporterPostcode: "",
+    transactionNatureCode: "",
   });
 
-  // Hydrate form once data loads. Missing fields stay empty — no defaults.
   React.useEffect(() => {
-    if (declaration) {
-      const d = declaration as Record<string, unknown>;
-      setFormData({
-        eori: (d.eori as string) || "",
-        declarationType: "H1",
-        route: (d.route as string) || "Route 1",
-        dispatchCountry: (d.dispatchCountry as string) || "",
-        transportMode: (d.transportMode as string) || "",
-        transportId: (d.transportId as string) || "",
-        transportIdType: (d.transportIdType as string) || "",
-        destinationCountry: (d.destinationCountry as string) || "",
-        importerEori: (d.importerEori as string) || "",
-        invoiceCurrency: (d.invoiceCurrency as string) || "",
-        invoiceTotal: d.invoiceTotal != null ? String(d.invoiceTotal) : "",
-        incoterms: (d.incoterms as string) || "",
-        incotermLocation: (d.incotermLocation as string) || "",
-        goodsLocationKind: inferGoodsLocationKind({ goodsLocationKind: d.goodsLocationKind }) || "",
-        locationId: (d.locationId as string) || "",
-        presentationOffice: (d.presentationOffice as string) || "",
-      });
-    }
-  }, [declaration]);
+    hydratedForIdRef.current = null;
+  }, [id]);
+
+  React.useEffect(() => {
+    if (!declaration || !id) return;
+    if (hydratedForIdRef.current === id) return;
+    hydratedForIdRef.current = id;
+    const d = declaration as Record<string, unknown>;
+    setFormData({
+      eori: (d.eori as string) || "",
+      declarationType: "H1",
+      route: (d.route as string) || "Route 1",
+      dispatchCountry: (d.dispatchCountry as string) || "",
+      transportMode: d.transportMode != null ? String(d.transportMode) : "",
+      transportId: (d.transportId as string) || "",
+      transportIdType: normalizeTransportIdType(d.transportIdType),
+      destinationCountry: (d.destinationCountry as string) || "",
+      importerEori: (d.importerEori as string) || "",
+      invoiceCurrency: (d.invoiceCurrency as string) || "",
+      invoiceTotal: d.invoiceTotal != null ? String(d.invoiceTotal) : "",
+      incoterms: (d.incoterms as string) || "",
+      incotermLocation: (d.incotermLocation as string) || "",
+      goodsLocationKind: inferGoodsLocationKind({ goodsLocationKind: d.goodsLocationKind }) || "",
+      locationId: (d.locationId as string) || "",
+      presentationOffice: (d.presentationOffice as string) || "",
+      exporterName: (d.exporterName as string) || "",
+      exporterCity: (d.exporterCity as string) || "",
+      exporterLine: (d.exporterLine as string) || "",
+      exporterPostcode: (d.exporterPostcode as string) || "",
+      transactionNatureCode: (d.transactionNatureCode as string) || "",
+    });
+  }, [declaration, id]);
 
   const handleSave = async (e?: React.FormEvent) => {
     e?.preventDefault();
     setSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
     try {
+      if (!formData.transportIdType.trim()) {
+        setSaveError("Identification Type (DE 7/9) is required.");
+        return;
+      }
+      if (!formData.transportMode.trim()) {
+        setSaveError("Transport Mode (DE 7/4) is required.");
+        return;
+      }
+      const dispatch = formData.dispatchCountry.trim().toUpperCase();
+      if (dispatch && dispatch !== "GB" && dispatch !== "XI") {
+        if (!formData.exporterName.trim()) {
+          setSaveError("Exporter name (DE 3/1) is required for overseas dispatch.");
+          return;
+        }
+        if (!formData.exporterCity.trim() || !formData.exporterLine.trim() || !formData.exporterPostcode.trim()) {
+          setSaveError("Exporter city, address line, and postcode (DE 3/1) are required for overseas dispatch.");
+          return;
+        }
+      }
+      if (!formData.transactionNatureCode.trim()) {
+        setSaveError("Nature of transaction (DE 8/5) is required.");
+        return;
+      }
       const invoiceTotalParsed = formData.invoiceTotal.trim() === ""
         ? null
         : Number(formData.invoiceTotal);
@@ -92,9 +165,9 @@ export default function CoreSchemaPage() {
         declarationType: formData.declarationType,
         route: formData.route,
         dispatchCountry: formData.dispatchCountry,
-        transportMode: formData.transportMode,
+        transportMode: formData.transportMode.trim(),
         transportId: formData.transportId.trim(),
-        transportIdType: formData.transportIdType,
+        transportIdType: formData.transportIdType.trim(),
         destinationCountry: formData.destinationCountry,
         importerEori: formData.importerEori.trim(),
         invoiceCurrency: formData.invoiceCurrency.trim().toUpperCase(),
@@ -104,9 +177,17 @@ export default function CoreSchemaPage() {
         goodsLocationKind: formData.goodsLocationKind || undefined,
         locationId: formData.locationId.trim(),
         presentationOffice: formData.presentationOffice.trim(),
+        exporterName: formData.exporterName.trim(),
+        exporterCity: formData.exporterCity.trim(),
+        exporterLine: formData.exporterLine.trim(),
+        exporterPostcode: formData.exporterPostcode.trim(),
+        transactionNatureCode: formData.transactionNatureCode.trim(),
       });
+      hydratedForIdRef.current = null;
+      setSaveSuccess(true);
     } catch (e) {
       console.error("Failed to save core schema", e);
+      setSaveError(e instanceof Error ? e.message : "Failed to save core details");
     } finally {
       setSaving(false);
     }
@@ -251,6 +332,59 @@ export default function CoreSchemaPage() {
               </p>
             </div>
 
+            {formData.dispatchCountry && formData.dispatchCountry !== "GB" && formData.dispatchCountry !== "XI" && (
+              <div className="md:col-span-2 space-y-3 rounded-md border border-gray-200 bg-gray-50/80 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-700">
+                  Overseas exporter (DE 3/1) — required when dispatch ≠ GB/XI
+                </p>
+                <p className="text-[11px] text-gray-600">
+                  Use the foreign seller on the commercial invoice — legal name and registered address in the dispatch country (not your UK importer details).
+                </p>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="text-xs font-medium text-gray-600">Exporter name</label>
+                    <input
+                      type="text"
+                      className="w-full rounded-md border border-gray-200 p-2.5 text-sm"
+                      value={formData.exporterName}
+                      onChange={(e) => setFormData({ ...formData, exporterName: e.target.value })}
+                      placeholder="e.g. Acme Export GmbH"
+                    />
+                  </div>
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="text-xs font-medium text-gray-600">Address line</label>
+                    <input
+                      type="text"
+                      className="w-full rounded-md border border-gray-200 p-2.5 text-sm"
+                      value={formData.exporterLine}
+                      onChange={(e) => setFormData({ ...formData, exporterLine: e.target.value })}
+                      placeholder="e.g. 1 Hafenstrasse"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600">City</label>
+                    <input
+                      type="text"
+                      className="w-full rounded-md border border-gray-200 p-2.5 text-sm"
+                      value={formData.exporterCity}
+                      onChange={(e) => setFormData({ ...formData, exporterCity: e.target.value })}
+                      placeholder="e.g. Hamburg"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-gray-600">Postcode</label>
+                    <input
+                      type="text"
+                      className="w-full rounded-md border border-gray-200 p-2.5 text-sm"
+                      value={formData.exporterPostcode}
+                      onChange={(e) => setFormData({ ...formData, exporterPostcode: e.target.value })}
+                      placeholder="e.g. 20095"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Destination Country — DE 5/8. A-mandatory per Appendix 21A. */}
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
@@ -287,7 +421,7 @@ export default function CoreSchemaPage() {
               </Select>
               {formData.goodsLocationKind === "port" && (
                 <p className="text-[10px] text-gray-500">
-                  Port mode splits the Appendix 16C code into XML: chars 1–2 → Address.CountryCode, char 3 → TypeCode, char 4 → Address.TypeCode, remainder → Name (see spec/de-5-23-goods-location.md).
+                  Port mode splits the Appendix 16C code into XML: chars 1–2 → Address.CountryCode, char 3 → TypeCode, char 4 → Address.TypeCode, remainder → Name (see docs/hmrc/ACTIVE/tdr/mapping/de-5-23-goods-location.md).
                 </p>
               )}
             </div>
@@ -312,7 +446,7 @@ export default function CoreSchemaPage() {
               <p className="text-[10px] text-gray-400 flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 {formData.goodsLocationKind === "port"
-                  ? `Appendix 16C code (e.g. GBAUFXTFXTFXT for Felixstowe). Source: spec/hmrc-mirror/appendix-16c-maritime.psv.`
+                  ? `Appendix 16C code (e.g. GBAUFXTFXTFXT for Felixstowe). Source: docs/hmrc/specs/cds-api/mirrors/appendix-16c-maritime.psv.`
                   : "Select Port or Address first."}
               </p>
             </div>
@@ -400,6 +534,25 @@ export default function CoreSchemaPage() {
               </p>
             </div>
 
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+                Nature of Transaction (DE 8/5)
+                <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.transactionNatureCode}
+                onChange={(e) => setFormData({ ...formData, transactionNatureCode: e.target.value })}
+                placeholder="e.g. 11"
+                className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+              />
+              <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                <Info className="h-3 w-3" />
+                WCOID 103 — GoodsShipment/TransactionNatureCode. Trade Test passing baseline uses 11.
+              </p>
+            </div>
+
           </div>
 
           <div className="border-t border-gray-100 pt-6">
@@ -413,21 +566,21 @@ export default function CoreSchemaPage() {
                   Transport Mode (DE 7/4)
                   <span className="text-red-500">*</span>
                 </label>
-                <Select value={formData.transportMode} onValueChange={(v) => setFormData({ ...formData, transportMode: v })}>
-                  <SelectTrigger className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
-                    <SelectValue placeholder="Select mode" />
-                  </SelectTrigger>
-                  <SelectContent position="popper">
-                    <SelectItem value="1">1 — Sea</SelectItem>
-                    <SelectItem value="2">2 — Rail</SelectItem>
-                    <SelectItem value="3">3 — Road</SelectItem>
-                    <SelectItem value="4">4 — Air</SelectItem>
-                    <SelectItem value="5">5 — Postal</SelectItem>
-                    <SelectItem value="7">7 — Fixed transport installations</SelectItem>
-                    <SelectItem value="8">8 — Inland waterway</SelectItem>
-                    <SelectItem value="9">9 — Mode unknown</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  required
+                  value={formData.transportMode}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, transportMode: e.target.value }))}
+                  className={selectFieldClassName}
+                >
+                  <option value="" disabled>
+                    Select mode
+                  </option>
+                  {TRANSPORT_MODE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="space-y-2">
@@ -435,19 +588,21 @@ export default function CoreSchemaPage() {
                   Identification Type (DE 7/9)
                   <span className="text-red-500">*</span>
                 </label>
-                <Select value={formData.transportIdType} onValueChange={(v) => setFormData({ ...formData, transportIdType: v })}>
-                  <SelectTrigger className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
-                    <SelectValue placeholder="Select identifier type" />
-                  </SelectTrigger>
-                  <SelectContent position="popper">
-                    <SelectItem value="10">10 — IMO ship identification number</SelectItem>
-                    <SelectItem value="11">11 — Name of seagoing vessel</SelectItem>
-                    <SelectItem value="20">20 — Wagon number</SelectItem>
-                    <SelectItem value="30">30 — Vehicle registration number</SelectItem>
-                    <SelectItem value="40">40 — IATA flight number</SelectItem>
-                    <SelectItem value="41">41 — Registration of aircraft</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  required
+                  value={formData.transportIdType}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, transportIdType: e.target.value }))}
+                  className={selectFieldClassName}
+                >
+                  <option value="" disabled>
+                    Select identifier type
+                  </option>
+                  {TRANSPORT_ID_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="space-y-2">
@@ -473,10 +628,15 @@ export default function CoreSchemaPage() {
 
         </div>
 
-        <div className="border-t border-gray-100 bg-gray-50/50 p-4 px-6 flex justify-end">
+        <div className="border-t border-gray-100 bg-gray-50/50 p-4 px-6 flex items-center justify-end gap-3">
+          {saveError && (
+            <p className="mr-auto text-xs text-red-600">{saveError}</p>
+          )}
+          {saveSuccess && !saveError && (
+            <p className="mr-auto text-xs text-green-700">Core details saved.</p>
+          )}
           <button
             type="submit"
-            formNoValidate
             disabled={saving}
             className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800 disabled:opacity-50"
           >

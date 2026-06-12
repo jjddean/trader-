@@ -3,7 +3,7 @@ import { internalMutation } from "./_generated/server";
 // Initial rule set, hand-curated from:
 //   - HMRC CDS reject library (CDS12* family)
 //   - WCO DEC-DMS:2 schema constraints
-//   - Empirical TDR rejections recorded in documentation/HMRC/tdr-progress.md
+//   - Empirical TDR rejections recorded in docs/hmrc/ACTIVE/tdr/errors-handled.md
 //
 // The set is deliberately small. Each rule is keyed on the smallest
 // trigger scope that captures the constraint, so adding the next lane
@@ -84,6 +84,36 @@ const RULES: SeedRule[] = [
       ],
     },
   },
+  {
+    ruleId: "DEC-TRANSACTION-NATURE",
+    name: "Nature of transaction (DE 8/5) is mandatory",
+    description:
+      "GoodsShipment/TransactionNatureCode (WCOID 103, DE 8/5) must be present. CDS12073 fires when absent; Trade Test passing baseline uses 11.",
+    severity: "blocking",
+    enabled: true,
+    source: "docs/hmrc/ARCHIVE/trade-test/errors-handled.md CDS12073; WCOID 103",
+    triggerScope: { declarationTypes: ["IMA", "IMD", "IMY", "IMZ"] },
+    effects: {
+      requiredFields: [
+        { path: "declaration.transactionNatureCode", reason: "DE 8/5 nature of transaction (e.g. 11)." },
+      ],
+    },
+  },
+  {
+    ruleId: "DEC-OVERSEAS-EXPORTER",
+    name: "Overseas exporter Name+Address required (DE 3/1)",
+    description:
+      "When dispatch country is not GB/XI, CDS requires foreign exporter Name+Address — no mapper placeholders.",
+    severity: "blocking",
+    enabled: true,
+    source: "docs/hmrc/ACTIVE/tdr/mapping/de-3-x-parties.md; h1-operational-invariants",
+    triggerScope: { declarationTypes: ["IMA", "IMD", "IMY", "IMZ"] },
+    effects: {
+      predicates: [
+        { name: "OVERSEAS_EXPORTER_ADDRESS", reason: "Overseas import requires exporter Name+Address on Core Schema." },
+      ],
+    },
+  },
 
   // -------- Valuation invariants --------
   {
@@ -141,7 +171,7 @@ const RULES: SeedRule[] = [
 // re-running this script after a trim doesn't leave stale rules enabled.
 //
 // NOTE: D006/D028/D031/360 were retired as guesses, then RE-INSTATED below
-// Legacy BR chicken lane only — not active lane (see spec/lane.md). CURATED rules after CDS empirically rejected HS 0207129000 / BR /
+// Legacy BR chicken lane only — not active lane (see docs/hmrc/ARCHIVE/trade-test/lane.md). CURATED rules after CDS empirically rejected HS 0207129000 / BR /
 // CPC 4000 submission for missing exactly those codes (TDR rejection,
 // 2026-04-26). The new CURATED-* IDs supersede the retired CPC-4000-* IDs.
 const RETIRED_RULE_IDS: string[] = [

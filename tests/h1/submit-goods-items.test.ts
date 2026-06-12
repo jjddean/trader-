@@ -6,18 +6,19 @@ import { mapToCDS_H1 } from "../../src/lib/wco-mapper";
 import { renderH1Xml } from "../../src/lib/h1-xml-renderer";
 
 describe("multi-item submit validation", () => {
-  it("accepts contiguous unique sequences", () => {
+  it("accepts any stored sequence when a single item (mapper renumbers to 1)", () => {
+    assert.deepEqual(validateGoodsItemSequences([{ sequenceNumber: 2 }]), []);
+  });
+
+  it("accepts multiple items (mapper emits 1..n in order)", () => {
     assert.deepEqual(
       validateGoodsItemSequences([{ sequenceNumber: 1 }, { sequenceNumber: 2 }]),
       [],
     );
   });
 
-  it("rejects duplicate sequences", () => {
-    assert.match(
-      validateGoodsItemSequences([{ sequenceNumber: 1 }, { sequenceNumber: 1 }]).join(" "),
-      /unique/,
-    );
+  it("rejects empty item list", () => {
+    assert.match(validateGoodsItemSequences([]).join(" "), /No goods items/);
   });
 
   it("maps two items into H1 XML", () => {
@@ -27,9 +28,14 @@ describe("multi-item submit validation", () => {
       importerEori: "GB531765313922",
       destinationCountry: "GB",
       dispatchCountry: "DE",
+      exporterName: "Acme Export GmbH",
+      exporterCity: "Hamburg",
+      exporterLine: "1 Hafenstrasse",
+      exporterPostcode: "20095",
       locationId: "GBAUFXTFXTFXT",
       goodsLocationKind: "port",
       invoiceCurrency: "GBP",
+      transactionNatureCode: "11",
       transportMode: "1",
       transportIdType: "11",
       transportId: "CSCL GLOBE",

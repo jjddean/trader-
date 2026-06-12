@@ -31,8 +31,8 @@
 
 Required ODS download:
 ```
-spec/hmrc-mirror/appendix5a-union.ods   ← from gov.uk
-spec/hmrc-mirror/appendix5a-rows.md     ← extracted rows for codes used by this lane
+docs/hmrc/specs/cds-api/mirrors/appendix5a-union.ods   ← from gov.uk
+docs/hmrc/specs/cds-api/mirrors/appendix5a-rows.md     ← extracted rows for codes used by this lane
 ```
 
 | Code | Type | Required? | Status code | Lane source |

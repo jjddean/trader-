@@ -3,23 +3,14 @@
 import { v } from "convex/values";
 import { action } from "../_generated/server";
 import { internal } from "../_generated/api";
+import { hmrcOAuthBaseUrl, hmrcOAuthCredentials } from "../lib/hmrc_oauth";
 
-const HMRC_CLIENT_ID = process.env.HMRC_CLIENT_ID;
-const HMRC_CLIENT_SECRET = process.env.HMRC_CLIENT_SECRET;
 const HMRC_REDIRECT_URI = process.env.HMRC_REDIRECT_URI;
-const HMRC_ENVIRONMENT = process.env.HMRC_ENVIRONMENT || "sandbox";
 const HMRC_SCOPES =
   process.env.HMRC_SCOPES || "write:customs-declaration write:customs-declarations-information";
 
-const AUTH_BASE_URL =
-  HMRC_ENVIRONMENT === "sandbox"
-    ? "https://test-api.service.hmrc.gov.uk/oauth/authorize"
-    : "https://api.service.hmrc.gov.uk/oauth/authorize";
-
-const TOKEN_BASE_URL =
-  HMRC_ENVIRONMENT === "sandbox"
-    ? "https://test-api.service.hmrc.gov.uk/oauth/token"
-    : "https://api.service.hmrc.gov.uk/oauth/token";
+const AUTH_BASE_URL = `${hmrcOAuthBaseUrl()}/oauth/authorize`;
+const TOKEN_BASE_URL = `${hmrcOAuthBaseUrl()}/oauth/token`;
 
 export const getHmrcAuthUrl = action({
   args: {},
@@ -27,14 +18,21 @@ export const getHmrcAuthUrl = action({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
 
-    if (!HMRC_CLIENT_ID || !HMRC_REDIRECT_URI) {
+    if (!HMRC_REDIRECT_URI) {
       throw new Error(
-        "HMRC environment variables (HMRC_CLIENT_ID, HMRC_REDIRECT_URI) are missing in Convex dashboard.",
+        "HMRC environment variables (HMRC_REDIRECT_URI) are missing in Convex dashboard.",
+      );
+    }
+
+    const { clientId } = hmrcOAuthCredentials();
+    if (!clientId) {
+      throw new Error(
+        "HMRC OAuth client ID missing in Convex dashboard (HMRC_PRODUCTION_CLIENT_ID for TDR).",
       );
     }
 
     const params = new URLSearchParams({
-      client_id: HMRC_CLIENT_ID!,
+      client_id: clientId,
       redirect_uri: HMRC_REDIRECT_URI!,
       response_type: "code",
       scope: HMRC_SCOPES,
@@ -50,6 +48,8 @@ export const handleHmrcCallback = action({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
 
+    const { clientId, clientSecret } = hmrcOAuthCredentials();
+
     const response = await fetch(TOKEN_BASE_URL, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -57,8 +57,8 @@ export const handleHmrcCallback = action({
         grant_type: "authorization_code",
         code: args.code,
         redirect_uri: HMRC_REDIRECT_URI!,
-        client_id: HMRC_CLIENT_ID!,
-        client_secret: HMRC_CLIENT_SECRET!,
+        client_id: clientId,
+        client_secret: clientSecret,
       }),
     });
 

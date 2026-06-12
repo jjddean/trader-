@@ -1,1 +1,1 @@
-# Moved → `documentation/HMRC/sdst-evidence-pack/`
+# Moved → `docs/hmrc/ARCHIVE/trade-test/sdst-evidence-pack/`

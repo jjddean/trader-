@@ -94,6 +94,76 @@ function normalizeCountryCode(value: unknown): string {
   return "";
 }
 
+/** True when dispatch ≠ GB/XI and no GB/XI exporter EORI applies. */
+export function requiresOverseasExporterAddress(declaration: { dispatchCountry?: unknown; exporterEori?: unknown }): boolean {
+  const dispatch = normalizeCountryCode(declaration.dispatchCountry);
+  if (!dispatch || dispatch === "GB" || dispatch === "XI") return false;
+  const eori = String(declaration.exporterEori || "").trim();
+  return !/^(GB|XI)\d{12}$/i.test(eori);
+}
+
+/** Validate DE 8/5 nature of transaction — no silent mapper default. */
+export function validateTransactionNatureCode(declaration: Record<string, unknown>): string[] {
+  const code = String(declaration.transactionNatureCode ?? "").trim();
+  if (!code) {
+    return ["Missing transaction nature code (DE 8/5)"];
+  }
+  return [];
+}
+
+/** Validate DE 3/1 overseas exporter Name+Address — no silent mapper defaults. */
+export function validateOverseasExporter(declaration: Record<string, unknown>): string[] {
+  if (!requiresOverseasExporterAddress(declaration)) return [];
+  const fields: [string, string][] = [
+    ["exporterName", "Exporter name (DE 3/1)"],
+    ["exporterCity", "Exporter city (DE 3/1)"],
+    ["exporterLine", "Exporter address line (DE 3/1)"],
+    ["exporterPostcode", "Exporter postcode (DE 3/1)"],
+  ];
+  return fields
+    .filter(([key]) => !String(declaration[key] ?? "").trim())
+    .map(([, label]) => `Missing ${label} for overseas dispatch`);
+}
+
+/**
+ * DE 4/9 AdditionCode — emit only when compatible with DE 4/1 Incoterm.
+ * DMSACC baseline FC-MPYAJ7RN: CIF + 0000. CDS12100 rejects incompatible pairs.
+ */
+export function resolveValuationAdditionCode(declaration: {
+  incoterms?: unknown;
+  valuationAdditionCode?: unknown;
+}): string | null {
+  const explicit = String(declaration.valuationAdditionCode ?? "").trim();
+  if (explicit) return explicit;
+
+  const incoterm = String(declaration.incoterms ?? "").trim().toUpperCase();
+  if (!incoterm) return null;
+
+  const WITH_NIL_ADDITION = new Set(["CIF", "CIP", "DAP", "DPU", "DDP"]);
+  if (WITH_NIL_ADDITION.has(incoterm)) return "0000";
+
+  return null;
+}
+
+function buildOverseasExporterBlock(declaration: Record<string, unknown>) {
+  const errors = validateOverseasExporter(declaration);
+  if (errors.length > 0) {
+    throw new Error(errors.join("; "));
+  }
+  const dispatch = normalizeCountryCode(declaration.dispatchCountry);
+  return {
+    Exporter: {
+      Name: String(declaration.exporterName).trim(),
+      Address: {
+        CityName: String(declaration.exporterCity).trim(),
+        CountryCode: dispatch,
+        Line: String(declaration.exporterLine).trim(),
+        PostcodeID: String(declaration.exporterPostcode).trim(),
+      },
+    },
+  };
+}
+
 function resolveGoodsLocation(declaration: any) {
   return resolveGoodsLocationForXml(declaration);
 }
@@ -369,21 +439,8 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
         if (/^(GB|XI)\d{12}$/i.test(eori) && (dispatch === "GB" || dispatch === "XI")) {
           return { Exporter: { ID: eori } };
         }
-        if (dispatch && dispatch !== "GB" && dispatch !== "XI") {
-          // CDS10001/57A/04A: when Exporter Name+Address is declared, CityName (241),
-          // Line (239), CountryCode (242), and PostcodeID (245) are all mandatory per XSD.
-          // TT_IM001a reference: full overseas exporter address block.
-          return {
-            Exporter: {
-              Name: String(declaration.exporterName || "").trim() || "German Exporter GmbH",
-              Address: {
-                CityName: String(declaration.exporterCity || "").trim() || "Hamburg",
-                CountryCode: dispatch,
-                Line: String(declaration.exporterLine || "").trim() || "1 Exportstrasse",
-                PostcodeID: String(declaration.exporterPostcode || "").trim() || "20095",
-              },
-            },
-          };
+        if (requiresOverseasExporterAddress(declaration)) {
+          return buildOverseasExporterBlock(declaration as Record<string, unknown>);
         }
         return {};
       })()),
@@ -441,7 +498,13 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
             ...(locationId ? { LocationID: locationId } : {}),
           };
         })(),
-        TransactionNatureCode: declaration.transactionNatureCode || "11",
+        TransactionNatureCode: (() => {
+          const code = String(declaration.transactionNatureCode ?? "").trim();
+          if (!code) {
+            throw new Error("Missing transaction nature code (DE 8/5)");
+          }
+          return code;
+        })(),
         GovernmentAgencyGoodsItem: (items || []).map((item, index) => {
           const providedDocs: unknown[] = options.omitAdditionalDocuments
             ? []
@@ -472,12 +535,13 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
 
           const procRaw = String(item.procedureCode || "").replace(/\s+/g, '');
           return {
-            SequenceNumeric: item.sequenceNumber || index + 1,
+            // CDS expects contiguous 1..n in declaration order; ignore stale DB sequenceNumber.
+            SequenceNumeric: index + 1,
             ...(isSelfRepresentation
               ? {
                   AdditionalInformation: [
                     {
-                      // Appendix 4A 00500 — spec/hmrc-mirror/appendix-4a-00500.md
+                      // Appendix 4A 00500 — docs/hmrc/specs/cds-api/mirrors/appendix-4a-00500.md
                       StatementCode: "00500",
                       StatementDescription: "Importer",
                     },
@@ -522,14 +586,15 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
             Packaging: [
               {
                 SequenceNumeric: "1",
-                MarksNumbersID: item.shippingMarks || "",
+                // DE 6/11 — empty element rejected by local preflight + XSD; "N/A" matches lane evidence.
+                MarksNumbersID: String(item.shippingMarks || "").trim() || "N/A",
                 QuantityQuantity: item.packageCount || "",
                 TypeCode: item.packageType || ""
               }
             ],
             // DE 5/15 Country of Origin — always mandatory (HMRC Group 5 verbatim:
             // "This data element is always mandatory.").
-            // Source: spec/hmrc-mirror/group-5-completion-guide.md.
+            // Source: docs/hmrc/specs/cds-api/mirrors/group-5-completion-guide.md.
             // Prior conditional omit-when-origin=dispatch logic was uncited inference
             // and contradicted Group 5; DMSREJ 2026-05-27 20:32 confirmed CDS12073
             // fires at 67A/103 + 68A/103 WITH Origin omitted, so omission did not help.
@@ -542,6 +607,10 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
                   TypeCode: "1",
                 },
               };
+            })()),
+            ...((() => {
+              const additionCode = resolveValuationAdditionCode(declaration);
+              return additionCode ? { ValuationAdjustment: { AdditionCode: additionCode } } : {};
             })()),
             GovernmentProcedure: [
               ...(/^\d{4}$/.test(procRaw)

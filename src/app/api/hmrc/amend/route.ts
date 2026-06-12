@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { api } from "../../../../../convex/_generated/api";
-import { buildAmendmentXmlFromChange, type AmendmentChangeKind } from "../../../../lib/hmrc-amendment-xml";
+import {
+  buildAmendFunctionalReferenceId,
+  buildAmendmentXmlFromChange,
+  type AmendmentChangeKind,
+} from "../../../../lib/hmrc-amendment-xml";
 import { deriveHeaderAmendment } from "../../../../lib/hmrc-amendment-pointers";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
-import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
+import { declarationsEndpointUrl, HMRC_CONFIG } from "../../../../lib/hmrc-config";
 import { getAuthenticatedConvex } from "../../../../lib/hmrc-route-session";
 import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
 import { logHmrcAudit } from "../../../../lib/audit-log";
@@ -23,7 +27,7 @@ const HEADER_AMENDMENT_FIELDS: Record<string, { de: string; label: string }> = {
 
 /**
  * POST /api/hmrc/amend
- * HMRC ref: TT_IM002b — FunctionCode 13, TypeCode COR, Amendment pointers + changed fragment.
+ * HMRC: POST /customs/declarations/amend — TT_IM002b, FunctionCode 13, TypeCode COR.
  */
 export async function POST(request: Request) {
   try {
@@ -95,9 +99,7 @@ export async function POST(request: Request) {
     const kind = (changeKind as AmendmentChangeKind) || "itemChargeAmount";
     const seq = parseInt(String(itemSequence ?? firstItem.sequence ?? "1"), 10) || 1;
 
-    const rawId = String(declarationId);
-    const amendLrn =
-      `AM-${rawId}`.length <= 35 ? `AM-${rawId}` : `AM-${rawId.slice(-32)}`;
+    const amendLrn = buildAmendFunctionalReferenceId(String(declarationId));
 
     let xmlPayload: string;
     if (kind === "headerField") {
@@ -192,7 +194,7 @@ export async function POST(request: Request) {
         : HMRC_CONFIG.productionBaseUrl;
 
     const hmrcResponse = await fetchHmrc(
-      `${hmrcBase}/customs/declarations`,
+      declarationsEndpointUrl(hmrcBase, "amend"),
       {
         method: "POST",
         headers: { "Content-Type": "application/xml; charset=UTF-8" },

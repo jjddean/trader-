@@ -1,5 +1,6 @@
 import { Agent, callable } from "agents";
 import { Env } from "../index";
+import { WORKERS_TEXT_MODEL } from "../lib/text-model";
 
 export class AgentClassifier extends Agent<Env> {
     @callable()
@@ -19,7 +20,7 @@ The user is describing a physical product. You must accurately determine the 10-
 Use your embedded knowledge and the provided context matches.
 Always respond with the 10-digit code formatted clearly, followed by a brief justification.`;
 
-            const res = await this.env.AI.run('@cf/meta/llama-3-8b-instruct', {
+            const res = await this.env.AI.run(WORKERS_TEXT_MODEL, {
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: message }

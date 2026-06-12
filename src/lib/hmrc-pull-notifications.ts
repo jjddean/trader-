@@ -5,10 +5,15 @@ import { HMRC_CONFIG } from "./hmrc-config";
 import { parseHmrcNotification } from "./hmrc-notification-parser";
 import { buildHmrcNotificationIdempotencyKey } from "./hmrc-notification-idempotency";
 
-export type PullNotificationsResult = {
+export type PullConversationResult = {
   conversationId: string;
   total: number;
   saved: number;
+  listOk: boolean;
+};
+
+export type PullNotificationsResult = PullConversationResult & {
+  conversations?: PullConversationResult[];
 };
 
 function extractNotificationIds(listBody: string): string[] {
@@ -95,7 +100,7 @@ export async function pullHmrcNotificationsForConversation(params: {
     const errorText = await listResponse.text();
     console.warn("[HMRC-PULL] List unavailable:", listResponse.status, errorText.slice(0, 300));
     // v2 Trade Test conversationIds often 400 on v1 pull — do not crash submit/status polling.
-    return { conversationId, total: 0, saved: 0 };
+    return { conversationId, total: 0, saved: 0, listOk: false };
   }
 
   const listBody = await listResponse.text();
@@ -137,7 +142,38 @@ export async function pullHmrcNotificationsForConversation(params: {
     saved += 1;
   }
 
-  return { conversationId, total: notificationIds.length, saved };
+  return { conversationId, total: notificationIds.length, saved, listOk: true };
+}
+
+/** Pull unpulled notifications for every conversation linked to a declaration. */
+export async function pullHmrcNotificationsForDeclaration(params: {
+  conversationIds: string[];
+  accessToken: string;
+  request: Request;
+  convex: ConvexHttpClient;
+}): Promise<{
+  saved: number;
+  total: number;
+  conversations: PullConversationResult[];
+}> {
+  const uniqueIds = [...new Set(params.conversationIds.map((id) => id.trim()).filter(Boolean))];
+  const conversations: PullConversationResult[] = [];
+  let saved = 0;
+  let total = 0;
+
+  for (const conversationId of uniqueIds) {
+    const result = await pullHmrcNotificationsForConversation({
+      conversationId,
+      accessToken: params.accessToken,
+      request: params.request,
+      convex: params.convex,
+    });
+    conversations.push(result);
+    saved += result.saved;
+    total += result.total;
+  }
+
+  return { saved, total, conversations };
 }
 
 /**

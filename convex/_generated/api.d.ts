@@ -42,6 +42,7 @@ import type * as lib_cds_wco_references from "../lib/cds_wco_references.js";
 import type * as lib_collect_declaration_notifications from "../lib/collect_declaration_notifications.js";
 import type * as lib_declaration_completeness from "../lib/declaration_completeness.js";
 import type * as lib_hmrc_notification_parser from "../lib/hmrc_notification_parser.js";
+import type * as lib_hmrc_oauth from "../lib/hmrc_oauth.js";
 import type * as lib_hmrc_pull_runtime from "../lib/hmrc_pull_runtime.js";
 import type * as lib_hmrc_token_refresh from "../lib/hmrc_token_refresh.js";
 import type * as lib_notification_dms_context from "../lib/notification_dms_context.js";
@@ -104,6 +105,7 @@ declare const fullApi: ApiFromModules<{
   "lib/collect_declaration_notifications": typeof lib_collect_declaration_notifications;
   "lib/declaration_completeness": typeof lib_declaration_completeness;
   "lib/hmrc_notification_parser": typeof lib_hmrc_notification_parser;
+  "lib/hmrc_oauth": typeof lib_hmrc_oauth;
   "lib/hmrc_pull_runtime": typeof lib_hmrc_pull_runtime;
   "lib/hmrc_token_refresh": typeof lib_hmrc_token_refresh;
   "lib/notification_dms_context": typeof lib_notification_dms_context;

@@ -1,6 +1,9 @@
 import {
+  declarationHasAmendStateBlocked as declarationHasAmendStateBlockedCore,
+  declarationHasImportDmscle as declarationHasImportDmscleCore,
   hasAmendLrnInPayload,
   hasCancelLrnInPayload,
+  hasCds12015StateError,
   isAmendmentAccepted as isAmendmentAcceptedCore,
   isAmendmentRejected as isAmendmentRejectedCore,
   isCancellationRejected as isCancellationRejectedCore,
@@ -50,6 +53,14 @@ export function isPostCancelClearance(ctx: NotificationRowContext): boolean {
   return isPostCancelClearanceCore(ctx);
 }
 
+export function declarationHasImportDmscle(notifications: NotificationRowContext[]): boolean {
+  return declarationHasImportDmscleCore(notifications);
+}
+
+export function declarationHasAmendStateBlocked(notifications: NotificationRowContext[]): boolean {
+  return declarationHasAmendStateBlockedCore(notifications);
+}
+
 /** DMSCLE = event on timeline; in Trade Test it is not final clearance proof. */
 export function isDmscleLifecycleOnly(ctx: NotificationRowContext): boolean {
   if (ctx.notificationType?.toUpperCase() !== "DMSCLE") return false;
@@ -95,10 +106,12 @@ export function resolveTimelineNotificationMeta(
   }
 
   if (isAmendmentRejected(ctx)) {
+    const stateBlocked = hasCds12015StateError(ctx);
     return {
       title: "Amendment rejected (DMSINV)",
-      detail:
-        "HMRC rejected the amendment message. The import declaration remains accepted — fix the change and resubmit amend.",
+      detail: stateBlocked
+        ? "CDS12015 at Declaration/ID (42A/D014): HMRC will not amend this MRN — declaration is cleared or not in an amendable state. Submit a fresh declaration and amend before DMSCLE."
+        : "HMRC rejected the amendment message. The import declaration remains accepted — fix the change and resubmit amend.",
       color: "bg-red-500",
       icon: "danger",
       normalizedType,

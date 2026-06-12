@@ -1,0 +1,11 @@
+{
+  "source": "Freightcode app GET /api/hmrc/status-query?mrn=26GB6GFBKLT2N0TAR6",
+  "capturedFrom": "Status tab Query HMRC status — 2026-06-12",
+  "httpStatus": 200,
+  "conversationId": "1da7b09a-339a-4730-afa1-7c9cbaa43e32",
+  "mrn": "26GB6GFBKLT2N0TAR6",
+  "ics": "14",
+  "status": "ICS 14",
+  "accept": "application/vnd.hmrc.1.0+xml",
+  "endpoint": "/customs/declarations-information/mrn/26GB6GFBKLT2N0TAR6/status"
+}

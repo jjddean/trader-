@@ -26,9 +26,9 @@
 ## Pending
 
 ```
-spec/hmrc-mirror/appendix1-4000.md       ← Appendix 1 row for CPC 4000 (verbatim)
-spec/hmrc-mirror/appendix2-000.md        ← Appendix 2 row for APC 000 (verbatim)
-spec/hmrc-mirror/de-1-10-1-11-matrix.md  ← matrix line for 4000 → permitted 3-digit APCs
+docs/hmrc/specs/cds-api/mirrors/appendix1-4000.md       ← Appendix 1 row for CPC 4000 (verbatim)
+docs/hmrc/specs/cds-api/mirrors/appendix2-000.md        ← Appendix 2 row for APC 000 (verbatim)
+docs/hmrc/specs/cds-api/mirrors/de-1-10-1-11-matrix.md  ← matrix line for 4000 → permitted 3-digit APCs
 ```
 
 ## WCO XML mapping (separate question)

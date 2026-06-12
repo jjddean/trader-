@@ -6,7 +6,7 @@
  *   MRN=26GB664W3BLIFZFAR4 node test-evidence/initiate-file-upload.js
  *
  * Requires: .env.local (HMRC_*, NEXT_PUBLIC_CONVEX_URL, HMRC_TEST_USER_ID)
- * Writes: documentation/HMRC/sdst-evidence-pack/evidence/06-file-upload/
+ * Writes: docs/hmrc/ARCHIVE/trade-test/sdst-evidence-pack/evidence/06-file-upload/
  *
  * Source: HMRC Customs Declarations v2.0 OAS — POST /customs/declarations/file-upload
  * Request shape: HMRC CDS E2E guide (hmrc:fileupload namespace + Files wrapper)
@@ -40,7 +40,7 @@ const DEFAULT_MRN = "26GB664W3BLIFZFAR4";
 const DEFAULT_DOCUMENT_TYPE = "invoice";
 const OUT_DIR = path.join(
   process.cwd(),
-  "documentation/HMRC/sdst-evidence-pack/evidence/06-file-upload",
+  "docs/hmrc/ARCHIVE/trade-test/sdst-evidence-pack/evidence/06-file-upload",
 );
 
 function xmlEscape(value) {

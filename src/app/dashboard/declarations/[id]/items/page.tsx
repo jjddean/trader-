@@ -2,7 +2,8 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
+import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { Plus, Trash2, UploadCloud, Loader2, Sparkles, AlertCircle } from "lucide-react";
@@ -24,14 +25,22 @@ import { countries } from "@/lib/data/countries";
 import { DeclarationModePromote } from "@/components/declaration-mode-promote";
 
 export default function GoodsItemsPage() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const params = useParams<{ id: string }>();
   const declarationId = params?.id as Id<"declarations">;
 
+  const authReady =
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && Boolean(declarationId);
+
   const declaration = useQuery(
     api.declarations.getLane,
-    declarationId ? { id: declarationId } : "skip",
+    authReady ? { id: declarationId } : "skip",
   );
-  const items = useQuery(api.goods_items.getItems, declarationId ? { declarationId } : "skip");
+  const items = useQuery(
+    api.goods_items.getItems,
+    authReady ? { declarationId } : "skip",
+  );
   const addItem = useMutation(api.goods_items.addItem);
   const removeItem = useMutation(api.goods_items.removeItem);
   const updateItem = useMutation(api.goods_items.updateItem);
@@ -47,7 +56,7 @@ export default function GoodsItemsPage() {
   // server-side source of truth for what's missing.
   const completeness = useQuery(
     api.declaration_completeness.getStatus,
-    declarationId ? { declarationId } : "skip",
+    authReady ? { declarationId } : "skip",
   );
   
   const [originCountry, setOriginCountry] = useState("");
@@ -405,10 +414,22 @@ export default function GoodsItemsPage() {
     }
   };
 
-  if (items === undefined) {
+  if (
+    !isLoaded ||
+    isConvexAuthLoading ||
+    (isSignedIn && isAuthenticated && (declaration === undefined || items === undefined))
+  ) {
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (!declaration) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-800">
+        Declaration not found or you do not have access.
       </div>
     );
   }
@@ -645,7 +666,7 @@ export default function GoodsItemsPage() {
                       key={`${item._id}-su-${String((item as Record<string, unknown>).supplementaryUnitQty ?? "")}`}
                       type="number"
                       required
-                      min="0.000001"
+                      min="1"
                       step="1"
                       defaultValue={
                         (item as Record<string, unknown>).supplementaryUnitQty != null

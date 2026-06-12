@@ -38,6 +38,12 @@ function toScenarioInput(declaration: Record<string, unknown>, items: Array<Reco
       valuationMethod: declaration.valuationMethod as string | undefined,
       mode: declaration.mode as string | undefined,
       invoiceTotal: declaration.invoiceTotal as number | string | undefined,
+      exporterEori: declaration.exporterEori as string | undefined,
+      exporterName: declaration.exporterName as string | undefined,
+      exporterCity: declaration.exporterCity as string | undefined,
+      exporterLine: declaration.exporterLine as string | undefined,
+      exporterPostcode: declaration.exporterPostcode as string | undefined,
+      transactionNatureCode: declaration.transactionNatureCode as string | undefined,
     },
     items: items.map((i) => ({
       commodityCode: i.commodityCode as string | undefined,

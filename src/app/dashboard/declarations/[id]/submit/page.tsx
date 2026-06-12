@@ -30,6 +30,10 @@ export default function SubmitPage() {
     api.documents.getDocumentRequirements,
     isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId ? { declarationId } : "skip",
   );
+  const completeness = useQuery(
+    api.declaration_completeness.getStatus,
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId ? { declarationId } : "skip",
+  );
   const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
 
   const hmrcTokens = useQuery(
@@ -123,10 +127,7 @@ export default function SubmitPage() {
     });
   }, [declarationId, declaration, upsertRequirementsForDeclaration]);
 
-  // Pre-flight validation checks
-  const missingEori = !declaration?.eori;
-  const noItems = !items || items.length === 0;
-  const missingHS = items?.some((i: any) => !i.commodityCode);
+  // Submit gate: rule engine completeness (single source of truth) + persisted doc requirements.
   const missingBlockingRequirements = (requirements || []).filter(
     (req: any) => req.status === "missing" && (req.requirementLevel || "blocking") === "blocking",
   );
@@ -138,7 +139,17 @@ export default function SubmitPage() {
   const missingAdvisoryCodes = missingAdvisoryRequirements
     .map((req: any) => String(req.code || "UNKNOWN"));
 
-  const isReady = !missingEori && !noItems && !missingHS && missingBlockingRequirements.length === 0;
+  const completenessReady = completeness?.ready === true;
+  const completenessMissing = completeness?.missing ?? [];
+  const isReady = completenessReady && missingBlockingRequirements.length === 0;
+
+  const ruleEngineBlocked =
+    dryRunResult?.localPreflight?.ruleEngine === "blocked"
+    || (dryRunResult?.actionableFailures ?? []).some((f) => f.severity === "blocking");
+  const dryRunFullyPassed =
+    dryRunPassed
+    && dryRunResult?.localPreflight?.ruleEngine === "pass"
+    && !ruleEngineBlocked;
 
   const LIVE_HMRC_STATUSES = new Set([
     "Processing",
@@ -149,9 +160,22 @@ export default function SubmitPage() {
   ]);
   const declarationStatus = String(declaration?.status ?? "Draft");
   const isLiveDeclaration = LIVE_HMRC_STATUSES.has(declarationStatus);
+
+  useEffect(() => {
+    if (!declarationId || !declaration || !isLiveDeclaration) return;
+    router.replace(`/dashboard/declarations/${declarationId}/status`);
+  }, [declaration, declarationId, isLiveDeclaration, router]);
   
-  // Generate the WCO payload for preview
-  const wcoPayloadPreview = isReady ? mapToCDS_H1(declaration, items) : null;
+  // Generate the WCO payload for preview (mapper throws if overseas exporter missing).
+  let wcoPayloadPreview: ReturnType<typeof mapToCDS_H1> | null = null;
+  let wcoPreviewError: string | null = null;
+  if (isReady && declaration && items) {
+    try {
+      wcoPayloadPreview = mapToCDS_H1(declaration, items);
+    } catch (err: unknown) {
+      wcoPreviewError = err instanceof Error ? err.message : "Failed to build WCO payload preview";
+    }
+  }
   const debugGoodsLocation = dryRunResult?.payloadDebug?.goodsShipment?.consignment;
   const goodsLocationDisplay = [
     debugGoodsLocation?.goodsLocationCountryCode,
@@ -206,8 +230,13 @@ export default function SubmitPage() {
               .map((fieldErr: { field?: string; reason?: string }) => `${fieldErr.field || "unknown"}: ${fieldErr.reason || "Validation error"}`)
               .join("\n")
           : "";
+        const missingFields = Array.isArray(data.missing)
+          ? data.missing.map((m: string) => `• ${m}`).join("\n")
+          : "";
         const errorMessage = data.details
           ? `${data.error}\n\n${data.details}`
+          : missingFields
+            ? `${data.error || "Validation failed"}\n\nMissing:\n${missingFields}`
           : fieldErrors
             ? `${data.error || "Validation failed"}\n\n${fieldErrors}`
           : data.error
@@ -260,15 +289,25 @@ export default function SubmitPage() {
 
       const data = await readResponsePayload(res);
       if (!res.ok) {
-        const failedChecks = Array.isArray(data.failedChecks) ? `\n${data.failedChecks.join(", ")}` : "";
+        const missingFields = Array.isArray(data.missing)
+          ? "\n\nMissing:\n" + data.missing.map((m: string) => `• ${m}`).join("\n")
+          : "";
+        const failedChecks = Array.isArray(data.failedChecks) ? `\n\nFailed checks:\n${data.failedChecks.map((c: string) => `• ${c}`).join("\n")}` : "";
         const missingHeaders = Array.isArray(data.missingHeaders) ? `\n${data.missingHeaders.join(", ")}` : "";
         const fieldErrors = Array.isArray(data.fields)
           ? "\n\n" + data.fields
               .map((fe: { field?: string; reason?: string }) => `• ${fe.field || "unknown"}: ${fe.reason || "Validation error"}`)
               .join("\n")
           : "";
+        const blockingRuleErrors = Array.isArray(data.blockingFailures)
+          ? "\n\nRule engine:\n" + data.blockingFailures
+              .map((f: { ruleId?: string; reason?: string; field?: string }) =>
+                `• ${f.ruleId || f.field || "rule"}: ${f.reason || "blocked"}`,
+              )
+              .join("\n")
+          : "";
         const message = data.message ? `\n${data.message}` : "";
-        throw new Error(`${data.error || "Dry run failed"}${message}${failedChecks}${missingHeaders}${fieldErrors}\nHTTP ${res.status}`);
+        throw new Error(`${data.error || "Dry run failed"}${message}${blockingRuleErrors}${missingFields}${failedChecks}${missingHeaders}${fieldErrors}\nHTTP ${res.status}`);
       }
 
       setDryRunResult(data as DryRunPayload);
@@ -281,7 +320,7 @@ export default function SubmitPage() {
     }
   };
 
-  if (!isLoaded || isConvexAuthLoading || (isSignedIn && isAuthenticated && (declaration === undefined || items === undefined || requirements === undefined))) {
+  if (!isLoaded || isConvexAuthLoading || (isSignedIn && isAuthenticated && (declaration === undefined || items === undefined || requirements === undefined || completeness === undefined))) {
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
@@ -329,39 +368,30 @@ export default function SubmitPage() {
             </div>
             <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${
               isLiveDeclaration ? "bg-blue-100 text-blue-700"
-              : isReady && dryRunPassed ? "bg-green-100 text-green-700"
+              : isReady && dryRunFullyPassed ? "bg-green-100 text-green-700"
               : isReady ? "bg-amber-100 text-amber-700"
               : "bg-red-100 text-red-700"
             }`}>
-              {isLiveDeclaration ? `Live — ${declarationStatus}` : isReady && dryRunPassed ? "Ready to Submit" : isReady ? "Awaiting Dry Run" : "Action Required"}
+              {isLiveDeclaration ? `Live — ${declarationStatus}` : isReady && dryRunFullyPassed ? "Ready to Submit" : isReady ? "Awaiting Dry Run" : "Action Required"}
             </span>
           </div>
 
           <ul className="space-y-3">
             <li className="flex items-start gap-3">
-              {missingEori ? <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
+              {!completenessReady ? <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
               <div>
-                <p className={`text-sm font-medium ${missingEori ? "text-red-700" : "text-gray-900"}`}>Declarant EORI</p>
-                <p className="text-xs text-gray-500">A valid EORI must be provided in the Core Schema.</p>
+                <p className={`text-sm font-medium ${!completenessReady ? "text-red-700" : "text-gray-900"}`}>Rule Engine Completeness</p>
+                <p className="text-xs text-gray-500">
+                  Single source of truth — transport, location, documents, exporter, and lane rules.
+                  {completenessMissing.length > 0 && (
+                    <span className="block mt-1 text-red-600">
+                      {completenessMissing.slice(0, 5).map((m) => m.reason).join(" · ")}
+                      {completenessMissing.length > 5 ? ` (+${completenessMissing.length - 5} more)` : ""}
+                    </span>
+                  )}
+                </p>
               </div>
             </li>
-            
-            <li className="flex items-start gap-3">
-              {noItems ? <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
-              <div>
-                <p className={`text-sm font-medium ${noItems ? "text-red-700" : "text-gray-900"}`}>Goods Items</p>
-                <p className="text-xs text-gray-500">At least one goods item must be added to the declaration.</p>
-              </div>
-            </li>
-
-            <li className="flex items-start gap-3">
-              {missingHS ? <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
-              <div>
-                <p className={`text-sm font-medium ${missingHS ? "text-red-700" : "text-gray-900"}`}>HS Commodity Codes</p>
-                <p className="text-xs text-gray-500">All goods items must have a valid 10-digit HS Code.</p>
-              </div>
-            </li>
-
             <li className="flex items-start gap-3">
               {missingBlockingRequirements.length > 0 ? <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
               <div>
@@ -385,10 +415,10 @@ export default function SubmitPage() {
             </li>
 
             <li className="flex items-start gap-3">
-              {!dryRunPassed ? <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
+              {!dryRunFullyPassed ? <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
               <div>
-                <p className={`text-sm font-medium ${!dryRunPassed ? "text-amber-700" : "text-gray-900"}`}>Dry Run Gate</p>
-                <p className="text-xs text-gray-500">Run and pass the local dry check before submitting to HMRC.</p>
+                <p className={`text-sm font-medium ${!dryRunFullyPassed ? "text-amber-700" : "text-gray-900"}`}>Dry Run Gate</p>
+                <p className="text-xs text-gray-500">XML preflight and rule engine must both pass before HMRC submit.</p>
               </div>
             </li>
           </ul>
@@ -631,7 +661,7 @@ export default function SubmitPage() {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!isReady || !dryRunPassed || isSubmitting || isDryRunning || isLiveDeclaration}
+            disabled={!isReady || !dryRunFullyPassed || isSubmitting || isDryRunning || isLiveDeclaration}
             className="flex w-full h-8 rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
           >
             {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-4 w-4 text-green-400" />}

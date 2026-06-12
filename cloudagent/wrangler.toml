@@ -1,13 +1,8 @@
 name = "cloudagent"
 main = "src/index.ts"
+account_id = "555e307a91082ae8c8e69b0a5ff3b8c3"
 compatibility_date = "2024-10-22"
 compatibility_flags = [ "nodejs_compat" ]
-
-[[d1_databases]]
-binding = "DB"
-database_name = "companies-db"
-database_id = "3afb31ce-83a9-4a12-ab5c-f85442ed10d1"
-remote = true
 
 [[vectorize]]
 binding = "HMRC_ERRORS_VECTORIZE"

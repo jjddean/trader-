@@ -30,4 +30,4 @@ Obtain the full current TDL spreadsheet from HMRC CDS technical documentation / 
 
 ## Active lane
 
-See `spec/lane.md` — Declarant and Importer EORI **`GB531765313922`** (Romwan Lee OAuth profile).
+See `docs/hmrc/ARCHIVE/trade-test/lane.md` — Declarant and Importer EORI **`GB531765313922`** (Romwan Lee OAuth profile).

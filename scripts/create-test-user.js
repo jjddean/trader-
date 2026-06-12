@@ -96,7 +96,7 @@ async function createTestUser(accessToken) {
 async function main() {
   if (!TDL_EORI) {
     throw new Error(
-      "Set HMRC_TEST_USER_EORI to a Test Data Library EORI before running (see spec/hmrc-mirror/trade-test-data-library.md).",
+      "Set HMRC_TEST_USER_EORI to a Test Data Library EORI before running (see docs/hmrc/ARCHIVE/trade-test/hmrc-mirror/trade-test-data-library.md).",
     );
   }
 

@@ -1,5 +1,6 @@
 import {
   isAmendmentAccepted,
+  isAmendmentAcknowledged,
   isAmendmentRejected,
   isInvalidationAccepted,
   type DmsNotificationContext,
@@ -39,6 +40,7 @@ export function resolveDeclarationCdsBadge(
   const ctx = (notifications ?? []).map(asDmsContext);
   const amendAccepted = ctx.some((n) => isAmendmentAccepted(n));
   const amendRejected = declarationHasAmendmentRejected(notifications);
+  const amendAcknowledged = ctx.some((n) => isAmendmentAcknowledged(n));
   const cancelAccepted = declarationHasInvalidationAccepted(notifications);
 
   if (amendAccepted) {
@@ -46,6 +48,9 @@ export function resolveDeclarationCdsBadge(
   }
   if (amendRejected && !cancelAccepted) {
     return { label: "Accepted — amend rejected", tone: "warning" };
+  }
+  if (amendAcknowledged && !amendAccepted && (status === "Accepted" || status === "Amendment Processing")) {
+    return { label: "Accepted — amend processing", tone: "info" };
   }
   if (cancelAccepted) {
     return { label: "Cancelled (DMSINV)", tone: "success" };

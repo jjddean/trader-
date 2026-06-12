@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api";
 import { HMRC_CONFIG } from "./hmrc-config";
+import { hmrcOAuthBaseUrl, hmrcOAuthCredentials } from "./hmrc-oauth";
 
 export async function resolveHmrcAccessToken(
   convex: ConvexHttpClient,
@@ -33,15 +34,13 @@ export async function resolveHmrcAccessToken(
       };
     }
 
-    const hmrcBase =
-      process.env.HMRC_ENVIRONMENT === "sandbox"
-        ? HMRC_CONFIG.sandboxBaseUrl
-        : HMRC_CONFIG.productionBaseUrl;
+    const hmrcBase = hmrcOAuthBaseUrl();
     const tokenUrl = `${hmrcBase}/oauth/token`;
+    const { clientId, clientSecret } = hmrcOAuthCredentials();
 
     const refreshBody = new URLSearchParams({
-      client_secret: process.env.HMRC_CLIENT_SECRET!,
-      client_id: process.env.HMRC_CLIENT_ID!,
+      client_secret: clientSecret,
+      client_id: clientId,
       grant_type: "refresh_token",
       refresh_token: tokenRecord.refreshToken,
     });

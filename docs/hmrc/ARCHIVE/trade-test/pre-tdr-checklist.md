@@ -16,7 +16,7 @@
 
 | Gate | Status | Evidence |
 |------|--------|----------|
-| Generate valid CDS XML (v2.0) | Done | `spec/passing-payload.xml`, dry-run gate |
+| Generate valid CDS XML (v2.0) | Done | `docs/hmrc/ARCHIVE/trade-test/passing-payload.xml`, dry-run gate |
 | Submit → 202 + MRN | Done | FC-MPYAJ7RN / `26GB63M1I0RQFCVAR4` |
 | 0 CDS validation errors (DMSACC) | Done | DMSACC FunctionCode `01` |
 | Handle synchronous submit response | Done | `src/app/api/hmrc/submit/route.ts` |
@@ -29,7 +29,7 @@
 |---------------------------|----------------|---------------|--------|
 | DMSACC | Yes | Yes (FC-MPYAJ7RN) | Done |
 | DMSTAX (FC 13, NameCode 4/67) | Yes | Yes | Done |
-| DMSCLE | Yes | No on passing MRN | **Done (handler)** — audit `test-evidence/passing/notification-audit-FC-MPYAJ7RN.md` |
+| DMSCLE | Yes | No on passing MRN | **Done (handler)** — audit `docs/hmrc/ARCHIVE/trade-test/evidence/passing/notification-audit-FC-MPYAJ7RN.md` |
 | DMSREJ | Yes | Yes (prior LRNs) | Done |
 | DMSINV | Yes | Unit test FC `02` | Done (parser); live scenario optional |
 | DMSROG / DMSCTL / DMSRES | Yes | Unit tests | Done (parser); live optional |
@@ -49,7 +49,7 @@
 | Customs Declarations Information 2.0 | Yes | Status page **Query HMRC status** |
 | Amend (FC 13) | Yes | Status page (Accepted + MRN) |
 | Cancel (FC 13 + INV) | Yes | Status page (Accepted + MRN) |
-| Secure document upload | Yes | Deferred — `spec/journey-scope.md` |
+| Secure document upload | Yes | Deferred — `docs/hmrc/ARCHIVE/trade-test/journey-scope.md` |
 
 ---
 
@@ -59,14 +59,14 @@ Runbook TT scope includes: **all declaration types and procedures** (slide 6). F
 
 | Journey (examples from Runbook / TT scope) | Spec lane | TT submit proof |
 |---------------------------------------------|-----------|-----------------|
-| H1 import frontier (Type A, free circulation) | `spec/lane.md` | DMSACC |
+| H1 import frontier (Type A, free circulation) | `docs/hmrc/ARCHIVE/trade-test/lane.md` | DMSACC |
 | H2 warehousing / supplementary | — | — |
 | Inward processing / OSR | — | — |
 | Export A–Z types | — | — |
 | Inventory linking | — | — |
 | Amendment / invalidation | API only | TT may limit amend scope per milestone — check current TTM scope bulletin |
 
-**Pragmatic TT exit:** See `spec/journey-scope.md`. Minimum = passing lane + sections B–C complete + `test-evidence/tt-evidence-pack/`.
+**Pragmatic TT exit:** See `docs/hmrc/ARCHIVE/trade-test/journey-scope.md`. Minimum = passing lane + sections B–C complete + `docs/hmrc/ARCHIVE/trade-test/evidence/tt-evidence-pack/`.
 
 ---
 

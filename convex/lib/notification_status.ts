@@ -74,6 +74,7 @@ export function statusAfterNotification(params: {
   hasResolvedMrn: boolean;
   isAmendmentRejected: boolean;
   isAmendmentAccepted: boolean;
+  isAmendmentAcknowledged?: boolean;
   isInvalidationAccepted: boolean;
   isPostCancelClearance?: boolean;
 }): string {
@@ -88,6 +89,11 @@ export function statusAfterNotification(params: {
       return "Accepted";
     }
     return params.currentStatus;
+  }
+
+  // FC 02 amend ack (DMSINV + AM- LRN, no errors) — import stays accepted; await DMSRES.
+  if (params.isAmendmentAcknowledged) {
+    return params.currentStatus === "Amendment Processing" ? "Amendment Processing" : "Accepted";
   }
 
   if (params.notificationType === "DMSINV" && params.isInvalidationAccepted) {

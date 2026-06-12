@@ -57,12 +57,12 @@ All config lives in `.env.local`. **Never commit this file** (`.gitignore` cover
 ### Switching Environments (Trade Test Sandbox → Production)
 
 1. Change `HMRC_ENVIRONMENT` to `production`
-2. Keep `HMRC_DECLARATIONS_ACCEPT` set to `application/vnd.hmrc.2.0+xml` — both sandbox and production use v2.0
+2. Set Accept headers per `docs/hmrc/ACTIVE/tdr/environment-matrix.md` (TDR: Declarations v1.0; Live: v2.0)
 3. Update `HMRC_CLIENT_ID` and `HMRC_CLIENT_SECRET` to production credentials
 4. Update `HMRC_REDIRECT_URI` to your production callback URL
 5. Restart the application
 
-> **Note:** TDR (Trader Dress Rehearsal) is a future phase that requires explicit HMRC allowlisting and uses v1.0 headers. It is not part of the current sandbox → production path.
+> **Note:** Active development environment is TDR. Behaviour: `docs/hmrc/ACTIVE/tdr/AGENT-SPEC.md`. Trade Test: `docs/hmrc/ARCHIVE/trade-test/` (read-only).
 
 ---
 

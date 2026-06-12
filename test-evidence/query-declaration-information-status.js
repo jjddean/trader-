@@ -6,7 +6,7 @@
  *   MRN=26GB63M1I0RQFCVAR4 node test-evidence/query-declaration-information-status.js
  *
  * Requires: .env.local (HMRC_*, NEXT_PUBLIC_CONVEX_URL, HMRC_TEST_USER_ID)
- * Writes: documentation/HMRC/sdst-evidence-pack/evidence/07-status-query/
+ * Writes: docs/hmrc/ARCHIVE/trade-test/sdst-evidence-pack/evidence/07-status-query/
  */
 
 const fs = require("fs");
@@ -38,7 +38,7 @@ const HMRC_CONFIG = {
 const DEFAULT_MRN = "26GB63M1I0RQFCVAR4";
 const OUT_DIR = path.join(
   process.cwd(),
-  "documentation/HMRC/sdst-evidence-pack/evidence/07-status-query",
+  "docs/hmrc/ARCHIVE/trade-test/sdst-evidence-pack/evidence/07-status-query",
 );
 
 async function getToken(client, userId) {

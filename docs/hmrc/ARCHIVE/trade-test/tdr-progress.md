@@ -49,7 +49,7 @@
 - [ ] Confirm `locationId === "GBAUFXTFXTFXT"` (Appendix 16C ODS — not `GBAUFXTFXTGW`)
 - [ ] Confirm `transportId`, `transportMode` populated (maritime lane: mode 1, vessel name)
 
-### ⛔ Deferred — converge remaining DMSREJ (see `spec/errors-handled.md`)
+### ⛔ Deferred — converge remaining DMSREJ (see `docs/hmrc/ARCHIVE/trade-test/errors-handled.md`)
 - [ ] **04A / 16A / 09B** — Charge/deduction valuation breakdown (R009, R050)
 - [ ] **02A / 03A** — Additional information (CDS12056)
 - [ ] **70A 166** — Additional procedure code (DE 1/11)

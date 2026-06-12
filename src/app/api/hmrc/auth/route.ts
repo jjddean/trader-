@@ -1,17 +1,24 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
+import {
+  hmrcOAuthBaseUrl,
+  hmrcOAuthCredentialError,
+  hmrcOAuthCredentials,
+} from "../../../../lib/hmrc-oauth";
 
 export async function GET() {
-  const clientId = process.env.HMRC_CLIENT_ID;
+  const credentialError = hmrcOAuthCredentialError();
+  if (credentialError) {
+    return NextResponse.json({ error: credentialError }, { status: 500 });
+  }
+
+  const { clientId } = hmrcOAuthCredentials();
   const redirectUri = process.env.HMRC_REDIRECT_URI;
   const scopes = process.env.HMRC_SCOPES || "write:customs-declaration write:customs-declarations-information";
-  const hmrcAuthBase = process.env.HMRC_ENVIRONMENT === "sandbox"
-    ? `${HMRC_CONFIG.sandboxBaseUrl}/oauth/authorize`
-    : `${HMRC_CONFIG.productionBaseUrl}/oauth/authorize`;
+  const hmrcAuthBase = `${hmrcOAuthBaseUrl()}/oauth/authorize`;
 
-  if (!clientId || !redirectUri) {
-    return NextResponse.json({ error: "Missing HMRC environment variables" }, { status: 500 });
+  if (!redirectUri) {
+    return NextResponse.json({ error: "Missing HMRC_REDIRECT_URI" }, { status: 500 });
   }
 
   const { userId } = await auth();

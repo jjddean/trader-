@@ -1,0 +1,14 @@
+<!-- Invalidation accepted — DMSINV FC 02 / TT_IM011a
+     MRN 26GB6GFOZ64AZ37AR9 | cancel LRN CX-kn7fh999tx3mnjg6s3fgmr39d188h8x1 | 2026-06-12T16:02:42Z
+     SDST retest — POST /customs/declarations/cancellation-requests -->
+<_2:MetaData xmlns:_2="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2"><_2:WCODataModelVersionCode>3.6</_2:WCODataModelVersionCode><_2:WCOTypeName>RES</_2:WCOTypeName><_2:ResponsibleCountryCode/><_2:ResponsibleAgencyName/><_2:AgencyAssignedCustomizationCode/><_2:AgencyAssignedCustomizationVersionCode/><_2_1:Response xmlns:_2_1="urn:wco:datamodel:WCO:RES-DMS:2">
+      <_2_1:FunctionCode>02</_2_1:FunctionCode>
+      <_2_1:FunctionalReferenceID>b91f5f1fd9724490baee31c6db7eefff</_2_1:FunctionalReferenceID>
+      <_2_1:IssueDateTime>
+        <_2_2:DateTimeString formatCode="304" xmlns:_2_2="urn:wco:datamodel:WCO:Response_DS:DMS:2">20260612160242Z</_2_2:DateTimeString>
+      </_2_1:IssueDateTime>
+      <_2_1:Declaration>
+        <_2_1:FunctionalReferenceID>CX-kn7fh999tx3mnjg6s3fgmr39d188h8x1</_2_1:FunctionalReferenceID>
+        <_2_1:ID>26GB6GFOZ64AZ37AR9</_2_1:ID>
+      </_2_1:Declaration>
+    </_2_1:Response></_2:MetaData>

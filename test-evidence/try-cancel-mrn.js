@@ -32,7 +32,7 @@ async function run() {
   const tokenRecord = await client.query(api.hmrc.getToken, { userId });
   const base = process.env.HMRC_SANDBOX_BASE_URL || "https://test-api.service.hmrc.gov.uk";
 
-  const response = await fetch(`${base}/customs/declarations`, {
+  const response = await fetch(`${base}/customs/declarations/cancellation-requests`, {
     method: "POST",
     headers: {
       Accept: process.env.HMRC_DECLARATIONS_ACCEPT || "application/vnd.hmrc.2.0+xml",
@@ -46,7 +46,7 @@ async function run() {
   });
 
   const body = await response.text();
-  const outDir = path.join(process.cwd(), "documentation/HMRC/sdst-evidence-pack/evidence/04-cancel");
+  const outDir = path.join(process.cwd(), "docs/hmrc/ARCHIVE/trade-test/sdst-evidence-pack/evidence/04-cancel");
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(path.join(outDir, "request.xml"), xmlPayload);
   fs.writeFileSync(path.join(outDir, "response.xml"), body);

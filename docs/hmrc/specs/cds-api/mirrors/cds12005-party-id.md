@@ -2,11 +2,11 @@
 
 | | |
 |--|--|
-| Source — CDS error codes ODS | `spec/hmrc-mirror/cds-error-codes-2026-03-11.ods` (GOV.UK publication updated 13 March 2026) |
+| Source — CDS error codes ODS | `docs/hmrc/specs/cds-api/mirrors/cds-error-codes-2026-03-11.ods` (GOV.UK publication updated 13 March 2026) |
 | Source — ValidationResultTypes | `CDS 03 CDS Codelists and WCO References 5.1.0 v2.55.xlsx` sheet `System_Defined_Codes` row 107 |
 | Source — WCO field tags | `convex/lib/cds_wco_references.ts` (from same codelists xlsx) |
 | Source — Group 3 import | https://www.gov.uk/government/publications/cds-uk-trade-tariff-volume-3-import-declaration-completion-guide/group-3-parties (retrieved 2026-06-02) |
-| Source — Trade Test profiles | `spec/hmrc-mirror/trade-test-data-library.md` |
+| Source — Trade Test profiles | `docs/hmrc/specs/cds-api/mirrors/trade-test-data-library.md` |
 | Source — Customs Declarations API | https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/customs-declarations/2.0 |
 
 ## DMSREJ pointers (not separate “transport rules”)

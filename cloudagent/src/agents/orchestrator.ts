@@ -1,5 +1,6 @@
 import { Agent, callable } from "agents";
 import { Env } from "../index";
+import { WORKERS_TEXT_MODEL } from "../lib/text-model";
 
 export class AgentOrchestrator extends Agent<Env> {
     @callable()
@@ -44,7 +45,7 @@ export class AgentOrchestrator extends Agent<Env> {
     }
 
     private async classifyIntent(text: string, history: any[]): Promise<string> {
-        const res = await this.env.AI.run('@cf/meta/llama-3-8b-instruct', {
+        const res = await this.env.AI.run(WORKERS_TEXT_MODEL, {
             messages: [
                 { role: 'system', content: 'Classify the user intent into exactly one of these three categories: "validation" (if they are asking about an HMRC CDS error code like CDS40045, MALFORMED_XML, or a rejection), "classification" (if they are describing a product and need an HS/commodity code), or "general" (if it is a general question). Reply with ONLY the single word: validation, classification, or general.' },
                 ...history.slice(-3),
@@ -55,7 +56,7 @@ export class AgentOrchestrator extends Agent<Env> {
     }
 
     private async handleGeneralChat(text: string, history: any[]) {
-        const res = await this.env.AI.run('@cf/meta/llama-3-8b-instruct', {
+        const res = await this.env.AI.run(WORKERS_TEXT_MODEL, {
             messages: [
                 { role: 'system', content: 'You are the HMRC CDS Orchestrator Copilot. You help users clear their goods through customs.' },
                 ...history,

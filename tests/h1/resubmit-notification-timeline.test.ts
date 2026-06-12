@@ -48,9 +48,9 @@ describe("resubmit notification timeline", () => {
   const MRN_NEW = "MRN_NEW";
   const DECL = "decl_1";
 
-  it("returns only new conversation rows", async () => {
+  it("returns only new conversation rows for the current MRN", async () => {
     const rows: Row[] = [
-      { _id: "n_old_acc", mrn: MRN_NEW, conversationId: CONV_OLD, declarationId: DECL, notificationType: "DMSACC", timestamp: "2026-06-05T09:00:00Z" },
+      { _id: "n_old_acc", mrn: MRN_OLD, conversationId: CONV_OLD, declarationId: DECL, notificationType: "DMSACC", timestamp: "2026-06-05T09:00:00Z" },
       { _id: "n_new_acc", mrn: MRN_NEW, conversationId: CONV_NEW, declarationId: DECL, notificationType: "DMSACC", timestamp: "2026-06-06T10:00:00Z" },
     ];
 

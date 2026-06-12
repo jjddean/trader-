@@ -1,0 +1,35 @@
+{
+  "timestamp": "2026-06-11T22:00:00.000Z",
+  "host": "https://test-api.service.hmrc.gov.uk",
+  "accept": "application/vnd.hmrc.1.0+xml",
+  "oauth": "Bearer token refreshed successfully (token_len 32)",
+  "note": "CLI script blocked: hmrc.getToken requires Convex auth. Ran direct Information API GET via agent.",
+  "results": [
+    {
+      "mrn": "26GB6DTVT5133M7AR0",
+      "lrn": "FC-MQ8IDIYS",
+      "context": "TDR v1 DMSACC frozen baseline",
+      "http": 404,
+      "code": "CDS60001",
+      "message": "Declaration not found",
+      "conversationId": "d68011d5-2631-4e30-8ce1-089e400c45b8"
+    },
+    {
+      "mrn": "26GB6F8QX9AC62SAR0",
+      "context": "TDR v1 amend test MRN",
+      "http": 404,
+      "code": "CDS60001",
+      "message": "Declaration not found",
+      "conversationId": "ed1521f9-c1d7-4ad4-bf65-9b7f5495243b"
+    }
+  ],
+  "retestAfterRefresh": {
+    "timestamp": "2026-06-11T22:01:00.000Z",
+    "oauth": "refresh OK, same 404 on both MRNs",
+    "conversationIds": [
+      "e213303c-9ddd-4cfd-8647-f8d7a963a250",
+      "804a1d90-6726-448d-863c-c922c7394ff1"
+    ]
+  },
+  "conclusion": "Auth OK (404 not 401). Information API index has no row for TDR v1 sandbox MRNs — not MRN-specific."
+}

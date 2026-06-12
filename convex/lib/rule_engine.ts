@@ -33,7 +33,8 @@ export interface TriggerScope {
 export type PredicateName =
   | "ITEM_VALUE_SUM_MATCHES_INVOICE"
   | "ALL_ITEMS_HAVE_PROCEDURE"
-  | "WILDCARD_FORBID_ALL_DOCUMENTS";
+  | "WILDCARD_FORBID_ALL_DOCUMENTS"
+  | "OVERSEAS_EXPORTER_ADDRESS";
 
 export interface Effects {
   requiredDocuments?: {
@@ -123,6 +124,12 @@ export interface ScenarioInput {
     valuationMethod?: string;
     mode?: string; // "minimal" | "enriched"
     invoiceTotal?: number | string;
+    exporterEori?: string;
+    exporterName?: string;
+    exporterCity?: string;
+    exporterLine?: string;
+    exporterPostcode?: string;
+    transactionNatureCode?: string;
   };
   items: Array<{
     commodityCode?: string;
@@ -329,6 +336,32 @@ function runPredicate(
         ok: present.length === 0,
         detail: present.length === 0 ? undefined : `Documents present in minimal mode: ${present.join(", ")}`,
         evidence: { present },
+      };
+    }
+    case "OVERSEAS_EXPORTER_ADDRESS": {
+      const dispatch = String(input.declaration.dispatchCountry || "").trim().toUpperCase();
+      if (!dispatch || dispatch === "GB" || dispatch === "XI") {
+        return { ok: true, detail: "Skipped: dispatch is GB/XI" };
+      }
+      const eori = String(input.declaration.exporterEori || "").trim();
+      if (/^(GB|XI)\d{12}$/i.test(eori)) {
+        return { ok: true, detail: "Skipped: GB/XI exporter EORI declared" };
+      }
+      const missing = (
+        [
+          ["exporterName", "Exporter name (DE 3/1)"],
+          ["exporterCity", "Exporter city (DE 3/1)"],
+          ["exporterLine", "Exporter address line (DE 3/1)"],
+          ["exporterPostcode", "Exporter postcode (DE 3/1)"],
+        ] as const
+      ).filter(([key]) => !String(input.declaration[key as keyof typeof input.declaration] ?? "").trim());
+      return {
+        ok: missing.length === 0,
+        detail:
+          missing.length === 0
+            ? undefined
+            : `Missing overseas exporter fields: ${missing.map(([, label]) => label).join(", ")}`,
+        evidence: { missingFields: missing.map(([key]) => key) },
       };
     }
     default: {

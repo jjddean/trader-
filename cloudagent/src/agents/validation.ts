@@ -1,5 +1,6 @@
 import { Agent, callable } from "agents";
 import { Env } from "../index";
+import { WORKERS_TEXT_MODEL } from "../lib/text-model";
 
 export class AgentValidationError extends Agent<Env> {
     @callable()
@@ -35,7 +36,7 @@ Context Evidence: ${contextText}
 ---
 Provide a highly specific, actionable explanation.`;
 
-            const res = await this.env.AI.run('@cf/meta/llama-3-8b-instruct', {
+            const res = await this.env.AI.run(WORKERS_TEXT_MODEL, {
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: message }

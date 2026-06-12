@@ -1,0 +1,46 @@
+{
+  "timestamp": "2026-06-11T17:30:04.674Z",
+  "declarationId": "kn7d36t02m9wn70e4hzzdfj64h88djpk",
+  "userId": "user_3Ab42qRLt6cchUas7LDrkJx11kM",
+  "overall": "READY",
+  "mapper": "src/lib/wco-mapper.ts",
+  "renderer": "src/lib/h1-xml-renderer.ts",
+  "issues": [],
+  "warnings": [],
+  "declaration": {
+    "eori": "GB553202734852",
+    "dispatchCountry": "DE",
+    "transactionNatureCode": "11",
+    "declarationType": "H1",
+    "status": "Accepted",
+    "mrn": "26GB6DTVT5133M7AR0",
+    "conversationId": "c493713d-b599-421c-8283-f182a1e7d275"
+  },
+  "items": [
+    {
+      "seq": 1,
+      "commodityCode": "8471300000",
+      "description": "Portable automatic data processing machine",
+      "originCountry": "DE",
+      "procedureCode": "4000",
+      "additionalProcedureCode": "000",
+      "valueAmount": 5500,
+      "valueCurrency": "GBP",
+      "grossWeightKg": 120,
+      "additionalDocuments": [
+        {
+          "CategoryCode": "N",
+          "ID": "TEST-INV-2026-0428-001",
+          "StatusCode": "",
+          "TypeCode": "935"
+        },
+        {
+          "CategoryCode": "N",
+          "ID": "TEST-PL-2026-0428-001",
+          "StatusCode": "",
+          "TypeCode": "271"
+        }
+      ]
+    }
+  ]
+}

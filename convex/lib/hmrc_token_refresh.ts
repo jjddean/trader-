@@ -1,14 +1,9 @@
 import type { ActionCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
+import { hmrcOAuthBaseUrl, hmrcOAuthCredentials } from "./hmrc_oauth";
 
 const TOKEN_EXPIRY_BUFFER_MS = Number(process.env.HMRC_TOKEN_EXPIRY_BUFFER_MS) || 300000;
 const DEFAULT_EXPIRES_IN_SEC = Number(process.env.HMRC_DEFAULT_TOKEN_EXPIRY_MS) || 14400;
-
-function hmrcBaseUrl(): string {
-  return process.env.HMRC_ENVIRONMENT === "sandbox"
-    ? process.env.HMRC_SANDBOX_BASE_URL || "https://test-api.service.hmrc.gov.uk"
-    : process.env.HMRC_PRODUCTION_BASE_URL || "https://api.service.hmrc.gov.uk";
-}
 
 export interface HmrcTokenRow {
   accessToken?: string;
@@ -37,10 +32,11 @@ export async function resolveAccessTokenForUser(
     return row.accessToken;
   }
 
-  const tokenUrl = `${hmrcBaseUrl()}/oauth/token`;
+  const tokenUrl = `${hmrcOAuthBaseUrl()}/oauth/token`;
+  const { clientId, clientSecret } = hmrcOAuthCredentials();
   const refreshBody = new URLSearchParams({
-    client_secret: process.env.HMRC_CLIENT_SECRET!,
-    client_id: process.env.HMRC_CLIENT_ID!,
+    client_secret: clientSecret,
+    client_id: clientId,
     grant_type: "refresh_token",
     refresh_token: row.refreshToken,
   });

@@ -3,6 +3,7 @@ import { query, mutation } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import {
   isAmendmentAccepted,
+  isAmendmentAcknowledged,
   isAmendmentRejected,
   isInvalidationAccepted,
   isPostCancelClearance,
@@ -142,6 +143,12 @@ export const saveWebhook = mutation({
         fieldErrors: args.fieldErrors,
         errorCodes: args.errorCodes,
       });
+      const amendAcknowledged = isAmendmentAcknowledged({
+        notificationType: args.notificationType,
+        rawPayload: args.rawPayload,
+        fieldErrors: args.fieldErrors,
+        errorCodes: args.errorCodes,
+      });
       const invAccepted = isInvalidationAccepted({
         notificationType: args.notificationType,
         rawPayload: args.rawPayload,
@@ -159,6 +166,7 @@ export const saveWebhook = mutation({
           hasResolvedMrn,
           isAmendmentRejected: amendRejected,
           isAmendmentAccepted: amendAccepted,
+          isAmendmentAcknowledged: amendAcknowledged,
           isInvalidationAccepted: invAccepted,
           isPostCancelClearance: postCancelCle,
         });

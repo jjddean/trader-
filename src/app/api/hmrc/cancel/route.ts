@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { api } from "../../../../../convex/_generated/api";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
-import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
+import { declarationsEndpointUrl, HMRC_CONFIG } from "../../../../lib/hmrc-config";
 import { getAuthenticatedConvex } from "../../../../lib/hmrc-route-session";
 import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
 import { logHmrcAudit } from "../../../../lib/audit-log";
@@ -11,7 +11,7 @@ import { buildInvalidationXml } from "../../../../lib/hmrc-invalidation-xml";
 /**
  * POST /api/hmrc/cancel
  * Submit a cancellation (invalidation) request for an existing declaration.
- * HMRC ref: CDS End-to-End Guide > Cancel — FunctionCode 13, TypeCode INV.
+ * HMRC: POST /customs/declarations/cancellation-requests — FunctionCode 13, TypeCode INV.
  */
 export async function POST(request: Request) {
   try {
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
         : HMRC_CONFIG.productionBaseUrl;
 
     const hmrcResponse = await fetchHmrc(
-      `${hmrcBase}/customs/declarations`,
+      declarationsEndpointUrl(hmrcBase, "cancel"),
       {
         method: "POST",
         headers: { "Content-Type": "application/xml; charset=UTF-8" },

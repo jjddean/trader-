@@ -79,7 +79,11 @@ export default function AdminSetupPage() {
                 <div className="flex items-center gap-2">
                   <span className={cn(
                     "rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border",
-                    hmrcEnv === "production" ? "bg-red-50 text-red-700 border-red-100" : "bg-blue-50 text-blue-700 border-blue-100"
+                    hmrcEnv === "production"
+                      ? "bg-red-50 text-red-700 border-red-100"
+                      : hmrcEnv === "tdr"
+                        ? "bg-amber-50 text-amber-800 border-amber-100"
+                        : "bg-blue-50 text-blue-700 border-blue-100"
                   )}>
                     {hmrcEnv}
                   </span>

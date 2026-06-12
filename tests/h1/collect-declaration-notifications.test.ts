@@ -60,7 +60,7 @@ describe("collectDeclarationNotifications", () => {
     { _id: "n_other", mrn: "26GBOTHER", conversationId: "other-conv", declarationId: "decl_other", notificationType: "DMSACC", timestamp: "2026-06-04T09:00:00Z" },
   ];
 
-  it("returns only the current conversation's notifications when conversationId is set", async () => {
+  it("returns current conversation plus same-MRN declaration notifications", async () => {
     const db = makeDb(rows);
     const result = await collectDeclarationNotifications(db, {
       declarationId: DECL as never,
@@ -68,20 +68,21 @@ describe("collectDeclarationNotifications", () => {
       mrn: MRN,
     });
     const ids = result.map((r) => r._id).sort();
-    assert.deepEqual(ids, ["n_acc_current", "n_tax_current"]);
+    assert.deepEqual(ids, ["n_acc_current", "n_old_amend", "n_tax_current"]);
   });
 
-  it("excludes old-cycle notifications on the same MRN when conversationId is set", async () => {
+  it("includes same-MRN rows from other conversations on the declaration", async () => {
     const db = makeDb(rows);
     const result = await collectDeclarationNotifications(db, {
       declarationId: DECL as never,
       conversationId: CONV_CURRENT,
       mrn: MRN,
     });
-    assert.equal(result.some((r) => r._id === "n_old_amend"), false);
+    assert.equal(result.some((r) => r._id === "n_old_amend"), true);
+    assert.equal(result.some((r) => r._id === "n_other"), false);
   });
 
-  it("falls back to declaration + MRN scope when no conversationId is provided", async () => {
+  it("excludes unrelated MRN when conversationId is set", async () => {
     const db = makeDb(rows);
     const result = await collectDeclarationNotifications(db, {
       declarationId: DECL as never,
@@ -102,6 +103,34 @@ describe("collectDeclarationNotifications", () => {
       mrn: MRN,
     });
     assert.equal(result[0]._id, "n_tax_current");
+  });
+
+  it("includes MRN-indexed rows without declarationId (orphan submit-conversation pull)", async () => {
+    const orphanRows: Row[] = [
+      {
+        _id: "n_orphan_acc",
+        mrn: MRN,
+        conversationId: CONV_OLD,
+        notificationType: "DMSACC",
+        timestamp: "2026-06-06T09:30:00Z",
+      },
+      {
+        _id: "n_amend_fc02",
+        mrn: MRN,
+        conversationId: CONV_CURRENT,
+        declarationId: DECL,
+        notificationType: "DMSRES",
+        timestamp: "2026-06-06T11:00:00Z",
+      },
+    ];
+    const db = makeDb(orphanRows);
+    const result = await collectDeclarationNotifications(db, {
+      declarationId: DECL as never,
+      conversationId: CONV_CURRENT,
+      mrn: MRN,
+    });
+    assert.equal(result.some((r) => r._id === "n_orphan_acc"), true);
+    assert.equal(result.some((r) => r._id === "n_amend_fc02"), true);
   });
 
   it("dedupes a row matched by both conversationId and declaration indexes", async () => {

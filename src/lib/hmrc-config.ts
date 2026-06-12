@@ -1,12 +1,65 @@
+const V1_XML = process.env.HMRC_ACCEPT_V1_XML || "application/vnd.hmrc.1.0+xml";
+const V2_XML = process.env.HMRC_ACCEPT_V2_XML || "application/vnd.hmrc.2.0+xml";
+
+/** Active CDS phase — see docs/hmrc/ACTIVE/tdr/environment-matrix.md */
+export function hmrcPhase(): "trade_test" | "tdr" | "live" {
+  const label = (process.env.NEXT_PUBLIC_HMRC_ENV || "").toLowerCase();
+  if (label === "tdr") return "tdr";
+  if (label === "production" || label === "live") return "live";
+  if (process.env.HMRC_ENVIRONMENT === "sandbox") return "trade_test";
+  if (process.env.HMRC_DECLARATIONS_ACCEPT?.includes("1.0")) return "tdr";
+  return "live";
+}
+
+/** Declarations API Accept — TDR v1.0, Trade Test / CDS Live v2.0 */
+export function declarationsAcceptHeader(): string {
+  if (process.env.HMRC_DECLARATIONS_ACCEPT) {
+    return process.env.HMRC_DECLARATIONS_ACCEPT;
+  }
+  return hmrcPhase() === "tdr" ? V1_XML : V2_XML;
+}
+
+/** HMRC Customs Declarations API paths (v1.0 and v2.0). */
+export type DeclarationsOperation = "submit" | "cancel" | "amend";
+
+export function declarationsEndpointPath(operation: DeclarationsOperation): string {
+  switch (operation) {
+    case "submit":
+      return "/customs/declarations";
+    case "cancel":
+      return "/customs/declarations/cancellation-requests";
+    case "amend":
+      return "/customs/declarations/amend";
+  }
+}
+
+export function declarationsEndpointUrl(baseUrl: string, operation: DeclarationsOperation): string {
+  const base = baseUrl.replace(/\/$/, "");
+  return `${base}${declarationsEndpointPath(operation)}`;
+}
+
+/** Information API Accept — sandbox host v1.0; production TDR/Live v2.0 */
+export function informationAcceptHeader(): string {
+  if (process.env.HMRC_INFORMATION_ACCEPT) {
+    return process.env.HMRC_INFORMATION_ACCEPT;
+  }
+  if (process.env.HMRC_ENVIRONMENT === "sandbox") {
+    return V1_XML;
+  }
+  return hmrcPhase() === "trade_test" ? V1_XML : V2_XML;
+}
+
 export const HMRC_CONFIG = {
   sandboxBaseUrl: process.env.HMRC_SANDBOX_BASE_URL || "https://test-api.service.hmrc.gov.uk",
   productionBaseUrl: process.env.HMRC_PRODUCTION_BASE_URL || "https://api.service.hmrc.gov.uk",
 
   accept: {
-    declarations: process.env.HMRC_DECLARATIONS_ACCEPT || "application/vnd.hmrc.2.0+xml",
-    v2Xml: process.env.HMRC_ACCEPT_V2_XML || "application/vnd.hmrc.2.0+xml",
+    get declarations() {
+      return declarationsAcceptHeader();
+    },
+    v2Xml: V2_XML,
     v2Json: process.env.HMRC_ACCEPT_V2_JSON || "application/vnd.hmrc.2.0+json",
-    v1Xml: process.env.HMRC_ACCEPT_V1_XML || "application/vnd.hmrc.1.0+xml",
+    v1Xml: V1_XML,
     v1Json: process.env.HMRC_ACCEPT_V1_JSON || "application/vnd.hmrc.1.0+json",
   },
 

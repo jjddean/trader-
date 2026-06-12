@@ -147,6 +147,7 @@ export const scheduleNotificationPulls = mutation({
     for (const delayMs of delaysMs) {
       await ctx.scheduler.runAfter(delayMs, internal.hmrc_actions.pullNotificationsScheduled, {
         userId: identity.subject,
+        declarationId: args.declarationId,
         conversationId: args.conversationId,
         source: delayMs === 0 ? "scheduled_immediate" : `scheduled_${delayMs}ms`,
       });

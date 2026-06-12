@@ -6,8 +6,8 @@
 
 | Journey | Spec | TT evidence |
 |---------|------|-------------|
-| H1 import frontier, goods arrived (Type A / IMA) | `spec/lane.md` | DMSACC FC-MPYAJ7RN |
-| DMSREJ burn-down (negative) | `spec/errors-handled.md` | Multiple LRNs |
+| H1 import frontier, goods arrived (Type A / IMA) | `docs/hmrc/ARCHIVE/trade-test/lane.md` | DMSACC FC-MPYAJ7RN |
+| DMSREJ burn-down (negative) | `docs/hmrc/ARCHIVE/trade-test/errors-handled.md` | Multiple LRNs |
 | Dry-run preflight (no HMRC submit) | `test-evidence/run-hmrc-scenarios.js` | Gate before submit |
 
 ## In scope (TT — software ready, scenario not yet run)

@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
-import { commodityRequiresSupplementaryUnit, mapToCDS_H1, validateCdsCodeLists } from "../../../../lib/wco-mapper";
+import { commodityRequiresSupplementaryUnit, mapToCDS_H1, validateCdsCodeLists, validateOverseasExporter, validateTransactionNatureCode } from "../../../../lib/wco-mapper";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
-import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
+import { declarationsEndpointUrl, HMRC_CONFIG } from "../../../../lib/hmrc-config";
 import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
 import { buildPayloadDebugSnapshot, renderH1Xml, validateXmlPreflight } from "../../../../lib/h1-xml-renderer";
 import { validateGoodsLocationForSubmit } from "../../../../lib/goods-location";
@@ -47,6 +47,11 @@ type SubmitDeclarationInput = {
   transportId?: string;
   transportIdType?: string;
   invoiceCurrency?: string;
+  exporterName?: string;
+  exporterCity?: string;
+  exporterLine?: string;
+  exporterPostcode?: string;
+  exporterEori?: string;
 };
 
 // Confirmed required set for WEB_APP_VIA_SERVER (HMRC Fraud Prevention v3.3, Jan 2025)
@@ -84,6 +89,8 @@ function validateDeclaration(lane: SubmitDeclarationInput, items: SubmitItemInpu
   if (!lane?.transportId) errors.push("Missing transport identity (DE 7/9)");
   if (!lane?.transportIdType) errors.push("Missing transport identity type (DE 7/7)");
   if (!lane?.invoiceCurrency) errors.push("Missing invoice currency");
+  errors.push(...validateOverseasExporter(lane as Record<string, unknown>));
+  errors.push(...validateTransactionNatureCode(lane as Record<string, unknown>));
   if (!Array.isArray(items) || items.length === 0) {
     errors.push("No goods items");
     return errors;
@@ -209,6 +216,12 @@ export async function POST(request: Request) {
         valuationMethod: (lane as Record<string, unknown>).valuationMethod as string | undefined,
         mode: (lane as Record<string, unknown>).mode as string | undefined,
         invoiceTotal: (lane as Record<string, unknown>).invoiceTotal as number | string | undefined,
+        exporterEori: (lane as Record<string, unknown>).exporterEori as string | undefined,
+        exporterName: (lane as Record<string, unknown>).exporterName as string | undefined,
+        exporterCity: (lane as Record<string, unknown>).exporterCity as string | undefined,
+        exporterLine: (lane as Record<string, unknown>).exporterLine as string | undefined,
+        exporterPostcode: (lane as Record<string, unknown>).exporterPostcode as string | undefined,
+        transactionNatureCode: (lane as Record<string, unknown>).transactionNatureCode as string | undefined,
       },
       items: (items as SubmitItemInput[]).map((i) => ({
         commodityCode: i.commodityCode,
@@ -228,13 +241,17 @@ export async function POST(request: Request) {
     } catch (ruleErr: unknown) {
       const message = ruleErr instanceof Error ? ruleErr.message : String(ruleErr);
       console.error("Rule engine evaluation failed:", message);
+      return NextResponse.json(
+        {
+          error: "Rule engine evaluation failed",
+          message,
+        },
+        { status: 500 },
+      );
     }
     const blockingFailures = ruleResults.filter((r) => r.status === "fail" && r.severity === "blocking");
     const advisoryFailures = ruleResults.filter((r) => r.status === "fail" && r.severity === "advisory");
-    if (blockingFailures.length > 0 && dryRunOnly !== true) {
-      // Block live submissions on rule failures. Dry runs proceed so the user
-      // can see exactly which rules fired without losing the rest of the
-      // preflight payload.
+    if (blockingFailures.length > 0) {
       return NextResponse.json(
         {
           error: "Rule engine blocked submission",
@@ -339,7 +356,7 @@ export async function POST(request: Request) {
         return { code: `${cat}${type}`, id, lpcoExemptionCode: status };
       });
       return NextResponse.json({
-        success: xmlPreflight.valid,
+        success: true,
         dryRunOnly: true,
         hmrcCallAttempted: false,
         stage: "local_preflight_complete",
@@ -455,9 +472,11 @@ export async function POST(request: Request) {
     };
 
     // 4. Fire the POST request to HMRC
-    const hmrcEndpoint = process.env.HMRC_ENVIRONMENT === "sandbox"
-      ? `${HMRC_CONFIG.sandboxBaseUrl}/customs/declarations`
-      : `${HMRC_CONFIG.productionBaseUrl}/customs/declarations`;
+    const hmrcBase =
+      process.env.HMRC_ENVIRONMENT === "sandbox"
+        ? HMRC_CONFIG.sandboxBaseUrl
+        : HMRC_CONFIG.productionBaseUrl;
+    const hmrcEndpoint = declarationsEndpointUrl(hmrcBase, "submit");
 
     const hmrcHeaders = {
       "Content-Type": "application/xml; charset=UTF-8",

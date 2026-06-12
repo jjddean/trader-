@@ -1,0 +1,153 @@
+<!-- TDR v1 PASSING LANE BASELINE — DMSACC 2026-06-10
+     App submit: LRN FC-MQ8IDIYS | MRN 26GB6DTVT5133M7AR0
+     Declaration ID: kn7d36t02m9wn70e4hzzdfj64h88djpk
+     X-Conversation-ID: c493713d-b599-421c-8283-f182a1e7d275
+     Accept: application/vnd.hmrc.1.0+xml
+     Host: https://test-api.service.hmrc.gov.uk/customs/declarations
+     Parties (DE 3/16, 3/18): GB553202734852
+     Request source: UI dry-run XML (2026-06-10); FunctionalReferenceID set to accepted LRN.
+     Note: convex submissions row missing for this declaration — structure verified at GBP 5000.
+     Acceptance: 0 blocking CDS errors; advisory CDS13000 (value per kilo) on DMSACC
+-->
+<?xml version="1.0" encoding="UTF-8"?>
+<MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
+  <WCODataModelVersionCode>3.6</WCODataModelVersionCode>
+  <WCOTypeName>DEC</WCOTypeName>
+  <ResponsibleCountryCode>GB</ResponsibleCountryCode>
+  <ResponsibleAgencyName>HMRC</ResponsibleAgencyName>
+  <AgencyAssignedCustomizationVersionCode>v2.1</AgencyAssignedCustomizationVersionCode>
+  <Declaration xmlns="urn:wco:datamodel:WCO:DEC-DMS:2" xmlns:clm63055="urn:un:unece:uncefact:codelist:standard:UNECE:AgencyIdentificationCode:D12B" xmlns:ds="urn:wco:datamodel:WCO:MetaData_DS-DMS:2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2 ../DocumentMetaData_2_DMS.xsd ">
+    <FunctionCode>9</FunctionCode>
+    <FunctionalReferenceID>FC-MQ8IDIYS</FunctionalReferenceID>
+    <TypeCode>IMA</TypeCode>
+    <GoodsItemQuantity>1</GoodsItemQuantity>
+    <DeclarationOfficeID>GBLON004</DeclarationOfficeID>
+    <InvoiceAmount currencyID="GBP">5000.00</InvoiceAmount>
+    <TotalGrossMassMeasure unitCode="KGM">120.000</TotalGrossMassMeasure>
+    <TotalPackageQuantity>1</TotalPackageQuantity>
+    <BorderTransportMeans>
+      <ID>CSCLGLOBE</ID>
+      <IdentificationTypeCode>11</IdentificationTypeCode>
+      <ModeCode>1</ModeCode>
+    </BorderTransportMeans>
+    <Declarant>
+      <ID>GB553202734852</ID>
+    </Declarant>
+    <Exporter>
+      <Name>acme export gmbh</Name>
+      <Address>
+        <CityName>hamberg</CityName>
+        <CountryCode>DE</CountryCode>
+        <Line>hafenstrasse</Line>
+        <PostcodeID>20095</PostcodeID>
+      </Address>
+    </Exporter>
+    <GoodsShipment>
+      <TransactionNatureCode>11</TransactionNatureCode>
+      <Consignment>
+        <ContainerCode>0</ContainerCode>
+        <ArrivalTransportMeans>
+          <ID>CSCLGLOBE</ID>
+          <IdentificationTypeCode>11</IdentificationTypeCode>
+          <ModeCode>1</ModeCode>
+        </ArrivalTransportMeans>
+        <GoodsLocation><Name>FXTFXTFXT</Name><TypeCode>A</TypeCode><Address><TypeCode>U</TypeCode><CountryCode>GB</CountryCode></Address></GoodsLocation>
+      </Consignment>
+      <Destination>
+        <CountryCode>GB</CountryCode>
+      </Destination>
+      <ExportCountry>
+        <ID>DE</ID>
+      </ExportCountry>
+      
+      <GovernmentAgencyGoodsItem>
+        <SequenceNumeric>1</SequenceNumeric>
+        <StatisticalValueAmount currencyID="GBP">5000.00</StatisticalValueAmount>
+        
+        <AdditionalDocument>
+          <CategoryCode>N</CategoryCode>
+          <ID>TEST-INV-2026-0428-001</ID>
+          <TypeCode>935</TypeCode>
+          <LPCOExemptionCode>AC</LPCOExemptionCode>
+        </AdditionalDocument>
+        <AdditionalDocument>
+          <CategoryCode>N</CategoryCode>
+          <ID>TEST-PL-2026-0428-001</ID>
+          <TypeCode>271</TypeCode>
+          <LPCOExemptionCode>AC</LPCOExemptionCode>
+        </AdditionalDocument>
+        
+        <AdditionalInformation>
+          <StatementCode>00500</StatementCode>
+          <StatementDescription>Importer</StatementDescription>
+        </AdditionalInformation>
+        <Commodity>
+          <Description>Portable automatic data processing machine</Description>
+          
+          <Classification>
+            <ID>84713000</ID>
+            <IdentificationTypeCode>TSP</IdentificationTypeCode>
+          </Classification>
+          <Classification>
+            <ID>00</ID>
+            <IdentificationTypeCode>TRC</IdentificationTypeCode>
+          </Classification>
+          <DutyTaxFee>
+            <DutyRegimeCode>100</DutyRegimeCode>
+            <TypeCode>A00</TypeCode>
+          </DutyTaxFee>
+          <DutyTaxFee>
+            <TypeCode>B00</TypeCode>
+          </DutyTaxFee>
+          <GoodsMeasure>
+            <GrossMassMeasure unitCode="KGM">120.000</GrossMassMeasure>
+            <NetNetWeightMeasure unitCode="KGM">110.000</NetNetWeightMeasure>
+            <TariffQuantity unitCode="NAR">10</TariffQuantity>
+          </GoodsMeasure>
+          <InvoiceLine><ItemChargeAmount currencyID="GBP">5000.00</ItemChargeAmount></InvoiceLine>
+        </Commodity>
+        <CustomsValuation>
+          <MethodCode>1</MethodCode>
+        </CustomsValuation>
+        
+        <GovernmentProcedure>
+          <CurrentCode>40</CurrentCode>
+          <PreviousCode>00</PreviousCode>
+        </GovernmentProcedure>
+        <GovernmentProcedure>
+          <CurrentCode>000</CurrentCode>
+          
+        </GovernmentProcedure>
+        <Origin>
+          <CountryCode>DE</CountryCode>
+          <TypeCode>1</TypeCode>
+        </Origin>
+        <Packaging>
+          <SequenceNumeric>1</SequenceNumeric>
+          <MarksNumbersID>N/A</MarksNumbersID>
+          <QuantityQuantity>1</QuantityQuantity>
+          <TypeCode>PK</TypeCode>
+        </Packaging>
+        <ValuationAdjustment>
+          <AdditionCode>0000</AdditionCode>
+        </ValuationAdjustment>
+      </GovernmentAgencyGoodsItem>
+      <Importer>
+        <ID>GB553202734852</ID>
+      </Importer>
+      <PreviousDocument>
+        <CategoryCode>Z</CategoryCode>
+        <ID>6GB553202734852-KN7D36</ID>
+        <TypeCode>DCR</TypeCode>
+        <LineNumeric>1</LineNumeric>
+      </PreviousDocument>
+      <TradeTerms>
+        <ConditionCode>CIF</ConditionCode>
+        <LocationID>GBFELIXSTOWE</LocationID>
+      </TradeTerms>
+      <UCR>
+        <TraderAssignedReferenceID>6GB553202734852-KN7D36</TraderAssignedReferenceID>
+      </UCR>
+    </GoodsShipment>
+  </Declaration>
+</MetaData>

@@ -15,7 +15,7 @@ Source policy: DMSREJ is negative evidence only. This file tracks which spec sec
 | 2026-05-27 20:32 | FC-MPOISWS0 | 26GB5TUB6ZMD0MHAR0 | 10 | First submission with DE 5/23 split shape (`ID` + `TypeCode` + `Address[TypeCode + CountryCode]`). CDS10001 on 64A GONE. New CDS12070 at `64A/L016` and `64A/04A/410`. Mis-interpreted L016 as top-level CountryCode. Origin still blank — uncovered uncited `originCountry === dispatchCountry` omit in `wco-mapper.ts`; removed (Group 5 says DE 5/15 always mandatory). |
 | 2026-05-28 ~10:30 | n/a | n/a | XSD reject | HMRC XSD validator returned `BAD_REQUEST / xml_validation_error: cvc-complex-type.2.4.a: Invalid content was found starting with element 'CountryCode'. One of '{Address}' is expected.` Definitive proof CountryCode at GoodsLocation root is NOT in the schema. Reverted to Address.CountryCode (nested). L016 pointer in business-rule DMSREJ refers to `Address.CountryCode` — pointer chain truncates path. |
 | 2026-05-31 19:02 | TT-1780254160221 | n/a | XSD reject | Single controlled submit returned HTTP 400, `X-Conversation-ID: 4a09777f-8490-41cb-9b47-abab4e3cc8fc`. HMRC XSD validator returned `BAD_REQUEST / xml_validation_error`: empty `DeclarationOfficeID` is invalid, and `GoodsShipment/Consignment` was rejected in the stale scenario-runner XML sequence (`Consignment` where `{Warehouse}` was expected). Not a DMSREJ; no business-rule count update. Fix scope: stop the submit runner using its stale duplicate XML builder and route it through the app mapper/renderer. |
-| 2026-05-31 21:00 | TT-1780261221319 | pending | HTTP 202 | Controlled resubmit after runner fix returned HTTP 202, `X-Conversation-ID: 357a2553-b074-4151-ae89-c2b0a3742783`. This is envelope acceptance only; no DMSACC/DMSREJ has been pulled or pasted yet. `spec/passing-payload.xml` remains pending until actual DMSACC. |
+| 2026-05-31 21:00 | TT-1780261221319 | pending | HTTP 202 | Controlled resubmit after runner fix returned HTTP 202, `X-Conversation-ID: 357a2553-b074-4151-ae89-c2b0a3742783`. This is envelope acceptance only; no DMSACC/DMSREJ has been pulled or pasted yet. `docs/hmrc/ARCHIVE/trade-test/passing-payload.xml` remains pending until actual DMSACC. |
 | 2026-05-31 21:03 | FC-MPU9NSCQ | 26GB5ZL62L96SAEAR5 | 8 | App submit DMSREJ, FunctionCode `03`, FunctionalReferenceID `0f69ddc8a87e4d818f218222c3cbcfb1`. Errors: 2x CDS12073 (`42A` + `67A/103`; `42A` + `67A` + item `68A/103`), 2x CDS12070 (`42A/67A/28A/64A/04A/410`; `42A/67A/28A/64A/L016`), 2x CDS12056 (`42A/05A`; `42A/67A/68A/03A/226`), 2x CDS12005 (`42A/57B/R123`; `42A/67A/74A/R038`). Confirms current count is 8 business-rule errors. No DMSACC; do not freeze `passing-payload.xml`. |
 | 2026-05-31 21:19 | FC-MPUA8FWM | 26GB5ZLQQ4438YLAR5 | 6 | App submit after DE 5/23 `Name + TypeCode + Address(TypeCode, CountryCode)` change. CDS12070 on `64A/L016` and `64A/04A/410` is gone — GoodsLocation family burned down. Remaining: 2x CDS12073 (`42A` + `67A/103`; `42A` + `67A` + item `68A/103`), 2x CDS12056 (`42A/05A`; `42A/67A/68A/03A/226`), 2x CDS12005 (`42A/57B/R123`; `42A/67A/74A/R038`). |
 | 2026-05-31 ~21:25 | n/a | n/a | XSD reject | HMRC XSD validator rejected item sequence after adding self-representation AI `00500`: `Invalid content was found starting with element 'AdditionalDocument'... One of '{AdditionalInformation, AEOMutualRecognitionParty, Buyer, Commodity, ...}' is expected.` Cause: renderer emitted item `AdditionalInformation` before `AdditionalDocument`; CDS schema requires `AdditionalDocument` before `AdditionalInformation`. Fixed renderer order and added regression assertion. Not a DMSREJ; business-rule count remains last known 6. |
@@ -25,7 +25,7 @@ Source policy: DMSREJ is negative evidence only. This file tracks which spec sec
 | 2026-06-01 20:23 | FC-MPVNPBLP | 26GB60Z7LNJXBB7AR9 | **2** | App submit after renderer emits `GoodsShipment/TransactionNatureCode` **11** (DE 8/5, WCOID 103). **CDS12073 cleared** (both `67A/103` and `68A/103` gone). Unchanged: 2× CDS12005 (`42A/57B/R123`; `42A/67A/74A/R038`). FunctionalReferenceID `eb9f9750e5a9415ab1d84f3383969434`. EORI `GB243617410764`. |
 | 2026-06-02 14:38 | FC-MPWQSJ97 | 26GB622ATBJB8W5AR2 | **2** | App submit with EORI `GB531765313922` (Romwan Lee). **Same 2× CDS12005** R123 + R038. Payload verified: Declarant + Importer = `GB531765313922`, 00500 + Importer, TransactionNatureCode 11. EORI not in TDL spreadsheet. FunctionalReferenceID `1fa4163e11dc4a47abe0d01e133ecfb7`. |
 | 2026-06-03 16:07 | FC-MPY9FFEE | 26GB63KXPPOH5QLAR0 | **1** | TDL EORI `GB553202734852` on parties (Romwan OAuth). **CDS12005 cleared.** New: **CDS40011** — missing DE 6/2 `TariffQuantity` (Tag 130) for HS 8471300000 / p/st. FunctionalReferenceID `81dc30327a5c402fb15d204a9bcf51f0`. |
-| 2026-06-03 16:38 | FC-MPYAJ7RN | 26GB63M1I0RQFCVAR4 | **0** | **DMSACC** (FunctionCode `01`). TDL EORI + DE 6/2 `TariffQuantity` 10 NAR — **CDS40011 cleared.** Advisory **CDS13000** only (value per kilo — smart check, non-blocking). DMSTAX ×2 followed; **DMSCLE pending.** Freeze: `spec/passing-payload.xml`. |
+| 2026-06-03 16:38 | FC-MPYAJ7RN | 26GB63M1I0RQFCVAR4 | **0** | **DMSACC** (FunctionCode `01`). TDL EORI + DE 6/2 `TariffQuantity` 10 NAR — **CDS40011 cleared.** Advisory **CDS13000** only (value per kilo — smart check, non-blocking). DMSTAX ×2 followed; **DMSCLE pending.** Freeze: `docs/hmrc/ARCHIVE/trade-test/passing-payload.xml`. |
 
 ## Code → spec section
 
@@ -50,7 +50,7 @@ Source policy: DMSREJ is negative evidence only. This file tracks which spec sec
 
 ## Active workstream — **DMSACC achieved** (FC-MPYAJ7RN)
 
-**Gate:** `spec/passing-payload.xml` frozen 2026-06-03. Next: **DMSCLE** on same MRN (async); optional CDS13000 tuning on *new* submit only.
+**Gate:** `docs/hmrc/ARCHIVE/trade-test/passing-payload.xml` frozen 2026-06-03. Next: **DMSCLE** on same MRN (async); optional CDS13000 tuning on *new* submit only.
 
 | Phase | Scope |
 |-------|--------|
@@ -60,7 +60,7 @@ Source policy: DMSREJ is negative evidence only. This file tracks which spec sec
 | **Done** | DMSACC — 0 validation errors; MRN `26GB63M1I0RQFCVAR4` |
 | **Now** | Wait for **DMSCLE**; monitor webhook/pull |
 
-**Lane EORI (parties):** `GB553202734852` (TDL). **OAuth:** Romwan `GB531765313922` — `documentation/HMRC/test-user.md`.
+**Lane EORI (parties):** `GB553202734852` (TDL). **OAuth:** Romwan `GB531765313922` — `docs/hmrc/ARCHIVE/trade-test/test-user.md`.
 
 **CDS12073 closed:** DMSREJ Tag **103** = `GoodsShipment/TransactionNatureCode` (not `CountryCode`). Do not revisit Origin / ExportCountry / Destination / GoodsLocation for this code.
 
@@ -122,13 +122,13 @@ ODS CDS12073 text (`src/lib/cds_error_codes.ts`): “8/5 must be declared at lea
 
 | DE | XML path (actual) | HMRC source | Status | Notes |
 |----|-------------------|-------------|--------|-------|
-| **3/1** Exporter | `Declaration/Exporter` Name + Address, `CountryCode` **DE** | Appendix 21A: 3/1 **D**, X,Y (`spec/hmrc-mirror/appendix-21a-h1-page.md`); Group 3 [12] conditionality **not pasted** | **pass (presence)** | Not in DMSREJ pointers (`67A`/`68A` Tag 103 only). Foreign Name+Address matches lane `spec/lane.md`. |
+| **3/1** Exporter | `Declaration/Exporter` Name + Address, `CountryCode` **DE** | Appendix 21A: 3/1 **D**, X,Y (`docs/hmrc/specs/cds-api/mirrors/appendix-21a-h1-page.md`); Group 3 [12] conditionality **not pasted** | **pass (presence)** | Not in DMSREJ pointers (`67A`/`68A` Tag 103 only). Foreign Name+Address matches lane `docs/hmrc/ARCHIVE/trade-test/lane.md`. |
 | **3/15** Importer | No separate 3/15 name block | Appendix 21A: 3/15 **D**, Y only | **blocked** | Group 3 reading notes [12t][12u] not in spec. |
-| **3/16** Importer EORI | `GoodsShipment/Importer/ID` **GB243617410764** | Appendix 21A: 3/16 **D**, Y; ODS CDS12073: “3/15 or 3/16 … at **header** level” (`src/lib/cds_error_codes.ts`) | **pass** | Self-rep: item AI `00500` + `Importer` per `spec/hmrc-mirror/appendix-4a-00500.md`. |
-| **5/8** Destination | `GoodsShipment/Destination/CountryCode` **GB** | Group 5 DE 5/8: a2; single item → “declared at **header level only**” (`spec/hmrc-mirror/group-5-completion-guide.md` L48) | **pass** | Matches `spec/lane.md` destination GB. |
+| **3/16** Importer EORI | `GoodsShipment/Importer/ID` **GB243617410764** | Appendix 21A: 3/16 **D**, Y; ODS CDS12073: “3/15 or 3/16 … at **header** level” (`src/lib/cds_error_codes.ts`) | **pass** | Self-rep: item AI `00500` + `Importer` per `docs/hmrc/specs/cds-api/mirrors/appendix-4a-00500.md`. |
+| **5/8** Destination | `GoodsShipment/Destination/CountryCode` **GB** | Group 5 DE 5/8: a2; single item → “declared at **header level only**” (`docs/hmrc/specs/cds-api/mirrors/group-5-completion-guide.md` L48) | **pass** | Matches `docs/hmrc/ARCHIVE/trade-test/lane.md` destination GB. |
 | **5/14** Dispatch/export | `GoodsShipment/ExportCountry/ID` **DE** | Group 5 DE 5/14: a2; single item → header only (L87); WCO path `ExportCountry/ID` = DE 5/14 (`convex/lib/cds_wco_references.ts` row 232) | **pass** | Not duplicated at item level. Value DE per lane / Appendix 13 (lane table). |
 | **5/15** Origin | `GovernmentAgencyGoodsItem/Origin/CountryCode` **DE** | Group 5 DE 5/15: **NA** header, **1× item** (L106–108); “always mandatory” (L116) | **pass** | Same code as dispatch is allowed (different DEs). |
-| **5/23** Location country | `GoodsLocation/Address/CountryCode` **GB** | Group 5 field format country a2 (`spec/de-5-23-goods-location.md`); split shape country **GB** for `GBAUFXTFXTFXT` | **pass** | Distinct from DE 5/8 semantically; both GB. No cite forbids both Tag 103. |
+| **5/23** Location country | `GoodsLocation/Address/CountryCode` **GB** | Group 5 field format country a2 (`docs/hmrc/ACTIVE/tdr/mapping/de-5-23-goods-location.md`); split shape country **GB** for `GBAUFXTFXTFXT` | **pass** | Distinct from DE 5/8 semantically; both GB. No cite forbids both Tag 103. |
 | **8/5** Nature of transaction | Mapper JSON `"11"` at `GoodsShipment`; **absent from XML** | Appendix 21A **A** X,Y; WCOID **103** = `TransactionNatureCode` (`cds_wco_references.ts`) | **fail** | **Active CDS12073 lever** — pointers `67A/103` and `68A/103` are DE 8/5, not country (see above). |
 
 ### Phase 1B — Country fields (closed; Tag 103 misread)
@@ -156,7 +156,7 @@ For each code:
 
 | Layer | WCOID | XML path | DE | Source |
 |-------|-------|----------|-----|--------|
-| Declaration | `42A` | `Declaration` | — | `documentation/HMRC/WCO_SECTION_CODES.md` |
+| Declaration | `42A` | `Declaration` | — | `docs/hmrc/specs/wco-3.6/WCO_SECTION_CODES.md` |
 | Party | `57B` | `Declaration/Declarant` | 3/17–3/18 | same |
 | Field | **`R123`** | `Declaration/Declarant/ID` | **3/18** | `convex/lib/cds_wco_references.ts` sourceRow 117: `wcoId: "R123"`, `wcoPath: "Declaration/Declarant/ID"`, format `an..17` |
 
@@ -173,11 +173,11 @@ DMSREJ therefore flags **declarant identification (DE 3/18)** under CDS12005, no
 
 ### FC-MPVNPBLP baseline (lane XML — EORI superseded 2026-06-02)
 
-Dry-run artefact `test-evidence/trade-test-cds-v2-request.xml` reflects **prior** EORI `GB243617410764`. **Active lane EORI:** `GB531765313922` (Romwan Lee — `documentation/HMRC/test-user.md`). Re-run dry-run after EORI change.
+Dry-run artefact `docs/hmrc/ARCHIVE/trade-test/evidence/trade-test-cds-v2-request.xml` reflects **prior** EORI `GB243617410764`. **Active lane EORI:** `GB531765313922` (Romwan Lee — `docs/hmrc/ARCHIVE/trade-test/test-user.md`). Re-run dry-run after EORI change.
 
 Historical FC-MPVNPBLP shape (Declarant/Importer were `GB243617410764`):
 
-Dry-run artefact `test-evidence/trade-test-cds-v2-request.xml` (2026-06-01) shows:
+Dry-run artefact `docs/hmrc/ARCHIVE/trade-test/evidence/trade-test-cds-v2-request.xml` (2026-06-01) shows:
 
 | Element | Value | DE |
 |---------|-------|-----|
@@ -200,9 +200,9 @@ Local format gate (`src/app/api/hmrc/submit/route.ts`): `^GB\d{12}$` — **pass*
 
 ### Appendix 21A obligation (cited)
 
-`spec/hmrc-mirror/appendix-21a-h1-page.md`: DE **3/18** Declarant identification no — **A** / **Y**. Lane value `GB243617410764` matches `spec/lane.md` and `documentation/HMRC/test-user.md` (sandbox test user EORI).
+`docs/hmrc/specs/cds-api/mirrors/appendix-21a-h1-page.md`: DE **3/18** Declarant identification no — **A** / **Y**. Lane value `GB243617410764` matches `docs/hmrc/ARCHIVE/trade-test/lane.md` and `docs/hmrc/ARCHIVE/trade-test/test-user.md` (sandbox test user EORI).
 
-Group 3 completion guide text for *when* an EORI is “not permitted in this DE” is **not pasted** in `spec/de-3-x-parties.md` — cannot derive a fix from Vol 3 alone.
+Group 3 completion guide text for *when* an EORI is “not permitted in this DE” is **not pasted** in `docs/hmrc/ACTIVE/tdr/mapping/de-3-x-parties.md` — cannot derive a fix from Vol 3 alone.
 
 ### Out of scope for R123 (pointer does not include)
 
@@ -214,8 +214,8 @@ Group 3 completion guide text for *when* an EORI is “not permitted in this DE�
 
 - `convex/rule_seed.ts` / `rules-dump.json` — links R123 to transport fields
 - `src/lib/wco-mapper.ts` comments on lines 45, 332–334, 386
-- `documentation/HMRC/tdr-progress.md` — “R123 / ArrivalTransportMeans”
-- `spec/errors-handled.md` row 14 historical note “transport” (pre–WCOID decode)
+- `docs/hmrc/ARCHIVE/trade-test/tdr-progress.md` — “R123 / ArrivalTransportMeans”
+- `docs/hmrc/ARCHIVE/trade-test/errors-handled.md` row 14 historical note “transport” (pre–WCOID decode)
 
 ### Next step (one category)
 
@@ -223,7 +223,7 @@ Group 3 completion guide text for *when* an EORI is “not permitted in this DE�
 2. Update `.env.local` `HMRC_EORI`, declaration Declarant + Importer, **re-OAuth** as new user.
 3. **One submit** — expect CDS12005 to clear if TDL EORI is the only gap.
 
-Full write-up: `spec/hmrc-mirror/cds12005-party-id.md`.
+Full write-up: `docs/hmrc/specs/cds-api/mirrors/cds12005-party-id.md`.
 
 ## R038 — same family as R123
 

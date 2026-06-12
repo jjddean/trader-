@@ -66,6 +66,7 @@ export const searchHSCode = action({
 export const pullNotificationsScheduled = internalAction({
     args: {
         userId: v.string(),
+        declarationId: v.optional(v.id("declarations")),
         conversationId: v.string(),
         source: v.string(),
     },
@@ -81,19 +82,34 @@ export const pullNotificationsScheduled = internalAction({
             return { conversationId: args.conversationId, total: 0, saved: 0 };
         }
 
-        const result = await pullHmrcNotificationsServer(
-            args.conversationId,
-            token,
-            args.source,
-            makeSavePulledNotification(ctx),
-        );
+        let conversationIds = [args.conversationId];
+        if (args.declarationId) {
+            const ids: string[] = await ctx.runQuery(
+                internal.submissions.getDistinctConversationIdsInternal,
+                { declarationId: args.declarationId },
+            );
+            if (ids.length > 0) conversationIds = ids;
+        }
 
-        if (result.saved > 0) {
+        let total = 0;
+        let saved = 0;
+        for (const conversationId of [...new Set(conversationIds)]) {
+            const result = await pullHmrcNotificationsServer(
+                conversationId,
+                token,
+                args.source,
+                makeSavePulledNotification(ctx),
+            );
+            total += result.total;
+            saved += result.saved;
+        }
+
+        if (saved > 0) {
             console.log(
-                `[HMRC-PULL-SCHEDULED] ${args.source}: saved ${result.saved}/${result.total} for ${args.conversationId}`,
+                `[HMRC-PULL-SCHEDULED] ${args.source}: saved ${saved}/${total} across ${conversationIds.length} conversation(s)`,
             );
         }
-        return result;
+        return { conversationId: args.conversationId, total, saved };
     },
 });
 
@@ -136,16 +152,29 @@ export const recoverStuckDeclarations = internalAction({
             }
 
             try {
-                const result = await pullHmrcNotificationsServer(
-                    decl.conversationId,
-                    token,
-                    "cron_recover",
-                    makeSavePulledNotification(ctx),
+                let conversationIds = [decl.conversationId];
+                const ids: string[] = await ctx.runQuery(
+                    internal.submissions.getDistinctConversationIdsInternal,
+                    { declarationId: decl._id as never },
                 );
+                if (ids.length > 0) conversationIds = ids;
+
+                let declTotal = 0;
+                let declSaved = 0;
+                for (const conversationId of [...new Set(conversationIds)]) {
+                    const result = await pullHmrcNotificationsServer(
+                        conversationId,
+                        token,
+                        "cron_recover",
+                        makeSavePulledNotification(ctx),
+                    );
+                    declTotal += result.total;
+                    declSaved += result.saved;
+                }
                 pulled += 1;
-                saved += result.saved;
+                saved += declSaved;
                 console.log(
-                    `[RECOVER] ${decl._id} (${decl.status}): saved ${result.saved}/${result.total} notifications`,
+                    `[RECOVER] ${decl._id} (${decl.status}): saved ${declSaved}/${declTotal} notifications`,
                 );
             } catch (err) {
                 console.warn(`[RECOVER] Error for ${decl._id}:`, err);

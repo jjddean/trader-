@@ -82,7 +82,7 @@ async function run() {
     process.env.HMRC_SANDBOX_BASE_URL || "https://test-api.service.hmrc.gov.uk";
 
   for (const [name, xml] of Object.entries(variants)) {
-    const r = await fetch(`${base}/customs/declarations`, {
+    const r = await fetch(`${base}/customs/declarations/cancellation-requests`, {
       method: "POST",
       headers: {
         Accept: "application/vnd.hmrc.2.0+xml",

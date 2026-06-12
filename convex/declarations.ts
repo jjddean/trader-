@@ -710,6 +710,11 @@ export const updateDeclarationDetails = mutation({
     transportMode: v.optional(v.string()),
     transportId: v.optional(v.string()),
     transportIdType: v.optional(v.string()),
+    exporterName: v.optional(v.string()),
+    exporterCity: v.optional(v.string()),
+    exporterLine: v.optional(v.string()),
+    exporterPostcode: v.optional(v.string()),
+    transactionNatureCode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -739,6 +744,11 @@ export const updateDeclarationDetails = mutation({
       ...(args.transportMode !== undefined ? { transportMode: args.transportMode } : {}),
       ...(args.transportId !== undefined ? { transportId: args.transportId } : {}),
       ...(args.transportIdType !== undefined ? { transportIdType: args.transportIdType } : {}),
+      ...(args.exporterName !== undefined ? { exporterName: args.exporterName } : {}),
+      ...(args.exporterCity !== undefined ? { exporterCity: args.exporterCity } : {}),
+      ...(args.exporterLine !== undefined ? { exporterLine: args.exporterLine } : {}),
+      ...(args.exporterPostcode !== undefined ? { exporterPostcode: args.exporterPostcode } : {}),
+      ...(args.transactionNatureCode !== undefined ? { transactionNatureCode: args.transactionNatureCode } : {}),
       lastUpdated: Date.now(),
     });
     await upsertDeclarationPreviewByDeclaration(ctx, args.id);

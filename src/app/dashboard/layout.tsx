@@ -22,8 +22,9 @@ export default function DashboardLayout({
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   
   const hmrcEnv = process.env.NEXT_PUBLIC_HMRC_ENV || "sandbox";
-  const dashboardBadge = hmrcEnv === "production" ? "LIVE" : "SANDBOX";
-  const dashboardBadgeVariant = hmrcEnv === "production" ? "default" : "default";
+  const dashboardBadge =
+    hmrcEnv === "production" ? "LIVE" : hmrcEnv === "tdr" ? "TDR" : "SANDBOX";
+  const dashboardBadgeVariant = "default";
 
   const routeConfigs: Record<
     string,

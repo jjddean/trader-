@@ -24,7 +24,7 @@
 | Supplementary units (DE 6/2) | **10** + unit **NAR** (p/st) | UK tariff 8471300000 — cleared CDS40011 on FC-MPYAJ7RN |
 | Declarant EORI (DE 3/18) | GB553202734852 | TDL-listed; OAuth Romwan (`GB531765313922`) |
 | Importer EORI (DE 3/16) | GB553202734852 | same |
-| Passing LRN / MRN | FC-MPYAJ7RN / 26GB63M1I0RQFCVAR4 | DMSACC — baseline XML `spec/passing-payload.xml` |
+| Passing LRN / MRN | FC-MPYAJ7RN / 26GB63M1I0RQFCVAR4 | DMSACC — baseline XML `docs/hmrc/ARCHIVE/trade-test/passing-payload.xml` |
 | Exporter (DE 3/1) | foreign — Name + Address (no GB/XI EORI) | Group 3 — pending verification |
 
 ## Documents claimed for this lane
@@ -38,8 +38,8 @@
 
 - **DMSACC** 2026-06-03 — **0** CDS validation errors; MRN issued.
 - **Advisory:** CDS13000 (value per kilo credibility) — non-blocking; tune gross/net vs £5000 on next submit if desired.
-- **Follow-on:** DMSTAX ×2 (NameCode 67, 4); **DMSCLE** not on this MRN — handler + pull UI ready (`test-evidence/passing/notification-audit-FC-MPYAJ7RN.md`).
-- **Regression baseline:** `spec/passing-payload.xml`, `test-evidence/passing/`.
+- **Follow-on:** DMSTAX ×2 (NameCode 67, 4); **DMSCLE** not on this MRN — handler + pull UI ready (`docs/hmrc/ARCHIVE/trade-test/evidence/passing/notification-audit-FC-MPYAJ7RN.md`).
+- **Regression baseline:** `docs/hmrc/ARCHIVE/trade-test/passing-payload.xml`, `docs/hmrc/ARCHIVE/trade-test/evidence/passing/`.
 
 ## Outstanding lane verification
 

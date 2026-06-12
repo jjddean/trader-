@@ -1,14 +1,4 @@
-import { HMRC_CONFIG } from "./hmrc-config";
-
-/** Trade Test sandbox = Information API v1.0; production CDS Live = v2.0 (CDS E2E guide). */
-export function informationAcceptHeader(): string {
-  if (process.env.HMRC_INFORMATION_ACCEPT) {
-    return process.env.HMRC_INFORMATION_ACCEPT;
-  }
-  return process.env.HMRC_ENVIRONMENT === "sandbox"
-    ? HMRC_CONFIG.accept.v1Xml
-    : HMRC_CONFIG.accept.v2Xml;
-}
+export { informationAcceptHeader } from "./hmrc-config";
 
 export function parseDeclarationStatusXml(xml: string) {
   const tag = (name: string) => {

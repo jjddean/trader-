@@ -1,6 +1,5 @@
 /**
  * Fill CDS-Production-Checklist-v1.2.odt from SDST evidence pack data.
- * Output: documentation/HMRC/sdst-evidence-pack/forms/CDS-Production-Checklist-v1.2-FILLED.odt
  *
  * Run: node test-evidence/fill-cds-odt.js
  */
@@ -8,12 +7,28 @@ const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
 
-const FORMS = path.join(process.cwd(), "documentation/HMRC/sdst-evidence-pack/forms");
+const PACK_FORMS = path.join(
+  process.cwd(),
+  "docs/hmrc/ARCHIVE/trade-test/sdst-evidence-pack/forms",
+);
+const FUTURE_FORMS = path.join(process.cwd(), "docs/hmrc/FUTURE/production/forms");
+const FORMS = fs.existsSync(path.join(PACK_FORMS, "CDS-Production-Checklist-v1.2.odt"))
+  ? PACK_FORMS
+  : FUTURE_FORMS;
 const SRC = path.join(FORMS, "CDS-Production-Checklist-v1.2.odt");
 const WORK = path.join(FORMS, "odt-fill-work");
-const OUT = path.join(FORMS, "CDS-Production-Checklist-v1.2-FILLED.odt");
+const OUT_FILES = [
+  path.join(PACK_FORMS, "CDS-Production-Checklist-v1.2-FILLED.odt"),
+  path.join(FUTURE_FORMS, "CDS-Production-Checklist-v1.2-FILLED.odt"),
+];
 
-const CLIENT = "b74874e9-957e-4a40-b426-0cde839f8a45";
+/** Sandbox Hub application ID — used for §4 evidence Client ID column. */
+const SANDBOX_APP_ID =
+  process.env.HMRC_SANDBOX_APPLICATION_ID || "b74874e9-957e-4a40-b426-0cde839f8a45";
+
+/** Production application ID — UUID from Get production credentials URL (/developer/submissions/application/{id}/view-answers). */
+const PRODUCTION_APP_ID =
+  process.env.HMRC_PRODUCTION_APPLICATION_ID || "00292df9-e2e6-4d66-9d28-7d79a2a931ba";
 
 function fillParagraph(styleName, value) {
   return `<text:p text:style-name="${styleName}"><text:span text:style-name="T16">${value}</text:span></text:p>`;
@@ -94,7 +109,7 @@ xml = replaceOnce(
   xml,
   '<text:span text:style-name="T16">Sandbox Application ID:</text:span></text:p></text:list-item></text:list><text:p text:style-name="P17"/>',
   '<text:span text:style-name="T16">Sandbox Application ID:</text:span></text:p></text:list-item></text:list>' +
-    fillParagraph("P17", CLIENT),
+    fillParagraph("P17", SANDBOX_APP_ID),
   "Sandbox ID",
 );
 xml = replaceOnce(
@@ -108,7 +123,7 @@ xml = replaceOnce(
   xml,
   '<text:span text:style-name="T31">:</text:span></text:p></text:list-item></text:list><text:p text:style-name="P32"/>',
   '<text:span text:style-name="T31">:</text:span></text:p></text:list-item></text:list>' +
-    fillParagraph("P32", "Pending — production application ID to follow when HMRC issues credentials"),
+    fillParagraph("P32", PRODUCTION_APP_ID),
   "Production ID",
 );
 xml = replaceOnce(
@@ -128,10 +143,7 @@ xml = replaceOnce(
   xml,
   "If using Push, please provide the<text:s/>Production<text:s/>callback URL/s:</text:p></text:list-item></text:list><text:p text:style-name=\"P41\"/>",
   'If using Push, please provide the<text:s/>Production<text:s/>callback URL/s:</text:p></text:list-item></text:list>' +
-    fillParagraph(
-      "P41",
-      "https://www.freightcode.co.uk/api/hmrc/webhooks/notify (sandbox test only: ngrok validated 2026-06-04)",
-    ),
+    fillParagraph("P41", "https://www.freightcode.co.uk/api/hmrc/webhooks/notify"),
   "Callback",
 );
 
@@ -144,23 +156,41 @@ xml = xml.slice(0, firstBox) + "☑" + xml.slice(firstBox + 1);
 xml = tickAfter(xml, "Customs Declarations</text:p>");
 xml = tickAfter(xml, "Customs Declarations Information");
 
-// §4
+// §4 — SDST retest 2026-06-12 uses dedicated /cancellation-requests and /amend paths
 const section4 = [
   [
     "Submit a Customs Declaration",
-    [CLIENT, "26GB63M1I0RQFCVAR4", "FC-MPYAJ7RN", "2026-06-03T16:38:33Z", "68edb212-5c4a-4ef7-9223-f55630c5859e"],
+    [SANDBOX_APP_ID, "26GB63M1I0RQFCVAR4", "FC-MPYAJ7RN", "2026-06-03T16:38:33Z", "68edb212-5c4a-4ef7-9223-f55630c5859e"],
   ],
   [
     "Submit a cancellation request",
-    [CLIENT, "26GB656DZN0FE7LAR0", "FC-MPZUVPRD", "2026-06-04T18:56:06Z", "5a46d731-2020-4c95-810c-cc83b40d36a3"],
+    [
+      SANDBOX_APP_ID,
+      "26GB6GFOZ64AZ37AR9",
+      "FC-MQB46PCA",
+      "2026-06-12T17:02:42Z",
+      "521e8797-09cc-4f56-8caa-b0041fae6646",
+    ],
   ],
   [
     "Submit an upload initiate request",
-    [CLIENT, "26GB664W3BLIFZFAR4", "—", "2026-06-05T13:47:40Z", "e8aba099-acee-438e-be25-2d4c713b9d99"],
+    [
+      SANDBOX_APP_ID,
+      "26GB664W3BLIFZFAR4",
+      "Not applicable",
+      "2026-06-05T13:47:40Z",
+      "e8aba099-acee-438e-be25-2d4c713b9d99",
+    ],
   ],
   [
     "Submit a customs Amend Declaration",
-    [CLIENT, "26GB664W3BLIFZFAR4", "FC-MQ0TDTJA", "2026-06-05T11:12:02Z", "01382a81-5000-408f-9c99-5215852f5758"],
+    [
+      SANDBOX_APP_ID,
+      "26GB6GDX92A21TIAR0",
+      "FC-MQB2EYRG",
+      "2026-06-12T15:22:37Z",
+      "4a267b1b-b7e4-4ce8-b9cf-d4e2a3be5b6e",
+    ],
   ],
 ];
 for (const [label, lines] of section4) {
@@ -171,23 +201,27 @@ for (const [label, lines] of section4) {
 // §5.2 — MRN status only
 xml = tickAfter(xml, "Get the status of a declaration by MRN");
 xml = fillEvidenceColumn(xml, "Get the status of a declaration by MRN", [
-  CLIENT,
-  "26GB63M1I0RQFCVAR4",
-  "2026-06-04T14:40:59Z",
-  "2a9e80a9-1b65-4541-8077-73d2492357f4",
-  "ICS 22",
+  SANDBOX_APP_ID,
+  "26GB6GFBKLT2N0TAR6",
+  "2026-06-12T16:51:31Z",
+  "1da7b09a-339a-4730-afa1-7c9cbaa43e32",
+  "ICS 14",
 ]);
 
 fs.writeFileSync(path.join(WORK, "unzipped/content.xml"), xml);
 
 const unzipDir = path.join(WORK, "unzipped");
 const packScript = path.join(process.cwd(), "test-evidence/package-odt.py");
-execSync(`python "${packScript}" "${unzipDir}" "${OUT}"`, { stdio: "inherit" });
+for (const out of OUT_FILES) {
+  fs.mkdirSync(path.dirname(out), { recursive: true });
+  execSync(`python "${packScript}" "${unzipDir}" "${out}"`, { stdio: "inherit" });
+}
 fs.rmSync(WORK, { recursive: true, force: true });
 
-// Clean up leftover odt-fill from earlier attempt
 const oldFill = path.join(FORMS, "odt-fill");
 if (fs.existsSync(oldFill)) fs.rmSync(oldFill, { recursive: true, force: true });
 
-console.log("Done:", OUT);
+console.log("Sandbox Application ID:", SANDBOX_APP_ID);
+console.log("Production Application ID:", PRODUCTION_APP_ID || "(blank — pending HMRC issue)");
+for (const out of OUT_FILES) console.log("Done:", out);
 console.log("Open in LibreOffice and review all 5 pages before sending to SDST.");

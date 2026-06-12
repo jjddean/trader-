@@ -35,7 +35,7 @@ Reading notes [12], [12a]–[12u]: see Appendix 21 reading notes — pending pas
 | 3/1 Exporter | Name + Address (foreign) | Group 3 conditionality pending |
 | 3/2 Exporter EORI | omitted (no GB/XI EORI) | TBD |
 | 3/15 Importer | GB553202734852 (or omit if 3/16 alone) | TBD |
-| 3/16 Importer EORI | GB553202734852 | Trade Test Data Library — `spec/hmrc-mirror/trade-test-data-library.md` |
+| 3/16 Importer EORI | GB553202734852 | Trade Test Data Library — `docs/hmrc/specs/cds-api/mirrors/trade-test-data-library.md` |
 | 3/17 Declarant | omit (Declarant EORI in 3/18) | C — optional |
 | 3/18 Declarant EORI | GB553202734852 | A — mandatory; must be **recognised** by CDS (Group 3) |
 | 3/19 Representative | TBD — depends on self-rep vs broker | reading note [12b] |
@@ -48,7 +48,7 @@ Reading notes [12], [12a]–[12u]: see Appendix 21 reading notes — pending pas
 Sources:
 
 - Group 3 completion guide — https://www.gov.uk/government/publications/cds-uk-trade-tariff-volume-3-import-declaration-completion-guide/group-3-parties (retrieved 2026-05-31)
-- Appendix 4A row `00500` — `spec/hmrc-mirror/appendix-4a-00500.md` (ODS retrieved 2026-05-31)
+- Appendix 4A row `00500` — `docs/hmrc/specs/cds-api/mirrors/appendix-4a-00500.md` (ODS retrieved 2026-05-31)
 
 For the current lane the declarant EORI and importer EORI are both `GB553202734852` (Trade Test Data Library profile); this is self-representation. Representative (`05A`, DE 3/19–3/21) remains omitted.
 

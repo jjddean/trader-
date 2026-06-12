@@ -5,7 +5,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const SRC = path.join(process.cwd(), "spec/hmrc-mirror/appendix-16c-maritime.psv");
+const SRC = path.join(process.cwd(), "docs/hmrc/specs/cds-api/mirrors/appendix-16c-maritime.psv");
 const OUT = path.join(process.cwd(), "src/lib/generated/appendix-16c-codes.ts");
 
 const lines = fs.readFileSync(SRC, "utf8").split(/\r?\n/);

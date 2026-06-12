@@ -2,9 +2,14 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  declarationHasImportDmscle,
+  hasCds12015StateError,
   isAmendmentRejected,
+  isAmendmentAcknowledged,
+  isImportDmscleEvent,
   isInvalidationAccepted,
 } from "../../convex/lib/notification_dms_context";
+import { resolveDeclarationCdsBadge } from "../../convex/lib/cds_badge";
 import { replayDeclarationStatus } from "../../convex/lib/replay_declaration_status";
 import { statusAfterNotification } from "../../convex/lib/notification_status";
 
@@ -43,6 +48,47 @@ describe("notification DMS context", () => {
       fieldErrors: [],
     };
     assert.equal(isAmendmentRejected(ctx), false);
+    assert.equal(isAmendmentAcknowledged(ctx), true);
+  });
+
+  it("keeps Accepted when FC 02 amend ack arrives after a rejected amend", () => {
+    const fc02Ack = `
+      <Response><FunctionCode>02</FunctionCode>
+      <Declaration><FunctionalReferenceID>AM-jpyv90jbvmt1d2t0ny188fa8r-4UZ5WB</FunctionalReferenceID>
+      <ID>26GB6F8QX9AC62SAR0</ID></Declaration></Response>`;
+    const status = replayDeclarationStatus(
+      "Accepted",
+      "26GB6F8QX9AC62SAR0",
+      [
+        {
+          mrn: "26GB6F8QX9AC62SAR0",
+          notificationType: "DMSINV",
+          rawPayload: AMEND_REJECT_XML,
+          errorCodes: ["CDS13000"],
+          timestamp: "2026-06-11T20:04:22Z",
+        },
+        {
+          mrn: "26GB6F8QX9AC62SAR0",
+          notificationType: "DMSINV",
+          rawPayload: fc02Ack,
+          errorCodes: [],
+          timestamp: "2026-06-11T21:10:55Z",
+        },
+      ],
+    );
+    assert.equal(status, "Accepted");
+  });
+
+  it("badge shows amend processing after FC 02 ack without DMSRES", () => {
+    const fc02Ack = `
+      <Response><FunctionCode>02</FunctionCode>
+      <Declaration><FunctionalReferenceID>AM-jpyv90jbvmt1d2t0ny188fa8r</FunctionalReferenceID>
+      <ID>26GB6F8QX9AC62SAR0</ID></Declaration></Response>`;
+    const badge = resolveDeclarationCdsBadge("Amendment Processing", [
+      { notificationType: "DMSINV", rawPayload: fc02Ack, errorCodes: [], fieldErrors: [] },
+    ]);
+    assert.equal(badge.label, "Accepted — amend processing");
+    assert.equal(badge.tone, "info");
   });
 
   it("keeps Accepted status when amendment is rejected", () => {
@@ -114,5 +160,38 @@ describe("notification DMS context", () => {
       ],
     );
     assert.equal(status, "Invalid");
+  });
+
+  it("detects import DMSCLE as blocking amend state", () => {
+    assert.equal(
+      isImportDmscleEvent({ notificationType: "DMSCLE", rawPayload: "<Response/>" }),
+      true,
+    );
+    assert.equal(
+      isImportDmscleEvent({
+        notificationType: "DMSCLE",
+        rawPayload: "<Declaration><FunctionalReferenceID>CX-kn73a2vabc</FunctionalReferenceID></Declaration>",
+      }),
+      false,
+    );
+    assert.equal(
+      declarationHasImportDmscle([
+        { notificationType: "DMSACC", rawPayload: "" },
+        { notificationType: "DMSCLE", rawPayload: "<Response/>" },
+      ]),
+      true,
+    );
+  });
+
+  it("detects CDS12015 on amend rejection", () => {
+    const xml = `
+      <Response><FunctionCode>03</FunctionCode>
+      <Error><ValidationCode>CDS12015</ValidationCode>
+      <Pointer><DocumentSectionCode>42A</DocumentSectionCode><TagID>D014</TagID></Pointer></Error>
+      <Declaration><FunctionalReferenceID>AM-jpyv90jbvmt1d2t0ny188fa8r-0FIFPK</FunctionalReferenceID><ID>26GB6F8QX9AC62SAR0</ID></Declaration>
+      </Response>`;
+    const ctx = { notificationType: "DMSINV", rawPayload: xml, errorCodes: ["CDS12015"] };
+    assert.equal(hasCds12015StateError(ctx), true);
+    assert.equal(isAmendmentRejected(ctx), true);
   });
 });
