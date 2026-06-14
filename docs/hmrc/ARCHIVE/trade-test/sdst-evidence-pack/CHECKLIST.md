@@ -2,7 +2,7 @@
 
 **Purpose:** Complete and return **`CDS-Production-Checklist-v1.2-FILLED.odt`** to Software Developer Support.  
 **API version in this pack:** Trade Test **Declarations v2.0** (sandbox).  
-**TDR v1.0 evidence:** separate checklist — [`docs/hmrc/ACTIVE/tdr/CHECKLIST.md`](../../../ACTIVE/tdr/CHECKLIST.md).
+**TDR v1.0 evidence:** [`docs/hmrc/ACTIVE/tdr/evidence/LOG.md`](../../../ACTIVE/tdr/evidence/LOG.md) · product todo: [`DELIVERY-PLAN.md`](../../../ACTIVE/tdr/DELIVERY-PLAN.md).
 
 Copy values from completed rows into `forms/CDS-Production-Checklist-v1.2-FILLED.odt`.  
 Evidence files live in this pack only (`evidence/`).  

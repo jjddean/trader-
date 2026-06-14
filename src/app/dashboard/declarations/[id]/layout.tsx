@@ -6,8 +6,15 @@ import { useQuery, useConvexAuth } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
-import { FileText, ListChecks, UploadCloud, Activity, Send, Loader2, ArrowLeft, ShieldCheck, ShieldAlert, AlertCircle } from "lucide-react";
+import { FileText, ListChecks, UploadCloud, Activity, Send, Loader2, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  badgeIconForTone,
+  badgeToneClassName,
+  declarationHumanSubtitle,
+  mrnSubtitleClass,
+  resolveDeclarationRowBadge,
+} from "@/lib/declaration-status-display";
 
 export default function DeclarationWorkspaceLayout({
   children,
@@ -45,49 +52,22 @@ export default function DeclarationWorkspaceLayout({
     hasDeclaration && declaration!.mrn && String(declaration!.mrn).trim().length > 0
       ? declaration!.mrn
       : "Draft CDS Entry";
-  const hasMrn = hasDeclaration && Boolean(declaration!.mrn && String(declaration!.mrn).trim().length > 0);
-  const cdsBadgeLabel =
-    hasMrn && typeof (declaration as { cdsBadgeLabel?: string }).cdsBadgeLabel === "string"
-      ? (declaration as { cdsBadgeLabel: string }).cdsBadgeLabel
-      : null;
-  const cdsBadgeTone = hasDeclaration ? (declaration as { cdsBadgeTone?: string }).cdsBadgeTone : undefined;
-  const headerLabel = hasDeclaration
-    ? cdsBadgeLabel ??
-      (declaration!.status === "Cleared"
-        ? "Accepted"
-        : declaration!.status === "Amended"
-          ? "Amended"
-          : declaration!.status === "Invalid"
-            ? "Invalid (DMSINV)"
-            : declaration!.status)
-    : "Loading";
-  const badgeToneClass: Record<string, string> = {
-    success: "bg-green-100 text-green-700",
-    danger: "bg-red-100 text-red-700",
-    warning: "bg-amber-100 text-amber-700",
-    info: "bg-blue-100 text-blue-700",
-    neutral: "bg-gray-100 text-gray-700",
-  };
-  const headerBadgeClass = hasDeclaration
-    ? (cdsBadgeTone && badgeToneClass[cdsBadgeTone]) ||
-      (declaration!.status === "Rejected" || declaration!.status === "Action Required" || declaration!.status === "Invalid"
-        ? badgeToneClass.danger
-        : declaration!.status === "Draft"
-          ? badgeToneClass.neutral
-          : badgeToneClass.info)
-    : badgeToneClass.neutral;
-  const HeaderBadgeIcon = hasDeclaration
-    ? cdsBadgeTone === "success" || declaration!.status === "Cleared"
-      ? ShieldCheck
-      : cdsBadgeTone === "danger" ||
-          declaration!.status === "Rejected" ||
-          declaration!.status === "Action Required" ||
-          declaration!.status === "Invalid"
-        ? ShieldAlert
-        : declaration!.status === "Draft"
-          ? FileText
-          : AlertCircle
-    : Loader2;
+
+  const rowBadge = hasDeclaration
+    ? resolveDeclarationRowBadge({
+        status: declaration!.status,
+        cdsBadgeLabel: (declaration as { cdsBadgeLabel?: string }).cdsBadgeLabel,
+        cdsBadgeTone: (declaration as { cdsBadgeTone?: string }).cdsBadgeTone,
+      })
+    : { label: "Loading", tone: "neutral" as const };
+
+  const headerBadgeLabel = rowBadge.label;
+  const headerBadgeTone = rowBadge.tone;
+  const headerSubtitle = hasDeclaration
+    ? declarationHumanSubtitle(headerBadgeLabel, declaration!.status, headerBadgeTone)
+    : "";
+  const HeaderBadgeIcon = hasDeclaration ? badgeIconForTone(headerBadgeTone) : Loader2;
+  const headerBadgeClass = badgeToneClassName(headerBadgeTone);
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
@@ -108,9 +88,10 @@ export default function DeclarationWorkspaceLayout({
                     className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[0.625rem] font-medium ${headerBadgeClass}`}
                   >
                     <HeaderBadgeIcon className={cn("h-3 w-3", isSessionLoading && "animate-spin")} />
-                    {headerLabel}
+                    {headerBadgeLabel}
                   </span>
                 </div>
+                <p className={cn("text-xs font-medium", mrnSubtitleClass(headerBadgeTone))}>{headerSubtitle}</p>
                 <p className="text-xs text-gray-500">
                   EORI: {declaration!.eori || "Not set"} • Route: {declaration!.route || "Unknown"}
                 </p>

@@ -1,182 +1,272 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
 import { useQuery } from "convex/react";
-import { useRouter } from "next/navigation";
-
 import { api } from "../../../../../convex/_generated/api";
-import {
-  History, 
-  Search, 
-  Download, 
-  ArrowUpRight,
-  Clock,
-  User,
-  Activity,
-  Key
-} from "lucide-react";
+import { History, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
+import { AdminLoading } from "../page";
+
+type AuditLog = {
+  _id: string;
+  userId?: string;
+  action?: string;
+  details?: Record<string, unknown>;
+  entityId?: string;
+  ipAddress?: string;
+  timestamp?: number;
+};
+
+type ActionFilter = "all" | "submissions" | "hmrc" | "platform" | "errors";
+
+function actionCategory(action: string): ActionFilter {
+  if (action.includes("fail") || action.includes("error")) return "errors";
+  if (action.includes("declaration") || action.includes("submit") || action.includes("amend") || action.includes("cancel")) {
+    return "submissions";
+  }
+  if (action.includes("hmrc") || action.includes("auth") || action.includes("cds_file")) return "hmrc";
+  return "platform";
+}
+
+function formatActionLabel(action: string) {
+  return action.replace(/_/g, " ");
+}
+
+function formatTimestamp(ts?: number) {
+  if (!ts) return "—";
+  return new Date(ts).toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+function formatUserId(userId?: string) {
+  if (!userId) return "—";
+  if (userId.includes("@")) return userId;
+  if (userId.startsWith("user_") && userId.length > 16) return `${userId.slice(0, 14)}…`;
+  return userId;
+}
+
+function summarizeDetails(details?: Record<string, unknown>) {
+  if (!details || typeof details !== "object") return [];
+  const keys = ["mrn", "declarationId", "conversationId", "notificationType", "status", "error", "message"];
+  return keys
+    .filter((key) => details[key] != null && String(details[key]).trim() !== "")
+    .map((key) => ({ key, value: String(details[key]) }));
+}
 
 export default function AuditLogsPage() {
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const userData = useQuery(api.users.current);
+  const [actionFilter, setActionFilter] = useState<ActionFilter>("all");
   const logs = useQuery(api.audit.getRecentLogs);
 
-  useEffect(() => {
-    if (userData && userData.role !== "admin") {
-      router.push("/dashboard");
-    }
-  }, [userData, router]);
+  const filteredLogs = useMemo(() => {
+    if (!logs) return [];
+    const term = searchQuery.toLowerCase().trim();
+    return (logs as AuditLog[]).filter((log) => {
+      const action = log.action ?? "";
+      const category = actionCategory(action);
+      if (actionFilter !== "all" && category !== actionFilter) return false;
 
-  if (!userData) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-      </div>
-    );
-  }
+      if (!term) return true;
 
-  if (userData.role !== "admin") {
-    return null;
-  }
+      const haystack = [
+        action,
+        log.userId,
+        log.entityId,
+        log.ipAddress,
+        JSON.stringify(log.details ?? {}),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
-
-
-  const filteredLogs = logs?.filter((log: any) => 
-    !searchQuery || 
-    log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    JSON.stringify(log.metadata || {}).toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const getActionIcon = (action: string) => {
-    if (action.includes("submitted")) return <ArrowUpRight className="h-3.5 w-3.5" />;
-    if (action.includes("auth") || action.includes("link")) return <Key className="h-3.5 w-3.5" />;
-    return <Activity className="h-3.5 w-3.5" />;
-  };
-
-  const getActionColor = (action: string) => {
-    if (action.includes("submitted")) return "bg-blue-50 text-blue-700 border-blue-100";
-    if (action.includes("auth") || action.includes("link")) return "bg-green-50 text-green-700 border-green-100";
-    if (action.includes("error") || action.includes("fail")) return "bg-red-50 text-red-700 border-red-100";
-    return "bg-gray-50 text-gray-700 border-gray-100";
-  };
-
-  const formatDate = (ts: number) => {
-    return new Date(ts).toLocaleString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit"
+      return haystack.includes(term);
     });
-  };
+  }, [logs, searchQuery, actionFilter]);
+
+  const stats = useMemo(() => {
+    if (!logs) return { total: 0, submissions: 0, hmrc: 0, errors: 0 };
+    const rows = logs as AuditLog[];
+    return {
+      total: rows.length,
+      submissions: rows.filter((l) => actionCategory(l.action ?? "") === "submissions").length,
+      hmrc: rows.filter((l) => actionCategory(l.action ?? "") === "hmrc").length,
+      errors: rows.filter((l) => actionCategory(l.action ?? "") === "errors").length,
+    };
+  }, [logs]);
+
+  if (logs === undefined) {
+    return <AdminLoading label="Loading activity log…" />;
+  }
 
   return (
-    <div className="space-y-8 p-8 max-w-7xl mx-auto">
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">System Audit Logs</h1>
-          <p className="mt-1 text-sm text-gray-500">Immutable trail of platform actions for HMRC compliance.</p>
+    <div className="mx-auto max-w-5xl space-y-6 p-8">
+      <div>
+        <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-gray-900">
+          <History className="h-5 w-5 text-gray-400" />
+          Activity Log
+        </h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Submissions, HMRC OAuth, and platform actions across all users.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <StatTile label="Recent events" value={stats.total} hint="Last 100 stored" />
+        <StatTile label="Submissions" value={stats.submissions} hint="Submit, amend, cancel" />
+        <StatTile label="HMRC auth" value={stats.hmrc} hint="OAuth & file upload" />
+        <StatTile label="Errors" value={stats.errors} accent={stats.errors > 0 ? "danger" : undefined} hint="Failed operations" />
+      </div>
+
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <div className="relative flex-1 md:max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search action, user, MRN, declaration…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-gray-400"
+          />
         </div>
-        <button className="flex h-9 items-center gap-2 rounded-md border border-gray-200 bg-white px-4 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50">
-          <Download className="h-4 w-4" />
-          Export Audit Trail
-        </button>
+        <select
+          value={actionFilter}
+          onChange={(e) => setActionFilter(e.target.value as ActionFilter)}
+          className="h-9 rounded-md border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700"
+        >
+          <option value="all">All categories</option>
+          <option value="submissions">Submissions</option>
+          <option value="hmrc">HMRC OAuth</option>
+          <option value="platform">Platform</option>
+          <option value="errors">Errors</option>
+        </select>
+        <span className="text-xs tabular-nums text-gray-400">{filteredLogs.length} shown</span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatsCard title="Total Logs" value={logs?.length || 0} icon={<History className="h-4 w-4" />} />
-        <StatsCard title="Security Events" value={logs?.filter((l: any) => l.action.includes("auth")).length || 0} icon={<Key className="h-4 w-4" />} />
-        <StatsCard title="Last Activity" value={logs?.[0] ? "Just now" : "None"} icon={<Clock className="h-4 w-4" />} />
-      </div>
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        {filteredLogs.length === 0 ? (
+          <p className="px-6 py-12 text-center text-xs text-gray-500">No activity matches your filters.</p>
+        ) : (
+          <table className="w-full border-collapse text-left text-sm">
+            <thead className="border-b border-gray-100 bg-gray-50/50">
+              <tr>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Time</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Action</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">User</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Details</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredLogs.map((log) => {
+                const action = log.action ?? "unknown";
+                const category = actionCategory(action);
+                const summary = summarizeDetails(log.details);
+                const declarationId = log.details?.declarationId
+                  ? String(log.details.declarationId)
+                  : null;
 
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Filter by action, ID, or metadata..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="h-10 w-full rounded-lg border border-gray-200 bg-white pl-10 pr-4 text-sm outline-none transition-colors focus:border-gray-400"
-        />
-      </div>
-
-      <Card className="overflow-hidden border-gray-200 shadow-none">
-        <CardContent className="p-0">
-          {!logs ? (
-            <div className="py-20 text-center text-gray-400">Loading audit trail...</div>
-          ) : filteredLogs?.length === 0 ? (
-            <div className="py-20 text-center text-gray-500">No matching audit events found.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="px-6 py-3 text-[11px] font-semibold tracking-widest text-gray-500 uppercase">Timestamp</th>
-                    <th className="px-6 py-3 text-[11px] font-semibold tracking-widest text-gray-500 uppercase">Action</th>
-                    <th className="px-6 py-3 text-[11px] font-semibold tracking-widest text-gray-500 uppercase">User</th>
-                    <th className="px-6 py-3 text-[11px] font-semibold tracking-widest text-gray-500 uppercase">Context</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filteredLogs?.map((log: any) => (
-                    <tr key={log._id} className="hover:bg-gray-50/50 transition-colors group">
-                      <td className="px-6 py-4 whitespace-nowrap text-[11px] font-mono text-gray-400">
-                        {formatDate(log.timestamp)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={cn(
-                          "inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border",
-                          getActionColor(log.action)
-                        )}>
-                          {getActionIcon(log.action)}
-                          {log.action.replace(/_/g, " ")}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <div className="h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
-                            <User className="h-3 w-3 text-gray-400" />
-                          </div>
-                          <span className="text-xs font-semibold text-gray-900 truncate max-w-[120px]">
-                            {log.userId.startsWith("user_") ? log.userId.slice(0, 12) + "..." : log.userId}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="max-w-md">
-                          <pre className="text-[10px] font-mono text-gray-600 bg-gray-50/50 p-2 rounded border border-gray-100/50 truncate group-hover:whitespace-normal group-hover:overflow-visible transition-all">
-                            {JSON.stringify(log.metadata || log.details || {}, null, 2)}
+                return (
+                  <tr key={log._id} className="align-top hover:bg-gray-50/50">
+                    <td className="whitespace-nowrap px-6 py-3 text-[11px] font-mono text-gray-500">
+                      {formatTimestamp(log.timestamp)}
+                    </td>
+                    <td className="px-6 py-3">
+                      <span
+                        className={cn(
+                          "inline-block rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                          category === "errors" && "border-red-100 bg-red-50 text-red-700",
+                          category === "submissions" && "border-blue-100 bg-blue-50 text-blue-700",
+                          category === "hmrc" && "border-green-100 bg-green-50 text-green-700",
+                          category === "platform" && "border-gray-100 bg-gray-50 text-gray-700",
+                        )}
+                      >
+                        {formatActionLabel(action)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3">
+                      <p className="text-xs font-medium text-gray-900">{formatUserId(log.userId)}</p>
+                      {log.ipAddress ? (
+                        <p className="mt-0.5 font-mono text-[10px] text-gray-400">{log.ipAddress}</p>
+                      ) : null}
+                    </td>
+                    <td className="px-6 py-3">
+                      {summary.length === 0 ? (
+                        <span className="text-xs text-gray-400">—</span>
+                      ) : (
+                        <dl className="space-y-0.5">
+                          {summary.map(({ key, value }) => (
+                            <div key={key} className="flex flex-wrap gap-x-2 text-[11px]">
+                              <dt className="font-medium text-gray-500">{key}</dt>
+                              <dd className="font-mono text-gray-700">
+                                {key === "declarationId" && declarationId ? (
+                                  <Link
+                                    href={`/dashboard/declarations/${declarationId}/status`}
+                                    className="text-blue-600 hover:underline"
+                                  >
+                                    {value.length > 20 ? `${value.slice(0, 18)}…` : value}
+                                  </Link>
+                                ) : (
+                                  value.length > 48 ? `${value.slice(0, 46)}…` : value
+                                )}
+                              </dd>
+                            </div>
+                          ))}
+                        </dl>
+                      )}
+                      {log.details && Object.keys(log.details).length > summary.length ? (
+                        <details className="mt-1.5">
+                          <summary className="cursor-pointer text-[10px] font-medium text-gray-400 hover:text-gray-600">
+                            Full payload
+                          </summary>
+                          <pre className="mt-1 max-h-32 overflow-auto rounded border border-gray-100 bg-gray-50/80 p-2 font-mono text-[10px] text-gray-600 whitespace-pre-wrap">
+                            {JSON.stringify(log.details, null, 2)}
                           </pre>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                        </details>
+                      ) : null}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <p className="text-xs text-gray-500">
+        Showing the 100 most recent events. For HMRC DMS correspondence, see{" "}
+        <Link href="/dashboard/admin/notifications" className="text-blue-600 hover:underline">
+          HMRC Notifications
+        </Link>
+        . Per-declaration audit rows appear on each declaration timeline.
+      </p>
     </div>
   );
 }
 
-function StatsCard({ title, value, icon }: { title: string; value: string | number; icon: React.ReactNode }) {
+function StatTile({
+  label,
+  value,
+  hint,
+  accent,
+}: {
+  label: string;
+  value: string | number;
+  hint: string;
+  accent?: "danger";
+}) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
-      <div className="flex items-center justify-between mb-1">
-        <p className="text-[11px] font-semibold tracking-widest text-gray-400 uppercase">
-          {title}
-        </p>
-        <div className="text-gray-300">{icon}</div>
-      </div>
-      <h2 className="text-2xl font-bold tracking-tight text-gray-900 tabular-nums">
+    <div className="rounded-xl border border-gray-200 bg-white p-4">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">{label}</p>
+      <p className={cn("mt-1.5 text-2xl font-semibold tabular-nums", accent === "danger" ? "text-red-700" : "text-gray-900")}>
         {value}
-      </h2>
+      </p>
+      <p className="mt-0.5 text-[11px] text-gray-500">{hint}</p>
     </div>
   );
 }

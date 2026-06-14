@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 const getOwnerId = (doc: unknown): string | null => {
   if (!doc || typeof doc !== "object") return null;
@@ -7,76 +8,8 @@ const getOwnerId = (doc: unknown): string | null => {
   return typeof userId === "string" ? userId : null;
 };
 
-function parseNumberish(value: unknown) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-// Applies only a totalValue delta to dashboard_summary — no full rescan needed for item mutations
-// because item changes never affect totalDeclarations or reviewCount.
-async function applyValueDeltaToSummary(ctx: any, userId: string, valueDelta: number) {
-  if (valueDelta === 0) return;
-  const existing = await ctx.db
-    .query("dashboard_summary")
-    .withIndex("by_user", (q: any) => q.eq("userId", userId))
-    .first();
-  if (!existing) return; // not yet bootstrapped; getDashboardSummary fallback will handle it
-  await ctx.db.patch(existing._id, {
-    totalValue: Math.max(0, (existing.totalValue || 0) + valueDelta),
-    updatedAt: Date.now(),
-  });
-}
-
 async function refreshReadModels(ctx: any, declarationId: any) {
-  const declaration = await ctx.db.get(declarationId);
-  const existingPreview = await ctx.db
-    .query("declaration_preview")
-    .withIndex("by_declarationId", (q: any) => q.eq("declarationId", declarationId))
-    .first();
-
-  if (!declaration) {
-    if (existingPreview) {
-      const userId = existingPreview.userId;
-      const oldValue = existingPreview.totalValue || 0;
-      await ctx.db.delete(existingPreview._id);
-      if (userId) await applyValueDeltaToSummary(ctx, userId, -oldValue);
-    }
-    return;
-  }
-
-  const declarationUserId = typeof declaration.userId === "string" ? declaration.userId : "";
-  const items = await ctx.db
-    .query("goods_items")
-    .withIndex("by_declaration", (q: any) => q.eq("declarationId", declarationId))
-    .take(2000);
-
-  let totalValue = 0;
-  for (const item of items) totalValue += parseNumberish(item.valueAmount);
-
-  const oldTotalValue = existingPreview?.totalValue || 0;
-  const valueDelta = totalValue - oldTotalValue;
-
-  const nextPreview = {
-    declarationId,
-    userId: declarationUserId,
-    status: String(declaration.status || "Draft"),
-    totalItems: items.length,
-    totalValue,
-    mrn: declaration.mrn ? String(declaration.mrn) : undefined,
-    eori: declaration.eori ? String(declaration.eori) : undefined,
-    declarationType: declaration.declarationType ? String(declaration.declarationType) : undefined,
-    lastUpdated: Date.now(),
-  };
-
-  if (existingPreview) {
-    await ctx.db.patch(existingPreview._id, nextPreview);
-  } else {
-    await ctx.db.insert("declaration_preview", nextPreview);
-  }
-
-  if (declarationUserId) {
-    await applyValueDeltaToSummary(ctx, declarationUserId, valueDelta);
-  }
+  await ctx.runMutation(internal.declarations.upsertDeclarationPreview, { declarationId });
 }
 
 export const getItems = query({

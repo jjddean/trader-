@@ -15,6 +15,8 @@ Production host (`api.service.hmrc.gov.uk`) and production OAuth credentials are
 
 **Archived:** Trade Test v2.0 (Declarations `2.0+xml` on sandbox) — `docs/hmrc/ARCHIVE/trade-test/`
 
+**Doc conflict resolved (2026-06-14):** `AGENT-SPEC.md` §2 previously said TDR runs on production host — **wrong for current phase**. Canonical active config is **sandbox + `NEXT_PUBLIC_HMRC_ENV=tdr`** until G3 production credentials. `hmrc-operations-runbook.md` production-host notes apply only after SDST sign-off.
+
 ## API versions
 
 | API | Trade Test | TDR (Freightcode now) | TDR (production host, future) | CDS Live |

@@ -1,0 +1,22 @@
+{
+  "title": "Freightcode HS LoRA GPU",
+  "id": "jasondean1/freightcode-hs-lora-gpu",
+  "licenses": [
+    {
+      "name": "CC0-1.0"
+    }
+  ],
+  "code_file": "train_kernel.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "dataset_sources": [
+    "jasondean1/hs-classifier-train",
+    "jasondean1/hs-classifier-wheels"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}

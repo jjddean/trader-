@@ -140,7 +140,7 @@ export const DashboardHeader = ({
   return (
     <header
       className={cn(
-        "z-[60] flex h-[48px] shrink-0 items-center justify-between gap-8 border-b border-gray-200 bg-white px-6",
+        "z-[60] flex h-[55px] shrink-0 items-center justify-between gap-8 border-b border-gray-200 bg-white px-6",
         className,
       )}
     >

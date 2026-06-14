@@ -198,21 +198,21 @@ export default function StatusTimelinePage() {
   }
 
   const notificationMeta: Record<string, { title: string; color: string; icon: "success" | "warning" | "danger" | "info"; detail: string }> = {
-    DMSUB:  { title: "Declaration received by HMRC", color: "bg-blue-500",  icon: "info",    detail: "Declaration has been received and queued by HMRC." },
-    DMSSUB: { title: "Declaration received by HMRC", color: "bg-blue-500",  icon: "info",    detail: "Declaration has been received and queued by HMRC." },
-    DMSACC: { title: "Declaration accepted",          color: "bg-green-500", icon: "success", detail: "Declaration passed initial controls and is accepted." },
+    DMSUB:  { title: "Declaration received by HMRC (DMSUB)",  color: "bg-blue-500",  icon: "info",    detail: "Declaration has been received and queued by HMRC." },
+    DMSSUB: { title: "Declaration received by HMRC (DMSSUB)", color: "bg-blue-500",  icon: "info",    detail: "Declaration has been received and queued by HMRC." },
+    DMSACC: { title: "Declaration accepted (DMSACC)",          color: "bg-green-500", icon: "success", detail: "Declaration passed initial controls and is accepted." },
     DMSCLE: { title: "Clearance event (DMSCLE)",      color: "bg-blue-500",  icon: "info",    detail: "HMRC clearance event on the timeline (see label for Trade Test meaning)." },
-    DMSROG: { title: "Route to examine",              color: "bg-amber-500", icon: "warning", detail: "HMRC routed this declaration for examination. Action required." },
-    DMSREJ: { title: "Declaration rejected",          color: "bg-red-500",   icon: "danger",  detail: "HMRC rejected the declaration. Review error codes and amend." },
-    DMSINV: { title: "Declaration invalid",           color: "bg-red-500",   icon: "danger",  detail: "HMRC returned field-level validation errors." },
-    DMSTAX: { title: "Tax notification",              color: "bg-amber-500", icon: "warning", detail: "HMRC issued a tax/duty demand. Payment may be required." },
-    DMSCTL: { title: "Documentary control",           color: "bg-amber-500", icon: "warning", detail: "Declaration under documentary control. Documents may be requested." },
-    DMSRES: { title: "Response required",             color: "bg-amber-500", icon: "warning", detail: "HMRC requires a response before proceeding." },
-    DMSRCV: { title: "Declaration received",          color: "bg-blue-500",  icon: "info",    detail: "HMRC confirmed receipt of the declaration." },
-    DMSREQ: { title: "Further information required",  color: "bg-amber-500", icon: "warning", detail: "HMRC has requested additional information." },
-    DMSDOC: { title: "Document check",                color: "bg-amber-500", icon: "warning", detail: "HMRC is checking supporting documents." },
-    DMSQRY: { title: "Query raised",                  color: "bg-amber-500", icon: "warning", detail: "HMRC has raised a query on this declaration." },
-    DMSNOTFN: { title: "General notification",        color: "bg-blue-500",  icon: "info",    detail: "HMRC sent a general status notification." },
+    DMSROG: { title: "Route to examine (DMSROG)",              color: "bg-amber-500", icon: "warning", detail: "HMRC routed this declaration for examination. Action required." },
+    DMSREJ: { title: "Declaration rejected (DMSREJ)",          color: "bg-red-500",   icon: "danger",  detail: "HMRC rejected the declaration. Review error codes and amend." },
+    DMSINV: { title: "Declaration invalid (DMSINV)",           color: "bg-red-500",   icon: "danger",  detail: "HMRC returned field-level validation errors." },
+    DMSTAX: { title: "Tax notification (DMSTAX)",              color: "bg-amber-500", icon: "warning", detail: "HMRC issued a tax/duty demand. Payment may be required." },
+    DMSCTL: { title: "Documentary control (DMSCTL)",           color: "bg-amber-500", icon: "warning", detail: "Declaration under documentary control. Documents may be requested." },
+    DMSRES: { title: "Response required (DMSRES)",             color: "bg-amber-500", icon: "warning", detail: "HMRC requires a response before proceeding." },
+    DMSRCV: { title: "Declaration received (DMSRCV)",          color: "bg-blue-500",  icon: "info",    detail: "HMRC confirmed receipt of the declaration." },
+    DMSREQ: { title: "Further information required (DMSREQ)",  color: "bg-amber-500", icon: "warning", detail: "HMRC has requested additional information." },
+    DMSDOC: { title: "Document check (DMSDOC)",                color: "bg-amber-500", icon: "warning", detail: "HMRC is checking supporting documents." },
+    DMSQRY: { title: "Query raised (DMSQRY)",                  color: "bg-amber-500", icon: "warning", detail: "HMRC has raised a query on this declaration." },
+    DMSNOTFN: { title: "General notification (DMSNOTFN)",        color: "bg-blue-500",  icon: "info",    detail: "HMRC sent a general status notification." },
   };
 
   const notifContext = (notif: {

@@ -43,7 +43,8 @@ export default function DashboardLayout({
     "/dashboard/user": { title: "Account", badge: "PROFILE", badgeVariant: "default" },
     "/dashboard/user/billing": { title: "Billing", badge: "STRIPE", badgeVariant: "success" },
     "/dashboard/tools/hscode-lookup": { title: "HS Code Lookup", badge: "TOOLS", badgeVariant: "default" },
-    "/dashboard/admin/subscriptions": { title: "Subscriptions Hub", badge: "ADMIN", badgeVariant: "blue" },
+    "/dashboard/admin": { title: "Admin Overview", badge: "ADMIN", badgeVariant: "blue" },
+    "/dashboard/admin/subscriptions": { title: "Vendor Stack", badge: "ADMIN", badgeVariant: "blue" },
   };
 
   // Extract declaration ID if in a declaration workspace

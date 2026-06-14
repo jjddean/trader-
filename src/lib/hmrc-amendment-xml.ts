@@ -156,27 +156,6 @@ function amendmentPointers(change: AmendmentChange, seq: number): string {
   return buildDerivedItemPointers(GROSS_MASS_WCO_PATH, seq);
 }
 
-/** @deprecated Use buildAmendmentXmlFromChange */
-export function buildAmendmentXml(args: {
-  amendLrn: string;
-  mrn: string;
-  statementDescription: string;
-  changeReasonCode: string;
-  itemSequence: number;
-  itemChargeAmount: string;
-  currencyId: string;
-}): string {
-  return buildAmendmentXmlFromChange({
-    changeKind: "itemChargeAmount",
-    amendLrn: args.amendLrn,
-    mrn: args.mrn,
-    statementDescription: args.statementDescription,
-    changeReasonCode: args.changeReasonCode,
-    itemSequence: args.itemSequence,
-    itemChargeAmount: args.itemChargeAmount,
-    currencyId: args.currencyId,
-  });
-}
 
 function invoiceAmountFragment(currencyId: string, amount: string): string {
   const currency = currencyId.trim() || "GBP";

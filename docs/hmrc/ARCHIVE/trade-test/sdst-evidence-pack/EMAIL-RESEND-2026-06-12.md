@@ -29,9 +29,15 @@ Evidence summaries are in our pack under `evidence/04-cancel/`, `evidence/05-ame
 - **Production push callback URL:** `https://www.freightcode.co.uk/api/hmrc/webhooks/notify`  
 - **Notification model:** Push (sandbox ngrok validated 2026-06-04; production URL registered in Hub)
 
-## Status query 404 on earlier MRNs
+## Status query 404 on earlier MRNs — reason for SDST
 
-Earlier sandbox status queries for TDR test MRNs returned **HTTP 404** with valid OAuth. Our fresh Trade Test v2.0 query on `26GB6GFBKLT2N0TAR6` returns **HTTP 200** (ICS 14). We believe the earlier 404s reflect sandbox Information API indexing timing or environment, not a client routing defect.
+Earlier sandbox status queries returned **HTTP 404** / **CDS60001** (*Declaration not found*) for MRNs submitted via **TDR v1.0 Declarations API** (`application/vnd.hmrc.1.0+xml`), for example `26GB6DTVT5133M7AR0` and `26GB6I2VFHAN3WAAR0`. OAuth was valid (404, not 401); MRN format was valid (not CDS60002).
+
+**Reason:** CDI on **test-api** returns those TDR v1.0 submit MRNs as not found, while **Trade Test v2.0** submit MRNs on the same sandbox app return **HTTP 200**. We do not believe this is a client routing defect.
+
+**Up-to-date HTTP 200 (ODT §5.2):** MRN `26GB6GFBKLT2N0TAR6`, conversation `1da7b09a-339a-4730-afa1-7c9cbaa43e32`, **ICS 14**, DMSACC `2026-06-12T16:51:31Z` — submit via Trade Test **v2.0**.
+
+Full table: `evidence/07-status-query/404-explanation-for-sdst.md`. If the ODT was sent without this paragraph, use **`EMAIL-FOLLOWUP-CDI-404.md`**.
 
 ## Safety & Security (S&S) APIs — CDS scope only for this submission
 

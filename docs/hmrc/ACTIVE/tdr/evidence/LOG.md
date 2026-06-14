@@ -1,13 +1,17 @@
-# TDR v1 sandbox test log
+# TDR v1 evidence log
 
-Add one row per TDR test (`Accept: application/vnd.hmrc.1.0+xml`). Copy into evidence folders.
+Authoritative record of sandbox tests (`Accept: application/vnd.hmrc.1.0+xml`).  
+Add one row per new test. Store XML under this folder.
 
-| Date (UTC) | Test | LRN | MRN | X-Conversation-ID | Outcome | Evidence |
-|------------|------|-----|-----|-------------------|---------|----------|
-| 2026-06-10 20:15 | Submit FC9 v1 | FC-MQ8IDIYS | 26GB6DTVT5133M7AR0 | c493713d-b599-421c-8283-f182a1e7d275 | DMSACC (CDS13000 advisory) | `submit/request.xml`, `submit/response-dmsacc.xml`, `passing-payload.xml` |
+**Environment:** `HMRC_ENVIRONMENT=sandbox`, `NEXT_PUBLIC_HMRC_ENV=tdr` — see [`../environment-matrix.md`](../environment-matrix.md)
 
-## Row template
+| Date (UTC) | Test | LRN | MRN | X-Conversation-ID | Outcome | Files |
+|------------|------|-----|-----|---------------------|---------|-------|
+| 2026-06-10 20:15 | Submit FC9 | FC-MQ8IDIYS | 26GB6DTVT5133M7AR0 | c493713d-b599-421c-8283-f182a1e7d275 | DMSACC | `submit/`, `passing-payload.xml` |
+| 2026-06-13 19:20 | Amend | AM-zqmrw49eqhnpwtz95kh88kxqx-V5SU4Y | 26GB6HZPT2QN2U8AR7 | 18ab42e9-9f26-4648-9b9f-de35d8b1e4c1 | DMSRES | `amend/` |
+| 2026-06-13 19:38 | Cancel | CX-kn78tw6ms6bdnjvp4r1mdnz7v188j528 | 26GB6I2VFHAN3WAAR0 | 4646aa3d-48ac-4654-aef2-646c806d3c33 | DMSINV | `cancel/` |
+| 2026-06-13 20:40 | Status query | — | 26GB6I2VFHAN3WAAR0 | — | CDS60001 | `status-query/` |
+| 2026-06-13 | Pull notifications | — | 26GB6I2VFHAN3WAAR0 | 2 convs | HTTP 200 | `pull-notifications/` |
+| 2026-06-13 | File upload | — | 26GB6GFBKLT2N0TAR6 | — | Initiate OK | `file-upload/` |
 
-```
-| YYYY-MM-DD | <endpoint> | <LRN> | <MRN> | <conversation-id> | <DMS* / HTTP> | evidence/<folder>/ |
-```
+**Row template:** `| YYYY-MM-DD | test | LRN | MRN | conversation-id | outcome | folder/ |`

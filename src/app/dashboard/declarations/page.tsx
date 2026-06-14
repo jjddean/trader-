@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Filter, Loader2, ArrowRight, FileText, ShieldCheck, ShieldAlert, AlertCircle, Trash2 } from "lucide-react";
+import { Plus, Search, Filter, Loader2, ArrowRight, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,14 @@ import {
 
 import { countries } from "@/lib/data/countries";
 import { cn } from "@/lib/utils";
+import {
+  DeclarationStatusBadge,
+  declarationHumanSubtitle,
+  mrnSubtitleClass,
+  mrnTitleClass,
+  resolveDeclarationRowBadge,
+  rowTintClass,
+} from "@/lib/declaration-status-display";
 
 export default function DeclarationsPage() {
   const { user } = useUser();
@@ -34,6 +42,8 @@ export default function DeclarationsPage() {
 
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [originCountry, setOriginCountry] = useState("");
   const [hsCode, setHsCode] = useState("");
@@ -80,15 +90,41 @@ export default function DeclarationsPage() {
   };
 
   const filteredDeclarations = declarations?.filter((dec: any) => {
+    const status = dec.status ?? "Draft";
+    const { label: badgeLabel } = resolveDeclarationRowBadge(dec);
+
+    if (statusFilter !== "all") {
+      if (statusFilter === "needs-action") {
+        if (!["Rejected", "Invalid", "Action Required"].includes(status)) return false;
+      } else if (statusFilter === "Cancelled") {
+        if (!badgeLabel.startsWith("Cancelled")) return false;
+      } else if (status !== statusFilter) {
+        return false;
+      }
+    }
+
     const term = searchQuery.toLowerCase();
     if (!term) return true;
 
-    const mrnMatch = (dec.mrn || dec.mrn || "Pending CDS").toLowerCase().includes(term);
+    const mrnMatch = (dec.mrn || "Pending CDS").toLowerCase().includes(term);
     const eoriMatch = (dec.eori || "Not set").toLowerCase().includes(term);
-    const statusMatch = (dec.status || "").toLowerCase().includes(term);
+    const statusMatch = status.toLowerCase().includes(term);
+    const badgeMatch = badgeLabel.toLowerCase().includes(term);
 
-    return mrnMatch || eoriMatch || statusMatch;
+    return mrnMatch || eoriMatch || statusMatch || badgeMatch;
   });
+
+  const hasActiveFilters = statusFilter !== "all" || searchQuery.length > 0;
+
+  const STATUS_FILTER_OPTIONS = [
+    { value: "all", label: "All statuses" },
+    { value: "Draft", label: "Draft" },
+    { value: "Accepted", label: "Accepted" },
+    { value: "Amended", label: "Amended" },
+    { value: "Amendment Processing", label: "Amend processing" },
+    { value: "needs-action", label: "Needs action" },
+    { value: "Cancelled", label: "Cancelled" },
+  ] as const;
 
   return (
     <div className="space-y-6 p-8">
@@ -109,28 +145,58 @@ export default function DeclarationsPage() {
         </button>
       </div>
 
-      <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
-        {/* FILTER BAR */}
-        <div className="border-b border-[#e9e9e7] bg-gray-50 px-5 py-4">
+      <div className="flex flex-col rounded-xl border border-[#e9e9e7] bg-white shadow-none">
+        {/* FILTER BAR — overflow-visible so dropdown isn't clipped (reports pattern) */}
+        <div className="relative z-20 overflow-visible border-b border-[#e9e9e7] bg-gray-50 px-5 py-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search by MRN, EORI, or Status..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-4 text-[0.6875rem] font-medium tracking-normal text-gray-600 shadow-sm outline-none transition-colors focus:border-gray-400"
+                className="h-9 w-full rounded-md border border-gray-200 bg-white pl-8 pr-4 text-xs text-gray-700 outline-none transition-colors focus:border-gray-400"
               />
             </div>
-            <button className="flex h-9 items-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-gray-600 shadow-sm transition-colors hover:border-gray-400 hover:bg-gray-50">
-              <Filter className="h-3 w-3" />
-              Filter
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowFilters((prev) => !prev)}
+                className={cn(
+                  "flex h-9 items-center gap-2 rounded-md border bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-gray-600 transition-colors hover:border-gray-400 hover:bg-gray-50",
+                  statusFilter !== "all" ? "border-gray-400" : "border-gray-200",
+                )}
+              >
+                <Filter className="h-3 w-3" />
+                Filter
+              </button>
+              {showFilters && (
+                <div className="absolute right-0 top-10 z-[120] w-44 rounded-md border border-gray-200 bg-white p-2 shadow-md">
+                  {STATUS_FILTER_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        setStatusFilter(option.value);
+                        setShowFilters(false);
+                      }}
+                      className={cn(
+                        "block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-gray-100",
+                        statusFilter === option.value && "bg-gray-100 font-medium text-black",
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* TABLE */}
+        <div className="overflow-hidden">
         {declarations === undefined ? (
           <div className="flex h-40 items-center justify-center">
             <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
@@ -151,114 +217,36 @@ export default function DeclarationsPage() {
                 {!filteredDeclarations || filteredDeclarations.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-gray-500 text-xs italic">
-                      {searchQuery
+                      {hasActiveFilters
                         ? "No declarations match these filters."
                         : "No declarations yet. Create your first declaration to get started."}
                     </td>
                   </tr>
                 ) : (
                   filteredDeclarations.map((dec: any) => {
-                    const isAlert =
-                      dec.status === "Rejected" ||
-                      dec.status === "Action Required" ||
-                      dec.status === "Invalid";
-                    const isWarning = dec.status === "Draft";
-                    const hasMrn = Boolean(dec.mrn && String(dec.mrn).trim().length > 0);
-                    const isCleared = hasMrn && dec.status === "Cleared";
-                    const isAcceptedOrAmended =
-                      hasMrn &&
-                      (dec.status === "Accepted" || dec.status === "Amended");
+                    const { label: badgeLabel, tone } = resolveDeclarationRowBadge(dec);
+                    const subtitleLabel = declarationHumanSubtitle(badgeLabel, dec.status, tone);
 
                     return (
                     <tr
                       key={dec.declarationId}
                       onClick={() => router.push(`/dashboard/declarations/${dec.declarationId}`)}
-                      className={cn(
-                        "group cursor-pointer transition-colors",
-                        isAlert ? "bg-red-50/50 hover:bg-red-50" : "",
-                        isWarning ? "bg-amber-50/50 hover:bg-amber-50" : "",
-                        isCleared ? "bg-green-50/50 hover:bg-green-50" : "",
-                        isAcceptedOrAmended ? "bg-blue-50/50 hover:bg-blue-50" : "",
-                        !isAlert && !isWarning && !isCleared && !isAcceptedOrAmended
-                          ? "hover:bg-gray-50"
-                          : "",
-                      )}
+                      className={cn("group cursor-pointer transition-colors", rowTintClass(tone))}
                     >
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <span
-                            className={cn(
-                              "text-xs font-semibold transition-colors",
-                              isAlert
-                                ? "text-red-900 group-hover:text-red-900"
-                                : isWarning
-                                  ? "text-amber-900 group-hover:text-amber-900"
-                                  : isCleared
-                                    ? "text-green-900 group-hover:text-green-900"
-                                    : isAcceptedOrAmended
-                                      ? "text-blue-900 group-hover:text-blue-900"
-                                      : "text-black group-hover:text-black",
-                            )}
-                          >
+                          <span className={cn("text-xs font-semibold transition-colors", mrnTitleClass(tone))}>
                             {dec.mrn || "Pending CDS"}
                           </span>
-                          <span
-                            className={cn(
-                              "text-[0.625rem] mt-0.5",
-                              isAlert
-                                ? "text-red-700 font-medium"
-                                : isWarning
-                                  ? "text-amber-700 font-medium"
-                                  : isCleared
-                                    ? "text-green-700 font-medium"
-                                    : isAcceptedOrAmended
-                                      ? "text-blue-700 font-medium"
-                                      : "text-gray-500",
-                            )}
-                          >
-                            {isAlert
-                              ? "Action required"
-                              : isWarning
-                                ? "Awaiting submission"
-                                : isCleared
-                                  ? "Cleared by HMRC"
-                                  : isAcceptedOrAmended
-                                    ? dec.status === "Amended"
-                                      ? "Amended"
-                                      : "Accepted by HMRC"
-                                    : new Date(dec.lastUpdated || dec._creationTime).toLocaleDateString()}
+                          <span className={cn("mt-0.5 text-[0.625rem] font-medium", mrnSubtitleClass(tone))}>
+                            {subtitleLabel}
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-[0.6875rem] text-gray-600">{dec.eori || "Not set"}</td>
                       <td className="px-6 py-4 text-[0.6875rem] text-gray-600">{dec.declarationType || "IMD"}</td>
                       <td className="px-6 py-4">
-                        {isCleared ? (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
-                            <ShieldCheck className="h-3 w-3" />
-                            {dec.status}
-                          </span>
-                        ) : isAcceptedOrAmended ? (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700">
-                            <ShieldCheck className="h-3 w-3" />
-                            {dec.status}
-                          </span>
-                        ) : dec.status === "Rejected" || dec.status === "Action Required" || dec.status === "Invalid" ? (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
-                            <ShieldAlert className="h-3 w-3" />
-                            {dec.status === "Invalid" ? "Invalid (DMSINV)" : dec.status}
-                          </span>
-                        ) : dec.status === "Draft" ? (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
-                            <FileText className="h-3 w-3" />
-                            {dec.status}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700">
-                            <AlertCircle className="h-3 w-3" />
-                            {dec.status}
-                          </span>
-                        )}
+                        <DeclarationStatusBadge tone={tone} label={badgeLabel} />
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-0 transition-opacity group-hover:opacity-100">
@@ -282,6 +270,7 @@ export default function DeclarationsPage() {
             </table>
           </div>
         )}
+        </div>
       </div>
 
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>

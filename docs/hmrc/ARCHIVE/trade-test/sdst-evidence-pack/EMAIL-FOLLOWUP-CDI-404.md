@@ -1,0 +1,56 @@
+# Email to SDST — CDI 404 explanation (follow-up)
+
+**Use when:** ODT was sent with HTTP 200 row but **without** the 404 reason SDST requested.  
+**To:** softwaredevelopersupport@service.hmrc.gov.uk  
+**Subject:** Freightcode — CDI status query 404 explanation + 200 retest confirmation
+
+---
+
+Dear Agne / Software Developer Support,
+
+Thank you for your follow-up regarding **Customs Declarations Information** — `GET /customs/declarations-information/mrn/{mrn}/status`.
+
+We have updated our testing and attach / reference our **CDS-Production-Checklist-v1.2-FILLED.odt** with a fresh **HTTP 200** result. Below we confirm the **reason** for the earlier **404** responses.
+
+## Up-to-date test — HTTP 200
+
+| Field | Value |
+|-------|-------|
+| Endpoint | `GET /customs/declarations-information/mrn/{mrn}/status` |
+| Sandbox application ID | `b74874e9-957e-4a40-b426-0cde839f8a45` |
+| MRN | `26GB6GFBKLT2N0TAR6` |
+| Timestamp (DMSACC) | `2026-06-12T16:51:31Z` |
+| X-Conversation-ID | `1da7b09a-339a-4730-afa1-7c9cbaa43e32` |
+| Outcome | HTTP **200**, **ICS 14** |
+| Declarations submit | Trade Test **v2.0** (`application/vnd.hmrc.2.0+xml`) |
+| CDI Accept | `application/vnd.hmrc.1.0+xml` |
+
+This row is ticked in **§5.2** of our filled ODT.
+
+## Reason for earlier HTTP 404 (CDS60001)
+
+Earlier status queries returned **HTTP 404** with HMRC code **CDS60001** (*Declaration not found*) for MRNs including:
+
+- `26GB6DTVT5133M7AR0` (TDR v1.0 DMSACC, 2026-06-10)
+- `26GB6I2VFHAN3WAAR0` (TDR v1.0, 2026-06-13)
+
+We confirmed this is **not**:
+
+- invalid OAuth (responses were **404**, not **401**);
+- invalid MRN format (would be **400** / CDS60002);
+- a client routing error — the same integration returns **HTTP 200** for Trade Test **v2.0** submit MRNs (e.g. `26GB6GFBKLT2N0TAR6`, `26GB63M1I0RQFCVAR4`) on the same sandbox application and host.
+
+**Our conclusion:** the 404s occur when querying MRNs from declarations submitted via the **TDR v1.0 Beta Declarations API** (`application/vnd.hmrc.1.0+xml`, enabled on our production app subscription 2026-04-01). The Information API on **test-api** does not appear to return those MRNs, while **Trade Test v2.0** submissions are indexed and queryable.
+
+Submit, amend, cancel, and notifications all succeed for TDR v1.0; only CDI lookup by MRN returns CDS60001.
+
+**Could you please confirm** whether TDR v1.0 sandbox declarations should be visible to CDI on test-api, or whether ODT status-query evidence should use Trade Test v2.0 MRNs only until production credentials are issued?
+
+## Attachments / references
+
+1. `CDS-Production-Checklist-v1.2-FILLED.odt` (§5.2 updated)  
+2. Internal evidence: `evidence/07-status-query/summary-retest-2026-06-12.md`, `404-explanation-for-sdst.md`
+
+Kind regards,  
+Jason Dean  
+Freightcode

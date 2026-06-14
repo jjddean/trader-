@@ -795,7 +795,7 @@ function DocumentsPageInner() {
       />
 
       <UnifiedComplianceTool 
-        isOpen={activeTool === 'preference' || activeTool === 'roo'} 
+        isOpen={activeTool === 'preference'} 
         onOpenChange={(open) => !open && handleActiveToolChange(null)}
         declarationId={declarationFilter !== "all" ? declarationFilter : null}
       />

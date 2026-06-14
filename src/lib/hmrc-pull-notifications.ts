@@ -175,19 +175,3 @@ export async function pullHmrcNotificationsForDeclaration(params: {
 
   return { saved, total, conversations };
 }
-
-/**
- * @deprecated Use api.hmrc.scheduleNotificationPulls (Convex scheduler) instead.
- * In-process setTimeout is unreliable on serverless — Vercel may terminate the
- * function before delayed pulls run.
- */
-export function schedulePostSubmitNotificationPulls(_params: {
-  conversationId: string;
-  accessToken: string;
-  request: Request;
-  convex: ConvexHttpClient;
-}): void {
-  console.warn(
-    "[HMRC-PULL] schedulePostSubmitNotificationPulls is deprecated — use api.hmrc.scheduleNotificationPulls",
-  );
-}

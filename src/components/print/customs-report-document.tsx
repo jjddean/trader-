@@ -1,18 +1,17 @@
-import { PrintDocumentShell, PrintField } from "@/components/print/print-document-shell";
+import { PrintDocumentHeader, PrintField } from "@/components/print/print-document-shell";
 import type { CustomsReportPrintData } from "@/lib/print-sheet";
 
-export function CustomsReportDocument({ report }: { report: CustomsReportPrintData }) {
+export function CustomsReportPrintContent({ report }: { report: CustomsReportPrintData }) {
   const items = report.items || [];
 
   return (
-    <PrintDocumentShell
-      backHref="/dashboard/reports"
-      backLabel="Back to Customs Reports"
-      title={report.mrn || "Customs Report"}
-      subtitle={[report.date, report.broker, report.status ? `${report.status} (${report.score ?? 0}%)` : null]
-        .filter(Boolean)
-        .join(" · ")}
-    >
+    <>
+      <PrintDocumentHeader
+        title={report.mrn || "Customs Report"}
+        subtitle={[report.date, report.broker, report.status ? `${report.status} (${report.score ?? 0}%)` : null]
+          .filter(Boolean)
+          .join(" · ")}
+      />
       <section className="mb-8 space-y-6">
         <h2 className="border-b border-gray-200 pb-3 text-sm font-semibold text-gray-900">
           Declaration Summary
@@ -73,6 +72,6 @@ export function CustomsReportDocument({ report }: { report: CustomsReportPrintDa
           <p className="text-sm text-gray-500">No goods items available.</p>
         )}
       </section>
-    </PrintDocumentShell>
+    </>
   );
 }

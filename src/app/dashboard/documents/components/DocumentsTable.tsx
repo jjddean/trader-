@@ -22,6 +22,14 @@ import { Button } from "@/components/ui/button";
 import { ClientOnly } from "@/components/client-only";
 import { DOCUMENT_TYPES } from "@/lib/utils/document-utils";
 
+const FILTER_CONTROL_CLASS =
+  "h-9 w-full border-gray-200 bg-white text-[0.6875rem] font-medium tracking-normal text-gray-600 shadow-sm";
+
+const FILTER_MENU_ITEM_CLASS =
+  "text-[0.6875rem] font-medium tracking-normal text-gray-600 focus:bg-gray-50 focus:text-gray-700 data-[highlighted]:bg-gray-50 data-[highlighted]:text-gray-700 py-2 [&_[data-slot=select-item-indicator]_svg]:size-3";
+
+const FILTER_SELECT_CONTENT_CLASS = "z-[100] max-h-[300px] min-w-[var(--radix-select-trigger-width)]";
+
 interface DocumentsTableProps {
   documents: any[];
   declarationFilter: string;
@@ -74,13 +82,13 @@ export const DocumentsTable = React.memo(function DocumentsTable({
           <ClientOnly fallback={filterSkeleton}>
             <div className="contents">
               <Select value={declarationFilter} onValueChange={onDeclarationFilterChange}>
-                <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[0.6875rem] font-medium tracking-normal text-gray-600">
+                <SelectTrigger className={FILTER_CONTROL_CLASS}>
                   <SelectValue placeholder="All declarations" />
                 </SelectTrigger>
-                <SelectContent position="popper" className="z-[100] max-h-[300px]">
-                  <SelectItem value="all" className="text-[0.6875rem]">All declarations</SelectItem>
+                <SelectContent position="popper" className={FILTER_SELECT_CONTENT_CLASS}>
+                  <SelectItem value="all" className={FILTER_MENU_ITEM_CLASS}>All declarations</SelectItem>
                   {allDeclarationOptions.map((decl) => (
-                    <SelectItem key={decl.id} value={decl.id} className="font-mono text-[0.6875rem]">
+                    <SelectItem key={decl.id} value={decl.id} className={cn(FILTER_MENU_ITEM_CLASS, "font-mono")}>
                       {decl.mrn}
                     </SelectItem>
                   ))}
@@ -88,13 +96,13 @@ export const DocumentsTable = React.memo(function DocumentsTable({
               </Select>
 
               <Select value={typeFilter} onValueChange={onTypeFilterChange}>
-                <SelectTrigger className="h-9 w-full border-gray-200 bg-white text-[0.6875rem] font-medium tracking-normal text-gray-600">
+                <SelectTrigger className={FILTER_CONTROL_CLASS}>
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
-                <SelectContent position="popper" className="z-[100] max-h-[300px]">
-                  <SelectItem value="all" className="text-[0.6875rem]">All types</SelectItem>
+                <SelectContent position="popper" className={FILTER_SELECT_CONTENT_CLASS}>
+                  <SelectItem value="all" className={FILTER_MENU_ITEM_CLASS}>All types</SelectItem>
                   {DOCUMENT_TYPES.map((type) => (
-                    <SelectItem key={type.code} value={type.name} className="text-[0.6875rem]">
+                    <SelectItem key={type.code} value={type.name} className={FILTER_MENU_ITEM_CLASS}>
                       {type.name}
                     </SelectItem>
                   ))}
@@ -102,27 +110,21 @@ export const DocumentsTable = React.memo(function DocumentsTable({
               </Select>
 
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex h-9 w-full items-center justify-between rounded-md border border-gray-200 bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-gray-600 transition-colors hover:border-gray-400 focus:outline-none shadow-sm">
+                <DropdownMenuTrigger className={cn(FILTER_CONTROL_CLASS, "flex items-center justify-between px-3 transition-colors hover:border-gray-400 focus:outline-none")}>
                   <span>Compliance Tools</span>
                   <ChevronDown className="h-4 w-4 text-gray-400" />
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent className="z-[100] min-w-[12rem] overflow-hidden rounded-lg border border-gray-100 bg-white shadow-lg" align="end">
+                <DropdownMenuContent className="z-[100] min-w-[var(--radix-dropdown-menu-trigger-width)] overflow-hidden rounded-md border border-gray-200 bg-white p-1 shadow-md" align="end">
                   <DropdownMenuItem 
                     onClick={() => onActiveToolChange("preference")}
-                    className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-[0.6875rem] text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
+                    className={cn(FILTER_MENU_ITEM_CLASS, "cursor-pointer rounded-sm px-2 outline-none")}
                   >
                     Preference Checker
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => onActiveToolChange("roo")}
-                    className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-[0.6875rem] text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
-                  >
-                    Rules of Origin
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
                     onClick={() => onActiveToolChange("landed")}
-                    className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-[0.6875rem] text-gray-700 outline-none hover:bg-gray-50 focus:bg-gray-50"
+                    className={cn(FILTER_MENU_ITEM_CLASS, "cursor-pointer rounded-sm px-2 outline-none")}
                   >
                     Landed Cost Calculator
                   </DropdownMenuItem>
@@ -133,7 +135,7 @@ export const DocumentsTable = React.memo(function DocumentsTable({
 
           <Button
             variant="ghost"
-            className="h-9 w-full rounded-md border border-gray-200 bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-gray-600 shadow-sm transition-colors hover:border-gray-400 hover:bg-gray-50"
+            className={cn(FILTER_CONTROL_CLASS, "transition-colors hover:border-gray-400 hover:bg-gray-50")}
             onClick={onGenerateTemplates}
             disabled={isGeneratingTemplates || !canGenerateTemplates}
           >

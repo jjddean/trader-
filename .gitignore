@@ -40,3 +40,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# LoRA training artifacts
+/lora-output/
+/lora-output-kaggle-test/
+/lora-colab-bundle/
+/lora-colab-bundle.zip
+.kaggle-wheels/
+.kaggle-dataset-staging/
+.kaggle-wheels-staging/
+.kaggle-kernel-debug*/
+.kaggle-pull-test/
+scripts/lora/autotrain.config.yaml
+
+# python
+__pycache__/
+*.pyc

@@ -1,21 +1,20 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getCurrentUserRole, resolveUserRole } from "./lib/user_role";
 
 export const current = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
+    const currentUser = await getCurrentUserRole(ctx);
+    if (!currentUser) return null;
 
-    const dbUser = await ctx.db
-      .query("users")
-      .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
-      .unique();
+    const { dbUser, role, email, identity } = currentUser;
 
     return {
-      ...dbUser,
-      // JWT claim takes precedence; fall back to stored role
-      role: (identity.role as string | undefined) ?? dbUser?.role,
+      ...(dbUser ?? {}),
+      clerkId: identity.subject,
+      email: email ?? dbUser?.email,
+      role,
     };
   },
 });
@@ -36,12 +35,18 @@ export const syncUser = mutation({
       .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
       .unique();
 
+    const role = resolveUserRole(
+      args.role,
+      typeof existing?.role === "string" ? existing.role : undefined,
+      args.email,
+    );
+
     if (existing) {
       await ctx.db.patch(existing._id, {
         name: args.name,
         email: args.email,
         orgId: args.orgId,
-        ...(args.role !== undefined && { role: args.role }),
+        ...(role !== undefined && { role }),
       });
       return existing._id;
     }
@@ -51,7 +56,7 @@ export const syncUser = mutation({
       name: args.name,
       email: args.email,
       orgId: args.orgId,
-      role: args.role,
+      role,
     });
   },
 });

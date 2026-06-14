@@ -1,23 +1,39 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { useUser } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
+import Link from "next/link";
+import { useAuth, useUser } from "@clerk/nextjs";
+import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { AlertCircle, PoundSterling, FileText, ArrowUpRight, TrendingUp, Archive, RefreshCw, ShieldCheck, ShieldAlert, Plus } from "lucide-react";
+import { AlertCircle, PoundSterling, FileText, ArrowUpRight, TrendingUp, Archive, ShieldCheck, ShieldAlert, Plus } from "lucide-react";
 
 export default function DashboardPage() {
+  const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
+  const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const userId = user?.id || "";
 
-  const summary = useQuery(api.declarations.getDashboardSummary);
-  const declarationPreviews = useQuery(api.declarations.getDeclarationPreviews);
-  const hmrcToken = useQuery(api.hmrc.getToken, userId ? { userId } : "skip");
-  const stats = useMemo(() => {
-    if (!summary) return null;
+  const canQuery =
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated;
 
-    const recentDeclarations = (declarationPreviews || []).slice(0, 7).map((preview: any) => ({
+  const declarationPreviews = useQuery(api.declarations.getDeclarationPreviews, canQuery ? {} : "skip");
+  const hmrcToken = useQuery(api.hmrc.getToken, userId ? { userId } : "skip");
+
+  const stats = useMemo(() => {
+    const previews = declarationPreviews ?? [];
+    const importValue = previews.reduce(
+      (sum: number, preview: { totalValue?: number }) => sum + Number(preview.totalValue || 0),
+      0,
+    );
+
+    const recentDeclarations = previews.slice(0, 7).map((preview: {
+      declarationId: string;
+      lastUpdated?: number;
+      mrn?: string;
+      status?: string;
+      totalValue?: number;
+    }) => ({
       id: preview.declarationId,
       date: new Date(preview.lastUpdated || 0).toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
       mrn: preview.mrn || "Draft",
@@ -29,19 +45,16 @@ export default function DashboardPage() {
     return {
       kpis: {
         totalDuty: 0,
-        importValue: Number(summary.totalValue || 0),
-        declarationsCount: Number(summary.totalDeclarations || 0),
+        importValue,
+        declarationsCount: previews.length,
         avgDuty: 0,
       },
-      chartData: [],
+      chartData: [] as Array<{ code: string; duty: number }>,
       recentDeclarations,
-      overpayments: [],
+      overpayments: [] as Array<{ title: string; subtitle: string; amount: number }>,
+      recentLoading: canQuery && declarationPreviews === undefined,
     };
-  }, [summary, declarationPreviews]);
-
-  const tokenExpiryText = hmrcToken?.expiresAt
-    ? `Expires ${new Date(hmrcToken.expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
-    : "—";
+  }, [canQuery, declarationPreviews]);
 
   // Feature toggles: allow hiding specific dashboard cards via public env vars.
   // Set NEXT_PUBLIC_DASH_SHOW_DUTY_BY_HS=false to hide the Duty by HS Code chart.
@@ -73,28 +86,28 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {!stats ? (
-        <div className="flex h-64 w-full flex-col items-center justify-center gap-4 pt-12">
-           <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
-           <p className="text-sm font-medium text-gray-500">Loading live database...</p>
+      {isLoaded && isSignedIn && !isConvexAuthLoading && !isAuthenticated && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+          Clerk is signed in but Convex is not connected yet — declaration list may be empty until
+          the session syncs.
         </div>
-      ) : (
-        <>
-          {/* 1. KPI ROW */}
-          <KpiRow kpis={stats.kpis} />
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-            {/* 2. CHART */}
-            {showDutyByHs && <DutyByHsChart data={stats.chartData} />}
-
-            {/* 4. AUDITS (STATIC UNTIL WIRING) */}
-            {showOverpayments && <ActionableAudits overpayments={stats.overpayments || []} />}
-          </div>
-
-          {/* 3. RECENT DECLARATIONS */}
-          <RecentDeclarations declarations={stats.recentDeclarations} />
-        </>
       )}
+
+      <p className="text-xs text-gray-400">
+        Duty analytics activate after first DMSACC — figures below are placeholders during build.
+      </p>
+
+      <KpiRow kpis={stats.kpis} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+        {showDutyByHs && <DutyByHsChart data={stats.chartData} />}
+        {showOverpayments && <ActionableAudits overpayments={stats.overpayments} />}
+      </div>
+
+      <RecentDeclarations
+        declarations={stats.recentDeclarations}
+        isLoading={stats.recentLoading}
+      />
     </div>
   );
 }
@@ -169,6 +182,7 @@ const CustomChartTooltip = ({ active, payload, label }: any) => {
 };
 
 function DutyByHsChart({ data }: { data: any[] }) {
+  const hasData = data.length > 0;
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none h-80">
       <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-5 py-3">
@@ -176,6 +190,7 @@ function DutyByHsChart({ data }: { data: any[] }) {
         <h3 className="text-sm font-medium text-black">Duty by HS Code</h3>
       </div>
       <div className="flex-1 min-h-0 p-5 pt-8 pl-0">
+        {hasData ? (
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
             <XAxis 
@@ -204,13 +219,24 @@ function DutyByHsChart({ data }: { data: any[] }) {
             />
           </BarChart>
         </ResponsiveContainer>
+        ) : (
+          <div className="flex h-full items-center justify-center px-6 text-xs text-gray-500">
+            Duty breakdown available after first accepted declaration (DMSACC).
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 // 3️⃣ RECENT DECLARATIONS TABLE
-function RecentDeclarations({ declarations }: { declarations: any[] }) {
+function RecentDeclarations({
+  declarations,
+  isLoading,
+}: {
+  declarations: any[];
+  isLoading?: boolean;
+}) {
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
       <div className="flex items-center justify-between border-b border-[#e9e9e7] bg-gray-50 px-5 py-3">
@@ -218,7 +244,12 @@ function RecentDeclarations({ declarations }: { declarations: any[] }) {
           <FileText className="h-4 w-4 text-gray-400" />
           <h3 className="text-sm font-medium text-black">Recent Declarations</h3>
         </div>
-        <button className="text-[0.6875rem] font-semibold tracking-widest text-blue-600 uppercase transition hover:text-blue-700">View All</button>
+        <Link
+          href="/dashboard/declarations"
+          className="text-[0.6875rem] font-semibold tracking-widest text-blue-600 uppercase transition hover:text-blue-700"
+        >
+          View All
+        </Link>
       </div>
 
       <div className="flex-1 p-0 overflow-x-auto">
@@ -233,7 +264,13 @@ function RecentDeclarations({ declarations }: { declarations: any[] }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#e9e9e7]">
-            {declarations.length > 0 ? (
+            {isLoading ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-400">
+                  Loading declarations…
+                </td>
+              </tr>
+            ) : declarations.length > 0 ? (
               declarations.map((decl: any) => {
                 const isAlert = decl.status === "Rejected" || decl.status === "Action Required" || decl.status === "Invalid";
                 const isWarning = decl.status === "Draft";
@@ -324,7 +361,7 @@ function ActionableAudits({ overpayments }: { overpayments: Array<{ title: strin
           ))
         ) : (
           <div className="border border-[#e9e9e7] rounded-lg p-4 text-xs text-gray-500">
-            No potential overpayments identified from current declarations.
+            Overpayment detection available after HMRC duty assessments (DMSTAX).
           </div>
         )}
       </div>

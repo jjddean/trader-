@@ -1,0 +1,85 @@
+<!-- DMSRES (FC 07) — amend COR accepted
+     MRN: 26GB6HZPT2QN2U8AR7
+     Submit LRN: FC-MQCO7IX1
+     Amend LRN: AM-zqmrw49eqhnpwtz95kh88kxqx-V5SU4Y
+     VersionID: 2
+     IssueDateTime: 20260613182025Z
+     Amend conversation: 18ab42e9-9f26-4648-9b9f-de35d8b1e4c1
+     Env: TDR v1 (confirm Accept: application/vnd.hmrc.1.0+xml on submit/amend)
+-->
+<_2:MetaData xmlns:_2="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2"><_2:WCODataModelVersionCode>3.6</_2:WCODataModelVersionCode><_2:WCOTypeName>RES</_2:WCOTypeName><_2:ResponsibleCountryCode/><_2:ResponsibleAgencyName/><_2:AgencyAssignedCustomizationCode/><_2:AgencyAssignedCustomizationVersionCode/><_2_1:Response xmlns:_2_1="urn:wco:datamodel:WCO:RES-DMS:2">
+      <_2_1:FunctionCode>07</_2_1:FunctionCode>
+      <_2_1:FunctionalReferenceID>45215bbdd2dc43e083e045fe355039c1</_2_1:FunctionalReferenceID>
+      <_2_1:IssueDateTime>
+        <_2_2:DateTimeString formatCode="304" xmlns:_2_2="urn:wco:datamodel:WCO:Response_DS:DMS:2">20260613182025Z</_2_2:DateTimeString>
+      </_2_1:IssueDateTime>
+      <_2_1:AdditionalInformation>
+        <_2_1:StatementDescription>Amending item price as a mistake was made on the declaration.</_2_1:StatementDescription>
+        <_2_1:StatementTypeCode>AES</_2_1:StatementTypeCode>
+        <_2_1:Pointer>
+          <_2_1:SequenceNumeric>1</_2_1:SequenceNumeric>
+          <_2_1:DocumentSectionCode>07B</_2_1:DocumentSectionCode>
+        </_2_1:Pointer>
+        <_2_1:Pointer>
+          <_2_1:SequenceNumeric>1</_2_1:SequenceNumeric>
+          <_2_1:DocumentSectionCode>06A</_2_1:DocumentSectionCode>
+        </_2_1:Pointer>
+      </_2_1:AdditionalInformation>
+      <_2_1:AdditionalInformation>
+        <_2_1:StatementDescription>Amending item price as a mistake was made on the declaration.</_2_1:StatementDescription>
+        <_2_1:StatementTypeCode>AES</_2_1:StatementTypeCode>
+        <_2_1:Pointer>
+          <_2_1:SequenceNumeric>1</_2_1:SequenceNumeric>
+          <_2_1:DocumentSectionCode>07B</_2_1:DocumentSectionCode>
+        </_2_1:Pointer>
+        <_2_1:Pointer>
+          <_2_1:SequenceNumeric>2</_2_1:SequenceNumeric>
+          <_2_1:DocumentSectionCode>06A</_2_1:DocumentSectionCode>
+        </_2_1:Pointer>
+      </_2_1:AdditionalInformation>
+      <_2_1:Amendment>      <_2_1:ChangeReasonCode>21</_2_1:ChangeReasonCode>
+        <_2_1:Pointer>
+          <_2_1:DocumentSectionCode>42A</_2_1:DocumentSectionCode>
+        </_2_1:Pointer>
+        <_2_1:Pointer>
+          <_2_1:DocumentSectionCode>67A</_2_1:DocumentSectionCode>
+        </_2_1:Pointer>
+        <_2_1:Pointer>
+          <_2_1:SequenceNumeric>1</_2_1:SequenceNumeric>
+          <_2_1:DocumentSectionCode>68A</_2_1:DocumentSectionCode>
+        </_2_1:Pointer>
+        <_2_1:Pointer>
+          <_2_1:DocumentSectionCode>23A</_2_1:DocumentSectionCode>
+        </_2_1:Pointer>
+        <_2_1:Pointer>
+          <_2_1:DocumentSectionCode>79A</_2_1:DocumentSectionCode>
+          <_2_1:TagID>112</_2_1:TagID>
+        </_2_1:Pointer>
+      </_2_1:Amendment>
+      <_2_1:Amendment>
+        <_2_1:ChangeReasonCode>21</_2_1:ChangeReasonCode>
+        <_2_1:Pointer>
+          <_2_1:DocumentSectionCode>42A</_2_1:DocumentSectionCode>
+          <_2_1:TagID>109</_2_1:TagID>
+        </_2_1:Pointer>
+      </_2_1:Amendment>
+      <_2_1:Declaration>
+        <_2_1:FunctionalReferenceID>FC-MQCO7IX1</_2_1:FunctionalReferenceID>
+        <_2_1:ID>26GB6HZPT2QN2U8AR7</_2_1:ID>
+        <_2_1:VersionID>2</_2_1:VersionID>
+      </_2_1:Declaration>
+      <_2_3:Declaration xmlns:_2_3="urn:wco:datamodel:WCO:DEC-DMS:2">
+        <_2_3:FunctionCode>9</_2_3:FunctionCode>
+        <_2_3:InvoiceAmount currencyID="GBP">8000.00</_2_3:InvoiceAmount>
+        <_2_3:GoodsShipment>
+          <_2_3:GovernmentAgencyGoodsItem>
+            <_2_3:SequenceNumeric>1</_2_3:SequenceNumeric>
+            <_2_3:Commodity>
+              <_2_3:InvoiceLine>
+                <_2_3:ItemChargeAmount currencyID="GBP">8000.0</_2_3:ItemChargeAmount>
+              </_2_3:InvoiceLine>
+            </_2_3:Commodity>
+          </_2_3:GovernmentAgencyGoodsItem>
+        </_2_3:GoodsShipment>
+      </_2_3:Declaration>
+    </_2_1:Response></_2:MetaData>

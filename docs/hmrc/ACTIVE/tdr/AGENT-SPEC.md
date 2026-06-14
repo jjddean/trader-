@@ -33,12 +33,19 @@ If a rule is not found in (1)–(3), STOP and request source.
 ## 2. ENVIRONMENT (SINGLE TRUTH)
 
 ```
-ACTIVE ENVIRONMENT:  TDR (v1.0 Declarations, production API host api.service.hmrc.gov.uk)
+ACTIVE NOW:          TDR v1.0 Declarations on sandbox
+                     HMRC_ENVIRONMENT=sandbox
+                     NEXT_PUBLIC_HMRC_ENV=tdr
+                     Host: https://test-api.service.hmrc.gov.uk
+                     Accept: application/vnd.hmrc.1.0+xml
+
+PRODUCTION HOST:     https://api.service.hmrc.gov.uk — after SDST grants credentials (G3/G4)
+
 ARCHIVED:            Trade Test v2.0 (read-only — docs/hmrc/ARCHIVE/trade-test/)
 FUTURE:              CDS Live / Production (docs/hmrc/FUTURE/production/)
 ```
 
-- TDR is the **only** active execution environment
+- TDR is the **only** active execution environment for new work
 - All validation, mapping, and submission logic MUST align to TDR rules
 - Trade Test MUST NOT influence active logic
 - API versions and Accept headers: `docs/hmrc/ACTIVE/tdr/environment-matrix.md`

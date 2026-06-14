@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-
-const ADMIN_ROLE = "admin";
+import { requireAdmin } from "./lib/user_role";
 
 /**
  * List all admin subscriptions.
@@ -9,6 +8,7 @@ const ADMIN_ROLE = "admin";
 export const list = query({
   args: {},
   handler: async (ctx) => {
+    await requireAdmin(ctx);
     return await ctx.db.query("admin_subscriptions").order("desc").take(200);
   },
 });
@@ -28,10 +28,7 @@ export const upsert = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.role !== ADMIN_ROLE) {
-      throw new Error("Unauthorized: Admin access required");
-    }
+    await requireAdmin(ctx);
 
     const { id, ...data } = args;
     if (id) {
@@ -52,10 +49,7 @@ export const upsert = mutation({
 export const remove = mutation({
   args: { id: v.id("admin_subscriptions") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.role !== ADMIN_ROLE) {
-      throw new Error("Unauthorized: Admin access required");
-    }
+    await requireAdmin(ctx);
     await ctx.db.delete(args.id);
   },
 });
@@ -69,10 +63,7 @@ export const updateStatus = mutation({
     status: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.role !== ADMIN_ROLE) {
-      throw new Error("Unauthorized: Admin access required");
-    }
+    await requireAdmin(ctx);
     await ctx.db.patch(args.id, { status: args.status, lastChecked: Date.now() });
   },
 });
@@ -83,10 +74,7 @@ export const updateStatus = mutation({
 export const seedSubscriptions = mutation({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.role !== ADMIN_ROLE) {
-      throw new Error("Unauthorized: Admin access required");
-    }
+    await requireAdmin(ctx);
 
     const existing = await ctx.db.query("admin_subscriptions").take(1);
     if (existing.length > 0) return "Already seeded";

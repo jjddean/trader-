@@ -1,19 +1,18 @@
-import { PrintDocumentShell, PrintField } from "@/components/print/print-document-shell";
+import { PrintDocumentHeader, PrintField } from "@/components/print/print-document-shell";
 import type { FinancialRecordPrintData } from "@/lib/print-sheet";
 
-export function FinancialRecordDocument({ record }: { record: FinancialRecordPrintData }) {
+export function FinancialRecordPrintContent({ record }: { record: FinancialRecordPrintData }) {
   const amount = Number(record.amount || 0).toLocaleString("en-GB", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
   return (
-    <PrintDocumentShell
-      backHref="/dashboard/records"
-      backLabel="Back to Financial Records"
-      title="Tax Line Record"
-      subtitle={[record.date, record.mrn].filter(Boolean).join(" · ")}
-    >
+    <>
+      <PrintDocumentHeader
+        title="Tax Line Record"
+        subtitle={[record.date, record.mrn].filter(Boolean).join(" · ")}
+      />
       <section className="mb-8 space-y-6">
         <h2 className="border-b border-gray-200 pb-3 text-sm font-semibold text-gray-900">
           Transaction &amp; Account Details
@@ -43,6 +42,6 @@ export function FinancialRecordDocument({ record }: { record: FinancialRecordPri
           <p className="text-xl font-bold tracking-tight text-gray-900">£{amount}</p>
         </div>
       </section>
-    </PrintDocumentShell>
+    </>
   );
 }

@@ -228,7 +228,13 @@ function preflightGates(xmlPayload, eori) {
 }
 
 async function run() {
-  const evidenceDir = path.join(process.cwd(), "docs/hmrc/ARCHIVE/trade-test/evidence");
+  const acceptHeader = declarationsAcceptHeader();
+  const isTdr =
+    (process.env.NEXT_PUBLIC_HMRC_ENV || "").toLowerCase() === "tdr" ||
+    acceptHeader === HMRC_CONFIG.accept.v1Xml;
+  const evidenceDir = isTdr
+    ? path.join(process.cwd(), "docs/hmrc/ACTIVE/tdr/evidence")
+    : path.join(process.cwd(), "docs/hmrc/ARCHIVE/trade-test/evidence");
   fs.mkdirSync(evidenceDir, { recursive: true });
 
   const dryRunOnly = process.env.DRY_RUN_ONLY !== "false";
@@ -325,7 +331,9 @@ async function run() {
 
   const singleRunRequestFile = process.env.SINGLE_RUN_REQUEST_FILE || "trade-test-cds-v2-request.xml";
   const singleRunResponseFile = process.env.SINGLE_RUN_RESPONSE_FILE || "trade-test-cds-v2-response.xml";
-  const dryRunReportFile = process.env.DRY_RUN_REPORT_FILE || "trade-test-cds-v2-dry-run.json";
+  const dryRunReportFile =
+    process.env.DRY_RUN_REPORT_FILE ||
+    (isTdr ? "regression-dry-run-latest.json" : "trade-test-cds-v2-dry-run.json");
 
   const requestMeta = `<!-- request_accept: ${preflight.acceptHeader} | request_content_type: ${preflight.contentTypeHeader} | request_authorization: Bearer [REDACTED] | request_x_client_id: ${process.env.HMRC_CLIENT_ID || ""} | request_gov_test_scenario: ABSENT -->`;
   fs.writeFileSync(

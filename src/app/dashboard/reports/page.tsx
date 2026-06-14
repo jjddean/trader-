@@ -1,24 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Search, Filter, ShieldAlert, ShieldCheck, Download, Copy, FileText, CheckCircle2, Printer } from "lucide-react";
-import { openCustomsReportPrint } from "@/lib/print-sheet";
+import { useDirectPrint } from "@/components/print/direct-print";
+import { CustomsReportPrintContent } from "@/components/print/customs-report-document";
+import type { CustomsReportPrintData } from "@/lib/print-sheet";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useQuery } from "convex/react";
 import { useConvexAuth } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { useAuth, useUser } from "@clerk/nextjs";
-import { RefreshCw } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
 
 export default function ReportsPage() {
-  const router = useRouter();
+  const { print, portal } = useDirectPrint();
   const { isLoaded, isSignedIn } = useAuth();
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
-  const { user } = useUser();
-  const userId = user?.id || "";
   const canQueryReports = isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated;
   const reports = useQuery(api.declarations.getReports, canQueryReports ? {} : "skip");
+  const isReportsLoading = canQueryReports && reports === undefined;
   
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedReport, setSelectedReport] = useState<any | null>(null);
@@ -94,8 +93,33 @@ export default function ReportsPage() {
     URL.revokeObjectURL(url);
   };
 
+  const handlePrintReport = () => {
+    if (!selectedReport) return;
+    const data: CustomsReportPrintData = {
+      mrn: selectedReport.mrn,
+      date: selectedReport.date,
+      broker: selectedReport.broker,
+      ducr: selectedReport.ducr,
+      lrn: selectedReport.lrn,
+      importer: selectedReport.importer,
+      declarant: selectedReport.declarant,
+      acceptanceDate: selectedReport.acceptanceDate,
+      clearanceDate: selectedReport.clearanceDate,
+      originCountry: selectedReport.originCountry,
+      dispatchCountry: selectedReport.dispatchCountry,
+      portCode: selectedReport.portCode,
+      totalInvoiceValue: selectedReport.totalInvoiceValue,
+      totalDutyAndVat: selectedReport.totalDutyAndVat,
+      status: selectedReport.status,
+      score: selectedReport.score,
+      items: selectedReport.items || [],
+    };
+    print(<CustomsReportPrintContent report={data} />);
+  };
+
   return (
     <div className="space-y-8 p-8">
+      {portal}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-gray-900">
@@ -111,20 +135,20 @@ export default function ReportsPage() {
         <div className="border-b border-[#e9e9e7] bg-gray-50 px-5 py-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search by MRN or Broker..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-4 text-[0.6875rem] font-medium tracking-normal text-gray-600 shadow-sm outline-none transition-colors focus:border-gray-400"
+                className="h-9 w-full rounded-md border border-gray-200 bg-white pl-8 pr-4 text-xs text-gray-700 outline-none transition-colors focus:border-gray-400"
               />
             </div>
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setShowFilters((prev) => !prev)}
-                className="flex h-9 items-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-gray-600 shadow-sm transition-colors hover:border-gray-400 hover:bg-gray-50"
+                className="flex h-9 items-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-gray-600 transition-colors hover:border-gray-400 hover:bg-gray-50"
               >
                 <Filter className="h-3 w-3" />
                 Filter
@@ -167,10 +191,9 @@ export default function ReportsPage() {
           </div>
         </div>
 
-          {!isLoaded || isConvexAuthLoading || (canQueryReports && reports === undefined) ? (
+          {isReportsLoading ? (
             <div className="flex h-40 flex-col items-center justify-center gap-2">
-              <RefreshCw className="h-5 w-5 animate-spin text-gray-400" />
-              <p className="text-xs text-gray-400">Loading Historical Reports...</p>
+              <p className="text-xs text-gray-400">Loading reports…</p>
             </div>
           ) : filteredReports.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -288,7 +311,7 @@ export default function ReportsPage() {
                     )}
                   </button>
                   <button
-                    onClick={() => openCustomsReportPrint(router, selectedReport)}
+                    onClick={handlePrintReport}
                     className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer"
                   >
                     <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">PRINT</span>

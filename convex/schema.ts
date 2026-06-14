@@ -147,6 +147,10 @@ export default defineSchema({
     exporterEori: v.optional(v.string()),
     // DE 8/5 — GoodsShipment/TransactionNatureCode (WCOID 103).
     transactionNatureCode: v.optional(v.string()),
+    // DE 2/6 — duty deferment account number (optional; surfaced on Financial Records).
+    defermentAccountNumber: v.optional(v.string()),
+    // DE 4/8 — method of payment code (e.g. "E" deferment).
+    paymentMethodCode: v.optional(v.string()),
   }).index("by_user", ["userId"]).index("by_mrn", ["mrn"]).index("by_conversationId", ["conversationId"]),
 
   goods_items: defineTable({
@@ -269,6 +273,16 @@ export default defineSchema({
     // Optional for back-compat with rows written before this field existed.
     completenessReady: v.optional(v.boolean()),
     missingCount: v.optional(v.number()),
+    // DMSTAX / tariff-derived financial snapshot — refreshed on notification + item writes.
+    dutyAmount: v.optional(v.number()),
+    vatAmount: v.optional(v.number()),
+    customsValue: v.optional(v.number()),
+    derivedDutyAmount: v.optional(v.number()),
+    derivedVatAmount: v.optional(v.number()),
+    financialSource: v.optional(v.union(v.literal("hmrc_confirmed"), v.literal("derived"))),
+    dmstaxUpdatedAt: v.optional(v.number()),
+    defermentAccountNumber: v.optional(v.string()),
+    paymentMethodLabel: v.optional(v.string()),
     lastUpdated: v.number(),
   }).index("by_user", ["userId"]).index("by_declarationId", ["declarationId"]),
 

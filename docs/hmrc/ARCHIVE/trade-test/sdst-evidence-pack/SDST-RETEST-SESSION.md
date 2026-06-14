@@ -4,7 +4,7 @@
 
 **Env (current):** `HMRC_ENVIRONMENT=sandbox`, `NEXT_PUBLIC_HMRC_ENV=tdr` **commented out** → Declarations **v2.0** (`application/vnd.hmrc.2.0+xml`). Restart Next.js after changes.
 
-**Not this session:** TDR v1.0 evidence — see [`../../../ACTIVE/tdr/CHECKLIST.md`](../../../ACTIVE/tdr/CHECKLIST.md). Switch back to TDR only after SDST retest is closed.
+**Not this session:** TDR v1.0 evidence — see [`../../../ACTIVE/tdr/evidence/LOG.md`](../../../ACTIVE/tdr/evidence/LOG.md).
 
 ---
 
@@ -71,8 +71,9 @@
 | Conversation | `1da7b09a-339a-4730-afa1-7c9cbaa43e32` |
 | Summary | `evidence/07-status-query/summary-retest-2026-06-12.md` |
 
-- [ ] Optional: Network JSON → `response-retest-2026-06-12.json`
-- SDST email: cite this MRN for §5.2; explain TDR MRNs 404 = sandbox index gap
+- [x] Optional: Network JSON → `response-retest-2026-06-12.json`
+- [x] 404 reason for SDST → `404-explanation-for-sdst.md` + `EMAIL-FOLLOWUP-CDI-404.md`
+- SDST email: cite retest MRN for §5.2; **must include 404 reason** (TDR v1 vs TT v2 index)
 
 ---
 

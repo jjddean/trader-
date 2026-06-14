@@ -1,0 +1,18 @@
+<!-- DMSINV (FC 02) — cancellation accepted
+     MRN: 26GB6I2VFHAN3WAAR0
+     Cancel LRN: CX-kn78tw6ms6bdnjvp4r1mdnz7v188j528
+     IssueDateTime: 20260613193851Z
+     Cancel conversation: 4646aa3d-48ac-4654-aef2-646c806d3c33
+     Env: TDR v1 (NEXT_PUBLIC_HMRC_ENV=tdr, Accept: application/vnd.hmrc.1.0+xml)
+-->
+<_2:MetaData xmlns:_2="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2"><_2:WCODataModelVersionCode>3.6</_2:WCODataModelVersionCode><_2:WCOTypeName>RES</_2:WCOTypeName><_2:ResponsibleCountryCode/><_2:ResponsibleAgencyName/><_2:AgencyAssignedCustomizationCode/><_2:AgencyAssignedCustomizationVersionCode/><_2_1:Response xmlns:_2_1="urn:wco:datamodel:WCO:RES-DMS:2">
+      <_2_1:FunctionCode>02</_2_1:FunctionCode>
+      <_2_1:FunctionalReferenceID>0f1bda0c70cf4ec88689e43d5a49d1dd</_2_1:FunctionalReferenceID>
+      <_2_1:IssueDateTime>
+        <_2_2:DateTimeString formatCode="304" xmlns:_2_2="urn:wco:datamodel:WCO:Response_DS:DMS:2">20260613193851Z</_2_2:DateTimeString>
+      </_2_1:IssueDateTime>
+      <_2_1:Declaration>
+        <_2_1:FunctionalReferenceID>CX-kn78tw6ms6bdnjvp4r1mdnz7v188j528</_2_1:FunctionalReferenceID>
+        <_2_1:ID>26GB6I2VFHAN3WAAR0</_2_1:ID>
+      </_2_1:Declaration>
+    </_2_1:Response></_2:MetaData>

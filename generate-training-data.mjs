@@ -12,8 +12,10 @@ import { join } from "path";
 
 // ─── CLI ARGS ────────────────────────────────────────────────────────────────
 const args = process.argv.slice(2);
-const TOTAL_ROWS = parseInt(args[args.find((a, i) => args[i - 1] === "--rows")] ?? "1000");
-const OUT_DIR    = args[args.find((a, i) => args[i - 1] === "--out")]  ?? "./lora-dataset";
+const rowsIdx = args.indexOf("--rows");
+const outIdx = args.indexOf("--out");
+const TOTAL_ROWS = rowsIdx !== -1 ? parseInt(args[rowsIdx + 1] ?? "1000", 10) : 1000;
+const OUT_DIR = outIdx !== -1 ? args[outIdx + 1] ?? "./lora-dataset" : "./lora-dataset";
 const EVAL_SPLIT = 0.1; // 10% reserved for eval
 
 // ─── PRODUCT POOLS ───────────────────────────────────────────────────────────
@@ -93,19 +95,11 @@ const EDGE_CASES = [
   { desc: "Unroasted green coffee beans, 10 tonnes, from Ethiopia — organic certification attached, fair-trade labelled", hs: "0901110000", gir: ["1", "6"], confidence: 0.94, risk: "LOW", rep: "3", indirect: true, reason: "Unroasted decaffeinated coffee classified under heading 0901. Organic certification requires GB Organic Operator Registration (DE 2/3 N910 / N853 equivalent). Non-UK importer requires indirect representation. Low tariff rate applicable." },
 ];
 
-// ─── INSTRUCTION TEMPLATE ────────────────────────────────────────────────────
+// ─── INSTRUCTION TEMPLATE (compact — less token noise per row) ───────────────
 
-const INSTRUCTION = `You are a UK Customs Compliance Officer.
+const INSTRUCTION = `You are a UK customs classifier. Classify under the UK Trade Tariff (GIR 1-6) and assess representation risk.
 
-Your task is to classify goods under the UK Trade Tariff using GIR 1–6 and determine customs compliance obligations.
-
-You must be legally accurate and follow HMRC-style reasoning.
-
-Rules:
-- Always apply GIR rules in order
-- Always justify classification logically
-- Always assess INDIRECT REPRESENTATION risk if importer is non-UK established
-- Never guess without reasoning
+Rules: apply GIR in order; justify logically; flag indirect representation if importer is non-UK established; never guess without reasoning.
 
 Product:
 {{PRODUCT_DESCRIPTION}}
@@ -132,6 +126,12 @@ function buildRow(g) {
   const instruction = INSTRUCTION.replace("{{PRODUCT_DESCRIPTION}}", g.desc);
   const output = buildOutput(g);
   const text = `[INST] ${instruction} [/INST]\n\n${output}`;
+  if (!text.includes("[INST]") || !text.includes("[/INST]")) {
+    throw new Error(`Row missing INST markers for: ${g.desc.slice(0, 60)}`);
+  }
+  if (text.includes("without . ") || /\bwithout\s+\d{4}\s+reasoning\b/.test(text)) {
+    throw new Error(`Corrupt prompt text for: ${g.desc.slice(0, 60)}`);
+  }
   return JSON.stringify({ text });
 }
 
@@ -163,26 +163,32 @@ const NONUK_SUFFIXES = [
   ", foreign entity acting as importer of record", ", non-UK established entity"
 ];
 
+const ORIGIN_PATTERN = /\bfrom ([A-Z][A-Za-z]+(?: [A-Za-z]+)*)\b/g;
+
+function replaceOrigin(desc, newOrigin) {
+  const matches = [...desc.matchAll(ORIGIN_PATTERN)];
+  if (matches.length === 0) return desc;
+  const last = matches[matches.length - 1];
+  return desc.slice(0, last.index) + `from ${newOrigin}` + desc.slice(last.index + last[0].length);
+}
+
 function varyDescription(g) {
-  // Randomly substitute origin or append UK/non-UK context for variety
   const varied = { ...g };
   const roll = Math.random();
 
   if (roll < 0.3) {
-    // Swap origin
-    const newOrigin = ORIGINATORS[Math.floor(Math.random() * ORIGINATORS.length)];
-    varied.desc = varied.desc.replace(/from [A-Za-z\s]+(?=[,.]|$)/, newOrigin);
+    const newOrigin = ORIGINATORS[Math.floor(Math.random() * ORIGINATORS.length)].replace(/^from /, "");
+    varied.desc = replaceOrigin(varied.desc, newOrigin);
   }
 
-  if (roll > 0.6 && varied.risk === "LOW") {
-    // Sometimes make it UK-established (direct rep)
-    if (Math.random() < 0.4) {
-      varied.desc += UK_SUFFIXES[Math.floor(Math.random() * UK_SUFFIXES.length)];
-      varied.rep = "2";
-      varied.indirect = false;
-      varied.reason = varied.reason.replace(/Non-UK (importer|established entity|entity|importer of record)[^.]*\./g,
-        "UK-established importer permits direct representation (Type 2).");
-    }
+  if (roll > 0.6 && varied.risk === "LOW" && Math.random() < 0.4) {
+    varied.desc += UK_SUFFIXES[Math.floor(Math.random() * UK_SUFFIXES.length)];
+    varied.rep = "2";
+    varied.indirect = false;
+    varied.reason = varied.reason.replace(
+      /Non-UK (?:importer|established entity|entity|importer of record)[^.]*\./,
+      "UK-established importer permits direct representation (Type 2).",
+    );
   }
 
   return varied;

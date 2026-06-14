@@ -1,24 +1,11 @@
-# Freightcode HMRC documentation
+# HMRC documentation
 
-**Behaviour:** `docs/hmrc/ACTIVE/tdr/AGENT-SPEC.md` only.
+**Roadmap (post-TDR):** [`ACTIVE/tdr/DELIVERY-PLAN.md`](ACTIVE/tdr/DELIVERY-PLAN.md)
 
-```
-docs/hmrc/ACTIVE/tdr/     TDR — active (behaviour + mapping + evidence)
-docs/hmrc/specs/          HMRC official mirrors (data)
-docs/hmrc/ARCHIVE/        Trade Test (read-only)
-docs/hmrc/FUTURE/         Production go-live (not active)
-```
-
-## HMRC URLs (TDR)
-
-- https://www.gov.uk/guidance/using-the-trader-dress-rehearsal-service
-- https://developer.service.hmrc.gov.uk/guides/customs-declarations-end-to-end-service-guide/
-- https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/customs-declarations
-- https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/customs-declarations-information-api
-
-## Retired paths
-
-| Old | New |
-|-----|-----|
-| `spec/` | `docs/hmrc/ACTIVE/tdr/mapping/` + `docs/hmrc/specs/` + `docs/hmrc/ARCHIVE/trade-test/` |
-| `documentation/HMRC/` | See tiers above |
+| Path | Contents |
+|------|----------|
+| `ACTIVE/tdr/AGENT-SPEC.md` | Mandatory code behaviour |
+| `ACTIVE/tdr/evidence/` | Sandbox test XML + [`LOG.md`](ACTIVE/tdr/evidence/LOG.md) |
+| `ACTIVE/tdr/mapping/` | Data element mapping for the active lane |
+| `specs/` | HMRC reference mirrors |
+| `ARCHIVE/trade-test/` | Trade Test v2 (historical) |

@@ -1,0 +1,43 @@
+{
+  "timestamp": "2026-06-14T18:55:42.202Z",
+  "mode": "DRY_RUN_ONLY",
+  "submitEnabled": false,
+  "endpoint": "https://test-api.service.hmrc.gov.uk/customs/declarations",
+  "checks": {
+    "token_present": false,
+    "client_id_present": true,
+    "content_type_is_xml": true,
+    "xml_has_metadata_root": true,
+    "xml_has_declaration": true,
+    "xml_has_function_code": true,
+    "xml_has_type_code": true,
+    "xml_has_declarant_id": true,
+    "xml_has_importer_id": true,
+    "xml_has_hs_code": true,
+    "xml_has_dispatch_de": true,
+    "xml_no_y922": true,
+    "xml_has_n935": true,
+    "xml_has_n271": true,
+    "eori_format_valid": true,
+    "xml_no_empty_tags": true,
+    "phase_is_tdr": true,
+    "accept_is_v1": true,
+    "environment_is_sandbox": true,
+    "endpoint_matches_host": true
+  },
+  "failed": [],
+  "readyToSubmit": true,
+  "lane": {
+    "hs": "8471300000",
+    "cpc": "4000 000",
+    "origin": "DE",
+    "type": "IMA",
+    "description": "Portable automatic data processing machine (laptops)",
+    "documents": [
+      "N935",
+      "N271"
+    ]
+  },
+  "command": "node test-evidence/run-hmrc-scenarios.js",
+  "env": "NEXT_PUBLIC_HMRC_ENV=tdr, HMRC_ENVIRONMENT=sandbox"
+}

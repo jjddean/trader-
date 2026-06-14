@@ -1,5 +1,6 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { requireAdmin } from "./lib/user_role";
 
 export const logAction = mutation({
   args: {
@@ -69,10 +70,7 @@ export const getDeclarationAuditLogs = query({
 
 export const getRecentLogs = query({
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.role !== "admin") {
-      throw new Error("Unauthorized access to system audit logs.");
-    }
+    await requireAdmin(ctx);
     return await ctx.db.query("auditLogs")
       .withIndex("by_timestamp")
       .order("desc")
@@ -83,10 +81,7 @@ export const getRecentLogs = query({
 
 export const getOldLogs = query({
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity || identity.role !== "admin") {
-      throw new Error("Unauthorized access to system audit logs.");
-    }
+    await requireAdmin(ctx);
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
     return await ctx.db.query("auditLogs")
       .withIndex("by_timestamp", q => q.lt("timestamp", thirtyDaysAgo))

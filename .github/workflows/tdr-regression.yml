@@ -1,0 +1,32 @@
+name: TDR regression
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  tdr-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - name: H1 unit tests + golden XML
+        run: npm run test:h1
+
+      - name: TDR v1 dry-run preflight
+        run: npm run test:tdr-dry-run
+
+      - name: Production build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_CONVEX_URL: https://example.convex.cloud
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ci_placeholder

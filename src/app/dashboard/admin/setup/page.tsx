@@ -1,221 +1,234 @@
 "use client";
 
-import React, { useState } from "react";
-import { useQuery } from "convex/react";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
-import { useUser } from "@clerk/nextjs";
-import { 
-  Shield, 
-  Settings, 
-  Globe, 
-  Zap, 
-  ShieldCheck, 
-  Activity, 
-  Database,
-  Server
-} from "lucide-react";
+import { CheckCircle2, ExternalLink, Loader2, Radio, Users, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function AdminSetupPage() {
-  const { user } = useUser();
-  const dbUser = useQuery(api.users.current);
-  const [activeTab, setActiveTab] = useState<"system" | "organization" | "health">("system");
+interface HealthPayload {
+  status: string;
+  environment: string;
+  services: { convex: boolean; hmrc: boolean; clerk: boolean };
+}
+
+export default function AdminHmrcPage() {
+  const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth();
+  const panel = useQuery(
+    api.admin_ops.getIntegrationPanel,
+    isAuthenticated ? {} : "skip",
+  );
+  const [health, setHealth] = useState<HealthPayload | null>(null);
+  const [healthError, setHealthError] = useState<string | null>(null);
+  const [slowLoad, setSlowLoad] = useState(false);
 
   const hmrcEnv = process.env.NEXT_PUBLIC_HMRC_ENV || "sandbox";
-  const eori = process.env.NEXT_PUBLIC_HMRC_EORI || "GB123456789000";
+  const publicEori = process.env.NEXT_PUBLIC_HMRC_EORI || "Not set in env";
+
+  useEffect(() => {
+    fetch("/api/health")
+      .then((res) => res.json())
+      .then((data) => setHealth(data as HealthPayload))
+      .catch(() => setHealthError("Could not reach /api/health"));
+  }, []);
+
+  useEffect(() => {
+    if (panel !== undefined) return;
+    const timer = window.setTimeout(() => setSlowLoad(true), 8000);
+    return () => window.clearTimeout(timer);
+  }, [panel]);
+
+  const hmrcConnections = panel?.hmrcConnections ?? [];
+  const platformUsers = panel?.platformUsers ?? [];
+  const panelLoading = isAuthLoading || (isAuthenticated && panel === undefined);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-8">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-xl font-semibold tracking-tight text-gray-900">Platform Set Up</h1>
-        <p className="text-sm text-gray-500">System-wide configuration and operational control plane.</p>
+    <div className="mx-auto max-w-5xl space-y-8 p-8">
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight text-gray-900">Users &amp; HMRC</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Environment, service connectivity, OAuth connections, and synced users.
+        </p>
       </div>
 
-      <div className="flex flex-wrap gap-2 rounded-xl border border-gray-200 bg-white p-2">
-        <button
-          onClick={() => setActiveTab("system")}
-          className={cn(
-            "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors",
-            activeTab === "system" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100",
-          )}
-        >
-          <Server className="h-3.5 w-3.5" />
-          System Config
-        </button>
-        <button
-          onClick={() => setActiveTab("organization")}
-          className={cn(
-            "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors",
-            activeTab === "organization" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100",
-          )}
-        >
-          <Globe className="h-3.5 w-3.5" />
-          Organization Master
-        </button>
-        <button
-          onClick={() => setActiveTab("health")}
-          className={cn(
-            "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors",
-            activeTab === "health" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100",
-          )}
-        >
-          <Activity className="h-3.5 w-3.5" />
-          Service Health
-        </button>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <EnvCard label="HMRC environment" value={hmrcEnv.toUpperCase()} />
+        <EnvCard label="API host" value={health?.environment ?? "—"} />
+        <EnvCard label="Default EORI (env)" value={publicEori} mono />
       </div>
 
-      {activeTab === "system" && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
-            <Settings className="h-4 w-4 text-gray-400" />
-            <h3 className="text-sm font-medium text-black">Master Configuration</h3>
-          </div>
-          <div className="space-y-6 p-6">
-            <div className="grid grid-cols-2 gap-8">
-              <div>
-                <label className="mb-1.5 block text-[10px] font-semibold tracking-widest text-gray-400 uppercase">
-                  HMRC Environment
-                </label>
-                <div className="flex items-center gap-2">
-                  <span className={cn(
-                    "rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border",
-                    hmrcEnv === "production"
-                      ? "bg-red-50 text-red-700 border-red-100"
-                      : hmrcEnv === "tdr"
-                        ? "bg-amber-50 text-amber-800 border-amber-100"
-                        : "bg-blue-50 text-blue-700 border-blue-100"
-                  )}>
-                    {hmrcEnv}
-                  </span>
-                  <p className="text-[11px] text-gray-400 italic">Controlled via .env.local</p>
-                </div>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-[10px] font-semibold tracking-widest text-gray-400 uppercase">
-                  System EORI
-                </label>
-                <p className="font-mono text-xs font-semibold text-gray-900">{eori}</p>
-              </div>
-            </div>
+      <section className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+        <div className="border-b border-gray-100 px-6 py-4">
+          <h2 className="text-sm font-semibold text-gray-900">Service connectivity</h2>
+          <p className="mt-0.5 text-xs text-gray-500">From GET /api/health — env vars populated, not live latency tests.</p>
+        </div>
+        <div className="grid grid-cols-1 gap-px bg-gray-100 sm:grid-cols-3">
+          <ServiceTile name="Convex" ok={health?.services.convex} loading={!health && !healthError} />
+          <ServiceTile name="HMRC OAuth" ok={health?.services.hmrc} loading={!health && !healthError} />
+          <ServiceTile name="Clerk" ok={health?.services.clerk} loading={!health && !healthError} />
+        </div>
+        {healthError && (
+          <p className="border-t border-gray-100 px-6 py-3 text-xs text-red-600">{healthError}</p>
+        )}
+      </section>
 
-            <div className="rounded-lg bg-amber-50 border border-amber-100 p-4">
-              <div className="flex gap-3">
-                <Shield className="h-4 w-4 text-amber-600 shrink-0" />
-                <div className="space-y-1">
-                  <h4 className="text-xs font-semibold text-amber-900">Security Notice</h4>
-                  <p className="text-[11px] text-amber-700 leading-relaxed">
-                    Changes to the HMRC environment or Master EORI require a system restart. 
-                    Ensure all tokens are refreshed in the new environment to avoid 401 Unauthorized rejections.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+      {panelLoading && (
+        <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-600">
+          <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+          Loading users and HMRC connections…
+          {slowLoad && (
+            <span className="text-gray-500">
+              — If this persists, run <code className="rounded bg-white px-1">npx convex dev</code> and refresh.
+            </span>
+          )}
         </div>
       )}
 
-      {activeTab === "organization" && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
-            <Globe className="h-4 w-4 text-gray-400" />
-            <h3 className="text-sm font-medium text-black">Company Identity</h3>
+      <section className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-6 py-4">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900">HMRC OAuth connections</h2>
+            <p className="mt-0.5 text-xs text-gray-500">Per-user tokens in Convex — no secrets shown.</p>
           </div>
-          <div className="p-6">
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="mb-1.5 block text-[10px] font-semibold tracking-widest text-gray-400 uppercase">
-                    Legal Entity Name
-                  </label>
-                  <p className="text-xs text-black font-medium">FreightCode Ltd</p>
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-[10px] font-semibold tracking-widest text-gray-400 uppercase">
-                    Company Number
-                  </label>
-                  <p className="text-xs text-black font-medium">12345678</p>
-                </div>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-[10px] font-semibold tracking-widest text-gray-400 uppercase">
-                  CDS Status
-                </label>
-                <div className="flex items-center gap-2">
-                   <ShieldCheck className="h-4 w-4 text-green-500" />
-                   <span className="text-xs font-medium text-green-700">Trade Test Validated (v2.0)</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <a
+            href="/api/hmrc/auth"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-medium text-white hover:bg-gray-800"
+          >
+            <Radio className="h-3.5 w-3.5" />
+            Connect HMRC (this account)
+          </a>
         </div>
-      )}
+        {panelLoading ? (
+          <PanelSkeleton rows={2} />
+        ) : hmrcConnections.length === 0 ? (
+          <p className="px-6 py-10 text-center text-xs text-gray-500">
+            No HMRC tokens yet. Click <strong>Connect HMRC</strong> above, or use Settings in the broker app.
+          </p>
+        ) : (
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-gray-100 bg-gray-50/50">
+              <tr>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">User</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">EORI</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Token expires</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {hmrcConnections.map((row) => (
+                <tr key={row.userId} className="hover:bg-gray-50/50">
+                  <td className="px-6 py-3 text-xs font-medium text-gray-900">
+                    {row.ownerEmail || row.ownerName || row.userId.slice(0, 16)}
+                  </td>
+                  <td className="px-6 py-3 font-mono text-xs text-gray-600">{row.eori || "—"}</td>
+                  <td className="px-6 py-3 text-xs text-gray-600">
+                    {row.expiresAt ? new Date(row.expiresAt).toLocaleString("en-GB") : "—"}
+                  </td>
+                  <td className="px-6 py-3">
+                    {row.isActive ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700">
+                        <XCircle className="h-3.5 w-3.5" /> Reconnect
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <div className="border-t border-gray-100 px-6 py-3">
+          <Link href="/dashboard/settings" className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline">
+            User-facing HMRC settings <ExternalLink className="h-3 w-3" />
+          </Link>
+        </div>
+      </section>
 
-      {activeTab === "health" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <HealthCard 
-            title="Convex Database" 
-            status="Healthy" 
-            latency="14ms" 
-            icon={<Database className="h-4 w-4" />} 
-            color="green"
-          />
-          <HealthCard 
-            title="HMRC API" 
-            status="Degraded" 
-            latency="1.2s" 
-            icon={<Zap className="h-4 w-4" />} 
-            color="amber"
-          />
-          <HealthCard 
-            title="Clerk Auth" 
-            status="Healthy" 
-            latency="42ms" 
-            icon={<ShieldCheck className="h-4 w-4" />} 
-            color="green"
-          />
-          <HealthCard 
-            title="Freight Assistant (AI)" 
-            status="Healthy" 
-            latency="850ms" 
-            icon={<Activity className="h-4 w-4" />} 
-            color="green"
-          />
+      <section className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+        <div className="border-b border-gray-100 px-6 py-4">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+            <Users className="h-4 w-4 text-gray-400" />
+            Platform users
+          </h2>
         </div>
-      )}
+        {panelLoading ? (
+          <PanelSkeleton rows={3} />
+        ) : platformUsers.length === 0 ? (
+          <p className="px-6 py-10 text-center text-xs text-gray-500">
+            No users synced from Clerk yet — sign in once to create your row in Convex.
+          </p>
+        ) : (
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-gray-100 bg-gray-50/50">
+              <tr>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Email</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Role</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">HMRC</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {platformUsers.map((user) => (
+                <tr key={user.clerkId} className="hover:bg-gray-50/50">
+                  <td className="px-6 py-3">
+                    <p className="text-xs font-medium text-gray-900">{user.email || "—"}</p>
+                    {user.name && <p className="text-[10px] text-gray-400">{user.name}</p>}
+                  </td>
+                  <td className="px-6 py-3 text-xs capitalize text-gray-600">{user.role || "user"}</td>
+                  <td className="px-6 py-3 text-xs text-gray-600">
+                    {user.hmrcConnected ? (
+                      <span className="text-green-700">Connected{user.hmrcEori ? ` · ${user.hmrcEori}` : ""}</span>
+                    ) : (
+                      <span className="text-gray-400">Not connected</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
     </div>
   );
 }
 
-function HealthCard({ title, status, latency, icon, color }: { title: string; status: string; latency: string; icon: React.ReactNode; color: "green" | "amber" | "red" }) {
-  const colorMap = {
-    green: "bg-green-50 text-green-700 border-green-100",
-    amber: "bg-amber-50 text-amber-700 border-amber-100",
-    red: "bg-red-50 text-red-700 border-red-100",
-  };
-  const dotMap = {
-    green: "bg-green-500",
-    amber: "bg-amber-500",
-    red: "bg-red-500",
-  };
-
+function PanelSkeleton({ rows }: { rows: number }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 transition-all hover:border-gray-300">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="text-gray-400">{icon}</div>
-          <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase">
-            {title}
-          </p>
-        </div>
-        <div className={cn("flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px] font-bold uppercase", colorMap[color])}>
-           <div className={cn("h-1.5 w-1.5 rounded-full", dotMap[color])} />
-           {status}
-        </div>
-      </div>
-      <div className="flex items-baseline gap-1">
-        <span className="text-2xl font-bold tracking-tight text-gray-900 tabular-nums">{latency}</span>
-        <span className="text-[10px] text-gray-400 font-medium">LATENCY</span>
-      </div>
+    <div className="space-y-2 px-6 py-6">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="h-8 animate-pulse rounded bg-gray-100" />
+      ))}
+    </div>
+  );
+}
+
+function EnvCard({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-5">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">{label}</p>
+      <p className={cn("mt-2 text-sm font-semibold text-gray-900", mono && "font-mono text-xs")}>{value}</p>
+    </div>
+  );
+}
+
+function ServiceTile({ name, ok, loading }: { name: string; ok?: boolean; loading?: boolean }) {
+  return (
+    <div className="bg-white px-6 py-4">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">{name}</p>
+      {loading ? (
+        <Loader2 className="mt-2 h-4 w-4 animate-spin text-gray-400" />
+      ) : ok ? (
+        <p className="mt-2 flex items-center gap-1 text-xs font-medium text-green-700">
+          <CheckCircle2 className="h-3.5 w-3.5" /> Configured
+        </p>
+      ) : (
+        <p className="mt-2 flex items-center gap-1 text-xs font-medium text-red-700">
+          <XCircle className="h-3.5 w-3.5" /> Missing env
+        </p>
+      )}
     </div>
   );
 }

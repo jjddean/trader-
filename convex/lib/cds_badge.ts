@@ -44,7 +44,7 @@ export function resolveDeclarationCdsBadge(
   const cancelAccepted = declarationHasInvalidationAccepted(notifications);
 
   if (amendAccepted) {
-    return { label: "Amended (DMSRES)", tone: "success" };
+    return { label: "Amended (DMSRES)", tone: "info" };
   }
   if (amendRejected && !cancelAccepted) {
     return { label: "Accepted — amend rejected", tone: "warning" };
@@ -58,11 +58,11 @@ export function resolveDeclarationCdsBadge(
   if (status === "Cleared") {
     return { label: "Accepted (clearance event)", tone: "info" };
   }
-  if (status === "Amended") return { label: "Amended (DMSRES)", tone: "success" };
+  if (status === "Amended") return { label: "Amended (DMSRES)", tone: "info" };
   if (status === "Accepted") return { label: "Accepted (DMSACC)", tone: "success" };
   if (status === "Rejected") return { label: "Rejected (DMSREJ)", tone: "danger" };
   if (status === "Invalid") return { label: "Invalid (DMSINV)", tone: "danger" };
-  if (status === "Action Required") return { label: status, tone: "warning" };
-  if (status === "Draft") return { label: status, tone: "neutral" };
+  if (status === "Action Required") return { label: status, tone: "danger" };
+  if (status === "Draft") return { label: status, tone: "warning" };
   return { label: status, tone: "info" };
 }

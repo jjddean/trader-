@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   HelpCircle,
   ChevronRight,
+  Shield,
 } from "lucide-react";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
@@ -72,7 +73,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="!h-screen border-r border-gray-200 bg-gray-50">
-      <SidebarHeader className="flex h-[48px] flex-row items-center border-b border-gray-200 px-6">
+      <SidebarHeader className="flex h-[55px] flex-row items-center border-b border-gray-200 px-6">
         <Link
           href="/"
           className="flex w-full items-center gap-2 transition-opacity hover:opacity-80"
@@ -217,6 +218,35 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {isAdmin && (
+          <SidebarGroup className="p-0 mt-4">
+            <SidebarGroupLabel className="mb-0.5 px-3 text-[10px] font-normal tracking-widest text-gray-400 uppercase">
+              Admin
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-0.5">
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith("/dashboard/admin")}
+                    className={cn(
+                      "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors",
+                      pathname.startsWith("/dashboard/admin")
+                        ? "bg-gray-100 text-black"
+                        : "text-gray-500 hover:bg-gray-100 hover:text-black",
+                    )}
+                  >
+                    <Link href="/dashboard/admin" className="flex flex-1 items-center gap-2">
+                      <Shield className={cn("h-3.5 w-3.5", pathname.startsWith("/dashboard/admin") ? "text-gray-700" : "text-gray-400")} />
+                      <span className="flex-1">Admin Panel</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
 
 

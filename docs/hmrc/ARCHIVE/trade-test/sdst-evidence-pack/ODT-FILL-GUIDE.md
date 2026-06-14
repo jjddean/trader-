@@ -153,13 +153,26 @@ Use **Sandbox Application ID** as Client ID unless the form asks for OAuth clien
 
 ### Status by MRN — `/customs/declarations-information/mrn/{mrn}/status` ☑
 
+**ODT row (retest — use this in form):**
+
 | Field | Value |
 |-------|-------|
 | Client ID | `b74874e9-957e-4a40-b426-0cde839f8a45` |
+| MRN | `26GB6GFBKLT2N0TAR6` |
+| Timestamp | `2026-06-12T16:51:31Z` |
+| Conversation ID | `1da7b09a-339a-4730-afa1-7c9cbaa43e32` |
+| Outcome | HTTP 200; **ICS 14**; Accept `application/vnd.hmrc.1.0+xml` |
+
+**404 explanation for SDST:** see `evidence/07-status-query/404-explanation-for-sdst.md` and email `EMAIL-FOLLOWUP-CDI-404.md`.
+
+**Prior June run (also HTTP 200, superseded in ODT by retest row above):**
+
+| Field | Value |
+|-------|-------|
 | MRN | `26GB63M1I0RQFCVAR4` |
 | Timestamp | `2026-06-04T14:40:59Z` |
 | Conversation ID | `2a9e80a9-1b65-4541-8077-73d2492357f4` |
-| Outcome | HTTP 200; ICS 22; Accept `application/vnd.hmrc.1.0+xml` |
+| Outcome | HTTP 200; ICS 22 |
 
 ### DUCR / UCR / Inventory reference status ☐
 

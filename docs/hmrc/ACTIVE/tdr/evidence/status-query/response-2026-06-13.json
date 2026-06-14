@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-06-13T20:40:00.000Z",
+  "source": "Freightcode app GET /api/hmrc/status-query?mrn=…",
+  "host": "https://test-api.service.hmrc.gov.uk",
+  "accept": "application/vnd.hmrc.1.0+xml",
+  "env": "NEXT_PUBLIC_HMRC_ENV=tdr",
+  "results": [
+    {
+      "mrn": "26GB6I2VFHAN3WAAR0",
+      "context": "TDR v1 cancel evidence MRN (2026-06-13)",
+      "http": 404,
+      "code": "CDS60001",
+      "message": "Declaration not found"
+    }
+  ],
+  "priorProbe": "docs/hmrc/ACTIVE/tdr/evidence/status-query/cli-test-2026-06-11.json — same CDS60001 on TDR v1 baseline + amend MRNs",
+  "contrast": "ARCHIVE trade-test status query HTTP 200 ICS 14 on 26GB6GFBKLT2N0TAR6 (TT v2 submit session, 2026-06-12)",
+  "conclusion": "Auth and route OK (404 not 401). Information API on test-api does not return rows for declarations submitted via TDR v1.0 Declarations API — platform/index limitation, not wrong MRN or expired OAuth."
+}

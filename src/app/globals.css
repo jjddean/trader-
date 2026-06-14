@@ -49,3 +49,30 @@ body {
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #e2e8f0; border-radius: 10px; }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: #cbd5e1; }
+
+/* Direct print: hide dashboard chrome; show #freightcode-print-root only */
+@media screen {
+  #freightcode-print-root {
+    position: fixed;
+    left: -10000px;
+    top: 0;
+    width: 800px;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+@media print {
+  body > *:not(#freightcode-print-root) {
+    display: none !important;
+  }
+
+  #freightcode-print-root {
+    display: block !important;
+    position: static !important;
+    left: auto !important;
+    visibility: visible !important;
+    width: 100% !important;
+    pointer-events: auto !important;
+  }
+}
