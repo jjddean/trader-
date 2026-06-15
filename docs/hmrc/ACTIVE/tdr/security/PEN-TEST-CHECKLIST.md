@@ -47,7 +47,7 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 
 | # | Item | Status | Notes |
 |---|------|--------|-------|
-| 2.1 | Upgrade `@clerk/nextjs` past middleware bypass CVE (GHSA-vqx2-fgx2-5wq9) | `[ ]` | Still `^7.0.1` in `package.json`; run `npm audit` + upgrade |
+| 2.1 | Upgrade `@clerk/nextjs` past middleware bypass CVE (GHSA-vqx2-fgx2-5wq9) | `[x]` | `@clerk/nextjs@^7.5.2`, build passes 15 Jun 2026 |
 | 2.2 | Dashboard routes protected | `[ ]` | Verify `src/proxy.ts` — unauthenticated → redirect on `/dashboard/*` |
 | 2.3 | API routes: HMRC submit/amend/cancel require auth | `[ ]` | Spot-check `/api/hmrc/submit`, `/api/hmrc/status-query` |
 | 2.4 | Cross-user session: Convex JWT `identity.subject` matches Clerk user | `[ ]` | Attempt API call with valid JWT for user A, body referencing user B |
@@ -195,14 +195,11 @@ Book **after** sections 1–6 verified on deployed Convex + Vercel preview.
 ## 10. Recommended order (remaining work)
 
 ```
-1. Commit + push security fixes                    ← NEXT
-2. Confirm NOTIFICATION_INGEST_SECRET on Vercel
-3. Clerk upgrade + npm audit (critical/high)
-4. Stripe: add customer.subscription.updated; real checkout E2E
-5. Manual retest sections 2–6 (this checklist)
-6. OPS-SECURITY.md (+ backup/DR one-pagers if needed for HMRC)
-7. Book third-party pen test
-8. HMRC production go-live (after SUP-16375 closed)
+1. Manual retest sections 2–6 (this checklist)     ← NEXT
+2. npm audit — remaining non-Clerk high/critical
+3. OPS-SECURITY.md (+ backup/DR one-pagers if needed for HMRC)
+4. Book third-party pen test
+5. HMRC production go-live (after SUP-16375 closed)
 ```
 
 **Product backlog (parallel):** [`DELIVERY-PLAN.md`](../DELIVERY-PLAN.md) §1 — DAN + payment method on declaration form.
