@@ -1,46 +1,59 @@
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 import { updateSubscriptionImpl } from "./subscriptions";
 
-// Internal mutation used by the webhook action
-export const stripeWebhookHandler = mutation({
+/** Stripe webhook events — internal only; verify signature before calling. */
+export const stripeWebhookHandler = internalMutation({
   args: {
     type: v.string(),
     data: v.any(),
   },
   handler: async (ctx, args) => {
     const { type, data } = args;
+    const object = data?.object;
+    if (!object) return;
 
-    if (type === "checkout.session.completed" || type === "customer.subscription.updated") {
-      const subscription = data.object;
-      const clerkId = subscription.metadata.userId; // Important: pass this in checkout session
-
-      if (clerkId) {
+    if (type === "checkout.session.completed") {
+      const clerkId = object.metadata?.userId;
+      const subscriptionId = object.subscription;
+      if (clerkId && subscriptionId) {
         await updateSubscriptionImpl(ctx, {
           userId: clerkId,
-          stripeCustomerId: subscription.customer,
-          stripeSubscriptionId: subscription.id,
-          status: subscription.status,
-          plan: subscription.metadata.plan || "Starter",
-          currentPeriodEnd: subscription.current_period_end * 1000,
+          stripeCustomerId: String(object.customer ?? ""),
+          stripeSubscriptionId: String(subscriptionId),
+          status: "active",
+          plan: object.metadata?.plan || "Starter",
+          currentPeriodEnd: Date.now() + 30 * 24 * 60 * 60 * 1000,
         });
       }
+      return;
     }
 
-    if (type === "customer.subscription.deleted") {
-      const subscription = data.object;
-      const clerkId = subscription.metadata.userId;
+    if (type === "customer.subscription.updated" || type === "customer.subscription.deleted") {
+      const subscription = object;
+      const clerkId = subscription.metadata?.userId;
+      if (!clerkId) return;
 
-      if (clerkId) {
+      if (type === "customer.subscription.deleted") {
         await updateSubscriptionImpl(ctx, {
           userId: clerkId,
-          stripeCustomerId: subscription.customer,
+          stripeCustomerId: String(subscription.customer ?? ""),
           stripeSubscriptionId: subscription.id,
           status: "canceled",
-          plan: "Starter", // Revert to free/starter
+          plan: "Starter",
           currentPeriodEnd: Date.now(),
         });
+        return;
       }
+
+      await updateSubscriptionImpl(ctx, {
+        userId: clerkId,
+        stripeCustomerId: String(subscription.customer ?? ""),
+        stripeSubscriptionId: subscription.id,
+        status: subscription.status,
+        plan: subscription.metadata?.plan || "Starter",
+        currentPeriodEnd: (subscription.current_period_end ?? 0) * 1000,
+      });
     }
   },
 });

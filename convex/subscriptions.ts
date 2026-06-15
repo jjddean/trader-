@@ -1,19 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, query } from "./_generated/server";
 
-// This will be expanded in Stage 1/5 as we finalize the Stripe webhooks
 export const getSubscription = query({
-  args: { userId: v.string() }, // clerkId
-  handler: async (ctx, args) => {
+  args: { userId: v.optional(v.string()) },
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
     return await ctx.db
       .query("subscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .unique();
   },
 });
 
-export const updateSubscription = mutation({
+export const updateSubscription = internalMutation({
   args: {
     userId: v.string(),
     stripeCustomerId: v.string(),
@@ -48,6 +50,8 @@ export async function updateSubscriptionImpl(
       status: args.status,
       plan: args.plan,
       currentPeriodEnd: args.currentPeriodEnd,
+      stripeCustomerId: args.stripeCustomerId,
+      stripeSubscriptionId: args.stripeSubscriptionId,
     });
     return existing._id;
   }

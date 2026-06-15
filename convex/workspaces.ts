@@ -1,55 +1,83 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
+async function requireWorkspaceAccess(
+  ctx: { db: any },
+  workspaceId: any,
+  userId: string,
+) {
+  const workspace = await ctx.db.get(workspaceId);
+  if (!workspace) throw new Error("Workspace not found");
+  if (workspace.ownerId === userId) return workspace;
+
+  const membership = await ctx.db
+    .query("workspaceMembers")
+    .withIndex("by_user", (q: any) => q.eq("userId", userId))
+    .filter((q: any) => q.eq(q.field("workspaceId"), workspaceId))
+    .first();
+
+  if (!membership) throw new Error("Unauthorized");
+  return workspace;
+}
+
 export const getWorkspaces = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
-    // 1. Get owned workspaces
+  args: { userId: v.optional(v.string()) },
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const userId = identity.subject;
+
     const owned = await ctx.db
       .query("workspaces")
-      .withIndex("by_owner", (q) => q.eq("ownerId", args.userId))
+      .withIndex("by_owner", (q) => q.eq("ownerId", userId))
       .take(100);
 
-    // 2. Get member workspaces
     const memberships = await ctx.db
       .query("workspaceMembers")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .take(200);
 
     const memberWorkspaces = await Promise.all(
-      memberships.map((m) => ctx.db.get(m.workspaceId))
+      memberships.map((m) => ctx.db.get(m.workspaceId)),
     );
 
-    // Combine and deduplicate
     const allWorkspaces = [...owned, ...memberWorkspaces.filter(Boolean)];
-    const uniqueWorkspaces = Array.from(new Map(allWorkspaces.map((w) => [w!._id, w])).values());
-
-    return uniqueWorkspaces;
+    return Array.from(new Map(allWorkspaces.map((w) => [w!._id, w])).values());
   },
 });
 
 export const getWorkspace = query({
   args: { workspaceId: v.id("workspaces") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.workspaceId);
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    try {
+      return await requireWorkspaceAccess(ctx, args.workspaceId, identity.subject);
+    } catch {
+      return null;
+    }
   },
 });
 
 export const createWorkspace = mutation({
   args: {
-    userId: v.string(),
     name: v.string(),
+    userId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
     const workspaceId = await ctx.db.insert("workspaces", {
       name: args.name,
-      ownerId: args.userId,
+      ownerId: identity.subject,
     });
 
-    // Automatically make the creator an admin member
     await ctx.db.insert("workspaceMembers", {
       workspaceId,
-      userId: args.userId,
+      userId: identity.subject,
       role: "admin",
     });
 
@@ -64,6 +92,11 @@ export const updateWorkspaceConfig = mutation({
     hmrcTokensId: v.optional(v.id("hmrc_tokens")),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    await requireWorkspaceAccess(ctx, args.workspaceId, identity.subject);
+
     const { workspaceId, ...updates } = args;
     await ctx.db.patch(workspaceId, updates);
     return workspaceId;

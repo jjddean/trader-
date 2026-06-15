@@ -4,18 +4,36 @@ import { api, internal } from "./_generated/api";
 
 const http = httpRouter();
 
+function secretsEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) {
+    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return mismatch === 0;
+}
+
+function authorizeBearer(request: Request, envKey: string): boolean {
+  const expected = process.env[envKey]?.trim();
+  if (!expected) return false;
+
+  const authHeader = request.headers.get("Authorization")?.trim() ?? "";
+  const received = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (!received) return false;
+
+  return secretsEqual(expected, received);
+}
+
 http.route({
   path: "/hmrc-sync-trigger",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
-    const authHeader = request.headers.get("Authorization");
-    const syncSecret = process.env.SYNC_SECRET || "default_sync_secret";
-
-    if (authHeader !== `Bearer ${syncSecret}`) {
+    if (!authorizeBearer(request, "SYNC_SECRET")) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    // Trigger the global sync action
+    const syncSecret = process.env.SYNC_SECRET!.trim();
+
     await ctx.runAction(api.actions.hmrc.syncAllUsersHMRC, {
         secret: syncSecret
     });
@@ -32,18 +50,21 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     try {
+      const ingestSecret = process.env.INGEST_SECRET?.trim();
+      if (!ingestSecret) {
+        return new Response("Ingest not configured", { status: 503 });
+      }
+
+      const provided = request.headers.get("X-Ingest-Secret")?.trim() ?? "";
+      if (!secretsEqual(ingestSecret, provided)) {
+        return new Response("Unauthorized Ingest", { status: 401 });
+      }
+
       const payload = await request.json();
       
       // Extract the forwarding address (e.g. data+user_xyz@ingest.freightcode.com)
       const toAddress = payload.To || payload.to || "";
       const match = toAddress.match(/data\+(.+)@ingest\.freightcode\.com/i);
-      
-      const ingestSecret = request.headers.get("X-Ingest-Secret");
-      const expectedSecret = process.env.INGEST_SECRET || "default_ingest_secret";
-
-      if (ingestSecret !== expectedSecret) {
-        return new Response("Unauthorized Ingest", { status: 401 });
-      }
 
       if (!match) {
         return new Response("Invalid destination address", { status: 400 });
@@ -71,6 +92,32 @@ http.route({
     } catch (error) {
       console.error("Email ingest error:", error);
       return new Response("Internal Server Error", { status: 500 });
+    }
+  }),
+});
+
+http.route({
+  path: "/stripe-webhook",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const signature = request.headers.get("stripe-signature");
+    if (!signature) {
+      return new Response("Missing stripe-signature", { status: 400 });
+    }
+
+    try {
+      const body = await request.text();
+      await ctx.runAction(internal.actions.stripe.processWebhook, {
+        body,
+        signature,
+      });
+      return new Response(JSON.stringify({ received: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (error) {
+      console.error("Stripe webhook error:", error);
+      return new Response("Webhook error", { status: 400 });
     }
   }),
 });

@@ -84,8 +84,13 @@ export const trackUpload = mutation({
   }
 });
 
-export const generateUploadUrl = mutation(async (ctx) => {
-  return await ctx.storage.generateUploadUrl();
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    return await ctx.storage.generateUploadUrl();
+  },
 });
 
 export const saveDocument = mutation({

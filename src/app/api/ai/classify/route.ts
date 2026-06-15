@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import Groq from "groq-sdk";
 
 export async function POST(request: Request) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
+    }
+
     const { description } = await request.json();
 
     if (!description) {

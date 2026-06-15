@@ -2,7 +2,7 @@ import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireAdmin } from "./lib/user_role";
 
-export const logAction = mutation({
+export const logAction = internalMutation({
   args: {
     action: v.string(),
     userId: v.string(),
@@ -14,6 +14,29 @@ export const logAction = mutation({
     const { metadata, ...rest } = args;
     return await ctx.db.insert("auditLogs", {
       ...rest,
+      details: metadata,
+      timestamp: Date.now(),
+      archived: false,
+    });
+  },
+});
+
+/** Authenticated users log actions against their own userId only. */
+export const logMyAction = mutation({
+  args: {
+    action: v.string(),
+    entityId: v.optional(v.string()),
+    ipAddress: v.optional(v.string()),
+    metadata: v.optional(v.any()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const { metadata, ...rest } = args;
+    return await ctx.db.insert("auditLogs", {
+      ...rest,
+      userId: identity.subject,
       details: metadata,
       timestamp: Date.now(),
       archived: false,
@@ -96,5 +119,3 @@ export const markArchived = internalMutation({
     await Promise.all(args.logIds.map((id) => ctx.db.patch(id, { archived: true })));
   }
 });
-
-

@@ -2,7 +2,8 @@
 "use node";
 
 import { v } from "convex/values";
-import { action } from "../_generated/server";
+import { action, internalAction } from "../_generated/server";
+import { api, internal } from "../_generated/api";
 import Stripe from "stripe";
 
 const getStripe = () => {
@@ -52,19 +53,47 @@ export const createCheckoutSession = action({
 });
 
 export const createPortalSession = action({
-  args: {
-    customerId: v.string(),
-  },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx): Promise<string> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
 
+    const subscription = (await ctx.runQuery(api.subscriptions.getSubscription, {})) as {
+      stripeCustomerId?: string;
+    } | null;
+    const customerId = subscription?.stripeCustomerId;
+    if (!customerId) {
+      throw new Error("No Stripe customer linked to this account");
+    }
+
     const stripe = getStripe();
     const session = await stripe.billingPortal.sessions.create({
-      customer: args.customerId,
-      return_url: `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL}/dashboard/user/billing`,
+      customer: customerId,
+      return_url: `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL}/dashboard/settings`,
     });
 
+    if (!session.url) throw new Error("Stripe portal session missing URL");
     return session.url;
+  },
+});
+
+export const processWebhook = internalAction({
+  args: {
+    body: v.string(),
+    signature: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      throw new Error("STRIPE_WEBHOOK_SECRET is not configured");
+    }
+
+    const stripe = getStripe();
+    const event = stripe.webhooks.constructEvent(args.body, args.signature, webhookSecret);
+
+    await ctx.runMutation(internal.stripe_webhooks.stripeWebhookHandler, {
+      type: event.type,
+      data: event.data,
+    });
   },
 });

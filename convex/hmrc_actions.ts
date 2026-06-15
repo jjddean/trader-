@@ -16,9 +16,15 @@ function buildHmrcNotificationIdempotencyKey(rawPayload: string): string {
 }
 
 function makeSavePulledNotification(ctx: ActionCtx) {
+    const ingestSecret = process.env.NOTIFICATION_INGEST_SECRET?.trim();
+    if (!ingestSecret) {
+        throw new Error("NOTIFICATION_INGEST_SECRET is not configured");
+    }
+
     return async (saveArgs: PullSaveArgs) => {
         await ctx.runMutation(api.notifications.saveWebhook, {
             ...saveArgs,
+            ingestSecret,
             idempotencyKey: buildHmrcNotificationIdempotencyKey(saveArgs.rawPayload),
         });
     };

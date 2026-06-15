@@ -126,7 +126,13 @@ export async function pullHmrcNotificationsForConversation(params: {
       `[HMRC-PULL] Parsed: type=${notificationType}, mrn=${mrn}, errorCodes=${errorCodes.join(",") || "none"}`,
     );
 
+    const ingestSecret = process.env.NOTIFICATION_INGEST_SECRET?.trim();
+    if (!ingestSecret) {
+      throw new Error("NOTIFICATION_INGEST_SECRET is not configured");
+    }
+
     await convex.mutation(api.notifications.saveWebhook, {
+      ingestSecret,
       mrn,
       conversationId,
       notificationType,

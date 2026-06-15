@@ -13,6 +13,7 @@ import { collectDeclarationNotifications } from "./lib/collect_declaration_notif
 
 export const saveWebhook = mutation({
   args: {
+    ingestSecret: v.string(),
     mrn: v.string(),
     conversationId: v.string(),
     notificationType: v.string(),
@@ -30,6 +31,11 @@ export const saveWebhook = mutation({
     issueDateTime: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const expected = process.env.NOTIFICATION_INGEST_SECRET?.trim();
+    if (!expected || args.ingestSecret !== expected) {
+      throw new Error("Unauthorized");
+    }
+
     // Dedupe by HMRC notificationId first — stable across push/pull channels.
     if (args.hmrcNotificationId) {
       const existingByNotifId = await ctx.db
@@ -37,7 +43,7 @@ export const saveWebhook = mutation({
         .withIndex("by_hmrcNotificationId", (q) => q.eq("hmrcNotificationId", args.hmrcNotificationId))
         .first();
       if (existingByNotifId) {
-        await ctx.runMutation(api.audit.logAction, {
+        await ctx.runMutation(internal.audit.logAction, {
           userId: existingByNotifId.userId || "",
           action: "notification_dedup",
           metadata: { reason: "hmrcNotificationId", id: existingByNotifId._id, incoming: { conversationId: args.conversationId, notificationType: args.notificationType } },
@@ -53,7 +59,7 @@ export const saveWebhook = mutation({
         .withIndex("by_idempotencyKey", (q) => q.eq("idempotencyKey", args.idempotencyKey))
         .first();
       if (existingByIdemp) {
-        await ctx.runMutation(api.audit.logAction, {
+        await ctx.runMutation(internal.audit.logAction, {
           userId: existingByIdemp.userId || "",
           action: "notification_dedup",
           metadata: { reason: "idempotencyKey", id: existingByIdemp._id, incoming: { conversationId: args.conversationId, notificationType: args.notificationType } },
@@ -71,7 +77,7 @@ export const saveWebhook = mutation({
         )
         .first();
       if (existingByConv) {
-        await ctx.runMutation(api.audit.logAction, {
+        await ctx.runMutation(internal.audit.logAction, {
           userId: existingByConv.userId || "",
           action: "notification_dedup",
           metadata: { reason: "conv_type_ts", id: existingByConv._id, incoming: { idempotencyKey: args.idempotencyKey } },
@@ -187,7 +193,7 @@ export const saveWebhook = mutation({
           declarationId: declaration._id,
         });
 
-        await ctx.runMutation(api.audit.logAction, {
+        await ctx.runMutation(internal.audit.logAction, {
           userId: declaration.userId,
           action: "declaration_status_updated",
           metadata: {
@@ -214,6 +220,16 @@ export const getWebhooks = query({
     declarationId: v.optional(v.id("declarations")),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    if (args.declarationId) {
+      const declaration = await ctx.db.get(args.declarationId);
+      if (!declaration || declaration.userId !== identity.subject) {
+        return [];
+      }
+    }
+
     return collectDeclarationNotifications(ctx.db, {
       declarationId: args.declarationId,
       conversationId: args.conversationId,
@@ -223,11 +239,14 @@ export const getWebhooks = query({
 });
 
 export const getUserNotifications = query({
-  args: { userId: v.string() },
-  handler: async (ctx, args) => {
+  args: { userId: v.optional(v.string()) },
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
     return await ctx.db
       .query("notifications")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .order("desc")
       .take(15);
   },

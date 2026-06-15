@@ -28,9 +28,8 @@ export async function POST(request: Request) {
     convex.setAuth(convexToken);
     const logSmartUploadError = async (code: string, message: string, metadata?: Record<string, unknown>) => {
       try {
-        await convex.mutation(api.audit.logAction, {
+        await convex.mutation(api.audit.logMyAction, {
           action: "smart_upload_error",
-          userId: clerkUserId,
           metadata: {
             route: "/api/ai/smart-upload",
             code,
@@ -210,9 +209,8 @@ export async function POST(request: Request) {
         const fallbackToken = await getToken({ template: "convex" });
         if (fallbackToken) {
           convex.setAuth(fallbackToken);
-          await convex.mutation(api.audit.logAction, {
+          await convex.mutation(api.audit.logMyAction, {
             action: "smart_upload_error",
-            userId: fallbackUserId,
             metadata: {
               route: "/api/ai/smart-upload",
               code: "UNHANDLED_EXCEPTION",

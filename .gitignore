@@ -42,6 +42,7 @@ yarn-error.log*
 next-env.d.ts
 
 # LoRA training artifacts
+/tmp/
 /lora-output/
 /lora-output-kaggle-test/
 /lora-colab-bundle/

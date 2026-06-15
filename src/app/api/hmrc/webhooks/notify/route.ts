@@ -74,8 +74,15 @@ export async function POST(request: Request) {
     console.log(`[HMRC-WEBHOOK] Parsed: type=${notificationType}, mrn=${mrn}, errorCodes=${errorCodes.join(",") || "none"}`);
     const idempotencyKey = buildHmrcNotificationIdempotencyKey(rawPayload);
 
+    const ingestSecret = process.env.NOTIFICATION_INGEST_SECRET?.trim();
+    if (!ingestSecret) {
+      console.error("[HMRC-WEBHOOK] NOTIFICATION_INGEST_SECRET not configured");
+      return NextResponse.json({ error: "Notification ingest not configured" }, { status: 500 });
+    }
+
     // Save to Convex for the dashboard to pick up
     await convex.mutation(api.notifications.saveWebhook, {
+      ingestSecret,
       mrn,
       conversationId,
       notificationType,

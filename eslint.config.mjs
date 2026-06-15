@@ -26,16 +26,37 @@ const eslintConfig = defineConfig([
         },
       ],
     },
-    overrides: [
-      {
-        files: ["convex/**/*.ts", "src/lib/**/*.ts", "src/lib/**/*.tsx"],
-        rules: {
-          "@typescript-eslint/no-explicit-any": "off",
-        },
-      },
-    ],
   },
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
+  {
+    files: ["convex/**/*.ts", "src/lib/**/*.ts", "src/lib/**/*.tsx"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+  globalIgnores([
+    // Next.js / build output
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    // Dependencies & tooling caches
+    "node_modules/**",
+    ".vercel/**",
+    // Local scratch & experiments (not production code)
+    "tmp/**",
+    "cloudagent/.wrangler/**",
+    // ML / Kaggle artifacts
+    "lora-output/**",
+    "lora-output-kaggle-test/**",
+    "lora-colab-bundle/**",
+    ".kaggle-*/**",
+    ".kaggle-wheels/**",
+    ".kaggle-dataset-staging/**",
+    ".kaggle-wheels-staging/**",
+    // Generated / vendor
+    "convex/_generated/**",
+    "**/__pycache__/**",
+  ]),
 ]);
 
 export default eslintConfig;

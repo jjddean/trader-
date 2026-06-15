@@ -824,29 +824,39 @@ export const getLane = query({
   },
 });
 
-// Debug-only: list declarations for a userId without a Clerk session (same pattern as getToken).
+// Debug-only: list declarations for a userId without a Clerk session (test-evidence scripts).
 export const listForDebug = query({
   args: { userId: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    const effectiveUserId = identity?.subject || args.userId;
-    if (!effectiveUserId) return [];
+    if (identity) {
+      return await ctx.db
+        .query("declarations")
+        .withIndex("by_user", (q: any) => q.eq("userId", identity.subject))
+        .order("desc")
+        .take(20);
+    }
+
+    if (process.env.ALLOW_DEBUG_CONVEX_QUERIES !== "true" || !args.userId) {
+      return [];
+    }
+
     return await ctx.db
       .query("declarations")
-      .withIndex("by_user", (q: any) => q.eq("userId", effectiveUserId))
+      .withIndex("by_user", (q: any) => q.eq("userId", args.userId))
       .order("desc")
       .take(20);
   },
 });
 
 // Debug-only query: used by test-evidence/debug-payload.js to fetch a declaration
-// without a Clerk browser session. Falls back to args.userId (same pattern as hmrc.getToken).
-// Still enforces ownership — only returns if userId matches the declaration owner.
+// without a Clerk browser session. Requires ALLOW_DEBUG_CONVEX_QUERIES=true in dev.
 export const getForDebug = query({
   args: { id: v.id("declarations"), userId: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    const effectiveUserId = identity?.subject || args.userId;
+    const effectiveUserId = identity?.subject
+      ?? (process.env.ALLOW_DEBUG_CONVEX_QUERIES === "true" ? args.userId : undefined);
     if (!effectiveUserId) return null;
 
     const declaration = await ctx.db.get(args.id);
