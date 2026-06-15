@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { v } from "convex/values";
-import { internalMutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, query } from "./_generated/server";
 
 export const getSubscription = query({
   args: { userId: v.optional(v.string()) },
@@ -58,3 +58,14 @@ export async function updateSubscriptionImpl(
 
   return await ctx.db.insert("subscriptions", args);
 }
+
+/** CLI/script verification after Stripe webhook tests — internal only. */
+export const getSubscriptionByUserIdInternal = internalQuery({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .unique();
+  },
+});

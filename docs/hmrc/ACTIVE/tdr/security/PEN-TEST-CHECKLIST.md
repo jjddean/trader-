@@ -31,8 +31,8 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 | 1.4 | Handler is internal-only | `stripeWebhookHandler` = `internalMutation`; signature via `processWebhook` | `[~]` | Code in `convex/stripe_webhooks.ts`, `convex/http.ts` — **retest after deploy** |
 | 1.5 | Public `updateSubscription` removed | Only internal mutation; not callable from client | `[~]` | `convex/subscriptions.ts` — **retest after deploy** |
 | 1.6 | Portal route IDOR | `/api/stripe/portal` requires Clerk auth; customerId from own subscription only | `[~]` | `src/app/api/stripe/portal/route.ts` — **manual IDOR retest** |
-| 1.7 | Add `customer.subscription.updated` to Stripe webhook events | Plan changes sync | `[ ]` | Dashboard → playful-voyage → Events |
-| 1.8 | Real checkout updates `subscriptions` row | End-to-end with `metadata.userId` on session | `[ ]` | CLI trigger alone may 200 without DB write |
+| 1.7 | Add `customer.subscription.updated` to Stripe webhook events | Plan changes sync | `[x]` | `we_1TiOCoLHQkvGaqmg1tjbcGdz` — enabled 15 Jun 2026 |
+| 1.8 | Real checkout updates `subscriptions` row | End-to-end with `metadata.userId` on session | `[x]` | `node scripts/stripe-subscription-sync-test.mjs` |
 
 **Pen test probes (Stripe):**
 

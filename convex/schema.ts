@@ -49,7 +49,10 @@ export default defineSchema({
     status: v.optional(v.any()), // "active", "trialing", "past_due", "canceled"
     plan: v.optional(v.any()), // "Starter", "Professional", "Enterprise"
     currentPeriodEnd: v.optional(v.any()), // timestamp
-  }).index("by_user", ["userId"]),
+  })
+    .index("by_user", ["userId"])
+    .index("by_stripe_customer", ["stripeCustomerId"])
+    .index("by_stripe_subscription", ["stripeSubscriptionId"]),
 
   referenceDatasets: defineTable({
     name: v.optional(v.any()), // "hs_codes", "dcts", "tariffs", "currency", "companies"
