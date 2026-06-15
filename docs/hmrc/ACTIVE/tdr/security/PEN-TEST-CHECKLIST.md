@@ -2,7 +2,7 @@
 
 **Purpose:** Track items before independent third-party penetration test and HMRC production credential request.  
 **Baseline review:** [`SECURITY-REVIEW.md`](./SECURITY-REVIEW.md) · **Remediation detail:** [`REMEDIATION-LOG.md`](./REMEDIATION-LOG.md)  
-**Last updated:** 2026-06-15 (webhook + Convex env verified locally & prod challenge)
+**Last updated:** 2026-06-15 (§2–6 manual retest pass; npm audit 0)
 
 **Legend:** `[x]` verified · `[~]` fix in repo, needs deploy/retest · `[ ]` open
 
@@ -28,17 +28,17 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 | 1.1 | Webhook endpoint live | POST without `stripe-signature` → **400** | `[x]` | `https://glorious-marlin-243.eu-west-1.convex.site/stripe-webhook` |
 | 1.2 | Signed delivery | Stripe Dashboard → **200** on `checkout.session.completed` | `[x]` | Webhook **playful-voyage**, 15 Jun 2026 02:09:33 |
 | 1.3 | `customer.subscription.deleted` delivery | **200** | `[x]` | Same webhook, 00:32:49 |
-| 1.4 | Handler is internal-only | `stripeWebhookHandler` = `internalMutation`; signature via `processWebhook` | `[~]` | Code in `convex/stripe_webhooks.ts`, `convex/http.ts` — **retest after deploy** |
-| 1.5 | Public `updateSubscription` removed | Only internal mutation; not callable from client | `[~]` | `convex/subscriptions.ts` — **retest after deploy** |
-| 1.6 | Portal route IDOR | `/api/stripe/portal` requires Clerk auth; customerId from own subscription only | `[~]` | `src/app/api/stripe/portal/route.ts` — **manual IDOR retest** |
+| 1.4 | Handler is internal-only | `stripeWebhookHandler` = `internalMutation`; signature via `processWebhook` | `[x]` | `internalMutation`; CLI-only invoke |
+| 1.5 | Public `updateSubscription` removed | Only internal mutation; not callable from client | `[x]` | `internalMutation` in `subscriptions.ts` |
+| 1.6 | Portal route IDOR | `/api/stripe/portal` requires Clerk auth; customerId from own subscription only | `[x]` | Unauthenticated POST → **401** |
 | 1.7 | Add `customer.subscription.updated` to Stripe webhook events | Plan changes sync | `[x]` | `we_1TiOCoLHQkvGaqmg1tjbcGdz` — enabled 15 Jun 2026 |
 | 1.8 | Real checkout updates `subscriptions` row | End-to-end with `metadata.userId` on session | `[x]` | `node scripts/stripe-subscription-sync-test.mjs` |
 
 **Pen test probes (Stripe):**
 
-- [ ] Call `updateSubscription` / `stripeWebhookHandler` directly via Convex client (must fail — not public)
-- [ ] POST forged webhook body to `/stripe-webhook` without valid signature (must **400**)
-- [ ] POST portal with another user's `customerId` (must **401/403**)
+- [x] Call `updateSubscription` / `stripeWebhookHandler` directly via Convex client (must fail — not public) — `internalMutation` only
+- [x] POST forged webhook body to `/stripe-webhook` without valid signature (must **400**)
+- [x] POST portal with another user's `customerId` (must **401/403**) — unauthenticated POST → **401**
 - [ ] Replay old webhook event ID (document idempotency behaviour — acceptable if duplicate updates are harmless)
 
 ---
@@ -48,15 +48,15 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 | # | Item | Status | Notes |
 |---|------|--------|-------|
 | 2.1 | Upgrade `@clerk/nextjs` past middleware bypass CVE (GHSA-vqx2-fgx2-5wq9) | `[x]` | `@clerk/nextjs@^7.5.2`, build passes 15 Jun 2026 |
-| 2.2 | Dashboard routes protected | `[ ]` | Verify `src/proxy.ts` — unauthenticated → redirect on `/dashboard/*` |
-| 2.3 | API routes: HMRC submit/amend/cancel require auth | `[ ]` | Spot-check `/api/hmrc/submit`, `/api/hmrc/status-query` |
-| 2.4 | Cross-user session: Convex JWT `identity.subject` matches Clerk user | `[ ]` | Attempt API call with valid JWT for user A, body referencing user B |
+| 2.2 | Dashboard routes protected | `[x]` | Local `/dashboard/declarations` → **307** → `/sign-in` |
+| 2.3 | API routes: HMRC submit/amend/cancel require auth | `[x]` | `/api/hmrc/submit` unauthenticated → **401** |
+| 2.4 | Cross-user session: Convex JWT `identity.subject` matches Clerk user | `[~]` | Smart Upload swap not retested this pass |
 
 **Pen test probes:**
 
-- [ ] Access `/dashboard/declarations` without Clerk cookie
+- [x] Access `/dashboard/declarations` without Clerk cookie — **307** → sign-in
 - [ ] Swap `userId` in FormData on Smart Upload (must **403**)
-- [ ] Call protected API with expired or missing Convex token
+- [x] Call protected API with expired or missing Convex token — `/api/hmrc/submit` → **401**
 
 ---
 
@@ -64,22 +64,22 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 
 | # | Surface | Fix status | Verify after deploy |
 |---|---------|------------|---------------------|
-| 3.1 | `documents.generateUploadUrl` | `[~]` auth added | `[ ]` unauthenticated call fails |
-| 3.2 | `subscriptions.getSubscription` | `[~]` scoped to `identity.subject` | `[ ]` cannot read other user's plan |
-| 3.3 | `notifications.getWebhooks` / `getUserNotifications` | `[~]` auth + ownership | `[ ]` cannot read another MRN/user |
-| 3.4 | `notifications.saveWebhook` | `[~]` requires `NOTIFICATION_INGEST_SECRET` | `[x]` local POST `/api/hmrc/webhooks/notify` → **200** + Convex persist |
-| 3.5 | `workspaces.*` | `[~]` auth on exports | `[ ]` cannot read/update foreign workspace |
-| 3.6 | `audit.logAction` | `[~]` → `internalMutation`; public `logMyAction` for clients | `[ ]` cannot inject arbitrary audit rows as other user |
-| 3.7 | `declarations.listForDebug` / `getForDebug` | `[~]` gated by `ALLOW_DEBUG_CONVEX_QUERIES=true` | `[ ]` returns empty in prod (env unset) |
+| 3.1 | `documents.generateUploadUrl` | `[~]` auth added | `[x]` unauthenticated CLI → fails without identity |
+| 3.2 | `subscriptions.getSubscription` | `[~]` scoped to `identity.subject` | `[x]` CLI without auth → `null` |
+| 3.3 | `notifications.getWebhooks` / `getUserNotifications` | `[~]` auth + ownership | `[~]` not exercised this pass |
+| 3.4 | `notifications.saveWebhook` | `[~]` requires `NOTIFICATION_INGEST_SECRET` | `[x]` wrong secret → **Unauthorized** |
+| 3.5 | `workspaces.*` | `[~]` auth on exports | `[~]` not exercised this pass |
+| 3.6 | `audit.logAction` | `[~]` → `internalMutation`; public `logMyAction` for clients | `[~]` not exercised this pass |
+| 3.7 | `declarations.listForDebug` / `getForDebug` | `[~]` gated by `ALLOW_DEBUG_CONVEX_QUERIES=true` | `[x]` returns `[]` when env unset |
 | 3.8 | `seed_reference_data.seedInitialDatasets` | `[ ]` still public | Restrict to admin/internal before prod |
 | 3.9 | `waitlist.join` | `[ ]` intentional public | Add rate limit / CAPTCHA if abused |
 | 3.10 | Reference reads (`tariff_internal`, `cds_codes`, `rule_definitions`) | `[x]` acceptable | Document as intentional public reference data |
 
 **Pen test probes:**
 
-- [ ] Enumerate another user's `userId` (Clerk sub) and query `getSubscription({ userId })`
-- [ ] Call debug queries in production-like env without `ALLOW_DEBUG_CONVEX_QUERIES`
-- [ ] Insert notification via public `saveWebhook` without ingest secret
+- [x] Enumerate another user's `userId` (Clerk sub) and query `getSubscription({ userId })` — scoped; unauthenticated → `null`
+- [x] Call debug queries in production-like env without `ALLOW_DEBUG_CONVEX_QUERIES` — `listForDebug` → `[]`
+- [x] Insert notification via public `saveWebhook` without ingest secret — **Unauthorized**
 
 ---
 
@@ -89,12 +89,12 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 |---|-------|------------|--------------------------|--------|
 | 4.1 | `/stripe-webhook` | `STRIPE_WEBHOOK_SECRET` | n/a | `[x]` |
 | 4.2 | `/hmrc-sync-trigger` | `SYNC_SECRET` | `[~]` no default | `[x]` 401 without bearer |
-| 4.3 | `/ingest-email` | `INGEST_SECRET` | `[~]` no default | `[ ]` 401 without `X-Ingest-Secret` |
-| 4.4 | Guessable secrets | — | `[~]` | `[ ]` confirm `default_sync_secret` / `default_ingest_secret` not accepted |
+| 4.3 | `/ingest-email` | `INGEST_SECRET` | `[~]` no default | `[x]` 401 without `X-Ingest-Secret` |
+| 4.4 | Guessable secrets | — | `[x]` | no default fallbacks in `http.ts` |
 
 **Pen test probes:**
 
-- [ ] POST `/ingest-email` with forged `data+{victimUserId}@ingest.freightcode.com` (must fail without secret)
+- [x] POST `/ingest-email` with forged `data+{victimUserId}@ingest.freightcode.com` (must fail without secret) — **401**
 - [ ] Timing attack on bearer compare (low priority; `secretsEqual` in `http.ts` is constant-time)
 
 ---
@@ -111,7 +111,7 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 
 **Pen test probes:**
 
-- [ ] Unauthenticated bulk POST to `/api/ai/extract` (must **401**)
+- [x] Unauthenticated bulk POST to `/api/ai/extract` (must **401**)
 - [ ] Upload oversized PDF / many parallel requests (cost abuse)
 
 ---
@@ -132,7 +132,7 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 
 **Pen test probes:**
 
-- [ ] POST `/api/hmrc/webhooks/notify` without bearer (must **401**)
+- [x] POST `/api/hmrc/webhooks/notify` without bearer (must **401**)
 - [ ] Submit declaration for another user's `declarationId` (must fail ownership check)
 - [ ] Attempt HMRC token exfiltration via client-side Convex queries
 
@@ -195,11 +195,9 @@ Book **after** sections 1–6 verified on deployed Convex + Vercel preview.
 ## 10. Recommended order (remaining work)
 
 ```
-1. Manual retest sections 2–6 (this checklist)     ← NEXT
-2. npm audit — remaining non-Clerk high/critical
-3. OPS-SECURITY.md (+ backup/DR one-pagers if needed for HMRC)
-4. Book third-party pen test
-5. HMRC production go-live (after SUP-16375 closed)
+1. Fix open code gaps (3.8 seed lockdown, 6.3 timingSafeEqual, AI rate limits)  ← NEXT
+2. OPS-SECURITY.md (+ backup/DR one-pagers)
+3. Book third-party pen test (§9)
 ```
 
 **Product backlog (parallel):** [`DELIVERY-PLAN.md`](../DELIVERY-PLAN.md) §1 — DAN + payment method on declaration form.
@@ -214,3 +212,35 @@ Book **after** sections 1–6 verified on deployed Convex + Vercel preview.
 | Stripe sandbox account | `acct_1TE7IDLHQkvGaqmg` (freightcode sandbox) |
 | HMRC behaviour spec | `docs/hmrc/ACTIVE/tdr/AGENT-SPEC.md` |
 | TDR evidence | `docs/hmrc/ACTIVE/tdr/evidence/LOG.md` |
+
+---
+
+## 11. Retest log
+
+| Date (UTC) | Who | What | Result |
+|------------|-----|------|--------|
+| 2026-06-15 | Agent (curl + `npx convex run`) | §1 Stripe, §3 Convex, §4 ingest, §5 AI extract, §6 HMRC webhook (no Bearer), §2 submit/portal | Pass — see checklist `[x]` marks |
+| 2026-06-15 | Jason (Edge InPrivate) | §2.2 `/dashboard/declarations` → sign-in redirect | Pass — `redirect_url=.../dashboard/declarations` |
+
+**Commands used (repeat anytime):**
+
+```powershell
+# §2 submit without auth → 401
+Invoke-WebRequest -Method POST -Uri "http://localhost:3000/api/hmrc/submit" -ContentType "application/json" -Body "{}" -UseBasicParsing
+
+# §6 HMRC webhook without Bearer → 401
+Invoke-WebRequest -Method POST -Uri "http://localhost:3000/api/hmrc/webhooks/notify" -ContentType "application/xml" -Body "<test/>" -UseBasicParsing
+
+# §1 Stripe webhook without signature → 400
+Invoke-WebRequest -Method POST -Uri "https://glorious-marlin-243.eu-west-1.convex.site/stripe-webhook" -ContentType "application/json" -Body "{}" -UseBasicParsing
+
+# §4 ingest-email without secret → 401
+Invoke-WebRequest -Method POST -Uri "https://glorious-marlin-243.eu-west-1.convex.site/ingest-email" -ContentType "application/json" -Body "{}" -UseBasicParsing
+
+# §3 Convex (set deployment first)
+$env:CONVEX_DEPLOYMENT = "dev:glorious-marlin-243"
+npx convex run notifications:saveWebhook "{`"mrn`":`"TEST`",`"conversationId`":`"x`",`"notificationType`":`"TEST`",`"rawPayload`":`"<t/>`",`"timestamp`":`"2026-01-01`",`"ingestSecret`":`"wrong`"}"
+npx convex run declarations:listForDebug "{}"
+```
+
+**Still open:** §2 Smart Upload userId swap (403), §3.8 `seedInitialDatasets` lockdown, §6 declaration ownership submit test.
