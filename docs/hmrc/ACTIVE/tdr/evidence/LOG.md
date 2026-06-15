@@ -15,3 +15,17 @@ Add one row per new test. Store XML under this folder.
 | 2026-06-13 | File upload | — | 26GB6GFBKLT2N0TAR6 | — | Initiate OK | `file-upload/` |
 
 **Row template:** `| YYYY-MM-DD | test | LRN | MRN | conversation-id | outcome | folder/ |`
+
+---
+
+## Production / HMRC ops (not sandbox tests)
+
+| Date | Event | Ref | Outcome |
+|------|-------|-----|---------|
+| 2026-06-15 | Developer Hub email verified | freightcode app | Production credentials unlocked (sign in to Hub) |
+| 2026-06-15 | SDST production application approved | Agne Bergelyte, SDST | Approved; S&S + Pull Notifications removed from prod app |
+| 2026-06-15 | Production push URL submitted | SDST | `https://www.freightcode.co.uk/api/hmrc/webhooks/notify` |
+
+**Production push URL:** `https://www.freightcode.co.uk/api/hmrc/webhooks/notify`  
+**Production application ID:** `00292df9-e2e6-4d66-9d28-7d79a2a931ba`
+

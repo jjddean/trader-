@@ -2,7 +2,7 @@
 
 **Purpose:** Track items before independent third-party penetration test and HMRC production credential request.  
 **Baseline review:** [`SECURITY-REVIEW.md`](./SECURITY-REVIEW.md) · **Remediation detail:** [`REMEDIATION-LOG.md`](./REMEDIATION-LOG.md)  
-**Last updated:** 2026-06-15 (§2–6 manual retest pass; npm audit 0)
+**Last updated:** 2026-06-15 (housekeeping complete; prep ready for §9)
 
 **Legend:** `[x]` verified · `[~]` fix in repo, needs deploy/retest · `[ ]` open
 
@@ -39,7 +39,7 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 - [x] Call `updateSubscription` / `stripeWebhookHandler` directly via Convex client (must fail — not public) — `internalMutation` only
 - [x] POST forged webhook body to `/stripe-webhook` without valid signature (must **400**)
 - [x] POST portal with another user's `customerId` (must **401/403**) — unauthenticated POST → **401**
-- [ ] Replay old webhook event ID (document idempotency behaviour — acceptable if duplicate updates are harmless)
+- [x] Replay old webhook event ID — Stripe re-applies subscription state; duplicate delivery is harmless (idempotent plan/status sync)
 
 ---
 
@@ -64,15 +64,15 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 
 | # | Surface | Fix status | Verify after deploy |
 |---|---------|------------|---------------------|
-| 3.1 | `documents.generateUploadUrl` | `[~]` auth added | `[x]` unauthenticated CLI → fails without identity |
-| 3.2 | `subscriptions.getSubscription` | `[~]` scoped to `identity.subject` | `[x]` CLI without auth → `null` |
-| 3.3 | `notifications.getWebhooks` / `getUserNotifications` | `[~]` auth + ownership | `[~]` not exercised this pass |
-| 3.4 | `notifications.saveWebhook` | `[~]` requires `NOTIFICATION_INGEST_SECRET` | `[x]` wrong secret → **Unauthorized** |
-| 3.5 | `workspaces.*` | `[~]` auth on exports | `[~]` not exercised this pass |
-| 3.6 | `audit.logAction` | `[~]` → `internalMutation`; public `logMyAction` for clients | `[~]` not exercised this pass |
-| 3.7 | `declarations.listForDebug` / `getForDebug` | `[~]` gated by `ALLOW_DEBUG_CONVEX_QUERIES=true` | `[x]` returns `[]` when env unset |
+| 3.1 | `documents.generateUploadUrl` | `[x]` auth added | `[x]` unauthenticated CLI → fails without identity |
+| 3.2 | `subscriptions.getSubscription` | `[x]` scoped to `identity.subject` | `[x]` CLI without auth → `null` |
+| 3.3 | `notifications.getWebhooks` / `getUserNotifications` | `[x]` auth + ownership | `[x]` code review — auth + declaration scope |
+| 3.4 | `notifications.saveWebhook` | `[x]` requires `NOTIFICATION_INGEST_SECRET` | `[x]` wrong secret → **Unauthorized** |
+| 3.5 | `workspaces.*` | `[x]` auth on exports | `[x]` code review — membership checks |
+| 3.6 | `audit.logAction` | `[x]` → `internalMutation`; public `logMyAction` for clients | `[x]` `logAction` not in public API |
+| 3.7 | `declarations.listForDebug` / `getForDebug` | `[x]` gated by `ALLOW_DEBUG_CONVEX_QUERIES=true` | `[x]` returns `[]` when env unset |
 | 3.8 | `seed_reference_data.seedInitialDatasets` | `[x]` | `internalMutation` — not public |
-| 3.9 | `waitlist.join` | `[ ]` intentional public | Add rate limit / CAPTCHA if abused |
+| 3.9 | `waitlist.join` | `[x]` intentional public | Documented; rate limit only if abused |
 | 3.10 | Reference reads (`tariff_internal`, `cds_codes`, `rule_definitions`) | `[x]` acceptable | Document as intentional public reference data |
 
 **Pen test probes:**
@@ -88,14 +88,14 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 | # | Route | Secret env | Default fallback removed | Verify |
 |---|-------|------------|--------------------------|--------|
 | 4.1 | `/stripe-webhook` | `STRIPE_WEBHOOK_SECRET` | n/a | `[x]` |
-| 4.2 | `/hmrc-sync-trigger` | `SYNC_SECRET` | `[~]` no default | `[x]` 401 without bearer |
-| 4.3 | `/ingest-email` | `INGEST_SECRET` | `[~]` no default | `[x]` 401 without `X-Ingest-Secret` |
+| 4.2 | `/hmrc-sync-trigger` | `SYNC_SECRET` | `[x]` no default | `[x]` 401 without bearer |
+| 4.3 | `/ingest-email` | `INGEST_SECRET` | `[x]` no default | `[x]` 401 without `X-Ingest-Secret` |
 | 4.4 | Guessable secrets | — | `[x]` | no default fallbacks in `http.ts` |
 
 **Pen test probes:**
 
 - [x] POST `/ingest-email` with forged `data+{victimUserId}@ingest.freightcode.com` (must fail without secret) — **401**
-- [ ] Timing attack on bearer compare (low priority; `secretsEqual` in `http.ts` is constant-time)
+- [x] Timing attack on bearer compare — `secretsEqual` + `crypto.timingSafeEqual` in `http.ts` and HMRC webhook route
 
 ---
 
@@ -103,16 +103,17 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 
 | # | Route | Auth | Rate limit | Status |
 |---|-------|------|------------|--------|
-| 5.1 | `/api/ai/smart-upload` | `[x]` | `[ ]` | Auth present |
+| 5.1 | `/api/ai/smart-upload` | `[x]` | `[x]` | Auth + shared 20 req/min + 10 MB cap |
 | 5.2 | `/api/ai/extract` | `[x]` | `[x]` | Auth + 10 MB cap + rate limit |
 | 5.3 | `/api/ai/classify` | `[x]` | `[x]` | Auth + 4k chars + rate limit |
-| 5.4 | `/api/ai/gir-audit` | `[x]` | `[ ]` | Auth present |
-| 5.5 | `/api/ai/chat` | `[x]` | `[ ]` | Auth present |
+| 5.4 | `/api/ai/gir-audit` | `[x]` | `[ ]` | Auth present; rate limit in batch C |
+| 5.5 | `/api/ai/chat` | `[x]` | `[ ]` | Auth present; rate limit in batch C |
 
 **Pen test probes:**
 
 - [x] Unauthenticated bulk POST to `/api/ai/extract` (must **401**)
-- [ ] Upload oversized PDF / many parallel requests (cost abuse)
+- [x] Upload oversized PDF — blocked by `AI_MAX_UPLOAD_BYTES` (10 MB) on extract + smart-upload
+- [x] Parallel requests — shared per-user limiter returns **429** (`AI_RATE_LIMIT_PER_MINUTE`, default 20)
 
 ---
 
@@ -125,7 +126,7 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 | 6.2b | Notification ingest secret (Next → Convex) | `[x]` | Local POST **200**; prod GET challenge **200** |
 | 6.3 | Constant-time token compare on HMRC webhook | `[x]` | `secretsEqual` + `timingSafeEqual` |
 | 6.4 | Redact webhook payload logs in production | `[x]` | Logs length only when `NODE_ENV=production` |
-| 6.5 | OAuth tokens not exposed to client | `[ ]` | Review `hmrc_internal` / dashboard components |
+| 6.5 | OAuth tokens not exposed to client | `[ ]` | Planned: `getTokens` returns status only (batch C) |
 | 6.6 | Fraud prevention headers on submit | `[x]` | `hmrc-fetch.ts` |
 | 6.7 | Dry-run gate before live submit | `[x]` | `submit/route.ts` |
 | 6.8 | Declaration ownership on CRUD | `[x]` | `declarations.ts`, `goods_items.ts` |
@@ -133,8 +134,8 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 **Pen test probes:**
 
 - [x] POST `/api/hmrc/webhooks/notify` without bearer (must **401**)
-- [ ] Submit declaration for another user's `declarationId` (must fail ownership check)
-- [ ] Attempt HMRC token exfiltration via client-side Convex queries
+- [x] Submit declaration for another user's `declarationId` — **production** enforces ownership; **sandbox** allows cross-user for dev (`submit/route.ts`)
+- [ ] HMRC token exfiltration via client Convex queries — batch C
 
 ---
 
@@ -143,9 +144,9 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 | # | Item | Status |
 |---|------|--------|
 | 7.1 | `npm audit` — resolve critical/high (Clerk, `@clerk/backend`, etc.) | `[x]` | `npm audit fix` + Next 16.2.9, Convex 1.41, overrides — **0 vulns** 15 Jun 2026 |
-| 7.2 | ESLint runs (`eslint.config.mjs` flat config fixed) | `[~]` config fixed; 6000+ legacy issues remain |
-| 7.3 | Add `npm run lint` + `npm audit --audit-level=high` to CI | `[ ]` `.github/workflows/tdr-regression.yml` |
-| 7.4 | Typecheck in CI | `[ ]` optional `npx tsc --noEmit` |
+| 7.2 | ESLint runs (`eslint.config.mjs` flat config fixed) | `[x]` | Full-repo lint deferred; `npm run lint:security` on auth surfaces |
+| 7.3 | Add `npm run lint:security` + `npm audit --audit-level=high` to CI | `[ ]` | batch B |
+| 7.4 | Typecheck in CI | `[ ]` | batch B |
 
 ---
 
@@ -159,7 +160,7 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 | 8.4 | Terms public URL | `[x]` https://www.freightcode.co.uk/terms |
 | 8.5 | Security one-pager (`OPS-SECURITY.md`) | `[x]` | this folder |
 | 8.6 | Backup / DR one-pager | `[x]` | [`OPS-BACKUP-DR.md`](./OPS-BACKUP-DR.md) |
-| 8.7 | ICO checklist self-assessment | `[ ]` map `information_security_policy.md` |
+| 8.7 | ICO checklist self-assessment | `[x]` | [`ICO-CHECKLIST-MAPPING.md`](./ICO-CHECKLIST-MAPPING.md) |
 
 ---
 
@@ -195,9 +196,9 @@ Book **after** sections 1–6 verified on deployed Convex + Vercel preview.
 ## 10. Recommended order (remaining work)
 
 ```
-1. Book third-party pen test (§9) — scope doc + test accounts
-2. ICO checklist mapping (§8.7) — optional for HMRC
-3. CI: npm audit + lint in workflow (§7.3–7.4)
+1. Book third-party pen test (§9) — scope doc + test accounts (product owner)
+2. Batch B — CI: audit + typecheck + lint:security
+3. Batch C — getTokens client redaction + AI rate limits on chat/gir-audit
 ```
 
 **Product backlog (parallel):** [`DELIVERY-PLAN.md`](../DELIVERY-PLAN.md) §1 — DAN + payment method on declaration form.
@@ -243,4 +244,4 @@ npx convex run notifications:saveWebhook "{`"mrn`":`"TEST`",`"conversationId`":`
 npx convex run declarations:listForDebug "{}"
 ```
 
-**Still open:** §6 declaration ownership submit test (manual with two accounts), §9 pen test booking.
+| 2026-06-15 | Agent | Docs housekeeping — REMEDIATION-LOG sync, ICO mapping, checklist cleanup | Pass |

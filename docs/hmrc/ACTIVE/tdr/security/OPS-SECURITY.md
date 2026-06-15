@@ -30,6 +30,7 @@
 - **Clerk middleware** (`src/proxy.ts`): `/dashboard/*` requires sign-in.
 - **Convex:** mutations/queries call `ctx.auth.getUserIdentity()`; ownership checks on declarations/items.
 - **Internal-only:** Stripe webhook handler, audit `logAction`, reference seed, subscription updates.
+- **HMRC OAuth:** tokens stored in Convex; resolved server-side in submit routes (client redaction planned batch C).
 
 ---
 
@@ -49,8 +50,8 @@ Production HMRC webhook logs: metadata only (no payload body preview).
 ## AI routes
 
 - Clerk auth required on `/api/ai/*`.
-- Rate limit: 20 req/min/user (configurable via `AI_RATE_LIMIT_PER_MINUTE`).
-- Upload cap: 10 MB (`AI_MAX_UPLOAD_BYTES`).
+- Rate limit: 20 req/min/user shared across AI routes (`AI_RATE_LIMIT_PER_MINUTE`).
+- Upload cap: 10 MB (`AI_MAX_UPLOAD_BYTES`); classify text cap: 4k chars.
 
 ---
 

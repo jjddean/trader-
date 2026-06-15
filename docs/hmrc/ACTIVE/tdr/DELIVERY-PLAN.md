@@ -77,14 +77,13 @@ HS 8471300000, Felixstowe, N935 + N271 — verify every mapped field in [`mappin
 
 **Done when:** security + backup one-pagers exist (before production).
 
+- [x] [`security/OPS-SECURITY.md`](./security/OPS-SECURITY.md) · [`security/OPS-BACKUP-DR.md`](./security/OPS-BACKUP-DR.md)
+
 ---
 
 ## Later
 
 CRM, export/ENS/H2, SaaS billing UI, env submit guard.
 
----
+Production credentials and config: [`../../FUTURE/production/README.md`](../../FUTURE/production/README.md) · ops log in [`evidence/LOG.md`](./evidence/LOG.md).
 
-## Blocked (not dev)
-
-HMRC production sign-off.
