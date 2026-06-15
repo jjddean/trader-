@@ -16,8 +16,8 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 |------|--------|
 | Run `npx convex dev` on dev deployment matching `.env.local` `CONVEX_DEPLOYMENT` | `[x]` | glorious-marlin-243, functions ready 15 Jun 2026 |
 | Confirm Convex env vars set: `STRIPE_WEBHOOK_SECRET`, `STRIPE_SECRET_KEY`, `NOTIFICATION_INGEST_SECRET`, `SYNC_SECRET`, `INGEST_SECRET` | `[x]` | `npx convex env list` with `CONVEX_DEPLOYMENT=dev:glorious-marlin-243` |
-| `NOTIFICATION_INGEST_SECRET` in `.env.local` + Vercel production | `[x]` | Vercel `trader-fa1m` env set; **prod POST 500 until security code deployed** |
-| Commit + push security branch (fixes currently uncommitted on `main` working tree) | `[ ]` |
+| `NOTIFICATION_INGEST_SECRET` in `.env.local` + Vercel production | `[x]` | Vercel `trader-fa1m` + prod POST **200** after `d48d59c` deploy |
+| Commit + push security branch (fixes currently uncommitted on `main` working tree) | `[x]` | `d48d59c` pushed 15 Jun 2026 |
 
 ---
 
