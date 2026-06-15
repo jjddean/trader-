@@ -3,8 +3,10 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../../convex/_generated/api";
 import { parseHmrcNotification } from "../../../../../lib/hmrc-notification-parser";
 import { buildHmrcNotificationIdempotencyKey } from "../../../../../lib/hmrc-notification-idempotency";
+import { secretsEqual } from "../../../../../lib/secrets-equal";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+const isProduction = process.env.NODE_ENV === "production";
 
 /**
  * HEAD /api/hmrc/webhooks/notify
@@ -50,9 +52,7 @@ export async function POST(request: Request) {
     ).trim();
     const receivedToken = authHeader.replace(/^Bearer\s+/i, "").trim();
     const authMatches =
-      expectedToken.length > 0 &&
-      (receivedToken === expectedToken ||
-        authHeader.trim() === `Bearer ${expectedToken}`);
+      expectedToken.length > 0 && receivedToken.length > 0 && secretsEqual(expectedToken, receivedToken);
 
     if (expectedToken.length === 0) {
       console.error("[HMRC-WEBHOOK] Missing webhook auth token configuration.");
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     }
 
     if (!authMatches) {
-      console.warn(`[HMRC-WEBHOOK] Unauthorized attempt. Received: ${authHeader.substring(0, 20)}...`);
+      console.warn("[HMRC-WEBHOOK] Unauthorized attempt.");
       return new Response("Unauthorized", { status: 401 });
     }
 
@@ -68,7 +68,11 @@ export async function POST(request: Request) {
     const conversationId = request.headers.get("X-Conversation-ID") || "UNKNOWN";
 
     console.log(`[HMRC-WEBHOOK] Received authorized notification for Conversation ID: ${conversationId}`);
-    console.log(`[HMRC-WEBHOOK] Payload preview: ${rawPayload.substring(0, 500)}`);
+    if (!isProduction) {
+      console.log(`[HMRC-WEBHOOK] Payload preview: ${rawPayload.substring(0, 500)}`);
+    } else {
+      console.log(`[HMRC-WEBHOOK] Payload length: ${rawPayload.length} bytes`);
+    }
 
     const { notificationType, mrn, errorCodes, fieldErrors, issueDateTime } = parseHmrcNotification(rawPayload);
     console.log(`[HMRC-WEBHOOK] Parsed: type=${notificationType}, mrn=${mrn}, errorCodes=${errorCodes.join(",") || "none"}`);

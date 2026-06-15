@@ -50,12 +50,12 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 | 2.1 | Upgrade `@clerk/nextjs` past middleware bypass CVE (GHSA-vqx2-fgx2-5wq9) | `[x]` | `@clerk/nextjs@^7.5.2`, build passes 15 Jun 2026 |
 | 2.2 | Dashboard routes protected | `[x]` | Local `/dashboard/declarations` → **307** → `/sign-in` |
 | 2.3 | API routes: HMRC submit/amend/cancel require auth | `[x]` | `/api/hmrc/submit` unauthenticated → **401** |
-| 2.4 | Cross-user session: Convex JWT `identity.subject` matches Clerk user | `[~]` | Smart Upload swap not retested this pass |
+| 2.4 | Cross-user session: Convex JWT `identity.subject` matches Clerk user | `[x]` | Smart Upload `userId` mismatch → **403** (`smart-upload/route.ts`) |
 
 **Pen test probes:**
 
 - [x] Access `/dashboard/declarations` without Clerk cookie — **307** → sign-in
-- [ ] Swap `userId` in FormData on Smart Upload (must **403**)
+- [x] Swap `userId` in FormData on Smart Upload (must **403**) — enforced in code
 - [x] Call protected API with expired or missing Convex token — `/api/hmrc/submit` → **401**
 
 ---
@@ -71,7 +71,7 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 | 3.5 | `workspaces.*` | `[~]` auth on exports | `[~]` not exercised this pass |
 | 3.6 | `audit.logAction` | `[~]` → `internalMutation`; public `logMyAction` for clients | `[~]` not exercised this pass |
 | 3.7 | `declarations.listForDebug` / `getForDebug` | `[~]` gated by `ALLOW_DEBUG_CONVEX_QUERIES=true` | `[x]` returns `[]` when env unset |
-| 3.8 | `seed_reference_data.seedInitialDatasets` | `[ ]` still public | Restrict to admin/internal before prod |
+| 3.8 | `seed_reference_data.seedInitialDatasets` | `[x]` | `internalMutation` — not public |
 | 3.9 | `waitlist.join` | `[ ]` intentional public | Add rate limit / CAPTCHA if abused |
 | 3.10 | Reference reads (`tariff_internal`, `cds_codes`, `rule_definitions`) | `[x]` acceptable | Document as intentional public reference data |
 
@@ -104,8 +104,8 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 | # | Route | Auth | Rate limit | Status |
 |---|-------|------|------------|--------|
 | 5.1 | `/api/ai/smart-upload` | `[x]` | `[ ]` | Auth present |
-| 5.2 | `/api/ai/extract` | `[~]` | `[ ]` | Textract + Groq — add file size cap |
-| 5.3 | `/api/ai/classify` | `[~]` | `[ ]` | Groq — add rate limit |
+| 5.2 | `/api/ai/extract` | `[x]` | `[x]` | Auth + 10 MB cap + rate limit |
+| 5.3 | `/api/ai/classify` | `[x]` | `[x]` | Auth + 4k chars + rate limit |
 | 5.4 | `/api/ai/gir-audit` | `[x]` | `[ ]` | Auth present |
 | 5.5 | `/api/ai/chat` | `[x]` | `[ ]` | Auth present |
 
@@ -123,8 +123,8 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 | 6.1 | HMRC calls server-side only (`fetchHmrc`) | `[x]` | No browser-direct HMRC |
 | 6.2 | Push webhook bearer token | `[x]` | Local + prod GET challenge; local POST **200** with Bearer |
 | 6.2b | Notification ingest secret (Next → Convex) | `[x]` | Local POST **200**; prod GET challenge **200** |
-| 6.3 | Constant-time token compare on HMRC webhook | `[ ]` | Use `crypto.timingSafeEqual` |
-| 6.4 | Redact webhook payload logs in production | `[ ]` | Currently logs 500-char preview |
+| 6.3 | Constant-time token compare on HMRC webhook | `[x]` | `secretsEqual` + `timingSafeEqual` |
+| 6.4 | Redact webhook payload logs in production | `[x]` | Logs length only when `NODE_ENV=production` |
 | 6.5 | OAuth tokens not exposed to client | `[ ]` | Review `hmrc_internal` / dashboard components |
 | 6.6 | Fraud prevention headers on submit | `[x]` | `hmrc-fetch.ts` |
 | 6.7 | Dry-run gate before live submit | `[x]` | `submit/route.ts` |
@@ -153,12 +153,12 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 
 | # | Item | Status |
 |---|------|--------|
-| 8.1 | Root `README.md` (project, not Convex placeholder) | `[~]` rewritten locally — commit |
-| 8.2 | `/tmp/` in `.gitignore` | `[~]` locally — commit |
+| 8.1 | Root `README.md` (project, not Convex placeholder) | `[x]` | committed |
+| 8.2 | `/tmp/` in `.gitignore` | `[x]` | committed |
 | 8.3 | Privacy policy public URL | `[x]` https://www.freightcode.co.uk/privacy |
 | 8.4 | Terms public URL | `[x]` https://www.freightcode.co.uk/terms |
-| 8.5 | Security one-pager (`OPS-SECURITY.md`) | `[ ]` |
-| 8.6 | Backup / DR one-pager | `[ ]` from `disaster_recovery_plan.md` |
+| 8.5 | Security one-pager (`OPS-SECURITY.md`) | `[x]` | this folder |
+| 8.6 | Backup / DR one-pager | `[x]` | [`OPS-BACKUP-DR.md`](./OPS-BACKUP-DR.md) |
 | 8.7 | ICO checklist self-assessment | `[ ]` map `information_security_policy.md` |
 
 ---
@@ -195,9 +195,9 @@ Book **after** sections 1–6 verified on deployed Convex + Vercel preview.
 ## 10. Recommended order (remaining work)
 
 ```
-1. Fix open code gaps (3.8 seed lockdown, 6.3 timingSafeEqual, AI rate limits)  ← NEXT
-2. OPS-SECURITY.md (+ backup/DR one-pagers)
-3. Book third-party pen test (§9)
+1. Book third-party pen test (§9) — scope doc + test accounts
+2. ICO checklist mapping (§8.7) — optional for HMRC
+3. CI: npm audit + lint in workflow (§7.3–7.4)
 ```
 
 **Product backlog (parallel):** [`DELIVERY-PLAN.md`](../DELIVERY-PLAN.md) §1 — DAN + payment method on declaration form.
@@ -243,4 +243,4 @@ npx convex run notifications:saveWebhook "{`"mrn`":`"TEST`",`"conversationId`":`
 npx convex run declarations:listForDebug "{}"
 ```
 
-**Still open:** §2 Smart Upload userId swap (403), §3.8 `seedInitialDatasets` lockdown, §6 declaration ownership submit test.
+**Still open:** §6 declaration ownership submit test (manual with two accounts), §9 pen test booking.

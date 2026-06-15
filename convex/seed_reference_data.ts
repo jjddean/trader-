@@ -1,6 +1,7 @@
-import { mutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 
-export const seedInitialDatasets = mutation({
+/** Bootstrap reference dataset pointers — internal / CLI only. */
+export const seedInitialDatasets = internalMutation({
   handler: async (ctx) => {
     const datasets = [
       { name: "hs_codes", version: "v2026-03-01", storagePath: "/hs/latest.json" },

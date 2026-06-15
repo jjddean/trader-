@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import Groq from "groq-sdk";
 import { TextractClient, DetectDocumentTextCommand } from "@aws-sdk/client-textract";
+import { AI_MAX_UPLOAD_BYTES, aiExtractLimiter } from "@/lib/api-rate-limiter";
 
 async function extractTextWithTextract(buffer: Buffer): Promise<string> {
   const client = new TextractClient({
@@ -28,12 +29,18 @@ export async function POST(request: Request) {
     if (!userId) {
       return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
     }
+    if (!aiExtractLimiter.tryConsume(userId)) {
+      return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+    }
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
 
     if (!file) {
       return NextResponse.json({ error: "No document file uploaded" }, { status: 400 });
+    }
+    if (file.size > AI_MAX_UPLOAD_BYTES) {
+      return NextResponse.json({ error: "File too large" }, { status: 413 });
     }
 
     const groqApiKey = process.env.GROQ_API_KEY;

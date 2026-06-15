@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import Groq from "groq-sdk";
+import { AI_MAX_CLASSIFY_CHARS, aiClassifyLimiter } from "@/lib/api-rate-limiter";
 
 export async function POST(request: Request) {
   try {
@@ -8,11 +9,17 @@ export async function POST(request: Request) {
     if (!userId) {
       return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
     }
+    if (!aiClassifyLimiter.tryConsume(userId)) {
+      return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+    }
 
     const { description } = await request.json();
 
-    if (!description) {
+    if (!description || typeof description !== "string") {
       return NextResponse.json({ error: "Missing description" }, { status: 400 });
+    }
+    if (description.length > AI_MAX_CLASSIFY_CHARS) {
+      return NextResponse.json({ error: "Description too long" }, { status: 413 });
     }
 
     const groqApiKey = process.env.GROQ_API_KEY;

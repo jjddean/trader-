@@ -4,6 +4,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 import { auth } from "@clerk/nextjs/server";
 import { cloudagentConfigured, postCloudagent } from "@/lib/cloudagent-client";
+import { AI_MAX_UPLOAD_BYTES, aiExtractLimiter } from "@/lib/api-rate-limiter";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -20,6 +21,9 @@ export async function POST(request: Request) {
     const { userId: clerkUserId, getToken } = await auth();
     if (!clerkUserId) {
       return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
+    }
+    if (!aiExtractLimiter.tryConsume(clerkUserId)) {
+      return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
     }
     const convexToken = await getToken({ template: "convex" });
     if (!convexToken) {
@@ -86,6 +90,9 @@ export async function POST(request: Request) {
       fileName = `pasted_${safeTypeToken || "document"}_${Date.now()}.txt`;
       mimeType = "text/plain";
     } else if (file) {
+      if (file.size > AI_MAX_UPLOAD_BYTES) {
+        return NextResponse.json({ error: "File too large" }, { status: 413 });
+      }
       if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
         return NextResponse.json({ error: "AWS Textract is not configured on this environment." }, { status: 500 });
       }
