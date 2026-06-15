@@ -142,7 +142,7 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 
 | # | Item | Status |
 |---|------|--------|
-| 7.1 | `npm audit` — resolve critical/high (Clerk, `@clerk/backend`, etc.) | `[ ]` ~23 vulns reported Jun 2026 |
+| 7.1 | `npm audit` — resolve critical/high (Clerk, `@clerk/backend`, etc.) | `[x]` | `npm audit fix` + Next 16.2.9, Convex 1.41, overrides — **0 vulns** 15 Jun 2026 |
 | 7.2 | ESLint runs (`eslint.config.mjs` flat config fixed) | `[~]` config fixed; 6000+ legacy issues remain |
 | 7.3 | Add `npm run lint` + `npm audit --audit-level=high` to CI | `[ ]` `.github/workflows/tdr-regression.yml` |
 | 7.4 | Typecheck in CI | `[ ]` optional `npx tsc --noEmit` |
