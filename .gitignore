@@ -47,6 +47,10 @@ next-env.d.ts
 /lora-output-kaggle-test/
 /lora-colab-bundle/
 /lora-colab-bundle.zip
+/lora-runpod-bundle/
+/lora-runpod-bundle.zip
+/lora-dataset/.tariff-codes.json
+/.runpod-lora-state.json
 .kaggle-wheels/
 .kaggle-dataset-staging/
 .kaggle-wheels-staging/
@@ -57,3 +61,6 @@ scripts/lora/autotrain.config.yaml
 # python
 __pycache__/
 *.pyc
+
+# wrangler (cloudagent local dev/build cache)
+cloudagent/.wrangler/
