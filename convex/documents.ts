@@ -6,7 +6,6 @@ import {
   listDocumentsForTenant,
   listDeclarationsForTenant,
   orgIdFromDeclaration,
-  resolveOrgIdForNewRecord,
 } from "./lib/org_access";
 
 const DOC_CODE_REGEX = /(?:^|[^A-Z0-9])([A-Z]\d{3}|\d{4})(?:[^A-Z0-9]|$)/;
