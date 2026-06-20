@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query } from "./_generated/server";
 import { evaluateCompleteness } from "./lib/declaration_completeness";
 import type { RuleDefinition } from "./lib/rule_engine";
+import { canAccessDeclaration } from "./lib/org_access";
 
 // Live completeness state for a declaration.
 //
@@ -20,7 +21,7 @@ export const getStatus = query({
     if (!declaration) {
       return { ready: false, missing: [{ field: "declaration", reason: "Declaration not found.", ruleId: "system:not-found" }] };
     }
-    if (declaration.userId !== identity.subject) {
+    if (!(await canAccessDeclaration(ctx, identity.subject, declaration))) {
       throw new Error("Unauthorized");
     }
 

@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { api } from "../../../../../convex/_generated/api";
+import { Id } from "../../../../../convex/_generated/dataModel";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
-import { declarationsEndpointUrl, HMRC_CONFIG } from "../../../../lib/hmrc-config";
+import { declarationsEndpointUrl } from "../../../../lib/hmrc-config";
 import { getAuthenticatedConvex } from "../../../../lib/hmrc-route-session";
+import { resolveOrgHmrcRoutingForDeclaration } from "../../../../lib/hmrc-org-routing";
 import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
 import { logHmrcAudit } from "../../../../lib/audit-log";
 import { buildInvalidationXml } from "../../../../lib/hmrc-invalidation-xml";
@@ -32,14 +34,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Declaration not found" }, { status: 404 });
     }
 
-    if (lane.userId !== userId && process.env.HMRC_ENVIRONMENT !== "sandbox") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
-
     const tokenResult = await resolveHmrcAccessToken(convex, userId);
     if ("error" in tokenResult) {
       return tokenResult.error;
     }
+
+    const orgRouting = await resolveOrgHmrcRoutingForDeclaration(
+      convex,
+      declarationId as Id<"declarations">,
+    );
+    if ("error" in orgRouting) {
+      return orgRouting.error;
+    }
+    const { hmrcContext } = orgRouting;
 
     const eori = String(lane.eori || "").trim();
     if (!/^GB\d{12}$/.test(eori)) {
@@ -61,13 +68,8 @@ export async function POST(request: Request) {
       reason: trimmedReason.length > 0 ? trimmedReason : undefined,
     });
 
-    const hmrcBase =
-      process.env.HMRC_ENVIRONMENT === "sandbox"
-        ? HMRC_CONFIG.sandboxBaseUrl
-        : HMRC_CONFIG.productionBaseUrl;
-
     const hmrcResponse = await fetchHmrc(
-      declarationsEndpointUrl(hmrcBase, "cancel"),
+      declarationsEndpointUrl(hmrcContext.apiBaseUrl, "cancel"),
       {
         method: "POST",
         headers: { "Content-Type": "application/xml; charset=UTF-8" },
@@ -76,6 +78,7 @@ export async function POST(request: Request) {
       request,
       tokenResult.token,
       eori,
+      hmrcContext,
     );
 
     const recordCancelEvidence = async (

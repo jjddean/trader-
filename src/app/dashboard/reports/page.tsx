@@ -1,5 +1,6 @@
 "use client";
 
+import { FINANCIAL_LABELS as FL } from "@/lib/financial-labels";
 import { useState } from "react";
 import { Search, Filter, ShieldAlert, ShieldCheck, Download, Copy, FileText, CheckCircle2, Printer } from "lucide-react";
 import { useDirectPrint } from "@/components/print/direct-print";
@@ -79,7 +80,7 @@ export default function ReportsPage() {
       totalDutyAndVat: selectedReport.totalDutyAndVat,
       items: selectedReport.items || [],
       provenance: selectedReport.provenance || "derived",
-      provenanceLabel: selectedReport.provenanceLabel || "Derived from declaration preview data",
+      provenanceLabel: selectedReport.provenanceLabel || FL.reportEstimated,
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8;" });

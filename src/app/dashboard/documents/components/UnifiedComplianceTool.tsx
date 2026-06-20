@@ -1,18 +1,15 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { useMutation } from "convex/react";
-import { 
-  Globe, 
-  ShieldCheck, 
-  CheckCircle2, 
-  XCircle, 
+import React, { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+import {
+  Globe,
+  ShieldCheck,
   Loader2,
   AlertTriangle,
   FileText,
   Download,
   Upload,
-  Calculator
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -29,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { docTypeName } from "@/lib/utils/document-utils";
 import { getPreferenceDecision } from "@/lib/preference-engine";
 import { api } from "../../../../../convex/_generated/api";
+import type { Id } from "../../../../../convex/_generated/dataModel";
 
 interface UnifiedComplianceToolProps {
   isOpen: boolean;
@@ -42,8 +40,17 @@ interface ComplianceData {
     rate: string;
     saving: string;
     isMfn: boolean;
+    dutyAmount: number;
+    preferenceCodeId: string | null;
   };
-  allRates: any[];
+  allRates: Array<{
+    name: string;
+    rate: string;
+    dutyAmount: number;
+    isMfn: boolean;
+    preferenceCodeId: string | null;
+    incompleteInput: boolean;
+  }>;
   documents: Array<{
     name: string;
     code: string;
@@ -52,48 +59,101 @@ interface ComplianceData {
   }>;
   quota?: {
     orderNumber: string;
-    balance?: string;
-    isExhausted?: boolean;
   };
+  estimateLabel: string;
+}
+
+function asDeclarationId(value: string | null | undefined): Id<"declarations"> | null {
+  if (!value || value === "all") return null;
+  return value as Id<"declarations">;
 }
 
 export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: UnifiedComplianceToolProps) {
-  // FORM STATE
+  const declarationRef = asDeclarationId(declarationId);
+  const declarationItems = useQuery(
+    api.goods_items.getItems,
+    declarationRef && isOpen ? { declarationId: declarationRef } : "skip",
+  );
+
   const [selectedCountry, setSelectedCountry] = useState("");
   const [commodityCode, setCommodityCode] = useState("");
   const [itemValue, setItemValue] = useState("");
   const [shippingCost, setShippingCost] = useState("");
-  
-  // UI & DATA STATE
+  const [netWeightKg, setNetWeightKg] = useState("");
+  const [selectedItemKey, setSelectedItemKey] = useState<string>("manual");
+
   const [data, setData] = useState<ComplianceData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showCalculator, setShowCalculator] = useState(false);
   const [isSavingRequirements, setIsSavingRequirements] = useState(false);
   const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
 
   const certMapping: Record<string, string> = {
-    "N865": docTypeName("N865"),
-    "N935": docTypeName("N935"),
-    "U166": docTypeName("U166"),
-    "U101": docTypeName("U101"),
-    "U164": docTypeName("U164"),
+    N865: docTypeName("N865"),
+    N935: docTypeName("N935"),
+    U166: docTypeName("U166"),
+    U101: docTypeName("U101"),
+    U164: docTypeName("U164"),
     "9100": docTypeName("9100"),
   };
 
+  const itemOptions = useMemo(() => {
+    if (!declarationItems?.length) return [];
+    return declarationItems.map((item, index) => ({
+      key: String(item._id || index),
+      label: `Item ${item.sequenceNumber || index + 1} — ${item.commodityCode || "No HS code"}`,
+      item,
+    }));
+  }, [declarationItems]);
+
+  function applyItemToForm(item: (typeof itemOptions)[number]["item"]) {
+    setSelectedCountry(String(item.originCountry || "").toUpperCase());
+    setCommodityCode(String(item.commodityCode || "").replace(/\D/g, "").slice(0, 10));
+    setItemValue(item.valueAmount != null ? String(item.valueAmount) : "");
+    setNetWeightKg(item.netWeightKg != null ? String(item.netWeightKg) : "");
+  }
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!declarationRef || !itemOptions.length) return;
+    const first = itemOptions[0];
+    setSelectedItemKey(first.key);
+    applyItemToForm(first.item);
+  }, [isOpen, declarationRef, itemOptions]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setData(null);
+      setError(null);
+      setLoading(false);
+    }
+  }, [isOpen]);
+
+  const handleItemSelection = (key: string) => {
+    setSelectedItemKey(key);
+    if (key === "manual") return;
+    const match = itemOptions.find((option) => option.key === key);
+    if (match) applyItemToForm(match.item);
+  };
+
   const handleRunCheck = async () => {
-    if (!selectedCountry || !commodityCode) return;
+    if (!selectedCountry || commodityCode.length < 10) return;
     setLoading(true);
     setError(null);
     setData(null);
 
     try {
-      const result = await getPreferenceDecision({ country: selectedCountry, commodityCode });
+      const result = await getPreferenceDecision({
+        country: selectedCountry,
+        commodityCode,
+        customsValueGbp: Number(itemValue) || 0,
+        netWeightKg: netWeightKg ? Number(netWeightKg) : undefined,
+      });
 
-      const preferencesFound = result.all.some(r => !r.isMfn);
+      const preferencesFound = result.all.some((r) => !r.isMfn);
       const docsList: ComplianceData["documents"] = result.certificates
-        .filter(code => certMapping[code])
-        .map(code => ({
+        .filter((code) => certMapping[code])
+        .map((code) => ({
           name: certMapping[code],
           code,
           status: "READY" as const,
@@ -101,17 +161,30 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
         }));
 
       if (preferencesFound && !result.certificates.includes("9100")) {
-        docsList.push({ name: "Rules of Origin Statement", code: "9100", status: "PENDING", type: "Required" });
+        docsList.push({
+          name: "Rules of Origin Statement",
+          code: "9100",
+          status: "PENDING",
+          type: "Required",
+        });
       }
 
       setData({
         bestRate: result.best,
-        allRates: result.all,
+        allRates: result.all.map((row) => ({
+          name: row.name,
+          rate: row.rate,
+          dutyAmount: row.dutyAmount,
+          isMfn: row.isMfn,
+          preferenceCodeId: row.preferenceCodeId,
+          incompleteInput: row.incompleteInput,
+        })),
         documents: docsList,
         quota: result.quota ?? undefined,
+        estimateLabel: result.estimateLabel,
       });
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -121,19 +194,19 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
     if (!data || !itemValue) return null;
     const valueNum = Number(itemValue);
     const shipNum = Number(shippingCost) || 0;
-    const ratePercent = parseFloat(data.bestRate.rate.replace(/[^\d.]/g, '')) / 100 || 0;
-    const duty = (valueNum + shipNum) * ratePercent;
-    const vat = (valueNum + shipNum + duty) * 0.20;
-    return { duty, vat, total: valueNum + shipNum + duty + vat };
+    const customsValue = valueNum + shipNum;
+    const duty = data.bestRate.dutyAmount;
+    const vat = (customsValue + duty) * 0.2;
+    return { duty, vat, total: customsValue + duty + vat };
   }, [data, itemValue, shippingCost]);
 
   const handleSaveRequirements = async () => {
-    if (!data || !declarationId) return;
+    if (!data || !declarationRef) return;
     try {
       setIsSavingRequirements(true);
       const advisoryCodes = new Set(["9100", "U166", "U101", "U164", "N865", "N864"]);
       await upsertRequirementsForDeclaration({
-        declarationId: declarationId as any,
+        declarationId: declarationRef,
         requirements: data.documents.map((doc) => ({
           code: doc.code,
           name: doc.name,
@@ -160,8 +233,31 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
             Preference Checker
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6 pt-4">
+          {declarationRef && itemOptions.length > 0 && (
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                Declaration item
+              </label>
+              <Select value={selectedItemKey} onValueChange={handleItemSelection}>
+                <SelectTrigger className="h-9 w-full rounded-md border-gray-200 bg-gray-50 text-xs text-gray-700">
+                  <SelectValue placeholder="Choose an item..." />
+                </SelectTrigger>
+                <SelectContent position="popper" className="z-[110]">
+                  {itemOptions.map((option) => (
+                    <SelectItem key={option.key} value={option.key} className="text-xs">
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="manual" className="text-xs">
+                    Manual entry
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="space-y-5">
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
@@ -189,14 +285,57 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
                 type="text"
                 placeholder="e.g. 0101210000"
                 value={commodityCode}
-                onChange={(e) => setCommodityCode(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                onChange={(e) => setCommodityCode(e.target.value.replace(/\D/g, "").slice(0, 10))}
                 className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none placeholder:text-gray-400"
               />
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  Item value (GBP)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={itemValue}
+                  onChange={(e) => setItemValue(e.target.value)}
+                  className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  Shipping (GBP)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={shippingCost}
+                  onChange={(e) => setShippingCost(e.target.value)}
+                  className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  Net weight (kg)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.001"
+                  value={netWeightKg}
+                  onChange={(e) => setNetWeightKg(e.target.value)}
+                  placeholder="Required for weight-based duty"
+                  className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700"
+                />
+              </div>
             </div>
           </div>
 
           <div className="space-y-4">
-            <Button 
+            <Button
               onClick={handleRunCheck}
               disabled={loading || !selectedCountry || commodityCode.length < 10}
               className="w-full bg-black text-white hover:bg-gray-800 h-9 text-xs"
@@ -206,13 +345,14 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Checking Tariff...
                 </>
-              ) : "Check Preferences"}
+              ) : (
+                "Check Preferences"
+              )}
             </Button>
           </div>
 
           {error && (
             <div className="p-6 rounded-lg bg-red-50 border border-red-100 flex items-start gap-3 relative animate-in fade-in">
-              <button className="absolute top-2 right-3 text-[10px] font-bold uppercase tracking-widest text-red-400 hover:text-red-600">forms</button>
               <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
               <p className="text-xs text-red-800 font-medium pr-10">{error}</p>
             </div>
@@ -220,17 +360,28 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
 
           {data && (
             <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
+                {data.estimateLabel}
+              </p>
+
               <div>
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 ml-1">Best Available Rate</h3>
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 ml-1">
+                  Best Available Rate
+                </h3>
                 <div className="p-5 rounded-xl bg-green-50 border border-green-100">
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-green-700 uppercase tracking-wider mb-1">Recommended Scheme</p>
+                      <p className="text-[0.625rem] font-semibold text-green-700 uppercase tracking-wider mb-1">
+                        Recommended Scheme
+                      </p>
                       <h4 className="text-[15px] font-bold text-green-900 leading-tight">{data.bestRate.scheme}</h4>
                     </div>
                     <div className="text-right">
-                      <p className="text-[0.625rem] font-semibold text-green-700 uppercase tracking-wider mb-1">Duty Rate</p>
+                      <p className="text-[0.625rem] font-semibold text-green-700 uppercase tracking-wider mb-1">
+                        Duty Rate
+                      </p>
                       <p className="text-[18px] font-bold text-green-900 tabular-nums">{data.bestRate.rate}</p>
+                      <p className="text-[11px] text-green-800 tabular-nums">£{data.bestRate.dutyAmount.toFixed(2)} est.</p>
                     </div>
                   </div>
                   <div className="pt-3 border-t border-green-200/50 flex items-center justify-between">
@@ -239,17 +390,36 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
                       <span className="text-xs font-semibold">{data.bestRate.saving}</span>
                     </div>
                     {data.quota && (
-                      <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] uppercase font-bold">Quota: {data.quota.orderNumber}</Badge>
+                      <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] uppercase font-bold">
+                        Quota: {data.quota.orderNumber}
+                      </Badge>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* AVAILABLE DOCUMENTS */}
+              {landedCost && (
+                <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-xs space-y-1">
+                  <p className="font-semibold text-gray-900">Indicative landed cost</p>
+                  <div className="flex justify-between text-gray-600">
+                    <span>Estimated duty</span>
+                    <span className="tabular-nums">£{landedCost.duty.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-600">
+                    <span>Estimated VAT (20%)</span>
+                    <span className="tabular-nums">£{landedCost.vat.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold text-gray-900 pt-1 border-t border-gray-200">
+                    <span>Total</span>
+                    <span className="tabular-nums">£{landedCost.total.toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <div className="mb-3 ml-1 flex items-center justify-between">
                   <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Available Documents</h3>
-                  {declarationId ? (
+                  {declarationRef ? (
                     <Button
                       onClick={handleSaveRequirements}
                       disabled={isSavingRequirements}
@@ -260,36 +430,47 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
                       {isSavingRequirements ? "Saving..." : "Save as Required Docs"}
                     </Button>
                   ) : (
-                    <span className="text-[10px] text-gray-400">Select a declaration filter to persist</span>
+                    <span className="text-[10px] text-gray-400">Filter by declaration to persist</span>
                   )}
                 </div>
                 <div className="space-y-2">
-                  {data.documents.length > 0 ? data.documents.map((doc, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-100 transition-colors hover:border-gray-200">
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded bg-gray-50 flex items-center justify-center text-gray-400">
-                          <FileText className="h-4 w-4" />
+                  {data.documents.length > 0 ? (
+                    data.documents.map((doc, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-100 transition-colors hover:border-gray-200"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded bg-gray-50 flex items-center justify-center text-gray-400">
+                            <FileText className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="text-[12px] font-semibold text-gray-900">{doc.name}</p>
+                            <p className="text-[9px] text-gray-500 uppercase tracking-wider font-medium">{doc.type}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-[12px] font-semibold text-gray-900">{doc.name}</p>
-                          <p className="text-[9px] text-gray-500 uppercase tracking-wider font-medium">{doc.type}</p>
+                        <div className="flex items-center gap-3">
+                          <Badge
+                            className={cn(
+                              "text-[9px] font-bold tracking-widest rounded px-2 py-0.5",
+                              doc.status === "READY"
+                                ? "bg-green-100 text-green-700 border-green-100"
+                                : "bg-amber-100 text-amber-700 border-amber-100",
+                            )}
+                          >
+                            {doc.status}
+                          </Badge>
+                          <div className="flex items-center gap-1 text-gray-300">
+                            <Download className="h-3.5 w-3.5 cursor-pointer hover:text-gray-900" />
+                            <Upload className="h-3.5 w-3.5 cursor-pointer hover:text-gray-900" />
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Badge className={cn(
-                          "text-[9px] font-bold tracking-widest rounded px-2 py-0.5",
-                          doc.status === "READY" ? "bg-green-100 text-green-700 border-green-100" : "bg-amber-100 text-amber-700 border-amber-100"
-                        )}>
-                          {doc.status}
-                        </Badge>
-                        <div className="flex items-center gap-1 text-gray-300">
-                          <Download className="h-3.5 w-3.5 cursor-pointer hover:text-gray-900" />
-                          <Upload className="h-3.5 w-3.5 cursor-pointer hover:text-gray-900" />
-                        </div>
-                      </div>
-                    </div>
-                  )) : (
-                    <p className="text-[11px] text-gray-500 italic ml-1">No special certificates required for this route.</p>
+                    ))
+                  ) : (
+                    <p className="text-[11px] text-gray-500 italic ml-1">
+                      No special certificates required for this route.
+                    </p>
                   )}
                 </div>
               </div>

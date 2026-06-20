@@ -1,3 +1,4 @@
+/** @deprecated Legacy Convex workspaces — use Clerk orgs (`orgId` on records). Kept for existing DB rows only. */
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 

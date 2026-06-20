@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { cloudagentBaseUrl } from "@/lib/cloudagent-client";
+import { aiGirAuditLimiter } from "@/lib/api-rate-limiter";
 
 interface GIRResponse {
   correctHsCode?: string;
@@ -12,37 +13,41 @@ interface GIRResponse {
   error?: string;
 }
 
-function validateGIRResponse(data: any): { valid: boolean; errors: string[] } {
+function validateGIRResponse(data: unknown): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
+  if (typeof data !== "object" || data === null) {
+    return { valid: false, errors: ["Response is not an object"] };
+  }
+  const row = data as GIRResponse;
 
-  if (data.error) {
-    errors.push(`API returned error: ${data.error}`);
+  if (row.error) {
+    errors.push(`API returned error: ${row.error}`);
     return { valid: false, errors };
   }
 
-  if (!data.correctHsCode || typeof data.correctHsCode !== "string") {
+  if (!row.correctHsCode || typeof row.correctHsCode !== "string") {
     errors.push("Missing or invalid correctHsCode");
   }
 
-  if (typeof data.confidence !== "number" || data.confidence < 0 || data.confidence > 1) {
+  if (typeof row.confidence !== "number" || row.confidence < 0 || row.confidence > 1) {
     errors.push("Missing or invalid confidence (must be 0-1)");
   }
 
-  if (!Array.isArray(data.girsApplied)) {
+  if (!Array.isArray(row.girsApplied)) {
     errors.push("Missing or invalid girsApplied (must be array)");
-  } else if (data.girsApplied.length === 0) {
+  } else if (row.girsApplied.length === 0) {
     errors.push("girsApplied is empty");
   }
 
-  if (!data.complianceVerdict || !["COMPLIANT", "NON_COMPLIANT", "AMBIGUOUS"].includes(data.complianceVerdict)) {
+  if (!row.complianceVerdict || !["COMPLIANT", "NON_COMPLIANT", "AMBIGUOUS"].includes(row.complianceVerdict)) {
     errors.push("Missing or invalid complianceVerdict");
   }
 
-  if (!data.verdictReasoning) {
+  if (!row.verdictReasoning) {
     errors.push("Missing verdictReasoning");
   }
 
-  if (!data.officerExplanation) {
+  if (!row.officerExplanation) {
     errors.push("Missing officerExplanation");
   }
 
@@ -72,6 +77,9 @@ export async function POST(request: Request) {
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!aiGirAuditLimiter.tryConsume(userId)) {
+      return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
     }
 
     const { textractOutput, declaredHsCode } = await request.json();
@@ -104,8 +112,9 @@ export async function POST(request: Request) {
         }),
         signal: AbortSignal.timeout(10000), // 10s timeout
       });
-    } catch (fetchError: any) {
-      const reason = fetchError.name === "AbortError" ? "Request timeout" : fetchError.message;
+    } catch (fetchError: unknown) {
+      const err = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
+      const reason = err.name === "AbortError" ? "Request timeout" : err.message;
       console.error(`Cloudagent fetch error: ${reason}`);
       return NextResponse.json(buildFallbackResponse(declaredHsCode, reason));
     }
@@ -119,7 +128,7 @@ export async function POST(request: Request) {
       );
     }
 
-    let data: any;
+    let data: unknown;
     try {
       data = await response.json();
     } catch (parseError) {
@@ -138,15 +147,16 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(data as GIRResponse);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GIR Audit Error:", error);
+    const message = error instanceof Error ? error.message : "Unexpected error";
     // Try to extract declared code from request for fallback
     try {
       const body = await request.json().catch(() => ({}));
       const declaredHsCode = body.declaredHsCode || "0000000000";
-      return NextResponse.json(buildFallbackResponse(declaredHsCode, error.message || "Unexpected error"));
+      return NextResponse.json(buildFallbackResponse(declaredHsCode, message));
     } catch {
       return NextResponse.json(
         { error: "Failed to process GIR audit" },

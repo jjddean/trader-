@@ -151,6 +151,21 @@ export function renderH1Xml(payloadInfo: unknown): string {
       <ModeCode>${xmlEscape(btm.ModeCode || "")}</ModeCode>
     </BorderTransportMeans>`
     : "";
+  const declarationAdditionalDocs = asArray(d.AdditionalDocument);
+  const declarationAdditionalDocsXml = declarationAdditionalDocs
+    .map((doc) => {
+      const category = String(doc?.CategoryCode || "").trim();
+      const docId = String(doc?.ID || "").trim();
+      const type = String(doc?.TypeCode || "").trim();
+      if (!category || !docId || !type) return "";
+      return `
+    <AdditionalDocument>
+      <CategoryCode>${xmlEscape(category)}</CategoryCode>
+      <ID>${xmlEscape(docId)}</ID>
+      <TypeCode>${xmlEscape(type)}</TypeCode>
+    </AdditionalDocument>`;
+    })
+    .join("");
   const atm = read(consignment, "ArrivalTransportMeans");
   const arrivalTransportMeansXml = atm.ID
     ? `
@@ -188,7 +203,7 @@ export function renderH1Xml(payloadInfo: unknown): string {
     <GoodsItemQuantity>${xmlEscape(d.GoodsItemQuantity)}</GoodsItemQuantity>
     ${String(d.DeclarationOfficeID || "").trim() ? `<DeclarationOfficeID>${xmlEscape(d.DeclarationOfficeID)}</DeclarationOfficeID>\n    ` : ""}<InvoiceAmount currencyID="${xmlEscape(read(d, "InvoiceAmount").currencyID)}">${xmlEscape(read(d, "InvoiceAmount").value)}</InvoiceAmount>
     <TotalGrossMassMeasure unitCode="KGM">${xmlEscape(d.TotalGrossMassMeasure)}</TotalGrossMassMeasure>
-    <TotalPackageQuantity>${xmlEscape(d.TotalPackageQuantity)}</TotalPackageQuantity>${borderTransportMeansXml}
+    <TotalPackageQuantity>${xmlEscape(d.TotalPackageQuantity)}</TotalPackageQuantity>${borderTransportMeansXml}${declarationAdditionalDocsXml}
     <Declarant>
       <ID>${xmlEscape(read(d, "Declarant").ID)}</ID>
     </Declarant>${exporterXml}
@@ -270,7 +285,29 @@ export function renderH1Xml(payloadInfo: unknown): string {
         // DE 4/3 — Duty Regime Code. "100" = standard MFN (third-country) duty rate.
         // Mandatory for H1 IMA: absence triggers CDS12070 cascade across GovernmentProcedure,
         // CustomsValuation, InvoiceLine, and ValuationAdjustment pointers.
-        const dutyRegimeCode = String(read(commodity, "DutyTaxFee").DutyRegimeCode || "100");
+        const dutyTaxFees = asArray(commodity.DutyTaxFee);
+        const primaryDutyTaxFee = dutyTaxFees[0] ?? read(commodity, "DutyTaxFee");
+        const dutyRegimeCode = String(primaryDutyTaxFee.DutyRegimeCode || "100");
+        const dutyTaxFeeXml = (dutyTaxFees.length > 0 ? dutyTaxFees : [primaryDutyTaxFee, { TypeCode: "B00" }])
+          .map((fee) => {
+            const typeCode = String(fee.TypeCode || "").trim();
+            if (!typeCode) return "";
+            const regimeXml =
+              typeCode === "A00" && fee.DutyRegimeCode
+                ? `\n            <DutyRegimeCode>${xmlEscape(String(fee.DutyRegimeCode))}</DutyRegimeCode>`
+                : typeCode === "A00"
+                  ? `\n            <DutyRegimeCode>${xmlEscape(dutyRegimeCode)}</DutyRegimeCode>`
+                  : "";
+            const methodXml = fee.MethodCode
+              ? `\n            <MethodCode>${xmlEscape(String(fee.MethodCode))}</MethodCode>`
+              : "";
+            return `
+          <DutyTaxFee>
+            ${regimeXml}
+            <TypeCode>${xmlEscape(typeCode)}</TypeCode>${methodXml}
+          </DutyTaxFee>`;
+          })
+          .join("");
         // DE 4/14 — Item Charge Amount (invoice line value).
         // Required when CustomsValuation.MethodCode = "1" (Transaction Value).
         const invoiceLineAmt = read(read(commodity, "InvoiceLine"), "ItemChargeAmount");
@@ -298,13 +335,7 @@ export function renderH1Xml(payloadInfo: unknown): string {
         <Commodity>
           <Description>${xmlEscape(commodity.Description || "General goods")}</Description>
           ${classificationXml}
-          <DutyTaxFee>
-            <DutyRegimeCode>${xmlEscape(dutyRegimeCode)}</DutyRegimeCode>
-            <TypeCode>A00</TypeCode>
-          </DutyTaxFee>
-          <DutyTaxFee>
-            <TypeCode>B00</TypeCode>
-          </DutyTaxFee>
+          ${dutyTaxFeeXml}
           <GoodsMeasure>
             <GrossMassMeasure unitCode="KGM">${xmlEscape(goodsMeasure.GrossMassMeasure || 0)}</GrossMassMeasure>
             <NetNetWeightMeasure unitCode="KGM">${xmlEscape(goodsMeasure.NetNetWeightMeasure || 0)}</NetNetWeightMeasure>${tariffQtyXml}

@@ -1,4 +1,4 @@
-<!-- timestamp: 2026-06-14T21:47:43.671Z | http_status: 0 | conversation_id: DRY_RUN -->
+<!-- timestamp: 2026-06-19T19:27:48.180Z | http_status: 0 | conversation_id: DRY_RUN -->
 <!-- request_accept: application/vnd.hmrc.1.0+xml | request_content_type: application/xml; charset=UTF-8 | request_authorization: Bearer [REDACTED] | request_x_client_id: ZSoA1lpJi8FyuzSsncFrOZKpmrNe | request_gov_test_scenario: ABSENT -->
 <?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2">
@@ -9,7 +9,7 @@
   <AgencyAssignedCustomizationVersionCode>v2.1</AgencyAssignedCustomizationVersionCode>
   <Declaration xmlns="urn:wco:datamodel:WCO:DEC-DMS:2" xmlns:clm63055="urn:un:unece:uncefact:codelist:standard:UNECE:AgencyIdentificationCode:D12B" xmlns:ds="urn:wco:datamodel:WCO:MetaData_DS-DMS:2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:wco:datamodel:WCO:DocumentMetaData-DMS:2 ../DocumentMetaData_2_DMS.xsd ">
     <FunctionCode>9</FunctionCode>
-    <FunctionalReferenceID>TT-1781473663381</FunctionalReferenceID>
+    <FunctionalReferenceID>TT-1781897267937</FunctionalReferenceID>
     <TypeCode>IMA</TypeCode>
     <GoodsItemQuantity>1</GoodsItemQuantity>
     <InvoiceAmount currencyID="GBP">5000.00</InvoiceAmount>
@@ -82,11 +82,14 @@
             <ID>00</ID>
             <IdentificationTypeCode>TRC</IdentificationTypeCode>
           </Classification>
+          
           <DutyTaxFee>
+            
             <DutyRegimeCode>100</DutyRegimeCode>
             <TypeCode>A00</TypeCode>
           </DutyTaxFee>
           <DutyTaxFee>
+            
             <TypeCode>B00</TypeCode>
           </DutyTaxFee>
           <GoodsMeasure>
@@ -127,7 +130,7 @@
       </Importer>
       <PreviousDocument>
         <CategoryCode>Z</CategoryCode>
-        <ID>6GB553202734852-1781473663381</ID>
+        <ID>6GB553202734852-1781897267937</ID>
         <TypeCode>DCR</TypeCode>
         <LineNumeric>1</LineNumeric>
       </PreviousDocument>
@@ -136,7 +139,7 @@
         <LocationID>GBFELIXSTOWE</LocationID>
       </TradeTerms>
       <UCR>
-        <TraderAssignedReferenceID>6GB553202734852-1781473663381</TraderAssignedReferenceID>
+        <TraderAssignedReferenceID>6GB553202734852-1781897267937</TraderAssignedReferenceID>
       </UCR>
     </GoodsShipment>
   </Declaration>

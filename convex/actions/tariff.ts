@@ -48,3 +48,53 @@ export const refreshCommodity = internalAction({
     };
   },
 });
+
+// Refresh commodities that appear on goods_items and are missing or past TTL.
+// Invoked by cron — processes a small batch per run to respect API limits.
+type StaleRefreshRow = {
+  commodityCode: string;
+  ok: boolean;
+  error?: string;
+  rulesGenerated?: number;
+};
+
+type StaleRefreshResult = {
+  checkedAt: number;
+  staleCount: number;
+  refreshedCount: number;
+  results: StaleRefreshRow[];
+};
+
+export const refreshStaleCommodities = internalAction({
+  args: { batchSize: v.optional(v.number()) },
+  handler: async (ctx, args): Promise<StaleRefreshResult> => {
+    const stale: string[] = await ctx.runQuery(internal.tariff_internal.listStaleCommodityCodes, {
+      limit: args.batchSize ?? 15,
+    });
+
+    const results: StaleRefreshRow[] = [];
+    for (const commodityCode of stale) {
+      try {
+        const refreshed = await ctx.runAction(internal.actions.tariff.refreshCommodity, { commodityCode });
+        results.push({
+          commodityCode,
+          ok: true,
+          rulesGenerated: refreshed.rulesGenerated,
+        });
+      } catch (error) {
+        results.push({
+          commodityCode,
+          ok: false,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    return {
+      checkedAt: Date.now(),
+      staleCount: stale.length,
+      refreshedCount: results.filter((r) => r.ok).length,
+      results,
+    };
+  },
+});

@@ -81,9 +81,9 @@ export async function POST(request: Request) {
           content: `You are an expert UK Customs Data Entry Assistant. I will provide raw, messy text extracted from a Commercial Invoice PDF. 
           Your job is to identify all the "line items" or commodities being shipped.
           Return a JSON object containing an "items" array. Each object in the array MUST contain:
-          - "commodityCode": (string, try to guess the 10 digit HS code based on description, or leave empty if unknown)
-          - "description": (string, the product name)
-          - "originCountry": (string, the 2-letter ISO country code of origin, try to infer from the invoice header, default to "GB")
+          - "commodityCode": (string, 10-digit HS code only if clearly supported by the invoice text, otherwise empty string)
+          - "description": (string, normal trade description for CDS DE 6/8 — plain language from the invoice line, precise enough to identify the goods; do NOT paste tariff book legal wording; include grade/purity/model if shown on invoice)
+          - "originCountry": (string, 2-letter ISO country code of origin if stated on invoice, otherwise empty string — do NOT default to GB)
           - "valueAmount": (number, the total price/value for that line item)
           - "valueCurrency": (string, 3-letter currency code, e.g. "USD", "GBP", "EUR")
           DO NOT include markdown code blocks.`,

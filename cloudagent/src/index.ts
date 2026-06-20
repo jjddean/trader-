@@ -12,6 +12,26 @@ Analyze OCR text from a trade document and return ONLY valid JSON (no markdown):
   "status": "Verified | Review | Missing"
 }`;
 
+function normaliseGirResult(result: unknown): unknown {
+	if (!result || typeof result !== "object") return result;
+	const record = result as Record<string, any>;
+	const hs = typeof record.correctHsCode === "string" ? record.correctHsCode.replace(/\D/g, "") : "";
+	if (!/^\d{10}$/.test(hs)) return result;
+
+	const expectedHeading = hs.slice(0, 4);
+	const text = `${record.verdictReasoning ?? ""}\n${record.officerExplanation ?? ""}`;
+	const headingMatches = [...text.matchAll(/\bheading\s+(\d{4})\b/gi)].map((match) => match[1]);
+	const wrongHeading = headingMatches.find((heading) => heading !== expectedHeading);
+	if (!wrongHeading) return result;
+
+	return {
+		...record,
+		complianceVerdict: "AMBIGUOUS",
+		verdictReasoning: `Model output was internally inconsistent: it returned HS ${hs} but referenced heading ${wrongHeading}. Human review required before relying on this advisory classification.`,
+		officerExplanation: `Advisory classifier inconsistency detected. The returned commodity code starts with heading ${expectedHeading}, but the explanation referenced heading ${wrongHeading}. Review the invoice text and UK Trade Tariff manually.`,
+	};
+}
+
 export { AgentOrchestrator, AgentOrchestrator as ORCHESTRATOR } from "./agents/orchestrator";
 export { AgentValidationError, AgentValidationError as VALIDATION_AGENT } from "./agents/validation";
 export { AgentClassifier, AgentClassifier as CLASSIFIER_AGENT } from "./agents/classifier";
@@ -72,7 +92,7 @@ export default {
 			}
 
 			// Workers AI returns { response: "..." } or structured output depending on the model
-			const result = parseWorkersAiJson(response);
+			const result = normaliseGirResult(parseWorkersAiJson(response));
 
 			return Response.json(result);
 			} catch (error: any) {

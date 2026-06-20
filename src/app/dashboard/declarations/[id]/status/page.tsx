@@ -19,6 +19,11 @@ import {
 } from "@/lib/notification-context";
 import { generateClientFraudHeaders } from "@/lib/hmrc-fraud-headers";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import {
+  ConvexSessionMissing,
+  DeclarationLoadingSpinner,
+  isConvexSessionMissing,
+} from "@/components/declaration-session-states";
 
 export default function StatusTimelinePage() {
   const { isLoaded, isSignedIn, userId } = useAuth();
@@ -120,12 +125,16 @@ export default function StatusTimelinePage() {
     }
   }
 
-  if (!isLoaded || isConvexAuthLoading || declaration === undefined) {
-    return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-      </div>
-    );
+  if (!isLoaded) {
+    return <DeclarationLoadingSpinner />;
+  }
+
+  if (isConvexSessionMissing(isLoaded, Boolean(isSignedIn), isConvexAuthLoading, isAuthenticated)) {
+    return <ConvexSessionMissing />;
+  }
+
+  if (isSignedIn && isAuthenticated && declaration === undefined) {
+    return <DeclarationLoadingSpinner />;
   }
 
   if (!declaration) {
@@ -205,7 +214,7 @@ export default function StatusTimelinePage() {
     DMSROG: { title: "Route to examine (DMSROG)",              color: "bg-amber-500", icon: "warning", detail: "HMRC routed this declaration for examination. Action required." },
     DMSREJ: { title: "Declaration rejected (DMSREJ)",          color: "bg-red-500",   icon: "danger",  detail: "HMRC rejected the declaration. Review error codes and amend." },
     DMSINV: { title: "Declaration invalid (DMSINV)",           color: "bg-red-500",   icon: "danger",  detail: "HMRC returned field-level validation errors." },
-    DMSTAX: { title: "Tax notification (DMSTAX)",              color: "bg-amber-500", icon: "warning", detail: "HMRC issued a tax/duty demand. Payment may be required." },
+    DMSTAX: { title: "Duty and VAT assessed by HMRC", color: "bg-amber-500", icon: "warning", detail: "HMRC has calculated duty and import VAT for this declaration." },
     DMSCTL: { title: "Documentary control (DMSCTL)",           color: "bg-amber-500", icon: "warning", detail: "Declaration under documentary control. Documents may be requested." },
     DMSRES: { title: "Response required (DMSRES)",             color: "bg-amber-500", icon: "warning", detail: "HMRC requires a response before proceeding." },
     DMSRCV: { title: "Declaration received (DMSRCV)",          color: "bg-blue-500",  icon: "info",    detail: "HMRC confirmed receipt of the declaration." },

@@ -2,6 +2,7 @@ import type { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api";
 import { fetchHmrc } from "./hmrc-fetch";
 import { HMRC_CONFIG } from "./hmrc-config";
+import type { ResolvedHmrcContext } from "./hmrc-context";
 import { parseHmrcNotification } from "./hmrc-notification-parser";
 import { buildHmrcNotificationIdempotencyKey } from "./hmrc-notification-idempotency";
 
@@ -79,13 +80,14 @@ export async function pullHmrcNotificationsForConversation(params: {
   accessToken: string;
   request: Request;
   convex: ConvexHttpClient;
+  hmrcContext?: ResolvedHmrcContext;
 }): Promise<PullNotificationsResult> {
-  const { conversationId, accessToken, request, convex } = params;
+  const { conversationId, accessToken, request, convex, hmrcContext } = params;
 
-  const hmrcBase =
-    process.env.HMRC_ENVIRONMENT === "sandbox"
+  const hmrcBase = hmrcContext?.apiBaseUrl
+    ?? (process.env.HMRC_ENVIRONMENT === "sandbox"
       ? HMRC_CONFIG.sandboxBaseUrl
-      : HMRC_CONFIG.productionBaseUrl;
+      : HMRC_CONFIG.productionBaseUrl);
 
   const pullAccept = HMRC_CONFIG.accept.v1Xml;
   const listUrl = `${hmrcBase}/notifications/conversationId/${encodeURIComponent(conversationId)}/unpulled`;
@@ -94,6 +96,8 @@ export async function pullHmrcNotificationsForConversation(params: {
     { method: "GET", headers: { Accept: pullAccept } },
     request,
     accessToken,
+    undefined,
+    hmrcContext,
   );
 
   if (!listResponse.ok) {
@@ -114,6 +118,8 @@ export async function pullHmrcNotificationsForConversation(params: {
       { method: "GET", headers: { Accept: pullAccept } },
       request,
       accessToken,
+      undefined,
+      hmrcContext,
     );
 
     if (!notifResponse.ok) continue;
@@ -157,6 +163,7 @@ export async function pullHmrcNotificationsForDeclaration(params: {
   accessToken: string;
   request: Request;
   convex: ConvexHttpClient;
+  hmrcContext?: ResolvedHmrcContext;
 }): Promise<{
   saved: number;
   total: number;
@@ -173,6 +180,7 @@ export async function pullHmrcNotificationsForDeclaration(params: {
       accessToken: params.accessToken,
       request: params.request,
       convex: params.convex,
+      hmrcContext: params.hmrcContext,
     });
     conversations.push(result);
     saved += result.saved;

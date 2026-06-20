@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
-import { Plus, Trash2, UploadCloud, Loader2, Sparkles, AlertCircle } from "lucide-react";
+import { Plus, Trash2, UploadCloud, Loader2, Sparkles, AlertCircle, Search } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +25,11 @@ import {
 } from "@/components/ui/select";
 import { countries } from "@/lib/data/countries";
 import { DeclarationModePromote } from "@/components/declaration-mode-promote";
+import {
+  ConvexSessionMissing,
+  DeclarationLoadingSpinner,
+  isConvexSessionMissing,
+} from "@/components/declaration-session-states";
 
 export default function GoodsItemsPage() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -73,7 +80,16 @@ export default function GoodsItemsPage() {
   const [docSaveState, setDocSaveState] = useState<Record<string, "idle" | "saving" | "saved" | "error">>({});
   const [itemSaveError, setItemSaveError] = useState<string | null>(null);
 
-  // Batch pending field updates per item — flushed after 600ms idle OR immediately on blur.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("hsApplied") === "1") {
+      toast.success("HS code applied — verify the trade description against your invoice");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
+  // Batch pending field updates per item
   const pendingUpdates = useRef<Record<string, Record<string, unknown>>>({});
   const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const flushInFlight = useRef<Record<string, boolean>>({});
@@ -414,16 +430,16 @@ export default function GoodsItemsPage() {
     }
   };
 
-  if (
-    !isLoaded ||
-    isConvexAuthLoading ||
-    (isSignedIn && isAuthenticated && (declaration === undefined || items === undefined))
-  ) {
-    return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-      </div>
-    );
+  if (!isLoaded) {
+    return <DeclarationLoadingSpinner />;
+  }
+
+  if (isConvexSessionMissing(isLoaded, Boolean(isSignedIn), isConvexAuthLoading, isAuthenticated)) {
+    return <ConvexSessionMissing />;
+  }
+
+  if (isSignedIn && isAuthenticated && (declaration === undefined || items === undefined)) {
+    return <DeclarationLoadingSpinner />;
   }
 
   if (!declaration) {
@@ -568,7 +584,18 @@ export default function GoodsItemsPage() {
                 */}
                 <div className="grid grid-cols-2 gap-x-6 gap-y-4 px-4 py-4 md:grid-cols-3 lg:grid-cols-4">
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">HS Code <span className="text-red-500">*</span></label>
+                    <div className="mb-1 flex items-center justify-between gap-2">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                        HS Code <span className="text-red-500">*</span>
+                      </label>
+                      <Link
+                        href={`/dashboard/tools/hscode-lookup?declarationId=${declarationId}&itemId=${item._id}`}
+                        className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-600 hover:text-blue-800"
+                      >
+                        <Search className="h-3 w-3" />
+                        Look up
+                      </Link>
+                    </div>
                     <input
                       type="text"
                       required

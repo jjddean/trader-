@@ -71,7 +71,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ suggestions });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("AI Classification Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

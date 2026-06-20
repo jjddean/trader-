@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { ArrowRight, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { WaitlistForm } from "@/components/waitlist-form";
+import { SignUpCta } from "@/components/sign-up-cta";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { HomeDashboardPreview } from "@/components/home-dashboard-preview";
@@ -94,7 +94,7 @@ export function LandingPageContent() {
               Automate declarations, recover overpaid duties, and stay ahead of HMRC compliance changes — from one connected platform.
             </p>
 
-            <div id="waitlist-form" className="flex flex-col items-center justify-center gap-[16px] sm:flex-row">
+            <div id="signup-cta" className="flex flex-col items-center justify-center gap-[16px] sm:flex-row">
               {isSignedIn ? (
                 <Link
                   href="/dashboard"
@@ -103,7 +103,7 @@ export function LandingPageContent() {
                   Open Dashboard <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Link>
               ) : (
-                <WaitlistForm />
+                <SignUpCta />
               )}
             </div>
           </div>
@@ -447,8 +447,8 @@ export function LandingPageContent() {
               Take control of your customs data
             </h2>
             <p className="mx-auto mb-10 max-w-xl text-[18px] text-slate-600">
-              Automate your declarations, uncover hidden savings, and ensure total HMRC compliance. 
-              Request early access to our platform today.
+              Automate your declarations, uncover hidden savings, and ensure total HMRC compliance.
+              Create a free practice workspace — no card required.
             </p>
             <div className="flex flex-col items-center justify-center gap-6">
               {isSignedIn ? (
@@ -460,7 +460,7 @@ export function LandingPageContent() {
                 </Link>
               ) : (
                 <div className="relative flex w-full justify-center">
-                  <WaitlistForm />
+                  <SignUpCta />
                 </div>
               )}
             </div>

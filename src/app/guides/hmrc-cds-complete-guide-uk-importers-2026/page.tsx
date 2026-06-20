@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { WaitlistForm } from "@/components/waitlist-form";
+import { SignUpCta } from "@/components/sign-up-cta";
 
 export const metadata: Metadata = {
   title: "HMRC CDS: Complete Guide for UK Importers 2026 | FreightCode",
@@ -174,7 +174,7 @@ export default function Guide1Page() {
           FreightCode connects directly to CDS and presents all your declaration data, notifications, and duty calculations in one clear dashboard. Instead of logging into HMRC to track notifications, you see every DMSACC, DMSROG, DMSCLE and DMSREJ in real time — with plain-English explanations of what each one means.
         </p>
         <div className="mt-8 max-w-sm">
-          <WaitlistForm variant="light" />
+          <SignUpCta variant="light" showSignIn={false} />
         </div>
       </div>
     </article>

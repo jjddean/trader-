@@ -7,9 +7,11 @@ import {
   type AmendmentChangeKind,
 } from "../../../../lib/hmrc-amendment-xml";
 import { deriveHeaderAmendment } from "../../../../lib/hmrc-amendment-pointers";
+import { Id } from "../../../../../convex/_generated/dataModel";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
-import { declarationsEndpointUrl, HMRC_CONFIG } from "../../../../lib/hmrc-config";
+import { declarationsEndpointUrl } from "../../../../lib/hmrc-config";
 import { getAuthenticatedConvex } from "../../../../lib/hmrc-route-session";
+import { resolveOrgHmrcRoutingForDeclaration } from "../../../../lib/hmrc-org-routing";
 import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
 import { logHmrcAudit } from "../../../../lib/audit-log";
 
@@ -55,10 +57,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Declaration not found" }, { status: 404 });
     }
 
-    if (lane.userId !== userId && process.env.HMRC_ENVIRONMENT !== "sandbox") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
-
     const status = String(lane.status || "");
     if (status.includes("Invalid") || status.includes("Cancel")) {
       return NextResponse.json(
@@ -90,6 +88,15 @@ export async function POST(request: Request) {
     if ("error" in tokenResult) {
       return tokenResult.error;
     }
+
+    const orgRouting = await resolveOrgHmrcRoutingForDeclaration(
+      convex,
+      declarationId as Id<"declarations">,
+    );
+    if ("error" in orgRouting) {
+      return orgRouting.error;
+    }
+    const { hmrcContext } = orgRouting;
 
     const firstItem = items[0] as {
       valueAmount?: number | string;
@@ -188,13 +195,8 @@ export async function POST(request: Request) {
       });
     }
 
-    const hmrcBase =
-      process.env.HMRC_ENVIRONMENT === "sandbox"
-        ? HMRC_CONFIG.sandboxBaseUrl
-        : HMRC_CONFIG.productionBaseUrl;
-
     const hmrcResponse = await fetchHmrc(
-      declarationsEndpointUrl(hmrcBase, "amend"),
+      declarationsEndpointUrl(hmrcContext.apiBaseUrl, "amend"),
       {
         method: "POST",
         headers: { "Content-Type": "application/xml; charset=UTF-8" },
@@ -203,6 +205,7 @@ export async function POST(request: Request) {
       request,
       tokenResult.token,
       eori,
+      hmrcContext,
     );
 
     const recordAmendEvidence = async (

@@ -55,45 +55,12 @@ const SIGNED_ADDITIONAL_DOCUMENTS = [
 ];
 
 
-async function getToken(client, userId) {
-  const tokenRecord = await client.query(api.hmrc.getToken, { userId });
-  if (!tokenRecord?.accessToken) {
+async function getAccessToken(client, userId) {
+  const result = await client.action(api.hmrc_actions.resolveAccessToken, { userId });
+  if (!result?.token) {
     throw new Error(`No HMRC token found in Convex for user ${userId}`);
   }
-
-  if (tokenRecord.expiresAt && Date.now() + HMRC_CONFIG.timing.tokenExpiryBufferMs > tokenRecord.expiresAt) {
-    if (!tokenRecord.refreshToken) {
-      throw new Error("HMRC token expiring and no refresh token available in Convex");
-    }
-    const hmrcBase =
-      process.env.HMRC_ENVIRONMENT === "sandbox"
-        ? HMRC_CONFIG.sandboxBaseUrl
-        : HMRC_CONFIG.productionBaseUrl;
-    const refreshResponse = await fetch(`${hmrcBase}/oauth/token`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        client_secret: process.env.HMRC_CLIENT_SECRET,
-        client_id: process.env.HMRC_CLIENT_ID,
-        grant_type: "refresh_token",
-        refresh_token: tokenRecord.refreshToken,
-      }).toString(),
-    });
-    if (!refreshResponse.ok) {
-      throw new Error(`Failed to refresh HMRC token: ${await refreshResponse.text()}`);
-    }
-    const data = await refreshResponse.json();
-    await client.mutation(api.hmrc.saveToken, {
-      userId,
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token || tokenRecord.refreshToken,
-      expiresIn: data.expires_in || HMRC_CONFIG.timing.defaultTokenExpiryMs,
-      eori: tokenRecord.eori,
-    });
-    return data.access_token;
-  }
-
-  return tokenRecord.accessToken;
+  return result.token;
 }
 
 async function submitXml(xmlPayload, token) {
@@ -307,18 +274,24 @@ async function run() {
   const payloadInfo = appMapToCDS_H1(input.declaration, [{ ...input.item }]);
   const xmlPayload = appRenderH1Xml(payloadInfo);
 
-  let tokenRecord = null;
+  let tokenConnected = false;
   if (client && userId && !dryRunOnly) {
-    tokenRecord = await client.query(api.hmrc.getToken, { userId });
+    try {
+      const status = await client.query(api.hmrc_internal.getTokens, { userId });
+      tokenConnected = Boolean(status?.connected);
+    } catch {
+      // Convex unreachable — non-blocking in dry-run
+    }
   } else if (client && userId) {
     try {
-      tokenRecord = await client.query(api.hmrc.getToken, { userId });
+      const status = await client.query(api.hmrc_internal.getTokens, { userId });
+      tokenConnected = Boolean(status?.connected);
     } catch {
       // Convex unreachable in dry-run — token_present will show false, non-blocking
     }
   }
   const preflight = preflightGates(xmlPayload, eori);
-  preflight.checks.token_present = Boolean(tokenRecord?.accessToken);
+  preflight.checks.token_present = tokenConnected;
   const dryRunMode = process.env.DRY_RUN_ONLY !== "false";
   preflight.failed = Object.entries(preflight.checks)
     .filter(([key, ok]) => {
@@ -398,7 +371,7 @@ async function run() {
   }
 
   // Live submit — only reached when DRY_RUN_ONLY=false AND HMRC_SUBMIT_ONCE=true
-  const token = await getToken(client, userId);
+  const token = await getAccessToken(client, userId);
   const response = await submitXml(xmlPayload, token);
 
   const responseWithMeta = `<!-- request_accept: ${response.requestHeaders.Accept} | request_content_type: ${response.requestHeaders["Content-Type"]} | request_authorization: ${response.requestHeaders.Authorization} | request_x_client_id: ${response.requestHeaders["X-Client-ID"]} | request_gov_test_scenario: ABSENT -->\n${response.body || "<empty/>"}`;

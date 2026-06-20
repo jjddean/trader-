@@ -1,5 +1,10 @@
 import { countries } from "./data/countries";
 import { resolveGoodsLocationForXml } from "./goods-location";
+import {
+  buildDefermentAdditionalDocument,
+  resolveDeclarationPayment,
+  validatePaymentFields,
+} from "./payment-method";
 
 // validateCdsFields was deleted. The submit route already runs evaluateRules
 // from convex/lib/rule_engine.ts before mapping — that is the single source
@@ -400,6 +405,17 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
   const importerEori = String(declaration.importerEori || declaration.eori || "").trim();
   const isSelfRepresentation = declarantEori && importerEori && declarantEori === importerEori;
 
+  const paymentError = validatePaymentFields(
+    declaration.paymentMethodCode,
+    declaration.defermentAccountNumber,
+  );
+  if (paymentError) {
+    throw new Error(paymentError);
+  }
+  const { dan, mop } = resolveDeclarationPayment(declaration);
+  const headerDefermentDocs = dan ? [buildDefermentAdditionalDocument(dan)] : [];
+  const dutyTaxFeeMethod = mop ? { MethodCode: mop } : {};
+
   return {
     Declaration: {
       FunctionCode: "9",
@@ -426,6 +442,7 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
         IdentificationTypeCode: declaration.transportIdType || "",
         ModeCode: declaration.transportMode || "",
       },
+      ...(headerDefermentDocs.length > 0 ? { AdditionalDocument: headerDefermentDocs } : {}),
       Declarant: {
         ID: String(declaration.eori || "").trim()
       },
@@ -556,9 +573,17 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
             Commodity: {
               Description: item.description || "",
               Classification: commodityClassifications(item.commodityCode || item.hsCode),
-              DutyTaxFee: {
-                DutyRegimeCode: item.preferenceCode || "100",
-              },
+              DutyTaxFee: [
+                {
+                  DutyRegimeCode: item.preferenceCode || "100",
+                  TypeCode: "A00",
+                  ...dutyTaxFeeMethod,
+                },
+                {
+                  TypeCode: "B00",
+                  ...dutyTaxFeeMethod,
+                },
+              ],
               GoodsMeasure: {
                 GrossMassMeasure: formatMass(item.grossWeightKg),
                 NetNetWeightMeasure: clampNetToGross(item.netWeightKg ?? item.grossWeightKg, item.grossWeightKg),

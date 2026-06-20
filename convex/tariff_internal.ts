@@ -1,5 +1,8 @@
 import { v } from "convex/values";
-import { internalMutation, query } from "./_generated/server";
+import { internalMutation, internalQuery, query } from "./_generated/server";
+
+/** Default TTL for tariff cache refresh (7 days). */
+export const TARIFF_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 const ruleValidator = v.object({
   ruleId: v.string(),
@@ -127,5 +130,48 @@ export const getCache = query({
       .query("tariff_cache")
       .withIndex("by_commodity", (q) => q.eq("commodityCode", args.commodityCode))
       .first();
+  },
+});
+
+export const listCommodityCodesInUse = internalQuery({
+  args: { itemLimit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const items = await ctx.db.query("goods_items").take(args.itemLimit ?? 5000);
+    const codes = new Set<string>();
+    for (const item of items) {
+      const code = String(item.commodityCode || "").trim();
+      if (/^\d{10}$/.test(code)) codes.add(code);
+    }
+    return Array.from(codes).sort();
+  },
+});
+
+export const listStaleCommodityCodes = internalQuery({
+  args: {
+    ttlMs: v.optional(v.number()),
+    limit: v.optional(v.number()),
+    itemLimit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const ttlMs = args.ttlMs ?? TARIFF_CACHE_TTL_MS;
+    const limit = args.limit ?? 20;
+    const cutoff = Date.now() - ttlMs;
+    const items = await ctx.db.query("goods_items").take(args.itemLimit ?? 5000);
+    const codes = new Set<string>();
+    for (const item of items) {
+      const code = String(item.commodityCode || "").trim();
+      if (/^\d{10}$/.test(code)) codes.add(code);
+    }
+
+    const stale: string[] = [];
+    for (const code of Array.from(codes).sort()) {
+      const cache = await ctx.db
+        .query("tariff_cache")
+        .withIndex("by_commodity", (q) => q.eq("commodityCode", code))
+        .first();
+      if (!cache || cache.fetchedAt < cutoff) stale.push(code);
+      if (stale.length >= limit) break;
+    }
+    return stale;
   },
 });

@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { internalQuery, mutation, query } from "./_generated/server";
+import { canAccessDeclaration } from "./lib/org_access";
 
 async function distinctConversationIdsForDeclaration(
   db: QueryCtx["db"],
@@ -52,7 +53,7 @@ export const recordSubmission = mutation({
     if (!identity) throw new Error("Unauthenticated");
 
     const decl = await ctx.db.get(args.declarationId);
-    if (!decl || decl.userId !== identity.subject) {
+    if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
       throw new Error("Unauthorized");
     }
 
@@ -82,7 +83,7 @@ export const getDistinctConversationIds = query({
     if (!identity) return [];
 
     const decl = await ctx.db.get(args.declarationId);
-    if (!decl || decl.userId !== identity.subject) return [];
+    if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) return [];
 
     return distinctConversationIdsForDeclaration(ctx.db, args.declarationId);
   },
@@ -104,7 +105,7 @@ export const getSubmissions = query({
     if (!identity) return [];
 
     const decl = await ctx.db.get(args.declarationId);
-    if (!decl || decl.userId !== identity.subject) return [];
+    if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) return [];
 
     return await ctx.db
       .query("submissions")

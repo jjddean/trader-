@@ -1,97 +1,105 @@
-// src/lib/preference-engine.ts
-// Duty optimisation engine: extracts preference logic from UI
+// Preference checker — deterministic duty comparison from Trade Tariff measures.
+
+import {
+  evaluatePreferenceOptions,
+  type PreferenceEvaluation,
+} from "../../convex/lib/duty_rate_parser";
+import type { TariffJsonApi } from "../../convex/lib/tariff_parser";
+import { fetchCommodityTariff } from "./trade-tariff-client";
 
 export type PreferenceScheme = {
   code: string;
   countries: string[];
   measureCode: string;
-  priority: 'high' | 'medium' | 'low';
+  priority: "high" | "medium" | "low";
   label: string;
   notes?: string;
 };
 
 export const TRADE_AGREEMENTS: Record<string, PreferenceScheme> = {
   UK_EU_TCA: {
-    code: '1013',
-    countries: ['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'],
-    measureCode: '1013',
-    priority: 'high',
-    label: 'UK–EU Trade and Cooperation Agreement',
-    notes: 'Requires origin compliance',
+    code: "1013",
+    countries: [
+      "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE", "IT",
+      "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE",
+    ],
+    measureCode: "1013",
+    priority: "high",
+    label: "UK–EU Trade and Cooperation Agreement",
+    notes: "Requires origin compliance",
   },
   UK_JP_EPA: {
-    code: 'JP',
-    countries: ['JP'],
-    measureCode: 'JP',
-    priority: 'high',
-    label: 'UK–Japan Comprehensive Economic Partnership',
-    notes: 'Requires origin compliance',
+    code: "JP",
+    countries: ["JP"],
+    measureCode: "JP",
+    priority: "high",
+    label: "UK–Japan Comprehensive Economic Partnership",
+    notes: "Requires origin compliance",
   },
   UK_CA_CTPA: {
-    code: 'CA',
-    countries: ['CA'],
-    measureCode: 'CA',
-    priority: 'high',
-    label: 'UK–Canada CTPA',
-    notes: 'Requires origin compliance',
+    code: "CA",
+    countries: ["CA"],
+    measureCode: "CA",
+    priority: "high",
+    label: "UK–Canada CTPA",
+    notes: "Requires origin compliance",
   },
   UK_AU_FTA: {
-    code: 'AU',
-    countries: ['AU'],
-    measureCode: 'AU',
-    priority: 'high',
-    label: 'UK–Australia FTA',
-    notes: 'Requires origin compliance',
+    code: "AU",
+    countries: ["AU"],
+    measureCode: "AU",
+    priority: "high",
+    label: "UK–Australia FTA",
+    notes: "Requires origin compliance",
   },
   UK_NZ_FTA: {
-    code: 'NZ',
-    countries: ['NZ'],
-    measureCode: 'NZ',
-    priority: 'high',
-    label: 'UK–New Zealand FTA',
-    notes: 'Requires origin compliance',
+    code: "NZ",
+    countries: ["NZ"],
+    measureCode: "NZ",
+    priority: "high",
+    label: "UK–New Zealand FTA",
+    notes: "Requires origin compliance",
   },
   DCTS_STANDARD: {
-    code: '1060',
+    code: "1060",
     countries: [],
-    measureCode: '1060',
-    priority: 'medium',
-    label: 'DCTS – Standard Preferences',
+    measureCode: "1060",
+    priority: "medium",
+    label: "DCTS – Standard Preferences",
   },
   DCTS_ENHANCED: {
-    code: '1061',
+    code: "1061",
     countries: [],
-    measureCode: '1061',
-    priority: 'medium',
-    label: 'DCTS – Enhanced Preferences',
+    measureCode: "1061",
+    priority: "medium",
+    label: "DCTS – Enhanced Preferences",
   },
   DCTS_COMPREHENSIVE: {
-    code: '1062',
+    code: "1062",
     countries: [],
-    measureCode: '1062',
-    priority: 'medium',
-    label: 'DCTS – Comprehensive Preferences',
+    measureCode: "1062",
+    priority: "medium",
+    label: "DCTS – Comprehensive Preferences",
   },
   UK_GLOBAL_TARIFF: {
-    code: '1011',
+    code: "1011",
     countries: [],
-    measureCode: '1011',
-    priority: 'low',
-    label: 'UK Global Tariff (MFN)',
+    measureCode: "1011",
+    priority: "low",
+    label: "UK Global Tariff (MFN)",
   },
   GCC_FTA: {
-    code: 'UK-GCC',
-    countries: ['BH', 'KW', 'OM', 'QA', 'SA', 'AE'],
-    measureCode: 'FTA_GCC',
-    priority: 'high',
-    label: 'UK–GCC FTA',
-    notes: 'Requires proof of origin; eligibility may vary by HS code',
+    code: "UK-GCC",
+    countries: ["BH", "KW", "OM", "QA", "SA", "AE"],
+    measureCode: "FTA_GCC",
+    priority: "high",
+    label: "UK–GCC FTA",
+    notes: "Requires proof of origin; eligibility may vary by HS code",
   },
 };
 
-// Flat lookup: geoAreaId → scheme label
 const SCHEME_LABEL: Record<string, string> = Object.fromEntries(
-  Object.values(TRADE_AGREEMENTS).map(s => [s.code, s.label])
+  Object.values(TRADE_AGREEMENTS).map((s) => [s.code, s.label]),
 );
 
 export interface PreferenceEngineResult {
@@ -100,136 +108,195 @@ export interface PreferenceEngineResult {
     rate: string;
     saving: string;
     isMfn: boolean;
+    dutyAmount: number;
+    preferenceCodeId: string | null;
   };
   all: Array<{
     name: string;
     rate: string;
     rateValue: number;
+    dutyAmount: number;
     eligible: boolean;
     isMfn: boolean;
     notes: string;
+    preferenceCodeId: string | null;
+    incompleteInput: boolean;
   }>;
-  /** Raw certificate/document codes extracted from measure conditions (e.g. "N935", "U166"). */
   certificates: string[];
-  /** First tariff quota found for this commodity+country lane, if any. */
   quota: { orderNumber: string } | null;
+  /** Estimate only — not HMRC-assessed. */
+  estimateLabel: string;
 }
 
-/**
- * Fetches and computes the best available preference scheme, duty rate, required
- * origin certificates, and quota status for a given country + 10-digit HS code.
- * Calls the UK Trade Tariff API directly — must be called from a browser context
- * (CORS is open on trade-tariff.service.gov.uk).
- */
-export async function getPreferenceDecision({
-  country,
-  commodityCode,
-}: {
-  country: string;
-  commodityCode: string;
-}): Promise<PreferenceEngineResult> {
+function schemeLabelForGeo(geoAreaId: string, fallbackDescription: string): string {
+  return SCHEME_LABEL[geoAreaId] || fallbackDescription || `Scheme ${geoAreaId}`;
+}
+
+function schemeNotes(geoAreaId: string): string {
+  const entry = Object.values(TRADE_AGREEMENTS).find(
+    (s) => s.code === geoAreaId || s.measureCode === geoAreaId,
+  );
+  return entry?.notes || "";
+}
+
+function formatSaving(
+  bestDuty: number,
+  mfnDuty: number | null,
+  preferencesFound: boolean,
+): string {
+  if (mfnDuty != null && mfnDuty > bestDuty) {
+    const savingGbp = mfnDuty - bestDuty;
+    return `Saving: £${savingGbp.toFixed(2)} vs standard rate`;
+  }
+  if (preferencesFound) return "Same as standard rate";
+  return "No preference schemes available for this origin. Standard MFN rate applies.";
+}
+
+export function buildPreferenceEngineResult(evaluation: PreferenceEvaluation): PreferenceEngineResult {
+  const preferencesFound = evaluation.options.some((o) => o.isPreference);
+  const certificatesFound = new Set<string>();
+  let quota: { orderNumber: string } | null = null;
+
+  for (const option of evaluation.options) {
+    option.certificates.forEach((c) => certificatesFound.add(c));
+    if (option.hasQuota && option.quotaOrderNumber && !quota) {
+      quota = { orderNumber: option.quotaOrderNumber };
+    }
+  }
+
+  const best = evaluation.best;
+  const mfnDuty = evaluation.mfn?.dutyAmount ?? null;
+
+  return {
+    best: {
+      scheme: schemeLabelForGeo(best.geographicalAreaId, best.geographicalAreaDescription),
+      rate: best.rateLabel,
+      saving: formatSaving(best.dutyAmount, mfnDuty, preferencesFound),
+      isMfn: best.isMfn,
+      dutyAmount: best.dutyAmount,
+      preferenceCodeId: best.preferenceCodeId,
+    },
+    all: evaluation.options.map((option) => ({
+      name: schemeLabelForGeo(option.geographicalAreaId, option.geographicalAreaDescription),
+      rate: option.rateLabel,
+      rateValue: option.dutyAmount,
+      dutyAmount: option.dutyAmount,
+      eligible: !option.incompleteInput,
+      isMfn: option.isMfn,
+      notes: schemeNotes(option.geographicalAreaId),
+      preferenceCodeId: option.preferenceCodeId,
+      incompleteInput: option.incompleteInput,
+    })),
+    certificates: Array.from(certificatesFound),
+    quota,
+    estimateLabel: "Estimate only — HMRC assessed amounts override on clearance",
+  };
+}
+
+export function evaluatePreferenceFromTariffDoc(
+  doc: TariffJsonApi,
+  {
+    country,
+    commodityCode,
+    customsValueGbp = 0,
+    netWeightKg,
+    supplementaryUnitQty,
+    preferenceCode,
+  }: {
+    country: string;
+    commodityCode: string;
+    customsValueGbp?: number;
+    netWeightKg?: number;
+    supplementaryUnitQty?: number;
+    preferenceCode?: string;
+  },
+): PreferenceEngineResult {
   if (!country || !commodityCode || commodityCode.length !== 10) {
     throw new Error("Country and valid 10-digit commodity code required");
   }
 
-  const response = await fetch(
-    `https://www.trade-tariff.service.gov.uk/api/v2/commodities/${commodityCode}?country=${country}`
-  );
-  if (!response.ok) {
-    throw new Error("Unable to fetch tariff data. Please check that the commodity code is a valid 10-digit number.");
-  }
-  const json = await response.json();
-  const included: any[] = json.included || [];
-
-  const relevantMeasureIds = new Set(
-    json.data.relationships.import_measures.data.map((m: any) => String(m.id))
-  );
-  const findIncluded = (type: string, id: string) =>
-    included.find((item) => item.type === type && item.id === id);
-  const allMeasures = included.filter(
-    (item) => item.type === "measure" && relevantMeasureIds.has(String(item.id))
-  );
-
-  const rates: PreferenceEngineResult['all'] = [];
-  const certificatesFound = new Set<string>();
-  let mfnRateValue = 0;
-  let preferencesFound = false;
-  let quota: { orderNumber: string } | null = null;
-
-  allMeasures.forEach((measure: any) => {
-    const measureTypeId = measure.relationships.measure_type.data.id;
-    const geoAreaId = measure.relationships.geographical_area.data.id;
-    const dutyExprId = measure.relationships.duty_expression?.data?.id;
-
-    const geoArea = findIncluded("geographical_area", geoAreaId);
-    const dutyExpr = findIncluded("duty_expression", dutyExprId);
-
-    const children = geoArea?.relationships?.children_geographical_areas?.data || [];
-    const isChild = children.some((c: any) => c.id === country);
-    const isRelevantGeo = geoAreaId === country || geoAreaId === "1011" || isChild;
-
-    if (isRelevantGeo && (measureTypeId === "103" || measureTypeId === "142")) {
-      const rate = dutyExpr?.attributes?.base || "0.00 %";
-      const rateValue = parseFloat(rate.replace(/[^\d.]/g, "")) || 0;
-      const schemeName =
-        SCHEME_LABEL[geoAreaId] ||
-        geoArea?.attributes?.description ||
-        `Scheme ${geoAreaId}`;
-      const schemeEntry = Object.values(TRADE_AGREEMENTS).find(
-        s => s.code === geoAreaId || s.measureCode === geoAreaId
-      );
-
-      const isMfn = measureTypeId === "103";
-      if (isMfn) mfnRateValue = rateValue;
-      if (!isMfn) preferencesFound = true;
-
-      // Extract certificate codes from measure conditions
-      const conditionIds: string[] =
-        measure.relationships.measure_conditions?.data?.map((c: any) => String(c.id)) || [];
-      conditionIds.forEach((cId) => {
-        const condition = findIncluded("measure_condition", cId);
-        const certId = condition?.relationships?.certificate?.data?.id;
-        if (certId) certificatesFound.add(String(certId));
-      });
-
-      // Quota
-      if (measure.attributes?.order_number && !quota) {
-        quota = { orderNumber: String(measure.attributes.order_number) };
-      }
-
-      rates.push({
-        name: schemeName,
-        rate,
-        rateValue,
-        eligible: true,
-        isMfn,
-        notes: schemeEntry?.notes || "",
-      });
-    }
+  const evaluation = evaluatePreferenceOptions(doc, {
+    originCountry: country,
+    input: {
+      customsValueGbp,
+      netWeightKg,
+      supplementaryUnitQty,
+    },
   });
 
-  if (rates.length === 0) {
+  if (!evaluation) {
     throw new Error("No applicable measures found for this commodity.");
   }
 
-  const sorted = [...rates].sort((a, b) => a.rateValue - b.rateValue);
-  const best = sorted[0];
-  const savingValue = Math.max(0, mfnRateValue - best.rateValue);
-  const saving = savingValue > 0
-    ? `Saving: ${savingValue}% vs standard rate`
-    : preferencesFound
-      ? "Same as standard rate"
-      : "No preference schemes available for this origin. Standard MFN rate applies.";
+  if (evaluation.best.incompleteInput) {
+    throw new Error(
+      "Net weight or supplementary units are required to calculate duty for this commodity.",
+    );
+  }
 
-  return {
-    best: {
-      scheme: best.name,
-      rate: best.rate,
-      saving,
-      isMfn: best.isMfn,
-    },
-    all: rates.sort((a, b) => (a.isMfn ? 1 : -1)),
-    certificates: Array.from(certificatesFound),
-    quota,
-  };
+  return buildPreferenceEngineResult(evaluation);
+}
+
+/**
+ * Fetches tariff data (country-filtered) and returns the best preference/MFN duty lane.
+ * Prefer calling from `/api/tariff/preference` in the browser so fetches are server-side.
+ */
+export async function getPreferenceDecision({
+  country,
+  commodityCode,
+  customsValueGbp = 0,
+  netWeightKg,
+  supplementaryUnitQty,
+  preferenceCode,
+}: {
+  country: string;
+  commodityCode: string;
+  customsValueGbp?: number;
+  netWeightKg?: number;
+  supplementaryUnitQty?: number;
+  preferenceCode?: string;
+}): Promise<PreferenceEngineResult> {
+  const response = await fetch("/api/tariff/preference", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      country,
+      commodityCode,
+      customsValueGbp,
+      netWeightKg,
+      supplementaryUnitQty,
+      preferenceCode,
+    }),
+  });
+
+  const payload = (await response.json()) as PreferenceEngineResult & { error?: string };
+  if (!response.ok) {
+    throw new Error(payload.error || "Unable to check preferences for this commodity.");
+  }
+
+  return payload;
+}
+
+/** Server-side entry point used by the API route. */
+export async function getPreferenceDecisionFromApi({
+  country,
+  commodityCode,
+  customsValueGbp = 0,
+  netWeightKg,
+  supplementaryUnitQty,
+}: {
+  country: string;
+  commodityCode: string;
+  customsValueGbp?: number;
+  netWeightKg?: number;
+  supplementaryUnitQty?: number;
+}): Promise<PreferenceEngineResult> {
+  const doc = await fetchCommodityTariff(commodityCode, country);
+  return evaluatePreferenceFromTariffDoc(doc, {
+    country,
+    commodityCode,
+    customsValueGbp,
+    netWeightKg,
+    supplementaryUnitQty,
+  });
 }

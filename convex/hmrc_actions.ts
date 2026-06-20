@@ -200,3 +200,23 @@ export const recoverStuckDeclarations = internalAction({
         return summary;
     },
 });
+
+/** Server-side HMRC API routes — resolves access token via internal store + refresh. */
+export const resolveAccessToken = action({
+    args: { userId: v.optional(v.string()) },
+    handler: async (ctx, args) => {
+        const identity = await ctx.auth.getUserIdentity();
+        if (!identity) {
+            throw new Error("Unauthenticated");
+        }
+        if (args.userId && args.userId !== identity.subject) {
+            throw new Error("Forbidden");
+        }
+
+        const token = await resolveAccessTokenForUser(ctx, identity.subject);
+        if (!token) {
+            throw new Error("HMRC OAuth Token not found. Please connect your account.");
+        }
+        return { token };
+    },
+});

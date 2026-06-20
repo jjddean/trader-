@@ -15,6 +15,7 @@ import {
   mrnSubtitleClass,
   resolveDeclarationRowBadge,
 } from "@/lib/declaration-status-display";
+import { PreClearanceEstimate } from "@/components/pre-clearance-estimate";
 
 export default function DeclarationWorkspaceLayout({
   children,
@@ -28,17 +29,23 @@ export default function DeclarationWorkspaceLayout({
   const router = useRouter();
 
   const declarationId = params?.id as Id<"declarations">;
+  const authReady =
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated;
   const declaration = useQuery(
     api.declarations.getLane,
-    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId ? { id: declarationId } : "skip",
+    authReady && declarationId ? { id: declarationId } : "skip",
   );
+  const financialEstimate = useQuery(
+    api.declarations.getDeclarationFinancialEstimate,
+    authReady && declarationId ? { declarationId } : "skip",
+  );
+  const estimateReady = financialEstimate !== undefined;
 
-  const isSessionLoading =
-    !isLoaded || isConvexAuthLoading || (isSignedIn && isAuthenticated && declaration === undefined);
+  const isSessionLoading = !isLoaded || (authReady && declaration === undefined);
   const isSignedOut = isLoaded && !isConvexAuthLoading && !isSignedIn;
   const isConvexMissing = isLoaded && isSignedIn && !isConvexAuthLoading && !isAuthenticated;
-  const isNotFound = isLoaded && isSignedIn && isAuthenticated && declaration === null;
-  const hasDeclaration = Boolean(declaration);
+  const isNotFound = authReady && declaration === null;
+  const hasDeclaration = authReady && Boolean(declaration);
 
   const steps = [
     { id: "overview", name: "1. Core Schema", icon: FileText, path: `/dashboard/declarations/${declarationId}` },
@@ -133,6 +140,12 @@ export default function DeclarationWorkspaceLayout({
               );
             })}
           </nav>
+
+          {estimateReady && financialEstimate && (
+            <div className="mt-4">
+              <PreClearanceEstimate compact {...financialEstimate} />
+            </div>
+          )}
         </div>
       )}
 

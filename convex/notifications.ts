@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { api, internal } from "./_generated/api";
+import { internal } from "./_generated/api";
 import {
   isAmendmentAccepted,
   isAmendmentAcknowledged,
@@ -10,6 +10,7 @@ import {
 } from "./lib/notification_dms_context";
 import { statusAfterNotification } from "./lib/notification_status";
 import { collectDeclarationNotifications } from "./lib/collect_declaration_notifications";
+import { canAccessDeclaration, listNotificationsForTenant, orgIdFromDeclaration } from "./lib/org_access";
 
 export const saveWebhook = mutation({
   args: {
@@ -208,6 +209,7 @@ export const saveWebhook = mutation({
       await ctx.db.patch(notificationId, {
         userId: declaration.userId,
         declarationId: declaration._id,
+        orgId: orgIdFromDeclaration(declaration),
       });
     }
   }
@@ -225,7 +227,7 @@ export const getWebhooks = query({
 
     if (args.declarationId) {
       const declaration = await ctx.db.get(args.declarationId);
-      if (!declaration || declaration.userId !== identity.subject) {
+      if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
         return [];
       }
     }
@@ -244,10 +246,6 @@ export const getUserNotifications = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
 
-    return await ctx.db
-      .query("notifications")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
-      .order("desc")
-      .take(15);
+    return await listNotificationsForTenant(ctx, identity.subject, 15);
   },
 });

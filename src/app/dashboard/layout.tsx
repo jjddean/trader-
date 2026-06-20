@@ -1,12 +1,15 @@
 "use client";
 
+import { Suspense } from "react";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { UserSync } from "@/components/auth/user-sync";
+import { OrgWorkspaceGate } from "@/components/auth/org-workspace-gate";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { DashboardHeader } from "@/components/dashboard-header";
+import { HmrcConnectBanner } from "@/components/hmrc-connect-banner";
 import { useQuery, useConvexAuth } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../convex/_generated/api";
@@ -42,6 +45,7 @@ export default function DashboardLayout({
     "/dashboard/records": { title: "Financial Records", badge: "LEDGER", badgeVariant: "default" },
     "/dashboard/user": { title: "Account", badge: "PROFILE", badgeVariant: "default" },
     "/dashboard/user/billing": { title: "Billing", badge: "STRIPE", badgeVariant: "success" },
+    "/dashboard/pricing": { title: "Plans", badge: "STRIPE", badgeVariant: "success" },
     "/dashboard/tools/hscode-lookup": { title: "HS Code Lookup", badge: "TOOLS", badgeVariant: "default" },
     "/dashboard/admin": { title: "Admin Overview", badge: "ADMIN", badgeVariant: "blue" },
     "/dashboard/admin/subscriptions": { title: "Vendor Stack", badge: "ADMIN", badgeVariant: "blue" },
@@ -74,6 +78,7 @@ export default function DashboardLayout({
   }
 
   return (
+    <OrgWorkspaceGate>
     <SidebarProvider defaultOpen={true}>
       {pathname.startsWith("/dashboard/admin") ? <AdminSidebar /> : <AppSidebar />}
       <UserSync />
@@ -91,9 +96,13 @@ export default function DashboardLayout({
             pathname === "/dashboard/inbox" && "overflow-hidden",
           )}
         >
+          <Suspense fallback={null}>
+            <HmrcConnectBanner />
+          </Suspense>
           {children}
         </main>
       </SidebarInset>
     </SidebarProvider>
+    </OrgWorkspaceGate>
   );
 }

@@ -1,26 +1,73 @@
 "use client";
 
-import React, { useState } from "react";
-import { useQuery } from "convex/react";
+import React, { Suspense, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { useUser } from "@clerk/nextjs";
-import { User, CreditCard, Bell, ExternalLink, Shield } from "lucide-react";
+import { useUser, OrganizationProfile, useOrganization } from "@clerk/nextjs";
+import { User, CreditCard, Bell, ExternalLink, Shield, Users, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { planBadgeClass } from "@/lib/stripe-plans";
 
 export default function SettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[40vh] items-center justify-center p-6 text-sm text-gray-500">
+          Loading settings…
+        </div>
+      }
+    >
+      <SettingsPageContent />
+    </Suspense>
+  );
+}
+
+function SettingsPageContent() {
   const { user } = useUser();
+  const { organization } = useOrganization();
   const userId = user?.id || "";
+  const orgId = organization?.id || "";
+  const searchParams = useSearchParams();
 
   const subscription = useQuery(api.subscriptions.getSubscription, userId ? { userId } : "skip");
   const dbUser = useQuery(api.users.current);
-  const [activeTab, setActiveTab] = useState<"profile" | "subscription" | "security" | "notifications">("profile");
+  const orgHmrcMode = useQuery(api.org_hmrc.getModeForOrg, orgId ? { orgId } : "skip");
+  const setOrgHmrcMode = useMutation(api.org_hmrc.setOrgMode);
+  const [hmrcModeSaving, setHmrcModeSaving] = useState(false);
+  const personalMigration = useQuery(api.org_migration.previewPersonalMigration, userId ? {} : "skip");
+  const migratePersonal = useMutation(api.org_migration.migratePersonalToActiveOrg);
+  const [migrationLoading, setMigrationLoading] = useState(false);
+  const [migrationMessage, setMigrationMessage] = useState<string | null>(null);
+  const initialTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<
+    "profile" | "team" | "subscription" | "security" | "notifications"
+  >(
+    initialTab === "subscription" ||
+      initialTab === "team" ||
+      initialTab === "security" ||
+      initialTab === "notifications"
+      ? initialTab
+      : "profile",
+  );
   const [stripeLoading, setStripeLoading] = useState(false);
+  const checkoutSuccess = searchParams.get("success") === "true";
 
-  const planColors: Record<string, string> = {
-    Starter: "bg-gray-100 text-gray-700",
-    Professional: "bg-blue-100 text-blue-700",
-    Enterprise: "bg-purple-100 text-purple-700",
-  };
+  async function openBillingPortal() {
+    setStripeLoading(true);
+    try {
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Portal failed");
+      }
+      const data = (await res.json()) as { url?: string };
+      if (data.url) window.location.href = data.url;
+    } finally {
+      setStripeLoading(false);
+    }
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
@@ -34,6 +81,16 @@ export default function SettingsPage() {
         >
           <User className="h-3.5 w-3.5" />
           Profile
+        </button>
+        <button
+          onClick={() => setActiveTab("team")}
+          className={cn(
+            "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors",
+            activeTab === "team" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100",
+          )}
+        >
+          <Users className="h-3.5 w-3.5" />
+          Team
         </button>
         <button
           onClick={() => setActiveTab("subscription")}
@@ -107,6 +164,76 @@ export default function SettingsPage() {
       </div>
       )}
 
+      {activeTab === "team" && (
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
+            <Users className="h-4 w-4 text-gray-400" />
+            <div>
+              <h3 className="text-sm font-medium text-black">Team workspace</h3>
+              <p className="text-[11px] text-gray-500">
+                Create an organization, invite colleagues, and switch workspaces from the sidebar.
+              </p>
+            </div>
+          </div>
+          <div className="p-4">
+            {personalMigration && personalMigration.totalPending > 0 && !personalMigration.alreadyMigrated && (
+              <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm font-medium text-amber-950">Move personal data into this organisation</p>
+                <p className="mt-1 text-xs text-amber-900/80">
+                  You have {personalMigration.totalPending} personal-scoped record
+                  {personalMigration.totalPending === 1 ? "" : "s"} (declarations, documents, notifications).
+                  Attach them to your active org so your team can see them and Personal workspace can be hidden.
+                </p>
+                <button
+                  type="button"
+                  disabled={migrationLoading || !personalMigration.activeOrgId}
+                  onClick={async () => {
+                    setMigrationLoading(true);
+                    setMigrationMessage(null);
+                    try {
+                      const result = await migratePersonal({});
+                      setMigrationMessage(
+                        `Migrated ${result.declarations} declarations, ${result.documents} documents, ${result.notifications} notifications.`,
+                      );
+                    } catch (error) {
+                      setMigrationMessage(error instanceof Error ? error.message : "Migration failed");
+                    } finally {
+                      setMigrationLoading(false);
+                    }
+                  }}
+                  className="mt-3 rounded-md bg-black px-3 py-2 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+                >
+                  {migrationLoading ? "Migrating…" : "Migrate personal data"}
+                </button>
+                {!personalMigration.activeOrgId && (
+                  <p className="mt-2 text-[11px] text-amber-800">Select your organisation in the header first.</p>
+                )}
+              </div>
+            )}
+            {migrationMessage && (
+              <div className="mb-4 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+                {migrationMessage}
+              </div>
+            )}
+            {personalMigration?.alreadyMigrated && (
+              <div className="mb-4 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+                Personal data is attached to your organisation. The Personal workspace is hidden in the org switcher.
+              </div>
+            )}
+            <OrganizationProfile
+              appearance={{
+                elements: {
+                  rootBox: "w-full",
+                  card: "shadow-none border-0 w-full",
+                  navbar: "hidden",
+                  pageScrollBox: "p-0",
+                },
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       {activeTab === "subscription" && (
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
         <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
@@ -114,6 +241,11 @@ export default function SettingsPage() {
           <h3 className="text-sm font-medium text-black">Subscription</h3>
         </div>
         <div className="p-6">
+          {checkoutSuccess && (
+            <div className="mb-4 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+              Subscription updated successfully.
+            </div>
+          )}
           {subscription ? (
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
@@ -124,7 +256,7 @@ export default function SettingsPage() {
                   <span
                     className={cn(
                       "rounded-md px-2 py-1 text-[0.625rem] font-medium",
-                      planColors[subscription.plan] || "bg-gray-100 text-gray-700",
+                      planBadgeClass(String(subscription.plan ?? "")),
                     )}
                   >
                     {subscription.plan}
@@ -161,8 +293,13 @@ export default function SettingsPage() {
                   </p>
                 </div>
               </div>
-              <button className="flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-normal text-white transition-colors hover:bg-gray-800">
-                Manage Subscription
+              <button
+                type="button"
+                onClick={openBillingPortal}
+                disabled={stripeLoading}
+                className="flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-normal text-white transition-colors hover:bg-gray-800 disabled:opacity-60"
+              >
+                {stripeLoading ? "Opening…" : "Manage subscription"}
                 <ExternalLink className="h-3 w-3" />
               </button>
             </div>
@@ -170,9 +307,12 @@ export default function SettingsPage() {
             <div className="py-6 text-center">
               <CreditCard className="mx-auto mb-2 h-5 w-5 text-gray-300" />
               <p className="mb-3 text-xs text-gray-500">No active subscription</p>
-              <button className="h-8 rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-gray-800">
-                View Plans
-              </button>
+              <Link
+                href="/dashboard/pricing"
+                className="inline-flex h-8 items-center rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-gray-800"
+              >
+                View plans
+              </Link>
             </div>
           )}
         </div>
@@ -186,6 +326,67 @@ export default function SettingsPage() {
             <h3 className="text-sm font-medium text-black">Security</h3>
           </div>
           <div className="space-y-3 p-6">
+            <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-medium text-black">HMRC connection</p>
+                  <p className="mt-1 text-[11px] text-gray-500">
+                    Authorise Freightcode to submit declarations on behalf of your Government Gateway account.
+                  </p>
+                </div>
+                <a
+                  href="/api/hmrc/auth"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-black px-3 py-1.5 text-[11px] font-medium text-white hover:bg-gray-800"
+                >
+                  <Link2 className="h-3 w-3" />
+                  Connect HMRC
+                </a>
+              </div>
+            </div>
+
+            {orgId && (
+              <div className="rounded-lg border border-gray-100 p-4">
+                <p className="text-xs font-medium text-black">CDS environment</p>
+                <p className="mt-1 text-[11px] text-gray-500">
+                  Practice uses HMRC sandbox (Trade Test). Live uses production CDS — only enable when your org is approved.
+                </p>
+                <div className="mt-3 flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "rounded-md px-2 py-1 text-[10px] font-medium uppercase tracking-wide",
+                      orgHmrcMode?.hmrcMode === "live"
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-blue-100 text-blue-800",
+                    )}
+                  >
+                    {orgHmrcMode?.hmrcMode === "live" ? "Live CDS" : "Practice (sandbox)"}
+                  </span>
+                  {dbUser?.role === "admin" && (
+                    <button
+                      type="button"
+                      disabled={hmrcModeSaving}
+                      onClick={async () => {
+                        setHmrcModeSaving(true);
+                        try {
+                          const next = orgHmrcMode?.hmrcMode === "live" ? "practice" : "live";
+                          await setOrgHmrcMode({ orgId, hmrcMode: next });
+                        } finally {
+                          setHmrcModeSaving(false);
+                        }
+                      }}
+                      className="text-[11px] text-gray-600 underline hover:text-black disabled:opacity-50"
+                    >
+                      {hmrcModeSaving
+                        ? "Saving…"
+                        : orgHmrcMode?.hmrcMode === "live"
+                          ? "Switch to practice"
+                          : "Switch to live"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
               <span className="text-[0.6875rem] text-gray-600">Two-Factor Auth</span>
               <span className="rounded bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">

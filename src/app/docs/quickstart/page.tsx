@@ -19,7 +19,7 @@ export default function QuickstartPage() {
 
       <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">Step 1 — Sign in</h2>
       <p className="text-[15px] text-slate-700 leading-relaxed mb-6">
-        Go to <strong>freightcode.co.uk</strong> and click <strong>Gain Access</strong>. Join the waitlist or sign in with your existing account. Once approved, you&apos;ll land on your Dashboard.
+        Go to <strong>freightcode.co.uk</strong> and click <strong>Start free practice</strong>, or use <strong>Sign Up</strong> in the header. After creating your organisation workspace, you&apos;ll land on your Dashboard.
       </p>
 
       <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">Step 2 — Connect HMRC</h2>

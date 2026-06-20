@@ -126,7 +126,7 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 | 6.2b | Notification ingest secret (Next → Convex) | `[x]` | Local POST **200**; prod GET challenge **200** |
 | 6.3 | Constant-time token compare on HMRC webhook | `[x]` | `secretsEqual` + `timingSafeEqual` |
 | 6.4 | Redact webhook payload logs in production | `[x]` | Logs length only when `NODE_ENV=production` |
-| 6.5 | OAuth tokens not exposed to client | `[ ]` | Planned: `getTokens` returns status only (batch C) |
+| 6.5 | OAuth tokens not exposed to client | `[x]` | `getToken` / `getTokens` status-only; credentials via `hmrc_actions.resolveAccessToken` (server routes) |
 | 6.6 | Fraud prevention headers on submit | `[x]` | `hmrc-fetch.ts` |
 | 6.7 | Dry-run gate before live submit | `[x]` | `submit/route.ts` |
 | 6.8 | Declaration ownership on CRUD | `[x]` | `declarations.ts`, `goods_items.ts` |
@@ -135,7 +135,7 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 
 - [x] POST `/api/hmrc/webhooks/notify` without bearer (must **401**)
 - [x] Submit declaration for another user's `declarationId` — **production** enforces ownership; **sandbox** allows cross-user for dev (`submit/route.ts`)
-- [ ] HMRC token exfiltration via client Convex queries — batch C
+- [x] HMRC token exfiltration via client Convex queries — `getToken` redacted; UI uses `hmrc_internal.getTokens`
 
 ---
 
@@ -198,7 +198,7 @@ Book **after** sections 1–6 verified on deployed Convex + Vercel preview.
 ```
 1. Book third-party pen test (§9) — scope doc + test accounts (product owner)
 2. Batch B — CI: audit + typecheck + lint:security
-3. Batch C — getTokens client redaction + AI rate limits on chat/gir-audit
+3. Batch C — AI rate limits on chat/gir-audit (OAuth client redaction done 2026-06-18)
 ```
 
 **Product backlog (parallel):** [`DELIVERY-PLAN.md`](../DELIVERY-PLAN.md) §1 — DAN + payment method on declaration form.

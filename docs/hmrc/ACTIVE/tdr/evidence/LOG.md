@@ -13,6 +13,8 @@ Add one row per new test. Store XML under this folder.
 | 2026-06-13 20:40 | Status query | — | 26GB6I2VFHAN3WAAR0 | — | CDS60001 | `status-query/` |
 | 2026-06-13 | Pull notifications | — | 26GB6I2VFHAN3WAAR0 | 2 convs | HTTP 200 | `pull-notifications/` |
 | 2026-06-13 | File upload | — | 26GB6GFBKLT2N0TAR6 | — | Initiate OK | `file-upload/` |
+| 2026-06-18 | File upload (server S3) | — | — | — | Route shipped — retest on Vercel | `file-upload/summary.md` |
+| 2026-06-08 | File upload UI E2E (initiate + S3) | — | 26GB6MJW33LM8NNAR6 | 54060ee7-cc1b-450c-b398-32998a03c941 | PASS — `Jason_Dean.pdf`, ref `dc7e6551-8918-42fe-8b89-ee995399f03d` | `file-upload/summary.md` |
 
 **Row template:** `| YYYY-MM-DD | test | LRN | MRN | conversation-id | outcome | folder/ |`
 
@@ -25,6 +27,7 @@ Add one row per new test. Store XML under this folder.
 | 2026-06-15 | Developer Hub email verified | freightcode app | Production credentials unlocked (sign in to Hub) |
 | 2026-06-15 | SDST production application approved | Agne Bergelyte, SDST | Approved; S&S + Pull Notifications removed from prod app |
 | 2026-06-15 | Production push URL submitted | SDST | `https://www.freightcode.co.uk/api/hmrc/webhooks/notify` |
+| 2026-06-08 | Connect HMRC OAuth fixed (local) | [`../oauth-connect-troubleshooting.md`](../oauth-connect-troubleshooting.md) | Redirect URI + `test-www` authorize + `test-api` token + PKCE + `localhost:3000` host alignment |
 
 **Production push URL:** `https://www.freightcode.co.uk/api/hmrc/webhooks/notify`  
 **Production application ID:** `00292df9-e2e6-4d66-9d28-7d79a2a931ba`

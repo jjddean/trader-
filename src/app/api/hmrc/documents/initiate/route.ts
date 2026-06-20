@@ -3,12 +3,12 @@ import { auth } from "@clerk/nextjs/server";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { fetchHmrc } from "../../../../../lib/hmrc-fetch";
-import { HMRC_CONFIG } from "../../../../../lib/hmrc-config";
 import {
   buildFileUploadRequestXml,
   parseFileUploadResponse,
 } from "../../../../../lib/hmrc-file-upload";
 import { getAuthenticatedConvex } from "../../../../../lib/hmrc-route-session";
+import { resolveOrgHmrcRoutingForDeclaration } from "../../../../../lib/hmrc-org-routing";
 import { resolveHmrcAccessToken } from "../../../../../lib/hmrc-token";
 import { logHmrcAudit } from "../../../../../lib/audit-log";
 
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     const lane = await convex.query(api.declarations.getLane, {
       id: declarationId as Id<"declarations">,
     });
-    if (!lane || (lane.userId !== userId && process.env.HMRC_ENVIRONMENT !== "sandbox")) {
+    if (!lane) {
       return NextResponse.json({ error: "Declaration not found or unauthorized" }, { status: 404 });
     }
 
@@ -58,11 +58,16 @@ export async function POST(request: Request) {
       return tokenResult.error;
     }
 
-    const hmrcBase =
-      process.env.HMRC_ENVIRONMENT === "sandbox"
-        ? HMRC_CONFIG.sandboxBaseUrl
-        : HMRC_CONFIG.productionBaseUrl;
-    const initiateUrl = `${hmrcBase}/customs/declarations/file-upload`;
+    const orgRouting = await resolveOrgHmrcRoutingForDeclaration(
+      convex,
+      declarationId as Id<"declarations">,
+    );
+    if ("error" in orgRouting) {
+      return orgRouting.error;
+    }
+    const { hmrcContext } = orgRouting;
+
+    const initiateUrl = `${hmrcContext.apiBaseUrl}/customs/declarations/file-upload`;
     const docType = typeof documentType === "string" && documentType.trim() ? documentType.trim() : "invoice";
     const requestXml = buildFileUploadRequestXml({ mrn, documentType: docType });
 
@@ -71,7 +76,7 @@ export async function POST(request: Request) {
       {
         method: "POST",
         headers: {
-          Accept: HMRC_CONFIG.accept.declarations,
+          Accept: hmrcContext.declarationsAccept,
           "Content-Type": "application/xml; charset=UTF-8",
           "X-Eori-Identifier": eori,
         },
@@ -80,6 +85,7 @@ export async function POST(request: Request) {
       request,
       tokenResult.token,
       eori,
+      hmrcContext,
     );
 
     if (hmrcResponse.status === 429) {

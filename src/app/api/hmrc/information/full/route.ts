@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { fetchHmrc } from "../../../../../lib/hmrc-fetch";
 import { HMRC_CONFIG } from "../../../../../lib/hmrc-config";
 import { getAuthenticatedConvex } from "../../../../../lib/hmrc-route-session";
+import { resolveOrgHmrcRoutingForOrg } from "../../../../../lib/hmrc-org-routing";
 import { resolveHmrcAccessToken } from "../../../../../lib/hmrc-token";
 
 /**
@@ -32,12 +33,13 @@ export async function GET(request: Request) {
       return tokenResult.error;
     }
 
-    const hmrcBase =
-      process.env.HMRC_ENVIRONMENT === "sandbox"
-        ? HMRC_CONFIG.sandboxBaseUrl
-        : HMRC_CONFIG.productionBaseUrl;
+    const orgRouting = await resolveOrgHmrcRoutingForOrg(convex, clerkAuth.orgId);
+    if ("error" in orgRouting) {
+      return orgRouting.error;
+    }
+    const { hmrcContext } = orgRouting;
 
-    const queryUrl = `${hmrcBase}/customs/declarations-information/mrn/${encodeURIComponent(mrn)}/full`;
+    const queryUrl = `${hmrcContext.apiBaseUrl}/customs/declarations-information/mrn/${encodeURIComponent(mrn)}/full`;
 
     const hmrcResponse = await fetchHmrc(
       queryUrl,
@@ -49,6 +51,8 @@ export async function GET(request: Request) {
       },
       request,
       tokenResult.token,
+      undefined,
+      hmrcContext,
     );
 
     if (!hmrcResponse.ok) {

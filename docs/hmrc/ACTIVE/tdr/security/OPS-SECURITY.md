@@ -30,7 +30,7 @@
 - **Clerk middleware** (`src/proxy.ts`): `/dashboard/*` requires sign-in.
 - **Convex:** mutations/queries call `ctx.auth.getUserIdentity()`; ownership checks on declarations/items.
 - **Internal-only:** Stripe webhook handler, audit `logAction`, reference seed, subscription updates.
-- **HMRC OAuth:** tokens stored in Convex; resolved server-side in submit routes (client redaction planned batch C).
+- **HMRC OAuth:** tokens stored in Convex; client queries return connection status only; API routes resolve credentials via `hmrc_actions.resolveAccessToken` (server-side, authenticated).
 
 ---
 

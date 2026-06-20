@@ -16,6 +16,16 @@ import {
   type GoodsLocationKind,
 } from "@/lib/goods-location";
 import { DeclarationModePromote } from "@/components/declaration-mode-promote";
+import {
+  ConvexSessionMissing,
+  DeclarationLoadingSpinner,
+  isConvexSessionMissing,
+} from "@/components/declaration-session-states";
+import {
+  PAYMENT_METHOD_OPTIONS,
+  requiresDefermentAccount,
+  validatePaymentFields,
+} from "@/lib/payment-method";
 
 const TRANSPORT_MODE_OPTIONS = [
   { value: "1", label: "1 — Sea" },
@@ -91,6 +101,8 @@ export default function CoreSchemaPage() {
     exporterLine: "",
     exporterPostcode: "",
     transactionNatureCode: "",
+    paymentMethodCode: "",
+    defermentAccountNumber: "",
   });
 
   React.useEffect(() => {
@@ -124,6 +136,8 @@ export default function CoreSchemaPage() {
       exporterLine: (d.exporterLine as string) || "",
       exporterPostcode: (d.exporterPostcode as string) || "",
       transactionNatureCode: (d.transactionNatureCode as string) || "",
+      paymentMethodCode: (d.paymentMethodCode as string) || "",
+      defermentAccountNumber: (d.defermentAccountNumber as string) || "",
     });
   }, [declaration, id]);
 
@@ -156,6 +170,16 @@ export default function CoreSchemaPage() {
         setSaveError("Nature of transaction (DE 8/5) is required.");
         return;
       }
+      const paymentError = validatePaymentFields(
+        formData.paymentMethodCode,
+        requiresDefermentAccount(formData.paymentMethodCode)
+          ? formData.defermentAccountNumber
+          : "",
+      );
+      if (paymentError) {
+        setSaveError(paymentError);
+        return;
+      }
       const invoiceTotalParsed = formData.invoiceTotal.trim() === ""
         ? null
         : Number(formData.invoiceTotal);
@@ -182,6 +206,10 @@ export default function CoreSchemaPage() {
         exporterLine: formData.exporterLine.trim(),
         exporterPostcode: formData.exporterPostcode.trim(),
         transactionNatureCode: formData.transactionNatureCode.trim(),
+        paymentMethodCode: formData.paymentMethodCode.trim().toUpperCase() || undefined,
+        defermentAccountNumber: requiresDefermentAccount(formData.paymentMethodCode)
+          ? formData.defermentAccountNumber.replace(/\D/g, "")
+          : undefined,
       });
       hydratedForIdRef.current = null;
       setSaveSuccess(true);
@@ -193,10 +221,22 @@ export default function CoreSchemaPage() {
     }
   };
 
-  if (!isLoaded || isConvexAuthLoading || !declaration) {
+  if (!isLoaded) {
+    return <DeclarationLoadingSpinner />;
+  }
+
+  if (isConvexSessionMissing(isLoaded, Boolean(isSignedIn), isConvexAuthLoading, isAuthenticated)) {
+    return <ConvexSessionMissing />;
+  }
+
+  if (isSignedIn && isAuthenticated && declaration === undefined) {
+    return <DeclarationLoadingSpinner />;
+  }
+
+  if (!declaration) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+        <p className="text-sm text-gray-500">Declaration not found.</p>
       </div>
     );
   }
@@ -553,6 +593,71 @@ export default function CoreSchemaPage() {
               </p>
             </div>
 
+          </div>
+
+          <div className="border-t border-gray-100 pt-6">
+            <h3 className="text-sm font-medium text-gray-900">Duty payment</h3>
+            <p className="mt-1 text-[11px] text-gray-500">
+              DE 4/8 method of payment and DE 2/6 deferment account. Required when paying via deferment (MOP E or R).
+            </p>
+            <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Method of payment (DE 4/8)
+                </label>
+                <Select
+                  value={formData.paymentMethodCode || "__none__"}
+                  onValueChange={(v) =>
+                    setFormData({
+                      ...formData,
+                      paymentMethodCode: v === "__none__" ? "" : v,
+                      defermentAccountNumber:
+                        v === "E" || v === "R" ? formData.defermentAccountNumber : "",
+                    })
+                  }
+                >
+                  <SelectTrigger className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+                    <SelectValue placeholder="Select method" />
+                  </SelectTrigger>
+                  <SelectContent position="popper">
+                    {PAYMENT_METHOD_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value || "__none__"} value={opt.value || "__none__"}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {requiresDefermentAccount(formData.paymentMethodCode) && (
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+                    Deferment account (DE 2/6)
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="\d{7}"
+                    maxLength={7}
+                    required
+                    value={formData.defermentAccountNumber}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        defermentAccountNumber: e.target.value.replace(/\D/g, "").slice(0, 7),
+                      })
+                    }
+                    placeholder="7-digit DAN"
+                    className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                  />
+                  <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                    <Info className="h-3 w-3" />
+                    HMRC deferment account number (1DAN). Stored on your declaration only — not logged in audit output.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="border-t border-gray-100 pt-6">

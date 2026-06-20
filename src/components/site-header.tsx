@@ -61,7 +61,11 @@ export function SiteHeader() {
                     Sign In
                   </button>
                 </SignInButton>
-                <SignUpButton mode="modal">
+                <SignUpButton
+                  mode="modal"
+                  forceRedirectUrl="/session-tasks/choose-organization"
+                  fallbackRedirectUrl="/session-tasks/choose-organization"
+                >
                   <button
                     type="button"
                     className={`${authButtonClass} border border-transparent bg-[#111827] text-white hover:bg-slate-800`}
@@ -130,7 +134,11 @@ export function SiteHeader() {
                     Sign In
                   </button>
                 </SignInButton>
-                <SignUpButton mode="modal">
+                <SignUpButton
+                  mode="modal"
+                  forceRedirectUrl="/session-tasks/choose-organization"
+                  fallbackRedirectUrl="/session-tasks/choose-organization"
+                >
                   <button
                     type="button"
                     onClick={() => setIsMobileMenuOpen(false)}

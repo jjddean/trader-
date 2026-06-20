@@ -23,8 +23,12 @@ export class ApiRateLimiter {
 
 const aiLimitPerMinute = Number(process.env.AI_RATE_LIMIT_PER_MINUTE) || 20;
 
-export const aiExtractLimiter = new ApiRateLimiter(aiLimitPerMinute, 60_000);
-export const aiClassifyLimiter = new ApiRateLimiter(aiLimitPerMinute, 60_000);
+const aiRouteLimiter = new ApiRateLimiter(aiLimitPerMinute, 60_000);
+
+export const aiExtractLimiter = aiRouteLimiter;
+export const aiClassifyLimiter = aiRouteLimiter;
+export const aiChatLimiter = aiRouteLimiter;
+export const aiGirAuditLimiter = aiRouteLimiter;
 
 export const AI_MAX_UPLOAD_BYTES = Number(process.env.AI_MAX_UPLOAD_BYTES) || 10 * 1024 * 1024;
 export const AI_MAX_CLASSIFY_CHARS = Number(process.env.AI_MAX_CLASSIFY_CHARS) || 4_000;

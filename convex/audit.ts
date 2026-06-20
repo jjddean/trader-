@@ -1,6 +1,7 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireAdmin } from "./lib/user_role";
+import { canAccessDeclaration } from "./lib/org_access";
 
 export const logAction = internalMutation({
   args: {
@@ -72,7 +73,7 @@ export const getDeclarationAuditLogs = query({
     if (!identity) return [];
 
     const decl = await ctx.db.get(args.declarationId);
-    if (!decl || decl.userId !== identity.subject) return [];
+    if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) return [];
 
     const logs = await ctx.db
       .query("auditLogs")

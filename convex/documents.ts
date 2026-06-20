@@ -1,5 +1,13 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import {
+  canAccessDeclaration,
+  canAccessDocument,
+  listDocumentsForTenant,
+  listDeclarationsForTenant,
+  orgIdFromDeclaration,
+  resolveOrgIdForNewRecord,
+} from "./lib/org_access";
 
 const DOC_CODE_REGEX = /(?:^|[^A-Z0-9])([A-Z]\d{3}|\d{4})(?:[^A-Z0-9]|$)/;
 
@@ -73,13 +81,22 @@ export const trackUpload = mutation({
     
     // Verify ownership of parent declaration
     const declaration = await ctx.db.get(args.declarationId);
-    if (!declaration || declaration.userId !== identity.subject) {
+    if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
       throw new Error("Unauthorized");
     }
 
     return await ctx.db.insert("documents", {
-      ...args,
-      userId: identity.subject
+      declarationId: args.declarationId,
+      userId: identity.subject,
+      orgId: orgIdFromDeclaration(declaration),
+      fileName: args.fileName,
+      fileSize: args.fileSize,
+      fileType: args.documentType,
+      status: args.uploadStatus,
+      uploadDate: new Date().toISOString(),
+      mrn: declaration.mrn,
+      hmrcUploadReference: args.hmrcUploadReference,
+      hmrcConversationId: args.hmrcConversationId,
     });
   }
 });
@@ -117,9 +134,17 @@ export const saveDocument = mutation({
       throw new Error("Unauthenticated");
     }
 
+    const declaration = args.declarationId ? await ctx.db.get(args.declarationId) : null;
+    if (args.declarationId) {
+      if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
+        throw new Error("Unauthorized");
+      }
+    }
+
     const documentId = await ctx.db.insert("documents", {
       fileId: args.storageId,
       userId: identity.subject, // Enforce session ID
+      orgId: orgIdFromDeclaration(declaration),
       fileName: args.fileName,
       mrn: args.mrn,
       declarationId: args.declarationId,
@@ -151,11 +176,7 @@ export const getDocuments = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
 
-    return await ctx.db
-      .query("documents")
-      .withIndex("by_user", q => q.eq("userId", identity.subject))
-      .order("desc")
-      .take(200);
+    return await listDocumentsForTenant(ctx, identity.subject, 200);
   }
 });
 
@@ -175,7 +196,7 @@ export const getDocumentDownloadUrl = mutation({
     }
 
     const document = await ctx.db.get(args.documentId);
-    if (!document || document.userId !== identity.subject) {
+    if (!document || !(await canAccessDocument(ctx, identity.subject, document))) {
       await logDocActionError(ctx, {
         userId: identity.subject,
         action: "getDocumentDownloadUrl",
@@ -219,7 +240,7 @@ export const deleteDocument = mutation({
     }
 
     const document = await ctx.db.get(args.documentId);
-    if (!document || document.userId !== identity.subject) {
+    if (!document || !(await canAccessDocument(ctx, identity.subject, document))) {
       await logDocActionError(ctx, {
         userId: identity.subject,
         action: "deleteDocument",
@@ -282,7 +303,7 @@ export const replaceDocument = mutation({
     }
 
     const existing = await ctx.db.get(args.documentId);
-    if (!existing || existing.userId !== identity.subject) {
+    if (!existing || !(await canAccessDocument(ctx, identity.subject, existing))) {
       await logDocActionError(ctx, {
         userId: identity.subject,
         action: "replaceDocument",
@@ -346,7 +367,7 @@ export const upsertRequirementsForDeclaration = mutation({
     if (!identity) throw new Error("Unauthenticated");
 
     const declaration = await ctx.db.get(args.declarationId);
-    if (!declaration || declaration.userId !== identity.subject) {
+    if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
       throw new Error("Unauthorized");
     }
 
@@ -437,7 +458,7 @@ export const getDocumentRequirements = query({
 
     if (args.declarationId) {
       const declaration = await ctx.db.get(args.declarationId);
-      if (!declaration || declaration.userId !== identity.subject) {
+      if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
         return [];
       }
       return await ctx.db
@@ -446,10 +467,16 @@ export const getDocumentRequirements = query({
         .take(300);
     }
 
-    return await ctx.db
-      .query("document_requirements")
-      .withIndex("by_user", (q: any) => q.eq("userId", identity.subject))
-      .take(500);
+    const declarations = await listDeclarationsForTenant(ctx, identity.subject, 200);
+    const requirements = [];
+    for (const declaration of declarations) {
+      const rows = await ctx.db
+        .query("document_requirements")
+        .withIndex("by_declaration", (q: any) => q.eq("declarationId", declaration._id))
+        .take(300);
+      requirements.push(...rows);
+    }
+    return requirements;
   },
 });
 
@@ -473,20 +500,16 @@ export const getRequirementTelemetry = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
 
-    const requirements = await ctx.db
-      .query("document_requirements")
-      .withIndex("by_user", (q: any) => q.eq("userId", identity.subject))
-      .take(2000);
-
-    const docs = await ctx.db
-      .query("documents")
-      .withIndex("by_user", (q: any) => q.eq("userId", identity.subject))
-      .take(2000);
-
-    const declarations = await ctx.db
-      .query("declarations")
-      .withIndex("by_user", (q: any) => q.eq("userId", identity.subject))
-      .take(600);
+    const declarations = await listDeclarationsForTenant(ctx, identity.subject, 600);
+    const docs = await listDocumentsForTenant(ctx, identity.subject, 2000);
+    const requirements = [];
+    for (const declaration of declarations) {
+      const rows = await ctx.db
+        .query("document_requirements")
+        .withIndex("by_declaration", (q: any) => q.eq("declarationId", declaration._id))
+        .take(300);
+      requirements.push(...rows);
+    }
     const days = 7;
     const dayKeys: string[] = [];
     const now = Date.now();

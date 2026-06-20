@@ -14,9 +14,9 @@ Importers pay duty via a deferment account. Capture it on the declaration and em
 |-------|--------|
 | Schema (`defermentAccountNumber`, `paymentMethodCode`) | done |
 | Financial Records display when set | done |
-| Declaration form fields | **not started** |
-| `updateDeclarationDetails` saves them | **not started** |
-| `wco-mapper.ts` → XML (DE 2/6, DE 4/8) | **not started** |
+| Declaration form fields | done |
+| `updateDeclarationDetails` saves them | done |
+| `wco-mapper.ts` → XML (DE 2/6, DE 4/8) | done |
 
 **Do this, in order:**
 
@@ -31,7 +31,7 @@ Importers pay duty via a deferment account. Capture it on the declaration and em
 
 **Done when:** user enters DAN on declaration → dry-run XML contains deferment + MOP → Financial Records shows the account.
 
-- [ ] 1 complete — then move to 2
+- [x] 1 complete — then move to 2
 
 ---
 
@@ -41,6 +41,8 @@ OAuth API works from dashboard home; `/dashboard/settings` has no connect/discon
 
 **Done when:** connect and disconnect HMRC from Settings without using dashboard home.
 
+- [ ] not started
+
 ---
 
 ## 3. Org / workspace RBAC
@@ -48,6 +50,9 @@ OAuth API works from dashboard home; `/dashboard/settings` has no connect/discon
 Workspaces in schema; declarations still filtered by `userId` only.
 
 **Done when:** two users in same org see the same declarations.
+
+- [x] Clerk `orgId` scoping — [`convex/lib/org_access.ts`](../../convex/lib/org_access.ts)
+- [ ] Org-only product (hide Personal, sign-up → org) — see [`PRODUCT-PROGRESS-LOG.md`](./PRODUCT-PROGRESS-LOG.md)
 
 ---
 
@@ -84,6 +89,8 @@ HS 8471300000, Felixstowe, N935 + N271 — verify every mapped field in [`mappin
 ## Later
 
 CRM, export/ENS/H2, SaaS billing UI, env submit guard.
+
+**Financial product (validated roadmap):** [`FINANCIAL-ROADMAP.md`](./FINANCIAL-ROADMAP.md) — next: variance alerts (#5), reclaim tracker. DAN, duty parser, tariff refresh, and pre-clearance estimates complete.
 
 Production credentials and config: [`../../FUTURE/production/README.md`](../../FUTURE/production/README.md) · ops log in [`evidence/LOG.md`](./evidence/LOG.md).
 

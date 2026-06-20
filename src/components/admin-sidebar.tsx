@@ -11,7 +11,8 @@ import {
   CreditCard,
   ChevronLeft,
 } from "lucide-react";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { useOrganization, useUser } from "@clerk/nextjs";
+import { SidebarUserButton } from "@/components/auth/sidebar-user-button";
 import { cn } from "@/lib/utils";
 import {
   Sidebar,
@@ -41,6 +42,7 @@ const platformNav = [
 export function AdminSidebar() {
   const pathname = usePathname();
   const { user: clerkUser } = useUser();
+  const { organization } = useOrganization();
 
   function isActive(href: string, exact?: boolean) {
     return exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
@@ -139,10 +141,12 @@ export function AdminSidebar() {
 
       <SidebarFooter className="space-y-3 p-4">
         <div className="flex items-center gap-2 rounded-md border border-red-100 bg-red-50 px-3 py-2">
-          <UserButton />
+          <SidebarUserButton />
           <div className="flex flex-col">
             <span className="max-w-[100px] truncate text-xs font-normal text-gray-700">{clerkUser?.fullName || "Admin"}</span>
-            <span className="text-[10px] text-red-500">Administrator</span>
+            <span className="max-w-[100px] truncate text-[10px] text-red-500">
+              {organization?.name ?? "Administrator"}
+            </span>
           </div>
         </div>
       </SidebarFooter>

@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
-import { HMRC_CONFIG } from "../../../../lib/hmrc-config";
 import { hmrcOAuthBaseUrl, hmrcOAuthCredentials } from "../../../../lib/hmrc-oauth";
+import { hmrcOAuthStateNonce, hmrcPkceCookieName } from "../../../../lib/hmrc-pkce";
+import { getAuthenticatedConvex } from "../../../../lib/hmrc-route-session";
+import { resolveOrgHmrcRoutingForOrg } from "../../../../lib/hmrc-org-routing";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -13,7 +16,12 @@ export async function GET(request: Request) {
 
   if (error) {
     console.error("HMRC Auth Error:", error, errorDescription);
-    return NextResponse.redirect(new URL(`/dashboard?error=${error}`, request.url));
+    const failUrl = new URL("/dashboard", request.url);
+    failUrl.searchParams.set("error", error);
+    if (errorDescription) {
+      failUrl.searchParams.set("msg", errorDescription);
+    }
+    return NextResponse.redirect(failUrl);
   }
 
   if (!code) {
@@ -31,8 +39,11 @@ export async function GET(request: Request) {
 
   try {
     if (!sessionUserId) {
-      console.error("HMRC callback without an authenticated Clerk session — refusing to link tokens.");
-      return NextResponse.redirect(new URL("/dashboard?error=login_required", request.url));
+      console.error("HMRC callback without Clerk session — sending user to sign-in with return URL.");
+      const returnUrl = new URL(request.url);
+      const signIn = new URL("/sign-in", returnUrl.origin);
+      signIn.searchParams.set("redirect_url", returnUrl.pathname + returnUrl.search);
+      return NextResponse.redirect(signIn);
     }
     if (userIdFromState && userIdFromState !== sessionUserId) {
       console.error("HMRC callback state/session mismatch — possible CSRF; refusing.");
@@ -42,25 +53,56 @@ export async function GET(request: Request) {
 
     const convexToken = await clerkAuth.getToken({ template: "convex" });
     if (!convexToken) {
-      console.error("HMRC callback: no Convex token for session — cannot persist tokens.");
-      return NextResponse.redirect(new URL("/dashboard?error=login_required", request.url));
+      console.error("HMRC callback: no Convex JWT — cannot save tokens.");
+      return NextResponse.redirect(
+        new URL("/dashboard?error=internal_error&msg=Convex+JWT+missing.+Ensure+Clerk+convex+template+exists+and+npx+convex+dev+is+running.", request.url),
+      );
     }
     const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
     convex.setAuth(convexToken);
 
-    const { clientId, clientSecret } = hmrcOAuthCredentials();
+    const orgRouting = await resolveOrgHmrcRoutingForOrg(convex, clerkAuth.orgId);
+    if ("error" in orgRouting) {
+      return NextResponse.redirect(new URL("/dashboard?error=routing_blocked", request.url));
+    }
+    const { hmrcContext } = orgRouting;
+
+    const { clientId, clientSecret } = hmrcOAuthCredentials(hmrcContext);
     const redirectUri = process.env.HMRC_REDIRECT_URI!;
 
-    const hmrcBase = hmrcOAuthBaseUrl();
+    const stateNonce = hmrcOAuthStateNonce(state);
+    if (!stateNonce) {
+      console.error("HMRC callback: malformed OAuth state — refusing.");
+      return NextResponse.redirect(new URL("/dashboard?error=state_mismatch", request.url));
+    }
+
+    const cookieStore = await cookies();
+    const pkceCookieName = hmrcPkceCookieName(stateNonce);
+    let codeVerifier = cookieStore.get(pkceCookieName)?.value ?? null;
+
+    if (!codeVerifier) {
+      codeVerifier = await convex.mutation(api.hmrc.consumeOAuthPkce, { stateNonce });
+    } else {
+      await convex.mutation(api.hmrc.consumeOAuthPkce, { stateNonce }).catch(() => null);
+    }
+
+    if (!codeVerifier) {
+      console.error("HMRC callback: missing PKCE verifier for state", stateNonce);
+      return NextResponse.redirect(new URL("/dashboard?error=pkce_missing", request.url));
+    }
+
+    console.log("[HMRC CALLBACK] state_nonce:", stateNonce, "pkce: ok");
+    const hmrcBase = hmrcOAuthBaseUrl(hmrcContext);
     const tokenUrl = `${hmrcBase}/oauth/token`;
-    console.log("EXCHANGING TOKEN WITH REDIRECT URI:", redirectUri);
-    
+    console.log("[HMRC CALLBACK] exchanging token, redirect_uri:", redirectUri);
+
     const body = new URLSearchParams({
       client_secret: clientSecret,
       client_id: clientId,
       grant_type: "authorization_code",
       redirect_uri: redirectUri,
       code,
+      code_verifier: codeVerifier,
     });
 
     const response = await fetch(tokenUrl, {
@@ -74,7 +116,10 @@ export async function GET(request: Request) {
     if (!response.ok) {
       const errText = await response.text();
       console.error("Failed to exchange token with HMRC:", errText);
-      return NextResponse.redirect(new URL("/dashboard?error=token_exchange_failed", request.url));
+      const failUrl = new URL("/dashboard", request.url);
+      failUrl.searchParams.set("error", "token_exchange_failed");
+      failUrl.searchParams.set("msg", errText.slice(0, 500));
+      return NextResponse.redirect(failUrl);
     }
 
     const data = await response.json();
@@ -84,13 +129,16 @@ export async function GET(request: Request) {
       userId,
       accessToken: data.access_token,
       refreshToken: data.refresh_token,
-      expiresIn: data.expires_in || HMRC_CONFIG.timing.defaultTokenExpiryMs,
+      expiresIn: data.expires_in ?? 14400,
     });
 
-    return NextResponse.redirect(new URL("/dashboard?success=hmrc_connected", request.url));
+    const success = NextResponse.redirect(new URL("/dashboard?success=hmrc_connected", request.url));
+    success.cookies.delete(pkceCookieName);
+    return success;
 
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "unknown";
     console.error("Exception in HMRC callback:", err);
-    return NextResponse.redirect(new URL(`/dashboard?error=internal_error&msg=${encodeURIComponent(err.message || "unknown")}`, request.url));
+    return NextResponse.redirect(new URL(`/dashboard?error=internal_error&msg=${encodeURIComponent(message)}`, request.url));
   }
 }

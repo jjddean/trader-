@@ -6,6 +6,7 @@ import { useDirectPrint } from "@/components/print/direct-print";
 import { FinancialRecordPrintContent } from "@/components/print/financial-record-document";
 import type { FinancialRecordPrintData } from "@/lib/print-sheet";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { FINANCIAL_LABELS as FL } from "@/lib/financial-labels";
 import Link from "next/link";
 import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
@@ -102,20 +103,20 @@ export default function RecordsPage() {
 
   const dutySubtitle =
     confirmedDuty > 0 && estimatedDuty > 0
-      ? `£${formatAmount(confirmedDuty)} HMRC confirmed · £${formatAmount(estimatedDuty)} estimated`
+      ? `£${formatAmount(confirmedDuty)} ${FL.confirmedProvenance.toLowerCase()} · £${formatAmount(estimatedDuty)} estimated`
       : confirmedDuty > 0
-        ? "HMRC-confirmed from DMSTAX notifications"
+        ? FL.confirmedProvenance
         : estimatedDuty > 0
-          ? "Tariff-derived estimates until DMSTAX arrives"
+          ? FL.pendingAssessment
           : "Historical duty from declaration ledgers";
 
   const vatSubtitle =
     confirmedVat > 0 && estimatedVat > 0
-      ? `£${formatAmount(confirmedVat)} HMRC confirmed · £${formatAmount(estimatedVat)} estimated`
+      ? `£${formatAmount(confirmedVat)} ${FL.confirmedProvenance.toLowerCase()} · £${formatAmount(estimatedVat)} estimated`
       : confirmedVat > 0
-        ? "HMRC-confirmed from DMSTAX notifications"
+        ? FL.confirmedProvenance
         : estimatedVat > 0
-          ? "Tariff-derived estimates until DMSTAX arrives"
+          ? FL.pendingAssessment
           : "Import VAT from declaration ledgers";
   const handleExportCsv = () => {
     const grouped = filteredRecords.reduce((acc: Record<string, { mrn: string; date: string; dutyPaid: number; vat: number }>, record: any) => {
@@ -172,7 +173,7 @@ export default function RecordsPage() {
             Financial Records
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Duty and VAT ledgers from HMRC DMSTAX notifications and tariff-derived estimates.
+            {FL.recordsPageIntro}
           </p>
         </div>
         <button
@@ -372,8 +373,8 @@ export default function RecordsPage() {
                 >
                   {selectedRecord.provenanceLabel ||
                     (selectedRecord.isAuthoritative
-                      ? "HMRC-confirmed settlement figures from DMSTAX"
-                      : "Tariff-derived estimate from declaration items")}
+                      ? FL.confirmedSettlement
+                      : FL.estimatedFromDeclaration)}
                 </div>
 
                 {/* Transaction & Account Details Section */}

@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-const isProtectedRoute = createRouteMatcher(["/dashboard(.*)"]);
+const isProtectedRoute = createRouteMatcher(["/dashboard(.*)", "/session-tasks(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   const isClerkHandshake = req.nextUrl.searchParams.has("__clerk_handshake");

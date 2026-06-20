@@ -19,6 +19,15 @@ jobs:
 
       - run: npm ci
 
+      - name: Dependency audit (high+)
+        run: npm audit --audit-level=high
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Security lint (API + Convex auth surfaces)
+        run: npm run lint:security
+
       - name: H1 unit tests + golden XML
         run: npm run test:h1
 

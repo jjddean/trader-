@@ -4,7 +4,8 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 import { commodityRequiresSupplementaryUnit, mapToCDS_H1, validateCdsCodeLists, validateOverseasExporter, validateTransactionNatureCode } from "../../../../lib/wco-mapper";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
-import { declarationsEndpointUrl, HMRC_CONFIG } from "../../../../lib/hmrc-config";
+import { declarationsEndpointUrl } from "../../../../lib/hmrc-config";
+import { resolveOrgHmrcRoutingForDeclaration } from "../../../../lib/hmrc-org-routing";
 import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
 import { buildPayloadDebugSnapshot, renderH1Xml, validateXmlPreflight } from "../../../../lib/h1-xml-renderer";
 import { validateGoodsLocationForSubmit } from "../../../../lib/goods-location";
@@ -158,9 +159,15 @@ export async function POST(request: Request) {
 
     // 1. Fetch the Declaration, Items, and Auth Token from Convex
     const lane = await convex.query(api.declarations.getLane, { id: declarationId });
-    if (!lane || (lane.userId !== userId && process.env.HMRC_ENVIRONMENT !== "sandbox")) {
+    if (!lane) {
       return NextResponse.json({ error: "Declaration not found or unauthorized" }, { status: 404 });
     }
+
+    const orgRouting = await resolveOrgHmrcRoutingForDeclaration(convex, declarationId);
+    if ("error" in orgRouting) {
+      return orgRouting.error;
+    }
+    const { hmrcContext } = orgRouting;
 
     if (providedEori && lane.eori && providedEori !== lane.eori) {
       return NextResponse.json(
@@ -364,7 +371,7 @@ export async function POST(request: Request) {
           endpoint: "local-preflight",
           method: "POST",
           contentType: "application/xml; charset=UTF-8",
-          accept: HMRC_CONFIG.accept.declarations,
+          accept: hmrcContext.declarationsAccept,
           xmlByteLength: new TextEncoder().encode(xmlPayload).length,
         },
         localPreflight: {
@@ -471,12 +478,8 @@ export async function POST(request: Request) {
       }
     };
 
-    // 4. Fire the POST request to HMRC
-    const hmrcBase =
-      process.env.HMRC_ENVIRONMENT === "sandbox"
-        ? HMRC_CONFIG.sandboxBaseUrl
-        : HMRC_CONFIG.productionBaseUrl;
-    const hmrcEndpoint = declarationsEndpointUrl(hmrcBase, "submit");
+    // 4. Fire the POST request to HMRC (org mode selects sandbox vs production host)
+    const hmrcEndpoint = declarationsEndpointUrl(hmrcContext.apiBaseUrl, "submit");
 
     const hmrcHeaders = {
       "Content-Type": "application/xml; charset=UTF-8",
@@ -486,7 +489,7 @@ export async function POST(request: Request) {
       method: "POST",
       headers: hmrcHeaders,
       body: xmlPayload,
-    }, request, token, lane.eori);
+    }, request, token, lane.eori, hmrcContext);
 
     if (hmrcResponse.status === 429) {
       await revertClaim();
@@ -521,7 +524,7 @@ export async function POST(request: Request) {
           endpoint: hmrcEndpoint,
           method: "POST",
           contentType: hmrcHeaders["Content-Type"],
-          accept: HMRC_CONFIG.accept.declarations,
+          accept: hmrcContext.declarationsAccept,
           xmlByteLength: new TextEncoder().encode(xmlPayload).length,
         },
         responseEvidence: {
@@ -554,7 +557,7 @@ export async function POST(request: Request) {
           endpoint: hmrcEndpoint,
           method: "POST",
           contentType: hmrcHeaders["Content-Type"],
-          accept: HMRC_CONFIG.accept.declarations,
+          accept: hmrcContext.declarationsAccept,
           xmlByteLength: new TextEncoder().encode(xmlPayload).length,
         },
         responseEvidence: {
@@ -616,7 +619,7 @@ export async function POST(request: Request) {
         endpoint: hmrcEndpoint,
         method: "POST",
         contentType: hmrcHeaders["Content-Type"],
-        accept: HMRC_CONFIG.accept.declarations,
+        accept: hmrcContext.declarationsAccept,
         xmlByteLength: new TextEncoder().encode(xmlPayload).length,
       },
       responseEvidence: {

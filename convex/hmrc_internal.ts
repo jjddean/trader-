@@ -34,14 +34,21 @@ export const storeTokens = internalMutation({
   },
 });
 
+/** OAuth connection status only — never returns access/refresh tokens to the client. */
 export const getTokens = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity || identity.subject !== args.userId) return null;
-    return await ctx.db
+    const row = await ctx.db
       .query("hmrc_tokens")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .unique();
+    if (!row) return null;
+    return {
+      connected: true,
+      expiresAt: row.expiresAt,
+      eori: row.eori ?? null,
+    };
   },
 });

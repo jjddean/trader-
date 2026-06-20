@@ -172,4 +172,42 @@ describe("H1 mapper and XML renderer", () => {
     const xml = renderH1Xml(mapToCDS_H1({ ...declaration, incoterms: "FOB" }, items));
     assert.doesNotMatch(xml, /<ValuationAdjustment>/);
   });
+
+  it("emits DE 2/6 deferment account and DE 4/8 MOP E when configured", () => {
+    const withDeferment = {
+      ...declaration,
+      paymentMethodCode: "E",
+      defermentAccountNumber: "1234567",
+    };
+    const payload = mapToCDS_H1(withDeferment, items);
+    assert.deepEqual(payload.Declaration.AdditionalDocument, [
+      { CategoryCode: "1", TypeCode: "DAN", ID: "1234567" },
+    ]);
+    const item = payload.Declaration.GoodsShipment.GovernmentAgencyGoodsItem[0];
+    assert.deepEqual(item.Commodity.DutyTaxFee, [
+      { DutyRegimeCode: "100", TypeCode: "A00", MethodCode: "E" },
+      { TypeCode: "B00", MethodCode: "E" },
+    ]);
+
+    const xml = renderH1Xml(payload);
+    assert.match(
+      xml,
+      /<AdditionalDocument>\s*<CategoryCode>1<\/CategoryCode>\s*<ID>1234567<\/ID>\s*<TypeCode>DAN<\/TypeCode>\s*<\/AdditionalDocument>/,
+    );
+    assert.match(xml, /<DutyTaxFee>[\s\S]*<TypeCode>A00<\/TypeCode>[\s\S]*<MethodCode>E<\/MethodCode>[\s\S]*<\/DutyTaxFee>/);
+    assert.match(xml, /<DutyTaxFee>[\s\S]*<TypeCode>B00<\/TypeCode>[\s\S]*<MethodCode>E<\/MethodCode>[\s\S]*<\/DutyTaxFee>/);
+  });
+
+  it("leaves golden lane unchanged when deferment fields are empty", () => {
+    const baselineXml = renderH1Xml(mapToCDS_H1(declaration, items));
+    assert.doesNotMatch(baselineXml, /<TypeCode>DAN<\/TypeCode>/);
+    assert.doesNotMatch(baselineXml, /<MethodCode>E<\/MethodCode>/);
+  });
+
+  it("throws when MOP E is set without DAN", () => {
+    assert.throws(
+      () => mapToCDS_H1({ ...declaration, paymentMethodCode: "E" }, items),
+      /Deferment account number/,
+    );
+  });
 });

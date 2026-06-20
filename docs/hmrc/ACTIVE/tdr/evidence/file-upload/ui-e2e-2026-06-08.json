@@ -1,0 +1,15 @@
+{
+  "date": "2026-06-08",
+  "environment": "sandbox",
+  "host": "http://localhost:3000",
+  "route": "POST /api/hmrc/documents/upload",
+  "declarationId": "kn78tw6ms6bdnjvp4r1mdnz7v188j528",
+  "mrn": "26GB6MJW33LM8NNAR6",
+  "fileName": "Jason_Dean.pdf",
+  "fileSizeBytes": 35173,
+  "documentType": "invoice",
+  "conversationId": "54060ee7-cc1b-450c-b398-32998a03c941",
+  "uploadReference": "dc7e6551-8918-42fe-8b89-ee995399f03d",
+  "outcome": "PASS — initiate + Upscan S3 POST; UI green row; Convex trackUpload after schema fix",
+  "notes": "First attempt hit trackUpload schema error; HMRC side succeeded. Retry after documents schema fix."
+}

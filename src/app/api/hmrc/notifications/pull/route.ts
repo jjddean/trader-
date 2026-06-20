@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { pullHmrcNotificationsForDeclaration } from "../../../../../lib/hmrc-pull-notifications";
 import { getAuthenticatedConvex } from "../../../../../lib/hmrc-route-session";
+import {
+  resolveOrgHmrcRoutingForDeclaration,
+  resolveOrgHmrcRoutingForOrg,
+} from "../../../../../lib/hmrc-org-routing";
 import { resolveHmrcAccessToken } from "../../../../../lib/hmrc-token";
 import { auth } from "@clerk/nextjs/server";
 import { api } from "../../../../../../convex/_generated/api";
@@ -42,6 +46,14 @@ export async function GET(request: Request) {
       return tokenResult.error;
     }
 
+    const orgRouting = declarationIdParam
+      ? await resolveOrgHmrcRoutingForDeclaration(convex, declarationIdParam as Id<"declarations">)
+      : await resolveOrgHmrcRoutingForOrg(convex, clerkAuth.orgId);
+    if ("error" in orgRouting) {
+      return orgRouting.error;
+    }
+    const { hmrcContext } = orgRouting;
+
     let conversationIds: string[] = [];
     if (declarationIdParam) {
       const ids = await convex.query(api.submissions.getDistinctConversationIds, {
@@ -70,6 +82,7 @@ export async function GET(request: Request) {
       accessToken: tokenResult.token,
       request,
       convex,
+      hmrcContext,
     });
 
     return NextResponse.json({ success: true, ...result });

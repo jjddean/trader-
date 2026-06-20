@@ -10,6 +10,11 @@ import { ShieldCheck, Send, Loader2, AlertTriangle, CheckCircle2, Code2 } from "
 import { mapToCDS_H1 } from "@/lib/wco-mapper";
 import { generateClientFraudHeaders } from "@/lib/hmrc-fraud-headers";
 import { getHmrcRequirementSetForDeclaration } from "@/lib/utils/document-utils";
+import {
+  ConvexSessionMissing,
+  DeclarationLoadingSpinner,
+  isConvexSessionMissing,
+} from "@/components/declaration-session-states";
 
 export default function SubmitPage() {
   const { isLoaded, isSignedIn, userId } = useAuth();
@@ -320,12 +325,23 @@ export default function SubmitPage() {
     }
   };
 
-  if (!isLoaded || isConvexAuthLoading || (isSignedIn && isAuthenticated && (declaration === undefined || items === undefined || requirements === undefined || completeness === undefined))) {
-    return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-      </div>
-    );
+  if (!isLoaded) {
+    return <DeclarationLoadingSpinner />;
+  }
+
+  if (isConvexSessionMissing(isLoaded, Boolean(isSignedIn), isConvexAuthLoading, isAuthenticated)) {
+    return <ConvexSessionMissing />;
+  }
+
+  if (
+    isSignedIn &&
+    isAuthenticated &&
+    (declaration === undefined ||
+      items === undefined ||
+      requirements === undefined ||
+      completeness === undefined)
+  ) {
+    return <DeclarationLoadingSpinner />;
   }
 
   if (!isSignedIn) {

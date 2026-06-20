@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Search, Bell, Zap, CheckCircle2, FileText, Package, XCircle, Clock, Bot } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -19,6 +20,7 @@ function timeAgo(dateString: string) {
 import { cn } from "@/lib/utils";
 import { getNotificationDisplay } from "@/lib/notification-labels";
 import { GlobalSearchOverlay } from "./global-search-overlay";
+import { OrgSwitcher } from "@/components/auth/org-switcher";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AssistantSideSheet } from "@/components/assistant-side-sheet";
 import {
@@ -50,7 +52,7 @@ interface DashboardHeaderProps {
 function HmrcStatusIndicator() {
   const { user } = useUser();
   const userId = user?.id;
-  const hmrcToken = useQuery(api.hmrc.getToken, userId ? { userId } : "skip");
+  const hmrcConnection = useQuery(api.hmrc_internal.getTokens, userId ? { userId } : "skip");
   const [now, setNow] = React.useState(Date.now());
 
   React.useEffect(() => {
@@ -58,12 +60,12 @@ function HmrcStatusIndicator() {
     return () => clearInterval(timer);
   }, []);
 
-  if (hmrcToken === undefined) return null;
+  if (hmrcConnection === undefined) return null;
 
   let status = "not-connected";
-  if (hmrcToken) {
-    if (hmrcToken.expiresAt < now) status = "expired";
-    else if (hmrcToken.expiresAt - now < 30 * 60 * 1000) status = "expiring";
+  if (hmrcConnection) {
+    if (hmrcConnection.expiresAt < now) status = "expired";
+    else if (hmrcConnection.expiresAt - now < 30 * 60 * 1000) status = "expiring";
     else status = "valid";
   }
 
@@ -82,10 +84,10 @@ function HmrcStatusIndicator() {
 
   if (status === "valid") {
     return (
-      <div className={baseClass}>
+      <Link href="/dashboard/settings" className={baseClass}>
         <div className={`h-1.5 w-1.5 rounded-full ${dotColor}`} />
         {label}
-      </div>
+      </Link>
     );
   }
 
@@ -120,6 +122,7 @@ export const DashboardHeader = ({
 
   const { user } = useUser();
   const userId = user?.id;
+  const dbUser = useQuery(api.users.current);
   const notifications = useQuery(api.notifications.getUserNotifications, userId ? { userId } : "skip");
   const unreadCount = notifications?.filter(n => !n.processed).length || 0;
 
@@ -207,6 +210,7 @@ export const DashboardHeader = ({
               </div>
             )}
             <div className="h-4 w-px bg-gray-200" />
+            <OrgSwitcher hidePersonal={dbUser?.role !== "admin"} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="relative flex h-[32px] w-[32px] items-center justify-center rounded-md border border-gray-200 bg-white transition-colors hover:bg-gray-50 active:scale-95">

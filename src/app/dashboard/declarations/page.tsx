@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
@@ -31,13 +31,23 @@ import {
   resolveDeclarationRowBadge,
   rowTintClass,
 } from "@/lib/declaration-status-display";
+import {
+  ConvexSessionMissing,
+  DeclarationLoadingSpinner,
+  isConvexSessionMissing,
+} from "@/components/declaration-session-states";
 
 export default function DeclarationsPage() {
-  const { user } = useUser();
+  const { user, isLoaded: isClerkLoaded, isSignedIn } = useUser();
+  const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const userId = user?.id || "";
   const router = useRouter();
 
-  const declarations = useQuery(api.declarations.getDeclarationPreviews) || [];
+  const authReady = isClerkLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated;
+  const declarations = useQuery(
+    api.declarations.getDeclarationPreviews,
+    authReady ? {} : "skip",
+  );
   const createDeclaration = useMutation(api.declarations.createDeclaration);
 
   const [isCreating, setIsCreating] = useState(false);
@@ -89,7 +99,7 @@ export default function DeclarationsPage() {
     }
   };
 
-  const filteredDeclarations = declarations?.filter((dec: any) => {
+  const filteredDeclarations = (declarations ?? []).filter((dec: any) => {
     const status = dec.status ?? "Draft";
     const { label: badgeLabel } = resolveDeclarationRowBadge(dec);
 
@@ -197,9 +207,11 @@ export default function DeclarationsPage() {
 
         {/* TABLE */}
         <div className="overflow-hidden">
-        {declarations === undefined ? (
+        {isConvexSessionMissing(isClerkLoaded, Boolean(isSignedIn), isConvexAuthLoading, isAuthenticated) ? (
+          <ConvexSessionMissing />
+        ) : declarations === undefined ? (
           <div className="flex h-40 items-center justify-center">
-            <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+            <DeclarationLoadingSpinner />
           </div>
         ) : (
           <div className="w-full overflow-x-auto">

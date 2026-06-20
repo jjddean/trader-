@@ -7,6 +7,11 @@ import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { UploadCloud, File, ShieldCheck, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  ConvexSessionMissing,
+  DeclarationLoadingSpinner,
+  isConvexSessionMissing,
+} from "@/components/declaration-session-states";
 
 export default function DocumentsPage() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -24,12 +29,16 @@ export default function DocumentsPage() {
   const [uploadedFiles, setUploadedFiles] = useState<{ name: string; type: string; size: string }[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  if (!isLoaded || isConvexAuthLoading || declaration === undefined) {
-    return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-      </div>
-    );
+  if (!isLoaded) {
+    return <DeclarationLoadingSpinner />;
+  }
+
+  if (isConvexSessionMissing(isLoaded, Boolean(isSignedIn), isConvexAuthLoading, isAuthenticated)) {
+    return <ConvexSessionMissing />;
+  }
+
+  if (isSignedIn && isAuthenticated && declaration === undefined) {
+    return <DeclarationLoadingSpinner />;
   }
 
   if (!declaration) {
@@ -38,77 +47,45 @@ export default function DocumentsPage() {
 
   const isLocked = !declaration.mrn;
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const uploadFile = async (file: File) => {
     setIsUploading(true);
     setUploadError(null);
 
     try {
-      const initiateRes = await fetch("/api/hmrc/documents/initiate", {
+      const uploadForm = new FormData();
+      uploadForm.append("declarationId", id);
+      uploadForm.append("file", file);
+
+      const uploadRes = await fetch("/api/hmrc/documents/upload", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          declarationId: id,
-          fileName: file.name,
-          fileSize: file.size,
-        }),
+        body: uploadForm,
       });
-      if (initiateRes.status === 410) {
+
+      if (uploadRes.status === 410) {
         setUploadError("Upload URL expired. Please retry to generate a fresh HMRC upload session.");
         return;
       }
-      if (!initiateRes.ok) {
-        const initiateData = await initiateRes.json().catch(() => ({}));
-        setUploadError(initiateData?.error || "Unable to initiate secure upload with HMRC.");
+      if (!uploadRes.ok) {
+        const uploadData = await uploadRes.json().catch(() => ({}));
+        setUploadError(
+          uploadData?.error ||
+            (uploadData?.s3Status
+              ? `HMRC S3 Upload Failed (Status: ${uploadData.s3Status})`
+              : "Unable to upload document to HMRC."),
+        );
         return;
       }
 
-      const initiateData = await initiateRes.json();
-      const uploadParams = initiateData.uploadParameters || {};
-      const s3Url = uploadParams.href;
-      const s3Fields: Record<string, string> = uploadParams.fields || {};
-
-      if (!s3Url || Object.keys(s3Fields).length === 0) {
-        setUploadError("HMRC did not return S3 upload parameters.");
-        return;
-      }
-
-      const s3FormData = new FormData();
-      Object.keys(s3Fields).forEach((key) => s3FormData.append(key, s3Fields[key]));
-      s3FormData.append("file", file);
-
-      let s3Res: Response;
-      try {
-        s3Res = await fetch(s3Url, {
-          method: "POST",
-          body: s3FormData,
-        });
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "network error";
-        setUploadError(`Failed S3 POST blocked by missing CORS or network error: ${message}`);
-        return;
-      }
-
-      if (s3Res.status === 410) {
-        setUploadError("Upload URL expired (410 Gone). Please request new one.");
-        return;
-      }
-
-      if (s3Res.status !== 201 && s3Res.status !== 204 && !s3Res.ok) {
-        setUploadError(`HMRC S3 Upload Failed (Status: ${s3Res.status})`);
-        return;
-      }
+      const uploadData = await uploadRes.json();
 
       await trackUpload({
         declarationId: id,
         fileName: file.name,
         fileSize: file.size,
-        documentType: initiateData.documentType || "invoice",
+        documentType: uploadData.documentType || "invoice",
         uploadStatus: "uploaded",
-        hmrcUploadReference: initiateData.uploadReference || undefined,
-        hmrcConversationId: initiateData.conversationId || undefined,
+        hmrcUploadReference: uploadData.uploadReference || undefined,
+        hmrcConversationId: uploadData.conversationId || undefined,
       });
 
       setUploadedFiles((prev) => [
@@ -121,8 +98,28 @@ export default function DocumentsPage() {
       ]);
     } finally {
       setIsUploading(false);
-      if (e.target) e.target.value = "";
     }
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadFile(file);
+    if (e.target) e.target.value = "";
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isLocked || isUploading) return;
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    await uploadFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   return (
@@ -154,7 +151,11 @@ export default function DocumentsPage() {
 
       <div className={`rounded-xl border border-gray-200 bg-white overflow-hidden transition-opacity ${isLocked ? "opacity-50 pointer-events-none" : ""}`}>
         <div className="p-8">
-          <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-lg p-12 bg-gray-50/50 hover:bg-gray-50 transition-colors relative">
+          <div
+            className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-lg p-12 bg-gray-50/50 hover:bg-gray-50 transition-colors relative"
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+          >
             <input
               type="file"
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"

@@ -40,7 +40,7 @@ export function getNotificationDisplay(raw: string | undefined | null): Notifica
       return { title: "Declaration accepted (DMSACC)", tone: "success" };
     case "DMSTAX":
       return {
-        title: "Tax assessed (DMSTAX)",
+        title: "Duty and VAT assessed by HMRC",
         subtitle: raw === "67" ? "Indicative customs debt" : raw === "4" ? "Payment / final debt" : undefined,
         tone: "info",
       };

@@ -1,31 +1,46 @@
 import { NextResponse } from "next/server";
 import Groq from "groq-sdk";
+import type { ChatCompletionMessageParam } from "groq-sdk/resources/chat/completions";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
+import { Id } from "../../../../../convex/_generated/dataModel";
+import { aiChatLimiter } from "@/lib/api-rate-limiter";
 
-const SYSTEM_PROMPT = `You are the Freightcode AI consultant, a UK customs and trade compliance expert helping importers and customs brokers.
+type AssistantContext = Record<string, unknown>;
 
-You assist with:
-- HMRC CDS error diagnosis (CDS40045, CDS12050, MALFORMED_XML, etc.)
-- HS / commodity code classification using the 6 General Interpretative Rules (GIRs)
-- UK Global Tariff lookups, duty rates, and preference origin (DCTS, Rules of Origin)
-- CDS data element guidance (DE 1/10, 1/11, 6/8, etc.) and procedure codes
-- Document requirements (C088, N935, Y929, licensing codes)
+function toChatRole(value: unknown): "user" | "assistant" | "system" | "developer" {
+  const role = String(value ?? "user");
+  if (role === "system" || role === "assistant" || role === "user" || role === "developer") {
+    return role;
+  }
+  return "user";
+}
 
-Be concise, accurate, and cite the relevant CDS data element or tariff rule when applicable. If you are unsure, say so rather than guessing.`;
+function buildChatHistoryMessages(context: AssistantContext): ChatCompletionMessageParam[] {
+  return recordRows(context.chatHistory).map((message) => ({
+    role: toChatRole(message.role),
+    content: String(message.content ?? ""),
+  }));
+}
 
-function buildSystemPrompt(context: any) {
-  const declarationSummary = context.declaration
+function recordRows(value: unknown): Record<string, unknown>[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((row): row is Record<string, unknown> => typeof row === "object" && row !== null);
+}
+
+function buildSystemPrompt(context: AssistantContext) {
+  const declaration = context.declaration as Record<string, unknown> | undefined;
+  const declarationSummary = declaration
     ? `Active declaration context: ${JSON.stringify({
-        mrn: context.declaration.mrn,
-        status: context.declaration.status,
-        eori: context.declaration.eori,
-        hmrcConversationId: context.declaration.conversationId,
+        mrn: declaration.mrn,
+        status: declaration.status,
+        eori: declaration.eori,
+        hmrcConversationId: declaration.conversationId,
       })}`
     : "No declaration is currently linked to this assistant request.";
 
-  const validationSummary = (context.validationFailures || []).slice(0, 5).map((row: any) => ({
+  const validationSummary = recordRows(context.validationFailures).slice(0, 5).map((row) => ({
     ruleId: row.ruleId,
     ruleName: row.ruleName,
     severity: row.severity,
@@ -33,19 +48,19 @@ function buildSystemPrompt(context: any) {
     field: row.field,
   }));
 
-  const notificationSummary = (context.recentNotifications || []).slice(0, 5).map((row: any) => ({
+  const notificationSummary = recordRows(context.recentNotifications).slice(0, 5).map((row) => ({
     type: row.notificationType,
     timestamp: row.timestamp,
     errorCodes: row.errorCodes || [],
   }));
 
-  const documentSummary = (context.recentDocuments || []).slice(0, 5).map((row: any) => ({
+  const documentSummary = recordRows(context.recentDocuments).slice(0, 5).map((row) => ({
     fileName: row.fileName,
     status: row.status || row.auditStatus,
     declarationId: row.declarationId || null,
   }));
 
-  const declarationList = (context.openDeclarations || []).slice(0, 10).map((row: any) => ({
+  const declarationList = recordRows(context.openDeclarations).slice(0, 10).map((row) => ({
     declarationId: row.declarationId,
     mrn: row.mrn || null,
     status: row.status,
@@ -62,17 +77,31 @@ Recent validation failures: ${JSON.stringify(validationSummary)}
 Stay tied to customs workflows. Do not invent compliance outcomes. Deterministic validation results remain authoritative.`;
 }
 
+const SYSTEM_PROMPT = `You are the Freightcode AI consultant, a UK customs and trade compliance expert helping importers and customs brokers.
+
+You assist with:
+- HMRC CDS error diagnosis (CDS40045, CDS12050, MALFORMED_XML, etc.)
+- HS / commodity code classification using the 6 General Interpretative Rules (GIRs)
+- UK Global Tariff lookups, duty rates, and preference origin (DCTS, Rules of Origin)
+- CDS data element guidance (DE 1/10, 1/11, 6/8, etc.) and procedure codes
+- Document requirements (C088, N935, Y929, licensing codes)
+
+Be concise, accurate, and cite the relevant CDS data element or tariff rule when applicable. If you are unsure, say so rather than guessing.`;
+
 export async function POST(request: Request) {
   let convex: ConvexHttpClient | null = null;
-  let conversationId: any = null;
-  let assistantMessageId: any = null;
-  let model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+  let conversationId: Id<"conversations"> | null = null;
+  let assistantMessageId: Id<"messages"> | null = null;
+  const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
   try {
     const clerkAuth = await auth();
     const { userId } = clerkAuth;
     if (!userId) {
       return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
+    }
+    if (!aiChatLimiter.tryConsume(userId)) {
+      return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
     }
 
     const convexToken = await clerkAuth.getToken({ template: "convex" });
@@ -97,15 +126,19 @@ export async function POST(request: Request) {
       api.assistantMutations.ensureConversation,
       declarationId ? { declarationId } : {},
     );
-    conversationId = conversation._id;
+    if (!conversation) {
+      return NextResponse.json({ error: "Failed to open assistant conversation" }, { status: 500 });
+    }
+    const activeConversationId = conversation._id;
+    conversationId = activeConversationId;
 
-    const context = await convex.query(
+    const context = (await convex.query(
       api.assistantQueries.getAssistantContext,
       declarationId ? { declarationId } : {},
-    );
+    )) as AssistantContext;
 
     await convex.mutation(api.assistantMutations.appendUserMessage, {
-      conversationId,
+      conversationId: activeConversationId,
       content: query,
       metadata: {
         declarationId: declarationId ?? null,
@@ -113,24 +146,22 @@ export async function POST(request: Request) {
       },
     });
 
-    assistantMessageId = await convex.mutation(api.assistantMutations.startAssistantMessage, {
-      conversationId,
+    const activeMessageId = await convex.mutation(api.assistantMutations.startAssistantMessage, {
+      conversationId: activeConversationId,
       metadata: {
         declarationId: declarationId ?? null,
         model,
         state: "streaming",
       },
     });
+    assistantMessageId = activeMessageId;
 
     const groq = new Groq({ apiKey });
     const completion = await groq.chat.completions.create({
       model,
       messages: [
         { role: "system", content: buildSystemPrompt(context) },
-        ...((context.chatHistory || []).map((message: any) => ({
-          role: message.role,
-          content: message.content,
-        }))),
+        ...buildChatHistoryMessages(context),
         { role: "user", content: query },
       ],
       temperature: 0.2,
@@ -150,7 +181,7 @@ export async function POST(request: Request) {
       const now = Date.now();
       if (text.length - lastPersistedLength >= 40 || now - lastPersistAt >= 250) {
         await convex.mutation(api.assistantMutations.updateAssistantMessage, {
-          messageId: assistantMessageId,
+          messageId: activeMessageId,
           content: text,
           streamed: true,
           metadata: {
@@ -170,7 +201,7 @@ export async function POST(request: Request) {
     }
 
     await convex.mutation(api.assistantMutations.finalizeAssistantMessage, {
-      messageId: assistantMessageId,
+      messageId: activeMessageId,
       content: text,
       metadata: {
         declarationId: declarationId ?? null,

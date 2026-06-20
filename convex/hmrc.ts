@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { canAccessDeclaration } from "./lib/org_access";
 
 export const saveToken = mutation({
   args: {
@@ -51,18 +52,6 @@ export const saveToken = mutation({
       });
     }
 
-    // Securely link this to the user's workspace if one exists
-    const workspace = await ctx.db
-      .query("workspaces")
-      .withIndex("by_owner", (q) => q.eq("ownerId", effectiveUserId))
-      .first();
-      
-    if (workspace) {
-      await ctx.db.patch(workspace._id, {
-        hmrcTokensId: tokenId
-      });
-    }
-
     // 3. Audit Log Entry
     await ctx.db.insert("auditLogs", {
       userId: effectiveUserId,
@@ -92,14 +81,6 @@ export const disconnectToken = mutation({
     if (existing) {
       await ctx.db.delete(existing._id);
 
-      const workspace = await ctx.db
-        .query("workspaces")
-        .withIndex("by_owner", (q) => q.eq("ownerId", identity.subject))
-        .first();
-      if (workspace) {
-        await ctx.db.patch(workspace._id, { hmrcTokensId: undefined });
-      }
-
       await ctx.db.insert("auditLogs", {
         userId: identity.subject,
         action: "hmrc_auth_disconnected",
@@ -110,20 +91,25 @@ export const disconnectToken = mutation({
   },
 });
 
+/** OAuth connection status only — never returns access/refresh tokens to the client. */
 export const getToken = query({
   args: { userId: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    // Token rows contain access AND refresh tokens — never serve them to an
-    // unauthenticated caller, and never to a caller asking for another user's
-    // tokens. The authenticated identity is the only key we trust.
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
     if (args.userId && args.userId !== identity.subject) return null;
 
-    return await ctx.db
+    const row = await ctx.db
       .query("hmrc_tokens")
       .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .first();
+    if (!row) return null;
+
+    return {
+      connected: true,
+      expiresAt: row.expiresAt,
+      eori: row.eori ?? null,
+    };
   },
 });
 
@@ -139,7 +125,7 @@ export const scheduleNotificationPulls = mutation({
     if (!identity) throw new Error("Unauthenticated");
 
     const decl = await ctx.db.get(args.declarationId);
-    if (!decl || decl.userId !== identity.subject) {
+    if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
       throw new Error("Unauthorized");
     }
 
@@ -153,5 +139,64 @@ export const scheduleNotificationPulls = mutation({
       });
     }
     return null;
+  },
+});
+
+const PKCE_TTL_MS = 10 * 60 * 1000;
+
+export const storeOAuthPkce = mutation({
+  args: {
+    stateNonce: v.string(),
+    codeVerifier: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+
+    const existing = await ctx.db
+      .query("hmrc_oauth_pkce")
+      .withIndex("by_stateNonce", (q) => q.eq("stateNonce", args.stateNonce))
+      .first();
+    if (existing) {
+      await ctx.db.delete(existing._id);
+    }
+
+    await ctx.db.insert("hmrc_oauth_pkce", {
+      stateNonce: args.stateNonce,
+      userId: identity.subject,
+      codeVerifier: args.codeVerifier,
+      expiresAt: Date.now() + PKCE_TTL_MS,
+    });
+  },
+});
+
+export const consumeOAuthPkce = mutation({
+  args: {
+    stateNonce: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+
+    const row = await ctx.db
+      .query("hmrc_oauth_pkce")
+      .withIndex("by_stateNonce", (q) => q.eq("stateNonce", args.stateNonce))
+      .first();
+
+    if (!row || row.userId !== identity.subject) {
+      return null;
+    }
+
+    await ctx.db.delete(row._id);
+
+    if (row.expiresAt < Date.now()) {
+      return null;
+    }
+
+    return row.codeVerifier;
   },
 });

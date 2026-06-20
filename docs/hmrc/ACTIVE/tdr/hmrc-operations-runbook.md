@@ -7,6 +7,12 @@ This runbook covers common support scenarios for the FreightCode Customs Declara
 
 ## 1. HMRC OAuth Token Issues
 
+**Full playbook:** [`oauth-connect-troubleshooting.md`](oauth-connect-troubleshooting.md) — redirect URI + `test-www`/`test-api` split + PKCE + matching app host (resolved 2026-06-08).
+
+### Symptom: Connect fails / stuck on grantscope / `client_id is invalid`
+**Cause:** OAuth chain mismatch — not usually wrong client secret. Check: redirect URI (Hub + env + port), authorize on `test-www` (not `test-api`), PKCE verifier on callback, start from same host as redirect (e.g. `localhost:3000`).
+**Fix:** Follow checklist in [`oauth-connect-troubleshooting.md`](oauth-connect-troubleshooting.md).
+
 ### Symptom: "HMRC OAuth Token not found"
 **Cause:** User hasn't connected their HMRC account, or token has been deleted.
 **Fix:** Navigate to Dashboard → Settings → Security → HMRC OAuth → Connect/Reconnect.
@@ -81,9 +87,21 @@ This runbook covers common support scenarios for the FreightCode Customs Declara
 
 See `docs/hmrc/ACTIVE/tdr/environment-matrix.md`.
 
-**Active:** TDR — `HMRC_ENVIRONMENT=production`, Declarations `application/vnd.hmrc.1.0+xml`
+**Active:** TDR v1 on sandbox — `HMRC_ENVIRONMENT=sandbox`, `NEXT_PUBLIC_HMRC_ENV=tdr`, Declarations `application/vnd.hmrc.1.0+xml`
 
 **Archived:** Trade Test sandbox — `docs/hmrc/ARCHIVE/trade-test/` (do not use for active config)
+
+### Production deploy checklist (Freightcode app)
+
+1. **Vercel** — deploy latest `main` after `npm run build` passes locally.
+2. **Clerk Dashboard** — disable **Waitlist** / sign-up restrictions (User & Authentication → Restrictions).
+3. **Vercel env (production)** — at minimum:
+   - `HMRC_REDIRECT_URI=https://www.freightcode.co.uk/auth/hmrc/callback`
+   - `HMRC_ENVIRONMENT=sandbox` (TDR practice until org live routing is used)
+   - `NEXT_PUBLIC_HMRC_ENV=tdr`
+   - Clerk + Convex + HMRC sandbox OAuth creds (match Developer Hub redirect URIs)
+4. **HMRC Developer Hub** — production redirect URI registered for `www.freightcode.co.uk` if testing Connect on prod host.
+5. **Convex** — `npx convex deploy` after schema changes (`org_hmrc_settings`, documents fields, etc.).
 
 ---
 

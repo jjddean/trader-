@@ -1,78 +1,36 @@
 import { internalMutation, mutation } from "./_generated/server";
+import type { MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
+import {
+  canAccessDeclarationById,
+  conversationScopeMatches,
+  findGeneralConversationForScope,
+  resolveConversationScopeId,
+} from "./lib/org_access";
 
-async function getDbUser(ctx: any, userId: string) {
-  return await ctx.db
-    .query("users")
-    .withIndex("by_clerk", (q: any) => q.eq("clerkId", userId))
-    .unique();
-}
-
-async function resolveOrganizationId(ctx: any, userId: string, preferredWorkspaceId?: unknown) {
-  if (preferredWorkspaceId) {
-    return `workspace:${String(preferredWorkspaceId)}`;
-  }
-
-  const dbUser = await getDbUser(ctx, userId);
-  const explicitOrgId = typeof dbUser?.orgId === "string" ? dbUser.orgId.trim() : "";
-  if (explicitOrgId) {
-    return `org:${explicitOrgId}`;
-  }
-
-  const membership = await ctx.db
-    .query("workspaceMembers")
-    .withIndex("by_user", (q: any) => q.eq("userId", userId))
-    .first();
-  if (membership?.workspaceId) {
-    return `workspace:${String(membership.workspaceId)}`;
-  }
-
-  const ownedWorkspace = await ctx.db
-    .query("workspaces")
-    .withIndex("by_owner", (q: any) => q.eq("ownerId", userId))
-    .first();
-  if (ownedWorkspace?._id) {
-    return `workspace:${String(ownedWorkspace._id)}`;
-  }
-
-  return `user:${userId}`;
-}
-
-async function canAccessDeclaration(ctx: any, userId: string, declarationId: any) {
-  const declaration = await ctx.db.get(declarationId);
-  if (!declaration) return { allowed: false, declaration: null };
-  if (String(declaration.userId || "") === userId) {
-    return { allowed: true, declaration };
-  }
-
-  if (declaration.workspaceId) {
-    const membership = await ctx.db
-      .query("workspaceMembers")
-      .withIndex("by_user", (q: any) => q.eq("userId", userId))
-      .collect();
-    const match = membership.some((row: any) => String(row.workspaceId) === String(declaration.workspaceId));
-    if (match) {
-      return { allowed: true, declaration };
-    }
-  }
-
-  return { allowed: false, declaration: null };
+// Re-export normalize for declaration internal paths (local alias)
+function declOrgScope(declaration: { orgId?: unknown; userId?: unknown }) {
+  const org = typeof declaration.orgId === "string" ? declaration.orgId.trim() : "";
+  if (org) return org;
+  const owner = typeof declaration.userId === "string" ? declaration.userId.trim() : "";
+  return owner ? `user:${owner}` : "user:system";
 }
 
 async function ensureConversationForScope(
-  ctx: any,
+  ctx: MutationCtx,
   userId: string,
-  declarationId?: any,
+  declarationId?: Id<"declarations">,
 ) {
   if (declarationId) {
-    const access = await canAccessDeclaration(ctx, userId, declarationId);
+    const access = await canAccessDeclarationById(ctx, userId, declarationId);
     if (!access.allowed || !access.declaration) {
       throw new Error("Unauthorized");
     }
 
     const existing = await ctx.db
       .query("conversations")
-      .withIndex("by_declaration", (q: any) => q.eq("declarationId", declarationId))
+      .withIndex("by_declaration", (q) => q.eq("declarationId", declarationId))
       .first();
     if (existing) {
       await ctx.db.patch(existing._id, {
@@ -82,7 +40,7 @@ async function ensureConversationForScope(
       return existing;
     }
 
-    const organizationId = await resolveOrganizationId(ctx, userId, access.declaration.workspaceId);
+    const organizationId = await resolveConversationScopeId(ctx, userId, access.declaration);
     const now = Date.now();
     const title = access.declaration.mrn
       ? `Declaration ${String(access.declaration.mrn)}`
@@ -99,14 +57,7 @@ async function ensureConversationForScope(
     return await ctx.db.get(conversationId);
   }
 
-  const organizationId = await resolveOrganizationId(ctx, userId);
-  const existingGeneral = (await ctx.db
-    .query("conversations")
-    .withIndex("by_organization", (q: any) => q.eq("organizationId", organizationId))
-    .collect())
-    .filter((conversation: any) => !conversation.declarationId)
-    .sort((a: any, b: any) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0))[0];
-
+  const existingGeneral = await findGeneralConversationForScope(ctx, userId);
   if (existingGeneral) {
     await ctx.db.patch(existingGeneral._id, {
       updatedAt: Date.now(),
@@ -115,6 +66,7 @@ async function ensureConversationForScope(
     return existingGeneral;
   }
 
+  const organizationId = await resolveConversationScopeId(ctx, userId);
   const now = Date.now();
   const conversationId = await ctx.db.insert("conversations", {
     organizationId,
@@ -127,7 +79,10 @@ async function ensureConversationForScope(
   return await ctx.db.get(conversationId);
 }
 
-async function ensureConversationForDeclarationInternal(ctx: any, declarationId: any) {
+async function ensureConversationForDeclarationInternal(
+  ctx: MutationCtx,
+  declarationId: Id<"declarations">,
+) {
   const declaration = await ctx.db.get(declarationId);
   if (!declaration) {
     throw new Error("Declaration not found");
@@ -135,7 +90,7 @@ async function ensureConversationForDeclarationInternal(ctx: any, declarationId:
 
   const existing = await ctx.db
     .query("conversations")
-    .withIndex("by_declaration", (q: any) => q.eq("declarationId", declarationId))
+    .withIndex("by_declaration", (q) => q.eq("declarationId", declarationId))
     .first();
   if (existing) {
     await ctx.db.patch(existing._id, { updatedAt: Date.now() });
@@ -143,7 +98,7 @@ async function ensureConversationForDeclarationInternal(ctx: any, declarationId:
   }
 
   const createdBy = String(declaration.userId || "system");
-  const organizationId = await resolveOrganizationId(ctx, createdBy, declaration.workspaceId);
+  const organizationId = declOrgScope(declaration);
   const now = Date.now();
   const title = declaration.mrn ? `Declaration ${String(declaration.mrn)}` : "Declaration Assistant";
   const conversationId = await ctx.db.insert("conversations", {
@@ -158,18 +113,22 @@ async function ensureConversationForDeclarationInternal(ctx: any, declarationId:
   return await ctx.db.get(conversationId);
 }
 
-async function assertConversationAccess(ctx: any, userId: string, conversationId: any) {
+async function assertConversationAccess(
+  ctx: MutationCtx,
+  userId: string,
+  conversationId: Id<"conversations">,
+) {
   const conversation = await ctx.db.get(conversationId);
   if (!conversation) throw new Error("Conversation not found");
 
   if (conversation.declarationId) {
-    const access = await canAccessDeclaration(ctx, userId, conversation.declarationId);
+    const access = await canAccessDeclarationById(ctx, userId, conversation.declarationId);
     if (!access.allowed) throw new Error("Unauthorized");
     return conversation;
   }
 
-  const organizationId = await resolveOrganizationId(ctx, userId);
-  if (conversation.organizationId !== organizationId) {
+  const scopeId = await resolveConversationScopeId(ctx, userId);
+  if (!conversationScopeMatches(conversation.organizationId, scopeId)) {
     throw new Error("Unauthorized");
   }
   return conversation;
@@ -337,6 +296,7 @@ export const recordDeclarationEvent = internalMutation({
   },
   handler: async (ctx, args) => {
     const conversation = await ensureConversationForDeclarationInternal(ctx, args.declarationId);
+    if (!conversation) throw new Error("Conversation not found");
     await ctx.db.insert("assistantEvents", {
       conversationId: conversation._id,
       declarationId: args.declarationId,

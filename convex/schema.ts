@@ -40,14 +40,26 @@ export default defineSchema({
     name: v.optional(v.any()),
     orgId: v.optional(v.any()),
     role: v.optional(v.string()),
+    /** Set when personal-scoped rows are attached to a Clerk org — hides Personal in org switcher */
+    personalMigratedAt: v.optional(v.number()),
+    /** @deprecated Removed from product — strip via stripLegacyClaimedForOrgId then delete from schema */
+    legacyClaimedForOrgId: v.optional(v.string()),
   }).index("by_clerk", ["clerkId"]),
+
+  /** Per Clerk org: practice (sandbox/TDR) vs live (production CDS). */
+  org_hmrc_settings: defineTable({
+    orgId: v.string(),
+    hmrcMode: v.union(v.literal("practice"), v.literal("live")),
+    updatedAt: v.number(),
+    updatedBy: v.optional(v.string()),
+  }).index("by_org", ["orgId"]),
 
   subscriptions: defineTable({
     userId: v.optional(v.any()), // clerkId
     stripeCustomerId: v.optional(v.any()),
     stripeSubscriptionId: v.optional(v.any()),
     status: v.optional(v.any()), // "active", "trialing", "past_due", "canceled"
-    plan: v.optional(v.any()), // "Starter", "Professional", "Enterprise"
+    plan: v.optional(v.any()), // "Starter", "Pro", "Pay As You Go"
     currentPeriodEnd: v.optional(v.any()), // timestamp
   })
     .index("by_user", ["userId"])
@@ -70,6 +82,14 @@ export default defineSchema({
     expiresAt: v.optional(v.any()),
     eori: v.optional(v.any()), // Optionally store the linked EORI
   }).index("by_user", ["userId"]),
+
+  /** Short-lived PKCE verifiers for HMRC OAuth (survives cross-site redirect without cookies). */
+  hmrc_oauth_pkce: defineTable({
+    stateNonce: v.string(),
+    userId: v.string(),
+    codeVerifier: v.string(),
+    expiresAt: v.number(),
+  }).index("by_stateNonce", ["stateNonce"]),
 
   waitlist_leads: defineTable({
     email: v.optional(v.any()),
@@ -96,6 +116,7 @@ export default defineSchema({
 
   declarations: defineTable({
     userId: v.optional(v.any()), // clerkId
+    orgId: v.optional(v.string()), // Clerk org — shared within team
     workspaceId: v.optional(v.any()),
     status: v.optional(v.any()),
     eori: v.optional(v.any()),
@@ -154,7 +175,11 @@ export default defineSchema({
     defermentAccountNumber: v.optional(v.string()),
     // DE 4/8 — method of payment code (e.g. "E" deferment).
     paymentMethodCode: v.optional(v.string()),
-  }).index("by_user", ["userId"]).index("by_mrn", ["mrn"]).index("by_conversationId", ["conversationId"]),
+  })
+    .index("by_user", ["userId"])
+    .index("by_org", ["orgId"])
+    .index("by_mrn", ["mrn"])
+    .index("by_conversationId", ["conversationId"]),
 
   goods_items: defineTable({
     ownerId: v.optional(v.any()),
@@ -183,17 +208,25 @@ export default defineSchema({
 
   documents: defineTable({
     userId: v.optional(v.any()),
+    orgId: v.optional(v.string()),
     workspaceId: v.optional(v.any()),
     fileId: v.optional(v.any()),
     fileName: v.optional(v.any()),
     fileType: v.optional(v.any()),
+    fileSize: v.optional(v.number()),
     status: v.optional(v.any()),
     uploadDate: v.optional(v.any()),
     mrn: v.optional(v.any()),
     declarationId: v.optional(v.any()),
     auditStatus: v.optional(v.any()),
     ocrText: v.optional(v.string()),
-  }).index("by_user", ["userId"]).index("by_mrn", ["mrn"]).index("by_declaration", ["declarationId"]),
+    hmrcUploadReference: v.optional(v.string()),
+    hmrcConversationId: v.optional(v.string()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_org", ["orgId"])
+    .index("by_mrn", ["mrn"])
+    .index("by_declaration", ["declarationId"]),
 
   document_requirements: defineTable({
     declarationId: v.id("declarations"),
@@ -243,10 +276,12 @@ export default defineSchema({
     rawPayload: v.optional(v.any()),
     processed: v.optional(v.any()),
     userId: v.optional(v.any()),
+    orgId: v.optional(v.string()),
     declarationId: v.optional(v.any()),
   })
     .index("by_mrn", ["mrn"])
     .index("by_user", ["userId"])
+    .index("by_org", ["orgId"])
     .index("by_conversationId", ["conversationId"])
     .index("by_declaration", ["declarationId"])
     .index("by_conv_type_ts", ["conversationId", "notificationType", "timestamp"]) // used for dedupe
@@ -264,6 +299,7 @@ export default defineSchema({
   declaration_preview: defineTable({
     declarationId: v.id("declarations"),
     userId: v.string(),
+    orgId: v.optional(v.string()),
     status: v.string(),
     totalItems: v.number(),
     totalValue: v.number(),
@@ -283,11 +319,23 @@ export default defineSchema({
     derivedDutyAmount: v.optional(v.number()),
     derivedVatAmount: v.optional(v.number()),
     financialSource: v.optional(v.union(v.literal("hmrc_confirmed"), v.literal("derived"))),
+    estimateMethod: v.optional(
+      v.union(
+        v.literal("hmrc_confirmed"),
+        v.literal("tariff_measures"),
+        v.literal("historical_fallback"),
+      ),
+    ),
+    estimateIncomplete: v.optional(v.boolean()),
+    potentialPreferenceSaving: v.optional(v.number()),
     dmstaxUpdatedAt: v.optional(v.number()),
     defermentAccountNumber: v.optional(v.string()),
     paymentMethodLabel: v.optional(v.string()),
     lastUpdated: v.number(),
-  }).index("by_user", ["userId"]).index("by_declarationId", ["declarationId"]),
+  })
+    .index("by_user", ["userId"])
+    .index("by_org", ["orgId"])
+    .index("by_declarationId", ["declarationId"]),
 
   auditLogs: defineTable({
     userId: v.optional(v.any()),

@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { FINANCIAL_LABELS as FL } from "./lib/financial_labels";
 import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
@@ -8,6 +9,21 @@ import { collectDeclarationNotifications } from "./lib/collect_declaration_notif
 import { resolveDeclarationCdsBadge } from "./lib/cds_badge";
 import { requireAdmin } from "./lib/user_role";
 import type { RuleDefinition } from "./lib/rule_engine";
+import {
+  estimateItemDutyFromTariff,
+  evaluatePreferenceOptions,
+} from "./lib/duty_rate_parser";
+import type { TariffJsonApi } from "./lib/tariff_parser";
+import {
+  canAccessDeclaration,
+  getActiveOrgId,
+  listDeclarationPreviewsForTenant,
+  listDeclarationsForTenant,
+  orgIdFromDeclaration,
+  resolveOrgIdForNewRecord,
+} from "./lib/org_access";
+
+type EstimateMethod = "tariff_measures" | "historical_fallback" | "hmrc_confirmed";
 
 const preferenceCountries = new Set(["BD", "PK", "LK", "KE", "GH", "NG", "TZ", "UG", "ZM", "ZW"]);
 const hsDutyRateByPrefix: Record<string, number> = {
@@ -178,30 +194,166 @@ function extractConfirmedFinancials(notifications: any[]) {
 }
 
 type HistoricalRateMap = Record<string, { dutyTotal: number; vatTotal: number; customsTotal: number }>;
+type TariffCacheMap = Record<string, TariffJsonApi>;
+
+async function loadTariffCachesForCommodityCodes(
+  ctx: Pick<QueryCtx, "db"> | Pick<MutationCtx, "db">,
+  commodityCodes: string[],
+): Promise<TariffCacheMap> {
+  const unique = [...new Set(commodityCodes.map((c) => String(c || "").trim()).filter((c) => c.length === 10))];
+  const map: TariffCacheMap = {};
+  await Promise.all(
+    unique.map(async (code) => {
+      const row = await ctx.db
+        .query("tariff_cache")
+        .withIndex("by_commodity", (q) => q.eq("commodityCode", code))
+        .first();
+      if (row?.rawResponse) map[code] = row.rawResponse as TariffJsonApi;
+    }),
+  );
+  return map;
+}
+
+function estimateItemFinancials(
+  item: any,
+  historicalRates: HistoricalRateMap,
+  tariffByCommodityCode?: TariffCacheMap,
+) {
+  const val = Number(item.valueAmount || 0);
+  const code = String(item?.commodityCode || "").trim();
+  const tariffDoc = code.length === 10 ? tariffByCommodityCode?.[code] : undefined;
+  const input = {
+    customsValueGbp: val,
+    netWeightKg: item?.netWeightKg != null ? Number(item.netWeightKg) : undefined,
+    supplementaryUnitQty:
+      item?.supplementaryUnitQty != null ? Number(item.supplementaryUnitQty) : undefined,
+  };
+
+  if (tariffDoc) {
+    const tariffEstimate = estimateItemDutyFromTariff(tariffDoc, {
+      originCountry: String(item?.originCountry || ""),
+      preferenceCode: item?.preferenceCode != null ? String(item.preferenceCode) : undefined,
+      input,
+    });
+
+    if (tariffEstimate && !tariffEstimate.incompleteInput) {
+      const itemDuty = tariffEstimate.dutyAmount;
+      const itemVat = (val + itemDuty) * tariffEstimate.vatRate;
+      return {
+        val,
+        itemDuty,
+        itemVat,
+        tariffSource: tariffEstimate.source as string | undefined,
+        estimateMethod: "tariff_measures" as const,
+        incompleteInput: false,
+      };
+    }
+
+    if (tariffEstimate?.incompleteInput) {
+      return {
+        val,
+        itemDuty: 0,
+        itemVat: val * 0.2,
+        tariffSource: tariffEstimate.source as string | undefined,
+        estimateMethod: "tariff_measures" as const,
+        incompleteInput: true,
+      };
+    }
+  }
+
+  const { dutyRate, vatRate } = resolveRates(item, historicalRates);
+  return {
+    val,
+    itemDuty: val * dutyRate,
+    itemVat: (val + val * dutyRate) * vatRate,
+    tariffSource: undefined as string | undefined,
+    estimateMethod: "historical_fallback" as const,
+    incompleteInput: false,
+  };
+}
+
+function computePotentialPreferenceSaving(
+  items: any[],
+  tariffByCommodityCode?: TariffCacheMap,
+): number | null {
+  if (!tariffByCommodityCode) return null;
+
+  let saving = 0;
+  let computed = false;
+
+  for (const item of items) {
+    const code = String(item?.commodityCode || "").trim();
+    const tariffDoc = code.length === 10 ? tariffByCommodityCode[code] : undefined;
+    if (!tariffDoc) continue;
+
+    const val = Number(item.valueAmount || 0);
+    const input = {
+      customsValueGbp: val,
+      netWeightKg: item?.netWeightKg != null ? Number(item.netWeightKg) : undefined,
+      supplementaryUnitQty:
+        item?.supplementaryUnitQty != null ? Number(item.supplementaryUnitQty) : undefined,
+    };
+    const originCountry = String(item?.originCountry || "");
+    const preferenceCode = item?.preferenceCode != null ? String(item.preferenceCode) : undefined;
+
+    const declared = estimateItemDutyFromTariff(tariffDoc, {
+      originCountry,
+      preferenceCode,
+      input,
+    });
+    const options = evaluatePreferenceOptions(tariffDoc, { originCountry, input });
+    if (!declared || declared.incompleteInput || !options?.best || options.best.incompleteInput) continue;
+
+    const delta = declared.dutyAmount - options.best.dutyAmount;
+    if (delta > 0.009) {
+      saving += delta;
+      computed = true;
+    }
+  }
+
+  return computed ? saving : null;
+}
 
 function computeDeclarationFinancials(
   items: any[],
   notifications: any[],
   historicalRates: HistoricalRateMap,
+  tariffByCommodityCode?: TariffCacheMap,
 ) {
   let derivedDuty = 0;
   let derivedVat = 0;
   let declValue = 0;
+  let usedFallback = false;
+  let estimateIncomplete = false;
 
   for (const item of items) {
-    const val = Number(item.valueAmount || 0);
-    const { dutyRate, vatRate } = resolveRates(item, historicalRates);
-    const itemDuty = val * dutyRate;
-    const itemVat = (val + itemDuty) * vatRate;
+    const { val, itemDuty, itemVat, estimateMethod, incompleteInput } = estimateItemFinancials(
+      item,
+      historicalRates,
+      tariffByCommodityCode,
+    );
     declValue += val;
     derivedDuty += itemDuty;
     derivedVat += itemVat;
+    if (estimateMethod === "historical_fallback") usedFallback = true;
+    if (incompleteInput) estimateIncomplete = true;
   }
 
   const confirmed = extractConfirmedFinancials(notifications);
   const hasConfirmedFinancials = !!(confirmed && (confirmed.duty > 0 || confirmed.vat > 0));
   const duty = hasConfirmedFinancials ? confirmed!.duty : derivedDuty;
   const vat = hasConfirmedFinancials ? confirmed!.vat : derivedVat;
+
+  let estimateMethod: EstimateMethod = "tariff_measures";
+  if (hasConfirmedFinancials) {
+    estimateMethod = "hmrc_confirmed";
+  } else if (usedFallback) {
+    estimateMethod = "historical_fallback";
+  }
+
+  const potentialPreferenceSaving = hasConfirmedFinancials
+    ? null
+    : computePotentialPreferenceSaving(items, tariffByCommodityCode);
 
   return {
     declValue,
@@ -212,6 +364,9 @@ function computeDeclarationFinancials(
     hasConfirmedFinancials,
     confirmedDuty: confirmed?.duty ?? null,
     confirmedVat: confirmed?.vat ?? null,
+    estimateMethod,
+    estimateIncomplete,
+    potentialPreferenceSaving,
   };
 }
 
@@ -246,14 +401,14 @@ function resolvePaymentMethodLabel(
   }
 
   if (hasConfirmedFinancials) {
-    return { label: "HMRC assessed (DMSTAX)", accountNumber: "—" };
+    return { label: FL.paymentHmrcAssessed, accountNumber: "—" };
   }
 
   return { label: "Estimated — not on declaration", accountNumber: "—" };
 }
 
 async function buildFinancialPreviewFields(
-  ctx: Pick<MutationCtx, "db">,
+  ctx: Pick<QueryCtx, "db">,
   declaration: Doc<"declarations">,
   declarationId: Id<"declarations">,
   items: any[],
@@ -265,7 +420,16 @@ async function buildFinancialPreviewFields(
     conversationId: declaration.conversationId,
     mrn: declaration.mrn,
   });
-  const financials = computeDeclarationFinancials(items, notificationRows, historicalRates);
+  const tariffByCommodityCode = await loadTariffCachesForCommodityCodes(
+    ctx,
+    items.map((item) => String(item?.commodityCode || "")),
+  );
+  const financials = computeDeclarationFinancials(
+    items,
+    notificationRows,
+    historicalRates,
+    tariffByCommodityCode,
+  );
   const payment = resolvePaymentMethodLabel(declaration, financials.hasConfirmedFinancials);
   const dmstaxUpdatedAt = financials.hasConfirmedFinancials
     ? latestDmstaxTimestamp(notificationRows)
@@ -280,13 +444,16 @@ async function buildFinancialPreviewFields(
     financialSource: financials.hasConfirmedFinancials
       ? ("hmrc_confirmed" as const)
       : ("derived" as const),
+    estimateMethod: financials.estimateMethod,
+    estimateIncomplete: financials.estimateIncomplete,
+    potentialPreferenceSaving: financials.potentialPreferenceSaving ?? undefined,
     dmstaxUpdatedAt,
     defermentAccountNumber: payment.accountNumber !== "—" ? payment.accountNumber : undefined,
     paymentMethodLabel: payment.label,
   };
 }
 
-function financialsFromPreview(preview: Doc<"declaration_preview">) {
+function financialsFromPreview(preview: Doc<"declaration_preview">): ReturnType<typeof computeDeclarationFinancials> {
   const hasConfirmedFinancials = preview.financialSource === "hmrc_confirmed";
   return {
     declValue: Number(preview.customsValue || 0),
@@ -297,6 +464,11 @@ function financialsFromPreview(preview: Doc<"declaration_preview">) {
     hasConfirmedFinancials,
     confirmedDuty: hasConfirmedFinancials ? Number(preview.dutyAmount || 0) : null,
     confirmedVat: hasConfirmedFinancials ? Number(preview.vatAmount || 0) : null,
+    estimateMethod:
+      preview.estimateMethod ??
+      (hasConfirmedFinancials ? "hmrc_confirmed" : "historical_fallback"),
+    estimateIncomplete: preview.estimateIncomplete ?? false,
+    potentialPreferenceSaving: preview.potentialPreferenceSaving ?? null,
   };
 }
 
@@ -315,14 +487,14 @@ function buildFinancialRecordsForDeclaration(
   });
   const provenance = hasConfirmedFinancials ? "hmrc_confirmed" : "derived";
   const provenanceLabel = hasConfirmedFinancials
-    ? "HMRC-confirmed settlement figures from DMSTAX"
-    : "Tariff-derived estimate from declaration items";
+    ? FL.confirmedSettlement
+    : FL.estimatedFromDeclaration;
   const transactionCode = decl.transactionNatureCode ? String(decl.transactionNatureCode) : "—";
   const statementContext = payment.accountNumber !== "—"
     ? "Deferment account on declaration (DE 2/6)"
     : hasConfirmedFinancials
-      ? "From DMSTAX notification"
-      : "Not on declaration";
+      ? FL.statementFromHmrc
+      : FL.statementEstimated;
 
   if (duty > 0) {
     records.push({
@@ -336,8 +508,8 @@ function buildFinancialRecordsForDeclaration(
       statementContext,
       paymentLimit: "—",
       calculationMethod: hasConfirmedFinancials
-        ? "Duty amount from HMRC DMSTAX notification"
-        : `Tariff-derived rates by HS/origin over customs value £${declValue.toFixed(2)}`,
+        ? FL.dutyConfirmedMethod
+        : FL.dutyEstimatedMethod(declValue),
       natureOfTransaction: transactionCode,
       provenance,
       provenanceLabel,
@@ -357,8 +529,8 @@ function buildFinancialRecordsForDeclaration(
       statementContext,
       paymentLimit: "—",
       calculationMethod: hasConfirmedFinancials
-        ? "VAT amount from HMRC DMSTAX notification"
-        : `VAT derived from customs value + duty for £${declValue.toFixed(2)}`,
+        ? FL.vatConfirmedMethod
+        : FL.vatEstimatedMethod(declValue),
       natureOfTransaction: transactionCode,
       provenance,
       provenanceLabel,
@@ -575,7 +747,7 @@ async function upsertDeclarationPreviewByDeclaration(
   });
 
   const financialFields =
-    declarationUserId && declaration.mrn
+    declarationUserId
       ? await buildFinancialPreviewFields(
           ctx,
           declaration,
@@ -590,6 +762,9 @@ async function upsertDeclarationPreviewByDeclaration(
           derivedDutyAmount: undefined,
           derivedVatAmount: undefined,
           financialSource: undefined,
+          estimateMethod: undefined,
+          estimateIncomplete: undefined,
+          potentialPreferenceSaving: undefined,
           dmstaxUpdatedAt: undefined,
           defermentAccountNumber: undefined,
           paymentMethodLabel: undefined,
@@ -598,6 +773,7 @@ async function upsertDeclarationPreviewByDeclaration(
   const nextPreview = {
     declarationId,
     userId: declarationUserId,
+    orgId: orgIdFromDeclaration(declaration),
     status: replayedStatus,
     totalItems: items.length,
     totalValue,
@@ -799,11 +975,11 @@ export const getLane = query({
   args: { id: v.id("declarations") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) return null;
 
     const declaration = await ctx.db.get(args.id);
-    if (!declaration || declaration.userId !== identity.subject) {
-      throw new Error("Unauthorized: You do not own this declaration.");
+    if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
+      return null;
     }
 
     const notificationRows = await collectDeclarationNotifications(ctx.db, {
@@ -821,6 +997,77 @@ export const getLane = query({
     const cdsBadge = resolveDeclarationCdsBadge(status, notificationRows);
 
     return { ...declaration, status, cdsBadgeLabel: cdsBadge.label, cdsBadgeTone: cdsBadge.tone };
+  },
+});
+
+export const getDeclarationFinancialEstimate = query({
+  args: { declarationId: v.id("declarations") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const declaration = await ctx.db.get(args.declarationId);
+    if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
+      return null;
+    }
+
+    try {
+      const preview = await ctx.db
+        .query("declaration_preview")
+        .withIndex("by_declarationId", (q) => q.eq("declarationId", args.declarationId))
+        .first();
+
+      if (preview?.financialSource !== undefined) {
+        return {
+          declarationId: args.declarationId,
+          dutyAmount: Number(preview.dutyAmount || 0),
+          vatAmount: Number(preview.vatAmount || 0),
+          customsValue: Number(preview.customsValue || 0),
+          derivedDutyAmount: Number(preview.derivedDutyAmount || 0),
+          derivedVatAmount: Number(preview.derivedVatAmount || 0),
+          financialSource: preview.financialSource,
+          estimateMethod: preview.estimateMethod,
+          estimateIncomplete: preview.estimateIncomplete ?? false,
+          potentialPreferenceSaving: preview.potentialPreferenceSaving ?? null,
+          paymentMethodLabel: preview.paymentMethodLabel,
+          defermentAccountNumber: preview.defermentAccountNumber,
+          dmstaxUpdatedAt: preview.dmstaxUpdatedAt,
+          updatedAt: preview.lastUpdated,
+        };
+      }
+
+      const items = await ctx.db
+        .query("goods_items")
+        .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId))
+        .take(500);
+
+      const fields = await buildFinancialPreviewFields(
+        ctx,
+        declaration,
+        args.declarationId,
+        items,
+        identity.subject,
+      );
+
+      return {
+        declarationId: args.declarationId,
+        dutyAmount: Number(fields.dutyAmount || 0),
+        vatAmount: Number(fields.vatAmount || 0),
+        customsValue: Number(fields.customsValue || 0),
+        derivedDutyAmount: Number(fields.derivedDutyAmount || 0),
+        derivedVatAmount: Number(fields.derivedVatAmount || 0),
+        financialSource: fields.financialSource,
+        estimateMethod: fields.estimateMethod,
+        estimateIncomplete: fields.estimateIncomplete ?? false,
+        potentialPreferenceSaving: fields.potentialPreferenceSaving ?? null,
+        paymentMethodLabel: fields.paymentMethodLabel,
+        defermentAccountNumber: fields.defermentAccountNumber,
+        dmstaxUpdatedAt: fields.dmstaxUpdatedAt,
+        updatedAt: Date.now(),
+      };
+    } catch {
+      return null;
+    }
   },
 });
 
@@ -869,7 +1116,6 @@ export const getForDebug = query({
 export const createDeclaration = mutation({
   args: {
     userId: v.string(),
-    workspaceId: v.optional(v.id("workspaces")),
     eori: v.optional(v.string()),
     route: v.optional(v.string()),
     declarationType: v.string(), // "H1", "B1" etc
@@ -885,9 +1131,11 @@ export const createDeclaration = mutation({
     if (!identity) throw new Error("Unauthenticated");
 
     const { initialItem, ...declarationArgs } = args;
+    const orgId = await resolveOrgIdForNewRecord(ctx, identity.subject);
     const declarationId = await ctx.db.insert("declarations", {
       ...declarationArgs,
       userId: identity.subject, // Override argument with identity
+      ...(orgId ? { orgId } : {}),
       created: Date.now(),
       lastUpdated: Date.now(),
     });
@@ -919,7 +1167,7 @@ export const deleteDeclaration = mutation({
     if (!identity) throw new Error("Unauthenticated");
 
     const existing = await ctx.db.get(args.id);
-    if (!existing || existing.userId !== identity.subject) {
+    if (!existing || !(await canAccessDeclaration(ctx, identity.subject, existing))) {
       throw new Error("Unauthorized: You do not own this declaration.");
     }
 
@@ -974,7 +1222,7 @@ export const beginSubmission = mutation({
     if (!identity) throw new Error("Unauthenticated");
 
     const existing = await ctx.db.get(args.id);
-    if (!existing || existing.userId !== identity.subject) {
+    if (!existing || !(await canAccessDeclaration(ctx, identity.subject, existing))) {
       throw new Error("Unauthorized");
     }
 
@@ -1010,7 +1258,7 @@ export const updateDeclarationStatus = mutation({
     if (!identity) throw new Error("Unauthenticated");
 
     const existing = await ctx.db.get(args.id);
-    if (!existing || existing.userId !== identity.subject) {
+    if (!existing || !(await canAccessDeclaration(ctx, identity.subject, existing))) {
       throw new Error("Unauthorized");
     }
 
@@ -1054,14 +1302,31 @@ export const updateDeclarationDetails = mutation({
     exporterLine: v.optional(v.string()),
     exporterPostcode: v.optional(v.string()),
     transactionNatureCode: v.optional(v.string()),
+    defermentAccountNumber: v.optional(v.string()),
+    paymentMethodCode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
 
     const existing = await ctx.db.get(args.id);
-    if (!existing || existing.userId !== identity.subject) {
+    if (!existing || !(await canAccessDeclaration(ctx, identity.subject, existing))) {
       throw new Error("Unauthorized");
+    }
+
+    const mop = String(args.paymentMethodCode ?? "").trim().toUpperCase();
+    const danDigits = String(args.defermentAccountNumber ?? "").replace(/\D/g, "");
+    const dan = danDigits.length === 7 ? danDigits : "";
+    const defermentMops = new Set(["E", "R"]);
+
+    if (defermentMops.has(mop) && !dan) {
+      throw new Error("Deferment account number (DE 2/6) is required when method of payment is E or R.");
+    }
+    if (dan && !defermentMops.has(mop)) {
+      throw new Error("Method of payment must be E or R when a deferment account number is provided.");
+    }
+    if (String(args.defermentAccountNumber ?? "").trim() && !dan) {
+      throw new Error("Deferment account number must be exactly 7 digits (DE 2/6).");
     }
 
     await ctx.db.patch(args.id, {
@@ -1088,6 +1353,12 @@ export const updateDeclarationDetails = mutation({
       ...(args.exporterLine !== undefined ? { exporterLine: args.exporterLine } : {}),
       ...(args.exporterPostcode !== undefined ? { exporterPostcode: args.exporterPostcode } : {}),
       ...(args.transactionNatureCode !== undefined ? { transactionNatureCode: args.transactionNatureCode } : {}),
+      ...(args.defermentAccountNumber !== undefined
+        ? { defermentAccountNumber: dan || undefined }
+        : {}),
+      ...(args.paymentMethodCode !== undefined
+        ? { paymentMethodCode: mop || undefined }
+        : {}),
       lastUpdated: Date.now(),
     });
     await upsertDeclarationPreviewByDeclaration(ctx, args.id);
@@ -1104,7 +1375,7 @@ export const setDeclarationMode = mutation({
     if (!identity) throw new Error("Unauthenticated");
 
     const existing = await ctx.db.get(args.id);
-    if (!existing || existing.userId !== identity.subject) {
+    if (!existing || !(await canAccessDeclaration(ctx, identity.subject, existing))) {
       throw new Error("Unauthorized");
     }
 
@@ -1145,7 +1416,7 @@ export const populateDemoData = mutation({
     if (!identity) throw new Error("Unauthenticated");
 
     const existing = await ctx.db.get(args.id);
-    if (!existing || existing.userId !== identity.subject) {
+    if (!existing || !(await canAccessDeclaration(ctx, identity.subject, existing))) {
       throw new Error("Unauthorized");
     }
 
@@ -1196,11 +1467,7 @@ export const getMyDeclarations = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
-    return await ctx.db
-      .query("declarations")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
-      .order("desc")
-      .take(200);
+    return await listDeclarationsForTenant(ctx, identity.subject, 200);
   }
 });
 
@@ -1210,12 +1477,12 @@ export const getMyDeclarationCounts = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return { total: 0, reviewCount: 0 };
 
-    const previews = await ctx.db
-      .query("declaration_preview")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
-      .take(500);
+    const previews = await listDeclarationPreviewsForTenant(ctx, identity.subject, 500);
 
     if (previews.length === 0) {
+      const activeOrgId = await getActiveOrgId(ctx, identity.subject);
+      if (activeOrgId) return { total: 0, reviewCount: 0 };
+
       const summary = await ctx.db
         .query("dashboard_summary")
         .withIndex("by_user", (q) => q.eq("userId", identity.subject))
@@ -1246,26 +1513,16 @@ export const getDashboardSummary = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
 
-    const summary = await ctx.db
-      .query("dashboard_summary")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
-      .first();
-
-    if (summary) return summary;
-
-    const previews = await ctx.db
-      .query("declaration_preview")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
-      .take(500);
-
-    let reviewCount = 0;
-    let totalValue = 0;
-    for (const preview of previews) {
-      if (isReviewStatus(String(preview.status || "Draft"))) reviewCount += 1;
-      totalValue += Number(preview.totalValue || 0);
-    }
+    const previews = await listDeclarationPreviewsForTenant(ctx, identity.subject, 500);
 
     if (previews.length > 0) {
+      let reviewCount = 0;
+      let totalValue = 0;
+      for (const preview of previews) {
+        if (isReviewStatus(String(preview.status || "Draft"))) reviewCount += 1;
+        totalValue += Number(preview.totalValue || 0);
+      }
+
       return {
         userId: identity.subject,
         totalDeclarations: previews.length,
@@ -1275,12 +1532,27 @@ export const getDashboardSummary = query({
       };
     }
 
-    const declarations = await ctx.db
-      .query("declarations")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
-      .take(200);
+    const activeOrgId = await getActiveOrgId(ctx, identity.subject);
+    if (activeOrgId) {
+      return {
+        userId: identity.subject,
+        totalDeclarations: 0,
+        reviewCount: 0,
+        totalValue: 0,
+        updatedAt: 0,
+      };
+    }
 
-    reviewCount = 0;
+    const summary = await ctx.db
+      .query("dashboard_summary")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .first();
+
+    if (summary) return summary;
+
+    const declarations = await listDeclarationsForTenant(ctx, identity.subject, 200);
+
+    let reviewCount = 0;
     for (const declaration of declarations) {
       if (isReviewStatus(String(declaration.status || "Draft"))) {
         reviewCount += 1;
@@ -1304,17 +1576,8 @@ export const getDashboardAnalytics = query({
     if (!identity) return null;
 
     const userId = identity.subject;
-    const historicalRates = await getHistoricalRateMap(ctx, userId);
-    const notificationsByDeclaration = await buildNotificationsByDeclaration(ctx, userId);
 
-    const decls = await ctx.db
-      .query("declarations")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .order("desc")
-      .take(200);
-
-    const declarationIds = decls.map((decl) => String(decl._id));
-    const itemsByDeclaration = await getItemsByDeclarationForUser(ctx, userId, declarationIds);
+    const previews = await listDeclarationPreviewsForTenant(ctx, userId, 200);
 
     const cutoff = Date.now() - THIRTY_DAYS_MS;
     let totalDuty = 0;
@@ -1328,55 +1591,71 @@ export const getDashboardAnalytics = query({
       declarationId: string;
     }> = [];
 
-    for (const decl of decls) {
-      const items = itemsByDeclaration.get(String(decl._id)) || [];
-      const notifications = notificationsByDeclaration.get(String(decl._id)) || [];
-      const financials = computeDeclarationFinancials(items, notifications, historicalRates);
+    const recentDutyPreviewIds: string[] = [];
 
-      if (financials.duty > 0) {
-        dutyByDeclarationId[String(decl._id)] = financials.duty;
+    for (const preview of previews) {
+      const declId = String(preview.declarationId);
+      const duty = Number(preview.dutyAmount || 0);
+      const derivedDuty = Number(preview.derivedDutyAmount || 0);
+      const confirmed = preview.financialSource === "hmrc_confirmed";
+
+      if (duty > 0) {
+        dutyByDeclarationId[declId] = duty;
       }
 
-      const createdAt = Number(decl.created || decl.lastUpdated || decl._creationTime || 0);
-      if (createdAt < cutoff) continue;
-
-      if (financials.duty > 0) {
-        totalDuty += financials.duty;
+      const updatedAt = Number(preview.lastUpdated || 0);
+      if (updatedAt >= cutoff && duty > 0) {
+        totalDuty += duty;
         dutyDeclarationCount += 1;
+        recentDutyPreviewIds.push(declId);
       }
 
-      for (const item of items) {
-        const code = String(item.commodityCode || "").trim().slice(0, 4);
-        if (!code) continue;
-        const val = Number(item.valueAmount || 0);
-        const { dutyRate } = resolveRates(item, historicalRates);
-        const itemDuty = val * dutyRate;
-        if (itemDuty <= 0) continue;
-        dutyByHs.set(code, (dutyByHs.get(code) || 0) + itemDuty);
-      }
-
-      const savingsEstimate = Number(decl.savingsEstimate || 0);
+      const decl = await ctx.db.get(preview.declarationId);
+      const savingsEstimate = Number(decl?.savingsEstimate || 0);
       if (savingsEstimate > 0) {
         overpayments.push({
-          title: String(decl.mrn || "Draft declaration"),
-          subtitle: "Estimated duty savings opportunity",
+          title: String(preview.mrn || decl?.mrn || "Draft declaration"),
+          subtitle: FL.savingsOpportunity,
           amount: savingsEstimate,
-          declarationId: String(decl._id),
+          declarationId: declId,
         });
         continue;
       }
 
-      if (
-        financials.hasConfirmedFinancials &&
-        financials.confirmedDuty != null &&
-        financials.derivedDuty > financials.confirmedDuty + 0.01
-      ) {
+      if (confirmed && derivedDuty > duty + 0.01) {
         overpayments.push({
-          title: String(decl.mrn || "Draft declaration"),
-          subtitle: "Tariff estimate exceeds HMRC assessed duty",
-          amount: financials.derivedDuty - financials.confirmedDuty,
-          declarationId: String(decl._id),
+          title: String(preview.mrn || decl?.mrn || "Draft declaration"),
+          subtitle: FL.estimateHigherThanHmrc,
+          amount: derivedDuty - duty,
+          declarationId: declId,
         });
+      }
+    }
+
+    if (recentDutyPreviewIds.length > 0) {
+      const itemsByDeclaration = await getItemsByDeclarationForUser(
+        ctx,
+        userId,
+        recentDutyPreviewIds,
+      );
+      for (const declId of recentDutyPreviewIds) {
+        const preview = previews.find((p) => String(p.declarationId) === declId);
+        const duty = Number(preview?.dutyAmount || 0);
+        if (duty <= 0) continue;
+        const items = itemsByDeclaration.get(declId) || [];
+        const totalVal = items.reduce(
+          (sum, item) => sum + Number(item.valueAmount || 0),
+          0,
+        );
+        if (totalVal <= 0) continue;
+        for (const item of items) {
+          const code = String(item.commodityCode || "").trim().slice(0, 4);
+          if (!code) continue;
+          const itemVal = Number(item.valueAmount || 0);
+          if (itemVal <= 0) continue;
+          const share = duty * (itemVal / totalVal);
+          dutyByHs.set(code, (dutyByHs.get(code) || 0) + share);
+        }
       }
     }
 
@@ -1406,67 +1685,30 @@ export const getDeclarationPreviews = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
 
-    const previews = await ctx.db
-      .query("declaration_preview")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
-      .order("desc")
-      .take(200);
-
-    const enrichPreview = async (preview: (typeof previews)[number]) => {
-      const declaration = await ctx.db.get(preview.declarationId);
-      if (!declaration) return preview;
-      const { status, cdsBadgeLabel, cdsBadgeTone } = await resolveStatusAndBadge(
-        ctx,
-        preview.declarationId,
-        {
-          status: declaration.status,
-          mrn: declaration.mrn,
-          conversationId: declaration.conversationId,
-        },
-      );
-      return { ...preview, status, cdsBadgeLabel, cdsBadgeTone };
-    };
+    const previews = await listDeclarationPreviewsForTenant(ctx, identity.subject, 200);
 
     if (previews.length > 0) {
-      return Promise.all(previews.map(enrichPreview));
+      return previews;
     }
 
-    const declarations = await ctx.db
-      .query("declarations")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
-      .order("desc")
-      .take(200);
+    const declarations = await listDeclarationsForTenant(ctx, identity.subject, 200);
 
-    return Promise.all(
-      declarations.map(async (declaration) => {
-        const { status, cdsBadgeLabel, cdsBadgeTone } = await resolveStatusAndBadge(
-          ctx,
-          declaration._id,
-          {
-            status: declaration.status,
-            mrn: declaration.mrn,
-            conversationId: declaration.conversationId,
-          },
-        );
-        return {
-          declarationId: declaration._id,
-          userId: identity.subject,
-          status,
-          cdsBadgeLabel,
-          cdsBadgeTone,
-          totalItems: 0,
-          totalValue: 0,
-          mrn: declaration.mrn ? String(declaration.mrn) : undefined,
-          eori: declaration.eori ? String(declaration.eori) : undefined,
-          declarationType: declaration.declarationType
-            ? String(declaration.declarationType)
-            : undefined,
-          lastUpdated: Number(
-            declaration.lastUpdated || declaration.created || declaration._creationTime || 0,
-          ),
-        };
-      }),
-    );
+    return declarations.map((declaration) => ({
+      declarationId: declaration._id,
+      userId: String(declaration.userId ?? identity.subject),
+      orgId: orgIdFromDeclaration(declaration),
+      status: String(declaration.status ?? "Draft"),
+      totalItems: 0,
+      totalValue: 0,
+      mrn: declaration.mrn ? String(declaration.mrn) : undefined,
+      eori: declaration.eori ? String(declaration.eori) : undefined,
+      declarationType: declaration.declarationType
+        ? String(declaration.declarationType)
+        : undefined,
+      lastUpdated: Number(
+        declaration.lastUpdated || declaration.created || declaration._creationTime || 0,
+      ),
+    }));
   },
 });
 
@@ -1476,10 +1718,7 @@ export const rebuildMyReadModels = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
 
-    const declarations = await ctx.db
-      .query("declarations")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
-      .take(5000);
+    const declarations = await listDeclarationsForTenant(ctx, identity.subject, 5000);
 
     await Promise.all(declarations.map((d) => upsertDeclarationPreviewByDeclaration(ctx, d._id)));
 
@@ -1519,11 +1758,7 @@ export const getReports = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
 
-    const decls = await ctx.db
-      .query("declarations")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
-      .order("desc")
-      .take(150);
+    const decls = await listDeclarationsForTenant(ctx, identity.subject, 150);
 
     const historicalRates = await getHistoricalRateMap(ctx, identity.subject);
     const reports = [];
@@ -1531,18 +1766,26 @@ export const getReports = query({
     const itemsByDeclaration = await getItemsByDeclarationForUser(ctx, identity.subject, declarationIds);
     const notificationsByDeclaration = await buildNotificationsByDeclaration(ctx, identity.subject);
     const lrnByDeclaration = await buildSubmitLrnByDeclaration(ctx, identity.subject);
+    const allItems = [...itemsByDeclaration.values()].flat();
+    const tariffByCommodityCode = await loadTariffCachesForCommodityCodes(
+      ctx,
+      allItems.map((item) => String(item?.commodityCode || "")),
+    );
 
     for (const decl of decls) {
       const items = itemsByDeclaration.get(String(decl._id)) || [];
       const declarationNotifications = notificationsByDeclaration.get(String(decl._id)) || [];
-      const financials = computeDeclarationFinancials(items, declarationNotifications, historicalRates);
+      const financials = computeDeclarationFinancials(
+        items,
+        declarationNotifications,
+        historicalRates,
+        tariffByCommodityCode,
+      );
 
       let totalValue = 0;
       const mappedItems = items.slice(0, 50).map((item, idx) => {
         const val = Number(item.valueAmount || 0);
-        const { dutyRate, vatRate } = resolveRates(item, historicalRates);
-        const duty = val * dutyRate;
-        const vat = (val + duty) * vatRate;
+        const { itemDuty, itemVat } = estimateItemFinancials(item, historicalRates, tariffByCommodityCode);
         totalValue += val;
 
         return {
@@ -1553,8 +1796,8 @@ export const getReports = query({
           cpc: item.procedureCode || "4000 000",
           itemPrice: `GBP ${val.toFixed(2)}`,
           customsValue: `GBP ${val.toFixed(2)}`,
-          dutyPaid: `£${duty.toFixed(2)}`,
-          vatAmount: `£${vat.toFixed(2)}`,
+          dutyPaid: `£${itemDuty.toFixed(2)}`,
+          vatAmount: `£${itemVat.toFixed(2)}`,
         };
       });
 
@@ -1602,10 +1845,10 @@ export const getReports = query({
         items: mappedItems,
         provenance: isAuthoritative ? "hmrc_confirmed" : "derived",
         provenanceLabel: financials.hasConfirmedFinancials
-          ? "HMRC-confirmed duty/VAT from DMSTAX notifications"
+          ? FL.reportConfirmed
           : isAuthoritative
-            ? "HMRC-confirmed declaration status data"
-            : "Derived from declaration items and tariff rates",
+            ? FL.reportStatusConfirmed
+            : FL.reportEstimated,
         isAuthoritative,
       });
     }
@@ -1620,22 +1863,20 @@ export const getFinancialRecords = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
 
-    const decls = await ctx.db
-      .query("declarations")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
-      .order("desc")
-      .take(200);
+    const decls = await listDeclarationsForTenant(ctx, identity.subject, 200);
 
     const historicalRates = await getHistoricalRateMap(ctx, identity.subject);
     const records: Array<Record<string, unknown>> = [];
     const declarationIds = decls.map((decl) => String(decl._id));
     const itemsByDeclaration = await getItemsByDeclarationForUser(ctx, identity.subject, declarationIds);
     const notificationsByDeclaration = await buildNotificationsByDeclaration(ctx, identity.subject);
+    const allItems = [...itemsByDeclaration.values()].flat();
+    const tariffByCommodityCode = await loadTariffCachesForCommodityCodes(
+      ctx,
+      allItems.map((item) => String(item?.commodityCode || "")),
+    );
 
-    const previews = await ctx.db
-      .query("declaration_preview")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
-      .take(500);
+    const previews = await listDeclarationPreviewsForTenant(ctx, identity.subject, 500);
     const previewByDeclarationId = new Map(
       previews.map((preview) => [String(preview.declarationId), preview]),
     );
@@ -1658,7 +1899,12 @@ export const getFinancialRecords = query({
       } else {
         const items = itemsByDeclaration.get(String(decl._id)) || [];
         const declarationNotifications = notificationsByDeclaration.get(String(decl._id)) || [];
-        financials = computeDeclarationFinancials(items, declarationNotifications, historicalRates);
+        financials = computeDeclarationFinancials(
+          items,
+          declarationNotifications,
+          historicalRates,
+          tariffByCommodityCode,
+        );
         payment = resolvePaymentMethodLabel(decl, financials.hasConfirmedFinancials);
       }
 

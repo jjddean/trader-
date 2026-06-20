@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { WaitlistForm } from "@/components/waitlist-form";
+import { SignUpCta } from "@/components/sign-up-cta";
 
 export const metadata: Metadata = {
   title: "How to Read Your CDS CSV Export from TRE | FreightCode",
@@ -202,7 +202,7 @@ export default function Guide4Page() {
           FreightCode reads your TRE data and surfaces these audit flags automatically. Instead of manually filtering thousands of rows in Excel, the platform identifies potential misclassifications, missed preference claims, and value anomalies instantly, presenting them in a professional dashboard.
         </p>
         <div className="max-w-sm">
-          <WaitlistForm variant="light" />
+          <SignUpCta variant="light" showSignIn={false} />
         </div>
       </div>
     </article>

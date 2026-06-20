@@ -13,7 +13,8 @@ import {
   ChevronRight,
   Shield,
 } from "lucide-react";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { useOrganization, useUser } from "@clerk/nextjs";
+import { SidebarUserButton } from "@/components/auth/sidebar-user-button";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { cn } from "@/lib/utils";
@@ -59,6 +60,7 @@ const navItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const { user: clerkUser } = useUser();
+  const { organization } = useOrganization();
   const userData = useQuery(api.users.current);
   const isAdmin = userData?.role === "admin";
 
@@ -288,15 +290,16 @@ export function AppSidebar() {
         </SidebarMenu>
         {mounted ? (
           <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2">
-            <UserButton />
+            <SidebarUserButton />
             <div className="flex flex-col">
               <span className="max-w-[100px] truncate text-xs font-normal text-gray-700">
                 {clerkUser?.fullName || "User"}
               </span>
-              <span className="text-[10px] text-gray-400">{isAdmin ? "Admin" : "Enterprise"}</span>
+              <span className="max-w-[100px] truncate text-[10px] text-gray-400">
+                {isAdmin ? "Admin" : organization?.name ?? "Personal account"}
+              </span>
             </div>
           </div>
-
         ) : (
           <div className="flex h-[42px] items-center gap-2 rounded-md border border-gray-200 bg-gray-100 px-3 py-2">
             <div className="h-6 w-6 animate-pulse rounded-full bg-gray-200" />

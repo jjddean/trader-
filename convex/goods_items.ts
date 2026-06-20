@@ -1,12 +1,8 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
-
-const getOwnerId = (doc: unknown): string | null => {
-  if (!doc || typeof doc !== "object") return null;
-  const userId = (doc as { userId?: unknown }).userId;
-  return typeof userId === "string" ? userId : null;
-};
+import type { Id } from "./_generated/dataModel";
+import { canAccessDeclaration } from "./lib/org_access";
 
 async function refreshReadModels(ctx: any, declarationId: any) {
   await ctx.runMutation(internal.declarations.upsertDeclarationPreview, { declarationId });
@@ -19,7 +15,7 @@ export const getItems = query({
     if (!identity) throw new Error("Unauthenticated");
 
     const declaration = await ctx.db.get(args.declarationId);
-    if (!declaration || getOwnerId(declaration) !== identity.subject) {
+    if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
       return [];
     }
 
@@ -85,7 +81,7 @@ export const addItem = mutation({
     if (!identity) throw new Error("Unauthenticated");
 
     const declaration = await ctx.db.get(args.declarationId);
-    if (!declaration || getOwnerId(declaration) !== identity.subject) {
+    if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
       throw new Error("Unauthorized");
     }
 
@@ -107,8 +103,10 @@ export const removeItem = mutation({
     const existing = await ctx.db.get(args.id);
     if (!existing) return;
 
-    const declaration = await ctx.db.get(existing.declarationId);
-    if (!declaration || getOwnerId(declaration) !== identity.subject) {
+    const declaration = existing.declarationId
+      ? await ctx.db.get(existing.declarationId as Id<"declarations">)
+      : null;
+    if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
       throw new Error("Unauthorized");
     }
 
@@ -153,8 +151,10 @@ export const updateItem = mutation({
     const existing = await ctx.db.get(args.id);
     if (!existing) throw new Error("Item not found");
 
-    const declaration = await ctx.db.get(existing.declarationId);
-    if (!declaration || getOwnerId(declaration) !== identity.subject) {
+    const declaration = existing.declarationId
+      ? await ctx.db.get(existing.declarationId as Id<"declarations">)
+      : null;
+    if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
       throw new Error("Unauthorized");
     }
 

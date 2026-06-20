@@ -1,4 +1,5 @@
 import { HMRC_CONFIG, declarationsAcceptHeader } from "@/lib/hmrc-config";
+import type { ResolvedHmrcContext } from "@/lib/hmrc-context";
 import { hmrcLimiter } from "@/lib/rate-limiter";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -27,6 +28,7 @@ export async function fetchHmrc(
   // Declarations API). Non-declaration endpoints (file upload, info, status)
   // can omit; declaration submit/amend/cancel must pass it.
   submitterEori?: string,
+  hmrcContext?: ResolvedHmrcContext,
 ) {
   const vendorPublicIp = HMRC_CONFIG.vendor.publicIp || "203.0.113.6";
   // In local dev the browser and server are on the same machine, so the
@@ -71,10 +73,11 @@ export async function fetchHmrc(
   }
 
   const testScenario = process.env.HMRC_TEST_SCENARIO;
+  const acceptHeader = hmrcContext?.declarationsAccept ?? declarationsAcceptHeader();
   const hmrcHeaders: Record<string, string> = {
-    Accept: declarationsAcceptHeader(),
+    Accept: acceptHeader,
     Authorization: `Bearer ${token}`,
-    "X-Client-ID": process.env.HMRC_CLIENT_ID || "",
+    "X-Client-ID": hmrcContext?.clientId || process.env.HMRC_CLIENT_ID || "",
     ...govHeaders,
     ...(submitterEori ? { "X-Submitter-Identifier": submitterEori } : {}),
     ...(options.headers as Record<string, string>),
@@ -100,10 +103,9 @@ export async function fetchHmrc(
   }
 
   // Gov-Test-Scenario is Trade Test sandbox only. TDR/production reject it.
-  const acceptHeader = String(hmrcHeaders["Accept"] || "");
   const isV2 = acceptHeader.includes("hmrc.2.0");
   const isNotificationsApi = endpoint.includes("/notifications/");
-  const isProduction = process.env.HMRC_ENVIRONMENT === "production";
+  const isProduction = hmrcContext?.environment === "production" || process.env.HMRC_ENVIRONMENT === "production";
   if (testScenario && !isV2 && !isNotificationsApi && !isProduction) {
     hmrcHeaders["Gov-Test-Scenario"] = testScenario;
   }

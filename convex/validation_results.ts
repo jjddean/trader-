@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { evaluateRules, type RuleDefinition, type ScenarioInput } from "./lib/rule_engine";
+import { canAccessDeclaration } from "./lib/org_access";
 
 export const listForDeclaration = query({
   args: { declarationId: v.id("declarations") },
@@ -9,7 +10,7 @@ export const listForDeclaration = query({
     if (!identity) throw new Error("Unauthenticated");
     const decl = await ctx.db.get(args.declarationId);
     if (!decl) throw new Error("Declaration not found");
-    if (decl.userId !== identity.subject) throw new Error("Unauthorized");
+    if (!(await canAccessDeclaration(ctx, identity.subject, decl))) throw new Error("Unauthorized");
     return await ctx.db
       .query("validation_results")
       .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId))
@@ -24,7 +25,7 @@ export const blockingFailures = query({
     if (!identity) throw new Error("Unauthenticated");
     const decl = await ctx.db.get(args.declarationId);
     if (!decl) throw new Error("Declaration not found");
-    if (decl.userId !== identity.subject) throw new Error("Unauthorized");
+    if (!(await canAccessDeclaration(ctx, identity.subject, decl))) throw new Error("Unauthorized");
     const all = await ctx.db
       .query("validation_results")
       .withIndex("by_declaration_status", (q) =>
@@ -45,7 +46,7 @@ export const recompute = mutation({
     if (!identity) throw new Error("Unauthenticated");
     const decl = await ctx.db.get(args.declarationId);
     if (!decl) throw new Error("Declaration not found");
-    if (decl.userId !== identity.subject) throw new Error("Unauthorized");
+    if (!(await canAccessDeclaration(ctx, identity.subject, decl))) throw new Error("Unauthorized");
 
     const items = await ctx.db
       .query("goods_items")

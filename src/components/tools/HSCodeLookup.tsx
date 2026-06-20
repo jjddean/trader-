@@ -1,13 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Search, Loader2, AlertCircle, Copy, BookOpen } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import {
+  Search,
+  Loader2,
+  AlertCircle,
+  Copy,
+  Check,
+  BookOpen,
+  ExternalLink,
+  Info,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useAction } from "convex/react";
+import { useRouter } from "next/navigation";
+import { useAction, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
+import { commodityRequiresSupplementaryUnit } from "@/lib/wco-mapper";
 
 interface HSCode {
   code: string;
@@ -19,9 +31,164 @@ interface HSCode {
 interface HSCodeLookupProps {
   variant?: "default" | "minimal" | "card";
   className?: string;
+  /** When set, shows "Apply to item" and returns to declaration after apply */
+  declarationId?: string;
+  itemId?: string;
 }
 
-export function HSCodeLookup({ variant = "default", className }: HSCodeLookupProps) {
+type CopiedField = "code" | "description" | null;
+
+function tariffUrl(code: string) {
+  return `https://www.trade-tariff.service.gov.uk/commodities/${code.replace(/\s/g, "")}`;
+}
+
+function DescriptionGuidance({ compact }: { compact?: boolean }) {
+  return (
+    <div
+      className={cn(
+        "flex gap-2.5 rounded-lg border border-blue-100 bg-blue-50/80 text-blue-950",
+        compact ? "px-3 py-2.5" : "px-4 py-3",
+      )}
+    >
+      <Info className={cn("shrink-0 text-blue-600", compact ? "mt-0.5 h-3.5 w-3.5" : "mt-0.5 h-4 w-4")} />
+      <div className={cn("space-y-1", compact ? "text-[11px] leading-relaxed" : "text-xs leading-relaxed")}>
+        <p className="font-medium">Code vs declaration description</p>
+        <p className="text-blue-900/85">
+          The text below is <strong>tariff nomenclature</strong> — use it to pick the right commodity code.
+          On your declaration, enter a <strong>normal trade description</strong> (DE 6/8) that matches your
+          invoice and supports the code. Only use tariff wording if your goods exactly match that line
+          (including purity or CAS criteria where shown).
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ResultActionButton({
+  label,
+  copiedLabel,
+  isCopied,
+  onClick,
+  variant = "default",
+}: {
+  label: string;
+  copiedLabel: string;
+  isCopied: boolean;
+  onClick: () => void;
+  variant?: "default" | "secondary";
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex min-w-[88px] items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all",
+        isCopied
+          ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+          : variant === "secondary"
+            ? "border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+            : "border-gray-300 bg-gray-50 text-gray-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700",
+      )}
+    >
+      {isCopied ? (
+        <>
+          <Check className="h-3 w-3" />
+          {copiedLabel}
+        </>
+      ) : (
+        <>
+          <Copy className="h-3 w-3 opacity-70" />
+          {label}
+        </>
+      )}
+    </button>
+  );
+}
+
+function HSCodeResultRow({
+  item,
+  itemId,
+  declarationId,
+  onApply,
+  applying,
+}: {
+  item: HSCode;
+  itemId?: string;
+  declarationId?: string;
+  onApply?: (code: string, description: string) => void;
+  applying?: boolean;
+}) {
+  const [copiedField, setCopiedField] = useState<CopiedField>(null);
+  const needsSupplementary = commodityRequiresSupplementaryUnit(item.code);
+
+  const copyText = useCallback(async (text: string, field: Exclude<CopiedField, null>) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      toast.success(field === "code" ? `Code ${text} copied` : "Description copied — adapt for your invoice");
+      window.setTimeout(() => setCopiedField(null), 2000);
+    } catch {
+      toast.error("Could not copy to clipboard");
+    }
+  }, []);
+
+  return (
+    <div className="flex items-start gap-3 px-3 py-3 transition-colors hover:bg-gray-50/80 sm:px-4 sm:py-4">
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-bold tracking-tight text-blue-700">{item.code}</p>
+        <p className="mt-1 text-xs leading-relaxed text-gray-600">{item.description}</p>
+        {needsSupplementary && (
+          <p className="mt-1.5 text-[10px] font-medium text-amber-700">
+            This code may require supplementary units (DE 6/2) on the goods item.
+          </p>
+        )}
+      </div>
+
+      <div className="flex shrink-0 flex-col items-stretch gap-1.5">
+        {itemId && declarationId && onApply && (
+          <button
+            type="button"
+            disabled={applying}
+            onClick={() => onApply(item.code, item.description)}
+            className="flex min-w-[88px] items-center justify-center rounded-md border border-gray-900 bg-gray-900 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+          >
+            {applying ? "Applying…" : "Apply"}
+          </button>
+        )}
+        <ResultActionButton
+          label="Copy code"
+          copiedLabel="Copied"
+          isCopied={copiedField === "code"}
+          onClick={() => copyText(item.code, "code")}
+        />
+        <ResultActionButton
+          label="Copy text"
+          copiedLabel="Copied"
+          isCopied={copiedField === "description"}
+          onClick={() => copyText(item.description, "description")}
+          variant="secondary"
+        />
+        <a
+          href={tariffUrl(item.code)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex min-w-[88px] items-center justify-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+        >
+          <ExternalLink className="h-3 w-3 opacity-70" />
+          Tariff
+        </a>
+      </div>
+    </div>
+  );
+}
+
+export function HSCodeLookup({
+  variant = "default",
+  className,
+  declarationId,
+  itemId,
+}: HSCodeLookupProps) {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [results, setResults] = useState<HSCode[]>([]);
   const [loading, setLoading] = useState(false);
@@ -29,8 +196,35 @@ export function HSCodeLookup({ variant = "default", className }: HSCodeLookupPro
   const [staticCodes, setStaticCodes] = useState<{ code: string; desc: string }[]>([]);
   const [instantResults, setInstantResults] = useState<HSCode[]>([]);
   const [isDbLoaded, setIsDbLoaded] = useState(false);
+  const [applying, setApplying] = useState(false);
 
   const searchHMRC = useAction(api.hmrc_actions.searchHSCode);
+  const updateItem = useMutation(api.goods_items.updateItem);
+
+  const handleApplyToItem = useCallback(
+    async (code: string, tariffDescription: string) => {
+      if (!itemId) return;
+      setApplying(true);
+      try {
+        const normalizedCode = code.replace(/\D/g, "").slice(0, 10);
+        const tradeHint = tariffDescription.slice(0, 512);
+        await updateItem({
+          id: itemId as Id<"goods_items">,
+          commodityCode: normalizedCode,
+          description: tradeHint,
+        });
+        toast.success("Code and reference description applied — review against your invoice");
+        if (declarationId) {
+          router.push(`/dashboard/declarations/${declarationId}/items?hsApplied=1`);
+        }
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Could not apply to item");
+      } finally {
+        setApplying(false);
+      }
+    },
+    [itemId, declarationId, updateItem, router],
+  );
 
   useEffect(() => {
     fetch("/hs-codes.json")
@@ -43,7 +237,7 @@ export function HSCodeLookup({ variant = "default", className }: HSCodeLookupPro
   }, []);
 
   useEffect(() => {
-    if (variant !== "card" && searchTerm.length >= 2 && staticCodes.length > 0) {
+    if (searchTerm.length >= 2 && staticCodes.length > 0) {
       const term = searchTerm.toLowerCase();
       const filtered = staticCodes
         .filter((item) => item.code.includes(term) || item.desc.toLowerCase().includes(term))
@@ -55,11 +249,11 @@ export function HSCodeLookup({ variant = "default", className }: HSCodeLookupPro
         }));
       setInstantResults(filtered);
       setSearched(true);
-    } else if (variant !== "card") {
+    } else {
       setInstantResults([]);
       if (searchTerm.length < 2) setSearched(false);
     }
-  }, [searchTerm, staticCodes, variant]);
+  }, [searchTerm, staticCodes]);
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) return;
@@ -69,12 +263,14 @@ export function HSCodeLookup({ variant = "default", className }: HSCodeLookupPro
 
     try {
       const officialResults = await searchHMRC({ query: searchTerm });
-      const formatted = (officialResults || []).map((r: { code: string; description: string; matchType?: string }) => ({
-        code: r.code,
-        description: r.description,
-        matchType: r.matchType,
-        isOfficial: true,
-      }));
+      const formatted = (officialResults || []).map(
+        (r: { code: string; description: string; matchType?: string }) => ({
+          code: r.code,
+          description: r.description,
+          matchType: r.matchType,
+          isOfficial: true,
+        }),
+      );
 
       const lowerTerm = searchTerm.toLowerCase();
       const localResults = staticCodes
@@ -116,16 +312,28 @@ export function HSCodeLookup({ variant = "default", className }: HSCodeLookupPro
     }
   };
 
-  const copyToClipboard = (code: string) => {
-    navigator.clipboard.writeText(code);
-    toast.success(`Code ${code} copied to clipboard`);
-  };
-
-  const openTariffPage = (code: string) => {
-    window.open(`https://www.trade-tariff.service.gov.uk/commodities/${code.replace(/\s/g, "")}`, "_blank");
-  };
-
   const displayResults = results.length > 0 ? results : instantResults;
+
+  const resultsPanel =
+    displayResults.length > 0 ? (
+      <div
+        className={cn(
+          "divide-y divide-gray-100 overflow-y-auto rounded-md border border-gray-100 bg-white",
+          variant === "card" ? "mt-3 max-h-[420px]" : "max-h-[560px] rounded-2xl border-slate-100 shadow-sm",
+        )}
+      >
+        {displayResults.map((item, idx) => (
+          <HSCodeResultRow
+            key={`${item.code}-${idx}`}
+            item={item}
+            itemId={itemId}
+            declarationId={declarationId}
+            onApply={itemId ? handleApplyToItem : undefined}
+            applying={applying}
+          />
+        ))}
+      </div>
+    ) : null;
 
   if (variant === "card") {
     return (
@@ -133,9 +341,7 @@ export function HSCodeLookup({ variant = "default", className }: HSCodeLookupPro
         <div className="mb-3 flex items-center gap-2">
           <BookOpen className="h-4 w-4 text-gray-500" />
           <h3 className="text-sm font-semibold text-gray-900">HS Code Lookup</h3>
-          {!isDbLoaded && (
-            <span className="text-[11px] text-gray-400">Loading Database...</span>
-          )}
+          {!isDbLoaded && <span className="text-[11px] text-gray-400">Loading database…</span>}
         </div>
 
         <div className="flex gap-2">
@@ -162,34 +368,14 @@ export function HSCodeLookup({ variant = "default", className }: HSCodeLookupPro
         {searched && displayResults.length === 0 && !loading && (
           <div className="mt-4 flex items-center gap-2 rounded-md border border-dashed border-gray-200 bg-gray-50 px-3 py-6 text-xs text-gray-500">
             <AlertCircle className="h-4 w-4 shrink-0" />
-            No HS Codes found for &ldquo;{searchTerm}&rdquo;
+            No HS codes found for &ldquo;{searchTerm}&rdquo;
           </div>
         )}
 
         {displayResults.length > 0 && (
-          <div className="mt-3 max-h-[420px] divide-y divide-gray-100 overflow-y-auto rounded-md border border-gray-100">
-            {displayResults.map((item, idx) => (
-              <div
-                key={`${item.code}-${idx}`}
-                className="flex items-start justify-between gap-3 px-3 py-3 transition hover:bg-gray-50"
-              >
-                <button
-                  type="button"
-                  onClick={() => openTariffPage(item.code)}
-                  className="min-w-0 flex-1 text-left"
-                >
-                  <p className="text-sm font-bold text-blue-700">{item.code}</p>
-                  <p className="mt-0.5 text-xs leading-relaxed text-gray-600">{item.description}</p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => copyToClipboard(item.code)}
-                  className="shrink-0 rounded border border-gray-200 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-gray-500 hover:bg-gray-100"
-                >
-                  Copy
-                </button>
-              </div>
-            ))}
+          <div className="mt-3 space-y-3">
+            <DescriptionGuidance compact />
+            {resultsPanel}
           </div>
         )}
 
@@ -198,9 +384,10 @@ export function HSCodeLookup({ variant = "default", className }: HSCodeLookupPro
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
               <Search className="h-4 w-4 text-gray-300" />
             </div>
-            <h4 className="text-sm font-semibold text-gray-900">Instant Tariff Search</h4>
+            <h4 className="text-sm font-semibold text-gray-900">Instant tariff search</h4>
             <p className="mt-1 max-w-sm text-xs text-gray-500">
-              Lookup thousands of commodity codes instantly. Find the correct code for your imports.
+              Find commodity codes from HMRC Trade Tariff. Copy the code onto your declaration item; use tariff
+              text as a reference for your trade description.
             </p>
           </div>
         )}
@@ -208,10 +395,10 @@ export function HSCodeLookup({ variant = "default", className }: HSCodeLookupPro
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3 text-[10px] text-gray-400">
           <span>
             {isDbLoaded
-              ? `Database Ready (${staticCodes.length.toLocaleString()} codes)`
-              : "Initializing..."}
+              ? `Database ready (${staticCodes.length.toLocaleString()} codes)`
+              : "Initializing…"}
           </span>
-          <span>Source: HMRC Official Trade Tariff API</span>
+          <span>Source: HMRC Trade Tariff API</span>
         </div>
       </div>
     );
@@ -219,6 +406,8 @@ export function HSCodeLookup({ variant = "default", className }: HSCodeLookupPro
 
   return (
     <div className={cn("space-y-6", className)}>
+      <DescriptionGuidance />
+
       <div className="relative w-full">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <input
@@ -250,7 +439,7 @@ export function HSCodeLookup({ variant = "default", className }: HSCodeLookupPro
         {loading && results.length === 0 && (
           <div className="flex h-40 flex-col items-center justify-center gap-2">
             <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-            <p className="text-sm font-medium text-slate-500">Querying Trade Tariff API...</p>
+            <p className="text-sm font-medium text-slate-500">Querying Trade Tariff API…</p>
           </div>
         )}
 
@@ -265,33 +454,8 @@ export function HSCodeLookup({ variant = "default", className }: HSCodeLookupPro
         )}
 
         {displayResults.length > 0 && (
-          <div className="grid grid-cols-1 gap-3">
-            {displayResults.map((item, idx) => (
-              <div
-                key={idx}
-                role="button"
-                tabIndex={0}
-                onClick={() => openTariffPage(item.code)}
-                onKeyDown={(e) => e.key === "Enter" && openTariffPage(item.code)}
-                className="group relative flex cursor-pointer flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all hover:border-blue-200 hover:shadow-md"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-bold tracking-tight text-blue-600">{item.code}</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      copyToClipboard(item.code);
-                    }}
-                    className="flex items-center gap-1.5 rounded-lg bg-slate-50 px-3 py-1.5 text-[11px] font-bold text-slate-500 opacity-0 transition-opacity hover:bg-blue-50 hover:text-blue-600 group-hover:opacity-100"
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                    COPY
-                  </button>
-                </div>
-                <p className="pr-4 text-[13px] font-medium leading-relaxed text-slate-600">{item.description}</p>
-              </div>
-            ))}
+          <div className="space-y-3">
+            {resultsPanel}
           </div>
         )}
 
@@ -300,9 +464,10 @@ export function HSCodeLookup({ variant = "default", className }: HSCodeLookupPro
             <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
               <Search className="h-6 w-6 text-slate-300" />
             </div>
-            <h3 className="text-base font-bold leading-tight text-slate-900">Instant Tariff Search</h3>
+            <h3 className="text-base font-bold leading-tight text-slate-900">Instant tariff search</h3>
             <p className="mt-2 max-w-sm text-sm font-medium text-slate-500">
-              Lookup thousands of commodity codes instantly. Find the correct code for your imports.
+              Find commodity codes from HMRC Trade Tariff. Copy the code onto your declaration; adapt tariff text
+              for your trade description.
             </p>
           </div>
         )}
