@@ -35,7 +35,7 @@ export default function ToolsPage() {
                 {/* Compliance Note */}
                 <section className="py-24 bg-white text-slate-900 border-t border-slate-200 relative overflow-hidden">
                     <div className="max-w-5xl mx-auto px-6 text-center relative z-10">
-                        <h2 className="text-2xl font-bold mb-6 text-slate-900">Automated Compliance Fulfillment</h2>
+                        <h2 className="text-2xl font-bold mb-6 text-slate-900">Declaration support</h2>
                         <p className="text-slate-500 mb-16 max-w-2xl mx-auto text-base">
                             Our internal compliance team reviews all Import Declarations for accuracy.
                             We track the entire import lifecycle in your Freightcode dashboard.
@@ -48,7 +48,7 @@ export default function ToolsPage() {
                             </div>
                             <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-200 transition-colors group">
                                 <div className="text-blue-600 font-bold text-lg mb-4 italic tracking-tighter group-hover:translate-x-1 transition-transform inline-block">02. UPLOAD</div>
-                                <p className="text-sm text-slate-500 leading-relaxed">Securely upload your Commercial Invoices and Packing Lists. Our automated ingestion handles the heavy lifting.</p>
+                                <p className="text-sm text-slate-500 leading-relaxed">Securely upload your Commercial Invoices and Packing Lists. Extracted fields help pre-fill goods items on declarations.</p>
                             </div>
                             <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-200 transition-colors group">
                                 <div className="text-blue-600 font-bold text-lg mb-4 italic tracking-tighter group-hover:translate-x-1 transition-transform inline-block">03. MANAGE</div>

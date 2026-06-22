@@ -9,14 +9,14 @@ const capabilities = [
   { 
     id: 'historical', 
     label: 'Historical Data Analysis',
-    benefit: 'Import and analyze your past HMRC declarations to find trends and ensure your records are accurate.',
-    how: 'Upload your HMRC CSV reports directly to our platform. Our system automatically organizes the data into secure historical trade records, saving you hours of manual spreadsheet work.'
+    benefit: 'Review past declaration patterns when TRE data is imported (planned).',
+    how: 'Export CSV reports from HMRC TRE and import them into Freightcode to structure line items for estimates and HS suggestions.'
   },
   { 
     id: 'savings', 
     label: 'Duty Refund Detection',
-    benefit: 'Identify errors and refund opportunities across your international shipments.',
-    how: 'The platform checks your records against trade agreements, flagging instances where you could have paid 0% duty but didn\'t. It calculates exactly how much you can reclaim.'
+    benefit: 'Highlight possible preference or duty review opportunities — indicative, not filed reclaims.',
+    how: 'When historical data is available, the platform can flag lines where a preference code may have been missed. Your customs adviser confirms before any reclaim.'
   },
   { 
     id: 'prefill', 
@@ -32,9 +32,9 @@ const capabilities = [
   },
   { 
     id: 'hmrc', 
-    label: 'Direct HMRC Sync',
-    benefit: 'Connect securely to your HMRC account for real-time data synchronization.',
-    how: 'Using official HMRC standards, we link your account to your EORI number. The connection stays active and secure automatically, so your dashboard is always up to date.'
+    label: 'HMRC OAuth connection',
+    benefit: 'Connect to HMRC to submit declarations and pull status and notifications.',
+    how: 'Connect via official HMRC OAuth to submit declarations and pull status and notifications. Tokens refresh in the background while your session stays authorised.'
   },
   { 
     id: 'storage', 
@@ -55,7 +55,7 @@ export default function SolutionsPage() {
             Our Services
           </h1>
           <p className="text-[16px] text-slate-600 leading-relaxed mb-12">
-            Our tools automate your customs compliance, identify duty refund opportunities, and remove the need for manual paperwork.
+            Build and submit UK customs declarations through HMRC CDS, with dry-run validation, document storage, and duty estimates — in one workspace.
           </p>
 
           <div className="space-y-12 mt-12">

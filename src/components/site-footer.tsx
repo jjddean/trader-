@@ -19,7 +19,7 @@ export function SiteFooter({ isSignedIn }: { isSignedIn?: boolean }) {
               </div>
             </div>
             <p className="text-gray-500 text-xs leading-relaxed">
-              Automate your declarations, uncover hidden savings,<br />and ensure total HMRC compliance.
+              UK customs declarations through HMRC CDS — draft, validate, submit, and keep audit-ready records.
             </p>
             <p className="text-gray-400 text-xs mt-3">
               London, UK

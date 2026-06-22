@@ -50,7 +50,14 @@ export default function PrivacyPolicyPage() {
 
           <h2 className="mt-8 text-xl font-semibold text-slate-900">6. Your Rights</h2>
           <p>
-            You retain the right to access, export, or delete your data from the freightcode® platform. Revoking our OAuth access to your HMRC account immediately ceases any future data syncing. To exercise your rights, contact us at: <a href="mailto:info@freightcode.co.uk" className="text-blue-600 hover:underline">info@freightcode.co.uk</a>
+            You retain the right to access, export, or delete your data from the freightcode® platform. Signed-in users
+            can download a JSON export from{" "}
+            <a href="/dashboard/settings?tab=privacy" className="text-blue-600 hover:underline">
+              Settings → Privacy → Export my data
+            </a>
+            . Revoking our OAuth access to your HMRC account immediately ceases any future data syncing. To request
+            account deletion, contact us at:{" "}
+            <a href="mailto:info@freightcode.co.uk" className="text-blue-600 hover:underline">info@freightcode.co.uk</a>
           </p>
         </div>
       </div>

@@ -4,7 +4,10 @@ import { AlertTriangle } from "lucide-react";
 import { useOrganization } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { PracticeSandboxTestUserModalLink } from "@/components/practice-sandbox-test-user";
+import {
+  PracticeModeGuideModalLink,
+  PracticeSandboxTestUserModalLink,
+} from "@/components/practice-sandbox-test-user";
 
 export function PracticeModeBanner() {
   const { organization } = useOrganization();
@@ -26,7 +29,7 @@ export function PracticeModeBanner() {
     >
       <div className="mx-auto flex max-w-6xl flex-wrap items-start gap-2 text-xs leading-relaxed">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" aria-hidden />
-        <div className="min-w-0 flex-1 space-y-1">
+        <div className="min-w-0 flex-1 space-y-1.5">
           <p className="font-semibold">Practice mode active</p>
           <p>
             Submissions go to HMRC&apos;s test environment (TDR) only — not legally binding. Use
@@ -37,6 +40,9 @@ export function PracticeModeBanner() {
             when connecting (not your live Government Gateway). Enter your real EORI and trade data
             on declaration forms.
           </p>
+          <PracticeModeGuideModalLink className="text-[11px] font-medium text-amber-900 underline hover:text-amber-950">
+            How practice mode works
+          </PracticeModeGuideModalLink>
         </div>
       </div>
     </div>

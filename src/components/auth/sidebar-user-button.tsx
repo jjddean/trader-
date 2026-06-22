@@ -2,11 +2,10 @@
 
 import { UserButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
+import { compactClerkAppearance, compactProfileModalAppearance } from "@/lib/clerk-compact";
 
 const compactUserAppearance = {
-  variables: {
-    fontSize: "12px",
-  },
+  variables: compactClerkAppearance.variables,
   elements: {
     rootBox: "shrink-0",
     avatarBox: "h-7 w-7",
@@ -31,7 +30,10 @@ interface SidebarUserButtonProps {
 export function SidebarUserButton({ className }: SidebarUserButtonProps) {
   return (
     <div className={cn("shrink-0 leading-tight [font-size:12px]", className)}>
-      <UserButton appearance={compactUserAppearance} />
+      <UserButton
+        appearance={compactUserAppearance}
+        userProfileProps={{ appearance: compactProfileModalAppearance }}
+      />
     </div>
   );
 }

@@ -14,17 +14,17 @@ const faqs = [
   {
     question: "What does the beta program include?",
     answer:
-      "Beta participants receive full capabilities to securely sync their HMRC data, run automated compliance checks across historical filings, and access our smart duty pre-fill engine.",
+      "Beta participants can practise in HMRC TDR, build and submit CDS declarations, run dry-run validation, connect via OAuth, and use HS lookup and invoice extraction on goods items.",
   },
   {
     question: "Do you provide legal or customs advice?",
     answer:
-      "We provide data-driven insights and automated reporting based on official HMRC rules. While our platform highlights anomalies and potential savings, we recommend consulting with a certified customs practitioner for complex legal interpretations.",
+      "We provide data-driven insights and reporting based on official HMRC rules. While the platform highlights anomalies and potential savings, we recommend consulting with a certified customs practitioner for complex legal interpretations.",
   },
   {
     question: "Is my HMRC data secure?",
     answer:
-      "Absolutely. We use direct Government Gateway OAuth connections, meaning we never see or store your HMRC login credentials. All declaration data is end-to-end encrypted both in transit and at rest.",
+      "We use official HMRC OAuth — we never store your HMRC password. In practice mode you sign in with an HMRC Test User; on live CDS, with your Government Gateway. Declaration data is encrypted in transit and at rest.",
   },
   {
     question: "Who is this platform built for?",
@@ -48,7 +48,7 @@ export function LandingPageContent() {
             "name": "Freightcode",
             "applicationCategory": "BusinessApplication",
             "operatingSystem": "Web",
-            "description": "Automate your UK customs declarations (HMRC CDS), detect savings, and ensure compliance instantly."
+            "description": "UK customs declaration software for HMRC CDS — build, validate, and submit declarations with duty estimates and compliance tooling."
           })
         }}
       />
@@ -91,7 +91,7 @@ export function LandingPageContent() {
             </h1>
 
             <p className="mx-auto mb-6 max-w-[760px] text-[18px] leading-[1.6] text-slate-600">
-              Recover overpaid duties, stay ahead of HMRC compliance changes, and manage your declarations — from one connected platform.
+              Draft UK import declarations, run dry-run validation, connect to HMRC CDS, and track status and notifications — in one workspace. Practice in TDR before you go live.
             </p>
 
             <div id="signup-cta" className="flex flex-col items-center justify-center gap-[16px] sm:flex-row">
@@ -114,10 +114,10 @@ export function LandingPageContent() {
             <HomeDashboardPreview />
             <div className="mx-auto mt-36 max-w-[900px]">
               <h2 className="text-[34px] leading-[1.06] font-bold tracking-tight text-[#020817] md:text-[44px]">
-                Recover Duty. Reduce Risk. Strengthen Audit Position.
+                Build declarations. Validate before submit. Stay audit-ready.
               </h2>
               <p className="mx-auto mt-4 max-w-[760px] text-[18px] leading-[1.6] text-slate-600">
-                Identify overpaid duties, reclaim eligible amounts, and maintain a continuous audit-ready record across all shipments — fully aligned with ongoing HMRC compliance enforcement cycles.
+                Create goods items with HS lookup and invoice extraction, pre-check XML with dry-run, submit to HMRC CDS, and keep documents and notification history with each declaration.
               </p>
             </div>
           </div>
@@ -134,7 +134,7 @@ export function LandingPageContent() {
               <div className="hidden h-8 w-px bg-gray-200 sm:block" />
               <div className="text-center">
                 <p className="text-[24px] font-bold tracking-tight text-[#020817]">3 years</p>
-                <p className="mt-1 text-[13px] text-slate-500">HMRC window to reclaim overpaid duty</p>
+                <p className="mt-1 text-[13px] text-slate-500">Typical HMRC window to review overpaid duty</p>
               </div>
               <div className="hidden h-8 w-px bg-gray-200 sm:block" />
               <div className="text-center">
@@ -153,7 +153,7 @@ export function LandingPageContent() {
                 How It Works
               </h2>
               <p className="mx-auto max-w-2xl text-[18px] leading-[1.6] text-slate-600">
-                Three steps from raw HMRC data to recovered duty and full compliance — continuously mapped to upcoming CDS changes through 2026.
+                Three steps from draft declaration to HMRC acceptance — with validation and document support built in.
               </p>
             </div>
 
@@ -163,9 +163,9 @@ export function LandingPageContent() {
                 <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-[24px] font-bold text-[#1d6fc0]">
                   1
                 </div>
-                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Connect & Sync</h3>
+                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Build your declaration</h3>
                 <p className="text-[16px] leading-[1.6] text-slate-600">
-                  Securely authorize access to your HMRC Government Gateway account. We instantly import and organize your historical CDS declarations.
+                  Add goods items manually or from invoice PDFs. Use HS lookup, attach documents, and capture EORI, valuation, and payment details on the form.
                 </p>
               </div>
 
@@ -174,9 +174,9 @@ export function LandingPageContent() {
                 <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-[24px] font-bold text-[#1d6fc0]">
                   2
                 </div>
-                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Analyze & Optimize</h3>
+                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Validate with dry-run</h3>
                 <p className="text-[16px] leading-[1.6] text-slate-600">
-                  Our intelligence engine scans every line item, identifying overpaid duties, highlighting missing preference codes, and flagging compliance risks.
+                  Run pre-submit checks against CDS rules and schema before any HMRC call. Fix field errors and document gaps while the declaration is still a draft.
                 </p>
               </div>
 
@@ -185,9 +185,9 @@ export function LandingPageContent() {
                 <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-[24px] font-bold text-[#1d6fc0]">
                   3
                 </div>
-                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Execute & Report</h3>
+                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Submit and track</h3>
                 <p className="text-[16px] leading-[1.6] text-slate-600">
-                  Generate optimized declarations, reclaim historical overpayments, and monitor your entire customs portfolio through real-time, shareable dashboards.
+                  Connect HMRC via OAuth, submit to CDS (or TDR in practice mode), then follow status and DMS notifications. Amend or cancel where HMRC allows.
                 </p>
               </div>
             </div>
@@ -199,50 +199,59 @@ export function LandingPageContent() {
           <div className="mx-auto max-w-[1280px] px-[24px]">
             <div className="mb-[64px] text-center">
               <h2 className="mb-4 text-[36px] font-bold tracking-tight text-[#020817] md:text-[42px]">
-                Everything You Need to Stop Overpaying.
+                What&apos;s in the product today
               </h2>
               <p className="mx-auto max-w-2xl text-[18px] leading-[1.6] text-slate-600">
-                From declaration automation to duty reclaims — freightcode covers the full customs compliance stack, aligned with current CDS audit standards and enforcement rules.
+                CDS declaration workspace with validation, HMRC connectivity, documents, and duty estimates — plus roadmap items for TRE history and savings review.
               </p>
             </div>
 
             <div className="grid gap-[24px] md:grid-cols-2 lg:grid-cols-3">
               {[
                 { 
-                  id: 'historical', 
-                  label: 'Historical Data Analysis',
-                  benefit: 'Ingest and parse years of historical HMRC declarations instantly to identify patterns and track your overall customs performance.',
-                  how: 'You forward your HMRC "Report Ready" secure CSVs to your dedicated inbox. Our parsing engine automatically standardizes the raw line items and securely structures your trade history into your private database, saving hours of manual spreadsheet work.'
-                },
-                { 
-                  id: 'savings', 
-                  label: 'Automated Savings Detection',
-                  benefit: 'Stop leaving money on the table. We identify explicit financial losses and reclamation opportunities across your supply chain.',
-                  how: 'Our analytics engine constantly scans your data against global trade agreements. It flags exact instances where a shipment was eligible for a 0% duty preference code, but standard duty was paid instead, calculating exactly how much you can reclaim.'
-                },
-                { 
-                  id: 'prefill', 
-                  label: 'Smart Duty Pre-Fill',
-                  benefit: 'Draft new declarations in seconds. Remove the guesswork of finding the correct HS Commodity Codes for repetitive shipments.',
-                  how: "When you create a new draft, our system analyzes your company's highest-frequency historical shipments. By looking at successful past clearances for that specific origin country, it seamlessly suggests the most accurate, compliant commodity codes and preferences."
-                },
-                { 
-                  id: 'scoring', 
-                  label: 'Compliance Health Scoring',
-                  benefit: 'Monitor the performance of your appointed brokers and freight forwarders across all your UK ports.',
-                  how: 'We generate an immediate, comparative health score by analyzing the ratio of perfect clearances against flagged anomalies. You get a transparent leaderboard showing exactly which external agents are making the most compliance errors on your behalf.'
+                  id: 'declarations', 
+                  label: 'Declaration workspace',
+                  benefit: 'Create and edit import declarations with goods items, documents, dry-run, submit, amend, and cancel through HMRC CDS APIs.',
                 },
                 { 
                   id: 'hmrc', 
-                  label: 'HMRC Data Sync',
-                  benefit: 'Maintain a direct, secure, and perpetual connection to your HMRC Government Gateway account.',
-                  how: 'Without ever asking for your passwords, we utilize official HMRC OAuth flows to securely link your workspace and EORI number. Our system handles token refreshing automatically, ensuring your dashboard is always synced with your latest Trade Reporting and Extracting (TRE) data.'
+                  label: 'HMRC OAuth',
+                  benefit: 'Connect in Settings to authorise submit and status. Practice orgs use HMRC Test User credentials; live orgs use Government Gateway.',
+                },
+                { 
+                  id: 'prefill', 
+                  label: 'HS lookup & invoice extract',
+                  benefit: 'Look up commodity codes and apply them to line items. Upload commercial invoices to pre-fill goods fields — you review before submit.',
+                },
+                { 
+                  id: 'estimates', 
+                  label: 'Duty estimates',
+                  benefit: 'Pre-clearance duty and VAT estimates from Trade Tariff data on your draft. HMRC DMSTAX still overrides on acceptance.',
+                },
+                { 
+                  id: 'notifications', 
+                  label: 'Status & notifications',
+                  benefit: 'Pull HMRC notifications and map DMS codes to declaration status. Webhook receiver for push events when configured.',
                 },
                 { 
                   id: 'storage', 
-                  label: 'Secure Document Vault',
-                  benefit: 'Centralize your commercial invoices, packing lists, and clearance evidence in one HMRC-compliant repository.',
-                  how: 'Upload and attach critical trade documents directly to your declaration records. We maintain encrypted, redundant cloud storage organized by MRN, making it effortless to retrieve evidence during an unexpected HMRC post-clearance audit.'
+                  label: 'Document vault',
+                  benefit: 'Attach invoices and supporting documents to declarations. Organised by MRN for audit retrieval.',
+                },
+                { 
+                  id: 'historical', 
+                  label: 'TRE import (planned)',
+                  benefit: 'Upload HMRC TRE CSV exports to structure past line items for HS suggestions and savings review — see roadmap.',
+                },
+                { 
+                  id: 'savings', 
+                  label: 'Savings hints (early)',
+                  benefit: 'Dashboard and reports surface possible overpayment patterns from declarations in the app. Not a reclaim filing service.',
+                },
+                { 
+                  id: 'practice', 
+                  label: 'Practice mode (TDR)',
+                  benefit: 'New orgs start in sandbox TDR. Submissions are not legally binding; use real EORI on forms and Test User at Connect.',
                 },
               ].map((item) => (
                 <div key={item.id} className="group relative overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-sm transition-all hover:shadow-md flex flex-col p-[24px] h-full">
@@ -260,12 +269,12 @@ export function LandingPageContent() {
           <div className="mx-auto max-w-[1280px] px-[24px]">
             <div className="mb-[64px] text-center">
               <h2 className="mb-4 text-[36px] font-bold tracking-tight leading-[1.15] text-[#020817] md:text-[42px]">
-                Turn Your HMRC TRE Data Into Commercial
+                HMRC TRE data — export yourself,
                 <br />
-                Intelligence
+                analyse in Freightcode (roadmap)
               </h2>
               <p className="mx-auto max-w-2xl text-[18px] leading-[1.6] text-slate-600">
-                HMRC&apos;s Trade Reporting and Extracting (TRE) service became the sole route to your MSS/CDS declaration data from 31 March 2026 — replacing costly third-party report contracts. We connect directly to TRE via Government Gateway and transform your raw declaration data into duty recovery insights, compliance scoring, and full financial visibility.
+                From 31 March 2026, TRE is HMRC&apos;s route to your declaration reports. OAuth connects CDS submit — it does not bulk-download TRE history. We are building CSV import so you can upload exports and review line items alongside new declarations.
               </p>
             </div>
 
@@ -275,9 +284,9 @@ export function LandingPageContent() {
                 <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-md bg-[#111827] text-white">
                   <ArrowRight className="h-4 w-4" />
                 </div>
-                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Automated Ingestion</h3>
+                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Export from HMRC TRE</h3>
                 <p className="text-[15px] leading-[1.6] text-slate-600">
-                  Forward your secure CSVs directly to your workspace. Our engine handles the heavy lifting of parsing, deduplication, and organizing your trade history.
+                  Request CSV reports in HMRC&apos;s Trade Reporting service — the same data brokers used to buy from third parties.
                 </p>
               </div>
 
@@ -286,9 +295,9 @@ export function LandingPageContent() {
                 <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-md bg-[#111827] text-white">
                   <ArrowRight className="h-4 w-4" />
                 </div>
-                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Instant Reclaims</h3>
+                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Upload & structure (planned)</h3>
                 <p className="text-[15px] leading-[1.6] text-slate-600">
-                  Stop leaving money on the table. We automatically identify shipments where you paid full duty but were eligible for 0% preference codes.
+                  Import CSVs into your org workspace for structured line history — deduplicated and scoped to your team, without Excel gymnastics.
                 </p>
               </div>
 
@@ -297,9 +306,9 @@ export function LandingPageContent() {
                 <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-md bg-[#111827] text-white">
                   <ArrowRight className="h-4 w-4" />
                 </div>
-                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Overpayment Detection</h3>
+                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Review opportunities</h3>
                 <p className="text-[15px] leading-[1.6] text-slate-600">
-                  Every TRE record is automatically scanned against current tariff rates and trade agreements — flagging exactly where you paid more duty than required and how much you can reclaim.
+                  Flag possible preference or duty mismatches for review with your customs adviser — indicative hints, not automatic reclaim filing.
                 </p>
               </div>
             </div>

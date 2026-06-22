@@ -58,7 +58,7 @@ export default function DedicatedHSCodePage() {
                     </div>
                     
                     <p className="text-slate-600 text-[15px] mb-8 max-w-lg mx-auto leading-relaxed">
-                        Automate your UK customs declarations, uncover hidden duty savings, and ensure total HMRC compliance.
+                        UK customs declarations through HMRC CDS — draft, validate, submit, and keep audit-ready records.
                     </p>
                     
                     <div className="inline-flex flex-col items-center justify-center rounded-2xl bg-white border border-slate-200 p-6 shadow-sm min-w-[280px]">

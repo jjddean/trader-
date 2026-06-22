@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { useOrganization } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { Copy, Check, Loader2, RefreshCw } from "lucide-react";
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -46,16 +47,13 @@ function CopyValueButton({ label, value }: { label: string; value: string }) {
 
 interface PracticeSandboxTestUserProps {
   compact?: boolean;
-  /** Subscribe to Convex + render (false when modal closed / tab hidden) */
+  /** Subscribe to Convex while visible (e.g. modal open, Security tab) */
   enabled?: boolean;
-  /** Call HMRC Create Test User API when creds missing */
-  autoProvision?: boolean;
 }
 
 export function PracticeSandboxTestUser({
   compact = false,
   enabled = true,
-  autoProvision = false,
 }: PracticeSandboxTestUserProps) {
   const { organization } = useOrganization();
   const orgId = organization?.id || "";
@@ -72,7 +70,6 @@ export function PracticeSandboxTestUser({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [localCreds, setLocalCreds] = useState<{ userId: string; password: string } | null>(null);
-  const provisionAttempted = useRef(false);
 
   const provision = useCallback(async () => {
     if (!orgId) return;
@@ -98,33 +95,47 @@ export function PracticeSandboxTestUser({
     }
   }, [orgId]);
 
-  useEffect(() => {
-    if (!enabled || !autoProvision || !orgId || orgHmrc?.hmrcMode === "live") return;
-    if (stored === undefined) return;
-    if (stored !== null) return;
-    if (provisionAttempted.current) return;
-    provisionAttempted.current = true;
-    void provision();
-  }, [enabled, autoProvision, orgId, orgHmrc?.hmrcMode, stored, provision]);
-
   if (!enabled || !orgId || orgHmrc?.hmrcMode === "live") {
     return null;
   }
 
   const creds = stored ?? localCreds;
+  const waitingForStored = stored === undefined;
 
-  const body = (
-    <>
+  return (
+    <div
+      className={cn(
+        "rounded-lg border border-amber-200 bg-amber-50/80",
+        compact ? "p-3" : "p-4",
+      )}
+    >
       <p className="text-xs font-medium text-amber-950">HMRC Test User (practice OAuth)</p>
       <p className="mt-1 text-[11px] leading-relaxed text-amber-900/90">
         Sign in with these credentials on the HMRC screen when you click Connect HMRC — not your
         live Government Gateway. Use your real EORI on declaration forms.
       </p>
 
+      {waitingForStored && (
+        <div className="mt-3 flex items-center gap-2 text-[11px] text-amber-900">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Loading…
+        </div>
+      )}
+
+      {!waitingForStored && !creds && !loading && (
+        <button
+          type="button"
+          onClick={() => void provision()}
+          className="mt-3 inline-flex items-center rounded-md bg-amber-900 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-amber-950"
+        >
+          Create HMRC Test User
+        </button>
+      )}
+
       {loading && !creds && (
         <div className="mt-3 flex items-center gap-2 text-[11px] text-amber-900">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          Generating HMRC test user…
+          Creating HMRC test user…
         </div>
       )}
 
@@ -133,10 +144,7 @@ export function PracticeSandboxTestUser({
           <p className="text-[11px] text-red-700">{error}</p>
           <button
             type="button"
-            onClick={() => {
-              provisionAttempted.current = false;
-              void provision();
-            }}
+            onClick={() => void provision()}
             className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-950 underline"
           >
             <RefreshCw className="h-3 w-3" />
@@ -151,17 +159,6 @@ export function PracticeSandboxTestUser({
           <CopyValueButton label="Password" value={creds.password} />
         </div>
       )}
-    </>
-  );
-
-  return (
-    <div
-      className={cn(
-        "rounded-lg border border-amber-200 bg-amber-50/80",
-        compact ? "p-3" : "p-4",
-      )}
-    >
-      {body}
     </div>
   );
 }
@@ -186,7 +183,51 @@ export function PracticeSandboxTestUserModalLink({
         <div className="p-6">
           <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
             <DialogTitle className="sr-only">HMRC Test User</DialogTitle>
-            <PracticeSandboxTestUser compact enabled={open} autoProvision={open} />
+            <PracticeSandboxTestUser compact enabled={open} />
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function PracticeModeGuideModalLink({
+  className,
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button type="button" className={className}>
+          {children}
+        </button>
+      </DialogTrigger>
+      <DialogContent className="gap-0 overflow-hidden border-gray-200 p-0 sm:max-w-md">
+        <div className="p-6">
+          <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-4">
+            <DialogTitle className="text-sm font-semibold text-amber-950">Practice mode</DialogTitle>
+            <DialogDescription asChild>
+              <div className="mt-3 space-y-2 text-[11px] leading-relaxed text-amber-950/90">
+                <p>
+                  Your organisation uses HMRC&apos;s <strong>test service (TDR)</strong>. Submissions
+                  stay in the sandbox — they do not clear goods or trigger live payments.
+                </p>
+                <p>
+                  Click <strong>HMRC Test User credentials</strong> in the banner to create or copy
+                  sign-in details, then <strong>Connect HMRC</strong> with those (not your live
+                  Government Gateway). Use your <strong>real EORI</strong> on declaration forms.
+                </p>
+                <p>
+                  When you are ready for live customs, an admin can switch the organisation to live
+                  CDS in Settings → Security.
+                </p>
+              </div>
+            </DialogDescription>
           </div>
         </div>
       </DialogContent>

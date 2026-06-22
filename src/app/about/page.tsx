@@ -22,7 +22,7 @@ export default function AboutPage() {
               FreightCode is building the technology to simplify global trade data, starting with the UK border.
             </p>
             <p className="text-[15px] text-slate-700 leading-relaxed">
-              We provide a software platform that automates UK customs clearances. Our system offers historical data analytics, accurate data extraction from invoices, automated duty calculation, and direct connections with HMRC's Customs Declaration Service (CDS).
+              We provide software for UK customs declarations through HMRC&apos;s Customs Declaration Service (CDS): declaration workspace, dry-run validation, invoice extraction, duty estimates, and OAuth connectivity for submit and status.
             </p>
             <p className="text-[15px] text-slate-700 leading-relaxed">
               We believe that international trade should not be slowed down by complex rules, manual data entry, or preventable errors. High-volume businesses and freight forwarders often lose money through overpaid duties and penalties caused by a lack of clear visibility into their supply chain.

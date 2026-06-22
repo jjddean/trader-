@@ -2,6 +2,7 @@
 
 import { OrganizationSwitcher } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
+import { compactClerkAppearance, compactProfileModalAppearance } from "@/lib/clerk-compact";
 
 interface OrgSwitcherProps {
   className?: string;
@@ -22,9 +23,7 @@ export function OrgSwitcher({ className, hidePersonal = false }: OrgSwitcherProp
         afterSelectOrganizationUrl="/dashboard"
         afterSelectPersonalUrl="/dashboard"
         appearance={{
-          variables: {
-            fontSize: "12px",
-          },
+          variables: compactClerkAppearance.variables,
           elements: {
             rootBox: "flex",
             organizationSwitcherTrigger:
@@ -46,6 +45,7 @@ export function OrgSwitcher({ className, hidePersonal = false }: OrgSwitcherProp
             userPreviewSecondaryIdentifier: "text-[10px] text-gray-500",
           },
         }}
+        organizationProfileProps={{ appearance: compactProfileModalAppearance }}
       />
     </div>
   );

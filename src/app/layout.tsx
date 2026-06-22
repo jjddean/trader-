@@ -11,7 +11,7 @@ const geistSans = GeistSans;
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.freightcode.co.uk"),
   title: "FreightCode | Instant UK Customs Clearance Software",
-  description: "Automate your UK customs declarations (HMRC CDS), detect savings, and ensure compliance instantly with FreightCode. Search our 5 AI-powered guides for CDS, TRE, and Commodity Codes.",
+  description: "UK customs declaration software for HMRC CDS — build, validate, and submit declarations with duty estimates and compliance guides for TRE and commodity codes.",
   keywords: "HMRC, CDS, UK Customs, Import Duty, Declarations, TRE, FreightCode, AI Customs Agent",
   icons: {
     icon: "/icon.png",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "FreightCode | Instant UK Customs Clearance Software",
-    description: "Automate your UK customs declarations (HMRC CDS), detect savings, and ensure compliance instantly with FreightCode. Search our 5 AI-powered guides for CDS, TRE, and Commodity Codes.",
+    description: "UK customs declaration software for HMRC CDS — build, validate, and submit declarations with duty estimates and compliance guides for TRE and commodity codes.",
     type: "website",
     url: "https://www.freightcode.co.uk",
     siteName: "FreightCode",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "FreightCode | Instant UK Customs Clearance Software",
-    description: "Automate your UK customs declarations (HMRC CDS), detect savings, and ensure compliance instantly with FreightCode.",
+    description: "UK customs declaration software for HMRC CDS — build, validate, and submit declarations with FreightCode.",
     creator: "@freightcode",
     images: ["/social/og-image.png"],
   },
@@ -78,7 +78,7 @@ export default function RootLayout({
                 "name": "FreightCode",
                 "url": "https://www.freightcode.co.uk",
                 "logo": "https://www.freightcode.co.uk/icon.png",
-                "description": "Automate UK customs declarations (HMRC CDS), detect savings, and ensure compliance with FreightCode.",
+                "description": "UK customs declaration software for HMRC CDS — build, validate, and submit declarations with FreightCode.",
                 "sameAs": [
                   "https://twitter.com/freightcode"
                 ],

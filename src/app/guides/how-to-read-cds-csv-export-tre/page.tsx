@@ -197,9 +197,9 @@ export default function Guide4Page() {
       </ol>
 
       <div className="mt-12 p-8 bg-[#0f172a] rounded-2xl text-white">
-        <h2 className="text-[18px] font-semibold mb-3">Automate this with FreightCode</h2>
+        <h2 className="text-[18px] font-semibold mb-3">Use this data in Freightcode</h2>
         <p className="text-[14px] leading-relaxed text-slate-300 mb-6">
-          FreightCode reads your TRE data and surfaces these audit flags automatically. Instead of manually filtering thousands of rows in Excel, the platform identifies potential misclassifications, missed preference claims, and value anomalies instantly, presenting them in a professional dashboard.
+          Freightcode is building TRE CSV import and analysis to help you review line items, spot possible preference gaps, and keep declaration history alongside your CDS workspace — without filtering thousands of rows in Excel.
         </p>
         <div className="max-w-sm">
           <WaitlistForm variant="light" />

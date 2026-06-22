@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { SignInButton, SignUpButton, useAuth, UserButton } from "@clerk/nextjs";
 import { useState } from "react";
+import { compactProfileModalAppearance } from "@/lib/clerk-compact";
 
 const authButtonClass =
   "h-[32px] rounded-md px-[12px] md:px-[16px] text-[13px] font-medium transition-colors flex items-center justify-center whitespace-nowrap shadow-sm";
@@ -82,7 +83,7 @@ export function SiteHeader() {
                 >
                   Dashboard <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Link>
-                <UserButton />
+                <UserButton userProfileProps={{ appearance: compactProfileModalAppearance }} />
               </div>
             )}
 

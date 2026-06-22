@@ -173,7 +173,7 @@ export default function Guide2Page() {
           </li>
           <li className="flex items-start gap-2">
             <span className="text-blue-400 mt-1">✓</span>
-            <span>Automated duty and VAT tracking with reclaim identification</span>
+            <span>Duty and VAT estimates from declaration and tariff data, with savings flags for review</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-blue-400 mt-1">✓</span>

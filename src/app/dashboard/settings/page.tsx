@@ -5,12 +5,12 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { useUser, OrganizationProfile, useOrganization } from "@clerk/nextjs";
-import { User, CreditCard, Bell, ExternalLink, Shield, Users, Link2, Unlink, Download, Lock } from "lucide-react";
+import { useUser, useOrganization, useClerk } from "@clerk/nextjs";
+import { User, CreditCard, Bell, ExternalLink, Shield, Users, Link2, Unlink, Download, Lock, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { planBadgeClass } from "@/lib/stripe-plans";
 import { PracticeSandboxTestUser } from "@/components/practice-sandbox-test-user";
-import { compactEmbeddedOrgProfileAppearance } from "@/lib/clerk-compact";
+import { compactProfileModalAppearance } from "@/lib/clerk-compact";
 
 export default function SettingsPage() {
   return (
@@ -29,6 +29,7 @@ export default function SettingsPage() {
 function SettingsPageContent() {
   const { user } = useUser();
   const { organization } = useOrganization();
+  const clerk = useClerk();
   const userId = user?.id || "";
   const orgId = organization?.id || "";
   const searchParams = useSearchParams();
@@ -105,78 +106,42 @@ function SettingsPageContent() {
     }
   }
 
+  const settingsTabs = [
+    { id: "profile" as const, label: "Profile", icon: User },
+    { id: "team" as const, label: "Team", icon: Users },
+    { id: "subscription" as const, label: "Subscription", icon: CreditCard },
+    { id: "security" as const, label: "Security", icon: Shield },
+    { id: "notifications" as const, label: "Notifications", icon: Bell },
+    { id: "privacy" as const, label: "Privacy", icon: Lock },
+  ];
+
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
-      <div className="flex flex-wrap gap-2 rounded-xl border border-gray-200 bg-white p-2">
-        <button
-          onClick={() => setActiveTab("profile")}
-          className={cn(
-            "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors",
-            activeTab === "profile" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100",
-          )}
-        >
-          <User className="h-3.5 w-3.5" />
-          Profile
-        </button>
-        <button
-          onClick={() => setActiveTab("team")}
-          className={cn(
-            "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors",
-            activeTab === "team" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100",
-          )}
-        >
-          <Users className="h-3.5 w-3.5" />
-          Team
-        </button>
-        <button
-          onClick={() => setActiveTab("subscription")}
-          className={cn(
-            "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors",
-            activeTab === "subscription" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100",
-          )}
-        >
-          <CreditCard className="h-3.5 w-3.5" />
-          Subscription
-        </button>
-        <button
-          onClick={() => setActiveTab("security")}
-          className={cn(
-            "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors",
-            activeTab === "security" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100",
-          )}
-        >
-          <Shield className="h-3.5 w-3.5" />
-          Security
-        </button>
-        <button
-          onClick={() => setActiveTab("notifications")}
-          className={cn(
-            "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors",
-            activeTab === "notifications" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100",
-          )}
-        >
-          <Bell className="h-3.5 w-3.5" />
-          Notifications
-        </button>
-        <button
-          onClick={() => setActiveTab("privacy")}
-          className={cn(
-            "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors",
-            activeTab === "privacy" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100",
-          )}
-        >
-          <Lock className="h-3.5 w-3.5" />
-          Privacy
-        </button>
+      <div className="flex gap-1 overflow-x-auto rounded-xl border border-gray-200 bg-white p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {settingsTabs.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setActiveTab(id)}
+            className={cn(
+              "inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-xs font-medium transition-colors",
+              activeTab === id ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100",
+            )}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </button>
+        ))}
         <a
           href="/dashboard/support/changelog"
-          className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors text-gray-600 hover:bg-gray-100"
+          className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-history"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
           Changelog
         </a>
       </div>
 
+      <div className="min-h-[28rem]">
       {activeTab === "profile" && (
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
         <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
@@ -215,13 +180,41 @@ function SettingsPageContent() {
           <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
             <Users className="h-4 w-4 text-gray-400" />
             <div>
-              <h3 className="text-sm font-medium text-black">Team workspace</h3>
+              <h3 className="text-sm font-medium text-black">Organisation</h3>
               <p className="text-[11px] text-gray-500">
-                Create an organization, invite colleagues, and switch workspaces from the sidebar.
+                Switch workspace from the header menu. Members, invites, and org name open in the same
+                panel as <span className="font-medium">Manage organisation</span> on that menu.
               </p>
             </div>
           </div>
-          <div className="p-4">
+          <div className="space-y-4 p-6">
+            {organization ? (
+              <div className="flex items-center justify-between gap-4 rounded-lg border border-gray-100 bg-gray-50 p-4">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700">
+                    <Building2 className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-black">{organization.name}</p>
+                    <p className="text-[11px] text-gray-500">Active workspace</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    clerk.openOrganizationProfile({ appearance: compactProfileModalAppearance })
+                  }
+                  className="shrink-0 rounded-md bg-black px-3 py-1.5 text-[11px] font-medium text-white hover:bg-gray-800"
+                >
+                  Manage organisation
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs text-gray-600">
+                Select or create an organisation from the workspace menu in the header to invite team
+                members.
+              </p>
+            )}
             {personalMigration && personalMigration.totalPending > 0 && !personalMigration.alreadyMigrated && (
               <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
                 <p className="text-sm font-medium text-amber-950">Move personal data into this organisation</p>
@@ -262,16 +255,10 @@ function SettingsPageContent() {
               </div>
             )}
             {personalMigration?.alreadyMigrated && (
-              <div className="mb-4 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+              <div className="rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
                 Personal data is attached to your organisation. The Personal workspace is hidden in the org switcher.
               </div>
             )}
-            <div className="leading-tight [font-size:12px]">
-              <OrganizationProfile
-                routing="hash"
-                appearance={compactEmbeddedOrgProfileAppearance}
-              />
-            </div>
           </div>
         </div>
       )}
@@ -388,7 +375,7 @@ function SettingsPageContent() {
                     </p>
                   </div>
                   {orgHmrcMode?.hmrcMode !== "live" && (
-                    <PracticeSandboxTestUser compact enabled autoProvision />
+                    <PracticeSandboxTestUser compact enabled />
                   )}
                   {hmrcConnection && (
                     <p
@@ -539,47 +526,50 @@ function SettingsPageContent() {
       )}
 
       {activeTab === "privacy" && (
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
-          <Lock className="h-4 w-4 text-gray-400" />
-          <div>
-            <h3 className="text-sm font-medium text-black">Data &amp; privacy</h3>
-            <p className="text-[11px] text-gray-500">
-              Download a copy of your account data (declarations, items, documents metadata, notifications, audit log).
-            </p>
-          </div>
-        </div>
-        <div className="space-y-4 p-6">
-          <p className="text-xs text-gray-600">
-            The export reflects your <strong>active organisation</strong> in the header, or personal workspace if none is
-            selected. OAuth tokens are not included. To delete your account, contact{" "}
-            <a href="mailto:info@freightcode.co.uk" className="text-blue-600 underline hover:text-blue-800">
-              info@freightcode.co.uk
-            </a>
-            .
-          </p>
-          {exportError && (
-            <div className="rounded-md border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-800">
-              {exportError}
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
+            <Lock className="h-4 w-4 text-gray-400" />
+            <div>
+              <h3 className="text-sm font-medium text-black">Data &amp; privacy</h3>
+              <p className="text-[11px] text-gray-500">
+                Download a copy of your account data (declarations, items, documents metadata,
+                notifications, audit log).
+              </p>
             </div>
-          )}
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => void handleExportData()}
-              disabled={exportLoading}
-              className="inline-flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-normal text-white transition-colors hover:bg-gray-800 disabled:opacity-60"
-            >
-              <Download className="h-3 w-3" />
-              {exportLoading ? "Preparing export…" : "Export my data"}
-            </button>
-            <Link href="/privacy" className="text-xs text-gray-500 underline hover:text-black">
-              Privacy policy
-            </Link>
+          </div>
+          <div className="space-y-4 p-6">
+            <p className="text-xs text-gray-600">
+              The export reflects your <strong>active organisation</strong> in the header, or personal
+              workspace if none is selected. OAuth tokens are not included. To delete your account,
+              contact{" "}
+              <a href="mailto:info@freightcode.co.uk" className="text-blue-600 underline hover:text-blue-800">
+                info@freightcode.co.uk
+              </a>
+              .
+            </p>
+            {exportError && (
+              <div className="rounded-md border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-800">
+                {exportError}
+              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => void handleExportData()}
+                disabled={exportLoading}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-normal text-white transition-colors hover:bg-gray-800 disabled:opacity-60"
+              >
+                <Download className="h-3 w-3" />
+                {exportLoading ? "Preparing export…" : "Export my data"}
+              </button>
+              <Link href="/privacy" className="text-xs text-gray-500 underline hover:text-black">
+                Privacy policy
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
       )}
+      </div>
     </div>
   );
 }

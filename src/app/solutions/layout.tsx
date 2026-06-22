@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Automated HMRC CDS Solutions | UK Customs Compliance | FreightCode",
-  description: "Enterprise customs intelligence to automate HMRC CDS compliance, discover duty reclamation, and optimize your UK import strategy.",
+  title: "HMRC CDS Solutions | UK Customs Declarations | FreightCode",
+  description: "UK customs declaration software for HMRC CDS — practice in TDR, dry-run validation, submit and track declarations, and manage compliance documents.",
   alternates: {
     canonical: "/solutions",
   },
