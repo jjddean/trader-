@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as account_export from "../account_export.js";
 import type * as actions_cds_codes from "../actions/cds_codes.js";
 import type * as actions_companies from "../actions/companies.js";
 import type * as actions_currency from "../actions/currency.js";
@@ -74,6 +75,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  account_export: typeof account_export;
   "actions/cds_codes": typeof actions_cds_codes;
   "actions/companies": typeof actions_companies;
   "actions/currency": typeof actions_currency;

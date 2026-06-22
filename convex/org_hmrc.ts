@@ -4,18 +4,65 @@ import { requireAdmin } from "./lib/user_role";
 
 export type OrgHmrcMode = "practice" | "live";
 
+function readOrgIdFromIdentity(identity: Record<string, unknown>): string {
+  const raw = identity.org_id ?? identity.orgId;
+  return typeof raw === "string" ? raw.trim() : "";
+}
+
+function assertOrgSession(orgId: string, identity: Record<string, unknown>) {
+  const sessionOrg = readOrgIdFromIdentity(identity);
+  if (!sessionOrg || sessionOrg !== orgId.trim()) {
+    throw new Error("Organisation context required");
+  }
+}
+
 export const getModeForOrg = query({
   args: { orgId: v.string() },
   handler: async (ctx, args) => {
     const orgId = args.orgId.trim();
-    if (!orgId) return { hmrcMode: "practice" as const };
+    if (!orgId) return { hmrcMode: "practice" as const, hasSandboxTestUser: false };
 
     const row = await ctx.db
       .query("org_hmrc_settings")
       .withIndex("by_org", (q) => q.eq("orgId", orgId))
       .unique();
 
-    return { hmrcMode: (row?.hmrcMode ?? "practice") as OrgHmrcMode };
+    const hmrcMode = (row?.hmrcMode ?? "practice") as OrgHmrcMode;
+    const hasSandboxTestUser = Boolean(
+      row?.sandboxTestUserId?.trim() && row?.sandboxTestUserPassword?.trim(),
+    );
+
+    return { hmrcMode, hasSandboxTestUser };
+  },
+});
+
+export const getSandboxTestUserForOrg = query({
+  args: { orgId: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const orgId = args.orgId.trim();
+    if (!orgId) return null;
+
+    assertOrgSession(orgId, identity as Record<string, unknown>);
+
+    const row = await ctx.db
+      .query("org_hmrc_settings")
+      .withIndex("by_org", (q) => q.eq("orgId", orgId))
+      .unique();
+
+    if (!row || row.hmrcMode === "live") return null;
+
+    const userId = row.sandboxTestUserId?.trim() || "";
+    const password = row.sandboxTestUserPassword?.trim() || "";
+    if (!userId || !password) return null;
+
+    return {
+      userId,
+      password,
+      createdAt: row.sandboxTestUserCreatedAt ?? null,
+    };
   },
 });
 
@@ -48,14 +95,16 @@ export const ensurePracticeMode = mutation({
     if (!identity) throw new Error("Unauthenticated");
 
     const orgId = args.orgId.trim();
-    if (!orgId) return { hmrcMode: "practice" as const };
+    if (!orgId) return { hmrcMode: "practice" as const, created: false };
 
     const existing = await ctx.db
       .query("org_hmrc_settings")
       .withIndex("by_org", (q) => q.eq("orgId", orgId))
       .unique();
 
-    if (existing) return { hmrcMode: existing.hmrcMode as OrgHmrcMode };
+    if (existing) {
+      return { hmrcMode: existing.hmrcMode as OrgHmrcMode, created: false };
+    }
 
     await ctx.db.insert("org_hmrc_settings", {
       orgId,
@@ -64,7 +113,57 @@ export const ensurePracticeMode = mutation({
       updatedBy: identity.subject,
     });
 
-    return { hmrcMode: "practice" as const };
+    return { hmrcMode: "practice" as const, created: true };
+  },
+});
+
+/** Store HMRC sandbox Test User credentials for a practice org (server-provisioned). */
+export const saveSandboxTestUser = mutation({
+  args: {
+    orgId: v.string(),
+    userId: v.string(),
+    password: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const orgId = args.orgId.trim();
+    const userId = args.userId.trim();
+    const password = args.password.trim();
+    if (!orgId || !userId || !password) throw new Error("Invalid sandbox test user payload");
+
+    assertOrgSession(orgId, identity as Record<string, unknown>);
+
+    const existing = await ctx.db
+      .query("org_hmrc_settings")
+      .withIndex("by_org", (q) => q.eq("orgId", orgId))
+      .unique();
+
+    const hmrcMode = (existing?.hmrcMode ?? "practice") as OrgHmrcMode;
+    if (hmrcMode === "live") {
+      throw new Error("Cannot store sandbox test user on a live organisation");
+    }
+
+    const patch = {
+      sandboxTestUserId: userId,
+      sandboxTestUserPassword: password,
+      sandboxTestUserCreatedAt: Date.now(),
+      updatedAt: Date.now(),
+      updatedBy: identity.subject,
+    };
+
+    if (existing) {
+      await ctx.db.patch(existing._id, patch);
+    } else {
+      await ctx.db.insert("org_hmrc_settings", {
+        orgId,
+        hmrcMode: "practice",
+        ...patch,
+      });
+    }
+
+    return { orgId, userId };
   },
 });
 

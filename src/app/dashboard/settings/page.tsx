@@ -6,9 +6,11 @@ import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useUser, OrganizationProfile, useOrganization } from "@clerk/nextjs";
-import { User, CreditCard, Bell, ExternalLink, Shield, Users, Link2 } from "lucide-react";
+import { User, CreditCard, Bell, ExternalLink, Shield, Users, Link2, Unlink, Download, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { planBadgeClass } from "@/lib/stripe-plans";
+import { PracticeSandboxTestUser } from "@/components/practice-sandbox-test-user";
+import { compactEmbeddedOrgProfileAppearance } from "@/lib/clerk-compact";
 
 export default function SettingsPage() {
   return (
@@ -35,19 +37,25 @@ function SettingsPageContent() {
   const dbUser = useQuery(api.users.current);
   const orgHmrcMode = useQuery(api.org_hmrc.getModeForOrg, orgId ? { orgId } : "skip");
   const setOrgHmrcMode = useMutation(api.org_hmrc.setOrgMode);
+  const hmrcConnection = useQuery(api.hmrc.getToken, userId ? { userId } : "skip");
+  const disconnectHmrc = useMutation(api.hmrc.disconnectToken);
   const [hmrcModeSaving, setHmrcModeSaving] = useState(false);
+  const [hmrcDisconnecting, setHmrcDisconnecting] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const personalMigration = useQuery(api.org_migration.previewPersonalMigration, userId ? {} : "skip");
   const migratePersonal = useMutation(api.org_migration.migratePersonalToActiveOrg);
   const [migrationLoading, setMigrationLoading] = useState(false);
   const [migrationMessage, setMigrationMessage] = useState<string | null>(null);
   const initialTab = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState<
-    "profile" | "team" | "subscription" | "security" | "notifications"
+    "profile" | "team" | "subscription" | "security" | "notifications" | "privacy"
   >(
     initialTab === "subscription" ||
       initialTab === "team" ||
       initialTab === "security" ||
-      initialTab === "notifications"
+      initialTab === "notifications" ||
+      initialTab === "privacy"
       ? initialTab
       : "profile",
   );
@@ -66,6 +74,34 @@ function SettingsPageContent() {
       if (data.url) window.location.href = data.url;
     } finally {
       setStripeLoading(false);
+    }
+  }
+
+  async function handleExportData() {
+    setExportLoading(true);
+    setExportError(null);
+    try {
+      const res = await fetch("/api/account/export");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(typeof body.error === "string" ? body.error : "Export failed");
+      }
+      const blob = await res.blob();
+      const disposition = res.headers.get("Content-Disposition") || "";
+      const match = disposition.match(/filename="([^"]+)"/);
+      const filename = match?.[1] || `freightcode-data-export-${new Date().toISOString().slice(0, 10)}.json`;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : "Export failed");
+    } finally {
+      setExportLoading(false);
     }
   }
 
@@ -121,6 +157,16 @@ function SettingsPageContent() {
         >
           <Bell className="h-3.5 w-3.5" />
           Notifications
+        </button>
+        <button
+          onClick={() => setActiveTab("privacy")}
+          className={cn(
+            "inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors",
+            activeTab === "privacy" ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100",
+          )}
+        >
+          <Lock className="h-3.5 w-3.5" />
+          Privacy
         </button>
         <a
           href="/dashboard/support/changelog"
@@ -220,16 +266,12 @@ function SettingsPageContent() {
                 Personal data is attached to your organisation. The Personal workspace is hidden in the org switcher.
               </div>
             )}
-            <OrganizationProfile
-              appearance={{
-                elements: {
-                  rootBox: "w-full",
-                  card: "shadow-none border-0 w-full",
-                  navbar: "hidden",
-                  pageScrollBox: "p-0",
-                },
-              }}
-            />
+            <div className="leading-tight [font-size:12px]">
+              <OrganizationProfile
+                routing="hash"
+                appearance={compactEmbeddedOrgProfileAppearance}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -328,19 +370,82 @@ function SettingsPageContent() {
           <div className="space-y-3 p-6">
             <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
               <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-medium text-black">HMRC connection</p>
-                  <p className="mt-1 text-[11px] text-gray-500">
-                    Authorise Freightcode to submit declarations on behalf of your Government Gateway account.
-                  </p>
+                <div className="min-w-0 flex-1 space-y-3">
+                  <div>
+                    <p className="text-xs font-medium text-black">HMRC connection</p>
+                    <p className="mt-1 text-[11px] text-gray-500">
+                      {orgHmrcMode?.hmrcMode === "live" ? (
+                        <>
+                          Authorise Freightcode with your live Government Gateway account. Submissions
+                          have legal effect at the border.
+                        </>
+                      ) : (
+                        <>
+                          Authorise Freightcode for HMRC&apos;s test environment (TDR). Use the Test User
+                          credentials below at sign-in — not your live Government Gateway.
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  {orgHmrcMode?.hmrcMode !== "live" && (
+                    <PracticeSandboxTestUser compact enabled autoProvision />
+                  )}
+                  {hmrcConnection && (
+                    <p
+                      className={cn(
+                        "text-[11px]",
+                        hmrcConnection.expiresAt > Date.now() ? "text-green-700" : "text-amber-700",
+                      )}
+                    >
+                      {hmrcConnection.expiresAt > Date.now() ? "Connected" : "Session expired"} · token
+                      expires{" "}
+                      {new Date(hmrcConnection.expiresAt).toLocaleString("en-GB", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                      {hmrcConnection.eori ? ` · EORI ${hmrcConnection.eori}` : ""}
+                    </p>
+                  )}
                 </div>
-                <a
-                  href="/api/hmrc/auth"
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-black px-3 py-1.5 text-[11px] font-medium text-white hover:bg-gray-800"
-                >
-                  <Link2 className="h-3 w-3" />
-                  Connect HMRC
-                </a>
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  {hmrcConnection ? (
+                    <button
+                      type="button"
+                      disabled={hmrcDisconnecting}
+                      onClick={async () => {
+                        if (
+                          !window.confirm(
+                            "Remove your stored HMRC OAuth tokens from Freightcode? Existing declarations and notifications are not affected.",
+                          )
+                        ) {
+                          return;
+                        }
+                        setHmrcDisconnecting(true);
+                        try {
+                          await disconnectHmrc({});
+                        } finally {
+                          setHmrcDisconnecting(false);
+                        }
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                    >
+                      <Unlink className="h-3 w-3" />
+                      {hmrcDisconnecting ? "Disconnecting…" : "Disconnect HMRC"}
+                    </button>
+                  ) : null}
+                  <a
+                    href="/api/hmrc/auth"
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-medium",
+                      hmrcConnection && hmrcConnection.expiresAt > Date.now()
+                        ? "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                        : "bg-black text-white hover:bg-gray-800",
+                    )}
+                  >
+                    <Link2 className="h-3 w-3" />
+                    {hmrcConnection ? "Reconnect HMRC" : "Connect HMRC"}
+                  </a>
+                </div>
               </div>
             </div>
 
@@ -348,7 +453,8 @@ function SettingsPageContent() {
               <div className="rounded-lg border border-gray-100 p-4">
                 <p className="text-xs font-medium text-black">CDS environment</p>
                 <p className="mt-1 text-[11px] text-gray-500">
-                  Practice uses HMRC sandbox (Trade Test). Live uses production CDS — only enable when your org is approved.
+                  Practice uses HMRC sandbox (TDR). Live uses production CDS — only enable when your org
+                  is approved.
                 </p>
                 <div className="mt-3 flex items-center gap-2">
                   <span
@@ -429,6 +535,49 @@ function SettingsPageContent() {
               </span>
             </div>
           </div>
+      </div>
+      )}
+
+      {activeTab === "privacy" && (
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
+          <Lock className="h-4 w-4 text-gray-400" />
+          <div>
+            <h3 className="text-sm font-medium text-black">Data &amp; privacy</h3>
+            <p className="text-[11px] text-gray-500">
+              Download a copy of your account data (declarations, items, documents metadata, notifications, audit log).
+            </p>
+          </div>
+        </div>
+        <div className="space-y-4 p-6">
+          <p className="text-xs text-gray-600">
+            The export reflects your <strong>active organisation</strong> in the header, or personal workspace if none is
+            selected. OAuth tokens are not included. To delete your account, contact{" "}
+            <a href="mailto:info@freightcode.co.uk" className="text-blue-600 underline hover:text-blue-800">
+              info@freightcode.co.uk
+            </a>
+            .
+          </p>
+          {exportError && (
+            <div className="rounded-md border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-800">
+              {exportError}
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => void handleExportData()}
+              disabled={exportLoading}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-normal text-white transition-colors hover:bg-gray-800 disabled:opacity-60"
+            >
+              <Download className="h-3 w-3" />
+              {exportLoading ? "Preparing export…" : "Export my data"}
+            </button>
+            <Link href="/privacy" className="text-xs text-gray-500 underline hover:text-black">
+              Privacy policy
+            </Link>
+          </div>
+        </div>
       </div>
       )}
     </div>

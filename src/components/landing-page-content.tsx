@@ -91,7 +91,7 @@ export function LandingPageContent() {
             </h1>
 
             <p className="mx-auto mb-6 max-w-[760px] text-[18px] leading-[1.6] text-slate-600">
-              Automate declarations, recover overpaid duties, and stay ahead of HMRC compliance changes — from one connected platform.
+              Recover overpaid duties, stay ahead of HMRC compliance changes, and manage your declarations — from one connected platform.
             </p>
 
             <div id="signup-cta" className="flex flex-col items-center justify-center gap-[16px] sm:flex-row">
@@ -339,57 +339,6 @@ export function LandingPageContent() {
           </div>
         </section>
 
-        {/* Knowledge Hub Section */}
-        <section id="guides" className="py-[96px] bg-white border-t border-gray-100">
-          <div className="mx-auto max-w-[1280px] px-[24px]">
-            <div className="mb-[64px] text-center">
-              <h2 className="mb-4 text-[36px] font-bold tracking-tight text-[#020817] md:text-[42px]">
-                Knowledge Hub
-              </h2>
-              <p className="mx-auto max-w-2xl text-[18px] leading-[1.6] text-slate-600">
-                Master the complexities of the UK Customs Declaration Service with our comprehensive AI-enhanced guides.
-              </p>
-            </div>
-
-            <div className="grid gap-[24px] md:grid-cols-2">
-              {[
-                { 
-                  title: "HMRC CDS Complete Guide (2026)", 
-                  desc: "A full walkthrough of the Customs Declaration Service, mandatory for all UK importers.",
-                  link: "/guides/hmrc-cds-complete-guide-uk-importers-2026"
-                },
-                { 
-                  title: "CDS Status Notifications (DMSACC, DMSROG)", 
-                  desc: "Decode every error and status code received from HMRC to ensure seamless clearance.",
-                  link: "/guides/dmsacc-dmsrog-dmscle-hmrc-cds-notifications"
-                },
-                { 
-                  title: "How to Read TRE CSV Exports", 
-                  desc: "Turn raw CSV data into meaningful insights for your compliance audits.",
-                  link: "/guides/how-to-read-cds-csv-export-tre"
-                },
-                { 
-                  title: "Commodity Code Lookup Strategies", 
-                  desc: "Stop the guesswork. Find the right HS code every time with current HMRC rules.",
-                  link: "/guides/cds-commodity-codes-how-to-find"
-                }
-              ].map((guide, i) => (
-                <Link 
-                  key={i} 
-                  href={guide.link}
-                  className="group block p-6 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-blue-100 transition-all hover:shadow-lg"
-                >
-                  <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 mb-2">{guide.title}</h3>
-                  <p className="text-[13px] text-slate-600 leading-relaxed mb-4">{guide.desc}</p>
-                  <div className="flex items-center text-[10px] font-semibold text-slate-400 group-hover:text-blue-600 transition-colors uppercase tracking-widest">
-                    Read Guide <ArrowRight className="ml-2 h-3 w-3" />
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* FAQ Section */}
         <section id="faq" className="bg-gray-50/30 py-[96px]">
           <div className="mx-auto max-w-[768px] px-[24px]">
@@ -436,33 +385,6 @@ export function LandingPageContent() {
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="px-[24px] py-[96px]">
-          <div className="relative mx-auto max-w-[1024px] overflow-hidden rounded-3xl border border-slate-200 bg-white p-[48px] text-center shadow-lg md:p-[80px]">
-            <h2 className="mb-6 text-[40px] leading-tight font-bold text-[#020817] md:text-[52px] tracking-[-1px]">
-              Take control of your customs data
-            </h2>
-            <p className="mx-auto mb-10 max-w-xl text-[18px] text-slate-600">
-              Automate your declarations, uncover hidden savings, and ensure total HMRC compliance.
-              Create a free practice workspace — no card required.
-            </p>
-            <div className="flex flex-col items-center justify-center gap-6">
-              {isSignedIn ? (
-                <Link
-                  href="/dashboard/documents"
-                  className="h-[42px] min-w-[140px] rounded-md bg-[#111827] px-[24px] flex items-center justify-center text-[14px] font-medium text-white transition-all hover:bg-[#374151] shadow-none border-none"
-                >
-                  Open Dashboard <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                </Link>
-              ) : (
-                <div className="relative flex w-full justify-center">
-                  <SignUpCta />
-                </div>
-              )}
             </div>
           </div>
         </section>

@@ -49,7 +49,7 @@ Every new organisation starts in **Practice mode** (TDR on the sandbox host).
 
 - Banner: *“Practice environment — declarations are not legally binding.”*
 - Full declaration workspace: items, documents, dry-run, submit to HMRC TDR, status, notifications, amend/cancel (where TDR allows).
-- Connect **their** HMRC account (OAuth) — real declarant EORI, deferment account, authorisations as applicable.
+- Connect **HMRC Test User** credentials (Settings → Security) — sandbox OAuth only; **not** live Government Gateway in practice mode
 - Invite team members via Clerk organisation; shared declarations within the org.
 
 **What the customer must provide**
@@ -122,11 +122,11 @@ Customers should create or join an **organisation** for team practice. Personal 
 ## Connecting HMRC
 
 1. Org admin (or user) opens **Settings → Connect HMRC**.
-2. OAuth redirect to HMRC; tokens stored per user (and associated with org context).
-3. Practice uses the **sandbox** OAuth client (Freightcode Developer Hub app).
-4. Live uses **production** OAuth after Freightcode has production credentials (SDST).
+2. **Practice:** sign in with the organisation's **HMRC Test User** (shown in Settings → Security). **Live:** sign in with live Government Gateway.
+3. OAuth redirect to HMRC (`test-www` for practice, `www` for live); tokens stored per user with org context.
+4. Practice uses sandbox OAuth client; live uses production OAuth client.
 
-**Customer copy:** *“You are authorising Freightcode to submit declarations on your behalf. In practice mode, HMRC treats these as test declarations only.”*
+**Customer copy (practice):** *“You are authorising Freightcode to submit test declarations on your behalf. Sign in with your HMRC Test User — not your live Government Gateway. Use your real EORI on the declaration.”*
 
 ---
 
@@ -199,7 +199,7 @@ What engineering implements to match this guide. **Not yet complete** unless not
 |---|------------|------------------|-------|
 | 1 | Org `mode`: `practice` \| `live` | Practice / Live badge | Drives HMRC host + Accept headers |
 | 2 | Per-org HMRC routing guard | Submit blocked if org live but env sandbox (and vice versa) | Replaces global `.env` only |
-| 3 | Practice banner | Amber banner on all declaration routes | Link to this doc |
+| 3 | Practice banner | Amber banner on all declaration routes | **Done** — `PracticeModeBanner` in dashboard layout |
 | 4 | Auto practice on sign-up | New org defaults to `practice` | No billing gate |
 | 5 | Request production flow | Admin form + operator queue | Email/webhook to ops |
 | 6 | Approval mutation | Flips `mode` to `live` | Audit log entry |
@@ -222,14 +222,13 @@ What engineering implements to match this guide. **Not yet complete** unless not
 
 | Doc | Use |
 |-----|-----|
+| [`BACKLOG.md`](./BACKLOG.md) | Engineering + product todo (single source) |
 | [`AGENT-SPEC.md`](./AGENT-SPEC.md) | Agent/engineering compliance behaviour |
 | [`environment-matrix.md`](./environment-matrix.md) | Hosts, Accept headers, API versions |
-| [`DELIVERY-PLAN.md`](./DELIVERY-PLAN.md) | Engineering backlog |
-| [`PRODUCT-PROGRESS-LOG.md`](./PRODUCT-PROGRESS-LOG.md) | Org / onboarding done vs left |
 | [`FINANCIAL-ROADMAP.md`](./FINANCIAL-ROADMAP.md) | Duty estimates, DAN, variance |
 | [`../../FUTURE/production/README.md`](../../FUTURE/production/README.md) | Production credentials (future) |
 | HMRC CDS End-to-End Service Guide | Official API reference (external) |
 
 ---
 
-*Last updated: 2026-06-18 — draft for product + customer onboarding; revise when per-org routing ships.*
+*Last updated: 2026-06-20 — internal checklist tracked in [`BACKLOG.md`](./BACKLOG.md).*

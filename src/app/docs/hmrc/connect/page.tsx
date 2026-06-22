@@ -17,19 +17,31 @@ export default function ConnectHmrcPage() {
         freightcode® connects to HMRC&apos;s Customs Declaration Service via official OAuth 2.0. This gives the platform authority to submit declarations and receive notifications on your behalf — without storing your Government Gateway password.
       </p>
 
-      <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">Prerequisites</h2>
+      <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">Practice mode (TDR)</h2>
+      <p className="text-[15px] text-slate-700 leading-relaxed mb-4">
+        New organisations start in <strong>practice mode</strong>. Submissions go to HMRC&apos;s test environment (TDR) only — not legally binding.
+      </p>
+      <ul className="list-disc pl-6 mb-6 space-y-2 text-[15px] text-slate-700">
+        <li>Open <strong>Settings → Security</strong> and copy your organisation&apos;s <strong>HMRC Test User</strong> credentials.</li>
+        <li>Click <strong>Connect HMRC</strong> and sign in with those Test User credentials — <em>not</em> your live Government Gateway.</li>
+        <li>Enter your <strong>real EORI</strong> and trade data on declaration forms.</li>
+      </ul>
+
+      <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">Live CDS (production)</h2>
+      <p className="text-[15px] text-slate-700 leading-relaxed mb-4">
+        After production access is approved for your organisation, Connect HMRC uses your live Government Gateway account. Submissions are legally binding.
+      </p>
       <ul className="list-disc pl-6 mb-6 space-y-2 text-[15px] text-slate-700">
         <li>A UK EORI number (format: GB + 12 digits)</li>
         <li>A Government Gateway account subscribed to the Customs Declaration Service</li>
-        <li>Your business enrolled on HMRC&apos;s CDS (via the Government Gateway)</li>
       </ul>
 
       <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">How to connect</h2>
       <ul className="space-y-4 mb-6 text-[15px] text-slate-700">
-        <li><strong>1.</strong> From your Dashboard, click <strong>Connect HMRC</strong> in the top-right.</li>
-        <li><strong>2.</strong> You will be redirected to HMRC&apos;s login page. Sign in with your Government Gateway credentials.</li>
-        <li><strong>3.</strong> HMRC will ask you to grant freightcode® permission to access your CDS account. Click <strong>Allow</strong>.</li>
-        <li><strong>4.</strong> You are redirected back to freightcode®. The Dashboard button now shows <strong>HMRC Connected</strong> in green with the token expiry date.</li>
+        <li><strong>1.</strong> Go to <strong>Settings → Security</strong> (practice: copy Test User credentials first).</li>
+        <li><strong>2.</strong> Click <strong>Connect HMRC</strong>.</li>
+        <li><strong>3.</strong> Sign in on HMRC&apos;s page and grant freightcode® permission. Click <strong>Allow</strong>.</li>
+        <li><strong>4.</strong> You are redirected back. The Dashboard shows <strong>HMRC Connected</strong> when authorised.</li>
       </ul>
 
       <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">Token expiry and refresh</h2>
@@ -47,7 +59,7 @@ export default function ConnectHmrcPage() {
 
       <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">Sandbox vs Production</h2>
       <p className="text-[15px] text-slate-700 leading-relaxed mb-6">
-        During the Beta period, freightcode® operates against HMRC&apos;s External Test (sandbox) environment. Declarations submitted in sandbox are not real submissions — no duty is charged and no goods are cleared. The environment is configured per deployment and cannot be changed by users.
+        Practice organisations use HMRC&apos;s sandbox (TDR): Test User at Connect, real EORI on forms. Live organisations use production CDS and real Government Gateway — submissions clear goods at the border.
       </p>
 
       <div className="mt-12 p-8 bg-[#0f172a] rounded-2xl text-white">

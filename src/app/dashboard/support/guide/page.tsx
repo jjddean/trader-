@@ -5,7 +5,7 @@ export default function UserGuidePage() {
     {
       title: "Getting Started",
       icon: <Zap className="h-5 w-5 text-[#787774]" />,
-      content: "Welcome to FreightCode. To submit declarations to HMRC, you must first connect your Government Gateway account. Go to Settings > Security and click 'Connect HMRC'. Once authorised, you can begin processing declarations.",
+      content: "Welcome to FreightCode. In practice mode, open Settings > Security, copy your HMRC Test User credentials, then click Connect HMRC and sign in with those (not your live Government Gateway). Use your real EORI on declarations. Once authorised, you can submit to HMRC's test environment (TDR).",
     },
     {
       title: "Creating Declarations",

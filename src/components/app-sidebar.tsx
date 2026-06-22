@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useOrganization, useUser } from "@clerk/nextjs";
 import { SidebarUserButton } from "@/components/auth/sidebar-user-button";
+import { SidebarGlobalSearch } from "@/components/sidebar-global-search";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { cn } from "@/lib/utils";
@@ -88,7 +89,11 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="flex-1 min-h-0 p-4 pt-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="px-4 py-3">
+        <SidebarGlobalSearch />
+      </div>
+
+      <SidebarContent className="flex-1 min-h-0 p-4 pt-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <SidebarGroup className="p-0">
           <SidebarGroupLabel className="mb-0.5 px-3 text-[10px] font-normal tracking-widest text-gray-400 uppercase">
             {isAdmin ? "Control Plane" : "Platform"}
@@ -255,7 +260,7 @@ export function AppSidebar() {
 
       </SidebarContent>
 
-      <SidebarFooter className="mt-auto space-y-3 border-t border-gray-200 bg-white/60 p-4">
+      <SidebarFooter className="mt-auto space-y-3 bg-white/60 p-4">
         <SidebarMenu className="space-y-0.5">
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={pathname === "/dashboard/support/guide"} className={cn("flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors", pathname === "/dashboard/support/guide" ? "bg-gray-100 text-black" : "text-gray-500 hover:bg-gray-100 hover:text-black")}>

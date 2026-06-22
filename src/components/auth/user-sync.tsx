@@ -13,44 +13,53 @@ export function UserSync() {
   const ensureOrgPractice = useMutation(api.org_hmrc.ensurePracticeMode);
   const syncedKey = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (!isClerkLoaded || !isAuthLoaded || !user || !isAuthenticated) return;
+  const userId = user?.id;
+  const userRole = String(user?.publicMetadata?.role ?? "");
+  const userEmail = user?.primaryEmailAddress?.emailAddress ?? "";
 
-    const syncKey = [
-      user.id,
-      String(user.publicMetadata?.role ?? ""),
-      user.primaryEmailAddress?.emailAddress ?? "",
-      orgId ?? "personal",
-    ].join(":");
+  useEffect(() => {
+    if (!isClerkLoaded || !isAuthLoaded || !userId || !isAuthenticated) return;
+
+    const syncKey = [userId, userRole, userEmail, orgId ?? "personal"].join(":");
     if (syncedKey.current === syncKey) return;
 
+    syncedKey.current = syncKey;
+    let cancelled = false;
+
     syncUser({
-      name: user.fullName ?? undefined,
-      email: user.primaryEmailAddress?.emailAddress ?? "",
+      name: user?.fullName ?? undefined,
+      email: userEmail,
       orgId: orgId ?? undefined,
-      role: user.publicMetadata?.role as string | undefined,
+      role: user?.publicMetadata?.role as string | undefined,
     })
       .then(() => {
-        syncedKey.current = syncKey;
-        if (orgId) {
-          return ensureOrgPractice({ orgId }).catch((err) => {
-            console.error("Org HMRC practice init failed:", err);
-          });
-        }
+        if (cancelled || !orgId) return;
+        return ensureOrgPractice({ orgId }).catch((err) => {
+          console.error("Org HMRC practice init failed:", err);
+        });
       })
       .catch((err) => {
         console.error("User sync failed:", err);
+        if (syncedKey.current === syncKey) {
+          syncedKey.current = null;
+        }
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     isClerkLoaded,
     isAuthLoaded,
-    user,
     isAuthenticated,
     orgId,
+    userId,
+    userRole,
+    userEmail,
+    user?.fullName,
+    user?.publicMetadata?.role,
     syncUser,
     ensureOrgPractice,
-    user?.publicMetadata?.role,
-    user?.primaryEmailAddress?.emailAddress,
   ]);
 
   return null;

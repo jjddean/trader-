@@ -10,6 +10,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { HmrcConnectBanner } from "@/components/hmrc-connect-banner";
+import { PracticeModeBanner } from "@/components/practice-mode-banner";
 import { useQuery, useConvexAuth } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../convex/_generated/api";
@@ -97,6 +98,7 @@ export default function DashboardLayout({
           )}
         >
           <Suspense fallback={null}>
+            {pathname === "/dashboard" && <PracticeModeBanner />}
             <HmrcConnectBanner />
           </Suspense>
           {children}

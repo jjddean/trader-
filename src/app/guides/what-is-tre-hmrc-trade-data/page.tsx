@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { SignUpCta } from "@/components/sign-up-cta";
+import { WaitlistForm } from "@/components/waitlist-form";
 
 export const metadata: Metadata = {
   title: "What is TRE and How to Use Your HMRC Trade Data | FreightCode",
@@ -182,7 +182,7 @@ export default function Guide2Page() {
         </ul>
 
         <div className="max-w-sm">
-          <SignUpCta variant="light" showSignIn={false} />
+          <WaitlistForm variant="light" />
         </div>
       </div>
     </article>

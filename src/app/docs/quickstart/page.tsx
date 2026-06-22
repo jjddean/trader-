@@ -24,7 +24,7 @@ export default function QuickstartPage() {
 
       <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">Step 2 — Connect HMRC</h2>
       <p className="text-[15px] text-slate-700 leading-relaxed mb-4">
-        From the Dashboard, click <strong>Connect HMRC</strong>. You&apos;ll be redirected to HMRC&apos;s OAuth login page. Sign in with your Government Gateway credentials and authorise freightcode® to act on your behalf.
+        In <strong>Settings → Security</strong>, copy your organisation&apos;s <strong>HMRC Test User</strong> credentials (practice mode). Click <strong>Connect HMRC</strong> and sign in with those credentials — not your live Government Gateway. Use your real EORI on declaration forms.
       </p>
       <p className="text-[15px] text-slate-700 leading-relaxed mb-6">
         Once authorised, the button turns green showing <strong>HMRC Connected</strong> with the token expiry date. freightcode® refreshes your token automatically before it expires.

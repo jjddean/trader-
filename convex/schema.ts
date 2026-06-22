@@ -50,6 +50,10 @@ export default defineSchema({
   org_hmrc_settings: defineTable({
     orgId: v.string(),
     hmrcMode: v.union(v.literal("practice"), v.literal("live")),
+    /** Sandbox OAuth sign-in for practice orgs (HMRC Test User — not live Government Gateway). */
+    sandboxTestUserId: v.optional(v.string()),
+    sandboxTestUserPassword: v.optional(v.string()),
+    sandboxTestUserCreatedAt: v.optional(v.number()),
     updatedAt: v.number(),
     updatedBy: v.optional(v.string()),
   }).index("by_org", ["orgId"]),
