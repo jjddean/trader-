@@ -14,7 +14,7 @@ export function FinancialRecordPrintContent({ record }: { record: FinancialRecor
         subtitle={[record.date, record.mrn].filter(Boolean).join(" · ")}
       />
       <section className="mb-8 space-y-6">
-        <h2 className="border-b border-gray-200 pb-3 text-sm font-semibold text-gray-900">
+        <h2 className="border-b border-slate-200 pb-3 text-sm font-semibold text-slate-900">
           Transaction &amp; Account Details
         </h2>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -26,7 +26,7 @@ export function FinancialRecordPrintContent({ record }: { record: FinancialRecor
       </section>
 
       <section className="space-y-6">
-        <h2 className="border-b border-gray-200 pb-3 text-sm font-semibold text-gray-900">
+        <h2 className="border-b border-slate-200 pb-3 text-sm font-semibold text-slate-900">
           Tax Line Breakdown
         </h2>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -34,12 +34,12 @@ export function FinancialRecordPrintContent({ record }: { record: FinancialRecor
           <PrintField label="Calculation Method" value={record.calculationMethod} />
           <PrintField label="Nature of Transaction" value={record.natureOfTransaction} />
         </div>
-        <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-4">
+        <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-4">
           <div>
-            <p className="text-xs font-semibold text-gray-900">Total Tax Amount</p>
-            <p className="mt-0.5 text-[0.625rem] text-gray-500">Calculated value for this ledger line</p>
+            <p className="text-xs font-semibold text-slate-900">Total Tax Amount</p>
+            <p className="mt-0.5 text-[0.625rem] text-slate-500">Calculated value for this ledger line</p>
           </div>
-          <p className="text-xl font-bold tracking-tight text-gray-900">£{amount}</p>
+          <p className="text-xl font-bold tracking-tight text-slate-900">£{amount}</p>
         </div>
       </section>
     </>

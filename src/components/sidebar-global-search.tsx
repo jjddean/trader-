@@ -11,7 +11,7 @@ export function SidebarGlobalSearch() {
     <>
       <GlobalSearchOverlay isOpen={isOpen} onClose={() => setIsOpen(false)} />
       <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+        <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
         <input
           type="text"
           placeholder="Global Search"
@@ -19,7 +19,7 @@ export function SidebarGlobalSearch() {
           onFocus={() => setIsOpen(true)}
           onClick={() => setIsOpen(true)}
           readOnly
-          className="focus:border-ring focus:ring-ring/50 h-8 w-full cursor-pointer rounded-md border border-gray-200 bg-white pr-3 pl-8 text-xs text-gray-700 transition-[color,box-shadow] outline-none focus:ring-2"
+          className="focus:border-ring focus:ring-ring/50 h-8 w-full cursor-pointer rounded-md border border-slate-200 bg-white pr-3 pl-8 text-xs text-slate-700 transition-[color,box-shadow] outline-none focus:ring-2"
         />
       </div>
     </>

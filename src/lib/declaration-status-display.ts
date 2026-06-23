@@ -86,7 +86,7 @@ export function rowTintClass(tone: CdsBadgeTone): string {
   if (tone === "danger") return "bg-red-50/50 hover:bg-red-50";
   if (tone === "warning") return "bg-amber-50/50 hover:bg-amber-50";
   if (tone === "info") return "bg-blue-50/50 hover:bg-blue-50";
-  return "hover:bg-gray-50";
+  return "hover:bg-slate-50";
 }
 
 export function mrnTitleClass(tone: CdsBadgeTone): string {
@@ -102,14 +102,14 @@ export function mrnSubtitleClass(tone: CdsBadgeTone): string {
   if (tone === "danger") return "text-red-700";
   if (tone === "warning") return "text-amber-700";
   if (tone === "info") return "text-blue-700";
-  return "text-gray-500";
+  return "text-slate-500";
 }
 
 export function badgeToneClassName(tone: CdsBadgeTone): string {
   if (tone === "success") return "bg-green-100 text-green-700";
   if (tone === "danger") return "bg-red-100 text-red-700";
   if (tone === "warning") return "bg-amber-100 text-amber-700";
-  if (tone === "neutral") return "bg-gray-100 text-gray-700";
+  if (tone === "neutral") return "bg-slate-100 text-slate-700";
   return "bg-blue-100 text-blue-700";
 }
 

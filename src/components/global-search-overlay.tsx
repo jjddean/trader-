@@ -80,37 +80,37 @@ export function GlobalSearchOverlay({ isOpen, onClose }: GlobalSearchOverlayProp
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl p-0 overflow-hidden border-none bg-white shadow-2xl">
-        <DialogHeader className="p-4 border-b border-gray-100">
+        <DialogHeader className="p-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <Search className="h-4 w-4 text-gray-400" />
+            <Search className="h-4 w-4 text-slate-400" />
             <input
               autoFocus
-              className="flex-1 text-sm bg-transparent border-none outline-none text-black placeholder:text-gray-400"
+              className="flex-1 text-sm bg-transparent border-none outline-none text-black placeholder:text-slate-400"
               placeholder="Search global companies, HS codes, or countries..."
               value={query}
               onChange={(e) => handleSearch(e.target.value)}
             />
-            {isSearching && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
+            {isSearching && <Loader2 className="h-4 w-4 animate-spin text-slate-400" />}
           </div>
         </DialogHeader>
 
         <div className="max-h-[60vh] overflow-y-auto p-2">
           {results.length > 0 ? (
             <div className="space-y-1">
-              <p className="px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+              <p className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                 Search Results
               </p>
               {results.map((hit) => (
                 <div
                   key={hit.id}
-                  className="group flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="group flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-100">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100">
                       {hit.kind === "document" ? (
-                        <FileText className="h-4 w-4 text-gray-500" />
+                        <FileText className="h-4 w-4 text-slate-500" />
                       ) : (
-                        <Building2 className="h-4 w-4 text-gray-500" />
+                        <Building2 className="h-4 w-4 text-slate-500" />
                       )}
                     </div>
                     <div className="min-w-0">
@@ -118,15 +118,15 @@ export function GlobalSearchOverlay({ isOpen, onClose }: GlobalSearchOverlayProp
                         {hit.title}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] text-gray-500 flex items-center gap-1">
+                        <span className="text-[10px] text-slate-500 flex items-center gap-1">
                           <Globe className="h-2.5 w-2.5" />
                           {hit.kind === "document" ? "Document" : "Declaration"}
                         </span>
-                        <span className="text-[10px] text-gray-400 py-0.5 px-1.5 bg-gray-100 rounded">
+                        <span className="text-[10px] text-slate-400 py-0.5 px-1.5 bg-slate-100 rounded">
                           {hit.meta}
                         </span>
                       </div>
-                      <p className="text-[10px] text-gray-500 mt-1">{hit.subtitle}</p>
+                      <p className="text-[10px] text-slate-500 mt-1">{hit.subtitle}</p>
                     </div>
                   </div>
                 </div>
@@ -134,12 +134,12 @@ export function GlobalSearchOverlay({ isOpen, onClose }: GlobalSearchOverlayProp
             </div>
           ) : query.length >= 2 ? (
             <div className="py-12 text-center">
-              <Search className="h-8 w-8 text-gray-200 mx-auto mb-3" />
-              <p className="text-xs text-gray-500 font-medium">No matches found</p>
-              <p className="text-[10px] text-gray-400 mt-1">Try MRN, declaration ID, document name, or status</p>
+              <Search className="h-8 w-8 text-slate-200 mx-auto mb-3" />
+              <p className="text-xs text-slate-500 font-medium">No matches found</p>
+              <p className="text-[10px] text-slate-400 mt-1">Try MRN, declaration ID, document name, or status</p>
             </div>
           ) : (
-            <div className="py-12 text-center text-gray-400">
+            <div className="py-12 text-center text-slate-400">
               <Building2 className="h-8 w-8 mx-auto mb-3 opacity-20" />
               <p className="text-xs">Type to search declarations and documents</p>
             </div>

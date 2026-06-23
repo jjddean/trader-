@@ -140,7 +140,7 @@ export default function StatusTimelinePage() {
   if (!declaration) {
     return (
       <div className="flex justify-center py-12">
-        <p className="text-sm text-gray-500">Declaration not found.</p>
+        <p className="text-sm text-slate-500">Declaration not found.</p>
       </div>
     );
   }
@@ -303,33 +303,33 @@ export default function StatusTimelinePage() {
     danger: "bg-red-100 text-red-700",
     warning: "bg-amber-100 text-amber-700",
     info: "bg-blue-100 text-blue-700",
-    neutral: "bg-gray-100 text-gray-700",
+    neutral: "bg-slate-100 text-slate-700",
   };
 
   const hmrcActionBtnClass =
-    "inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 text-xs font-normal text-gray-800 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40";
+    "inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-normal text-slate-800 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40";
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-medium text-gray-900">Customs Status Timeline</h2>
-        <p className="mt-1 text-xs text-gray-500">
+        <h2 className="text-lg font-medium text-slate-900">Customs Status Timeline</h2>
+        <p className="mt-1 text-xs text-slate-500">
           Real-time webhook notifications pushed from HMRC Customs Declarations Service.
         </p>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-6">
+      <div className="rounded-xl border border-slate-200 bg-white p-6">
         {!isSubmitted ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Activity className="mb-4 h-8 w-8 text-gray-300" />
-            <h3 className="text-sm font-medium text-gray-900">Awaiting Submission</h3>
-            <p className="mt-1 text-xs text-gray-500 max-w-sm">
+            <Activity className="mb-4 h-8 w-8 text-slate-300" />
+            <h3 className="text-sm font-medium text-slate-900">Awaiting Submission</h3>
+            <p className="mt-1 text-xs text-slate-500 max-w-sm">
               The declaration must be submitted and receive an MRN before HMRC can route status webhooks.
             </p>
           </div>
         ) : (
           <div className="space-y-8">
-            <div className="space-y-3 border-b border-gray-100 pb-6">
+            <div className="space-y-3 border-b border-slate-100 pb-6">
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
@@ -345,7 +345,7 @@ export default function StatusTimelinePage() {
                     }
                   >
                     {hmrcBusy ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-500" />
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-500" />
                     ) : (
                       <RefreshCw className="h-3.5 w-3.5 text-blue-600" />
                     )}
@@ -378,16 +378,16 @@ export default function StatusTimelinePage() {
                           onClick={() => setAmendMenuOpen((open) => !open)}
                         >
                           Amend
-                          <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
+                          <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
                         </button>
                         {amendMenuOpen && (
-                          <div className="absolute left-0 top-full z-10 mt-1 w-60 rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+                          <div className="absolute left-0 top-full z-10 mt-1 w-60 rounded-md border border-slate-200 bg-white py-1 shadow-lg">
                             {AMEND_OPTIONS.map((opt) => (
                               <button
                                 key={opt.label}
                                 type="button"
                                 disabled={hmrcBusy}
-                                className="block w-full px-3 py-1.5 text-left text-xs text-gray-800 hover:bg-gray-100 disabled:opacity-40"
+                                className="block w-full px-3 py-1.5 text-left text-xs text-slate-800 hover:bg-slate-100 disabled:opacity-40"
                                 onClick={() => runAmend(opt)}
                               >
                                 {opt.label}
@@ -436,7 +436,7 @@ export default function StatusTimelinePage() {
                   </p>
                 )}
                 {mrnBlockedByClearance && (
-                  <p className="rounded-md border border-gray-200 bg-gray-50 p-3 text-xs text-gray-800">
+                  <p className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-800">
                     <strong>DMSCLE on this MRN</strong> — HMRC treats the declaration as cleared. Amend and
                     cancel are disabled (retries return CDS12015). Submit a new declaration and amend before
                     clearance for TDR evidence.
@@ -463,17 +463,17 @@ export default function StatusTimelinePage() {
               </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="rounded-lg bg-gray-50 p-4 border border-gray-100">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">
+              <div className="rounded-lg bg-slate-50 p-4 border border-slate-100">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
                   MRN
                 </p>
-                <p className="text-sm font-semibold text-gray-900 truncate">
+                <p className="text-sm font-semibold text-slate-900 truncate">
                   {declaration.mrn || "— pending"}
                 </p>
               </div>
 
-              <div className="rounded-lg bg-gray-50 p-4 border border-gray-100">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">
+              <div className="rounded-lg bg-slate-50 p-4 border border-slate-100">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">
                   CDS Status
                 </p>
                 <div>
@@ -493,7 +493,7 @@ export default function StatusTimelinePage() {
                       {cdsBadge.label}
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
+                    <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[0.625rem] font-medium text-slate-700">
                       <FileText className="h-3 w-3" />
                       {declaration.status}
                     </span>
@@ -501,28 +501,28 @@ export default function StatusTimelinePage() {
                 </div>
               </div>
 
-              <div className="rounded-lg bg-gray-50 p-4 border border-gray-100">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">
+              <div className="rounded-lg bg-slate-50 p-4 border border-slate-100">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
                   Last Update
                 </p>
-                <p className="text-sm font-semibold text-gray-900 truncate">
+                <p className="text-sm font-semibold text-slate-900 truncate">
                    {new Date(declaration.lastUpdated || declaration._creationTime).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
             </div>
 
             <div className="relative pl-6">
-              <div className="absolute left-[11px] top-2 h-full w-px bg-gray-200" />
+              <div className="absolute left-[11px] top-2 h-full w-px bg-slate-200" />
               
               <div className="space-y-6">
                 <div className="relative">
                   <div className="absolute -left-6 top-1 h-3 w-3 rounded-full border-2 border-white bg-blue-500" />
                   <div className="flex flex-col gap-1">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                       {new Date(submittedAt).toLocaleString()}
                     </p>
-                    <p className="text-sm font-medium text-gray-900">Declaration Submitted</p>
-                    <p className="text-xs text-gray-600">Payload successfully validated and stored by HMRC Hub.</p>
+                    <p className="text-sm font-medium text-slate-900">Declaration Submitted</p>
+                    <p className="text-xs text-slate-600">Payload successfully validated and stored by HMRC Hub.</p>
                   </div>
                 </div>
 
@@ -532,18 +532,18 @@ export default function StatusTimelinePage() {
                   <div key={notif._id} className="relative">
                     <div className={`absolute -left-6 top-1 h-3 w-3 rounded-full border-2 border-white ${meta.color}`} />
                     <div className="flex flex-col gap-1 mt-1">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                         {new Date(notif.timestamp).toLocaleString()}
                       </p>
                       <div className="flex items-center gap-2">
-                         <p className="text-sm font-medium text-gray-900">
+                         <p className="text-sm font-medium text-slate-900">
                            {meta.title}
                          </p>
                          {meta.icon === "success" && <CheckCircle2 className="h-4 w-4 text-green-500" />}
                          {meta.icon === "danger" && <XCircle className="h-4 w-4 text-red-500" />}
                          {meta.icon === "warning" && <AlertCircle className="h-4 w-4 text-amber-500" />}
                       </div>
-                      <p className="text-xs text-gray-600">
+                      <p className="text-xs text-slate-600">
                         {meta.detail}
                       </p>
                       {meta.showFieldErrors && Array.isArray(notif.fieldErrors) && notif.fieldErrors.length > 0 && (
@@ -560,9 +560,9 @@ export default function StatusTimelinePage() {
                           {notif.errorCodes.join(", ")}
                         </p>
                       )}
-                      <details className="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded border border-gray-100 cursor-pointer">
-                        <summary className="font-mono text-[10px] font-semibold hover:text-gray-900">View Raw XML Payload</summary>
-                        <pre className="mt-2 overflow-x-auto p-2 bg-gray-900 text-green-400 rounded font-mono text-[10px] whitespace-pre-wrap max-h-96">
+                      <details className="mt-2 text-xs text-slate-500 bg-slate-50 p-2 rounded border border-slate-100 cursor-pointer">
+                        <summary className="font-mono text-[10px] font-semibold hover:text-slate-900">View Raw XML Payload</summary>
+                        <pre className="mt-2 overflow-x-auto p-2 bg-slate-900 text-green-400 rounded font-mono text-[10px] whitespace-pre-wrap max-h-96">
                           {notif.rawPayload}
                         </pre>
                       </details>
@@ -587,31 +587,31 @@ export default function StatusTimelinePage() {
       </div>
 
       {isSubmitted && (
-        <div className="rounded-xl border border-gray-200 bg-white p-6">
+        <div className="rounded-xl border border-slate-200 bg-white p-6">
           <button
             type="button"
             className="flex w-full items-center justify-between text-left"
             onClick={() => setEvidenceOpen((o) => !o)}
           >
             <div>
-              <h3 className="text-sm font-medium text-gray-900">Submission evidence &amp; audit</h3>
-              <p className="mt-0.5 text-xs text-gray-500">
+              <h3 className="text-sm font-medium text-slate-900">Submission evidence &amp; audit</h3>
+              <p className="mt-0.5 text-xs text-slate-500">
                 Immutable request XML, LRNs, and HMRC lifecycle audit rows for this declaration.
               </p>
             </div>
             <ChevronDown
-              className={`h-4 w-4 text-gray-500 transition-transform ${evidenceOpen ? "rotate-180" : ""}`}
+              className={`h-4 w-4 text-slate-500 transition-transform ${evidenceOpen ? "rotate-180" : ""}`}
             />
           </button>
 
           {evidenceOpen && (
-            <div className="mt-6 space-y-8 border-t border-gray-100 pt-6">
+            <div className="mt-6 space-y-8 border-t border-slate-100 pt-6">
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
                   HMRC requests sent ({submissions?.length ?? 0})
                 </h4>
                 {!submissions || submissions.length === 0 ? (
-                  <p className="text-xs text-gray-500">No submission evidence recorded yet.</p>
+                  <p className="text-xs text-slate-500">No submission evidence recorded yet.</p>
                 ) : (
                   <div className="space-y-3">
                     {submissions.map((sub: {
@@ -624,9 +624,9 @@ export default function StatusTimelinePage() {
                       createdAt?: number;
                       requestXml?: string;
                     }) => (
-                      <div key={sub._id} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                      <div key={sub._id} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
                         <div className="flex flex-wrap items-center gap-2 text-xs">
-                          <span className="rounded bg-white px-2 py-0.5 font-medium text-gray-800 border border-gray-200">
+                          <span className="rounded bg-white px-2 py-0.5 font-medium text-slate-800 border border-slate-200">
                             {sub.operation || "submit"}
                           </span>
                           <span
@@ -641,17 +641,17 @@ export default function StatusTimelinePage() {
                             {sub.outcome || "unknown"}
                           </span>
                           {sub.hmrcStatus != null && (
-                            <span className="text-gray-500">HTTP {sub.hmrcStatus}</span>
+                            <span className="text-slate-500">HTTP {sub.hmrcStatus}</span>
                           )}
                           {sub.lrn && (
-                            <span className="font-mono text-gray-600">LRN {sub.lrn}</span>
+                            <span className="font-mono text-slate-600">LRN {sub.lrn}</span>
                           )}
                           {sub.conversationId && (
-                            <span className="font-mono text-gray-500 truncate max-w-[12rem]" title={sub.conversationId}>
+                            <span className="font-mono text-slate-500 truncate max-w-[12rem]" title={sub.conversationId}>
                               {sub.conversationId}
                             </span>
                           )}
-                          <span className="text-gray-400 ml-auto">
+                          <span className="text-slate-400 ml-auto">
                             {sub.createdAt
                               ? new Date(sub.createdAt).toLocaleString("en-GB")
                               : ""}
@@ -669,10 +669,10 @@ export default function StatusTimelinePage() {
                               }
                             }}
                           >
-                            <summary className="cursor-pointer text-[10px] font-mono font-semibold text-gray-500 hover:text-gray-900">
+                            <summary className="cursor-pointer text-[10px] font-mono font-semibold text-slate-500 hover:text-slate-900">
                               View request XML
                             </summary>
-                            <pre className="mt-2 max-h-64 overflow-auto rounded bg-gray-900 p-2 font-mono text-[10px] text-green-400 whitespace-pre-wrap">
+                            <pre className="mt-2 max-h-64 overflow-auto rounded bg-slate-900 p-2 font-mono text-[10px] text-green-400 whitespace-pre-wrap">
                               {sub.requestXml}
                             </pre>
                           </details>
@@ -684,11 +684,11 @@ export default function StatusTimelinePage() {
               </div>
 
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
                   Audit trail ({auditLogs?.length ?? 0})
                 </h4>
                 {!auditLogs || auditLogs.length === 0 ? (
-                  <p className="text-xs text-gray-500">No audit rows for this declaration yet.</p>
+                  <p className="text-xs text-slate-500">No audit rows for this declaration yet.</p>
                 ) : (
                   <ul className="space-y-2">
                     {auditLogs.map((log: {
@@ -699,18 +699,18 @@ export default function StatusTimelinePage() {
                     }) => (
                       <li
                         key={log._id}
-                        className="rounded border border-gray-100 bg-white px-3 py-2 text-xs"
+                        className="rounded border border-slate-100 bg-white px-3 py-2 text-xs"
                       >
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium text-gray-900">{log.action}</span>
-                          <span className="text-gray-400">
+                          <span className="font-medium text-slate-900">{log.action}</span>
+                          <span className="text-slate-400">
                             {log.timestamp
                               ? new Date(log.timestamp).toLocaleString("en-GB")
                               : ""}
                           </span>
                         </div>
                         {log.details && Object.keys(log.details).length > 0 && (
-                          <pre className="mt-1 max-h-24 overflow-auto font-mono text-[10px] text-gray-600 whitespace-pre-wrap">
+                          <pre className="mt-1 max-h-24 overflow-auto font-mono text-[10px] text-slate-600 whitespace-pre-wrap">
                             {JSON.stringify(log.details, null, 2)}
                           </pre>
                         )}
@@ -727,8 +727,8 @@ export default function StatusTimelinePage() {
       <Sheet open={nextStepsOpen} onOpenChange={setNextStepsOpen}>
         <SheetContent side="right" className="overflow-y-auto sm:max-w-md w-full p-0">
           <div className="flex flex-col min-h-full">
-            <SheetHeader className="px-6 sm:px-8 pt-6 pb-6 border-b border-gray-100 bg-white sticky top-0 z-10">
-              <SheetTitle className="text-lg font-semibold text-gray-900">What happens next?</SheetTitle>
+            <SheetHeader className="px-6 sm:px-8 pt-6 pb-6 border-b border-slate-100 bg-white sticky top-0 z-10">
+              <SheetTitle className="text-lg font-semibold text-slate-900">What happens next?</SheetTitle>
               <SheetDescription className="mt-1 text-xs">
                 Expected events and required actions based on HMRC routing.
               </SheetDescription>
@@ -737,7 +737,7 @@ export default function StatusTimelinePage() {
               {latestNotificationType === "DMSACC" && (
                 <>
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-600">Your declaration has been accepted and is awaiting customs clearance. Three outcomes are possible:</p>
+                    <p className="text-sm text-slate-600">Your declaration has been accepted and is awaiting customs clearance. Three outcomes are possible:</p>
                     <div className="rounded-lg border border-green-100 bg-green-50 p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -766,11 +766,11 @@ export default function StatusTimelinePage() {
               {latestNotificationType === "DMSROG" && (
                 <>
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-600">HMRC has routed this declaration for further examination.</p>
+                    <p className="text-sm text-slate-600">HMRC has routed this declaration for further examination.</p>
                     
                     <div>
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">What HMRC may request</h4>
-                      <ul className="text-sm text-gray-700 list-disc pl-4 space-y-1">
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">What HMRC may request</h4>
+                      <ul className="text-sm text-slate-700 list-disc pl-4 space-y-1">
                         <li>Commercial invoices</li>
                         <li>Packing lists</li>
                         <li>Certificates of origin</li>
@@ -779,15 +779,15 @@ export default function StatusTimelinePage() {
                     </div>
 
                     <div>
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">How to respond</h4>
-                      <p className="text-sm text-gray-700">
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">How to respond</h4>
+                      <p className="text-sm text-slate-700">
                         Upload requested documents directly via the <strong>Secure Upload</strong> tab in your declaration toolbar. Include your MRN in all correspondence.
                       </p>
                     </div>
 
                     <div>
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Typical timeframe</h4>
-                      <p className="text-sm text-gray-700">
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Typical timeframe</h4>
+                      <p className="text-sm text-slate-700">
                         Standard documentary checks (Route 1) are typically processed within <strong>2-4 hours</strong> of upload. Physical checks (Route 2) can take <strong>24-48 hours</strong>.
                       </p>
                     </div>
@@ -797,7 +797,7 @@ export default function StatusTimelinePage() {
 
               {latestIsInvalidationSuccess && (
                 <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-slate-600">
                     HMRC accepted your <strong>cancellation (invalidation)</strong> request. The declaration is cancelled — no further import processing.
                   </p>
                   <div className="rounded-lg border border-green-100 bg-green-50 p-4">
@@ -810,14 +810,14 @@ export default function StatusTimelinePage() {
 
               {!latestIsInvalidationSuccess && (latestNotificationType === "DMSREJ" || latestNotificationType === "DMSINV") && (
                 <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-slate-600">
                     {latestNotificationType === "DMSINV"
                       ? "The declaration failed HMRC validation."
                       : "HMRC rejected this message (declaration or cancellation)."}
                   </p>
 
                   <div>
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Error codes received</h4>
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Error codes received</h4>
                     <p className="text-sm font-mono bg-red-50 text-red-700 p-2 rounded border border-red-100">
                       {notifications?.[0]?.errorCodes?.join(", ") ||
                         notifications?.[0]?.fieldErrors?.map((e: { code?: string; reason: string }) => e.code || e.reason).join(", ") ||
@@ -826,9 +826,9 @@ export default function StatusTimelinePage() {
                   </div>
 
                   <div>
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Which fields to fix</h4>
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Which fields to fix</h4>
                     {(notifications?.[0]?.fieldErrors?.length ?? 0) > 0 ? (
-                      <ul className="text-sm text-gray-700 list-disc pl-4 space-y-1">
+                      <ul className="text-sm text-slate-700 list-disc pl-4 space-y-1">
                         {notifications?.[0]?.fieldErrors?.map((err: { field: string; reason: string }, idx: number) => (
                           <li key={idx}>
                             <strong>{err.field}</strong>: {err.reason}
@@ -836,15 +836,15 @@ export default function StatusTimelinePage() {
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-sm text-gray-700">
+                      <p className="text-sm text-slate-700">
                         Check the raw XML payload for CDS codes and pointers (e.g. 06A for cancel XML).
                       </p>
                     )}
                   </div>
 
                   <div>
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Next step</h4>
-                    <p className="text-sm text-gray-700">
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Next step</h4>
+                    <p className="text-sm text-slate-700">
                       {declarationHasInvalidationAccepted(
                         (notifications || []).map((n) => notifContext(n)),
                       )
@@ -858,7 +858,7 @@ export default function StatusTimelinePage() {
               {latestNotificationType === "DMSUB" && (
                 <>
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-600">Your payload has been submitted to the HMRC Hub.</p>
+                    <p className="text-sm text-slate-600">Your payload has been submitted to the HMRC Hub.</p>
                     <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <Activity className="h-4 w-4 text-blue-600" />

@@ -48,6 +48,7 @@ export default function DashboardLayout({
     "/dashboard/user/billing": { title: "Billing", badge: "STRIPE", badgeVariant: "success" },
     "/dashboard/pricing": { title: "Plans", badge: "STRIPE", badgeVariant: "success" },
     "/dashboard/tools/hscode-lookup": { title: "HS Code Lookup", badge: "TOOLS", badgeVariant: "default" },
+    "/dashboard/tre-import": { title: "Import TRE Data", badge: "TRE", badgeVariant: "default" },
     "/dashboard/admin": { title: "Admin Overview", badge: "ADMIN", badgeVariant: "blue" },
     "/dashboard/admin/subscriptions": { title: "Vendor Stack", badge: "ADMIN", badgeVariant: "blue" },
   };
@@ -83,7 +84,7 @@ export default function DashboardLayout({
     <SidebarProvider defaultOpen={true}>
       {pathname.startsWith("/dashboard/admin") ? <AdminSidebar /> : <AppSidebar />}
       <UserSync />
-      <SidebarInset className="flex min-h-screen flex-col overflow-hidden bg-gray-50">
+      <SidebarInset className="flex min-h-screen flex-col overflow-hidden bg-slate-50">
         {pathname !== "/dashboard/inbox" && (
           <DashboardHeader
             title={config.title}

@@ -46,8 +46,8 @@ export default function AdminHmrcPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-8 p-8">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-gray-900">Users &amp; HMRC</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-xl font-semibold tracking-tight text-slate-900">Users &amp; HMRC</h1>
+        <p className="mt-1 text-sm text-slate-500">
           Environment, service connectivity, OAuth connections, and synced users.
         </p>
       </div>
@@ -58,42 +58,42 @@ export default function AdminHmrcPage() {
         <EnvCard label="Default EORI (env)" value={publicEori} mono />
       </div>
 
-      <section className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-        <div className="border-b border-gray-100 px-6 py-4">
-          <h2 className="text-sm font-semibold text-gray-900">Service connectivity</h2>
-          <p className="mt-0.5 text-xs text-gray-500">From GET /api/health — env vars populated, not live latency tests.</p>
+      <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <div className="border-b border-slate-100 px-6 py-4">
+          <h2 className="text-sm font-semibold text-slate-900">Service connectivity</h2>
+          <p className="mt-0.5 text-xs text-slate-500">From GET /api/health — env vars populated, not live latency tests.</p>
         </div>
-        <div className="grid grid-cols-1 gap-px bg-gray-100 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-px bg-slate-100 sm:grid-cols-3">
           <ServiceTile name="Convex" ok={health?.services.convex} loading={!health && !healthError} />
           <ServiceTile name="HMRC OAuth" ok={health?.services.hmrc} loading={!health && !healthError} />
           <ServiceTile name="Clerk" ok={health?.services.clerk} loading={!health && !healthError} />
         </div>
         {healthError && (
-          <p className="border-t border-gray-100 px-6 py-3 text-xs text-red-600">{healthError}</p>
+          <p className="border-t border-slate-100 px-6 py-3 text-xs text-red-600">{healthError}</p>
         )}
       </section>
 
       {panelLoading && (
-        <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-600">
-          <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+          <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
           Loading users and HMRC connections…
           {slowLoad && (
-            <span className="text-gray-500">
+            <span className="text-slate-500">
               — If this persists, run <code className="rounded bg-white px-1">npx convex dev</code> and refresh.
             </span>
           )}
         </div>
       )}
 
-      <section className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-6 py-4">
+      <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-6 py-4">
           <div>
-            <h2 className="text-sm font-semibold text-gray-900">HMRC OAuth connections</h2>
-            <p className="mt-0.5 text-xs text-gray-500">Per-user tokens in Convex — no secrets shown.</p>
+            <h2 className="text-sm font-semibold text-slate-900">HMRC OAuth connections</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Per-user tokens in Convex — no secrets shown.</p>
           </div>
           <a
             href="/api/hmrc/auth"
-            className="inline-flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-medium text-white hover:bg-gray-800"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-medium text-white hover:bg-slate-800"
           >
             <Radio className="h-3.5 w-3.5" />
             Connect HMRC (this account)
@@ -102,27 +102,27 @@ export default function AdminHmrcPage() {
         {panelLoading ? (
           <PanelSkeleton rows={2} />
         ) : hmrcConnections.length === 0 ? (
-          <p className="px-6 py-10 text-center text-xs text-gray-500">
+          <p className="px-6 py-10 text-center text-xs text-slate-500">
             No HMRC tokens yet. Click <strong>Connect HMRC</strong> above, or use Settings in the broker app.
           </p>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-gray-100 bg-gray-50/50">
+            <thead className="border-b border-slate-100 bg-slate-50/50">
               <tr>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">User</th>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">EORI</th>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Token expires</th>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Status</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">User</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">EORI</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Token expires</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {hmrcConnections.map((row) => (
-                <tr key={row.userId} className="hover:bg-gray-50/50">
-                  <td className="px-6 py-3 text-xs font-medium text-gray-900">
+                <tr key={row.userId} className="hover:bg-slate-50/50">
+                  <td className="px-6 py-3 text-xs font-medium text-slate-900">
                     {row.ownerEmail || row.ownerName || row.userId.slice(0, 16)}
                   </td>
-                  <td className="px-6 py-3 font-mono text-xs text-gray-600">{row.eori || "—"}</td>
-                  <td className="px-6 py-3 text-xs text-gray-600">
+                  <td className="px-6 py-3 font-mono text-xs text-slate-600">{row.eori || "—"}</td>
+                  <td className="px-6 py-3 text-xs text-slate-600">
                     {row.expiresAt ? new Date(row.expiresAt).toLocaleString("en-GB") : "—"}
                   </td>
                   <td className="px-6 py-3">
@@ -141,48 +141,48 @@ export default function AdminHmrcPage() {
             </tbody>
           </table>
         )}
-        <div className="border-t border-gray-100 px-6 py-3">
+        <div className="border-t border-slate-100 px-6 py-3">
           <Link href="/dashboard/settings" className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline">
             User-facing HMRC settings <ExternalLink className="h-3 w-3" />
           </Link>
         </div>
       </section>
 
-      <section className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-        <div className="border-b border-gray-100 px-6 py-4">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-            <Users className="h-4 w-4 text-gray-400" />
+      <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <div className="border-b border-slate-100 px-6 py-4">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <Users className="h-4 w-4 text-slate-400" />
             Platform users
           </h2>
         </div>
         {panelLoading ? (
           <PanelSkeleton rows={3} />
         ) : platformUsers.length === 0 ? (
-          <p className="px-6 py-10 text-center text-xs text-gray-500">
+          <p className="px-6 py-10 text-center text-xs text-slate-500">
             No users synced from Clerk yet — sign in once to create your row in Convex.
           </p>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-gray-100 bg-gray-50/50">
+            <thead className="border-b border-slate-100 bg-slate-50/50">
               <tr>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Email</th>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Role</th>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">HMRC</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Email</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Role</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">HMRC</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {platformUsers.map((user) => (
-                <tr key={user.clerkId} className="hover:bg-gray-50/50">
+                <tr key={user.clerkId} className="hover:bg-slate-50/50">
                   <td className="px-6 py-3">
-                    <p className="text-xs font-medium text-gray-900">{user.email || "—"}</p>
-                    {user.name && <p className="text-[10px] text-gray-400">{user.name}</p>}
+                    <p className="text-xs font-medium text-slate-900">{user.email || "—"}</p>
+                    {user.name && <p className="text-[10px] text-slate-400">{user.name}</p>}
                   </td>
-                  <td className="px-6 py-3 text-xs capitalize text-gray-600">{user.role || "user"}</td>
-                  <td className="px-6 py-3 text-xs text-gray-600">
+                  <td className="px-6 py-3 text-xs capitalize text-slate-600">{user.role || "user"}</td>
+                  <td className="px-6 py-3 text-xs text-slate-600">
                     {user.hmrcConnected ? (
                       <span className="text-green-700">Connected{user.hmrcEori ? ` · ${user.hmrcEori}` : ""}</span>
                     ) : (
-                      <span className="text-gray-400">Not connected</span>
+                      <span className="text-slate-400">Not connected</span>
                     )}
                   </td>
                 </tr>
@@ -199,7 +199,7 @@ function PanelSkeleton({ rows }: { rows: number }) {
   return (
     <div className="space-y-2 px-6 py-6">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="h-8 animate-pulse rounded bg-gray-100" />
+        <div key={i} className="h-8 animate-pulse rounded bg-slate-100" />
       ))}
     </div>
   );
@@ -207,9 +207,9 @@ function PanelSkeleton({ rows }: { rows: number }) {
 
 function EnvCard({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">{label}</p>
-      <p className={cn("mt-2 text-sm font-semibold text-gray-900", mono && "font-mono text-xs")}>{value}</p>
+    <div className="rounded-xl border border-slate-200 bg-white p-5">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{label}</p>
+      <p className={cn("mt-2 text-sm font-semibold text-slate-900", mono && "font-mono text-xs")}>{value}</p>
     </div>
   );
 }
@@ -217,9 +217,9 @@ function EnvCard({ label, value, mono }: { label: string; value: string; mono?: 
 function ServiceTile({ name, ok, loading }: { name: string; ok?: boolean; loading?: boolean }) {
   return (
     <div className="bg-white px-6 py-4">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">{name}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{name}</p>
       {loading ? (
-        <Loader2 className="mt-2 h-4 w-4 animate-spin text-gray-400" />
+        <Loader2 className="mt-2 h-4 w-4 animate-spin text-slate-400" />
       ) : ok ? (
         <p className="mt-2 flex items-center gap-1 text-xs font-medium text-green-700">
           <CheckCircle2 className="h-3.5 w-3.5" /> Configured

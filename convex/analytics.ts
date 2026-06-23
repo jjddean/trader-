@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
+import { getActiveOrgId } from "./lib/org_access";
 
 export const suggestFromHistory = query({
   args: {
@@ -10,12 +11,20 @@ export const suggestFromHistory = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return { hsCode: null, confidence: 0 };
 
-    const records = await ctx.db
-      .query("historical_declarations")
-      .withIndex("by_user_country", (q) =>
-        q.eq("userId", identity.subject).eq("countryOfOriginCode", args.originCountry),
-      )
-      .take(1000);
+    const orgId = await getActiveOrgId(ctx, identity.subject);
+    const records = orgId
+      ? await ctx.db
+          .query("historical_declarations")
+          .withIndex("by_org_country", (q) =>
+            q.eq("orgId", orgId).eq("countryOfOriginCode", args.originCountry),
+          )
+          .take(1000)
+      : await ctx.db
+          .query("historical_declarations")
+          .withIndex("by_user_country", (q) =>
+            q.eq("userId", identity.subject).eq("countryOfOriginCode", args.originCountry),
+          )
+          .take(1000);
 
     if (records.length === 0) return { hsCode: null, confidence: 0 };
 

@@ -86,8 +86,8 @@ function ResultActionButton({
         isCopied
           ? "border-emerald-300 bg-emerald-50 text-emerald-700"
           : variant === "secondary"
-            ? "border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-            : "border-gray-300 bg-gray-50 text-gray-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700",
+            ? "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+            : "border-slate-300 bg-slate-50 text-slate-700 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700",
       )}
     >
       {isCopied ? (
@@ -133,10 +133,10 @@ function HSCodeResultRow({
   }, []);
 
   return (
-    <div className="flex items-start gap-3 px-3 py-3 transition-colors hover:bg-gray-50/80 sm:px-4 sm:py-4">
+    <div className="flex items-start gap-3 px-3 py-3 transition-colors hover:bg-slate-50/80 sm:px-4 sm:py-4">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-bold tracking-tight text-blue-700">{item.code}</p>
-        <p className="mt-1 text-xs leading-relaxed text-gray-600">{item.description}</p>
+        <p className="mt-1 text-xs leading-relaxed text-slate-600">{item.description}</p>
         {needsSupplementary && (
           <p className="mt-1.5 text-[10px] font-medium text-amber-700">
             This code may require supplementary units (DE 6/2) on the goods item.
@@ -150,7 +150,7 @@ function HSCodeResultRow({
             type="button"
             disabled={applying}
             onClick={() => onApply(item.code, item.description)}
-            className="flex min-w-[88px] items-center justify-center rounded-md border border-gray-900 bg-gray-900 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+            className="flex min-w-[88px] items-center justify-center rounded-md border border-slate-900 bg-slate-900 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
           >
             {applying ? "Applying…" : "Apply"}
           </button>
@@ -172,7 +172,7 @@ function HSCodeResultRow({
           href={tariffUrl(item.code)}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex min-w-[88px] items-center justify-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+          className="flex min-w-[88px] items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
         >
           <ExternalLink className="h-3 w-3 opacity-70" />
           Tariff
@@ -318,7 +318,7 @@ export function HSCodeLookup({
     displayResults.length > 0 ? (
       <div
         className={cn(
-          "divide-y divide-gray-100 overflow-y-auto rounded-md border border-gray-100 bg-white",
+          "divide-y divide-slate-100 overflow-y-auto rounded-md border border-slate-100 bg-white",
           variant === "card" ? "mt-3 max-h-[420px]" : "max-h-[560px] rounded-2xl border-slate-100 shadow-sm",
         )}
       >
@@ -337,11 +337,11 @@ export function HSCodeLookup({
 
   if (variant === "card") {
     return (
-      <div className={cn("rounded-lg border border-gray-200 bg-white p-5 shadow-sm", className)}>
+      <div className={cn("rounded-lg border border-slate-200 bg-white p-5 shadow-sm", className)}>
         <div className="mb-3 flex items-center gap-2">
-          <BookOpen className="h-4 w-4 text-gray-500" />
-          <h3 className="text-sm font-semibold text-gray-900">HS Code Lookup</h3>
-          {!isDbLoaded && <span className="text-[11px] text-gray-400">Loading database…</span>}
+          <BookOpen className="h-4 w-4 text-slate-500" />
+          <h3 className="text-sm font-semibold text-slate-900">HS Code Lookup</h3>
+          {!isDbLoaded && <span className="text-[11px] text-slate-400">Loading database…</span>}
         </div>
 
         <div className="flex gap-2">
@@ -352,21 +352,21 @@ export function HSCodeLookup({
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             disabled={!isDbLoaded}
-            className="h-9 flex-1 border-gray-200 bg-white text-xs shadow-none placeholder:text-gray-400 focus-visible:border-gray-300 focus-visible:ring-0"
+            className="h-9 flex-1 border-slate-200 bg-white text-xs shadow-none placeholder:text-slate-400 focus-visible:border-slate-300 focus-visible:ring-0"
           />
           <Button
             type="button"
             size="icon"
             onClick={handleSearch}
             disabled={!isDbLoaded || loading || !searchTerm.trim()}
-            className="size-9 shrink-0 bg-[#0f172a] text-white hover:bg-gray-800"
+            className="size-9 shrink-0 bg-[#0f172a] text-white hover:bg-slate-800"
           >
             {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
           </Button>
         </div>
 
         {searched && displayResults.length === 0 && !loading && (
-          <div className="mt-4 flex items-center gap-2 rounded-md border border-dashed border-gray-200 bg-gray-50 px-3 py-6 text-xs text-gray-500">
+          <div className="mt-4 flex items-center gap-2 rounded-md border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-xs text-slate-500">
             <AlertCircle className="h-4 w-4 shrink-0" />
             No HS codes found for &ldquo;{searchTerm}&rdquo;
           </div>
@@ -381,18 +381,18 @@ export function HSCodeLookup({
 
         {!searched && !loading && (
           <div className="mt-6 flex flex-col items-center py-6 text-center">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-              <Search className="h-4 w-4 text-gray-300" />
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+              <Search className="h-4 w-4 text-slate-300" />
             </div>
-            <h4 className="text-sm font-semibold text-gray-900">Instant tariff search</h4>
-            <p className="mt-1 max-w-sm text-xs text-gray-500">
+            <h4 className="text-sm font-semibold text-slate-900">Instant tariff search</h4>
+            <p className="mt-1 max-w-sm text-xs text-slate-500">
               Find commodity codes from HMRC Trade Tariff. Copy the code onto your declaration item; use tariff
               text as a reference for your trade description.
             </p>
           </div>
         )}
 
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3 text-[10px] text-gray-400">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-[10px] text-slate-400">
           <span>
             {isDbLoaded
               ? `Database ready (${staticCodes.length.toLocaleString()} codes)`
@@ -409,18 +409,18 @@ export function HSCodeLookup({
       <DescriptionGuidance />
 
       <div className="relative w-full">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input
           type="text"
           placeholder="Search by product description or HS Code..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-          className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-16 text-sm outline-none transition-colors focus:border-gray-400"
+          className="h-9 w-full rounded-md border border-slate-200 bg-white pl-9 pr-16 text-sm outline-none transition-colors focus:border-slate-400"
         />
         <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center">
           {loading ? (
-            <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+            <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
           ) : (
             searchTerm.trim() && (
               <button

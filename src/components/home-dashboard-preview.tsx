@@ -91,7 +91,7 @@ function StatusPill({ tone, label }: { tone: string; label: string }) {
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-700">
+    <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
       <FileText className="h-3 w-3" />
       {label}
     </span>
@@ -109,18 +109,18 @@ export function HomeDashboardPreview() {
         className="w-[980px] max-h-[660px] overflow-hidden rounded-[22px] border border-[#dbe4f0] bg-white shadow-[0_24px_80px_rgba(15,23,42,0.12)]"
         style={{ zoom: "min(1, calc(100cqw / 980px))" }}
       >
-        <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-2.5">
+        <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-red-300" />
           <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />
           <span className="h-2.5 w-2.5 rounded-full bg-green-300" />
-          <div className="ml-3 rounded-full border border-gray-200 bg-white px-3 py-1 text-[10px] text-gray-500">
+          <div className="ml-3 rounded-full border border-slate-200 bg-white px-3 py-1 text-[10px] text-slate-500">
             freightcode.co.uk/dashboard
           </div>
         </div>
 
         <div className="grid min-h-[540px] grid-cols-[180px_minmax(0,1fr)]">
-          <aside className="flex flex-col border-r border-gray-200 bg-gray-50 h-full">
-            <div className="flex h-12 shrink-0 items-center border-b border-gray-200 px-4">
+          <aside className="flex flex-col border-r border-slate-200 bg-slate-50 h-full">
+            <div className="flex h-12 shrink-0 items-center border-b border-slate-200 px-4">
               <div className="flex items-baseline whitespace-nowrap text-[#020817] leading-none">
                 <span className="text-[16px] font-bold tracking-tight">freight</span>
                 <span className="text-[16px] font-bold tracking-tight text-slate-500">code</span>
@@ -129,77 +129,77 @@ export function HomeDashboardPreview() {
             </div>
 
             <div className="flex-1 px-3 py-2.5">
-              <p className="mb-2 px-2 text-[9px] font-medium uppercase tracking-[0.2em] text-gray-400">
+              <p className="mb-2 px-2 text-[9px] font-medium uppercase tracking-[0.2em] text-slate-400">
                 Platform
               </p>
               <nav className="space-y-0.5">
-                <div className="flex items-center gap-2 rounded-md bg-gray-100 px-3 py-1.5 text-[11px] text-black">
-                  <LayoutDashboard className="h-3 w-3 text-gray-700" />
+                <div className="flex items-center gap-2 rounded-md bg-slate-100 px-3 py-1.5 text-[11px] text-black">
+                  <LayoutDashboard className="h-3 w-3 text-slate-700" />
                   <span>Dashboard</span>
                 </div>
-                <div className="flex items-center gap-2 rounded-md px-3 py-1.5 text-[11px] text-gray-500">
-                  <FileText className="h-3 w-3 text-gray-400" />
+                <div className="flex items-center gap-2 rounded-md px-3 py-1.5 text-[11px] text-slate-500">
+                  <FileText className="h-3 w-3 text-slate-400" />
                   <span>Documents</span>
                 </div>
-                <div className="flex items-center gap-2 rounded-md px-3 py-1.5 text-[11px] text-gray-500">
-                  <Compass className="h-3 w-3 text-gray-400" />
+                <div className="flex items-center gap-2 rounded-md px-3 py-1.5 text-[11px] text-slate-500">
+                  <Compass className="h-3 w-3 text-slate-400" />
                   <span>Declarations</span>
                 </div>
-                <div className="rounded-md px-3 py-1.5 text-[11px] text-gray-500">
+                <div className="rounded-md px-3 py-1.5 text-[11px] text-slate-500">
                   <div className="mb-1.5 flex items-center gap-2">
-                    <ShieldCheck className="h-3 w-3 text-gray-400" />
+                    <ShieldCheck className="h-3 w-3 text-slate-400" />
                     <span>Compliance</span>
                   </div>
-                  <div className="ml-4 space-y-1.5 border-l border-gray-200 pl-3 text-[10px]">
-                    <div className="text-gray-500">Audit</div>
+                  <div className="ml-4 space-y-1.5 border-l border-slate-200 pl-3 text-[10px]">
+                    <div className="text-slate-500">Audit</div>
                     <div className="font-medium text-black">Reports</div>
-                    <div className="text-gray-500">HS Code Lookup</div>
+                    <div className="text-slate-500">HS Code Lookup</div>
                   </div>
                 </div>
               </nav>
             </div>
 
-            <div className="shrink-0 space-y-0.5 border-t border-gray-200 px-3 py-2">
-              <div className="flex items-center gap-2 rounded-md px-2.5 py-1 text-[10px] text-gray-500">
-                <HelpCircle className="h-3 w-3 text-gray-400" />
+            <div className="shrink-0 space-y-0.5 border-t border-slate-200 px-3 py-2">
+              <div className="flex items-center gap-2 rounded-md px-2.5 py-1 text-[10px] text-slate-500">
+                <HelpCircle className="h-3 w-3 text-slate-400" />
                 <span>User Guide</span>
               </div>
-              <div className="flex items-center gap-2 rounded-md px-2.5 py-1 text-[10px] text-gray-500">
-                <Settings className="h-3 w-3 text-gray-400" />
+              <div className="flex items-center gap-2 rounded-md px-2.5 py-1 text-[10px] text-slate-500">
+                <Settings className="h-3 w-3 text-slate-400" />
                 <span>Settings</span>
               </div>
-              <div className="mt-1.5 flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2">
+              <div className="mt-1.5 flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2">
                 <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#111827] text-[10px] font-semibold text-white">
                   JC
                 </div>
                 <div className="flex min-w-0 flex-col">
-                  <span className="truncate text-xs font-normal text-gray-700">James Carter</span>
-                  <span className="text-[10px] text-gray-400">Enterprise</span>
+                  <span className="truncate text-xs font-normal text-slate-700">James Carter</span>
+                  <span className="text-[10px] text-slate-400">Enterprise</span>
                 </div>
               </div>
             </div>
           </aside>
 
           <div className="bg-white">
-            <div className="flex h-12 items-center justify-between border-b border-gray-200 px-5">
+            <div className="flex h-12 items-center justify-between border-b border-slate-200 px-5">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="h-4 w-px bg-gray-200" />
+                <div className="h-4 w-px bg-slate-200" />
                 <div className="truncate text-[13px] font-semibold text-black">Customs Dashboard</div>
                 <span className="rounded border border-blue-100 bg-blue-50 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-wide text-blue-600">
                   Sandbox
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-[11px] text-gray-500">
+                <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] text-slate-500">
                   <Search className="h-3 w-3" />
                   <span>Global Search</span>
                 </div>
-                <div className="flex items-center gap-1 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-medium text-gray-700">
+                <div className="flex items-center gap-1 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-700">
                   <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
                   HMRC
                 </div>
-                <button className="flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 bg-white">
-                  <Bell className="h-3 w-3 text-gray-400" />
+                <button className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white">
+                  <Bell className="h-3 w-3 text-slate-400" />
                 </button>
               </div>
             </div>
@@ -207,9 +207,9 @@ export function HomeDashboardPreview() {
             <div className="space-y-4 p-4.5">
               <div className="grid gap-4 grid-cols-4">
                 {kpis.map((item) => (
-                  <div key={item.label} className="rounded-xl border border-[#e9e9e7] bg-white p-4">
+                  <div key={item.label} className="rounded-xl border border-slate-200 bg-white p-4">
                     <div className="mb-2 flex items-center justify-between">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-gray-500">
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-slate-500">
                         {item.label}
                       </p>
                       <div
@@ -220,43 +220,43 @@ export function HomeDashboardPreview() {
                               ? "bg-amber-500"
                               : item.tone === "info"
                                 ? "bg-blue-500"
-                                : "bg-gray-300"
+                                : "bg-slate-300"
                         }`}
                       />
                     </div>
                     <div className="text-[22px] font-medium tracking-tight text-[#020817]">{item.value}</div>
-                    <p className="mt-1 text-[10px] text-gray-500">{item.detail}</p>
+                    <p className="mt-1 text-[10px] text-slate-500">{item.detail}</p>
                   </div>
                 ))}
               </div>
 
               <div className="grid gap-4 grid-cols-[1.2fr_0.8fr]">
-                <div className="overflow-hidden rounded-xl border border-[#e9e9e7] bg-white">
-                  <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50/60 px-4 py-2.5">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/60 px-4 py-2.5">
                     <div>
                       <h4 className="text-[15px] font-medium text-black">Recent Declarations</h4>
-                      <p className="text-[10px] text-gray-500">Tracked across linked HMRC activity</p>
+                      <p className="text-[10px] text-slate-500">Tracked across linked HMRC activity</p>
                     </div>
-                    <div className="rounded-md bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-600">
+                    <div className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-600">
                       24h
                     </div>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left">
-                      <thead className="border-b border-gray-100">
-                        <tr className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-400">
+                      <thead className="border-b border-slate-100">
+                        <tr className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                           <th className="px-4 py-2.5">MRN / LRN</th>
                           <th className="px-4 py-2.5">Type</th>
                           <th className="px-4 py-2.5">Updated</th>
                           <th className="px-4 py-2.5">Status</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+                      <tbody className="divide-y divide-slate-100">
                         {declarationRows.map((row) => (
-                        <tr key={row.mrn} className="hover:bg-gray-50/60">
-                            <td className="px-4 py-3.5 text-[11px] font-semibold text-gray-900">{row.mrn}</td>
-                            <td className="px-4 py-3.5 text-[11px] text-gray-500">{row.type}</td>
-                            <td className="px-4 py-3.5 text-[11px] text-gray-500">{row.updated}</td>
+                        <tr key={row.mrn} className="hover:bg-slate-50/60">
+                            <td className="px-4 py-3.5 text-[11px] font-semibold text-slate-900">{row.mrn}</td>
+                            <td className="px-4 py-3.5 text-[11px] text-slate-500">{row.type}</td>
+                            <td className="px-4 py-3.5 text-[11px] text-slate-500">{row.updated}</td>
                             <td className="px-4 py-3.5">
                               <StatusPill tone={row.statusTone} label={row.status} />
                             </td>
@@ -267,10 +267,10 @@ export function HomeDashboardPreview() {
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border border-[#e9e9e7] bg-white">
-                  <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50/60 px-4 py-2.5">
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/60 px-4 py-2.5">
                     <h4 className="text-[13px] font-medium text-black">Duty by HS Code</h4>
-                    <span className="text-[10px] text-gray-400">Last 30d</span>
+                    <span className="text-[10px] text-slate-400">Last 30d</span>
                   </div>
                   <div className="p-4">
                     <svg viewBox="0 0 300 120" preserveAspectRatio="none" className="h-[120px] w-full">
@@ -305,7 +305,7 @@ export function HomeDashboardPreview() {
                         <circle key={i} cx={x} cy={y} r="3" fill="#111827" />
                       ))}
                     </svg>
-                    <div className="mt-2 grid grid-cols-6 text-center text-[10px] text-gray-400">
+                    <div className="mt-2 grid grid-cols-6 text-center text-[10px] text-slate-400">
                       {hsCodeLabels.map((label) => (
                         <span key={label}>{label}</span>
                       ))}

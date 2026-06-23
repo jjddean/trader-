@@ -108,11 +108,11 @@ export default function AuditLogsPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-8">
       <div>
-        <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-gray-900">
-          <History className="h-5 w-5 text-gray-400" />
+        <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-slate-900">
+          <History className="h-5 w-5 text-slate-400" />
           Activity Log
         </h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-slate-500">
           Submissions, HMRC OAuth, and platform actions across all users.
         </p>
       </div>
@@ -126,19 +126,19 @@ export default function AuditLogsPage() {
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <div className="relative flex-1 md:max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="Search action, user, MRN, declaration…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-gray-400"
+            className="h-9 w-full rounded-md border border-slate-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-slate-400"
           />
         </div>
         <select
           value={actionFilter}
           onChange={(e) => setActionFilter(e.target.value as ActionFilter)}
-          className="h-9 rounded-md border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700"
+          className="h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700"
         >
           <option value="all">All categories</option>
           <option value="submissions">Submissions</option>
@@ -146,23 +146,23 @@ export default function AuditLogsPage() {
           <option value="platform">Platform</option>
           <option value="errors">Errors</option>
         </select>
-        <span className="text-xs tabular-nums text-gray-400">{filteredLogs.length} shown</span>
+        <span className="text-xs tabular-nums text-slate-400">{filteredLogs.length} shown</span>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         {filteredLogs.length === 0 ? (
-          <p className="px-6 py-12 text-center text-xs text-gray-500">No activity matches your filters.</p>
+          <p className="px-6 py-12 text-center text-xs text-slate-500">No activity matches your filters.</p>
         ) : (
           <table className="w-full border-collapse text-left text-sm">
-            <thead className="border-b border-gray-100 bg-gray-50/50">
+            <thead className="border-b border-slate-100 bg-slate-50/50">
               <tr>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Time</th>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Action</th>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">User</th>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Details</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Time</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Action</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">User</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Details</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {filteredLogs.map((log) => {
                 const action = log.action ?? "unknown";
                 const category = actionCategory(action);
@@ -172,8 +172,8 @@ export default function AuditLogsPage() {
                   : null;
 
                 return (
-                  <tr key={log._id} className="align-top hover:bg-gray-50/50">
-                    <td className="whitespace-nowrap px-6 py-3 text-[11px] font-mono text-gray-500">
+                  <tr key={log._id} className="align-top hover:bg-slate-50/50">
+                    <td className="whitespace-nowrap px-6 py-3 text-[11px] font-mono text-slate-500">
                       {formatTimestamp(log.timestamp)}
                     </td>
                     <td className="px-6 py-3">
@@ -183,27 +183,27 @@ export default function AuditLogsPage() {
                           category === "errors" && "border-red-100 bg-red-50 text-red-700",
                           category === "submissions" && "border-blue-100 bg-blue-50 text-blue-700",
                           category === "hmrc" && "border-green-100 bg-green-50 text-green-700",
-                          category === "platform" && "border-gray-100 bg-gray-50 text-gray-700",
+                          category === "platform" && "border-slate-100 bg-slate-50 text-slate-700",
                         )}
                       >
                         {formatActionLabel(action)}
                       </span>
                     </td>
                     <td className="px-6 py-3">
-                      <p className="text-xs font-medium text-gray-900">{formatUserId(log.userId)}</p>
+                      <p className="text-xs font-medium text-slate-900">{formatUserId(log.userId)}</p>
                       {log.ipAddress ? (
-                        <p className="mt-0.5 font-mono text-[10px] text-gray-400">{log.ipAddress}</p>
+                        <p className="mt-0.5 font-mono text-[10px] text-slate-400">{log.ipAddress}</p>
                       ) : null}
                     </td>
                     <td className="px-6 py-3">
                       {summary.length === 0 ? (
-                        <span className="text-xs text-gray-400">—</span>
+                        <span className="text-xs text-slate-400">—</span>
                       ) : (
                         <dl className="space-y-0.5">
                           {summary.map(({ key, value }) => (
                             <div key={key} className="flex flex-wrap gap-x-2 text-[11px]">
-                              <dt className="font-medium text-gray-500">{key}</dt>
-                              <dd className="font-mono text-gray-700">
+                              <dt className="font-medium text-slate-500">{key}</dt>
+                              <dd className="font-mono text-slate-700">
                                 {key === "declarationId" && declarationId ? (
                                   <Link
                                     href={`/dashboard/declarations/${declarationId}/status`}
@@ -221,10 +221,10 @@ export default function AuditLogsPage() {
                       )}
                       {log.details && Object.keys(log.details).length > summary.length ? (
                         <details className="mt-1.5">
-                          <summary className="cursor-pointer text-[10px] font-medium text-gray-400 hover:text-gray-600">
+                          <summary className="cursor-pointer text-[10px] font-medium text-slate-400 hover:text-slate-600">
                             Full payload
                           </summary>
-                          <pre className="mt-1 max-h-32 overflow-auto rounded border border-gray-100 bg-gray-50/80 p-2 font-mono text-[10px] text-gray-600 whitespace-pre-wrap">
+                          <pre className="mt-1 max-h-32 overflow-auto rounded border border-slate-100 bg-slate-50/80 p-2 font-mono text-[10px] text-slate-600 whitespace-pre-wrap">
                             {JSON.stringify(log.details, null, 2)}
                           </pre>
                         </details>
@@ -238,7 +238,7 @@ export default function AuditLogsPage() {
         )}
       </div>
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-slate-500">
         Showing the 100 most recent events. For HMRC DMS correspondence, see{" "}
         <Link href="/dashboard/admin/notifications" className="text-blue-600 hover:underline">
           HMRC Notifications
@@ -261,12 +261,12 @@ function StatTile({
   accent?: "danger";
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">{label}</p>
-      <p className={cn("mt-1.5 text-2xl font-semibold tabular-nums", accent === "danger" ? "text-red-700" : "text-gray-900")}>
+    <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{label}</p>
+      <p className={cn("mt-1.5 text-2xl font-semibold tabular-nums", accent === "danger" ? "text-red-700" : "text-slate-900")}>
         {value}
       </p>
-      <p className="mt-0.5 text-[11px] text-gray-500">{hint}</p>
+      <p className="mt-0.5 text-[11px] text-slate-500">{hint}</p>
     </div>
   );
 }

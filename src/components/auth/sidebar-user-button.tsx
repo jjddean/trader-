@@ -9,7 +9,7 @@ const compactUserAppearance = {
   elements: {
     rootBox: "shrink-0",
     avatarBox: "h-7 w-7",
-    userButtonPopoverCard: "w-52 rounded-md border border-gray-200 shadow-lg",
+    userButtonPopoverCard: "w-52 rounded-md border border-slate-200 shadow-lg",
     userButtonPopoverMain: "gap-1 p-1.5",
     userButtonPopoverActions: "gap-0 p-1.5 pt-0",
     userButtonPopoverActionButton: "rounded px-1.5 py-1",
@@ -18,7 +18,7 @@ const compactUserAppearance = {
     userButtonPopoverFooter: "hidden",
     userPreviewAvatarBox: "h-8 w-8",
     userPreviewMainIdentifier: "text-[12px] font-medium leading-tight",
-    userPreviewSecondaryIdentifier: "text-[10px] leading-tight text-gray-500",
+    userPreviewSecondaryIdentifier: "text-[10px] leading-tight text-slate-500",
   },
 } as const;
 

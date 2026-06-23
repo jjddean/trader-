@@ -456,8 +456,8 @@ function DocumentsPageInner() {
       {/* PAGE HEADER */}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Documents</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900">Documents</h1>
+          <p className="mt-1 text-sm text-slate-500">
             Supporting documents required for CDS declarations
           </p>
         </div>
@@ -471,7 +471,7 @@ function DocumentsPageInner() {
             Upload document
           </Button>
           <Button
-            className="h-9 text-[0.6875rem] font-medium tracking-normal bg-black text-white hover:bg-gray-800"
+            className="h-9 text-[0.6875rem] font-medium tracking-normal bg-black text-white hover:bg-slate-800"
             onClick={() => setIsPasteOpen(true)}
           >
             <ClipboardPaste className="mr-2 h-4 w-4" />
@@ -482,18 +482,18 @@ function DocumentsPageInner() {
 
       {/* KPI CARDS ROW */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
-          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-slate-500 uppercase">
             Total Documents
           </p>
           <h2 className="text-2xl font-medium tracking-tight text-foreground tabular-nums">
             {stats.total}
           </h2>
-          <p className="mt-1 text-[0.625rem] text-gray-500">across {stats.declCount} declarations</p>
+          <p className="mt-1 text-[0.625rem] text-slate-500">across {stats.declCount} declarations</p>
         </div>
 
-        <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
-          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-slate-500 uppercase">
             Verified By AI
           </p>
           <div className="flex items-baseline gap-2">
@@ -501,11 +501,11 @@ function DocumentsPageInner() {
               {stats.verified}
             </h2>
           </div>
-          <p className="mt-1 text-[0.625rem] text-gray-500">no issues found</p>
+          <p className="mt-1 text-[0.625rem] text-slate-500">no issues found</p>
         </div>
 
-        <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
-          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-slate-500 uppercase">
             Needs Review
           </p>
           <div className="flex items-baseline gap-2">
@@ -513,17 +513,17 @@ function DocumentsPageInner() {
               {stats.review}
             </h2>
           </div>
-          <p className="mt-1 text-[0.625rem] text-gray-500">compliance flags</p>
+          <p className="mt-1 text-[0.625rem] text-slate-500">compliance flags</p>
         </div>
 
-        <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
-          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <p className="mb-1 text-[0.625rem] font-semibold tracking-widest text-slate-500 uppercase">
             Missing
           </p>
           <h2 className="text-2xl font-medium tracking-tight text-red-600 tabular-nums">
             {stats.missing}
           </h2>
-          <p className="mt-1 text-[0.625rem] text-gray-500">required for submission</p>
+          <p className="mt-1 text-[0.625rem] text-slate-500">required for submission</p>
         </div>
       </div>
 
@@ -542,7 +542,7 @@ function DocumentsPageInner() {
         canGenerateTemplates={allDeclarationOptions.length > 0}
       />
       
-      <p className="text-[0.6875rem] text-gray-400 flex items-center gap-1.5 mt-3">
+      <p className="text-[0.6875rem] text-slate-400 flex items-center gap-1.5 mt-3">
         <Info className="h-3.5 w-3.5" />
         DE 2/3 = CDS Data Element reference used in declaration submission
       </p>
@@ -552,10 +552,10 @@ function DocumentsPageInner() {
         <SheetContent side="right" className="overflow-y-auto sm:max-w-none w-full p-0" style={{ maxWidth: '800px' }}>
           {selectedDocument && (
             <div className="flex flex-col min-h-full">
-              <SheetHeader className="px-6 sm:px-8 pt-6 pb-6 border-b border-gray-100 flex flex-row items-center justify-between shrink-0 sticky top-0 bg-white z-10">
+              <SheetHeader className="px-6 sm:px-8 pt-6 pb-6 border-b border-slate-100 flex flex-row items-center justify-between shrink-0 sticky top-0 bg-white z-10">
                 <div>
-                  <SheetTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-                    <FileText className="h-4 w-4 text-gray-400" />
+                  <SheetTitle className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+                    <FileText className="h-4 w-4 text-slate-400" />
                     <span className="truncate max-w-[300px]">{selectedDocument.name}</span>
                     {selectedDocument.status === 'verified' && (
                       <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 ml-2 rounded-md font-medium text-[0.625rem]">Verified</Badge>
@@ -569,7 +569,7 @@ function DocumentsPageInner() {
                   </SheetTitle>
                   <SheetDescription className="mt-1 flex items-center gap-2 text-xs">
                     <span>{selectedDocument.typeName} ({selectedDocument.type})</span>
-                    <span className="h-1 w-1 rounded-full bg-gray-300" />
+                    <span className="h-1 w-1 rounded-full bg-slate-300" />
                     <span>{selectedDocument.date}</span>
                   </SheetDescription>
                 </div>
@@ -580,15 +580,15 @@ function DocumentsPageInner() {
                   <button
                     onClick={handleTriggerReplace}
                     disabled={isDocActionLoading}
-                    className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer disabled:opacity-50"
+                    className="group flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-1.5 transition-colors hover:bg-slate-100 cursor-pointer disabled:opacity-50"
                   >
-                    <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">REPLACE</span>
-                    <Upload className="h-3 w-3 text-gray-300 transition-colors group-hover:text-gray-500" />
+                    <span className="text-[0.6875rem] text-slate-700 font-medium tracking-wide">REPLACE</span>
+                    <Upload className="h-3 w-3 text-slate-300 transition-colors group-hover:text-slate-500" />
                   </button>
                   <button
                     onClick={handleRemoveDocument}
                     disabled={isDocActionLoading}
-                    className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-red-50 cursor-pointer disabled:opacity-50"
+                    className="group flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-1.5 transition-colors hover:bg-red-50 cursor-pointer disabled:opacity-50"
                   >
                     <span className="text-[0.6875rem] text-red-600 font-medium tracking-wide">REMOVE</span>
                     <Trash2 className="h-3 w-3 text-red-400 transition-colors group-hover:text-red-500" />
@@ -596,10 +596,10 @@ function DocumentsPageInner() {
                   <button
                     onClick={handleDownloadDocument}
                     disabled={isDocActionLoading}
-                    className="group flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-1.5 transition-colors hover:bg-gray-100 cursor-pointer disabled:opacity-50"
+                    className="group flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-1.5 transition-colors hover:bg-slate-100 cursor-pointer disabled:opacity-50"
                   >
-                    <span className="text-[0.6875rem] text-gray-700 font-medium tracking-wide">DOWNLOAD</span>
-                    <Download className="h-3 w-3 text-gray-300 transition-colors group-hover:text-gray-500" />
+                    <span className="text-[0.6875rem] text-slate-700 font-medium tracking-wide">DOWNLOAD</span>
+                    <Download className="h-3 w-3 text-slate-300 transition-colors group-hover:text-slate-500" />
                   </button>
                 </div>
                 )}
@@ -607,34 +607,34 @@ function DocumentsPageInner() {
 
               <div className="pt-6 px-6 sm:px-8 pb-12 space-y-8">
                 {/* Header Summary Section */}
-                <section className="bg-gray-50/80 rounded-xl p-6 border border-gray-100/80 shadow-sm">
-                  <h3 className="mb-6 text-sm font-semibold text-gray-900 border-b border-gray-200 pb-3">Document Summary</h3>
+                <section className="bg-slate-50/80 rounded-xl p-6 border border-slate-100/80 shadow-sm">
+                  <h3 className="mb-6 text-sm font-semibold text-slate-900 border-b border-slate-200 pb-3">Document Summary</h3>
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-4">
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Type</p>
-                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedDocument.typeName} ({selectedDocument.type})</p>
+                      <p className="text-[0.625rem] font-semibold text-slate-500 uppercase tracking-wider">Type</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-slate-950">{selectedDocument.typeName} ({selectedDocument.type})</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Linked MRN</p>
-                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950 font-mono">{selectedDocument.mrn}</p>
+                      <p className="text-[0.625rem] font-semibold text-slate-500 uppercase tracking-wider">Linked MRN</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-slate-950 font-mono">{selectedDocument.mrn}</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">DE 2/3 Reference</p>
-                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950 font-mono">{selectedDocument.de23}</p>
+                      <p className="text-[0.625rem] font-semibold text-slate-500 uppercase tracking-wider">DE 2/3 Reference</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-slate-950 font-mono">{selectedDocument.de23}</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Uploaded By</p>
-                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedDocument.method}</p>
+                      <p className="text-[0.625rem] font-semibold text-slate-500 uppercase tracking-wider">Uploaded By</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-slate-950">{selectedDocument.method}</p>
                     </div>
                     <div>
-                      <p className="text-[0.625rem] font-semibold text-gray-500 uppercase tracking-wider">Upload Date</p>
-                      <p className="mt-1.5 text-[0.8125rem] font-medium text-gray-950">{selectedDocument.date}</p>
+                      <p className="text-[0.625rem] font-semibold text-slate-500 uppercase tracking-wider">Upload Date</p>
+                      <p className="mt-1.5 text-[0.8125rem] font-medium text-slate-950">{selectedDocument.date}</p>
                     </div>
                   </div>
                 </section>
 
                 <section>
-                  <h3 className="mb-4 text-sm font-semibold text-gray-900 border-b border-gray-100 pb-3">AI Compliance Analysis</h3>
+                  <h3 className="mb-4 text-sm font-semibold text-slate-900 border-b border-slate-100 pb-3">AI Compliance Analysis</h3>
                   {selectedDocument.status === 'verified' ? (
                     <div className="rounded-lg border border-green-100 bg-green-50/50 p-4">
                       <div className="flex items-start gap-3">
@@ -685,9 +685,9 @@ function DocumentsPageInner() {
                 </section>
 
                 {/* GIR HS Code Audit Section */}
-                <section className="border-t border-gray-100 pt-8">
+                <section className="border-t border-slate-100 pt-8">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-semibold text-gray-900">GIR HS Code Audit (Mistral-7B LoRA)</h3>
+                    <h3 className="text-sm font-semibold text-slate-900">GIR HS Code Audit (Mistral-7B LoRA)</h3>
                     <Button 
                       onClick={() => runHsCodeAudit(selectedDocument.ocrText, "Unknown")}
                       disabled={isAuditing || !selectedDocument.ocrText}
@@ -717,57 +717,57 @@ function DocumentsPageInner() {
                               {(auditResult.confidence * 100).toFixed(0)}% Confidence
                             </Badge>
                           </div>
-                          <p className="text-sm font-semibold text-gray-900">Recommended HS: <span className="font-mono">{auditResult.correctHsCode}</span></p>
-                          <p className="mt-1 text-xs text-gray-700">{auditResult.verdictReasoning}</p>
+                          <p className="text-sm font-semibold text-slate-900">Recommended HS: <span className="font-mono">{auditResult.correctHsCode}</span></p>
+                          <p className="mt-1 text-xs text-slate-700">{auditResult.verdictReasoning}</p>
                         </div>
 
                         {auditResult.girsApplied && Array.isArray(auditResult.girsApplied) && auditResult.girsApplied.length > 0 && (
                           <div className="space-y-3">
-                            <p className="text-[0.625rem] font-bold uppercase tracking-widest text-gray-500">GIR Reasoning Path</p>
+                            <p className="text-[0.625rem] font-bold uppercase tracking-widest text-slate-500">GIR Reasoning Path</p>
                             {auditResult.girsApplied.map((gir: any, idx: number) => (
-                              <div key={idx} className="pl-3 border-l-2 border-gray-200">
-                                <p className="text-[0.6875rem] font-bold text-gray-900">{gir.rule}</p>
-                                <p className="text-[0.6875rem] text-gray-600">{gir.analysis}</p>
-                                {gir.conclusion && <p className="text-[0.6875rem] text-gray-500 italic mt-1">{gir.conclusion}</p>}
+                              <div key={idx} className="pl-3 border-l-2 border-slate-200">
+                                <p className="text-[0.6875rem] font-bold text-slate-900">{gir.rule}</p>
+                                <p className="text-[0.6875rem] text-slate-600">{gir.analysis}</p>
+                                {gir.conclusion && <p className="text-[0.6875rem] text-slate-500 italic mt-1">{gir.conclusion}</p>}
                               </div>
                             ))}
                           </div>
                         )}
 
                         {auditResult.officerExplanation && (
-                          <div className="rounded-lg bg-gray-50 p-4 border border-gray-100">
-                            <p className="text-[0.625rem] font-bold uppercase tracking-widest text-gray-500 mb-2">HMRC Officer Explanation</p>
-                            <p className="text-xs italic text-gray-600 leading-relaxed">"{auditResult.officerExplanation}"</p>
+                          <div className="rounded-lg bg-slate-50 p-4 border border-slate-100">
+                            <p className="text-[0.625rem] font-bold uppercase tracking-widest text-slate-500 mb-2">HMRC Officer Explanation</p>
+                            <p className="text-xs italic text-slate-600 leading-relaxed">"{auditResult.officerExplanation}"</p>
                           </div>
                         )}
                       </div>
                     )
                   ) : !selectedDocument.ocrText ? (
-                    <div className="p-4 rounded-lg bg-gray-50 border border-gray-100 text-center">
-                      <p className="text-xs text-gray-500 italic">Upload document via Smart-Upload to enable AI GIR Auditing.</p>
+                    <div className="p-4 rounded-lg bg-slate-50 border border-slate-100 text-center">
+                      <p className="text-xs text-slate-500 italic">Upload document via Smart-Upload to enable AI GIR Auditing.</p>
                     </div>
                   ) : (
-                    <div className="p-4 rounded-lg bg-gray-50 border border-gray-100 text-center">
-                      <p className="text-xs text-gray-500 italic">Click "Run AI Audit" to analyze classification via GIR rules.</p>
+                    <div className="p-4 rounded-lg bg-slate-50 border border-slate-100 text-center">
+                      <p className="text-xs text-slate-500 italic">Click "Run AI Audit" to analyze classification via GIR rules.</p>
                     </div>
                   )}
                 </section>
 
                 {/* Line Items Section Equivalent */}
                 <section>
-                  <h3 className="mb-4 text-sm font-semibold text-gray-900 border-b border-gray-100 pb-3">Document Preview</h3>
-                  <div className="overflow-hidden rounded-lg border border-gray-200 shadow-xs">
-                    <div className="flex flex-col items-center justify-center p-12 text-center bg-gray-50/50">
-                      <FileText className="h-10 w-10 text-gray-300 mb-4" />
-                      <p className="text-sm font-medium text-gray-900">Preview not available</p>
-                      <p className="mt-1 text-xs text-gray-500">Document preview must be downloaded to view securely.</p>
+                  <h3 className="mb-4 text-sm font-semibold text-slate-900 border-b border-slate-100 pb-3">Document Preview</h3>
+                  <div className="overflow-hidden rounded-lg border border-slate-200 shadow-xs">
+                    <div className="flex flex-col items-center justify-center p-12 text-center bg-slate-50/50">
+                      <FileText className="h-10 w-10 text-slate-300 mb-4" />
+                      <p className="text-sm font-medium text-slate-900">Preview not available</p>
+                      <p className="mt-1 text-xs text-slate-500">Document preview must be downloaded to view securely.</p>
                       <button
                         onClick={handleDownloadDocument}
                         disabled={isDocActionLoading}
-                        className="mt-6 group flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 transition-colors hover:bg-gray-50 cursor-pointer shadow-sm disabled:opacity-50"
+                        className="mt-6 group flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 transition-colors hover:bg-slate-50 cursor-pointer shadow-sm disabled:opacity-50"
                       >
-                        <span className="text-xs text-gray-700 font-semibold tracking-wide">DOWNLOAD FILE</span>
-                        <Download className="h-3.5 w-3.5 text-gray-400 transition-colors group-hover:text-gray-600" />
+                        <span className="text-xs text-slate-700 font-semibold tracking-wide">DOWNLOAD FILE</span>
+                        <Download className="h-3.5 w-3.5 text-slate-400 transition-colors group-hover:text-slate-600" />
                       </button>
                     </div>
                   </div>
@@ -812,9 +812,9 @@ function DocumentsPageInner() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Document Type</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Document Type</label>
               <Select value={pasteType} onValueChange={setPasteType}>
-                <SelectTrigger className="h-9 w-full bg-gray-50 border-gray-200 text-xs text-gray-700">
+                <SelectTrigger className="h-9 w-full bg-slate-50 border-slate-200 text-xs text-slate-700">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent position="popper" className="max-h-[300px] z-[110]">
@@ -827,9 +827,9 @@ function DocumentsPageInner() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Link to Declaration</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Link to Declaration</label>
               <Select value={pasteDeclarationId} onValueChange={setPasteDeclarationId}>
-                <SelectTrigger className="h-9 w-full bg-gray-50 border-gray-200 text-xs text-gray-700">
+                <SelectTrigger className="h-9 w-full bg-slate-50 border-slate-200 text-xs text-slate-700">
                   <SelectValue placeholder="Select declaration" />
                 </SelectTrigger>
                 <SelectContent position="popper" className="max-h-[300px] z-[110]">
@@ -843,13 +843,13 @@ function DocumentsPageInner() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Pasted Text</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Pasted Text</label>
               <textarea
                 value={pasteText}
                 onChange={(e) => setPasteText(e.target.value)}
                 rows={10}
                 placeholder="Paste OCR output, invoice text, or supporting document text..."
-                className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 focus:border-gray-400 focus:outline-none"
+                className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 focus:border-slate-400 focus:outline-none"
               />
             </div>
           </div>
@@ -857,7 +857,7 @@ function DocumentsPageInner() {
             <Button
               onClick={handleManualPaste}
               disabled={isPasting || !pasteText.trim() || !pasteType}
-              className="h-9 text-xs bg-black text-white hover:bg-gray-800"
+              className="h-9 text-xs bg-black text-white hover:bg-slate-800"
             >
               {isPasting ? "Analyzing..." : "Save & Analyze"}
             </Button>
@@ -871,9 +871,9 @@ function DocumentsPageInner() {
             <DialogTitle>Select declaration for templates</DialogTitle>
           </DialogHeader>
           <div className="space-y-1.5 py-2">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Declaration</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Declaration</label>
             <Select value={generateDeclarationId} onValueChange={setGenerateDeclarationId}>
-              <SelectTrigger className="h-9 w-full bg-gray-50 border-gray-200 text-xs text-gray-700">
+              <SelectTrigger className="h-9 w-full bg-slate-50 border-slate-200 text-xs text-slate-700">
                 <SelectValue placeholder="Select declaration" />
               </SelectTrigger>
               <SelectContent position="popper" className="max-h-[300px] z-[110]">
@@ -889,7 +889,7 @@ function DocumentsPageInner() {
             <Button
               onClick={handleGenerateFromPicker}
               disabled={isGeneratingTemplates || !generateDeclarationId || generateDeclarationId === "none"}
-              className="h-9 text-xs bg-black text-white hover:bg-gray-800"
+              className="h-9 text-xs bg-black text-white hover:bg-slate-800"
             >
               {isGeneratingTemplates ? "Generating..." : "Generate templates"}
             </Button>

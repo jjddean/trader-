@@ -162,23 +162,23 @@ export default function ComplyAuditConsole() {
   return (
     <div className="space-y-8 p-8">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-gray-900">Compliance Audit</h1>
-        <p className="mt-1 text-sm text-gray-500 max-w-2xl">
+        <h1 className="text-xl font-semibold tracking-tight text-slate-900">Compliance Audit</h1>
+        <p className="mt-1 text-sm text-slate-500 max-w-2xl">
           Review documents for customs compliance risks before submission.
         </p>
       </div>
       
       {/* Main Container */}
       <div className="w-full space-y-6">
-        <div className="overflow-hidden rounded-xl border border-[#e9e9e7] bg-white">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
           
           {/* Card Header */}
-          <div className="flex items-center justify-between border-b border-[#e9e9e7] bg-gray-50 px-6 py-4">
+          <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
             <div className="flex items-center gap-3">
-              <ShieldCheck className="h-4 w-4 text-gray-400" />
+              <ShieldCheck className="h-4 w-4 text-slate-400" />
               <h3 className="text-sm font-medium text-black">Compliance Audit</h3>
             </div>
-            <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[0.5625rem] font-medium tracking-wider uppercase text-gray-600 border border-gray-200">
+            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[0.5625rem] font-medium tracking-wider uppercase text-slate-600 border border-slate-200">
               BETA
             </span>
           </div>
@@ -187,11 +187,11 @@ export default function ComplyAuditConsole() {
         <div className="space-y-4 p-6">
           
           {/* Tabs */}
-          <div className="flex w-full rounded-md border border-gray-200 bg-gray-50 p-1 mb-6">
+          <div className="flex w-full rounded-md border border-slate-200 bg-slate-50 p-1 mb-6">
             <button
               onClick={() => setActiveTab("manual")}
               className={`flex-1 rounded py-1.5 text-xs font-medium transition-all ${
-                activeTab === "manual" ? "bg-white text-black shadow-sm" : "text-gray-500 hover:text-gray-700"
+                activeTab === "manual" ? "bg-white text-black shadow-sm" : "text-slate-500 hover:text-slate-700"
               }`}
             >
               Manual Paste
@@ -199,7 +199,7 @@ export default function ComplyAuditConsole() {
             <button
               onClick={() => setActiveTab("upload")}
               className={`flex-1 rounded py-1.5 text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
-                activeTab === "upload" ? "bg-white text-black shadow-sm" : "text-gray-500 hover:text-gray-700"
+                activeTab === "upload" ? "bg-white text-black shadow-sm" : "text-slate-500 hover:text-slate-700"
               }`}
             >
               <Wand2 className="h-3.5 w-3.5" /> Smart Upload (AI)
@@ -210,18 +210,18 @@ export default function ComplyAuditConsole() {
             <div className="grid grid-cols-2 gap-4 w-full">
               {/* Document Type Selector */}
               <div className="w-full flex-1">
-                <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+                <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
                   Document Type
                 </label>
                 <Select.Root value={docType} onValueChange={setDocType}>
-                  <Select.Trigger className="flex h-9 w-full items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none data-[placeholder]:text-gray-400">
+                  <Select.Trigger className="flex h-9 w-full items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 transition-colors focus:border-slate-400 focus:outline-none data-[placeholder]:text-slate-400">
                     <Select.Value placeholder="Select type..." />
                     <Select.Icon>
-                      <ChevronDown className="h-4 w-4 text-gray-400" />
+                      <ChevronDown className="h-4 w-4 text-slate-400" />
                     </Select.Icon>
                   </Select.Trigger>
                   <Select.Portal>
-                    <Select.Content className="z-50 min-w-[16rem] overflow-hidden rounded-lg border border-gray-100 bg-white shadow-lg" position="popper" sideOffset={4}>
+                    <Select.Content className="z-50 min-w-[16rem] overflow-hidden rounded-lg border border-slate-100 bg-white shadow-lg" position="popper" sideOffset={4}>
                       <Select.Viewport className="p-1">
                         {[
                           { value: "auto", label: "Auto-detect Type" },
@@ -234,10 +234,10 @@ export default function ComplyAuditConsole() {
                           <Select.Item
                             key={item.value}
                             value={item.value}
-                            className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50"
+                            className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-slate-700 outline-none data-[highlighted]:bg-slate-50"
                           >
                             <Select.ItemIndicator className="absolute left-2 inline-flex items-center">
-                              <Check className="h-3.5 w-3.5 text-gray-500" />
+                              <Check className="h-3.5 w-3.5 text-slate-500" />
                             </Select.ItemIndicator>
                             <Select.ItemText>{item.label}</Select.ItemText>
                           </Select.Item>
@@ -250,22 +250,22 @@ export default function ComplyAuditConsole() {
 
               {/* MRN Selector */}
               <div className="w-full flex-1">
-                <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+                <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
                   Link to Declaration (MRN)
                 </label>
                 <Select.Root value={selectedMrn} onValueChange={setSelectedMrn}>
-                  <Select.Trigger className="flex h-9 w-full items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none data-[placeholder]:text-gray-400">
+                  <Select.Trigger className="flex h-9 w-full items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 transition-colors focus:border-slate-400 focus:outline-none data-[placeholder]:text-slate-400">
                     <Select.Value placeholder="Select MRN..." />
                     <Select.Icon>
-                      <ChevronDown className="h-4 w-4 text-gray-400" />
+                      <ChevronDown className="h-4 w-4 text-slate-400" />
                     </Select.Icon>
                   </Select.Trigger>
                   <Select.Portal>
-                    <Select.Content className="z-50 min-w-[16rem] overflow-hidden rounded-lg border border-gray-100 bg-white shadow-lg" position="popper" sideOffset={4}>
+                    <Select.Content className="z-50 min-w-[16rem] overflow-hidden rounded-lg border border-slate-100 bg-white shadow-lg" position="popper" sideOffset={4}>
                       <Select.Viewport className="p-1">
-                        <Select.Item value="unlinked" className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50">
+                        <Select.Item value="unlinked" className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-slate-700 outline-none data-[highlighted]:bg-slate-50">
                           <Select.ItemIndicator className="absolute left-2 inline-flex items-center">
-                            <Check className="h-3.5 w-3.5 text-gray-500" />
+                            <Check className="h-3.5 w-3.5 text-slate-500" />
                           </Select.ItemIndicator>
                           <Select.ItemText>Do not link</Select.ItemText>
                         </Select.Item>
@@ -273,10 +273,10 @@ export default function ComplyAuditConsole() {
                           <Select.Item
                             key={d.mrn}
                             value={d.mrn}
-                            className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-gray-700 outline-none data-[highlighted]:bg-gray-50"
+                            className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-slate-700 outline-none data-[highlighted]:bg-slate-50"
                           >
                             <Select.ItemIndicator className="absolute left-2 inline-flex items-center">
-                              <Check className="h-3.5 w-3.5 text-gray-500" />
+                              <Check className="h-3.5 w-3.5 text-slate-500" />
                             </Select.ItemIndicator>
                             <Select.ItemText>{d.mrn}</Select.ItemText>
                           </Select.Item>
@@ -293,15 +293,15 @@ export default function ComplyAuditConsole() {
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+                    <label className="block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
                       Document Content
                     </label>
                     <div className="flex gap-2">
-                       <button onClick={pasteSample} className="text-[0.625rem] font-medium text-gray-400 hover:text-black transition-colors uppercase tracking-wider">
+                       <button onClick={pasteSample} className="text-[0.625rem] font-medium text-slate-400 hover:text-black transition-colors uppercase tracking-wider">
                          Sample
                        </button>
                        {rawText && (
-                         <button onClick={clearAll} className="text-[0.625rem] font-medium text-gray-400 hover:text-red-500 transition-colors uppercase tracking-wider">
+                         <button onClick={clearAll} className="text-[0.625rem] font-medium text-slate-400 hover:text-red-500 transition-colors uppercase tracking-wider">
                            Clear
                          </button>
                        )}
@@ -309,7 +309,7 @@ export default function ComplyAuditConsole() {
                   </div>
                   <textarea
                     placeholder="Paste the text content of your document here for a compliance risk analysis..."
-                    className="h-[280px] w-full resize-none rounded-md border border-gray-200 bg-gray-50 p-3 font-mono text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none"
+                    className="h-[280px] w-full resize-none rounded-md border border-slate-200 bg-slate-50 p-3 font-mono text-xs text-slate-700 transition-colors focus:border-slate-400 focus:outline-none"
                     value={rawText}
                     onChange={(e) => setRawText(e.target.value)}
                   />
@@ -317,7 +317,7 @@ export default function ComplyAuditConsole() {
 
                 <div className="flex w-full">
                   <button
-                    className="flex w-full h-8 rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
+                    className="flex w-full h-8 rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
                     onClick={() => handleAudit()}
                     disabled={loading || !rawText.trim()}
                   >
@@ -334,15 +334,15 @@ export default function ComplyAuditConsole() {
             {/* Smart Upload Section */}
             {activeTab === "upload" && (
               <div className="space-y-4">
-                <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+                <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
                   File Upload
                 </label>
                 <label
                   className={cn(
                     "block cursor-pointer rounded-xl border-2 border-dashed transition-all",
                     dragActive
-                      ? "border-gray-400 bg-gray-100"
-                      : "border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100/50"
+                      ? "border-slate-400 bg-slate-100"
+                      : "border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-slate-100/50"
                   )}
                   onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
                   onDragLeave={() => setDragActive(false)}
@@ -351,15 +351,15 @@ export default function ComplyAuditConsole() {
                   <div className="py-20 text-center">
                     {loading ? (
                       <div className="space-y-4">
-                        <Loader2 className="mx-auto h-8 w-8 animate-spin text-gray-400" />
-                        <p className="text-xs font-medium text-gray-600">{uploadStage || "Processing document..."}</p>
+                        <Loader2 className="mx-auto h-8 w-8 animate-spin text-slate-400" />
+                        <p className="text-xs font-medium text-slate-600">{uploadStage || "Processing document..."}</p>
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        <Upload className="mx-auto h-6 w-6 text-gray-400" />
+                        <Upload className="mx-auto h-6 w-6 text-slate-400" />
                         <div>
                           <p className="text-sm font-medium text-black">Click to upload or drag and drop</p>
-                          <p className="mt-1 text-[0.625rem] text-gray-400 uppercase tracking-widest">PDF, TXT, or Image</p>
+                          <p className="mt-1 text-[0.625rem] text-slate-400 uppercase tracking-widest">PDF, TXT, or Image</p>
                         </div>
                       </div>
                     )}
@@ -405,24 +405,24 @@ export default function ComplyAuditConsole() {
                   {result.status === "passed" ? "PASSED VALIDATION" : `RISKS DETECTED (${result.riskChecklist?.length || 0})`}
                 </span>
               </div>
-              <span className="text-[0.625rem] text-gray-400">
+              <span className="text-[0.625rem] text-slate-400">
                 ID: {Date.now().toString().slice(-6)}
               </span>
             </div>
             
             <div className="space-y-2">
               {(!result.riskChecklist || result.riskChecklist.length === 0) ? (
-                <p className="text-[0.6875rem] leading-relaxed text-gray-600">No major compliance risks were found in this document structure.</p>
+                <p className="text-[0.6875rem] leading-relaxed text-slate-600">No major compliance risks were found in this document structure.</p>
               ) : (
                 result.riskChecklist.map((risk: any, i: number) => {
                   return (
                     <div key={i} className="flex gap-2.5 rounded-md border border-red-100 bg-white p-3">
                       <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 text-red-500 mt-0.5" />
                       <div>
-                        <p className="mb-0.5 text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
+                        <p className="mb-0.5 text-[0.625rem] font-semibold tracking-widest text-slate-500 uppercase">
                           {risk.type} • {risk.field || "General"}
                         </p>
-                        <p className="text-[0.6875rem] leading-relaxed text-gray-800">{risk.message}</p>
+                        <p className="text-[0.6875rem] leading-relaxed text-slate-800">{risk.message}</p>
                       </div>
                     </div>
                   );
@@ -432,19 +432,19 @@ export default function ComplyAuditConsole() {
           </div>
 
           {result.extractedData && (
-            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
               <div 
-                className="flex cursor-pointer items-center justify-between border-b border-gray-100 px-6 py-4 hover:bg-gray-50 transition-colors"
+                className="flex cursor-pointer items-center justify-between border-b border-slate-100 px-6 py-4 hover:bg-slate-50 transition-colors"
                 onClick={() => setShowExtracted(!showExtracted)}
               >
                 <div className="flex items-center gap-3">
-                  <FileText className="h-4 w-4 text-gray-400" />
+                  <FileText className="h-4 w-4 text-slate-400" />
                   <span className="text-sm font-medium text-black">Extracted AI Data</span>
                 </div>
-                {showExtracted ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+                {showExtracted ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
               </div>
               {showExtracted && (
-                <div className="bg-gray-900 p-6 overflow-x-auto">
+                <div className="bg-slate-900 p-6 overflow-x-auto">
                   <pre className="text-green-400 text-[0.6875rem] font-mono leading-relaxed">
                     {JSON.stringify(result.extractedData, null, 2)}
                   </pre>

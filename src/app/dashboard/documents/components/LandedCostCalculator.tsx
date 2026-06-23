@@ -33,49 +33,49 @@ export function LandedCostCalculator({ isOpen, onOpenChange }: LandedCostCalcula
         <div className="space-y-6 pt-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Value (£)</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Value (£)</label>
               <input 
                 type="number" 
                 value={calcForm.itemValue} 
                 onChange={(e) => setCalcForm({...calcForm, itemValue: e.target.value})} 
-                className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs" 
+                className="h-9 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-xs" 
                 placeholder="0.00" 
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Shipping (£)</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Shipping (£)</label>
               <input 
                 type="number" 
                 value={calcForm.shippingCost} 
                 onChange={(e) => setCalcForm({...calcForm, shippingCost: e.target.value})} 
-                className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs" 
+                className="h-9 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-xs" 
                 placeholder="0.00" 
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Duty Rate (%)</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Duty Rate (%)</label>
               <input 
                 type="number" 
                 value={calcForm.dutyRate} 
                 onChange={(e) => setCalcForm({...calcForm, dutyRate: e.target.value})} 
-                className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs" 
+                className="h-9 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-xs" 
                 placeholder="0" 
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">VAT Rate (%)</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">VAT Rate (%)</label>
               <input 
                 type="number" 
                 value={calcForm.vatRate} 
                 onChange={(e) => setCalcForm({...calcForm, vatRate: e.target.value})} 
-                className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs" 
+                className="h-9 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-xs" 
                 placeholder="20" 
               />
             </div>
           </div>
 
           <Button 
-            className="h-9 bg-black text-white hover:bg-gray-800 w-full text-xs"
+            className="h-9 bg-black text-white hover:bg-slate-800 w-full text-xs"
             disabled={!calcForm.itemValue}
             onClick={handleCalculate}
           >

@@ -96,9 +96,9 @@ export default function DashboardPage() {
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold tracking-tight text-gray-900">Dashboard</h1>
+            <h1 className="text-xl font-semibold tracking-tight text-slate-900">Dashboard</h1>
           </div>
-          <p className="mt-1 text-sm text-gray-500">Welcome back, {user?.firstName || "Trader"}</p>
+          <p className="mt-1 text-sm text-slate-500">Welcome back, {user?.firstName || "Trader"}</p>
         </div>
         
         {hmrcStatus !== "loading" && (
@@ -113,7 +113,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-slate-400">
         Duty figures are estimates from Trade Tariff measures until HMRC confirms tax on clearance.
       </p>
 
@@ -140,25 +140,25 @@ function KpiRow({ kpis }: { kpis: any }) {
         title="Total Duty (30d)" 
         value={`£${kpis.totalDuty.toLocaleString("en-GB", { minimumFractionDigits: 2 })}`} 
         subtitle="Duty assigned across active declarations" 
-        icon={<PoundSterling className="h-4 w-4 text-gray-400" />} 
+        icon={<PoundSterling className="h-4 w-4 text-slate-400" />} 
       />
       <KpiCard 
         title="Import Value" 
         value={`£${kpis.importValue.toLocaleString("en-GB", { minimumFractionDigits: 2 })}`} 
         subtitle="Total customs value of goods" 
-        icon={<TrendingUp className="h-4 w-4 text-gray-400" />} 
+        icon={<TrendingUp className="h-4 w-4 text-slate-400" />} 
       />
       <KpiCard 
         title="Declarations" 
         value={`${kpis.declarationsCount}`} 
         subtitle="Total declarations filed" 
-        icon={<FileText className="h-4 w-4 text-gray-400" />} 
+        icon={<FileText className="h-4 w-4 text-slate-400" />} 
       />
       <KpiCard 
         title="Avg Duty" 
         value={`£${kpis.avgDuty.toLocaleString("en-GB", { minimumFractionDigits: 2 })}`} 
         subtitle="Average duty per declaration" 
-        icon={<ArrowUpRight className="h-4 w-4 text-gray-400" />} 
+        icon={<ArrowUpRight className="h-4 w-4 text-slate-400" />} 
       />
     </div>
   );
@@ -167,9 +167,9 @@ function KpiRow({ kpis }: { kpis: any }) {
 // KPI CARD
 function KpiCard({ title, value, subtitle, icon }: { title: string; value: string; subtitle?: string; icon: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-[#e9e9e7] bg-white p-5">
+    <div className="rounded-xl border border-slate-200 bg-white p-5">
       <div className="flex items-center justify-between mb-1">
-        <p className="text-[0.625rem] font-semibold tracking-widest text-gray-500 uppercase">
+        <p className="text-[0.625rem] font-semibold tracking-widest text-slate-500 uppercase">
           {title}
         </p>
         {icon}
@@ -178,7 +178,7 @@ function KpiCard({ title, value, subtitle, icon }: { title: string; value: strin
         {value}
       </h2>
       {subtitle && (
-        <p className="mt-1 text-[0.625rem] text-gray-500">{subtitle}</p>
+        <p className="mt-1 text-[0.625rem] text-slate-500">{subtitle}</p>
       )}
     </div>
   );
@@ -227,7 +227,7 @@ function HmrcDashboardAction({ status }: { status: "connected" | "expiring" | "e
   return (
     <a
       href="/api/hmrc/auth"
-      className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800"
+      className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-slate-800"
     >
       <Plus className="h-4 w-4" />
       {status === "expired" ? "Reconnect HMRC" : "Connect HMRC"}
@@ -242,9 +242,9 @@ const CustomChartTooltip = ({ active, payload }: { active?: boolean; payload?: A
   const row = payload?.[0]?.payload;
   if (!active || !row) return null;
   return (
-    <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-md">
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{row.label}</p>
-      <p className="text-sm font-semibold tabular-nums text-gray-900">
+    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-md">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{row.label}</p>
+      <p className="text-sm font-semibold tabular-nums text-slate-900">
         £{Number(row.duty || 0).toLocaleString("en-GB", { minimumFractionDigits: 2 })}
       </p>
     </div>
@@ -259,9 +259,9 @@ function DutyByHsChart({ data }: { data: Array<{ code: string; duty: number }> }
   const hasData = chartRows.length > 0;
 
   return (
-    <div className="flex h-80 flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
-      <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-5 py-3">
-        <Archive className="h-4 w-4 text-gray-400" />
+    <div className="flex h-80 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none">
+      <div className="flex items-center gap-3 border-b border-slate-200 bg-slate-50 px-5 py-3">
+        <Archive className="h-4 w-4 text-slate-400" />
         <h3 className="text-sm font-medium text-black">Duty by HS heading (4-digit)</h3>
       </div>
       <div className="min-h-0 flex-1 p-4">
@@ -298,7 +298,7 @@ function DutyByHsChart({ data }: { data: Array<{ code: string; duty: number }> }
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex h-full items-center justify-center px-6 text-xs text-gray-500">
+          <div className="flex h-full items-center justify-center px-6 text-xs text-slate-500">
             Duty breakdown available after declarations with duty in the last 30 days.
           </div>
         )}
@@ -316,10 +316,10 @@ function RecentDeclarations({
   isLoading?: boolean;
 }) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
-      <div className="flex items-center justify-between border-b border-[#e9e9e7] bg-gray-50 px-5 py-3">
+    <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none">
+      <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-3">
         <div className="flex items-center gap-3">
-          <FileText className="h-4 w-4 text-gray-400" />
+          <FileText className="h-4 w-4 text-slate-400" />
           <h3 className="text-sm font-medium text-black">Recent Declarations</h3>
         </div>
         <Link
@@ -333,18 +333,18 @@ function RecentDeclarations({
       <div className="flex-1 p-0 overflow-x-auto">
         <table className="w-full border-collapse text-left">
           <thead>
-            <tr className="bg-gray-50 border-b border-[#e9e9e7]">
-              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">Date</th>
-              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">MRN</th>
-              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase text-right">Value</th>
-              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase text-right">Duty</th>
+            <tr className="bg-slate-50 border-b border-slate-200">
+              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Date</th>
+              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">MRN</th>
+              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Status</th>
+              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase text-right">Value</th>
+              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase text-right">Duty</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#e9e9e7]">
+          <tbody className="divide-y divide-slate-200">
             {isLoading ? (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-400">
+                <td colSpan={5} className="px-6 py-8 text-center text-sm text-slate-400">
                   Loading declarations…
                 </td>
               </tr>
@@ -360,9 +360,9 @@ function RecentDeclarations({
                 return (
                 <tr
                   key={decl.id}
-                  className={`group cursor-pointer transition-colors ${isAlert ? "bg-red-50/50 hover:bg-red-50" : isWarning ? "bg-amber-50/50 hover:bg-amber-50" : isCleared ? "bg-green-50/50 hover:bg-green-50" : isAcceptedOrAmended ? "bg-blue-50/50 hover:bg-blue-50" : "hover:bg-gray-50"}`}
+                  className={`group cursor-pointer transition-colors ${isAlert ? "bg-red-50/50 hover:bg-red-50" : isWarning ? "bg-amber-50/50 hover:bg-amber-50" : isCleared ? "bg-green-50/50 hover:bg-green-50" : isAcceptedOrAmended ? "bg-blue-50/50 hover:bg-blue-50" : "hover:bg-slate-50"}`}
                 >
-                  <td className="px-6 py-4 text-[0.6875rem] text-gray-600 whitespace-nowrap">{decl.date}</td>
+                  <td className="px-6 py-4 text-[0.6875rem] text-slate-600 whitespace-nowrap">{decl.date}</td>
                   <td className="px-6 py-4">
                     <span className={`text-xs font-semibold transition-colors ${isAlert ? "text-red-900" : isWarning ? "text-amber-900" : isCleared ? "text-green-900" : isAcceptedOrAmended ? "text-blue-900" : "text-black"}`}>{decl.mrn}</span>
                   </td>
@@ -383,7 +383,7 @@ function RecentDeclarations({
                         {decl.status === "Invalid" ? "Invalid (DMSINV)" : decl.status}
                       </span>
                     ) : decl.status === "Draft" ? (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">
+                      <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[0.625rem] font-medium text-slate-700">
                         <FileText className="h-3 w-3" />
                         {decl.status}
                       </span>
@@ -394,10 +394,10 @@ function RecentDeclarations({
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-right text-xs text-gray-600">
+                  <td className="px-6 py-4 text-right text-xs text-slate-600">
                     £{decl.value.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
                   </td>
-                  <td className="px-6 py-4 text-right text-xs font-semibold text-gray-900">
+                  <td className="px-6 py-4 text-right text-xs font-semibold text-slate-900">
                     £{decl.duty.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
@@ -405,7 +405,7 @@ function RecentDeclarations({
               })
             ) : (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">
+                <td colSpan={5} className="px-6 py-8 text-center text-sm text-slate-500">
                   No declarations found in your live data stream.
                 </td>
               </tr>
@@ -420,16 +420,16 @@ function RecentDeclarations({
 // 4️⃣ ACTIONABLE AUDITS (SIMPLIFIED)
 function ActionableAudits({ overpayments }: { overpayments: Array<{ title: string; subtitle: string; amount: number }> }) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none h-80">
-      <div className="flex items-center gap-3 border-b border-[#e9e9e7] bg-gray-50 px-5 py-3">
-        <AlertCircle className="h-4 w-4 text-gray-400" />
+    <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none h-80">
+      <div className="flex items-center gap-3 border-b border-slate-200 bg-slate-50 px-5 py-3">
+        <AlertCircle className="h-4 w-4 text-slate-400" />
         <h3 className="text-sm font-medium text-black">Potential Overpayments</h3>
       </div>
       
       <div className="flex-1 p-5 overflow-y-auto space-y-3">
         {overpayments.length > 0 ? (
           overpayments.map((item, idx) => (
-            <div key={`${item.title}-${idx}`} className="border border-[#e9e9e7] rounded-lg p-4 flex justify-between items-center transition-all hover:bg-gray-50 cursor-pointer">
+            <div key={`${item.title}-${idx}`} className="border border-slate-200 rounded-lg p-4 flex justify-between items-center transition-all hover:bg-slate-50 cursor-pointer">
               <div>
                 <p className="font-semibold text-sm text-foreground">{item.title}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{item.subtitle}</p>
@@ -438,7 +438,7 @@ function ActionableAudits({ overpayments }: { overpayments: Array<{ title: strin
             </div>
           ))
         ) : (
-          <div className="border border-[#e9e9e7] rounded-lg p-4 text-xs text-gray-500">
+          <div className="border border-slate-200 rounded-lg p-4 text-xs text-slate-500">
             {FL.overpaymentAfterAssessment}
           </div>
         )}

@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 export function DeclarationLoadingSpinner() {
   return (
     <div className="flex justify-center py-12">
-      <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+      <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
     </div>
   );
 }
@@ -13,7 +13,7 @@ export function DeclarationLoadingSpinner() {
 export function ConvexSessionMissing() {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-12">
-      <p className="text-sm text-gray-500">Convex authentication not active for this session.</p>
+      <p className="text-sm text-slate-500">Convex authentication not active for this session.</p>
       <button
         type="button"
         onClick={() => window.location.reload()}

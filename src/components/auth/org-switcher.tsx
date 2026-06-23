@@ -27,13 +27,13 @@ export function OrgSwitcher({ className, hidePersonal = false }: OrgSwitcherProp
           elements: {
             rootBox: "flex",
             organizationSwitcherTrigger:
-              "flex h-8 max-w-[160px] items-center gap-1 rounded-md border border-gray-200 bg-white px-2 font-medium text-gray-700 shadow-sm hover:bg-gray-50",
-            organizationSwitcherTriggerIcon: "h-3 w-3 text-gray-400",
+              "flex h-8 max-w-[160px] items-center gap-1 rounded-md border border-slate-200 bg-white px-2 font-medium text-slate-700 shadow-sm hover:bg-slate-50",
+            organizationSwitcherTriggerIcon: "h-3 w-3 text-slate-400",
             organizationPreviewAvatarBox: "h-4 w-4",
             organizationPreviewMainIdentifier: "text-[12px] font-medium leading-none",
-            organizationPreviewSecondaryIdentifier: "text-[10px] leading-none text-gray-500",
+            organizationPreviewSecondaryIdentifier: "text-[10px] leading-none text-slate-500",
             organizationPreviewTextContainer: "gap-0",
-            organizationSwitcherPopoverCard: "w-52 rounded-md border border-gray-200 shadow-lg",
+            organizationSwitcherPopoverCard: "w-52 rounded-md border border-slate-200 shadow-lg",
             organizationSwitcherPopoverMain: "gap-0.5 p-1.5",
             organizationSwitcherPopoverActions: "gap-0 p-1.5 pt-0",
             organizationSwitcherPopoverActionButton: "rounded px-1.5 py-1",
@@ -42,7 +42,7 @@ export function OrgSwitcher({ className, hidePersonal = false }: OrgSwitcherProp
             organizationSwitcherPopoverFooter: "hidden",
             userPreviewAvatarBox: "h-4 w-4",
             userPreviewMainIdentifier: "text-[12px] font-medium",
-            userPreviewSecondaryIdentifier: "text-[10px] text-gray-500",
+            userPreviewSecondaryIdentifier: "text-[10px] text-slate-500",
           },
         }}
         organizationProfileProps={{ appearance: compactProfileModalAppearance }}

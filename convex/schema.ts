@@ -103,6 +103,9 @@ export default defineSchema({
 
   historical_declarations: defineTable({
     userId: v.optional(v.any()),
+    orgId: v.optional(v.string()),
+    importId: v.optional(v.id("tre_imports")),
+    sourceRowHash: v.optional(v.string()),
     entryIdentifierMrn: v.optional(v.any()),
     declarantEori: v.optional(v.any()),
     countryOfOriginCode: v.optional(v.any()),
@@ -113,10 +116,33 @@ export default defineSchema({
     customsProcedureCodeCpc: v.optional(v.any()),
     taxType: v.optional(v.any()),
     commodityCode: v.optional(v.any()),
+    acceptanceDate: v.optional(v.any()),
     createdAt: v.optional(v.any()),
   })
     .index("by_user", ["userId"])
-    .index("by_user_country", ["userId", "countryOfOriginCode"]),
+    .index("by_user_country", ["userId", "countryOfOriginCode"])
+    .index("by_org", ["orgId"])
+    .index("by_org_country", ["orgId", "countryOfOriginCode"])
+    .index("by_import", ["importId"])
+    .index("by_org_row_hash", ["orgId", "sourceRowHash"])
+    .index("by_user_row_hash", ["userId", "sourceRowHash"]),
+
+  tre_imports: defineTable({
+    orgId: v.optional(v.string()),
+    userId: v.string(),
+    filename: v.string(),
+    rowCount: v.number(),
+    lineItemsStored: v.number(),
+    lineItemsSkipped: v.number(),
+    status: v.string(),
+    warnings: v.optional(v.array(v.string())),
+    errors: v.optional(v.array(v.string())),
+    checksum: v.optional(v.string()),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_org", ["orgId"])
+    .index("by_user", ["userId"]),
 
   declarations: defineTable({
     userId: v.optional(v.any()), // clerkId
@@ -352,10 +378,13 @@ export default defineSchema({
   // Rebuilt only when historical_declarations are ingested — prevents getReports and
   // getFinancialRecords from scanning 2,000 historical rows on every subscription refresh.
   rate_cache: defineTable({
-    userId: v.string(),
+    userId: v.optional(v.string()),
+    orgId: v.optional(v.string()),
     rateMap: v.any(), // Record<string, { dutyTotal: number; vatTotal: number; customsTotal: number }>
     updatedAt: v.number(),
-  }).index("by_user", ["userId"]),
+  })
+    .index("by_user", ["userId"])
+    .index("by_org", ["orgId"]),
 
   admin_subscriptions: defineTable({
     service: v.string(),

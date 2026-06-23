@@ -31,11 +31,11 @@ function CopyValueButton({ label, value }: { label: string; value: string }) {
     <div className="rounded-md border border-amber-200 bg-white p-3">
       <p className="text-[10px] font-medium uppercase tracking-wide text-amber-800">{label}</p>
       <div className="mt-1 flex items-center justify-between gap-2">
-        <code className="min-w-0 flex-1 truncate font-mono text-xs text-gray-900">{value}</code>
+        <code className="min-w-0 flex-1 truncate font-mono text-xs text-slate-900">{value}</code>
         <button
           type="button"
           onClick={handleCopy}
-          className="inline-flex shrink-0 items-center gap-1 rounded border border-gray-200 px-2 py-1 text-[10px] font-medium text-gray-700 hover:bg-gray-50"
+          className="inline-flex shrink-0 items-center gap-1 rounded border border-slate-200 px-2 py-1 text-[10px] font-medium text-slate-700 hover:bg-slate-50"
         >
           {copied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
           {copied ? "Copied" : "Copy"}
@@ -115,8 +115,9 @@ export function PracticeSandboxTestUser({
         live Government Gateway. Use your real EORI on declaration forms.
       </p>
 
+      <div className="mt-3 min-h-[8.25rem]">
       {waitingForStored && (
-        <div className="mt-3 flex items-center gap-2 text-[11px] text-amber-900">
+        <div className="flex items-center gap-2 text-[11px] text-amber-900">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
           Loading…
         </div>
@@ -126,21 +127,21 @@ export function PracticeSandboxTestUser({
         <button
           type="button"
           onClick={() => void provision()}
-          className="mt-3 inline-flex items-center rounded-md bg-amber-900 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-amber-950"
+          className="inline-flex items-center rounded-md bg-amber-900 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-amber-950"
         >
           Create HMRC Test User
         </button>
       )}
 
       {loading && !creds && (
-        <div className="mt-3 flex items-center gap-2 text-[11px] text-amber-900">
+        <div className="flex items-center gap-2 text-[11px] text-amber-900">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
           Creating HMRC test user…
         </div>
       )}
 
       {error && (
-        <div className="mt-3 space-y-2">
+        <div className="space-y-2">
           <p className="text-[11px] text-red-700">{error}</p>
           <button
             type="button"
@@ -154,11 +155,12 @@ export function PracticeSandboxTestUser({
       )}
 
       {creds && (
-        <div className="mt-3 space-y-2">
+        <div className="space-y-2">
           <CopyValueButton label="User ID" value={creds.userId} />
           <CopyValueButton label="Password" value={creds.password} />
         </div>
       )}
+      </div>
     </div>
   );
 }
@@ -179,9 +181,9 @@ export function PracticeSandboxTestUserModalLink({
           {children}
         </button>
       </DialogTrigger>
-      <DialogContent className="gap-0 overflow-hidden border-gray-200 p-0 sm:max-w-xl">
+      <DialogContent className="gap-0 overflow-hidden border-slate-200 p-0 sm:max-w-xl">
         <div className="p-6">
-          <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
+          <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
             <DialogTitle className="sr-only">HMRC Test User</DialogTitle>
             <PracticeSandboxTestUser compact enabled={open} />
           </div>
@@ -207,7 +209,7 @@ export function PracticeModeGuideModalLink({
           {children}
         </button>
       </DialogTrigger>
-      <DialogContent className="gap-0 overflow-hidden border-gray-200 p-0 sm:max-w-md">
+      <DialogContent className="gap-0 overflow-hidden border-slate-200 p-0 sm:max-w-md">
         <div className="p-6">
           <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-4">
             <DialogTitle className="text-sm font-semibold text-amber-950">Practice mode</DialogTitle>

@@ -52,32 +52,32 @@ export default function ChangelogPage() {
 
   return (
     <div className="mx-auto flex h-full max-w-[800px] flex-col px-8 py-12">
-      <div className="mb-8 border-b border-[#e9e9e7] pb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-[#37352f] mb-2">Changelog</h1>
-        <p className="text-xs text-[#787774]">
+      <div className="mb-8 border-b border-slate-200 pb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-2">Changelog</h1>
+        <p className="text-xs text-slate-500">
           Latest updates, fixes, and HMRC integrations in FreightCode.
         </p>
       </div>
 
       <div className="flex flex-col gap-10">
         {updates.map((update, idx) => (
-          <div key={idx} className="relative pl-8 border-l border-[#e9e9e7]">
+          <div key={idx} className="relative pl-8 border-l border-slate-200">
             {/* Timeline Dot */}
             <div className="absolute left-[-5px] top-[6px] h-[9px] w-[9px] rounded-full bg-[#111827] ring-4 ring-white" />
             
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-xs font-bold text-[#37352f] bg-gray-100 px-2 py-0.5 rounded-[4px]">
+              <span className="text-xs font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-[4px]">
                 {update.version}
               </span>
-              <span className="text-xs text-[#787774]">{update.date}</span>
+              <span className="text-xs text-slate-500">{update.date}</span>
             </div>
             
-            <h2 className="text-base font-semibold text-[#37352f] mb-4">{update.title}</h2>
+            <h2 className="text-base font-semibold text-slate-900 mb-4">{update.title}</h2>
             
             <ul className="space-y-3">
               {update.changes.map((change, i) => (
-                <li key={i} className="flex items-start gap-2 text-xs text-[#37352f] leading-relaxed">
-                  <div className="mt-1 flex-shrink-0 text-[#787774]">•</div>
+                <li key={i} className="flex items-start gap-2 text-xs text-slate-900 leading-relaxed">
+                  <div className="mt-1 flex-shrink-0 text-slate-500">•</div>
                   <span>{change}</span>
                 </li>
               ))}

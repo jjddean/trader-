@@ -55,7 +55,7 @@ function normalizeTransportIdType(value: unknown): string {
 }
 
 const selectFieldClassName =
-  "w-full rounded-md border border-gray-200 bg-white p-2.5 text-sm outline-none transition-colors focus:border-blue-500";
+  "w-full rounded-md border border-slate-200 bg-white p-2.5 text-sm outline-none transition-colors focus:border-blue-500";
 
 export default function CoreSchemaPage() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -236,7 +236,7 @@ export default function CoreSchemaPage() {
   if (!declaration) {
     return (
       <div className="flex justify-center py-12">
-        <p className="text-sm text-gray-500">Declaration not found.</p>
+        <p className="text-sm text-slate-500">Declaration not found.</p>
       </div>
     );
   }
@@ -244,8 +244,8 @@ export default function CoreSchemaPage() {
   return (
     <form onSubmit={handleSave} className="space-y-6">
       <div>
-        <h2 className="text-lg font-medium text-gray-900">Core Declaration Details</h2>
-        <p className="mt-1 text-xs text-gray-500">
+        <h2 className="text-lg font-medium text-slate-900">Core Declaration Details</h2>
+        <p className="mt-1 text-xs text-slate-500">
           Enter the core details for this CDS import declaration.
         </p>
       </div>
@@ -272,14 +272,14 @@ export default function CoreSchemaPage() {
         </div>
       )}
 
-      <div className="rounded-xl border border-gray-200 bg-white">
+      <div className="rounded-xl border border-slate-200 bg-white">
         <div className="p-6 space-y-6">
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
 
             {/* EORI Number — DE 3/18 declarant. A-mandatory per Appendix 21A. */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
                 Declarant EORI (DE 3/18)
                 <span className="text-red-500">*</span>
               </label>
@@ -288,9 +288,9 @@ export default function CoreSchemaPage() {
                 value={formData.eori}
                 onChange={(e) => setFormData({ ...formData, eori: e.target.value })}
                 placeholder="e.g. GB123456789000"
-                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
               />
-              <p className="text-[10px] text-gray-400 flex items-center gap-1">
+              <p className="text-[10px] text-slate-400 flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 Must match your HMRC Developer Hub credentials.
               </p>
@@ -298,7 +298,7 @@ export default function CoreSchemaPage() {
 
             {/* Importer EORI — DE 3/16. A-mandatory per Appendix 21A. */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
                 Importer EORI (DE 3/16)
                 <span className="text-red-500">*</span>
               </label>
@@ -307,9 +307,9 @@ export default function CoreSchemaPage() {
                 value={formData.importerEori}
                 onChange={(e) => setFormData({ ...formData, importerEori: e.target.value })}
                 placeholder="e.g. GB123456789000"
-                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
               />
-              <p className="text-[10px] text-gray-400 flex items-center gap-1">
+              <p className="text-[10px] text-slate-400 flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 The UK importer&apos;s EORI. Same as declarant when self-representing.
               </p>
@@ -317,12 +317,12 @@ export default function CoreSchemaPage() {
 
             {/* Declaration Category */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
                 Declaration Category
                 <span className="text-red-500">*</span>
               </label>
               <Select value={formData.declarationType} onValueChange={(v) => setFormData({ ...formData, declarationType: v })}>
-                <SelectTrigger className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+                <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent position="popper">
@@ -333,11 +333,11 @@ export default function CoreSchemaPage() {
 
             {/* Routing */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Customs Routing
               </label>
               <Select value={formData.route} onValueChange={(v) => setFormData({ ...formData, route: v })}>
-                <SelectTrigger className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+                <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent position="popper">
@@ -352,12 +352,12 @@ export default function CoreSchemaPage() {
                 Native <select> instead of shadcn Select so HTML `required`
                 actually fires at form-submit. */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
                 Dispatch Country (DE 5/14)
                 <span className="text-red-500">*</span>
               </label>
               <Select value={formData.dispatchCountry} onValueChange={(v) => setFormData({ ...formData, dispatchCountry: v })}>
-                <SelectTrigger className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+                <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
                   <SelectValue placeholder="Country goods shipped FROM" />
                 </SelectTrigger>
                 <SelectContent position="popper" className="max-h-[300px]">
@@ -366,56 +366,56 @@ export default function CoreSchemaPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[10px] text-gray-400 flex items-center gap-1">
+              <p className="text-[10px] text-slate-400 flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 Country goods were shipped FROM — never GB for a third-country import.
               </p>
             </div>
 
             {formData.dispatchCountry && formData.dispatchCountry !== "GB" && formData.dispatchCountry !== "XI" && (
-              <div className="md:col-span-2 space-y-3 rounded-md border border-gray-200 bg-gray-50/80 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-700">
+              <div className="md:col-span-2 space-y-3 rounded-md border border-slate-200 bg-slate-50/80 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-700">
                   Overseas exporter (DE 3/1) — required when dispatch ≠ GB/XI
                 </p>
-                <p className="text-[11px] text-gray-600">
+                <p className="text-[11px] text-slate-600">
                   Use the foreign seller on the commercial invoice — legal name and registered address in the dispatch country (not your UK importer details).
                 </p>
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="space-y-1 md:col-span-2">
-                    <label className="text-xs font-medium text-gray-600">Exporter name</label>
+                    <label className="text-xs font-medium text-slate-600">Exporter name</label>
                     <input
                       type="text"
-                      className="w-full rounded-md border border-gray-200 p-2.5 text-sm"
+                      className="w-full rounded-md border border-slate-200 p-2.5 text-sm"
                       value={formData.exporterName}
                       onChange={(e) => setFormData({ ...formData, exporterName: e.target.value })}
                       placeholder="e.g. Acme Export GmbH"
                     />
                   </div>
                   <div className="space-y-1 md:col-span-2">
-                    <label className="text-xs font-medium text-gray-600">Address line</label>
+                    <label className="text-xs font-medium text-slate-600">Address line</label>
                     <input
                       type="text"
-                      className="w-full rounded-md border border-gray-200 p-2.5 text-sm"
+                      className="w-full rounded-md border border-slate-200 p-2.5 text-sm"
                       value={formData.exporterLine}
                       onChange={(e) => setFormData({ ...formData, exporterLine: e.target.value })}
                       placeholder="e.g. 1 Hafenstrasse"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-gray-600">City</label>
+                    <label className="text-xs font-medium text-slate-600">City</label>
                     <input
                       type="text"
-                      className="w-full rounded-md border border-gray-200 p-2.5 text-sm"
+                      className="w-full rounded-md border border-slate-200 p-2.5 text-sm"
                       value={formData.exporterCity}
                       onChange={(e) => setFormData({ ...formData, exporterCity: e.target.value })}
                       placeholder="e.g. Hamburg"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-gray-600">Postcode</label>
+                    <label className="text-xs font-medium text-slate-600">Postcode</label>
                     <input
                       type="text"
-                      className="w-full rounded-md border border-gray-200 p-2.5 text-sm"
+                      className="w-full rounded-md border border-slate-200 p-2.5 text-sm"
                       value={formData.exporterPostcode}
                       onChange={(e) => setFormData({ ...formData, exporterPostcode: e.target.value })}
                       placeholder="e.g. 20095"
@@ -427,12 +427,12 @@ export default function CoreSchemaPage() {
 
             {/* Destination Country — DE 5/8. A-mandatory per Appendix 21A. */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
                 Destination Country (DE 5/8)
                 <span className="text-red-500">*</span>
               </label>
               <Select value={formData.destinationCountry} onValueChange={(v) => setFormData({ ...formData, destinationCountry: v })}>
-                <SelectTrigger className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+                <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
                   <SelectValue placeholder="Country goods shipped TO" />
                 </SelectTrigger>
                 <SelectContent position="popper" className="max-h-[300px]">
@@ -445,12 +445,12 @@ export default function CoreSchemaPage() {
 
             {/* DE 5/23 — PORT = Name+ID only; ADDRESS = separate mode (not mixed). */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
                 Goods location method (DE 5/23)
                 <span className="text-red-500">*</span>
               </label>
               <Select value={formData.goodsLocationKind} onValueChange={(v) => setFormData({ ...formData, goodsLocationKind: v as GoodsLocationKind | "" })}>
-                <SelectTrigger className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+                <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
                   <SelectValue placeholder="Select how the location is identified" />
                 </SelectTrigger>
                 <SelectContent position="popper">
@@ -460,14 +460,14 @@ export default function CoreSchemaPage() {
                 </SelectContent>
               </Select>
               {formData.goodsLocationKind === "port" && (
-                <p className="text-[10px] text-gray-500">
+                <p className="text-[10px] text-slate-500">
                   Port mode splits the Appendix 16C code into XML: chars 1–2 → Address.CountryCode, char 3 → TypeCode, char 4 → Address.TypeCode, remainder → Name (see docs/hmrc/ACTIVE/tdr/mapping/de-5-23-goods-location.md).
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
                 Goods location code (DE 5/23)
                 <span className="text-red-500">*</span>
               </label>
@@ -481,9 +481,9 @@ export default function CoreSchemaPage() {
                     : "Appendix 16 code"
                 }
                 disabled={!formData.goodsLocationKind}
-                className="w-full rounded-md border border-gray-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50 disabled:bg-gray-50"
+                className="w-full rounded-md border border-slate-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50 disabled:bg-slate-50"
               />
-              <p className="text-[10px] text-gray-400 flex items-center gap-1">
+              <p className="text-[10px] text-slate-400 flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 {formData.goodsLocationKind === "port"
                   ? `Appendix 16C code (e.g. GBAUFXTFXTFXT for Felixstowe). Source: docs/hmrc/specs/cds-api/mirrors/appendix-16c-maritime.psv.`
@@ -493,7 +493,7 @@ export default function CoreSchemaPage() {
 
             {/* Presentation Office — DE 5/26. Conditional per Appendix 21A. */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Customs Office of Presentation (DE 5/26)
               </label>
               <input
@@ -501,9 +501,9 @@ export default function CoreSchemaPage() {
                 value={formData.presentationOffice}
                 onChange={(e) => setFormData({ ...formData, presentationOffice: e.target.value })}
                 placeholder="e.g. GBLON004 (only if presented elsewhere than 5/23)"
-                className="w-full rounded-md border border-gray-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500"
+                className="w-full rounded-md border border-slate-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500"
               />
-              <p className="text-[10px] text-gray-400 flex items-center gap-1">
+              <p className="text-[10px] text-slate-400 flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 Conditional — required only when goods aren&apos;t at the goods location.
               </p>
@@ -511,7 +511,7 @@ export default function CoreSchemaPage() {
 
             {/* Invoice currency — DE 4/11 currency. A-mandatory per Appendix 21A. */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
                 Invoice Currency (DE 4/11)
                 <span className="text-red-500">*</span>
               </label>
@@ -520,13 +520,13 @@ export default function CoreSchemaPage() {
                 value={formData.invoiceCurrency}
                 onChange={(e) => setFormData({ ...formData, invoiceCurrency: e.target.value.toUpperCase() })}
                 placeholder="ISO 4217 code, e.g. GBP"
-                className="w-full rounded-md border border-gray-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                className="w-full rounded-md border border-slate-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
               />
             </div>
 
             {/* Invoice total — DE 4/11. A-mandatory per Appendix 21A. */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Invoice Total (DE 4/11)
               </label>
               <input
@@ -536,16 +536,16 @@ export default function CoreSchemaPage() {
                 value={formData.invoiceTotal}
                 onChange={(e) => setFormData({ ...formData, invoiceTotal: e.target.value })}
                 placeholder="If empty, mapper sums from items"
-                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+                className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
               />
-              <p className="text-[10px] text-gray-400 flex items-center gap-1">
+              <p className="text-[10px] text-slate-400 flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 Optional override — leave blank to derive from goods item values.
               </p>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Incoterms (DE 4/1)
               </label>
               <input
@@ -553,12 +553,12 @@ export default function CoreSchemaPage() {
                 value={formData.incoterms}
                 onChange={(e) => setFormData({ ...formData, incoterms: e.target.value.toUpperCase() })}
                 placeholder="e.g. CIF"
-                className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
+                className="w-full rounded-md border border-slate-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Incoterm location (DE 4/1)
               </label>
               <input
@@ -566,16 +566,16 @@ export default function CoreSchemaPage() {
                 value={formData.incotermLocation}
                 onChange={(e) => setFormData({ ...formData, incotermLocation: e.target.value })}
                 placeholder="e.g. Felixstowe or GBFXT"
-                className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+                className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
               />
-              <p className="text-[10px] text-gray-400 flex items-center gap-1">
+              <p className="text-[10px] text-slate-400 flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 Required with CIF for method-1 valuation. Mapper sends GB + place (e.g. Felixstowe → GBFELIXSTOWE) per Group 4.
               </p>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
                 Nature of Transaction (DE 8/5)
                 <span className="text-red-500">*</span>
               </label>
@@ -585,9 +585,9 @@ export default function CoreSchemaPage() {
                 value={formData.transactionNatureCode}
                 onChange={(e) => setFormData({ ...formData, transactionNatureCode: e.target.value })}
                 placeholder="e.g. 11"
-                className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                className="w-full rounded-md border border-slate-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
               />
-              <p className="text-[10px] text-gray-400 flex items-center gap-1">
+              <p className="text-[10px] text-slate-400 flex items-center gap-1">
                 <Info className="h-3 w-3" />
                 WCOID 103 — GoodsShipment/TransactionNatureCode. Trade Test passing baseline uses 11.
               </p>
@@ -595,14 +595,14 @@ export default function CoreSchemaPage() {
 
           </div>
 
-          <div className="border-t border-gray-100 pt-6">
-            <h3 className="text-sm font-medium text-gray-900">Duty payment</h3>
-            <p className="mt-1 text-[11px] text-gray-500">
+          <div className="border-t border-slate-100 pt-6">
+            <h3 className="text-sm font-medium text-slate-900">Duty payment</h3>
+            <p className="mt-1 text-[11px] text-slate-500">
               DE 4/8 method of payment and DE 2/6 deferment account. Required when paying via deferment (MOP E or R).
             </p>
             <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Method of payment (DE 4/8)
                 </label>
                 <Select
@@ -616,7 +616,7 @@ export default function CoreSchemaPage() {
                     })
                   }
                 >
-                  <SelectTrigger className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+                  <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
                     <SelectValue placeholder="Select method" />
                   </SelectTrigger>
                   <SelectContent position="popper">
@@ -631,7 +631,7 @@ export default function CoreSchemaPage() {
 
               {requiresDefermentAccount(formData.paymentMethodCode) && (
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
                     Deferment account (DE 2/6)
                     <span className="text-red-500">*</span>
                   </label>
@@ -649,9 +649,9 @@ export default function CoreSchemaPage() {
                       })
                     }
                     placeholder="7-digit DAN"
-                    className="w-full rounded-md border border-gray-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                    className="w-full rounded-md border border-slate-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                   />
-                  <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                  <p className="text-[10px] text-slate-400 flex items-center gap-1">
                     <Info className="h-3 w-3" />
                     HMRC deferment account number (1DAN). Stored on your declaration only — not logged in audit output.
                   </p>
@@ -660,14 +660,14 @@ export default function CoreSchemaPage() {
             </div>
           </div>
 
-          <div className="border-t border-gray-100 pt-6">
-            <h3 className="text-sm font-medium text-gray-900">Transport Identity</h3>
-            <p className="mt-1 text-[11px] text-gray-500">
+          <div className="border-t border-slate-100 pt-6">
+            <h3 className="text-sm font-medium text-slate-900">Transport Identity</h3>
+            <p className="mt-1 text-[11px] text-slate-500">
               DE 7/4 (mode), DE 7/7 / 7/9 (border / arrival means). CDS rejects mismatched or stale values — use the actual vessel/IMO/wagon/vehicle/flight identifier for this consignment.
             </p>
             <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-3">
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
                   Transport Mode (DE 7/4)
                   <span className="text-red-500">*</span>
                 </label>
@@ -689,7 +689,7 @@ export default function CoreSchemaPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
                   Identification Type (DE 7/9)
                   <span className="text-red-500">*</span>
                 </label>
@@ -711,7 +711,7 @@ export default function CoreSchemaPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 flex justify-between">
+                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
                   Identification (DE 7/9)
                   <span className="text-red-500">*</span>
                 </label>
@@ -721,9 +721,9 @@ export default function CoreSchemaPage() {
                   value={formData.transportId}
                   onChange={(e) => setFormData({ ...formData, transportId: e.target.value })}
                   placeholder="e.g. IMO9395044, vessel name, vehicle reg"
-                  className="w-full rounded-md border border-gray-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                  className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                 />
-                <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                <p className="text-[10px] text-slate-400 flex items-center gap-1">
                   <Info className="h-3 w-3" />
                   Real identifier for this consignment. Don&apos;t carry over a value from a previous declaration.
                 </p>
@@ -733,7 +733,7 @@ export default function CoreSchemaPage() {
 
         </div>
 
-        <div className="border-t border-gray-100 bg-gray-50/50 p-4 px-6 flex items-center justify-end gap-3">
+        <div className="border-t border-slate-100 bg-slate-50/50 p-4 px-6 flex items-center justify-end gap-3">
           {saveError && (
             <p className="mr-auto text-xs text-red-600">{saveError}</p>
           )}
@@ -743,7 +743,7 @@ export default function CoreSchemaPage() {
           <button
             type="submit"
             disabled={saving}
-            className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800 disabled:opacity-50"
+            className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-slate-800 disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
             Save Core Details

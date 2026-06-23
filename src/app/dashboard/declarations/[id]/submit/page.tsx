@@ -63,7 +63,7 @@ export default function SubmitPage() {
       ? "bg-blue-50 text-blue-700 border-blue-200"
       : s === "curated"
       ? "bg-purple-50 text-purple-700 border-purple-200"
-      : "bg-gray-100 text-gray-700 border-gray-200";
+      : "bg-slate-100 text-slate-700 border-slate-200";
   type DryRunPayload = {
     success: boolean;
     localPreflight?: Record<string, string | undefined>;
@@ -365,8 +365,8 @@ export default function SubmitPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-medium text-gray-900">Validate & Submit</h2>
-        <p className="mt-1 text-xs text-gray-500">
+        <h2 className="text-lg font-medium text-slate-900">Validate & Submit</h2>
+        <p className="mt-1 text-xs text-slate-500">
           Run final pre-flight checks before pushing the WCO 3.6 payload to the HMRC Customs Declarations API.
         </p>
         <p className="mt-2 inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
@@ -374,13 +374,13 @@ export default function SubmitPage() {
         </p>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="p-6 space-y-6">
           
-          <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-gray-400" />
-              <h3 className="text-sm font-semibold text-gray-900">Pre-flight Validation</h3>
+              <ShieldCheck className="h-5 w-5 text-slate-400" />
+              <h3 className="text-sm font-semibold text-slate-900">Pre-flight Validation</h3>
             </div>
             <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${
               isLiveDeclaration ? "bg-blue-100 text-blue-700"
@@ -396,8 +396,8 @@ export default function SubmitPage() {
             <li className="flex items-start gap-3">
               {!completenessReady ? <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
               <div>
-                <p className={`text-sm font-medium ${!completenessReady ? "text-red-700" : "text-gray-900"}`}>Rule Engine Completeness</p>
-                <p className="text-xs text-gray-500">
+                <p className={`text-sm font-medium ${!completenessReady ? "text-red-700" : "text-slate-900"}`}>Rule Engine Completeness</p>
+                <p className="text-xs text-slate-500">
                   Single source of truth — transport, location, documents, exporter, and lane rules.
                   {completenessMissing.length > 0 && (
                     <span className="block mt-1 text-red-600">
@@ -411,8 +411,8 @@ export default function SubmitPage() {
             <li className="flex items-start gap-3">
               {missingBlockingRequirements.length > 0 ? <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
               <div>
-                <p className={`text-sm font-medium ${missingBlockingRequirements.length > 0 ? "text-red-700" : "text-gray-900"}`}>Required Documents (Blocking)</p>
-                <p className="text-xs text-gray-500">
+                <p className={`text-sm font-medium ${missingBlockingRequirements.length > 0 ? "text-red-700" : "text-slate-900"}`}>Required Documents (Blocking)</p>
+                <p className="text-xs text-slate-500">
                   Submit gate is based on persisted declaration requirements.
                   {missingBlockingCodes.length > 0 ? ` Missing: ${missingBlockingCodes.join(", ")}` : ""}
                 </p>
@@ -422,8 +422,8 @@ export default function SubmitPage() {
             <li className="flex items-start gap-3">
               {missingAdvisoryRequirements.length > 0 ? <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
               <div>
-                <p className={`text-sm font-medium ${missingAdvisoryRequirements.length > 0 ? "text-amber-700" : "text-gray-900"}`}>Advisory Evidence</p>
-                <p className="text-xs text-gray-500">
+                <p className={`text-sm font-medium ${missingAdvisoryRequirements.length > 0 ? "text-amber-700" : "text-slate-900"}`}>Advisory Evidence</p>
+                <p className="text-xs text-slate-500">
                   Advisory documents do not block submit but should be resolved.
                   {missingAdvisoryCodes.length > 0 ? ` Missing: ${missingAdvisoryCodes.join(", ")}` : ""}
                 </p>
@@ -433,8 +433,8 @@ export default function SubmitPage() {
             <li className="flex items-start gap-3">
               {!dryRunFullyPassed ? <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
               <div>
-                <p className={`text-sm font-medium ${!dryRunFullyPassed ? "text-amber-700" : "text-gray-900"}`}>Dry Run Gate</p>
-                <p className="text-xs text-gray-500">XML preflight and rule engine must both pass before HMRC submit.</p>
+                <p className={`text-sm font-medium ${!dryRunFullyPassed ? "text-amber-700" : "text-slate-900"}`}>Dry Run Gate</p>
+                <p className="text-xs text-slate-500">XML preflight and rule engine must both pass before HMRC submit.</p>
               </div>
             </li>
           </ul>
@@ -476,12 +476,12 @@ export default function SubmitPage() {
                 <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
                   {Object.entries(dryRunResult.localPreflight || {}).map(([k, v]) => (
                     <div key={k} className="flex items-center justify-between">
-                      <span className="text-gray-600">{k}</span>
+                      <span className="text-slate-600">{k}</span>
                       <span className={`font-mono font-semibold ${
                         v === "pass" ? "text-green-700"
                         : v === "blocked" || v === "fail" ? "text-red-700"
                         : v === "advisory" ? "text-amber-700"
-                        : "text-gray-500"
+                        : "text-slate-500"
                       }`}>{v ?? "—"}</span>
                     </div>
                   ))}
@@ -489,28 +489,28 @@ export default function SubmitPage() {
               </div>
 
               {(dryRunResult.actionableFailures?.length ?? 0) > 0 && (
-                <div className="rounded-md border border-gray-200 bg-white p-4">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-gray-800 mb-3">
+                <div className="rounded-md border border-slate-200 bg-white p-4">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-slate-800 mb-3">
                     Actions Required ({dryRunResult.actionableFailures!.length})
                   </h4>
                   <ul className="space-y-3">
                     {dryRunResult.actionableFailures!.map((af, i) => (
-                      <li key={i} className="flex items-start gap-3 rounded-md border border-gray-100 bg-gray-50 p-3">
+                      <li key={i} className="flex items-start gap-3 rounded-md border border-slate-100 bg-slate-50 p-3">
                         <span className={`mt-0.5 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide shrink-0 ${
                           af.severity === "blocking" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
                         }`}>
                           {af.severity}
                         </span>
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold text-gray-900">
+                          <p className="text-xs font-semibold text-slate-900">
                             {af.action.replace(/-/g, " ")}
-                            {af.field ? <span className="ml-2 font-mono text-gray-500">[{af.field}]</span> : null}
+                            {af.field ? <span className="ml-2 font-mono text-slate-500">[{af.field}]</span> : null}
                           </p>
-                          <p className="text-xs text-gray-700 mt-0.5">{af.reason}</p>
+                          <p className="text-xs text-slate-700 mt-0.5">{af.reason}</p>
                           {af.oneOf && af.oneOf.length > 0 && (
                             <div className="mt-1.5 flex flex-wrap gap-1">
                               {af.oneOf.map((c) => (
-                                <span key={c} className="inline-flex items-center rounded border border-gray-300 bg-white px-1.5 py-0.5 font-mono text-[10px] text-gray-700">
+                                <span key={c} className="inline-flex items-center rounded border border-slate-300 bg-white px-1.5 py-0.5 font-mono text-[10px] text-slate-700">
                                   {c}
                                 </span>
                               ))}
@@ -529,7 +529,7 @@ export default function SubmitPage() {
                             </div>
                           )}
                           {af.causedBy.measureIds.length > 0 && (
-                            <p className="mt-1.5 text-[10px] text-gray-500">
+                            <p className="mt-1.5 text-[10px] text-slate-500">
                               Tariff measure{af.causedBy.measureIds.length > 1 ? "s" : ""}: {af.causedBy.measureIds.join(", ")}
                             </p>
                           )}
@@ -549,8 +549,8 @@ export default function SubmitPage() {
                   {dryRunResult.payloadDebug && (
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div className="rounded border border-blue-100 bg-white p-3">
-                        <p className="text-[11px] font-semibold text-gray-900 mb-2">Declaration / Transport</p>
-                        <div className="space-y-1 text-[11px] font-mono text-gray-700">
+                        <p className="text-[11px] font-semibold text-slate-900 mb-2">Declaration / Transport</p>
+                        <div className="space-y-1 text-[11px] font-mono text-slate-700">
                           <div>LRN: {dryRunResult.payloadDebug.declaration?.functionalReferenceId || "—"}</div>
                           <div>Office: {dryRunResult.payloadDebug.declaration?.declarationOfficeId || "—"}</div>
                           <div>UCR: {dryRunResult.payloadDebug.declaration?.ucr || "—"}</div>
@@ -565,8 +565,8 @@ export default function SubmitPage() {
                       </div>
 
                       <div className="rounded border border-blue-100 bg-white p-3">
-                        <p className="text-[11px] font-semibold text-gray-900 mb-2">Countries / Parties</p>
-                        <div className="space-y-1 text-[11px] font-mono text-gray-700">
+                        <p className="text-[11px] font-semibold text-slate-900 mb-2">Countries / Parties</p>
+                        <div className="space-y-1 text-[11px] font-mono text-slate-700">
                           <div>Export Country: {dryRunResult.payloadDebug.goodsShipment?.exportCountryId || "—"}</div>
                           <div>Seller Country: {dryRunResult.payloadDebug.goodsShipment?.sellerCountryCode || "—"}</div>
                           <div>Buyer Country: {dryRunResult.payloadDebug.goodsShipment?.buyerCountryCode || "—"}</div>
@@ -578,21 +578,21 @@ export default function SubmitPage() {
 
                   {dryRunResult.payloadDebug?.items?.map((item, index) => (
                     <div key={index} className="rounded border border-blue-100 bg-white p-3">
-                      <p className="text-[11px] font-semibold text-gray-900 mb-2">
+                      <p className="text-[11px] font-semibold text-slate-900 mb-2">
                         Item {item.sequenceNumeric || String(index + 1)}
                       </p>
                       <div className="space-y-2 text-[11px]">
                         <div>
-                          <span className="font-medium text-gray-700">Government Procedures:</span>{" "}
-                          <span className="font-mono text-gray-700">
+                          <span className="font-medium text-slate-700">Government Procedures:</span>{" "}
+                          <span className="font-mono text-slate-700">
                             {(item.governmentProcedures || [])
                               .map((proc) => proc.PreviousCode ? `${proc.CurrentCode}/${proc.PreviousCode}` : `${proc.CurrentCode}`)
                               .join(", ") || "—"}
                           </span>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-700">Additional Information:</span>{" "}
-                          <span className="font-mono text-gray-700">
+                          <span className="font-medium text-slate-700">Additional Information:</span>{" "}
+                          <span className="font-mono text-slate-700">
                             {(item.additionalInformation || [])
                               .map((ai) => ai.StatementCode)
                               .filter(Boolean)
@@ -600,30 +600,30 @@ export default function SubmitPage() {
                           </span>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-700">Additional Documents:</span>
+                          <span className="font-medium text-slate-700">Additional Documents:</span>
                           <div className="mt-1 flex flex-wrap gap-1">
                             {(item.additionalDocuments || []).length > 0 ? (
                               item.additionalDocuments!.map((doc, docIndex) => (
-                                <span key={docIndex} className="inline-flex items-center rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[10px] text-gray-700">
+                                <span key={docIndex} className="inline-flex items-center rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] text-slate-700">
                                   {(doc.CategoryCode || "") + (doc.TypeCode || "")}:{doc.ID || "—"}{doc.StatusCode ? `:${doc.StatusCode}` : ""}
                                 </span>
                               ))
                             ) : (
-                              <span className="font-mono text-gray-500">—</span>
+                              <span className="font-mono text-slate-500">—</span>
                             )}
                           </div>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-700">Packaging:</span>{" "}
-                          <span className="font-mono text-gray-700">
+                          <span className="font-medium text-slate-700">Packaging:</span>{" "}
+                          <span className="font-mono text-slate-700">
                             {(item.packaging || [])
                               .map((pkg) => `${pkg.TypeCode || "—"} / ${pkg.QuantityQuantity || "—"} / ${pkg.MarksNumbersID || "—"}`)
                               .join(", ") || "—"}
                           </span>
                         </div>
                         <div>
-                          <span className="font-medium text-gray-700">Origin:</span>{" "}
-                          <span className="font-mono text-gray-700">{item.origin?.CountryCode || "—"}</span>
+                          <span className="font-medium text-slate-700">Origin:</span>{" "}
+                          <span className="font-mono text-slate-700">{item.origin?.CountryCode || "—"}</span>
                         </div>
                       </div>
                     </div>
@@ -631,8 +631,8 @@ export default function SubmitPage() {
 
                   {dryRunResult.xmlPayload && (
                     <div>
-                      <p className="text-[11px] font-semibold text-gray-900 mb-2">Exact XML Sent On Submit</p>
-                      <div className="rounded-md bg-gray-900 p-4 max-h-96 overflow-y-auto w-full">
+                      <p className="text-[11px] font-semibold text-slate-900 mb-2">Exact XML Sent On Submit</p>
+                      <div className="rounded-md bg-slate-900 p-4 max-h-96 overflow-y-auto w-full">
                         <pre className="text-[10px] text-green-400 font-mono whitespace-pre-wrap break-all">
                           {dryRunResult.xmlPayload}
                         </pre>
@@ -645,15 +645,15 @@ export default function SubmitPage() {
           )}
 
           {wcoPayloadPreview && (
-            <div className="mt-8 border-t border-gray-100 pt-6">
+            <div className="mt-8 border-t border-slate-100 pt-6">
               <div className="flex items-center gap-2 mb-4">
                 <Code2 className="h-5 w-5 text-blue-500" />
-                <h3 className="text-sm font-semibold text-gray-900">WCO 3.6 Payload Preview</h3>
+                <h3 className="text-sm font-semibold text-slate-900">WCO 3.6 Payload Preview</h3>
               </div>
-              <p className="text-xs text-gray-500 mb-4">
+              <p className="text-xs text-slate-500 mb-4">
                 This is the exact JSON structure that will be transmitted to the HMRC Customs Declarations API.
               </p>
-              <div className="rounded-md bg-gray-900 p-4 max-h-96 overflow-y-auto w-full">
+              <div className="rounded-md bg-slate-900 p-4 max-h-96 overflow-y-auto w-full">
                 <pre className="text-[10px] text-green-400 font-mono whitespace-pre-wrap break-all">
                   {JSON.stringify(wcoPayloadPreview, null, 2)}
                 </pre>
@@ -663,14 +663,14 @@ export default function SubmitPage() {
 
         </div>
 
-        <div className="border-t border-gray-100 bg-gray-50/50 p-4 px-6 flex flex-col items-center justify-center gap-3">
-          <p className="text-[10px] text-gray-500 text-center uppercase tracking-widest font-medium">
+        <div className="border-t border-slate-100 bg-slate-50/50 p-4 px-6 flex flex-col items-center justify-center gap-3">
+          <p className="text-[10px] text-slate-500 text-center uppercase tracking-widest font-medium">
             By submitting, you confirm authorization to act as the legal Declarant.
           </p>
           <button
             onClick={handleDryRun}
             disabled={!isReady || isSubmitting || isDryRunning}
-            className="flex w-full h-8 rounded-md border border-gray-300 bg-white px-4 text-xs font-normal text-gray-800 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
+            className="flex w-full h-8 rounded-md border border-slate-300 bg-white px-4 text-xs font-normal text-slate-800 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
           >
             {isDryRunning ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldCheck className="h-4 w-4 text-blue-600" />}
             {isDryRunning ? "Running Local Dry Check..." : "Run Local Dry Check (No HMRC Call)"}
@@ -678,7 +678,7 @@ export default function SubmitPage() {
           <button
             onClick={handleSubmit}
             disabled={!isReady || !dryRunFullyPassed || isSubmitting || isDryRunning || isLiveDeclaration}
-            className="flex w-full h-8 rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
+            className="flex w-full h-8 rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
           >
             {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-4 w-4 text-green-400" />}
             {isSubmitting ? "Transmitting to HMRC..." : "Submit to Customs Declarations API"}

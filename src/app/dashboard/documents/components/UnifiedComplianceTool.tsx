@@ -237,11 +237,11 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
         <div className="space-y-6 pt-4">
           {declarationRef && itemOptions.length > 0 && (
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Declaration item
               </label>
               <Select value={selectedItemKey} onValueChange={handleItemSelection}>
-                <SelectTrigger className="h-9 w-full rounded-md border-gray-200 bg-gray-50 text-xs text-gray-700">
+                <SelectTrigger className="h-9 w-full rounded-md border-slate-200 bg-slate-50 text-xs text-slate-700">
                   <SelectValue placeholder="Choose an item..." />
                 </SelectTrigger>
                 <SelectContent position="popper" className="z-[110]">
@@ -260,11 +260,11 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
 
           <div className="space-y-5">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Country of Origin
               </label>
               <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-                <SelectTrigger className="h-9 w-full rounded-md border-gray-200 bg-gray-50 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none">
+                <SelectTrigger className="h-9 w-full rounded-md border-slate-200 bg-slate-50 text-xs text-slate-700 transition-colors focus:border-slate-400 focus:outline-none">
                   <SelectValue placeholder="Choose a country..." />
                 </SelectTrigger>
                 <SelectContent position="popper" className="max-h-[300px] z-[110]">
@@ -278,7 +278,7 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Commodity Code
               </label>
               <input
@@ -286,13 +286,13 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
                 placeholder="e.g. 0101210000"
                 value={commodityCode}
                 onChange={(e) => setCommodityCode(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none placeholder:text-gray-400"
+                className="h-9 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 transition-colors focus:border-slate-400 focus:outline-none placeholder:text-slate-400"
               />
             </div>
 
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                   Item value (GBP)
                 </label>
                 <input
@@ -301,11 +301,11 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
                   step="0.01"
                   value={itemValue}
                   onChange={(e) => setItemValue(e.target.value)}
-                  className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700"
+                  className="h-9 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                   Shipping (GBP)
                 </label>
                 <input
@@ -314,11 +314,11 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
                   step="0.01"
                   value={shippingCost}
                   onChange={(e) => setShippingCost(e.target.value)}
-                  className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700"
+                  className="h-9 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                   Net weight (kg)
                 </label>
                 <input
@@ -328,7 +328,7 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
                   value={netWeightKg}
                   onChange={(e) => setNetWeightKg(e.target.value)}
                   placeholder="Required for weight-based duty"
-                  className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700"
+                  className="h-9 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700"
                 />
               </div>
             </div>
@@ -338,7 +338,7 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
             <Button
               onClick={handleRunCheck}
               disabled={loading || !selectedCountry || commodityCode.length < 10}
-              className="w-full bg-black text-white hover:bg-gray-800 h-9 text-xs"
+              className="w-full bg-black text-white hover:bg-slate-800 h-9 text-xs"
             >
               {loading ? (
                 <>
@@ -365,7 +365,7 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
               </p>
 
               <div>
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 ml-1">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1">
                   Best Available Rate
                 </h3>
                 <div className="p-5 rounded-xl bg-green-50 border border-green-100">
@@ -399,17 +399,17 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
               </div>
 
               {landedCost && (
-                <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-xs space-y-1">
-                  <p className="font-semibold text-gray-900">Indicative landed cost</p>
-                  <div className="flex justify-between text-gray-600">
+                <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 text-xs space-y-1">
+                  <p className="font-semibold text-slate-900">Indicative landed cost</p>
+                  <div className="flex justify-between text-slate-600">
                     <span>Estimated duty</span>
                     <span className="tabular-nums">£{landedCost.duty.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-600">
+                  <div className="flex justify-between text-slate-600">
                     <span>Estimated VAT (20%)</span>
                     <span className="tabular-nums">£{landedCost.vat.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between font-semibold text-gray-900 pt-1 border-t border-gray-200">
+                  <div className="flex justify-between font-semibold text-slate-900 pt-1 border-t border-slate-200">
                     <span>Total</span>
                     <span className="tabular-nums">£{landedCost.total.toFixed(2)}</span>
                   </div>
@@ -418,7 +418,7 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
 
               <div>
                 <div className="mb-3 ml-1 flex items-center justify-between">
-                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Available Documents</h3>
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Available Documents</h3>
                   {declarationRef ? (
                     <Button
                       onClick={handleSaveRequirements}
@@ -430,7 +430,7 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
                       {isSavingRequirements ? "Saving..." : "Save as Required Docs"}
                     </Button>
                   ) : (
-                    <span className="text-[10px] text-gray-400">Filter by declaration to persist</span>
+                    <span className="text-[10px] text-slate-400">Filter by declaration to persist</span>
                   )}
                 </div>
                 <div className="space-y-2">
@@ -438,15 +438,15 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
                     data.documents.map((doc, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-100 transition-colors hover:border-gray-200"
+                        className="flex items-center justify-between p-4 bg-white rounded-lg border border-slate-100 transition-colors hover:border-slate-200"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded bg-gray-50 flex items-center justify-center text-gray-400">
+                          <div className="h-8 w-8 rounded bg-slate-50 flex items-center justify-center text-slate-400">
                             <FileText className="h-4 w-4" />
                           </div>
                           <div>
-                            <p className="text-[12px] font-semibold text-gray-900">{doc.name}</p>
-                            <p className="text-[9px] text-gray-500 uppercase tracking-wider font-medium">{doc.type}</p>
+                            <p className="text-[12px] font-semibold text-slate-900">{doc.name}</p>
+                            <p className="text-[9px] text-slate-500 uppercase tracking-wider font-medium">{doc.type}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
@@ -460,15 +460,15 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
                           >
                             {doc.status}
                           </Badge>
-                          <div className="flex items-center gap-1 text-gray-300">
-                            <Download className="h-3.5 w-3.5 cursor-pointer hover:text-gray-900" />
-                            <Upload className="h-3.5 w-3.5 cursor-pointer hover:text-gray-900" />
+                          <div className="flex items-center gap-1 text-slate-300">
+                            <Download className="h-3.5 w-3.5 cursor-pointer hover:text-slate-900" />
+                            <Upload className="h-3.5 w-3.5 cursor-pointer hover:text-slate-900" />
                           </div>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <p className="text-[11px] text-gray-500 italic ml-1">
+                    <p className="text-[11px] text-slate-500 italic ml-1">
                       No special certificates required for this route.
                     </p>
                   )}

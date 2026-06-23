@@ -21,6 +21,7 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 | [`hmrc-operations-runbook.md`](./hmrc-operations-runbook.md) | Support runbook |
 | [`FINANCIAL-ROADMAP.md`](./FINANCIAL-ROADMAP.md) | Duty estimates, variance, reclaim |
 | [`TRE-CSV-IMPORT-PLAN.md`](./TRE-CSV-IMPORT-PLAN.md) | User-facing TRE upload — phased plan |
+| [`../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md`](../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md) | Future: B1 export, I1/C1 simplified — spec + phases |
 | [`DELIVERY-PLAN.md`](./DELIVERY-PLAN.md) | Redirect → here |
 | [`PRODUCT-PROGRESS-LOG.md`](./PRODUCT-PROGRESS-LOG.md) | Redirect → here |
 | [`hmrc-integration-plan.md`](./hmrc-integration-plan.md) | Archived Phase 3 scaffold |
@@ -134,7 +135,7 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 
 ## Later / out of scope
 
-- Export declarations (B1/ENS/H2)
+- **CDS exports + simplified I1/C1** — see [`../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md`](../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md) + [`../../specs/cds-api/declaration-categories-index.md`](../../specs/cds-api/declaration-categories-index.md)
 - CRM, white-label, acquisition targets (separate app)
 - TRE Phase 3+ (R2 bulk, email-forward ingest) — after Phase 1–2 in [`TRE-CSV-IMPORT-PLAN.md`](./TRE-CSV-IMPORT-PLAN.md)
 - Dual HMRC webhook tokens (sandbox + production Hub apps) — optional ops hardening

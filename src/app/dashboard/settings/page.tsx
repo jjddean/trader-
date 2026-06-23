@@ -16,7 +16,7 @@ export default function SettingsPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-[40vh] items-center justify-center p-6 text-sm text-gray-500">
+        <div className="flex min-h-[40vh] items-center justify-center p-6 text-sm text-slate-500">
           Loading settings…
         </div>
       }
@@ -39,6 +39,11 @@ function SettingsPageContent() {
   const orgHmrcMode = useQuery(api.org_hmrc.getModeForOrg, orgId ? { orgId } : "skip");
   const setOrgHmrcMode = useMutation(api.org_hmrc.setOrgMode);
   const hmrcConnection = useQuery(api.hmrc.getToken, userId ? { userId } : "skip");
+  // Prefetch so Security tab does not pop-in when selected
+  useQuery(
+    api.org_hmrc.getSandboxTestUserForOrg,
+    orgId && orgHmrcMode?.hmrcMode !== "live" ? { orgId } : "skip",
+  );
   const disconnectHmrc = useMutation(api.hmrc.disconnectToken);
   const [hmrcModeSaving, setHmrcModeSaving] = useState(false);
   const [hmrcDisconnecting, setHmrcDisconnecting] = useState(false);
@@ -117,47 +122,40 @@ function SettingsPageContent() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
-      <div className="flex gap-1 overflow-x-auto rounded-xl border border-gray-200 bg-white p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-1 rounded-xl border border-slate-200 bg-white p-2">
         {settingsTabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             type="button"
             onClick={() => setActiveTab(id)}
             className={cn(
-              "inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-xs font-medium transition-colors",
-              activeTab === id ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100",
+              "inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-xs font-medium transition-colors",
+              activeTab === id ? "bg-black text-white" : "text-slate-600 hover:bg-slate-100",
             )}
           >
-            <Icon className="h-3.5 w-3.5" />
+            <Icon className="h-3.5 w-3.5 shrink-0" />
             {label}
           </button>
         ))}
-        <a
-          href="/dashboard/support/changelog"
-          className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-history"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
-          Changelog
-        </a>
       </div>
 
-      <div className="min-h-[28rem]">
+      <div className="min-h-[36rem]">
       {activeTab === "profile" && (
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
-          <User className="h-4 w-4 text-gray-400" />
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
+          <User className="h-4 w-4 text-slate-400" />
           <h3 className="text-sm font-medium text-black">Profile</h3>
         </div>
         <div className="space-y-4 p-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+              <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
                 Name
               </label>
               <p className="text-xs text-black">{user?.fullName || dbUser?.name || "—"}</p>
             </div>
             <div>
-              <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+              <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
                 Email
               </label>
               <p className="text-xs text-black">
@@ -166,22 +164,22 @@ function SettingsPageContent() {
             </div>
           </div>
           <div>
-            <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+            <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
               User ID
             </label>
-            <p className="font-mono text-[0.6875rem] text-gray-500">{userId || "—"}</p>
+            <p className="font-mono text-[0.6875rem] text-slate-500">{userId || "—"}</p>
           </div>
         </div>
       </div>
       )}
 
       {activeTab === "team" && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
-            <Users className="h-4 w-4 text-gray-400" />
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
+            <Users className="h-4 w-4 text-slate-400" />
             <div>
               <h3 className="text-sm font-medium text-black">Organisation</h3>
-              <p className="text-[11px] text-gray-500">
+              <p className="text-[11px] text-slate-500">
                 Switch workspace from the header menu. Members, invites, and org name open in the same
                 panel as <span className="font-medium">Manage organisation</span> on that menu.
               </p>
@@ -189,14 +187,14 @@ function SettingsPageContent() {
           </div>
           <div className="space-y-4 p-6">
             {organization ? (
-              <div className="flex items-center justify-between gap-4 rounded-lg border border-gray-100 bg-gray-50 p-4">
+              <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700">
                     <Building2 className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-black">{organization.name}</p>
-                    <p className="text-[11px] text-gray-500">Active workspace</p>
+                    <p className="text-[11px] text-slate-500">Active workspace</p>
                   </div>
                 </div>
                 <button
@@ -204,13 +202,13 @@ function SettingsPageContent() {
                   onClick={() =>
                     clerk.openOrganizationProfile({ appearance: compactProfileModalAppearance })
                   }
-                  className="shrink-0 rounded-md bg-black px-3 py-1.5 text-[11px] font-medium text-white hover:bg-gray-800"
+                  className="shrink-0 rounded-md bg-black px-3 py-1.5 text-[11px] font-medium text-white hover:bg-slate-800"
                 >
                   Manage organisation
                 </button>
               </div>
             ) : (
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-slate-600">
                 Select or create an organisation from the workspace menu in the header to invite team
                 members.
               </p>
@@ -240,7 +238,7 @@ function SettingsPageContent() {
                       setMigrationLoading(false);
                     }
                   }}
-                  className="mt-3 rounded-md bg-black px-3 py-2 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+                  className="mt-3 rounded-md bg-black px-3 py-2 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
                 >
                   {migrationLoading ? "Migrating…" : "Migrate personal data"}
                 </button>
@@ -264,9 +262,9 @@ function SettingsPageContent() {
       )}
 
       {activeTab === "subscription" && (
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
-          <CreditCard className="h-4 w-4 text-gray-400" />
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
+          <CreditCard className="h-4 w-4 text-slate-400" />
           <h3 className="text-sm font-medium text-black">Subscription</h3>
         </div>
         <div className="p-6">
@@ -279,7 +277,7 @@ function SettingsPageContent() {
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+                  <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
                     Plan
                   </label>
                   <span
@@ -292,7 +290,7 @@ function SettingsPageContent() {
                   </span>
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+                  <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
                     Status
                   </label>
                   <div className="flex items-center gap-1.5">
@@ -306,14 +304,14 @@ function SettingsPageContent() {
                             : "bg-orange-500",
                       )}
                     />
-                    <span className="text-xs text-gray-700 capitalize">{subscription.status}</span>
+                    <span className="text-xs text-slate-700 capitalize">{subscription.status}</span>
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+                  <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
                     Renews
                   </label>
-                  <p className="text-xs text-gray-700">
+                  <p className="text-xs text-slate-700">
                     {new Date(subscription.currentPeriodEnd).toLocaleDateString("en-GB", {
                       day: "numeric",
                       month: "short",
@@ -326,7 +324,7 @@ function SettingsPageContent() {
                 type="button"
                 onClick={openBillingPortal}
                 disabled={stripeLoading}
-                className="flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-normal text-white transition-colors hover:bg-gray-800 disabled:opacity-60"
+                className="flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-normal text-white transition-colors hover:bg-slate-800 disabled:opacity-60"
               >
                 {stripeLoading ? "Opening…" : "Manage subscription"}
                 <ExternalLink className="h-3 w-3" />
@@ -334,11 +332,11 @@ function SettingsPageContent() {
             </div>
           ) : (
             <div className="py-6 text-center">
-              <CreditCard className="mx-auto mb-2 h-5 w-5 text-gray-300" />
-              <p className="mb-3 text-xs text-gray-500">No active subscription</p>
+              <CreditCard className="mx-auto mb-2 h-5 w-5 text-slate-300" />
+              <p className="mb-3 text-xs text-slate-500">No active subscription</p>
               <Link
                 href="/dashboard/pricing"
-                className="inline-flex h-8 items-center rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-gray-800"
+                className="inline-flex h-8 items-center rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-slate-800"
               >
                 View plans
               </Link>
@@ -349,18 +347,18 @@ function SettingsPageContent() {
       )}
 
       {activeTab === "security" && (
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
-            <Shield className="h-4 w-4 text-gray-400" />
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
+            <Shield className="h-4 w-4 text-slate-400" />
             <h3 className="text-sm font-medium text-black">Security</h3>
           </div>
           <div className="space-y-3 p-6">
-            <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
+            <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1 space-y-3">
                   <div>
                     <p className="text-xs font-medium text-black">HMRC connection</p>
-                    <p className="mt-1 text-[11px] text-gray-500">
+                    <p className="mt-1 text-[11px] text-slate-500">
                       {orgHmrcMode?.hmrcMode === "live" ? (
                         <>
                           Authorise Freightcode with your live Government Gateway account. Submissions
@@ -375,7 +373,7 @@ function SettingsPageContent() {
                     </p>
                   </div>
                   {orgHmrcMode?.hmrcMode !== "live" && (
-                    <PracticeSandboxTestUser compact enabled />
+                    <PracticeSandboxTestUser compact enabled={activeTab === "security"} />
                   )}
                   {hmrcConnection && (
                     <p
@@ -414,7 +412,7 @@ function SettingsPageContent() {
                           setHmrcDisconnecting(false);
                         }
                       }}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                      className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                     >
                       <Unlink className="h-3 w-3" />
                       {hmrcDisconnecting ? "Disconnecting…" : "Disconnect HMRC"}
@@ -425,8 +423,8 @@ function SettingsPageContent() {
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-medium",
                       hmrcConnection && hmrcConnection.expiresAt > Date.now()
-                        ? "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-                        : "bg-black text-white hover:bg-gray-800",
+                        ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                        : "bg-black text-white hover:bg-slate-800",
                     )}
                   >
                     <Link2 className="h-3 w-3" />
@@ -437,9 +435,9 @@ function SettingsPageContent() {
             </div>
 
             {orgId && (
-              <div className="rounded-lg border border-gray-100 p-4">
+              <div className="rounded-lg border border-slate-100 p-4">
                 <p className="text-xs font-medium text-black">CDS environment</p>
-                <p className="mt-1 text-[11px] text-gray-500">
+                <p className="mt-1 text-[11px] text-slate-500">
                   Practice uses HMRC sandbox (TDR). Live uses production CDS — only enable when your org
                   is approved.
                 </p>
@@ -467,7 +465,7 @@ function SettingsPageContent() {
                           setHmrcModeSaving(false);
                         }
                       }}
-                      className="text-[11px] text-gray-600 underline hover:text-black disabled:opacity-50"
+                      className="text-[11px] text-slate-600 underline hover:text-black disabled:opacity-50"
                     >
                       {hmrcModeSaving
                         ? "Saving…"
@@ -481,14 +479,14 @@ function SettingsPageContent() {
             )}
 
             <div className="flex items-center justify-between">
-              <span className="text-[0.6875rem] text-gray-600">Two-Factor Auth</span>
+              <span className="text-[0.6875rem] text-slate-600">Two-Factor Auth</span>
               <span className="rounded bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
                 Enabled
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[0.6875rem] text-gray-600">API Keys</span>
-              <button className="text-[0.625rem] text-gray-400 transition-colors hover:text-black">
+              <span className="text-[0.6875rem] text-slate-600">API Keys</span>
+              <button className="text-[0.625rem] text-slate-400 transition-colors hover:text-black">
                 Manage
               </button>
             </div>
@@ -497,27 +495,27 @@ function SettingsPageContent() {
       )}
 
       {activeTab === "notifications" && (
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
-            <Bell className="h-4 w-4 text-gray-400" />
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
+            <Bell className="h-4 w-4 text-slate-400" />
             <h3 className="text-sm font-medium text-black">Notifications</h3>
           </div>
           <div className="space-y-3 p-6">
             <div className="flex items-center justify-between">
-              <span className="text-[0.6875rem] text-gray-600">Compliance Alerts</span>
+              <span className="text-[0.6875rem] text-slate-600">Compliance Alerts</span>
               <span className="rounded bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
                 On
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[0.6875rem] text-gray-600">Declaration Status Updates</span>
+              <span className="text-[0.6875rem] text-slate-600">Declaration Status Updates</span>
               <span className="rounded bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
                 On
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[0.6875rem] text-gray-600">Policy Updates</span>
-              <span className="rounded bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-600">
+              <span className="text-[0.6875rem] text-slate-600">Policy Updates</span>
+              <span className="rounded bg-slate-100 px-2 py-0.5 text-[0.625rem] font-medium text-slate-600">
                 Off
               </span>
             </div>
@@ -526,19 +524,19 @@ function SettingsPageContent() {
       )}
 
       {activeTab === "privacy" && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-          <div className="flex items-center gap-3 border-b border-gray-100 px-6 py-4">
-            <Lock className="h-4 w-4 text-gray-400" />
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
+            <Lock className="h-4 w-4 text-slate-400" />
             <div>
               <h3 className="text-sm font-medium text-black">Data &amp; privacy</h3>
-              <p className="text-[11px] text-gray-500">
+              <p className="text-[11px] text-slate-500">
                 Download a copy of your account data (declarations, items, documents metadata,
                 notifications, audit log).
               </p>
             </div>
           </div>
           <div className="space-y-4 p-6">
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-slate-600">
               The export reflects your <strong>active organisation</strong> in the header, or personal
               workspace if none is selected. OAuth tokens are not included. To delete your account,
               contact{" "}
@@ -557,12 +555,12 @@ function SettingsPageContent() {
                 type="button"
                 onClick={() => void handleExportData()}
                 disabled={exportLoading}
-                className="inline-flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-normal text-white transition-colors hover:bg-gray-800 disabled:opacity-60"
+                className="inline-flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-normal text-white transition-colors hover:bg-slate-800 disabled:opacity-60"
               >
                 <Download className="h-3 w-3" />
                 {exportLoading ? "Preparing export…" : "Export my data"}
               </button>
-              <Link href="/privacy" className="text-xs text-gray-500 underline hover:text-black">
+              <Link href="/privacy" className="text-xs text-slate-500 underline hover:text-black">
                 Privacy policy
               </Link>
             </div>

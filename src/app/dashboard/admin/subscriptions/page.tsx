@@ -196,18 +196,18 @@ export default function AdminSubscriptionsPage() {
     <div className="mx-auto max-w-5xl space-y-6 p-8">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
         <div>
-          <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-gray-900">
-            <CreditCard className="h-5 w-5 text-gray-400" />
+          <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-slate-900">
+            <CreditCard className="h-5 w-5 text-slate-400" />
             Vendor Stack
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-slate-500">
             Internal SaaS and API subscriptions (Convex, Clerk, HMRC Dev Hub) — not client duty payments.
           </p>
         </div>
         <button
           type="button"
           onClick={openCreate}
-          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-black px-4 text-xs font-medium text-white hover:bg-gray-800"
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-black px-4 text-xs font-medium text-white hover:bg-slate-800"
         >
           <Plus className="h-3.5 w-3.5" />
           Add service
@@ -223,71 +223,71 @@ export default function AdminSubscriptionsPage() {
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <div className="relative flex-1 md:max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="Search service, plan, notes…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 w-full rounded-md border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-gray-400"
+            className="h-9 w-full rounded-md border border-slate-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-slate-400"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-          className="h-9 rounded-md border border-gray-200 bg-white px-3 text-xs font-medium text-gray-700"
+          className="h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700"
         >
           <option value="all">All statuses</option>
           <option value="active">Active</option>
           <option value="expiring">Expiring</option>
           <option value="suspended">Suspended</option>
         </select>
-        <span className="text-xs tabular-nums text-gray-400">{filtered.length} shown</span>
+        <span className="text-xs tabular-nums text-slate-400">{filtered.length} shown</span>
       </div>
 
-      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <div className="border-b border-gray-100 px-6 py-4">
-          <h2 className="text-sm font-semibold text-gray-900">Subscriptions &amp; API accounts</h2>
-          <p className="mt-0.5 text-xs text-gray-500">Manual ops register — login links only, no credentials stored.</p>
+      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="border-b border-slate-100 px-6 py-4">
+          <h2 className="text-sm font-semibold text-slate-900">Subscriptions &amp; API accounts</h2>
+          <p className="mt-0.5 text-xs text-slate-500">Manual ops register — login links only, no credentials stored.</p>
         </div>
 
         {subscriptions.length === 0 ? (
           <div className="px-6 py-12 text-center">
-            <p className="text-xs text-gray-500">No vendor entries yet.</p>
+            <p className="text-xs text-slate-500">No vendor entries yet.</p>
             <button
               type="button"
               onClick={handleSeed}
-              className="mt-4 inline-flex h-9 items-center gap-1.5 rounded-md border border-dashed border-gray-300 px-4 text-xs font-medium text-gray-700 hover:bg-gray-50"
+              className="mt-4 inline-flex h-9 items-center gap-1.5 rounded-md border border-dashed border-slate-300 px-4 text-xs font-medium text-slate-700 hover:bg-slate-50"
             >
               Seed default stack (Convex, Clerk, HMRC, etc.)
             </button>
           </div>
         ) : filtered.length === 0 ? (
-          <p className="px-6 py-12 text-center text-xs text-gray-500">No services match your filters.</p>
+          <p className="px-6 py-12 text-center text-xs text-slate-500">No services match your filters.</p>
         ) : (
           <table className="w-full border-collapse text-left text-sm">
-            <thead className="border-b border-gray-100 bg-gray-50/50">
+            <thead className="border-b border-slate-100 bg-slate-50/50">
               <tr>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Service</th>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Plan</th>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Status</th>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Renewal</th>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Dashboard</th>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-500">Notes</th>
-                <th className="px-6 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-500">Actions</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Service</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Plan</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Status</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Renewal</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Dashboard</th>
+                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Notes</th>
+                <th className="px-6 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-500">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-slate-100">
               {filtered.map((sub) => (
-                <tr key={sub._id} className="group align-top hover:bg-gray-50/50">
+                <tr key={sub._id} className="group align-top hover:bg-slate-50/50">
                   <td className="px-6 py-3">
-                    <p className="text-xs font-semibold text-gray-900">{sub.service}</p>
+                    <p className="text-xs font-semibold text-slate-900">{sub.service}</p>
                   </td>
-                  <td className="px-6 py-3 text-xs text-gray-600">{sub.plan}</td>
+                  <td className="px-6 py-3 text-xs text-slate-600">{sub.plan}</td>
                   <td className="px-6 py-3">
                     <StatusBadge status={sub.status} nextRenewal={sub.nextRenewal} />
                   </td>
-                  <td className="px-6 py-3 font-mono text-[11px] text-gray-500">{formatRenewal(sub.nextRenewal)}</td>
+                  <td className="px-6 py-3 font-mono text-[11px] text-slate-500">{formatRenewal(sub.nextRenewal)}</td>
                   <td className="px-6 py-3">
                     <div className="flex items-center gap-1">
                       <a
@@ -301,7 +301,7 @@ export default function AdminSubscriptionsPage() {
                       <button
                         type="button"
                         onClick={() => handleCopy(sub.loginUrl)}
-                        className="rounded p-1 text-gray-400 opacity-0 transition-opacity hover:bg-gray-100 hover:text-gray-600 group-hover:opacity-100"
+                        className="rounded p-1 text-slate-400 opacity-0 transition-opacity hover:bg-slate-100 hover:text-slate-600 group-hover:opacity-100"
                         title="Copy URL"
                       >
                         <Copy className="h-3 w-3" />
@@ -309,7 +309,7 @@ export default function AdminSubscriptionsPage() {
                     </div>
                   </td>
                   <td className="max-w-[180px] px-6 py-3">
-                    <p className="truncate text-[11px] text-gray-500" title={sub.notes}>
+                    <p className="truncate text-[11px] text-slate-500" title={sub.notes}>
                       {sub.notes || "—"}
                     </p>
                   </td>
@@ -318,7 +318,7 @@ export default function AdminSubscriptionsPage() {
                       <button
                         type="button"
                         onClick={() => openEdit(sub)}
-                        className="rounded p-1.5 text-gray-500 hover:bg-gray-100"
+                        className="rounded p-1.5 text-slate-500 hover:bg-slate-100"
                         title="Edit"
                       >
                         <Pencil className="h-3.5 w-3.5" />
@@ -339,14 +339,14 @@ export default function AdminSubscriptionsPage() {
           </table>
         )}
 
-        <div className="border-t border-gray-100 px-6 py-3">
+        <div className="border-t border-slate-100 px-6 py-3">
           <Link href="/dashboard/admin/setup" className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline">
             Users &amp; HMRC connectivity <ExternalLink className="h-3 w-3" />
           </Link>
         </div>
       </section>
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-slate-500">
         Renewal dates are manual reminders only — they do not sync with vendor billing APIs. Update entries when plans change.
       </p>
 
@@ -363,7 +363,7 @@ export default function AdminSubscriptionsPage() {
                 value={formData.service}
                 onChange={(e) => setFormData({ ...formData, service: e.target.value })}
                 placeholder="e.g. Convex"
-                className="h-9 w-full rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-gray-400"
+                className="h-9 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-slate-400"
               />
             </FormField>
             <div className="grid grid-cols-2 gap-3">
@@ -372,14 +372,14 @@ export default function AdminSubscriptionsPage() {
                   value={formData.plan}
                   onChange={(e) => setFormData({ ...formData, plan: e.target.value })}
                   placeholder="Pro / PAYG"
-                  className="h-9 w-full rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-gray-400"
+                  className="h-9 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-slate-400"
                 />
               </FormField>
               <FormField label="Status">
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="h-9 w-full rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-gray-400"
+                  className="h-9 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-slate-400"
                 >
                   <option value="active">Active</option>
                   <option value="expiring">Expiring</option>
@@ -392,7 +392,7 @@ export default function AdminSubscriptionsPage() {
                 value={formData.loginUrl}
                 onChange={(e) => setFormData({ ...formData, loginUrl: e.target.value })}
                 placeholder="https://…"
-                className="h-9 w-full rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-gray-400"
+                className="h-9 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-slate-400"
               />
             </FormField>
             <FormField label="Next renewal">
@@ -405,7 +405,7 @@ export default function AdminSubscriptionsPage() {
                     nextRenewal: new Date(e.target.value).getTime() || formData.nextRenewal,
                   })
                 }
-                className="h-9 w-full rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-gray-400"
+                className="h-9 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-slate-400"
               />
             </FormField>
             <FormField label="Notes (internal)">
@@ -413,13 +413,13 @@ export default function AdminSubscriptionsPage() {
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 placeholder="Optional"
-                className="h-9 w-full rounded-md border border-gray-200 px-3 text-sm outline-none focus:border-gray-400"
+                className="h-9 w-full rounded-md border border-slate-200 px-3 text-sm outline-none focus:border-slate-400"
               />
             </FormField>
             <button
               type="button"
               onClick={handleUpsert}
-              className="h-9 w-full rounded-md bg-black text-xs font-medium text-white hover:bg-gray-800"
+              className="h-9 w-full rounded-md bg-black text-xs font-medium text-white hover:bg-slate-800"
             >
               {editingId ? "Save changes" : "Add service"}
             </button>
@@ -442,19 +442,19 @@ function StatTile({
   accent?: "warn" | "danger";
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">{label}</p>
+    <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{label}</p>
       <p
         className={cn(
           "mt-1.5 text-2xl font-semibold tabular-nums",
           accent === "danger" && "text-red-700",
           accent === "warn" && "text-amber-700",
-          !accent && "text-gray-900",
+          !accent && "text-slate-900",
         )}
       >
         {value}
       </p>
-      <p className="mt-0.5 text-[11px] text-gray-500">{hint}</p>
+      <p className="mt-0.5 text-[11px] text-slate-500">{hint}</p>
     </div>
   );
 }
@@ -462,7 +462,7 @@ function StatTile({
 function FormField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">{label}</label>
+      <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-slate-400">{label}</label>
       {children}
     </div>
   );

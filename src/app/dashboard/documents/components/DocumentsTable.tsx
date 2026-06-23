@@ -23,10 +23,10 @@ import { ClientOnly } from "@/components/client-only";
 import { DOCUMENT_TYPES } from "@/lib/utils/document-utils";
 
 const FILTER_CONTROL_CLASS =
-  "h-9 w-full border-gray-200 bg-white text-[0.6875rem] font-medium tracking-normal text-gray-600 shadow-sm";
+  "h-9 w-full border-slate-200 bg-white text-[0.6875rem] font-medium tracking-normal text-slate-600 shadow-sm";
 
 const FILTER_MENU_ITEM_CLASS =
-  "text-[0.6875rem] font-medium tracking-normal text-gray-600 focus:bg-gray-50 focus:text-gray-700 data-[highlighted]:bg-gray-50 data-[highlighted]:text-gray-700 py-2 [&_[data-slot=select-item-indicator]_svg]:size-3";
+  "text-[0.6875rem] font-medium tracking-normal text-slate-600 focus:bg-slate-50 focus:text-slate-700 data-[highlighted]:bg-slate-50 data-[highlighted]:text-slate-700 py-2 [&_[data-slot=select-item-indicator]_svg]:size-3";
 
 const FILTER_SELECT_CONTENT_CLASS = "z-[100] max-h-[300px] min-w-[var(--radix-select-trigger-width)]";
 
@@ -68,16 +68,16 @@ export const DocumentsTable = React.memo(function DocumentsTable({
 
   const filterSkeleton = (
     <>
-      <div className="h-9 w-full animate-pulse rounded-md border border-gray-200 bg-gray-100" />
-      <div className="h-9 w-full animate-pulse rounded-md border border-gray-200 bg-gray-100" />
-      <div className="h-9 w-full animate-pulse rounded-md border border-gray-200 bg-gray-100" />
+      <div className="h-9 w-full animate-pulse rounded-md border border-slate-200 bg-slate-100" />
+      <div className="h-9 w-full animate-pulse rounded-md border border-slate-200 bg-slate-100" />
+      <div className="h-9 w-full animate-pulse rounded-md border border-slate-200 bg-slate-100" />
     </>
   );
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-none">
+    <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none">
       {/* FILTER BAR */}
-      <div className="border-b border-[#e9e9e7] bg-gray-50 px-5 py-4">
+      <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
         <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-4">
           <ClientOnly fallback={filterSkeleton}>
             <div className="contents">
@@ -110,12 +110,12 @@ export const DocumentsTable = React.memo(function DocumentsTable({
               </Select>
 
               <DropdownMenu>
-                <DropdownMenuTrigger className={cn(FILTER_CONTROL_CLASS, "flex items-center justify-between px-3 transition-colors hover:border-gray-400 focus:outline-none")}>
+                <DropdownMenuTrigger className={cn(FILTER_CONTROL_CLASS, "flex items-center justify-between px-3 transition-colors hover:border-slate-400 focus:outline-none")}>
                   <span>Compliance Tools</span>
-                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                  <ChevronDown className="h-4 w-4 text-slate-400" />
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent className="z-[100] min-w-[var(--radix-dropdown-menu-trigger-width)] overflow-hidden rounded-md border border-gray-200 bg-white p-1 shadow-md" align="end">
+                <DropdownMenuContent className="z-[100] min-w-[var(--radix-dropdown-menu-trigger-width)] overflow-hidden rounded-md border border-slate-200 bg-white p-1 shadow-md" align="end">
                   <DropdownMenuItem 
                     onClick={() => onActiveToolChange("preference")}
                     className={cn(FILTER_MENU_ITEM_CLASS, "cursor-pointer rounded-sm px-2 outline-none")}
@@ -135,7 +135,7 @@ export const DocumentsTable = React.memo(function DocumentsTable({
 
           <Button
             variant="ghost"
-            className={cn(FILTER_CONTROL_CLASS, "transition-colors hover:border-gray-400 hover:bg-gray-50")}
+            className={cn(FILTER_CONTROL_CLASS, "transition-colors hover:border-slate-400 hover:bg-slate-50")}
             onClick={onGenerateTemplates}
             disabled={isGeneratingTemplates || !canGenerateTemplates}
           >
@@ -148,18 +148,18 @@ export const DocumentsTable = React.memo(function DocumentsTable({
       <div className="w-full overflow-x-auto">
         <table className="w-full border-collapse text-left">
           <thead>
-            <tr className="bg-gray-50 border-b border-[#e9e9e7]">
-              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase w-[40%]">DOCUMENT</th>
-              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">TYPE</th>
-              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">LINKED MRN</th>
-              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase">STATUS</th>
-              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-gray-500 uppercase text-right w-[80px]">DE 2/3</th>
+            <tr className="bg-slate-50 border-b border-slate-200">
+              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase w-[40%]">DOCUMENT</th>
+              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">TYPE</th>
+              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">LINKED MRN</th>
+              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">STATUS</th>
+              <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase text-right w-[80px]">DE 2/3</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#e9e9e7]">
+          <tbody className="divide-y divide-slate-200">
             {filteredDocuments.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-gray-500 text-xs italic">
+                <td colSpan={5} className="px-6 py-12 text-center text-slate-500 text-xs italic">
                   No documents found matching these filters.
                 </td>
               </tr>
@@ -175,7 +175,7 @@ export const DocumentsTable = React.memo(function DocumentsTable({
                     className={cn(
                       "group cursor-pointer transition-colors",
                       isWarning ? "bg-amber-50/50 hover:bg-amber-50" : "",
-                      isMissing ? "bg-red-50/50 hover:bg-red-50" : "hover:bg-gray-50"
+                      isMissing ? "bg-red-50/50 hover:bg-red-50" : "hover:bg-slate-50"
                     )}
                   >
                     <td className="px-6 py-4">
@@ -183,17 +183,17 @@ export const DocumentsTable = React.memo(function DocumentsTable({
                         <span className={cn("text-xs font-semibold transition-colors", isWarning ? "text-amber-900 group-hover:text-amber-900" : isMissing ? "text-red-900 group-hover:text-red-900" : "text-black group-hover:text-black")}>
                           {doc.name}
                         </span>
-                        <span className={cn("text-[0.625rem] mt-0.5", isWarning ? "text-amber-700 font-medium" : isMissing ? "text-red-700 font-medium" : "text-gray-500")}>
+                        <span className={cn("text-[0.625rem] mt-0.5", isWarning ? "text-amber-700 font-medium" : isMissing ? "text-red-700 font-medium" : "text-slate-500")}>
                           {isMissing || isWarning ? doc.flag : `${doc.method} • ${doc.date}`}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-[0.6875rem] text-gray-600">
-                      {doc.typeName} <span className="text-[0.625rem] text-gray-400 ml-1">({doc.type})</span>
+                    <td className="px-6 py-4 text-[0.6875rem] text-slate-600">
+                      {doc.typeName} <span className="text-[0.625rem] text-slate-400 ml-1">({doc.type})</span>
                     </td>
                     <td className="px-6 py-4">
                       {doc.mrn === "Unlinked" || doc.mrn === "Draft (Pending)" ? (
-                        <span className="text-[0.6875rem] text-gray-400">—</span>
+                        <span className="text-[0.6875rem] text-slate-400">—</span>
                       ) : (
                         <span className="text-xs font-semibold text-black">{doc.mrn}</span>
                       )}
@@ -216,7 +216,7 @@ export const DocumentsTable = React.memo(function DocumentsTable({
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <span className="font-mono text-[0.6875rem] font-medium text-gray-400">{doc.de23}</span>
+                      <span className="font-mono text-[0.6875rem] font-medium text-slate-400">{doc.de23}</span>
                     </td>
                   </tr>
                 );

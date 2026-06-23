@@ -1,6 +1,6 @@
 # Plan: TRE CSV import (user-facing)
 
-**Status:** Planned — not started  
+**Status:** Phase 1 shipped (upload UI + parser + org-scoped import)  
 **Backlog:** [`BACKLOG.md`](./BACKLOG.md) P1  
 **Last updated:** 2026-06-20
 
@@ -118,7 +118,7 @@ errors[], createdAt, completedAt, r2Key?, checksum
 
 **UI files**
 
-- `src/app/dashboard/import/tre/page.tsx`
+- `src/app/dashboard/tre-import/page.tsx`
 - `src/components/tre-import-upload.tsx`
 - Sidebar: under Compliance → **Import TRE**
 
@@ -216,7 +216,7 @@ Remove: “connect directly to TRE”, “instant reclaims”, “auto-sync on O
 src/lib/tre-csv-parser.ts
 src/lib/tre-csv-types.ts
 src/app/api/tre/import/route.ts
-src/app/dashboard/import/tre/page.tsx
+src/app/dashboard/tre-import/page.tsx
 src/components/tre-import-upload.tsx
 convex/tre_imports.ts
 convex/tre_analytics.ts

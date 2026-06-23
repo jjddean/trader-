@@ -43,8 +43,8 @@ export default function AdminOverviewPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-8 p-8">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-gray-900">Operations</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-xl font-semibold tracking-tight text-slate-900">Operations</h1>
+        <p className="mt-1 text-sm text-slate-500">
           Customs broker control centre — action queue, HMRC feed, and platform health.
         </p>
       </div>
@@ -57,20 +57,20 @@ export default function AdminOverviewPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-          <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+        <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <div>
-              <h2 className="text-sm font-semibold text-gray-900">Action queue</h2>
-              <p className="text-xs text-gray-500">Declarations needing broker intervention</p>
+              <h2 className="text-sm font-semibold text-slate-900">Action queue</h2>
+              <p className="text-xs text-slate-500">Declarations needing broker intervention</p>
             </div>
             <Link href="/dashboard/admin/clerk?filter=needs-action" className="text-xs font-medium text-blue-600 hover:underline">
               View all
             </Link>
           </div>
           {actionQueue.length === 0 ? (
-            <p className="px-5 py-10 text-center text-xs text-gray-500">No declarations need action right now.</p>
+            <p className="px-5 py-10 text-center text-xs text-slate-500">No declarations need action right now.</p>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-slate-100">
               {actionQueue.map((row) => {
                 const badge = resolveDeclarationRowBadge(row);
                 const subtitle = declarationHumanSubtitle(badge.label, row.status, badge.tone);
@@ -79,7 +79,7 @@ export default function AdminOverviewPage() {
                     <button
                       type="button"
                       onClick={() => router.push(`/dashboard/declarations/${row.declarationId}/status`)}
-                      className={cn("flex w-full items-center justify-between gap-3 px-5 py-3 text-left transition-colors hover:bg-gray-50", rowTintClass(badge.tone))}
+                      className={cn("flex w-full items-center justify-between gap-3 px-5 py-3 text-left transition-colors hover:bg-slate-50", rowTintClass(badge.tone))}
                     >
                       <div>
                         <p className={cn("text-xs font-semibold", mrnTitleClass(badge.tone))}>{row.mrn || "Pending CDS"}</p>
@@ -94,13 +94,13 @@ export default function AdminOverviewPage() {
           )}
         </section>
 
-        <section className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-          <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+        <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
             <div className="flex items-center gap-2">
-              <Bell className="h-4 w-4 text-gray-400" />
+              <Bell className="h-4 w-4 text-slate-400" />
               <div>
-                <h2 className="text-sm font-semibold text-gray-900">Recent HMRC notifications</h2>
-                <p className="text-xs text-gray-500">Latest DMS events across all accounts</p>
+                <h2 className="text-sm font-semibold text-slate-900">Recent HMRC notifications</h2>
+                <p className="text-xs text-slate-500">Latest DMS events across all accounts</p>
               </div>
             </div>
             <Link href="/dashboard/admin/notifications" className="text-xs font-medium text-blue-600 hover:underline">
@@ -108,18 +108,18 @@ export default function AdminOverviewPage() {
             </Link>
           </div>
           {recentNotifications.length === 0 ? (
-            <p className="px-5 py-10 text-center text-xs text-gray-500">No notifications stored yet.</p>
+            <p className="px-5 py-10 text-center text-xs text-slate-500">No notifications stored yet.</p>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-slate-100">
               {recentNotifications.map((n) => (
                 <li key={n.id} className="px-5 py-3">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-medium text-gray-900">{n.notificationType}</p>
-                    <span className="text-[10px] text-gray-400">
+                    <p className="text-xs font-medium text-slate-900">{n.notificationType}</p>
+                    <span className="text-[10px] text-slate-400">
                       {n.timestamp ? new Date(n.timestamp).toLocaleString("en-GB") : "—"}
                     </span>
                   </div>
-                  <p className="mt-0.5 font-mono text-[10px] text-gray-500">{n.mrn || "No MRN"}</p>
+                  <p className="mt-0.5 font-mono text-[10px] text-slate-500">{n.mrn || "No MRN"}</p>
                 </li>
               ))}
             </ul>
@@ -127,21 +127,21 @@ export default function AdminOverviewPage() {
         </section>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
-        <h2 className="text-sm font-semibold text-gray-900">Platform</h2>
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+        <h2 className="text-sm font-semibold text-slate-900">Platform</h2>
         <dl className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
           <div>
-            <dt className="text-xs text-gray-500">HMRC environment</dt>
+            <dt className="text-xs text-slate-500">HMRC environment</dt>
             <dd className="mt-1 text-xs font-semibold uppercase text-amber-800">{hmrcEnv}</dd>
           </div>
           <div>
-            <dt className="text-xs text-gray-500">Last notification</dt>
-            <dd className="mt-1 text-xs font-medium text-gray-900">
+            <dt className="text-xs text-slate-500">Last notification</dt>
+            <dd className="mt-1 text-xs font-medium text-slate-900">
               {lastNotificationAt ? new Date(lastNotificationAt).toLocaleString("en-GB") : "None"}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-gray-500">Accepted declarations</dt>
+            <dt className="text-xs text-slate-500">Accepted declarations</dt>
             <dd className="mt-1 flex items-center gap-1 text-xs font-medium text-green-700">
               <CheckCircle2 className="h-3.5 w-3.5" /> {declarationCounts.accepted}
             </dd>
@@ -154,13 +154,13 @@ export default function AdminOverviewPage() {
 
 function StatCard({ label, value, hint, href, icon, accent }: { label: string; value: string | number; hint: string; href: string; icon: React.ReactNode; accent?: "danger" }) {
   return (
-    <Link href={href} className="rounded-xl border border-gray-200 bg-white p-5 transition-colors hover:border-gray-300 hover:bg-gray-50/50">
+    <Link href={href} className="rounded-xl border border-slate-200 bg-white p-5 transition-colors hover:border-slate-300 hover:bg-slate-50/50">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">{label}</p>
-        <span className="text-gray-400">{icon}</span>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{label}</p>
+        <span className="text-slate-400">{icon}</span>
       </div>
-      <p className={cn("mt-2 text-2xl font-semibold tabular-nums", accent === "danger" ? "text-red-700" : "text-gray-900")}>{value}</p>
-      <p className="mt-1 text-[11px] text-gray-500">{hint}</p>
+      <p className={cn("mt-2 text-2xl font-semibold tabular-nums", accent === "danger" ? "text-red-700" : "text-slate-900")}>{value}</p>
+      <p className="mt-1 text-[11px] text-slate-500">{hint}</p>
     </Link>
   );
 }
@@ -168,8 +168,8 @@ function StatCard({ label, value, hint, href, icon, accent }: { label: string; v
 export function AdminLoading({ label }: { label: string }) {
   return (
     <div className="flex h-[50vh] flex-col items-center justify-center gap-3">
-      <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-      <p className="text-xs text-gray-500">{label}</p>
+      <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+      <p className="text-xs text-slate-500">{label}</p>
     </div>
   );
 }

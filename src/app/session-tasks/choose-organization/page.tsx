@@ -12,7 +12,7 @@ export default function ChooseOrganizationPage() {
   const isAdmin = dbUser?.role === "admin";
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-6">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
       <OnboardingShell
         step={2}
         title="Set up your company workspace"
@@ -22,9 +22,9 @@ export default function ChooseOrganizationPage() {
           <TaskChooseOrganization redirectUrlComplete="/dashboard" />
         </div>
         {isAdmin && (
-          <p className="mt-6 text-center text-xs text-gray-500">
+          <p className="mt-6 text-center text-xs text-slate-500">
             Admin:{" "}
-            <Link href="/dashboard" className="font-medium text-gray-700 underline hover:text-black">
+            <Link href="/dashboard" className="font-medium text-slate-700 underline hover:text-black">
               continue in personal workspace
             </Link>
           </p>

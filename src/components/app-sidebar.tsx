@@ -48,10 +48,11 @@ const navItems = [
     label: "Compliance",
     icon: ShieldCheck,
     items: [
+      { href: "/dashboard/tools/hscode-lookup", label: "HS Code Lookup" },
+      { href: "/dashboard/tre-import", label: "Import TRE" },
       { href: "/dashboard/audit", label: "Compliance Audit" },
       { href: "/dashboard/reports", label: "Customs Reports" },
       { href: "/dashboard/records", label: "Financial Records" },
-      { href: "/dashboard/tools/hscode-lookup", label: "HS Code Lookup" },
     ],
   },
 ];
@@ -75,8 +76,8 @@ export function AppSidebar() {
   const reviewCount = declarationCounts?.reviewCount ?? 0;
 
   return (
-    <Sidebar className="!h-screen border-r border-gray-200 bg-gray-50">
-      <SidebarHeader className="flex h-[55px] flex-row items-center border-b border-gray-200 px-6">
+    <Sidebar className="!h-screen border-r border-slate-200 bg-white [&_[data-sidebar=sidebar]]:bg-white">
+      <SidebarHeader className="flex h-[55px] shrink-0 flex-row items-center border-b border-slate-200 px-6">
         <Link
           href="/"
           className="flex w-full items-center gap-2 transition-opacity hover:opacity-80"
@@ -89,13 +90,13 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
 
-      <div className="px-4 py-3">
+      <div className="shrink-0 px-4 py-2">
         <SidebarGlobalSearch />
       </div>
 
-      <SidebarContent className="flex-1 min-h-0 p-4 pt-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <SidebarContent className="min-h-0 flex-1 overflow-y-auto px-3 pb-1 pt-0">
         <SidebarGroup className="p-0">
-          <SidebarGroupLabel className="mb-0.5 px-3 text-[10px] font-normal tracking-widest text-gray-400 uppercase">
+          <SidebarGroupLabel className="mb-0 px-2 text-[10px] font-normal tracking-widest text-slate-400 uppercase">
             {isAdmin ? "Control Plane" : "Platform"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -116,16 +117,16 @@ export function AppSidebar() {
                         <SidebarMenuButton
                           tooltip={item.label}
                           className={cn(
-                            "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal text-gray-500",
+                            "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal text-slate-500",
                           )}
                         >
-                          <Icon className="h-3.5 w-3.5 text-gray-400" />
+                          <Icon className="h-3.5 w-3.5 text-slate-400" />
                           <span className="flex-1">{item.label}</span>
                         </SidebarMenuButton>
-                        <SidebarMenuSub className="ml-5 border-l border-gray-200 pl-2">
+                        <SidebarMenuSub className="ml-5 border-l border-slate-200 pl-2">
                           {item.items?.map((subItem) => (
                             <SidebarMenuSubItem key={subItem.label}>
-                              <SidebarMenuSubButton asChild className="px-2 py-1 text-xs font-normal text-gray-500">
+                              <SidebarMenuSubButton asChild className="px-2 py-1 text-xs font-normal text-slate-500">
                                 <Link href={subItem.href}>
                                   <span>{subItem.label}</span>
                                 </Link>
@@ -141,7 +142,7 @@ export function AppSidebar() {
                     <Collapsible
                       key={item.label}
                       asChild
-                      defaultOpen={isAnyChildActive}
+                      defaultOpen={item.label === "Compliance" ? true : isAnyChildActive}
                       className="group/collapsible"
                     >
                       <SidebarMenuItem>
@@ -150,16 +151,16 @@ export function AppSidebar() {
                             tooltip={item.label}
                             className={cn(
                               "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors",
-                              isAnyChildActive ? "text-black" : "text-gray-500 hover:bg-gray-100 hover:text-black"
+                              isAnyChildActive ? "text-black" : "text-slate-500 hover:bg-slate-100 hover:text-black"
                             )}
                           >
-                            <Icon className={cn("h-3.5 w-3.5", isAnyChildActive ? "text-gray-700" : "text-gray-400")} />
+                            <Icon className={cn("h-3.5 w-3.5", isAnyChildActive ? "text-slate-700" : "text-slate-400")} />
                             <span className="flex-1">{item.label}</span>
                             <ChevronRight className="ml-auto h-3 w-3 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                           </SidebarMenuButton>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
-                          <SidebarMenuSub className="ml-5 border-l border-gray-200 pl-2">
+                          <SidebarMenuSub className="ml-5 border-l border-slate-200 pl-2">
                             {item.items?.map((subItem) => {
                               const isSubActive = pathname === subItem.href || (subItem.href !== "/dashboard" && pathname.startsWith(subItem.href));
                               return (
@@ -169,7 +170,7 @@ export function AppSidebar() {
                                     isActive={isSubActive}
                                     className={cn(
                                       "px-2 py-1 text-xs font-normal",
-                                      isSubActive ? "text-black font-medium" : "text-gray-500 hover:text-black"
+                                      isSubActive ? "text-black font-medium" : "text-slate-500 hover:text-black"
                                     )}
                                   >
                                     <Link href={subItem.href}>
@@ -200,15 +201,15 @@ export function AppSidebar() {
                       className={cn(
                         "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors",
                         isActive
-                          ? "bg-gray-100 text-black"
-                          : "text-gray-500 hover:bg-gray-100 hover:text-black",
+                          ? "bg-slate-100 text-black"
+                          : "text-slate-500 hover:bg-slate-100 hover:text-black",
                       )}
                     >
                       <Link href={(item as any).href} className="flex flex-1 items-center gap-2">
                         <Icon
                           className={cn(
                             "h-3.5 w-3.5",
-                            isActive ? "text-gray-700" : "text-gray-400",
+                            isActive ? "text-slate-700" : "text-slate-400",
                           )}
                         />
                         <span className="flex-1">{item.label}</span>
@@ -227,8 +228,8 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {isAdmin && (
-          <SidebarGroup className="p-0 mt-4">
-            <SidebarGroupLabel className="mb-0.5 px-3 text-[10px] font-normal tracking-widest text-gray-400 uppercase">
+          <SidebarGroup className="p-0 mt-2">
+            <SidebarGroupLabel className="mb-0 px-2 text-[10px] font-normal tracking-widest text-slate-400 uppercase">
               Admin
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -240,12 +241,12 @@ export function AppSidebar() {
                     className={cn(
                       "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors",
                       pathname.startsWith("/dashboard/admin")
-                        ? "bg-gray-100 text-black"
-                        : "text-gray-500 hover:bg-gray-100 hover:text-black",
+                        ? "bg-slate-100 text-black"
+                        : "text-slate-500 hover:bg-slate-100 hover:text-black",
                     )}
                   >
                     <Link href="/dashboard/admin" className="flex flex-1 items-center gap-2">
-                      <Shield className={cn("h-3.5 w-3.5", pathname.startsWith("/dashboard/admin") ? "text-gray-700" : "text-gray-400")} />
+                      <Shield className={cn("h-3.5 w-3.5", pathname.startsWith("/dashboard/admin") ? "text-slate-700" : "text-slate-400")} />
                       <span className="flex-1">Admin Panel</span>
                     </Link>
                   </SidebarMenuButton>
@@ -260,12 +261,12 @@ export function AppSidebar() {
 
       </SidebarContent>
 
-      <SidebarFooter className="mt-auto space-y-3 bg-white/60 p-4">
+      <SidebarFooter className="mt-auto shrink-0 space-y-1.5 bg-white p-2">
         <SidebarMenu className="space-y-0.5">
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname === "/dashboard/support/guide"} className={cn("flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors", pathname === "/dashboard/support/guide" ? "bg-gray-100 text-black" : "text-gray-500 hover:bg-gray-100 hover:text-black")}>
+            <SidebarMenuButton asChild isActive={pathname === "/dashboard/support/guide"} className={cn("flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors", pathname === "/dashboard/support/guide" ? "bg-slate-100 text-black" : "text-slate-500 hover:bg-slate-100 hover:text-black")}>
               <Link href="/dashboard/support/guide" className="flex flex-1 items-center gap-2">
-                <HelpCircle className={cn("h-3.5 w-3.5", pathname === "/dashboard/support/guide" ? "text-gray-700" : "text-gray-400")} />
+                <HelpCircle className={cn("h-3.5 w-3.5", pathname === "/dashboard/support/guide" ? "text-slate-700" : "text-slate-400")} />
                 <span className="flex-1">User Guide</span>
               </Link>
             </SidebarMenuButton>
@@ -277,15 +278,15 @@ export function AppSidebar() {
               className={cn(
                 "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors",
                 pathname === "/dashboard/settings"
-                  ? "bg-gray-100 text-black"
-                  : "text-gray-500 hover:bg-gray-100 hover:text-black",
+                  ? "bg-slate-100 text-black"
+                  : "text-slate-500 hover:bg-slate-100 hover:text-black",
               )}
             >
               <Link href="/dashboard/settings" className="flex flex-1 items-center gap-2">
                 <Settings
                   className={cn(
                     "h-3.5 w-3.5",
-                    pathname === "/dashboard/settings" ? "text-gray-700" : "text-gray-400",
+                    pathname === "/dashboard/settings" ? "text-slate-700" : "text-slate-400",
                   )}
                 />
                 <span className="flex-1">Settings</span>
@@ -294,23 +295,23 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
         {mounted ? (
-          <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2">
+          <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1">
             <SidebarUserButton />
             <div className="flex flex-col">
-              <span className="max-w-[100px] truncate text-xs font-normal text-gray-700">
+              <span className="max-w-[100px] truncate text-xs font-normal text-slate-700">
                 {clerkUser?.fullName || "User"}
               </span>
-              <span className="max-w-[100px] truncate text-[10px] text-gray-400">
+              <span className="max-w-[100px] truncate text-[10px] text-slate-400">
                 {isAdmin ? "Admin" : organization?.name ?? "Personal account"}
               </span>
             </div>
           </div>
         ) : (
-          <div className="flex h-[42px] items-center gap-2 rounded-md border border-gray-200 bg-gray-100 px-3 py-2">
-            <div className="h-6 w-6 animate-pulse rounded-full bg-gray-200" />
+          <div className="flex h-[42px] items-center gap-2 rounded-md border border-slate-200 bg-slate-100 px-3 py-2">
+            <div className="h-6 w-6 animate-pulse rounded-full bg-slate-200" />
             <div className="flex flex-col gap-1">
-              <div className="h-3 w-16 animate-pulse rounded bg-gray-200" />
-              <div className="h-2 w-10 animate-pulse rounded bg-gray-200" />
+              <div className="h-3 w-16 animate-pulse rounded bg-slate-200" />
+              <div className="h-2 w-10 animate-pulse rounded bg-slate-200" />
             </div>
           </div>
         )}

@@ -42,6 +42,23 @@ function parseNumberish(value: any) {
 }
 
 async function getHistoricalRateMap(ctx: any, userId: string) {
+  const orgId = await getActiveOrgId(ctx, userId);
+
+  if (orgId) {
+    const cached = await ctx.db
+      .query("rate_cache")
+      .withIndex("by_org", (q: any) => q.eq("orgId", orgId))
+      .first();
+    if (cached) return cached.rateMap as Record<string, { dutyTotal: number; vatTotal: number; customsTotal: number }>;
+
+    const rows = await ctx.db
+      .query("historical_declarations")
+      .withIndex("by_org", (q: any) => q.eq("orgId", orgId))
+      .take(2000);
+
+    return buildRateMap(rows);
+  }
+
   const cached = await ctx.db
     .query("rate_cache")
     .withIndex("by_user", (q: any) => q.eq("userId", userId))
@@ -109,17 +126,17 @@ function hmrcStatusForDeclaration(decl: any, notifications: any[]) {
   if (decl?.status === "Draft") return { score: 0, status: "Draft" };
   const latestType = notifications[0]?.notificationType;
   if (latestType === "DMSCLE") return { score: 100, status: "Clean" };
-  if (latestType === "DMSACC") return { score: 85, status: "Warning" };
+  if (latestType === "DMSACC") return { score: 85, status: "Accepted" };
   if (latestType === "DMSROG") return { score: 60, status: "Action Required" };
   if (latestType === "DMSREJ") return { score: 0, status: "Action Required" };
   if (latestType === "DMSINV") return { score: 0, status: "Action Required" };
-  if (latestType === "DMSUB") return { score: 50, status: "Warning" };
+  if (latestType === "DMSUB") return { score: 50, status: "Submitted" };
 
   if (decl.status === "Cleared") return { score: 100, status: "Clean" };
-  if (decl.status === "Accepted") return { score: 85, status: "Warning" };
+  if (decl.status === "Accepted") return { score: 85, status: "Accepted" };
   if (decl.status === "Rejected" || decl.status === "Invalid" || decl.status === "Action Required") return { score: 0, status: "Action Required" };
-  if (decl.status === "Submitted") return { score: 50, status: "Warning" };
-  return { score: 0, status: "Warning" };
+  if (decl.status === "Submitted") return { score: 50, status: "Submitted" };
+  return { score: 0, status: "Pending" };
 }
 
 const HMRC_CONFIRMED_NOTIFICATION_TYPES = new Set(["DMSCLE", "DMSACC", "DMSROG", "DMSREJ", "DMSINV"]);
@@ -914,8 +931,38 @@ export const upsertDeclarationPreview = internalMutation({
 });
 
 export const refreshRateCache = internalMutation({
-  args: { userId: v.string() },
+  args: {
+    userId: v.optional(v.string()),
+    orgId: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
+    const now = Date.now();
+
+    if (args.orgId) {
+      const rows = await ctx.db
+        .query("historical_declarations")
+        .withIndex("by_org", (q: any) => q.eq("orgId", args.orgId))
+        .take(2000);
+      const rateMap = buildRateMap(rows);
+      const existing = await ctx.db
+        .query("rate_cache")
+        .withIndex("by_org", (q: any) => q.eq("orgId", args.orgId))
+        .first();
+      if (existing) {
+        await ctx.db.patch(existing._id, { rateMap, updatedAt: now });
+      } else {
+        await ctx.db.insert("rate_cache", {
+          orgId: args.orgId,
+          userId: args.userId,
+          rateMap,
+          updatedAt: now,
+        });
+      }
+      return;
+    }
+
+    if (!args.userId) return;
+
     const rows = await ctx.db
       .query("historical_declarations")
       .withIndex("by_user", (q: any) => q.eq("userId", args.userId))
@@ -926,9 +973,9 @@ export const refreshRateCache = internalMutation({
       .withIndex("by_user", (q: any) => q.eq("userId", args.userId))
       .first();
     if (existing) {
-      await ctx.db.patch(existing._id, { rateMap, updatedAt: Date.now() });
+      await ctx.db.patch(existing._id, { rateMap, updatedAt: now });
     } else {
-      await ctx.db.insert("rate_cache", { userId: args.userId, rateMap, updatedAt: Date.now() });
+      await ctx.db.insert("rate_cache", { userId: args.userId, rateMap, updatedAt: now });
     }
   },
 });

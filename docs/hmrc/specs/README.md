@@ -61,6 +61,8 @@
 - Appendix 16J — other locations — https://www.gov.uk/government/publications/other-location-codes-for-data-element-523-of-the-customs-declaration-service
 - Appendix 16S — GVMS — https://www.gov.uk/government/publications/goods-vehicle-movement-service-codes-for-data-element-523-of-the-customs-declaration-service
 - Appendix 21A — H1 data set — https://www.gov.uk/government/publications/appendix-21-import-declaration-category-data-sets/appendix-21a-declaration-category-data-sets-h1
+- Appendix 21F/G — I1 simplified import — https://www.gov.uk/government/publications/appendix-21-import-declaration-category-data-sets (index → 21F, 21G)
+- Appendix 22 — Export declaration category data sets — https://www.gov.uk/government/publications/appendix-22-export-declaration-category-data-sets
 - Appendix 21 — reading notes — https://www.gov.uk/government/publications/appendix-21-import-declaration-category-data-sets/appendix-21-introduction-to-declaration-category-data-sets
 
 ### Code list downloads (CSV)
@@ -81,6 +83,7 @@
 |------|--------|--------|
 | `lane.md` | draft | repo lane data |
 | `appendix-21a-h1-obligations.md` | verbatim | Appendix 21A |
+| `declaration-categories-index.md` | verbatim excerpts | CDSSG04130/06030 + import/export general notes |
 | `de-1-10-procedures.md` | placeholder | Appendix 1 — to fetch |
 | `de-2-3-documents.md` | partial | Appendix 5A landing — rows pending |
 | `hmrc-mirror/appendix-4a-00500.md` | verbatim | DE 2/2 self-representation AI `00500` |

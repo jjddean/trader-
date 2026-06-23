@@ -23,10 +23,10 @@ export function OnboardingShell({ step, title, description, children }: Onboardi
                 className={cn(
                   "flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium",
                   item.id === step
-                    ? "bg-gray-900 text-white"
+                    ? "bg-slate-900 text-white"
                     : item.id < step
-                      ? "bg-gray-200 text-gray-700"
-                      : "bg-gray-100 text-gray-400",
+                      ? "bg-slate-200 text-slate-700"
+                      : "bg-slate-100 text-slate-400",
                 )}
               >
                 {item.id}
@@ -34,20 +34,20 @@ export function OnboardingShell({ step, title, description, children }: Onboardi
               <span
                 className={cn(
                   "hidden text-xs sm:inline",
-                  item.id === step ? "font-medium text-gray-900" : "text-gray-500",
+                  item.id === step ? "font-medium text-slate-900" : "text-slate-500",
                 )}
               >
                 {item.label}
               </span>
               {item.id < STEPS.length && (
-                <span className="mx-1 hidden h-px w-6 bg-gray-200 sm:block" aria-hidden />
+                <span className="mx-1 hidden h-px w-6 bg-slate-200 sm:block" aria-hidden />
               )}
             </li>
           ))}
         </ol>
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">{title}</h1>
-          <p className="mt-2 text-sm text-gray-500">{description}</p>
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900">{title}</h1>
+          <p className="mt-2 text-sm text-slate-500">{description}</p>
         </div>
       </div>
       {children}

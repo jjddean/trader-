@@ -29,7 +29,7 @@ export function PreClearanceEstimate({
 
   if (!hasAmounts) {
     return (
-      <div className={cn("rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-500", className)}>
+      <div className={cn("rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500", className)}>
         Add goods items with commodity code, origin, and value to see a pre-clearance cost estimate.
       </div>
     );
@@ -50,12 +50,12 @@ export function PreClearanceEstimate({
         : "bg-blue-100 text-blue-800 border-blue-200";
 
   return (
-    <div className={cn("rounded-lg border border-gray-200 bg-white", className)}>
-      <div className={cn("flex items-start justify-between gap-3 border-b border-gray-100", compact ? "px-4 py-3" : "px-5 py-4")}>
+    <div className={cn("rounded-lg border border-slate-200 bg-white", className)}>
+      <div className={cn("flex items-start justify-between gap-3 border-b border-slate-100", compact ? "px-4 py-3" : "px-5 py-4")}>
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{display.headline}</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{display.headline}</p>
           {!compact && (
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-slate-500">
               Customs value {formatGbp(Number(input.customsValue || 0))}
             </p>
           )}
@@ -67,21 +67,21 @@ export function PreClearanceEstimate({
       </div>
 
       <div className={cn("space-y-2 text-sm", compact ? "px-4 py-3" : "px-5 py-4")}>
-        <div className="flex items-center justify-between text-gray-600">
+        <div className="flex items-center justify-between text-slate-600">
           <span>{display.dutyLabel}</span>
-          <span className="font-semibold tabular-nums text-gray-900">{formatGbp(duty)}</span>
+          <span className="font-semibold tabular-nums text-slate-900">{formatGbp(duty)}</span>
         </div>
-        <div className="flex items-center justify-between text-gray-600">
+        <div className="flex items-center justify-between text-slate-600">
           <span>{display.vatLabel}</span>
-          <span className="font-semibold tabular-nums text-gray-900">{formatGbp(vat)}</span>
+          <span className="font-semibold tabular-nums text-slate-900">{formatGbp(vat)}</span>
         </div>
-        <div className="flex items-center justify-between border-t border-gray-100 pt-2 font-semibold text-gray-900">
+        <div className="flex items-center justify-between border-t border-slate-100 pt-2 font-semibold text-slate-900">
           <span>{display.totalLabel}</span>
           <span className="tabular-nums">{formatGbp(total)}</span>
         </div>
       </div>
 
-      <div className={cn("border-t border-gray-100 bg-gray-50 text-[11px] leading-relaxed text-gray-600", compact ? "px-4 py-3" : "px-5 py-3")}>
+      <div className={cn("border-t border-slate-100 bg-slate-50 text-[11px] leading-relaxed text-slate-600", compact ? "px-4 py-3" : "px-5 py-3")}>
         <p>{display.footnote}</p>
         {display.preferenceHint && (
           <p className="mt-2 text-amber-800">{display.preferenceHint}</p>

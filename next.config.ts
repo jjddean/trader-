@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@aws-sdk/client-textract"],
   redirects: async () => {
     return [
+      {
+        source: "/dashboard/import/tre",
+        destination: "/dashboard/tre-import",
+        permanent: true,
+      },
       // Force www for all non-www requests (http->https handled by Vercel)
       {
         source: "/:path*",

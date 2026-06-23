@@ -331,6 +331,9 @@ export default function GoodsItemsPage() {
       // Empty input → undefined (not 0). Don't invent a value the user didn't supply.
       const parsed = trimmed === "" ? undefined : Number(trimmed);
       scheduleUpdate(itemId, field, parsed);
+      if (field === "valueAmount" && parsed != null && parsed > 0) {
+        scheduleUpdate(itemId, "valueCurrency", "GBP");
+      }
     } else if (field === "packageCount") {
       const parsed = trimmed === "" ? undefined : parseInt(trimmed, 10);
       const count = parsed != null && parsed > 0 ? parsed : undefined;
@@ -416,7 +419,7 @@ export default function GoodsItemsPage() {
           if (origin) payload.originCountry = origin;
           if (cpc) payload.procedureCode = cpc;
           if (Number.isFinite(valueParsed) && (valueParsed as number) > 0) payload.valueAmount = valueParsed;
-          if (currency) payload.valueCurrency = currency;
+          payload.valueCurrency = currency || "GBP";
           await addItem(payload as any);
         }
       }
@@ -456,8 +459,8 @@ export default function GoodsItemsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-gray-900">Goods Items</h2>
-          <p className="mt-1 text-xs text-gray-500">
+          <h2 className="text-lg font-medium text-slate-900">Goods Items</h2>
+          <p className="mt-1 text-xs text-slate-500">
             Define the physical commodities in this shipment. Required for WCO payload.
           </p>
         </div>
@@ -482,7 +485,7 @@ export default function GoodsItemsPage() {
           
           <button
             onClick={() => setShowAddRowModal(true)}
-            className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800"
+            className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-slate-800"
           >
             <Plus className="h-4 w-4" />
             Add Row
@@ -546,10 +549,10 @@ export default function GoodsItemsPage() {
           {itemList.map((item: GoodsItemRow, index: number) => {
             const slots = docEdits[item._id as string];
             return (
-              <div key={item._id} className="rounded-xl border border-gray-200 bg-white">
-                <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/40 px-4 py-3">
+              <div key={item._id} className="rounded-xl border border-slate-200 bg-white">
+                <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/40 px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-900 text-[11px] font-medium text-white">
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-[11px] font-medium text-white">
                       {index + 1}
                     </span>
                     <input
@@ -557,12 +560,12 @@ export default function GoodsItemsPage() {
                       defaultValue={String(item.description ?? "")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "description", e.target.value)}
                       placeholder="Item description"
-                      className="w-[26rem] max-w-full bg-transparent text-sm font-medium text-gray-900 outline-none placeholder:text-gray-400"
+                      className="w-[26rem] max-w-full bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400"
                     />
                   </div>
                   <button
                     onClick={() => removeItem({ id: item._id })}
-                    className="rounded p-1 text-gray-400 transition-colors hover:text-red-600"
+                    className="rounded p-1 text-slate-400 transition-colors hover:text-red-600"
                     aria-label="Remove item"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -585,7 +588,7 @@ export default function GoodsItemsPage() {
                 <div className="grid grid-cols-2 gap-x-6 gap-y-4 px-4 py-4 md:grid-cols-3 lg:grid-cols-4">
                   <div>
                     <div className="mb-1 flex items-center justify-between gap-2">
-                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                         HS Code <span className="text-red-500">*</span>
                       </label>
                       <Link
@@ -603,12 +606,12 @@ export default function GoodsItemsPage() {
                       defaultValue={String(item.commodityCode ?? "")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "commodityCode", e.target.value)}
                       placeholder="e.g. 8471300000"
-                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 font-mono text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                      className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 font-mono text-xs text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Origin <span className="text-red-500">*</span></label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Origin <span className="text-red-500">*</span></label>
                     <input
                       type="text"
                       required
@@ -616,12 +619,12 @@ export default function GoodsItemsPage() {
                       defaultValue={String(item.originCountry ?? "")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "originCountry", e.target.value)}
                       placeholder="e.g. BR"
-                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 font-mono text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                      className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 font-mono text-xs text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Value ({String(item.valueCurrency ?? "")}) <span className="text-red-500">*</span></label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Value (GBP) <span className="text-red-500">*</span></label>
                     <input
                       type="number"
                       required
@@ -630,12 +633,12 @@ export default function GoodsItemsPage() {
                       defaultValue={item.valueAmount != null ? Number(item.valueAmount) : ""}
                       onBlur={(e) => handleItemFieldBlur(item._id, "valueAmount", e.target.value)}
                       placeholder="0.00"
-                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                      className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">CPC (DE 1/10) <span className="text-red-500">*</span></label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-400">CPC (DE 1/10) <span className="text-red-500">*</span></label>
                     <input
                       type="text"
                       required
@@ -643,12 +646,12 @@ export default function GoodsItemsPage() {
                       defaultValue={String(item.procedureCode ?? "")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "procedureCode", e.target.value)}
                       placeholder="e.g. 4000"
-                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 font-mono text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                      className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 font-mono text-xs text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Add. Proc (DE 1/11) <span className="text-red-500">*</span></label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Add. Proc (DE 1/11) <span className="text-red-500">*</span></label>
                     <input
                       type="text"
                       required
@@ -656,12 +659,12 @@ export default function GoodsItemsPage() {
                       defaultValue={String(item.additionalProcedureCode ?? "")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "additionalProcedureCode", e.target.value)}
                       placeholder="e.g. 000"
-                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 font-mono text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                      className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 font-mono text-xs text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Gross (kg) <span className="text-red-500">*</span></label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Gross (kg) <span className="text-red-500">*</span></label>
                     <input
                       type="number"
                       required
@@ -670,12 +673,12 @@ export default function GoodsItemsPage() {
                       defaultValue={item.grossWeightKg != null ? Number(item.grossWeightKg) : ""}
                       onBlur={(e) => handleItemFieldBlur(item._id, "grossWeightKg", e.target.value)}
                       placeholder="0.000"
-                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                      className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Net (kg)</label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Net (kg)</label>
                     <input
                       type="number"
                       min="0.001"
@@ -683,12 +686,12 @@ export default function GoodsItemsPage() {
                       defaultValue={item.netWeightKg != null ? Number(item.netWeightKg) : ""}
                       onBlur={(e) => handleItemFieldBlur(item._id, "netWeightKg", e.target.value)}
                       placeholder="0.000"
-                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
+                      className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                       Supp. units (DE 6/2) p/st <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -705,12 +708,12 @@ export default function GoodsItemsPage() {
                       onBlur={(e) => handleItemFieldBlur(item._id, "supplementaryUnitQty", e.target.value)}
                       placeholder="e.g. 10 (number of laptops)"
                       title="Number of items (not packages). Required for HS 8471300000 per UK tariff."
-                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                      className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Pkg Count (DE 6/10) <span className="text-red-500">*</span></label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Pkg Count (DE 6/10) <span className="text-red-500">*</span></label>
                     <input
                       type="number"
                       required
@@ -719,40 +722,40 @@ export default function GoodsItemsPage() {
                       defaultValue={(item as Record<string, unknown>).packageCount != null ? Number((item as Record<string, unknown>).packageCount) : ""}
                       onBlur={(e) => handleItemFieldBlur(item._id, "packageCount", e.target.value)}
                       placeholder="e.g. 1"
-                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                      className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Pkg Type (DE 6/9) <span className="text-red-500">*</span></label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Pkg Type (DE 6/9) <span className="text-red-500">*</span></label>
                     <input
                       type="text"
                       required
                       defaultValue={String((item as Record<string, unknown>).packageType ?? "")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "packageType", e.target.value)}
                       placeholder="e.g. PK, BX, CT"
-                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 font-mono text-xs uppercase text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+                      className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 font-mono text-xs uppercase text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
                   </div>
 
                   <div className="md:col-span-3 lg:col-span-4">
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-gray-400">Shipping Marks (DE 6/11)</label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Shipping Marks (DE 6/11)</label>
                     <input
                       type="text"
                       defaultValue={String((item as Record<string, unknown>).shippingMarks ?? "")}
                       onBlur={(e) => handleItemFieldBlur(item._id, "shippingMarks", e.target.value)}
                       placeholder="Marks printed on the cartons/pallets"
-                      className="h-9 w-full rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500"
+                      className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500"
                     />
                   </div>
                 </div>
 
-                <div className="border-t border-gray-100 px-4 py-4">
+                <div className="border-t border-slate-100 px-4 py-4">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-600">Additional Documents (DE 2/3)</h4>
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-600">Additional Documents (DE 2/3)</h4>
                     <div className="flex items-center gap-2">
                       {docSaveState[item._id as string] === "saving" && (
-                        <span className="text-[10px] text-gray-500">Saving…</span>
+                        <span className="text-[10px] text-slate-500">Saving…</span>
                       )}
                       {docSaveState[item._id as string] === "saved" && (
                         <span className="text-[10px] text-green-600">Saved</span>
@@ -766,13 +769,13 @@ export default function GoodsItemsPage() {
                           const slotsNow = docEdits[item._id as string] ?? emptySlots();
                           void persistDocuments(item as GoodsItemRow, slotsNow);
                         }}
-                        className="h-7 rounded-md border border-gray-200 bg-white px-2 text-[10px] font-medium text-gray-700 hover:border-blue-400 hover:text-blue-600"
+                        className="h-7 rounded-md border border-slate-200 bg-white px-2 text-[10px] font-medium text-slate-700 hover:border-blue-400 hover:text-blue-600"
                       >
                         Save documents
                       </button>
                     </div>
                   </div>
-                  <p className="mb-1 text-[10px] text-gray-400">Lane: one N935 + one N271. Auto-saves ~600ms after edits.</p>
+                  <p className="mb-1 text-[10px] text-slate-400">Lane: one N935 + one N271. Auto-saves ~600ms after edits.</p>
                   <p className="mb-2 text-[10px] text-amber-700">
                     Remove duplicate N935/N271 rows and Y-slots with reference &quot;Excluded&quot; — only the first of each code is saved; Excluded is not sent to CDS.
                   </p>
@@ -781,7 +784,7 @@ export default function GoodsItemsPage() {
                       const hint = DOC_SLOT_HINTS[slotIdx] ?? { label: "Additional document", code: "", ref: "" };
                       return (
                         <div key={slotIdx} className="grid grid-cols-12 items-center gap-2">
-                          <div className="col-span-12 text-[10px] uppercase tracking-wider text-gray-400 sm:col-span-3">
+                          <div className="col-span-12 text-[10px] uppercase tracking-wider text-slate-400 sm:col-span-3">
                             Slot {slotIdx + 1} · {hint.label}
                           </div>
                           <input
@@ -790,7 +793,7 @@ export default function GoodsItemsPage() {
                             onChange={(e) => handleDocChange(item as GoodsItemRow, slotIdx, "code", e.target.value)}
                             onBlur={() => handleDocBlur(item)}
                             placeholder={hint.code || "e.g. D006"}
-                            className="col-span-3 h-9 rounded-md border border-gray-200 bg-white px-2 font-mono text-xs uppercase text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 sm:col-span-2"
+                            className="col-span-3 h-9 rounded-md border border-slate-200 bg-white px-2 font-mono text-xs uppercase text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 sm:col-span-2"
                           />
                           <input
                             type="text"
@@ -798,12 +801,12 @@ export default function GoodsItemsPage() {
                             onChange={(e) => handleDocChange(item as GoodsItemRow, slotIdx, "ref", e.target.value)}
                             onBlur={() => handleDocBlur(item)}
                             placeholder={hint.ref || "Reference"}
-                            className="col-span-8 h-9 rounded-md border border-gray-200 bg-white px-2 text-xs text-gray-800 outline-none hover:border-gray-300 focus:border-blue-500 sm:col-span-6"
+                            className="col-span-8 h-9 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 sm:col-span-6"
                           />
                           <button
                             type="button"
                             onClick={() => removeDocSlot(item as GoodsItemRow, slotIdx)}
-                            className="col-span-1 h-9 rounded-md border border-gray-200 bg-white text-xs text-gray-400 transition-colors hover:border-red-200 hover:text-red-500"
+                            className="col-span-1 h-9 rounded-md border border-slate-200 bg-white text-xs text-slate-400 transition-colors hover:border-red-200 hover:text-red-500"
                             title="Remove this document slot"
                           >
                             ×
@@ -815,7 +818,7 @@ export default function GoodsItemsPage() {
                   <button
                     type="button"
                     onClick={() => addDocSlot(item._id as string)}
-                    className="mt-3 inline-flex h-8 items-center gap-1 rounded-md border border-dashed border-gray-300 px-3 text-[11px] font-medium text-gray-600 transition-colors hover:border-blue-400 hover:text-blue-600"
+                    className="mt-3 inline-flex h-8 items-center gap-1 rounded-md border border-dashed border-slate-300 px-3 text-[11px] font-medium text-slate-600 transition-colors hover:border-blue-400 hover:text-blue-600"
                   >
                     + Add document slot
                   </button>
@@ -825,10 +828,10 @@ export default function GoodsItemsPage() {
           })}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white py-20 text-center">
-          <UploadCloud className="mb-4 h-8 w-8 text-gray-300" />
-          <h3 className="text-sm font-medium text-gray-900">No goods items yet</h3>
-          <p className="mt-1 max-w-sm text-xs text-gray-500">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white py-20 text-center">
+          <UploadCloud className="mb-4 h-8 w-8 text-slate-300" />
+          <h3 className="text-sm font-medium text-slate-900">No goods items yet</h3>
+          <p className="mt-1 max-w-sm text-xs text-slate-500">
             You can manually add rows or use our AI to automatically extract the line items from your commercial invoice PDF.
           </p>
         </div>
@@ -841,11 +844,11 @@ export default function GoodsItemsPage() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div>
-              <label htmlFor="origin" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+              <label htmlFor="origin" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
                 Origin Country
               </label>
               <Select value={originCountry} onValueChange={setOriginCountry}>
-                <SelectTrigger id="origin" className="h-9 w-full rounded-md border-gray-200 bg-gray-50 text-xs text-gray-700">
+                <SelectTrigger id="origin" className="h-9 w-full rounded-md border-slate-200 bg-slate-50 text-xs text-slate-700">
                   <SelectValue placeholder="Select Origin Country" />
                 </SelectTrigger>
                 <SelectContent position="popper" className="max-h-[300px]">
@@ -858,7 +861,7 @@ export default function GoodsItemsPage() {
               </Select>
             </div>
             <div>
-              <label htmlFor="hsCode" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+              <label htmlFor="hsCode" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
                 HS Code (Optional)
               </label>
               <input
@@ -866,11 +869,11 @@ export default function GoodsItemsPage() {
                 value={hsCode}
                 onChange={(e) => setHsCode(e.target.value)}
                 placeholder="e.g. 6109100010"
-                className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none"
+                className="h-9 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 transition-colors focus:border-slate-400 focus:outline-none"
               />
             </div>
             <div>
-              <label htmlFor="description" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-gray-400 uppercase">
+              <label htmlFor="description" className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
                 Description
               </label>
               <input
@@ -878,7 +881,7 @@ export default function GoodsItemsPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="e.g. Laptop, weight not exceeding 10 kg"
-                className="h-9 w-full rounded-md border border-gray-200 bg-gray-50 px-3 text-xs text-gray-700 transition-colors focus:border-gray-400 focus:outline-none"
+                className="h-9 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 transition-colors focus:border-slate-400 focus:outline-none"
               />
             </div>
           </div>
@@ -886,7 +889,7 @@ export default function GoodsItemsPage() {
             <button
               disabled={isAdding || !originCountry || !description}
               onClick={handleManualAdd}
-              className="flex h-9 w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800 disabled:opacity-50"
+              className="flex h-9 w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-slate-800 disabled:opacity-50"
             >
               {isAdding && <Loader2 className="h-4 w-4 animate-spin" />}
               Add Row

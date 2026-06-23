@@ -79,11 +79,11 @@ export function UploadModal({ isOpen, onOpenChange, allDeclarationOptions, userI
           <div>
             <div className="grid gap-4 py-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                   Document Type
                 </label>
                 <Select value={uploadForm.type} onValueChange={(val) => setUploadForm({...uploadForm, type: val})}>
-                  <SelectTrigger className="h-9 w-full bg-gray-50 border-gray-200 text-xs text-gray-700">
+                  <SelectTrigger className="h-9 w-full bg-slate-50 border-slate-200 text-xs text-slate-700">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent position="popper" className="max-h-[300px] z-[110]">
@@ -97,11 +97,11 @@ export function UploadModal({ isOpen, onOpenChange, allDeclarationOptions, userI
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                   Link to Declaration
                 </label>
                 <Select value={uploadForm.linkedDeclarationId} onValueChange={(val) => setUploadForm({...uploadForm, linkedDeclarationId: val})}>
-                  <SelectTrigger className="h-9 w-full bg-gray-50 border-gray-200 text-xs text-gray-700">
+                  <SelectTrigger className="h-9 w-full bg-slate-50 border-slate-200 text-xs text-slate-700">
                     <SelectValue placeholder="Select declaration" />
                   </SelectTrigger>
                   <SelectContent position="popper" className="max-h-[300px] z-[110]">
@@ -119,7 +119,7 @@ export function UploadModal({ isOpen, onOpenChange, allDeclarationOptions, userI
               <button
                 disabled={!uploadForm.type || !uploadForm.linkedDeclarationId}
                 onClick={() => setUploadStep(2)}
-                className="flex h-9 w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800 disabled:opacity-50"
+                className="flex h-9 w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-slate-800 disabled:opacity-50"
               >
                 Continue
               </button>
@@ -130,10 +130,10 @@ export function UploadModal({ isOpen, onOpenChange, allDeclarationOptions, userI
         {uploadStep === 2 && (
           <div>
             <div className="grid gap-4 py-4">
-              <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 flex flex-col items-center justify-center text-center bg-gray-50/50">
-                <Upload className="h-8 w-8 text-gray-400 mb-3" />
-                <p className="text-sm font-medium text-gray-900">Drag and drop document here</p>
-                <p className="text-xs text-gray-500 mt-1 mb-4">Accepted: PDF, JPG, PNG</p>
+              <div className="border-2 border-dashed border-slate-200 rounded-lg p-8 flex flex-col items-center justify-center text-center bg-slate-50/50">
+                <Upload className="h-8 w-8 text-slate-400 mb-3" />
+                <p className="text-sm font-medium text-slate-900">Drag and drop document here</p>
+                <p className="text-xs text-slate-500 mt-1 mb-4">Accepted: PDF, JPG, PNG</p>
                 
                 <input 
                   type="file" 
@@ -146,18 +146,18 @@ export function UploadModal({ isOpen, onOpenChange, allDeclarationOptions, userI
                     }
                   }}
                 />
-                <button onClick={() => document.getElementById('file-upload')?.click()} className="flex h-9 items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-4 text-xs font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50">
+                <button onClick={() => document.getElementById('file-upload')?.click()} className="flex h-9 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50">
                   Browse files
                 </button>
               </div>
               
               {uploadForm.file && (
-                <div className="flex items-center justify-between p-3 border border-gray-200 rounded-md bg-white">
+                <div className="flex items-center justify-between p-3 border border-slate-200 rounded-md bg-white">
                   <div className="flex items-center gap-2 overflow-hidden">
                     <FileText className="h-4 w-4 text-blue-500 shrink-0" />
-                    <span className="text-xs font-medium text-gray-700 truncate">{uploadForm.file.name}</span>
+                    <span className="text-xs font-medium text-slate-700 truncate">{uploadForm.file.name}</span>
                   </div>
-                  <span className="text-[0.625rem] text-gray-400 shrink-0 ml-2">
+                  <span className="text-[0.625rem] text-slate-400 shrink-0 ml-2">
                     {(uploadForm.file.size / 1024).toFixed(1)} KB
                   </span>
                 </div>
@@ -167,7 +167,7 @@ export function UploadModal({ isOpen, onOpenChange, allDeclarationOptions, userI
               <button
                 disabled={!uploadForm.file || isUploading}
                 onClick={handleSubmit}
-                className="flex h-9 w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-gray-800 disabled:opacity-50"
+                className="flex h-9 w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-slate-800 disabled:opacity-50"
               >
                 {isUploading && <Loader2 className="h-4 w-4 animate-spin" />}
                 {isUploading ? "Analyzing..." : "Upload & Analyze"}
