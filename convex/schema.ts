@@ -49,6 +49,8 @@ export default defineSchema({
   /** Per Clerk org: practice (sandbox/TDR) vs live (production CDS). */
   org_hmrc_settings: defineTable({
     orgId: v.string(),
+    /** Clerk organisation display name (synced on sign-in). */
+    orgName: v.optional(v.string()),
     hmrcMode: v.union(v.literal("practice"), v.literal("live")),
     /** Sandbox OAuth sign-in for practice orgs (HMRC Test User — not live Government Gateway). */
     sandboxTestUserId: v.optional(v.string()),

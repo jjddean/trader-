@@ -4,8 +4,10 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
-import { CheckCircle2, ExternalLink, Loader2, Radio, Users, XCircle } from "lucide-react";
+import { CheckCircle2, ExternalLink, Loader2, Radio, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AdminOrgCdsModeList } from "@/components/admin/admin-org-cds-mode-list";
+import { PlatformUsersSection } from "@/components/admin/platform-users-section";
 
 interface HealthPayload {
   status: string;
@@ -57,6 +59,8 @@ export default function AdminHmrcPage() {
         <EnvCard label="API host" value={health?.environment ?? "—"} />
         <EnvCard label="Default EORI (env)" value={publicEori} mono />
       </div>
+
+      <AdminOrgCdsModeList />
 
       <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
         <div className="border-b border-slate-100 px-6 py-4">
@@ -148,49 +152,7 @@ export default function AdminHmrcPage() {
         </div>
       </section>
 
-      <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-        <div className="border-b border-slate-100 px-6 py-4">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-            <Users className="h-4 w-4 text-slate-400" />
-            Platform users
-          </h2>
-        </div>
-        {panelLoading ? (
-          <PanelSkeleton rows={3} />
-        ) : platformUsers.length === 0 ? (
-          <p className="px-6 py-10 text-center text-xs text-slate-500">
-            No users synced from Clerk yet — sign in once to create your row in Convex.
-          </p>
-        ) : (
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-100 bg-white">
-              <tr>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Email</th>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Role</th>
-                <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">HMRC</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {platformUsers.map((user) => (
-                <tr key={user.clerkId} className="hover:bg-slate-50/50">
-                  <td className="px-6 py-3">
-                    <p className="text-xs font-medium text-slate-900">{user.email || "—"}</p>
-                    {user.name && <p className="text-[10px] text-slate-400">{user.name}</p>}
-                  </td>
-                  <td className="px-6 py-3 text-xs capitalize text-slate-600">{user.role || "user"}</td>
-                  <td className="px-6 py-3 text-xs text-slate-600">
-                    {user.hmrcConnected ? (
-                      <span className="text-green-700">Connected{user.hmrcEori ? ` · ${user.hmrcEori}` : ""}</span>
-                    ) : (
-                      <span className="text-slate-400">Not connected</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+      <PlatformUsersSection users={platformUsers} loading={panelLoading} />
     </div>
   );
 }

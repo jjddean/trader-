@@ -89,10 +89,12 @@ export const listOpportunities = query({
       ? await ctx.db
           .query("historical_declarations")
           .withIndex("by_org", (q) => q.eq("orgId", orgId))
+          .order("desc")
           .take(MAX_ROWS_SCANNED)
       : await ctx.db
           .query("historical_declarations")
           .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+          .order("desc")
           .take(MAX_ROWS_SCANNED);
 
     if (rows.length === 0) return emptyResult();

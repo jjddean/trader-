@@ -805,7 +805,13 @@ async function upsertDeclarationPreviewByDeclaration(
 
   const isNew = !existingPreview;
   if (existingPreview) {
-    await ctx.db.patch(existingPreview._id, nextPreview);
+    const previewUnchanged = Object.entries(nextPreview).every(([key, value]) => {
+      if (key === "lastUpdated") return true;
+      return (existingPreview as Record<string, unknown>)[key] === value;
+    });
+    if (!previewUnchanged) {
+      await ctx.db.patch(existingPreview._id, nextPreview);
+    }
   } else {
     await ctx.db.insert("declaration_preview", nextPreview);
   }
@@ -1540,14 +1546,7 @@ export const getMyDeclarationCounts = query({
 
     let reviewCount = 0;
     for (const preview of previews) {
-      const declaration = await ctx.db.get(preview.declarationId);
-      if (!declaration) continue;
-      const status = await effectiveDeclarationStatus(ctx, preview.declarationId, {
-        status: declaration.status,
-        mrn: declaration.mrn,
-        conversationId: declaration.conversationId,
-      });
-      if (isReviewStatus(status)) reviewCount += 1;
+      if (isReviewStatus(String(preview.status ?? ""))) reviewCount += 1;
     }
 
     return { total: previews.length, reviewCount };
@@ -1740,22 +1739,24 @@ export const getDeclarationPreviews = query({
 
     const declarations = await listDeclarationsForTenant(ctx, identity.subject, 200);
 
-    return declarations.map((declaration) => ({
-      declarationId: declaration._id,
-      userId: String(declaration.userId ?? identity.subject),
-      orgId: orgIdFromDeclaration(declaration),
-      status: String(declaration.status ?? "Draft"),
-      totalItems: 0,
-      totalValue: 0,
-      mrn: declaration.mrn ? String(declaration.mrn) : undefined,
-      eori: declaration.eori ? String(declaration.eori) : undefined,
-      declarationType: declaration.declarationType
-        ? String(declaration.declarationType)
-        : undefined,
-      lastUpdated: Number(
-        declaration.lastUpdated || declaration.created || declaration._creationTime || 0,
-      ),
-    }));
+    return declarations
+      .map((declaration) => ({
+        declarationId: declaration._id,
+        userId: String(declaration.userId ?? identity.subject),
+        orgId: orgIdFromDeclaration(declaration),
+        status: String(declaration.status ?? "Draft"),
+        totalItems: 0,
+        totalValue: 0,
+        mrn: declaration.mrn ? String(declaration.mrn) : undefined,
+        eori: declaration.eori ? String(declaration.eori) : undefined,
+        declarationType: declaration.declarationType
+          ? String(declaration.declarationType)
+          : undefined,
+        lastUpdated: Number(
+          declaration.lastUpdated || declaration.created || declaration._creationTime || 0,
+        ),
+      }))
+      .sort((a, b) => b.lastUpdated - a.lastUpdated);
   },
 });
 

@@ -3,6 +3,7 @@ import { mutation, query } from "./_generated/server";
 import {
   canAccessDeclaration,
   canAccessDocument,
+  getActiveOrgId,
   listDocumentsForTenant,
   listDeclarationsForTenant,
   orgIdFromDeclaration,
@@ -467,15 +468,27 @@ export const getDocumentRequirements = query({
     }
 
     const declarations = await listDeclarationsForTenant(ctx, identity.subject, 200);
-    const requirements = [];
-    for (const declaration of declarations) {
+    const accessibleIds = new Set(declarations.map((declaration) => declaration._id));
+    if (accessibleIds.size === 0) return [];
+
+    const activeOrgId = await getActiveOrgId(ctx, identity.subject);
+    if (!activeOrgId) {
       const rows = await ctx.db
         .query("document_requirements")
-        .withIndex("by_declaration", (q: any) => q.eq("declarationId", declaration._id))
-        .take(300);
-      requirements.push(...rows);
+        .withIndex("by_user", (q: any) => q.eq("userId", identity.subject))
+        .take(6000);
+      return rows.filter((row) => accessibleIds.has(row.declarationId));
     }
-    return requirements;
+
+    const batches = await Promise.all(
+      declarations.map((declaration) =>
+        ctx.db
+          .query("document_requirements")
+          .withIndex("by_declaration", (q: any) => q.eq("declarationId", declaration._id))
+          .take(100),
+      ),
+    );
+    return batches.flat();
   },
 });
 

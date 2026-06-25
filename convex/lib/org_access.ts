@@ -73,18 +73,23 @@ export async function listDeclarationsForTenant(ctx: Ctx, userId: string, take =
 export async function listDeclarationPreviewsForTenant(ctx: Ctx, userId: string, take = 500) {
   const activeOrgId = await getActiveOrgId(ctx, userId);
   if (activeOrgId) {
-    return await ctx.db
+    const rows = await ctx.db
       .query("declaration_preview")
       .withIndex("by_org", (q) => q.eq("orgId", activeOrgId))
+      .order("desc")
       .take(take);
+    return rows.sort((a, b) => b.lastUpdated - a.lastUpdated);
   }
 
   const rows = await ctx.db
     .query("declaration_preview")
     .withIndex("by_user", (q) => q.eq("userId", userId))
+    .order("desc")
     .take(take);
 
-  return rows.filter((row) => isPersonalScopedRecord(row.orgId));
+  return rows
+    .filter((row) => isPersonalScopedRecord(row.orgId))
+    .sort((a, b) => b.lastUpdated - a.lastUpdated);
 }
 
 export async function listDocumentsForTenant(ctx: Ctx, userId: string, take = 500) {

@@ -54,13 +54,23 @@ export const syncUser = mutation({
     const sessionOrgId = jwtOrg || args.orgId;
 
     if (existing) {
-      await ctx.db.patch(existing._id, {
-        name: args.name,
-        email: args.email,
-        orgId: sessionOrgId,
-        ...(role !== undefined && { role }),
-        legacyClaimedForOrgId: undefined,
-      });
+      const roleUnchanged = role === undefined || existing.role === role;
+      const unchanged =
+        existing.name === args.name &&
+        existing.email === args.email &&
+        existing.orgId === sessionOrgId &&
+        roleUnchanged &&
+        existing.legacyClaimedForOrgId === undefined;
+
+      if (!unchanged) {
+        await ctx.db.patch(existing._id, {
+          name: args.name,
+          email: args.email,
+          orgId: sessionOrgId,
+          ...(role !== undefined && { role }),
+          legacyClaimedForOrgId: undefined,
+        });
+      }
       return existing._id;
     }
 

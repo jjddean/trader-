@@ -39,6 +39,10 @@ export default function DeclarationWorkspaceLayout({
     api.declarations.getDeclarationFinancialEstimate,
     authReady && declarationId ? { declarationId } : "skip",
   );
+  const orgHmrc = useQuery(
+    api.org_hmrc.getModeForDeclaration,
+    authReady && declarationId ? { declarationId } : "skip",
+  );
   const estimateReady = financialEstimate !== undefined;
 
   const isSessionLoading = !isLoaded || (authReady && declaration === undefined);
@@ -75,81 +79,89 @@ export default function DeclarationWorkspaceLayout({
     : "";
   const HeaderBadgeIcon = hasDeclaration ? badgeIconForTone(headerBadgeTone) : Loader2;
   const headerBadgeClass = badgeToneClassName(headerBadgeTone);
+  const hmrcIsLive = orgHmrc?.hmrcMode === "live";
+  const hmrcEnvironmentLabel = hmrcIsLive ? "Live" : "Sandbox";
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
       {hasDeclaration && (
-        <div className="sticky top-0 z-10 border-b border-slate-200 bg-white px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="px-8 pt-6 pb-4">
+          <div className="mx-auto max-w-5xl space-y-4">
+            <div className="relative rounded-md border border-slate-200 bg-white p-5 shadow-sm">
               <button
                 onClick={() => router.push("/dashboard/declarations")}
-                className="group flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 transition-colors hover:bg-slate-50"
+                className="group absolute left-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                aria-label="Back to declarations"
               >
-                <ArrowLeft className="h-4 w-4 text-slate-400 group-hover:text-slate-900" />
+                <ArrowLeft className="h-3 w-3" />
               </button>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-semibold tracking-tight text-slate-900">{declarationTitle}</h1>
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[0.625rem] font-medium ${headerBadgeClass}`}
-                  >
-                    <HeaderBadgeIcon className={cn("h-3 w-3", isSessionLoading && "animate-spin")} />
-                    {headerBadgeLabel}
-                  </span>
-                </div>
-                <p className={cn("text-xs font-medium", mrnSubtitleClass(headerBadgeTone))}>{headerSubtitle}</p>
-                <p className="text-xs text-slate-500">
-                  EORI: {declaration!.eori || "Not set"} • Route: {declaration!.route || "Unknown"}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <p className="text-[10px] uppercase tracking-widest text-slate-400 font-medium">HMRC Environment</p>
-                <div className="flex items-center gap-1.5 justify-end mt-0.5">
-                  <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                  <span className="text-xs font-mono text-slate-600">Sandbox</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <nav className="mt-6 flex gap-1 rounded-lg bg-slate-100/50 p-1">
-            {steps.map((step) => {
-              const isActive = pathname === step.path;
-              const Icon = step.icon;
-
-              return (
-                <button
-                  key={step.id}
-                  onClick={() => !step.disabled && router.push(step.path)}
-                  disabled={step.disabled}
-                  className={cn(
-                    "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all",
-                    isActive
-                      ? "bg-white text-black shadow-sm"
-                      : "text-slate-500 hover:text-slate-900 hover:bg-slate-200/50",
-                    step.disabled && "opacity-50 cursor-not-allowed hover:bg-transparent",
+              <div className="flex items-center justify-between gap-4 pl-5">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="text-lg font-semibold tracking-tight text-slate-900">{declarationTitle}</h1>
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[0.625rem] font-medium ${headerBadgeClass}`}
+                    >
+                      <HeaderBadgeIcon className={cn("h-3 w-3", isSessionLoading && "animate-spin")} />
+                      {headerBadgeLabel}
+                    </span>
+                  </div>
+                  {headerSubtitle && headerSubtitle !== headerBadgeLabel && (
+                    <p className={cn("text-xs font-medium", mrnSubtitleClass(headerBadgeTone))}>{headerSubtitle}</p>
                   )}
-                >
-                  <Icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-600" : "text-slate-400")} />
-                  {step.name}
-                </button>
-              );
-            })}
-          </nav>
+                  <p className="text-xs text-slate-500">
+                    EORI: {declaration!.eori || "Not set"} • Route: {declaration!.route || "Unknown"}
+                  </p>
+                </div>
 
-          {estimateReady && financialEstimate && (
-            <div className="mt-4">
-              <PreClearanceEstimate compact {...financialEstimate} />
+                <div className="shrink-0 text-right">
+                  <p className="text-[10px] font-medium uppercase tracking-widest text-slate-400">HMRC Environment</p>
+                  <div className="mt-0.5 flex items-center justify-end gap-1.5">
+                    <div
+                      className={cn(
+                        "h-1.5 w-1.5 rounded-full",
+                        hmrcIsLive ? "bg-emerald-500" : "bg-blue-500",
+                      )}
+                    />
+                    <span className="text-xs text-slate-500">{hmrcEnvironmentLabel}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
+
+            <nav className="flex gap-1 rounded-lg bg-slate-100/80 p-1">
+              {steps.map((step) => {
+                const isActive = pathname === step.path;
+                const Icon = step.icon;
+
+                return (
+                  <button
+                    key={step.id}
+                    onClick={() => !step.disabled && router.push(step.path)}
+                    disabled={step.disabled}
+                    className={cn(
+                      "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all",
+                      isActive
+                        ? "bg-white text-black shadow-sm"
+                        : "text-slate-500 hover:bg-slate-200/60 hover:text-slate-900",
+                      step.disabled && "cursor-not-allowed opacity-50 hover:bg-transparent",
+                    )}
+                  >
+                    <Icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-600" : "text-slate-400")} />
+                    {step.name}
+                  </button>
+                );
+              })}
+            </nav>
+
+            {estimateReady && financialEstimate && (
+              <PreClearanceEstimate compact {...financialEstimate} />
+            )}
+          </div>
         </div>
       )}
 
-      <div className="flex-1 p-8">
+      <div className="flex-1 px-8 pb-8">
         <div className="mx-auto max-w-5xl">
           {isSignedOut ? (
             <div className="flex h-[400px] flex-col items-center justify-center space-y-4">

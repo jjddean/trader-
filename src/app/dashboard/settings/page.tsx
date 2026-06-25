@@ -39,7 +39,6 @@ function SettingsPageContent() {
   const subscription = useQuery(api.subscriptions.getSubscription, userId ? { userId } : "skip");
   const dbUser = useQuery(api.users.current, isAuthenticated ? {} : "skip");
   const orgHmrcMode = useQuery(api.org_hmrc.getModeForOrg, orgId ? { orgId } : "skip");
-  const setOrgHmrcMode = useMutation(api.org_hmrc.setOrgMode);
   const hmrcConnection = useQuery(api.hmrc.getToken, userId ? { userId } : "skip");
   // Prefetch so Security tab does not pop-in when selected
   useQuery(
@@ -47,7 +46,6 @@ function SettingsPageContent() {
     orgId && orgHmrcMode?.hmrcMode !== "live" ? { orgId } : "skip",
   );
   const disconnectHmrc = useMutation(api.hmrc.disconnectToken);
-  const [hmrcModeSaving, setHmrcModeSaving] = useState(false);
   const [hmrcDisconnecting, setHmrcDisconnecting] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -462,10 +460,11 @@ function SettingsPageContent() {
               <div className="rounded-lg border border-slate-100 p-4">
                 <p className="text-xs font-medium text-black">CDS environment</p>
                 <p className="mt-1 text-[11px] text-slate-500">
-                  Practice uses HMRC sandbox (TDR). Live uses production CDS — only enable when your org
-                  is approved.
+                  {orgHmrcMode?.hmrcMode === "live"
+                    ? "Your organisation is on live CDS. Submissions have legal effect."
+                    : "Your organisation is in practice mode (HMRC sandbox / TDR). Submissions are not legally binding."}
                 </p>
-                <div className="mt-3 flex items-center gap-2">
+                <div className="mt-3">
                   <span
                     className={cn(
                       "rounded-md px-2 py-1 text-[10px] font-medium uppercase tracking-wide",
@@ -476,28 +475,6 @@ function SettingsPageContent() {
                   >
                     {orgHmrcMode?.hmrcMode === "live" ? "Live CDS" : "Practice (sandbox)"}
                   </span>
-                  {dbUser?.role === "admin" && (
-                    <button
-                      type="button"
-                      disabled={hmrcModeSaving}
-                      onClick={async () => {
-                        setHmrcModeSaving(true);
-                        try {
-                          const next = orgHmrcMode?.hmrcMode === "live" ? "practice" : "live";
-                          await setOrgHmrcMode({ orgId, hmrcMode: next });
-                        } finally {
-                          setHmrcModeSaving(false);
-                        }
-                      }}
-                      className="text-[11px] text-slate-600 underline hover:text-black disabled:opacity-50"
-                    >
-                      {hmrcModeSaving
-                        ? "Saving…"
-                        : orgHmrcMode?.hmrcMode === "live"
-                          ? "Switch to practice"
-                          : "Switch to live"}
-                    </button>
-                  )}
                 </div>
               </div>
             )}

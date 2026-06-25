@@ -34,7 +34,7 @@ HMRC’s public docs explain **API integration** and the vendor **Path to Produc
 | OAuth, XML schema, Accept headers | Yes — Service Guide, mapping docs | We implement per [`environment-matrix.md`](./environment-matrix.md) |
 | Vendor SDST / Path to Production | Yes — for **Freightcode the supplier** | Internal evidence in `docs/hmrc/ACTIVE/tdr/evidence/` |
 | Signing up 50 broker clients into sandbox | **No** | Org-level **Practice mode** (below) |
-| When a customer may submit live declarations | Production credentials + trader readiness | **Production request** workflow (below) |
+| When a customer may submit live declarations | Production credentials + trader readiness | **Freightcode platform admin** enables live for the org (customer does not self-serve the toggle) |
 | Billing before practice | N/A | Product choice — practice should not require payment |
 
 ---
@@ -63,13 +63,13 @@ Every new organisation starts in **Practice mode** (TDR on the sandbox host).
 - Production HMRC credentials (those are Freightcode’s, via Developer Hub).
 - Stripe subscription (recommended product policy: billing gates **production**, not practice).
 
-### Phase 2 — Production (after approval)
+### Phase 2 — Production (live customs)
 
 When the organisation is ready for live customs:
 
-1. Customer completes in-app **Request production access** (org admin).
-2. Freightcode reviews: subscription (if applicable), org details, HMRC readiness, internal SDST/production checklist.
-3. On approval, org `mode` flips to **Live** — submissions route to CDS Live on the production host with production Accept headers and credentials.
+1. Customer completes onboarding (billing, production HMRC OAuth with Government Gateway, operational readiness).
+2. **Freightcode platform admin** switches the organisation to **live** mode in **Admin → Users & HMRC** (not a customer self-service control).
+3. Org `mode` flips to **Live** — submissions route to CDS Live on the production host with production Accept headers and credentials.
 
 **What the customer sees**
 
@@ -180,9 +180,6 @@ No. It means HMRC’s test environment accepted the declaration structure.
 **Do I need to pay before I practise?**  
 Product intent: **no**. Payment aligns with production readiness, not learning the UI.
 
-**How long does production approval take?**  
-Depends on Freightcode review and HMRC production credential status. Not instant.
-
 **Can my broker see all client orgs?**  
 Not by default. Each client org is separate; broker-for-client models are a future product pattern.
 
@@ -201,14 +198,13 @@ What engineering implements to match this guide. **Not yet complete** unless not
 | 2 | Per-org HMRC routing guard | Submit blocked if org live but env sandbox (and vice versa) | Replaces global `.env` only |
 | 3 | Practice banner | Amber banner on all declaration routes | **Done** — `PracticeModeBanner` in dashboard layout |
 | 4 | Auto practice on sign-up | New org defaults to `practice` | No billing gate |
-| 5 | Request production flow | Admin form + operator queue | Email/webhook to ops |
-| 6 | Approval mutation | Flips `mode` to `live` | Audit log entry |
-| 7 | Settings HMRC connect | Connect / disconnect | DELIVERY-PLAN item 2 |
-| 8 | Org-scoped declarations | Team sees shared data | Largely done (`orgId` indexes) |
-| 9 | Remove billing block for practice | Dashboard without subscription in practice | Policy decision |
-| 10 | Customer doc link in app | Help → “Practice vs Live” | Points here |
-| 11 | Terms clause | Legal review | Disclaimers § above |
-| 12 | Ops runbook row | Who approves production | `security/` ops docs |
+| 5 | Live mode toggle | Practice / Live badge updates | **Platform admin only** — Admin → Users & HMRC; `setOrgMode` + audit log |
+| 6 | Settings HMRC connect | Connect / disconnect | DELIVERY-PLAN item 2 |
+| 7 | Org-scoped declarations | Team sees shared data | Largely done (`orgId` indexes) |
+| 8 | Remove billing block for practice | Dashboard without subscription in practice | Policy decision |
+| 9 | Customer doc link in app | Help → “Practice vs Live” | Points here |
+| 10 | Terms clause | Legal review | Disclaimers § above |
+| 11 | Ops runbook row | Who switches org to live | **Freightcode platform admin** — not Clerk org admin |
 
 **Explicitly out of scope for customers**
 

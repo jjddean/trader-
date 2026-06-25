@@ -2,7 +2,6 @@ import {
   Bell,
   Compass,
   FileText,
-  HelpCircle,
   LayoutDashboard,
   Search,
   Settings,
@@ -160,10 +159,6 @@ export function HomeDashboardPreview() {
             </div>
 
             <div className="shrink-0 space-y-0.5 border-t border-slate-200 px-3 py-2">
-              <div className="flex items-center gap-2 rounded-md px-2.5 py-1 text-[10px] text-slate-500">
-                <HelpCircle className="h-3 w-3 text-slate-400" />
-                <span>User Guide</span>
-              </div>
               <div className="flex items-center gap-2 rounded-md px-2.5 py-1 text-[10px] text-slate-500">
                 <Settings className="h-3 w-3 text-slate-400" />
                 <span>Settings</span>

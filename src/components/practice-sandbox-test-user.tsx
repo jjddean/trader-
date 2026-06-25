@@ -214,20 +214,28 @@ export function PracticeModeGuideModalLink({
           <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-4">
             <DialogTitle className="text-sm font-semibold text-amber-950">Practice mode</DialogTitle>
             <DialogDescription asChild>
-              <div className="mt-3 space-y-2 text-[11px] leading-relaxed text-amber-950/90">
-                <p>
-                  Your organisation uses HMRC&apos;s <strong>test service (TDR)</strong>. Submissions
-                  stay in the sandbox — they do not clear goods or trigger live payments.
-                </p>
-                <p>
-                  Click <strong>HMRC Test User credentials</strong> in the banner to create or copy
-                  sign-in details, then <strong>Connect HMRC</strong> with those (not your live
-                  Government Gateway). Use your <strong>real EORI</strong> on declaration forms.
-                </p>
-                <p>
-                  When you are ready for live customs, an admin can switch the organisation to live
-                  CDS in Settings → Security.
-                </p>
+              <div className="mt-3 space-y-3 text-[11px] leading-relaxed text-amber-950/90">
+                <div>
+                  <p className="font-semibold">1. Create test credentials</p>
+                  <p className="mt-0.5">
+                    In the banner, open <strong>HMRC Test User</strong> and copy your sandbox
+                    sign-in.
+                  </p>
+                </div>
+                <div>
+                  <p className="font-semibold">2. Connect HMRC in Settings</p>
+                  <p className="mt-0.5">
+                    Use those test credentials on the HMRC screen — not your live Government
+                    Gateway. Enter your <strong>real EORI</strong> on declaration forms.
+                  </p>
+                </div>
+                <div>
+                  <p className="font-semibold">3. Go live when ready</p>
+                  <p className="mt-0.5">
+                    A platform admin can switch your organisation to live CDS in{" "}
+                    <strong>Admin → Users &amp; HMRC</strong>.
+                  </p>
+                </div>
               </div>
             </DialogDescription>
           </div>

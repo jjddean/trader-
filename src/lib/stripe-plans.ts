@@ -56,5 +56,5 @@ export const CUSTOM_PLAN = {
 export function planBadgeClass(plan: string): string {
   if (plan === PLAN_LABELS.pro) return "bg-blue-100 text-blue-700";
   if (plan === PLAN_LABELS.payg) return "bg-purple-100 text-purple-700";
-  return "bg-gray-100 text-gray-700";
+  return "bg-slate-100 text-slate-700";
 }

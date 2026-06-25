@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { Bell, Zap, CheckCircle2, FileText, Package, XCircle, Clock, Bot } from "lucide-react";
 import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -41,63 +40,6 @@ interface DashboardHeaderProps {
   buttonIcon?: React.ReactNode;
   className?: string;
   children?: React.ReactNode;
-}
-
-function HmrcStatusIndicator() {
-  const { user } = useUser();
-  const userId = user?.id;
-  const hmrcConnection = useQuery(api.hmrc_internal.getTokens, userId ? { userId } : "skip");
-  const [now, setNow] = React.useState(Date.now());
-
-  React.useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 60000);
-    return () => clearInterval(timer);
-  }, []);
-
-  if (hmrcConnection === undefined) {
-    return (
-      <div
-        className="flex h-[32px] w-[72px] shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-400 shadow-sm"
-        aria-hidden
-      >
-        <div className="h-1.5 w-1.5 rounded-full bg-slate-200" />
-        HMRC
-      </div>
-    );
-  }
-
-  let status = "not-connected";
-  if (hmrcConnection) {
-    if (hmrcConnection.expiresAt < now) status = "expired";
-    else if (hmrcConnection.expiresAt - now < 30 * 60 * 1000) status = "expiring";
-    else status = "valid";
-  }
-
-  const dotColor =
-    status === "valid" ? "bg-green-500" :
-    status === "expiring" ? "bg-amber-500" :
-    "bg-red-500";
-
-  const label = "HMRC";
-
-  const baseClass =
-    "flex h-[32px] w-[72px] shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-black";
-
-  if (status === "valid") {
-    return (
-      <Link href="/dashboard/settings" className={baseClass}>
-        <div className={`h-1.5 w-1.5 rounded-full ${dotColor}`} />
-        {label}
-      </Link>
-    );
-  }
-
-  return (
-    <a href="/api/hmrc/auth" className={baseClass}>
-      <div className={`h-1.5 w-1.5 rounded-full ${dotColor}`} />
-      {label}
-    </a>
-  );
 }
 
 function HeaderOrgSwitcher({ hidePersonal }: { hidePersonal?: boolean }) {
@@ -186,7 +128,6 @@ export const DashboardHeader = ({
         </AssistantSideSheet>
 
         <div className="flex shrink-0 items-center gap-3">
-          <HmrcStatusIndicator />
           <HeaderOrgSwitcher hidePersonal={dbUser?.role !== "admin"} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

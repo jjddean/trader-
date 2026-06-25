@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useAuth, useOrganization, useUser } from "@clerk/nextjs";
 import { useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useEffect, useRef } from "react";
@@ -8,6 +8,7 @@ import { useEffect, useRef } from "react";
 export function UserSync() {
   const { user, isLoaded: isClerkLoaded } = useUser();
   const { orgId, isLoaded: isAuthLoaded } = useAuth();
+  const { organization } = useOrganization();
   const { isAuthenticated } = useConvexAuth();
   const syncUser = useMutation(api.users.syncUser);
   const ensureOrgPractice = useMutation(api.org_hmrc.ensurePracticeMode);
@@ -34,7 +35,10 @@ export function UserSync() {
     })
       .then(() => {
         if (cancelled || !orgId) return;
-        return ensureOrgPractice({ orgId }).catch((err) => {
+        return ensureOrgPractice({
+          orgId,
+          orgName: organization?.name ?? undefined,
+        }).catch((err) => {
           console.error("Org HMRC practice init failed:", err);
         });
       })
@@ -53,6 +57,7 @@ export function UserSync() {
     isAuthLoaded,
     isAuthenticated,
     orgId,
+    organization?.name,
     userId,
     userRole,
     userEmail,

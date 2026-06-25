@@ -27,23 +27,27 @@ export function PracticeModeBanner() {
       role="status"
       className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-amber-950"
     >
-      <div className="mx-auto flex max-w-6xl flex-wrap items-start gap-2 text-xs leading-relaxed">
+      <div className="mx-auto flex max-w-6xl items-start gap-2 sm:gap-3">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" aria-hidden />
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <p className="font-semibold">Practice mode active</p>
-          <p>
-            Submissions go to HMRC&apos;s test environment (TDR) only — not legally binding. Use
-            your{" "}
-            <PracticeSandboxTestUserModalLink className="font-medium underline hover:text-amber-900">
-              HMRC Test User credentials
-            </PracticeSandboxTestUserModalLink>{" "}
-            when connecting (not your live Government Gateway). Enter your real EORI and trade data
-            on declaration forms.
-          </p>
-          <PracticeModeGuideModalLink className="text-[11px] font-medium text-amber-900 underline hover:text-amber-950">
-            How practice mode works
-          </PracticeModeGuideModalLink>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">HMRC Testing Environment</p>
+          <ul className="mt-1 space-y-0.5 text-xs leading-snug text-amber-900/90">
+            <li>
+              Connect your{" "}
+              <PracticeSandboxTestUserModalLink className="font-medium underline hover:text-amber-950">
+                HMRC Test User
+              </PracticeSandboxTestUserModalLink>{" "}
+              to submit sandbox declarations.
+            </li>
+            <li>
+              Validate workflows and familiarise yourself with Freightcode before enabling live
+              customs submissions.
+            </li>
+          </ul>
         </div>
+        <PracticeModeGuideModalLink className="shrink-0 text-xs font-medium text-amber-900 underline hover:text-amber-950">
+          How practice mode works
+        </PracticeModeGuideModalLink>
       </div>
     </div>
   );

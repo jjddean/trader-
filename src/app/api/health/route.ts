@@ -15,5 +15,12 @@ export async function GET() {
       hmrc: !!process.env.HMRC_CLIENT_ID,
       clerk: !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     },
+    livePlatform: {
+      productionHmrcOAuth: Boolean(
+        process.env.HMRC_PRODUCTION_CLIENT_ID?.trim() &&
+          process.env.HMRC_PRODUCTION_CLIENT_SECRET?.trim(),
+      ),
+      hmrcEnvironment: process.env.HMRC_ENVIRONMENT || "unknown",
+    },
   });
 }
