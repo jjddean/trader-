@@ -199,10 +199,10 @@ export function LandingPageContent() {
           <div className="mx-auto max-w-[1280px] px-[24px]">
             <div className="mb-[64px] text-center">
               <h2 className="mb-4 text-[36px] font-bold tracking-tight text-[#020817] md:text-[42px]">
-                What&apos;s in the product today
+                Core Capabilities
               </h2>
               <p className="mx-auto max-w-2xl text-[18px] leading-[1.6] text-slate-600">
-                CDS declaration workspace with validation, HMRC connectivity, documents, duty estimates, and TRE CSV import for declaration history.
+                Build and submit UK import declarations through HMRC CDS — with duty estimates, documents, and status tracking.
               </p>
             </div>
 
@@ -238,21 +238,6 @@ export function LandingPageContent() {
                   label: 'Document vault',
                   benefit: 'Attach invoices and supporting documents to declarations. Organised by MRN for audit retrieval.',
                 },
-                { 
-                  id: 'historical', 
-                  label: 'TRE CSV import',
-                  benefit: 'Upload HMRC TRE Item Report CSVs in Import TRE. Line items are org-scoped, deduplicated, and available in reports alongside new declarations.',
-                },
-                { 
-                  id: 'savings', 
-                  label: 'Preference opportunities',
-                  benefit: 'After a TRE import, scan history for lines where a preferential duty rate may have applied. Indicative flags for review — not reclaim filing.',
-                },
-                { 
-                  id: 'practice', 
-                  label: 'Practice mode (TDR)',
-                  benefit: 'New orgs start in sandbox TDR. Submissions are not legally binding; use real EORI on forms and Test User at Connect.',
-                },
               ].map((item) => (
                 <div key={item.id} className="group relative overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-sm transition-all hover:shadow-md flex flex-col p-[24px] h-full">
                   <h3 className="mb-2 text-[18px] font-bold text-[#37352f]">{item.label}</h3>
@@ -269,12 +254,10 @@ export function LandingPageContent() {
           <div className="mx-auto max-w-[1280px] px-[24px]">
             <div className="mb-[64px] text-center">
               <h2 className="mb-4 text-[36px] font-bold tracking-tight leading-[1.15] text-[#020817] md:text-[42px]">
-                HMRC TRE data — export yourself,
-                <br />
-                analyse in Freightcode
+                Import and review declaration history from HMRC TRE
               </h2>
               <p className="mx-auto max-w-2xl text-[18px] leading-[1.6] text-slate-600">
-                From 31 March 2026, TRE is HMRC&apos;s route to your declaration reports. OAuth connects CDS submit — it does not bulk-download TRE history. Export CSV from HMRC, then upload in <Link href="/dashboard/tre-import" className="font-medium text-blue-600 hover:text-blue-700">Import TRE</Link> to review line items next to new declarations.
+                HMRC Trade Reporting gives you CSV exports of past declarations. Upload them in Import TRE to browse line items, run preference checks, and keep history next to new declarations.
               </p>
             </div>
 
@@ -313,12 +296,9 @@ export function LandingPageContent() {
               </div>
             </div>
 
-            <div className="mt-12 flex flex-col items-center gap-4 text-center sm:flex-row sm:justify-center">
+            <div className="mt-12 text-center">
               <Link href="/guides/what-is-tre-hmrc-trade-data" className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700">
                 Learn more about HMRC TRE Data <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-              <Link href="/dashboard/tre-import" className="inline-flex items-center text-sm font-semibold text-slate-700 hover:text-slate-900">
-                Go to Import TRE <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </div>
           </div>
