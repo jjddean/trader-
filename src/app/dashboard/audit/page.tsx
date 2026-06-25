@@ -14,8 +14,13 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  ENTERPRISE_SELECT_CONTENT,
+  ENTERPRISE_SELECT_ITEM,
+  ENTERPRISE_SELECT_TRIGGER,
+} from "@/lib/enterprise-select-styles";
 import * as Select from "@radix-ui/react-select";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 
@@ -46,8 +51,11 @@ export default function ComplyAuditConsole() {
   const [uploadStage, setUploadStage] = useState("");
   const [selectedMrn, setSelectedMrn] = useState<string>("unlinked");
 
-  const { user } = useUser();
-  const declarations = useQuery(api.declarations.getDeclarationPreviews) || [];
+  const { user, isLoaded, isSignedIn } = useUser();
+  const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
+  const canQuery =
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated;
+  const declarations = useQuery(api.declarations.getDeclarationPreviews, canQuery ? {} : "skip") || [];
   const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
   const saveDocument = useMutation(api.documents.saveDocument);
 
@@ -214,14 +222,14 @@ export default function ComplyAuditConsole() {
                   Document Type
                 </label>
                 <Select.Root value={docType} onValueChange={setDocType}>
-                  <Select.Trigger className="flex h-9 w-full items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 transition-colors focus:border-slate-400 focus:outline-none data-[placeholder]:text-slate-400">
+                  <Select.Trigger className={ENTERPRISE_SELECT_TRIGGER}>
                     <Select.Value placeholder="Select type..." />
                     <Select.Icon>
                       <ChevronDown className="h-4 w-4 text-slate-400" />
                     </Select.Icon>
                   </Select.Trigger>
                   <Select.Portal>
-                    <Select.Content className="z-50 min-w-[16rem] overflow-hidden rounded-lg border border-slate-100 bg-white shadow-lg" position="popper" sideOffset={4}>
+                    <Select.Content className={cn(ENTERPRISE_SELECT_CONTENT, "z-50")} position="popper" sideOffset={4}>
                       <Select.Viewport className="p-1">
                         {[
                           { value: "auto", label: "Auto-detect Type" },
@@ -234,7 +242,7 @@ export default function ComplyAuditConsole() {
                           <Select.Item
                             key={item.value}
                             value={item.value}
-                            className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-slate-700 outline-none data-[highlighted]:bg-slate-50"
+                            className={cn(ENTERPRISE_SELECT_ITEM, "relative flex select-none items-center px-8 outline-none")}
                           >
                             <Select.ItemIndicator className="absolute left-2 inline-flex items-center">
                               <Check className="h-3.5 w-3.5 text-slate-500" />
@@ -254,16 +262,16 @@ export default function ComplyAuditConsole() {
                   Link to Declaration (MRN)
                 </label>
                 <Select.Root value={selectedMrn} onValueChange={setSelectedMrn}>
-                  <Select.Trigger className="flex h-9 w-full items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 transition-colors focus:border-slate-400 focus:outline-none data-[placeholder]:text-slate-400">
+                  <Select.Trigger className={ENTERPRISE_SELECT_TRIGGER}>
                     <Select.Value placeholder="Select MRN..." />
                     <Select.Icon>
                       <ChevronDown className="h-4 w-4 text-slate-400" />
                     </Select.Icon>
                   </Select.Trigger>
                   <Select.Portal>
-                    <Select.Content className="z-50 min-w-[16rem] overflow-hidden rounded-lg border border-slate-100 bg-white shadow-lg" position="popper" sideOffset={4}>
+                    <Select.Content className={cn(ENTERPRISE_SELECT_CONTENT, "z-50")} position="popper" sideOffset={4}>
                       <Select.Viewport className="p-1">
-                        <Select.Item value="unlinked" className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-slate-700 outline-none data-[highlighted]:bg-slate-50">
+                        <Select.Item value="unlinked" className={cn(ENTERPRISE_SELECT_ITEM, "relative flex select-none items-center px-8 outline-none")}>
                           <Select.ItemIndicator className="absolute left-2 inline-flex items-center">
                             <Check className="h-3.5 w-3.5 text-slate-500" />
                           </Select.ItemIndicator>
@@ -273,7 +281,7 @@ export default function ComplyAuditConsole() {
                           <Select.Item
                             key={d.mrn}
                             value={d.mrn}
-                            className="relative flex cursor-pointer select-none items-center rounded-md px-8 py-2 text-xs text-slate-700 outline-none data-[highlighted]:bg-slate-50"
+                            className={cn(ENTERPRISE_SELECT_ITEM, "relative flex select-none items-center px-8 outline-none")}
                           >
                             <Select.ItemIndicator className="absolute left-2 inline-flex items-center">
                               <Check className="h-3.5 w-3.5 text-slate-500" />

@@ -107,7 +107,7 @@ export default function AdminHmrcPage() {
           </p>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-100 bg-slate-50/50">
+            <thead className="border-b border-slate-100 bg-white">
               <tr>
                 <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">User</th>
                 <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">EORI</th>
@@ -163,7 +163,7 @@ export default function AdminHmrcPage() {
           </p>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-100 bg-slate-50/50">
+            <thead className="border-b border-slate-100 bg-white">
               <tr>
                 <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Email</th>
                 <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Role</th>

@@ -3,7 +3,7 @@
 import React, { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useUser, useOrganization, useClerk } from "@clerk/nextjs";
 import { User, CreditCard, Bell, ExternalLink, Shield, Users, Link2, Unlink, Download, Lock, Building2 } from "lucide-react";
@@ -30,12 +30,13 @@ function SettingsPageContent() {
   const { user } = useUser();
   const { organization } = useOrganization();
   const clerk = useClerk();
+  const { isAuthenticated } = useConvexAuth();
   const userId = user?.id || "";
   const orgId = organization?.id || "";
   const searchParams = useSearchParams();
 
   const subscription = useQuery(api.subscriptions.getSubscription, userId ? { userId } : "skip");
-  const dbUser = useQuery(api.users.current);
+  const dbUser = useQuery(api.users.current, isAuthenticated ? {} : "skip");
   const orgHmrcMode = useQuery(api.org_hmrc.getModeForOrg, orgId ? { orgId } : "skip");
   const setOrgHmrcMode = useMutation(api.org_hmrc.setOrgMode);
   const hmrcConnection = useQuery(api.hmrc.getToken, userId ? { userId } : "skip");

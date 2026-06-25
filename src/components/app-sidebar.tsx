@@ -9,14 +9,13 @@ import {
   Settings,
   Compass,
   ShieldCheck,
-  HelpCircle,
   ChevronRight,
   Shield,
 } from "lucide-react";
 import { useOrganization, useUser } from "@clerk/nextjs";
 import { SidebarUserButton } from "@/components/auth/sidebar-user-button";
 import { SidebarGlobalSearch } from "@/components/sidebar-global-search";
-import { useQuery } from "convex/react";
+import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { cn } from "@/lib/utils";
 import {
@@ -63,7 +62,8 @@ export function AppSidebar() {
   const pathname = usePathname();
   const { user: clerkUser } = useUser();
   const { organization } = useOrganization();
-  const userData = useQuery(api.users.current);
+  const { isAuthenticated } = useConvexAuth();
+  const userData = useQuery(api.users.current, isAuthenticated ? {} : "skip");
   const isAdmin = userData?.role === "admin";
 
   const [mounted, setMounted] = React.useState(false);
@@ -72,7 +72,10 @@ export function AppSidebar() {
     setMounted(true);
   }, []);
 
-  const declarationCounts = useQuery(api.declarations.getMyDeclarationCounts);
+  const declarationCounts = useQuery(
+    api.declarations.getMyDeclarationCounts,
+    isAuthenticated ? {} : "skip",
+  );
   const reviewCount = declarationCounts?.reviewCount ?? 0;
 
   return (
@@ -122,6 +125,7 @@ export function AppSidebar() {
                         >
                           <Icon className="h-3.5 w-3.5 text-slate-400" />
                           <span className="flex-1">{item.label}</span>
+                          <ChevronRight className="ml-auto h-3 w-3 rotate-90 text-slate-400" />
                         </SidebarMenuButton>
                         <SidebarMenuSub className="ml-5 border-l border-slate-200 pl-2">
                           {item.items?.map((subItem) => (
@@ -264,14 +268,6 @@ export function AppSidebar() {
       <SidebarFooter className="mt-auto shrink-0 space-y-1.5 bg-white p-2">
         <SidebarMenu className="space-y-0.5">
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname === "/dashboard/support/guide"} className={cn("flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors", pathname === "/dashboard/support/guide" ? "bg-slate-100 text-black" : "text-slate-500 hover:bg-slate-100 hover:text-black")}>
-              <Link href="/dashboard/support/guide" className="flex flex-1 items-center gap-2">
-                <HelpCircle className={cn("h-3.5 w-3.5", pathname === "/dashboard/support/guide" ? "text-slate-700" : "text-slate-400")} />
-                <span className="flex-1">User Guide</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
             <SidebarMenuButton
               asChild
               isActive={pathname === "/dashboard/settings"}
@@ -295,9 +291,9 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
         {mounted ? (
-          <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1">
+          <div className="flex min-h-[42px] items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1">
             <SidebarUserButton />
-            <div className="flex flex-col">
+            <div className="flex min-w-0 flex-col">
               <span className="max-w-[100px] truncate text-xs font-normal text-slate-700">
                 {clerkUser?.fullName || "User"}
               </span>
@@ -307,11 +303,14 @@ export function AppSidebar() {
             </div>
           </div>
         ) : (
-          <div className="flex h-[42px] items-center gap-2 rounded-md border border-slate-200 bg-slate-100 px-3 py-2">
-            <div className="h-6 w-6 animate-pulse rounded-full bg-slate-200" />
-            <div className="flex flex-col gap-1">
-              <div className="h-3 w-16 animate-pulse rounded bg-slate-200" />
-              <div className="h-2 w-10 animate-pulse rounded bg-slate-200" />
+          <div
+            className="flex min-h-[42px] items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1"
+            aria-hidden
+          >
+            <div className="h-7 w-7 shrink-0 rounded-full bg-slate-100" />
+            <div className="flex min-w-0 flex-col gap-1">
+              <div className="h-3 w-16 rounded bg-slate-100" />
+              <div className="h-2 w-10 rounded bg-slate-100" />
             </div>
           </div>
         )}

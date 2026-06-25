@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useCallback, useRef, useEffect, Suspense } from "react";
 import { useUser } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { useSearchParams } from "next/navigation";
 import { 
   Upload, 
@@ -16,6 +16,7 @@ import {
   Loader2
 } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
+import { Id } from "../../../../convex/_generated/dataModel";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,16 +43,12 @@ import {
 function DocumentsPageInner() {
   const searchParams = useSearchParams();
   const requestedDeclarationId = searchParams.get("declaration");
-  const { user } = useUser();
+  const { user, isLoaded, isSignedIn } = useUser();
+  const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const userId = user?.id || "";
-  const dbDocuments = useQuery(api.documents.getDocuments, userId ? { userId } : "skip");
-  const requirements = useQuery(api.documents.getDocumentRequirements, userId ? {} : "skip");
-  const getDocumentDownloadUrl = useMutation(api.documents.getDocumentDownloadUrl);
-  const deleteDocument = useMutation(api.documents.deleteDocument);
-  const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
-  const allDeclarations = useQuery(api.declarations.getDeclarationPreviews);
-  const declarations = allDeclarations || [];
-  const replaceFileInputRef = useRef<HTMLInputElement | null>(null);
+  const canQuery =
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && Boolean(userId);
+
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isPasteOpen, setIsPasteOpen] = useState(false);
@@ -65,7 +62,31 @@ function DocumentsPageInner() {
   const [isGeneratingTemplates, setIsGeneratingTemplates] = useState(false);
   const [isGeneratePickerOpen, setIsGeneratePickerOpen] = useState(false);
   const [generateDeclarationId, setGenerateDeclarationId] = useState("none");
+
+  const requirementsArgs = useMemo(() => {
+    if (!canQuery) return "skip" as const;
+    if (declarationFilter !== "all") {
+      return { declarationId: declarationFilter as Id<"declarations"> };
+    }
+    return {};
+  }, [canQuery, declarationFilter]);
+
+  const dbDocuments = useQuery(api.documents.getDocuments, canQuery ? { userId } : "skip");
+  const requirements = useQuery(api.documents.getDocumentRequirements, requirementsArgs);
+  const getDocumentDownloadUrl = useMutation(api.documents.getDocumentDownloadUrl);
+  const deleteDocument = useMutation(api.documents.deleteDocument);
+  const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
+  const allDeclarations = useQuery(
+    api.declarations.getDeclarationPreviews,
+    canQuery ? {} : "skip",
+  );
+  const isDocumentsLoading =
+    canQuery &&
+    (dbDocuments === undefined || requirements === undefined || allDeclarations === undefined);
+  const declarations = allDeclarations ?? [];
+  const replaceFileInputRef = useRef<HTMLInputElement | null>(null);
   const hydratedRequirementDeclarationsRef = useRef<Set<string>>(new Set());
+  const failedRequirementHydrationRef = useRef<Set<string>>(new Set());
   const appliedQueryDeclarationRef = useRef(false);
 
   const handleActiveToolChange = useCallback((tool: string | null) => {
@@ -359,21 +380,30 @@ function DocumentsPageInner() {
   }, [declarationFilter, declarationById]);
 
   useEffect(() => {
-    const declarationId = selectedDeclaration?.declarationId ? String(selectedDeclaration.declarationId) : null;
-    if (!declarationId) return;
-    if (hydratedRequirementDeclarationsRef.current.has(declarationId)) return;
+    if (declarationFilter === "all") return;
 
-    const requiredDocs = getHmrcRequirementSetForDeclaration(selectedDeclaration);
-    if (requiredDocs.length === 0) return;
+    const declarationId = declarationFilter;
+    if (hydratedRequirementDeclarationsRef.current.has(declarationId)) return;
+    if (failedRequirementHydrationRef.current.has(declarationId)) return;
+
+    const selected = declarationById.get(declarationId);
+    if (!selected) return;
+
+    const requiredDocs = getHmrcRequirementSetForDeclaration(selected);
+    if (requiredDocs.length === 0) {
+      hydratedRequirementDeclarationsRef.current.add(declarationId);
+      return;
+    }
 
     hydratedRequirementDeclarationsRef.current.add(declarationId);
     void upsertRequirementsForDeclaration({
-      declarationId: declarationId as any,
+      declarationId: declarationId as Id<"declarations">,
       requirements: requiredDocs,
     }).catch(() => {
       hydratedRequirementDeclarationsRef.current.delete(declarationId);
+      failedRequirementHydrationRef.current.add(declarationId);
     });
-  }, [selectedDeclaration, upsertRequirementsForDeclaration]);
+  }, [declarationFilter, declarationById, upsertRequirementsForDeclaration]);
 
   const generateTemplatesForDeclaration = useCallback(async (targetDeclaration: any) => {
     if (!targetDeclaration?.declarationId) {
@@ -487,7 +517,7 @@ function DocumentsPageInner() {
             Total Documents
           </p>
           <h2 className="text-2xl font-medium tracking-tight text-foreground tabular-nums">
-            {stats.total}
+            {isDocumentsLoading ? "—" : stats.total}
           </h2>
           <p className="mt-1 text-[0.625rem] text-slate-500">across {stats.declCount} declarations</p>
         </div>
@@ -498,7 +528,7 @@ function DocumentsPageInner() {
           </p>
           <div className="flex items-baseline gap-2">
             <h2 className="text-2xl font-medium tracking-tight text-green-600 tabular-nums">
-              {stats.verified}
+              {isDocumentsLoading ? "—" : stats.verified}
             </h2>
           </div>
           <p className="mt-1 text-[0.625rem] text-slate-500">no issues found</p>
@@ -510,7 +540,7 @@ function DocumentsPageInner() {
           </p>
           <div className="flex items-baseline gap-2">
             <h2 className="text-2xl font-medium tracking-tight text-amber-600 tabular-nums">
-              {stats.review}
+              {isDocumentsLoading ? "—" : stats.review}
             </h2>
           </div>
           <p className="mt-1 text-[0.625rem] text-slate-500">compliance flags</p>
@@ -521,7 +551,7 @@ function DocumentsPageInner() {
             Missing
           </p>
           <h2 className="text-2xl font-medium tracking-tight text-red-600 tabular-nums">
-            {stats.missing}
+            {isDocumentsLoading ? "—" : stats.missing}
           </h2>
           <p className="mt-1 text-[0.625rem] text-slate-500">required for submission</p>
         </div>
@@ -540,6 +570,7 @@ function DocumentsPageInner() {
         onGenerateTemplates={handleGenerateTemplates}
         isGeneratingTemplates={isGeneratingTemplates}
         canGenerateTemplates={allDeclarationOptions.length > 0}
+        isLoading={isDocumentsLoading}
       />
       
       <p className="text-[0.6875rem] text-slate-400 flex items-center gap-1.5 mt-3">

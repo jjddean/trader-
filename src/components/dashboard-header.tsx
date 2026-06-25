@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { Bell, Zap, CheckCircle2, FileText, Package, XCircle, Clock, Bot } from "lucide-react";
-import { useQuery } from "convex/react";
+import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
@@ -54,7 +54,17 @@ function HmrcStatusIndicator() {
     return () => clearInterval(timer);
   }, []);
 
-  if (hmrcConnection === undefined) return null;
+  if (hmrcConnection === undefined) {
+    return (
+      <div
+        className="flex h-[32px] w-[72px] shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-400 shadow-sm"
+        aria-hidden
+      >
+        <div className="h-1.5 w-1.5 rounded-full bg-slate-200" />
+        HMRC
+      </div>
+    );
+  }
 
   let status = "not-connected";
   if (hmrcConnection) {
@@ -70,7 +80,8 @@ function HmrcStatusIndicator() {
 
   const label = "HMRC";
 
-  const baseClass = "flex h-[32px] items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-black";
+  const baseClass =
+    "flex h-[32px] w-[72px] shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-black";
 
   if (status === "valid") {
     return (
@@ -89,6 +100,25 @@ function HmrcStatusIndicator() {
   );
 }
 
+function HeaderOrgSwitcher({ hidePersonal }: { hidePersonal?: boolean }) {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div
+        className="h-8 w-[160px] shrink-0 rounded-md border border-slate-200 bg-white shadow-sm"
+        aria-hidden
+      />
+    );
+  }
+
+  return <OrgSwitcher hidePersonal={hidePersonal} />;
+}
+
 export const DashboardHeader = ({
   title,
   badge,
@@ -100,22 +130,17 @@ export const DashboardHeader = ({
   className,
   children,
 }: DashboardHeaderProps) => {
-  const [mounted, setMounted] = useState(false);
-
   const { user } = useUser();
+  const { isAuthenticated } = useConvexAuth();
   const userId = user?.id;
-  const dbUser = useQuery(api.users.current);
+  const dbUser = useQuery(api.users.current, isAuthenticated ? {} : "skip");
   const notifications = useQuery(api.notifications.getUserNotifications, userId ? { userId } : "skip");
-  const unreadCount = notifications?.filter(n => !n.processed).length || 0;
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
+  const unreadCount = notifications?.filter((n) => !n.processed).length || 0;
 
   return (
     <header
       className={cn(
-        "z-[60] flex h-[55px] shrink-0 items-center justify-between gap-8 border-b border-slate-200 bg-white px-6",
+        "z-[60] flex h-[55px] shrink-0 items-center justify-between gap-8 border-b border-slate-200 bg-slate-50 px-6",
         className,
       )}
     >
@@ -123,7 +148,7 @@ export const DashboardHeader = ({
         <div className="flex items-center gap-2">
           <SidebarTrigger className="-ml-1 size-5 [&_svg]:size-2.5 [&_svg]:stroke-[1.5]" />
           <div className="h-4 w-px bg-slate-200 mx-1" />
-          <h1 className="shrink-0 text-sm font-semibold tracking-normal text-black">{title}</h1>
+          <h1 className="shrink-0 text-sm font-semibold tracking-normal text-slate-900">{title}</h1>
         </div>
         {badge && (
           <span
@@ -160,19 +185,18 @@ export const DashboardHeader = ({
           </button>
         </AssistantSideSheet>
 
-        {mounted ? (
-          <div className="flex items-center gap-3">
-            <HmrcStatusIndicator />
-            <OrgSwitcher hidePersonal={dbUser?.role !== "admin"} />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="relative flex h-[32px] w-[32px] items-center justify-center rounded-md border border-slate-200 bg-white transition-colors hover:bg-slate-50 active:scale-95">
-                  <Bell className="h-3.5 w-3.5 text-slate-400 stroke-[1.5]" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
-                  )}
-                </button>
-              </DropdownMenuTrigger>
+        <div className="flex shrink-0 items-center gap-3">
+          <HmrcStatusIndicator />
+          <HeaderOrgSwitcher hidePersonal={dbUser?.role !== "admin"} />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="relative flex h-[32px] w-[32px] items-center justify-center rounded-md border border-slate-200 bg-white transition-colors hover:bg-slate-50 active:scale-95">
+                <Bell className="h-3.5 w-3.5 text-slate-400 stroke-[1.5]" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+                )}
+              </button>
+            </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80 rounded-xl border-slate-200 bg-white p-0 shadow-xl overflow-hidden">
               <div className="bg-slate-50/50 p-3 border-b border-slate-100 flex items-center justify-between">
                 <DropdownMenuLabel className="p-0 text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
@@ -246,12 +270,7 @@ export const DashboardHeader = ({
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
-          </div>
-        ) : (
-          <button className="flex h-[32px] w-[32px] items-center justify-center rounded-md border border-slate-200 bg-white">
-            <Bell className="h-3.5 w-3.5 text-slate-400 stroke-[1.5]" />
-          </button>
-        )}
+        </div>
       </div>
     </header>
   );

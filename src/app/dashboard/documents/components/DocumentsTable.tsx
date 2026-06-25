@@ -21,14 +21,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { ClientOnly } from "@/components/client-only";
 import { DOCUMENT_TYPES } from "@/lib/utils/document-utils";
+import {
+  ENTERPRISE_DROPDOWN_ITEM,
+  ENTERPRISE_SELECT_CONTENT,
+  ENTERPRISE_SELECT_ITEM,
+} from "@/lib/enterprise-select-styles";
 
 const FILTER_CONTROL_CLASS =
-  "h-9 w-full border-slate-200 bg-white text-[0.6875rem] font-medium tracking-normal text-slate-600 shadow-sm";
-
-const FILTER_MENU_ITEM_CLASS =
-  "text-[0.6875rem] font-medium tracking-normal text-slate-600 focus:bg-slate-50 focus:text-slate-700 data-[highlighted]:bg-slate-50 data-[highlighted]:text-slate-700 py-2 [&_[data-slot=select-item-indicator]_svg]:size-3";
-
-const FILTER_SELECT_CONTENT_CLASS = "z-[100] max-h-[300px] min-w-[var(--radix-select-trigger-width)]";
+  "flex h-9 w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 text-xs text-slate-700 shadow-sm transition-colors focus:border-slate-400 focus:outline-none data-[placeholder]:text-slate-400";
 
 interface DocumentsTableProps {
   documents: any[];
@@ -42,6 +42,7 @@ interface DocumentsTableProps {
   onGenerateTemplates: () => void;
   isGeneratingTemplates: boolean;
   canGenerateTemplates: boolean;
+  isLoading?: boolean;
 }
 
 export const DocumentsTable = React.memo(function DocumentsTable({
@@ -56,6 +57,7 @@ export const DocumentsTable = React.memo(function DocumentsTable({
   onGenerateTemplates,
   isGeneratingTemplates,
   canGenerateTemplates,
+  isLoading = false,
 }: DocumentsTableProps) {
 
   const filteredDocuments = useMemo(() => {
@@ -85,10 +87,10 @@ export const DocumentsTable = React.memo(function DocumentsTable({
                 <SelectTrigger className={FILTER_CONTROL_CLASS}>
                   <SelectValue placeholder="All declarations" />
                 </SelectTrigger>
-                <SelectContent position="popper" className={FILTER_SELECT_CONTENT_CLASS}>
-                  <SelectItem value="all" className={FILTER_MENU_ITEM_CLASS}>All declarations</SelectItem>
+                <SelectContent position="popper" sideOffset={4} className={ENTERPRISE_SELECT_CONTENT}>
+                  <SelectItem value="all" className={ENTERPRISE_SELECT_ITEM}>All declarations</SelectItem>
                   {allDeclarationOptions.map((decl) => (
-                    <SelectItem key={decl.id} value={decl.id} className={cn(FILTER_MENU_ITEM_CLASS, "font-mono")}>
+                    <SelectItem key={decl.id} value={decl.id} className={ENTERPRISE_SELECT_ITEM}>
                       {decl.mrn}
                     </SelectItem>
                   ))}
@@ -99,10 +101,10 @@ export const DocumentsTable = React.memo(function DocumentsTable({
                 <SelectTrigger className={FILTER_CONTROL_CLASS}>
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
-                <SelectContent position="popper" className={FILTER_SELECT_CONTENT_CLASS}>
-                  <SelectItem value="all" className={FILTER_MENU_ITEM_CLASS}>All types</SelectItem>
+                <SelectContent position="popper" sideOffset={4} className={ENTERPRISE_SELECT_CONTENT}>
+                  <SelectItem value="all" className={ENTERPRISE_SELECT_ITEM}>All types</SelectItem>
                   {DOCUMENT_TYPES.map((type) => (
-                    <SelectItem key={type.code} value={type.name} className={FILTER_MENU_ITEM_CLASS}>
+                    <SelectItem key={type.code} value={type.name} className={ENTERPRISE_SELECT_ITEM}>
                       {type.name}
                     </SelectItem>
                   ))}
@@ -115,16 +117,16 @@ export const DocumentsTable = React.memo(function DocumentsTable({
                   <ChevronDown className="h-4 w-4 text-slate-400" />
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent className="z-[100] min-w-[var(--radix-dropdown-menu-trigger-width)] overflow-hidden rounded-md border border-slate-200 bg-white p-1 shadow-md" align="end">
+                <DropdownMenuContent className="z-[100] min-w-[16rem] overflow-hidden rounded-lg border border-slate-100 bg-white p-1 shadow-lg" align="end">
                   <DropdownMenuItem 
                     onClick={() => onActiveToolChange("preference")}
-                    className={cn(FILTER_MENU_ITEM_CLASS, "cursor-pointer rounded-sm px-2 outline-none")}
+                    className={ENTERPRISE_DROPDOWN_ITEM}
                   >
                     Preference Checker
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => onActiveToolChange("landed")}
-                    className={cn(FILTER_MENU_ITEM_CLASS, "cursor-pointer rounded-sm px-2 outline-none")}
+                    className={ENTERPRISE_DROPDOWN_ITEM}
                   >
                     Landed Cost Calculator
                   </DropdownMenuItem>
@@ -148,7 +150,7 @@ export const DocumentsTable = React.memo(function DocumentsTable({
       <div className="w-full overflow-x-auto">
         <table className="w-full border-collapse text-left">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
+            <tr className="border-b border-slate-200 bg-white">
               <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase w-[40%]">DOCUMENT</th>
               <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">TYPE</th>
               <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">LINKED MRN</th>
@@ -157,7 +159,13 @@ export const DocumentsTable = React.memo(function DocumentsTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
-            {filteredDocuments.length === 0 ? (
+            {isLoading ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-8 text-center text-sm text-slate-400">
+                  Loading documents…
+                </td>
+              </tr>
+            ) : filteredDocuments.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center text-slate-500 text-xs italic">
                   No documents found matching these filters.

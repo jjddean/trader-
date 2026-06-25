@@ -21,6 +21,7 @@ export default function DashboardPage() {
 
   const declarationPreviews = useQuery(api.declarations.getDeclarationPreviews, canQuery ? {} : "skip");
   const dashboardAnalytics = useQuery(api.declarations.getDashboardAnalytics, canQuery ? {} : "skip");
+  const treOpportunities = useQuery(api.tre_analytics.listOpportunities, canQuery ? {} : "skip");
   const hmrcConnection = useQuery(api.hmrc_internal.getTokens, userId ? { userId } : "skip");
 
   const hmrcStatus = useMemo(() => {
@@ -63,6 +64,28 @@ export default function DashboardPage() {
     const totalDuty = Number(dashboardAnalytics?.totalDuty || 0);
     const avgDuty = Number(dashboardAnalytics?.avgDuty || 0);
 
+    const declarationOverpayments = (dashboardAnalytics?.overpayments ?? []).map(
+      (item: { title: string; subtitle: string; amount: number }) => ({
+        ...item,
+        indicative: false,
+      }),
+    );
+
+    // TRE imported-history flags: indicative-only preference opportunities.
+    // Never presented as recoverable — labelled indicative, HMRC decides (C285).
+    const treOverpayments = (treOpportunities?.opportunities ?? [])
+      .slice(0, 5)
+      .map((opp: { mrn: string; commodityCode: string; indicativeDelta: number }) => ({
+        title: opp.mrn && opp.mrn !== "—" ? opp.mrn : `Commodity ${opp.commodityCode}`,
+        subtitle: "Possible preference opportunity (imported TRE history)",
+        amount: opp.indicativeDelta,
+        indicative: true,
+      }));
+
+    const overpayments = [...declarationOverpayments, ...treOverpayments]
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 8);
+
     return {
       kpis: {
         totalDuty,
@@ -72,15 +95,16 @@ export default function DashboardPage() {
       },
       chartData: (dashboardAnalytics?.chartData ?? []) as Array<{ code: string; duty: number }>,
       recentDeclarations,
-      overpayments: (dashboardAnalytics?.overpayments ?? []) as Array<{
+      overpayments: overpayments as Array<{
         title: string;
         subtitle: string;
         amount: number;
+        indicative: boolean;
       }>,
       recentLoading: canQuery && declarationPreviews === undefined,
       analyticsLoading: canQuery && dashboardAnalytics === undefined,
     };
-  }, [canQuery, declarationPreviews, dashboardAnalytics]);
+  }, [canQuery, declarationPreviews, dashboardAnalytics, treOpportunities]);
 
   // Feature toggles: allow hiding specific dashboard cards via public env vars.
   // Set NEXT_PUBLIC_DASH_SHOW_DUTY_BY_HS=false to hide the Duty by HS Code chart.
@@ -333,7 +357,7 @@ function RecentDeclarations({
       <div className="flex-1 p-0 overflow-x-auto">
         <table className="w-full border-collapse text-left">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
+            <tr className="border-b border-slate-200 bg-white">
               <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Date</th>
               <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">MRN</th>
               <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Status</th>
@@ -418,25 +442,42 @@ function RecentDeclarations({
 }
 
 // 4️⃣ ACTIONABLE AUDITS (SIMPLIFIED)
-function ActionableAudits({ overpayments }: { overpayments: Array<{ title: string; subtitle: string; amount: number }> }) {
+function ActionableAudits({
+  overpayments,
+}: {
+  overpayments: Array<{ title: string; subtitle: string; amount: number; indicative?: boolean }>;
+}) {
+  const hasIndicative = overpayments.some((item) => item.indicative);
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none h-80">
       <div className="flex items-center gap-3 border-b border-slate-200 bg-slate-50 px-5 py-3">
         <AlertCircle className="h-4 w-4 text-slate-400" />
         <h3 className="text-sm font-medium text-black">Potential Overpayments</h3>
       </div>
-      
+
       <div className="flex-1 p-5 overflow-y-auto space-y-3">
         {overpayments.length > 0 ? (
-          overpayments.map((item, idx) => (
-            <div key={`${item.title}-${idx}`} className="border border-slate-200 rounded-lg p-4 flex justify-between items-center transition-all hover:bg-slate-50 cursor-pointer">
-              <div>
-                <p className="font-semibold text-sm text-foreground">{item.title}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{item.subtitle}</p>
+          <>
+            {overpayments.map((item, idx) => (
+              <div key={`${item.title}-${idx}`} className="border border-slate-200 rounded-lg p-4 flex justify-between items-center gap-3 transition-all hover:bg-slate-50 cursor-pointer">
+                <div>
+                  <p className="font-semibold text-sm text-foreground">{item.title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{item.subtitle}</p>
+                </div>
+                {item.indicative ? (
+                  <p className="shrink-0 text-amber-600 font-semibold text-sm">~£{item.amount.toFixed(2)}</p>
+                ) : (
+                  <p className="shrink-0 text-red-600 font-semibold text-sm">+£{item.amount.toFixed(2)}</p>
+                )}
               </div>
-              <p className="text-red-600 font-semibold text-sm">+£{item.amount.toFixed(2)}</p>
-            </div>
-          ))
+            ))}
+            {hasIndicative && (
+              <p className="px-1 pt-1 text-[0.625rem] leading-relaxed text-slate-400">
+                ~ Indicative only, from imported TRE history. Not a reclaim amount — HMRC determines
+                any repayment (C285).
+              </p>
+            )}
+          </>
         ) : (
           <div className="border border-slate-200 rounded-lg p-4 text-xs text-slate-500">
             {FL.overpaymentAfterAssessment}

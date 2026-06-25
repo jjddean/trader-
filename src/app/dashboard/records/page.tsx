@@ -195,7 +195,7 @@ export default function RecordsPage() {
             <Landmark className="h-4 w-4 text-slate-400" />
           </div>
           <h2 className="text-2xl font-medium tracking-tight text-foreground tabular-nums">
-            £{formatAmount(totalDuty)}
+            {isRecordsLoading ? "—" : `£${formatAmount(totalDuty)}`}
           </h2>
           <p className="mt-1 text-[0.625rem] text-slate-500">{dutySubtitle}</p>
         </div>
@@ -208,7 +208,7 @@ export default function RecordsPage() {
             <Building2 className="h-4 w-4 text-slate-400" />
           </div>
           <h2 className="text-2xl font-medium tracking-tight text-foreground tabular-nums">
-            £{formatAmount(totalVat)}
+            {isRecordsLoading ? "—" : `£${formatAmount(totalVat)}`}
           </h2>
           <p className="mt-1 text-[0.625rem] text-slate-500">{vatSubtitle}</p>
         </div>
@@ -230,8 +230,26 @@ export default function RecordsPage() {
         </div>
 
         {isRecordsLoading ? (
-          <div className="flex h-40 flex-col items-center justify-center gap-2">
-            <p className="text-xs text-slate-400">Loading records…</p>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left">
+              <thead>
+                <tr className="border-b border-slate-200 bg-white">
+                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Declaration MRN</th>
+                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Date</th>
+                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Tax Type</th>
+                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Payment Method</th>
+                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Source</th>
+                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-sm text-slate-400">
+                    Loading records…
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         ) : filteredRecords.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -246,7 +264,7 @@ export default function RecordsPage() {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
+                <tr className="border-b border-slate-200 bg-white">
                   <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Declaration MRN</th>
                   <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Date</th>
                   <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Tax Type</th>

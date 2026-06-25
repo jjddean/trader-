@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense } from "react";
-import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { UserSync } from "@/components/auth/user-sync";
 import { OrgWorkspaceGate } from "@/components/auth/org-workspace-gate";
@@ -35,20 +34,15 @@ export default function DashboardLayout({
     { title: string; badge: string; badgeVariant?: "default" | "success" | "blue" }
   > = {
     "/dashboard": { title: "Customs Dashboard", badge: dashboardBadge, badgeVariant: (dashboardBadgeVariant as "default") },
-    "/dashboard/prospects": { title: "Partner Prospects", badge: "PIPELINE", badgeVariant: "blue" },
-    "/dashboard/calculator": { title: "Landed Cost Calculator", badge: "TARIFFS", badgeVariant: "default" },
-    "/dashboard/assistant": { title: "FreightCode Assistant", badge: "AI", badgeVariant: "success" },
-    "/dashboard/inbox": { title: "Inbox", badge: "HUB", badgeVariant: "default" },
     "/dashboard/settings": { title: "Account Settings", badge: "PREFERENCES", badgeVariant: "default" },
     "/dashboard/declarations": { title: "Declarations", badge: "CDS", badgeVariant: "default" },
     "/dashboard/documents": { title: "Documents", badge: "DOCS", badgeVariant: "success" },
     "/dashboard/reports": { title: "Customs Audit Reports", badge: "REPORTS", badgeVariant: "default" },
     "/dashboard/records": { title: "Financial Records", badge: "LEDGER", badgeVariant: "default" },
-    "/dashboard/user": { title: "Account", badge: "PROFILE", badgeVariant: "default" },
-    "/dashboard/user/billing": { title: "Billing", badge: "STRIPE", badgeVariant: "success" },
     "/dashboard/pricing": { title: "Plans", badge: "STRIPE", badgeVariant: "success" },
     "/dashboard/tools/hscode-lookup": { title: "HS Code Lookup", badge: "TOOLS", badgeVariant: "default" },
     "/dashboard/tre-import": { title: "Import TRE Data", badge: "TRE", badgeVariant: "default" },
+    "/dashboard/audit": { title: "Compliance Audit", badge: "AUDIT", badgeVariant: "default" },
     "/dashboard/admin": { title: "Admin Overview", badge: "ADMIN", badgeVariant: "blue" },
     "/dashboard/admin/subscriptions": { title: "Vendor Stack", badge: "ADMIN", badgeVariant: "blue" },
   };
@@ -85,19 +79,12 @@ export default function DashboardLayout({
       {pathname.startsWith("/dashboard/admin") ? <AdminSidebar /> : <AppSidebar />}
       <UserSync />
       <SidebarInset className="flex min-h-screen flex-col overflow-hidden bg-slate-50">
-        {pathname !== "/dashboard/inbox" && (
-          <DashboardHeader
-            title={config.title}
-            badge={config.badge}
-            badgeVariant={config.badgeVariant}
-          />
-        )}
-        <main
-          className={cn(
-            "flex-1 overflow-y-auto [scrollbar-gutter:stable]",
-            pathname === "/dashboard/inbox" && "overflow-hidden",
-          )}
-        >
+        <DashboardHeader
+          title={config.title}
+          badge={config.badge}
+          badgeVariant={config.badgeVariant}
+        />
+        <main className="flex-1 overflow-y-auto [scrollbar-gutter:stable]">
           <Suspense fallback={null}>
             {pathname === "/dashboard" && <PracticeModeBanner />}
             <HmrcConnectBanner />

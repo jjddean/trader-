@@ -91,7 +91,7 @@ export default function AdminDeclarationsPage() {
         ) : (
           <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/80">
+              <tr className="border-b border-slate-200 bg-white">
                 <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">MRN / LRN</th>
                 <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Owner</th>
                 <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">EORI</th>

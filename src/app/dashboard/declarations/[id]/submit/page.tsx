@@ -46,6 +46,7 @@ export default function SubmitPage() {
     isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && userId ? { userId } : "skip",
   );
   const hydratedRequirementsRef = useRef(false);
+  const failedRequirementsHydrationRef = useRef(false);
 
   type ActionableFailure = {
     action: "provide-document" | "declare-exemption" | "fix-field" | "remove-document" | "fix-predicate";
@@ -120,15 +121,19 @@ export default function SubmitPage() {
   useEffect(() => {
     if (!declarationId || !declaration) return;
     if (hydratedRequirementsRef.current) return;
+    if (failedRequirementsHydrationRef.current) return;
     const requiredDocs = getHmrcRequirementSetForDeclaration(declaration);
-    if (requiredDocs.length === 0) return;
+    if (requiredDocs.length === 0) {
+      hydratedRequirementsRef.current = true;
+      return;
+    }
 
     hydratedRequirementsRef.current = true;
     void upsertRequirementsForDeclaration({
       declarationId,
       requirements: requiredDocs,
     }).catch(() => {
-      hydratedRequirementsRef.current = false;
+      failedRequirementsHydrationRef.current = true;
     });
   }, [declarationId, declaration, upsertRequirementsForDeclaration]);
 

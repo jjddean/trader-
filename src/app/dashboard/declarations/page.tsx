@@ -33,7 +33,6 @@ import {
 } from "@/lib/declaration-status-display";
 import {
   ConvexSessionMissing,
-  DeclarationLoadingSpinner,
   isConvexSessionMissing,
 } from "@/components/declaration-session-states";
 
@@ -48,6 +47,7 @@ export default function DeclarationsPage() {
     api.declarations.getDeclarationPreviews,
     authReady ? {} : "skip",
   );
+  const isDeclarationsLoading = authReady && declarations === undefined;
   const createDeclaration = useMutation(api.declarations.createDeclaration);
 
   const [isCreating, setIsCreating] = useState(false);
@@ -209,15 +209,11 @@ export default function DeclarationsPage() {
         <div className="overflow-hidden">
         {isConvexSessionMissing(isClerkLoaded, Boolean(isSignedIn), isConvexAuthLoading, isAuthenticated) ? (
           <ConvexSessionMissing />
-        ) : declarations === undefined ? (
-          <div className="flex h-40 items-center justify-center">
-            <DeclarationLoadingSpinner />
-          </div>
         ) : (
           <div className="w-full overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50">
+                <tr className="border-b border-slate-200 bg-white">
                   <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase w-[40%]">MRN / LRN</th>
                   <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">EORI</th>
                   <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Type</th>
@@ -226,7 +222,13 @@ export default function DeclarationsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {!filteredDeclarations || filteredDeclarations.length === 0 ? (
+                {isDeclarationsLoading ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-sm text-slate-400">
+                      Loading declarations…
+                    </td>
+                  </tr>
+                ) : !filteredDeclarations || filteredDeclarations.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-slate-500 text-xs italic">
                       {hasActiveFilters

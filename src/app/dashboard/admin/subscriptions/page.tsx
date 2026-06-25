@@ -266,7 +266,7 @@ export default function AdminSubscriptionsPage() {
           <p className="px-6 py-12 text-center text-xs text-slate-500">No services match your filters.</p>
         ) : (
           <table className="w-full border-collapse text-left text-sm">
-            <thead className="border-b border-slate-100 bg-slate-50/50">
+            <thead className="border-b border-slate-100 bg-white">
               <tr>
                 <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Service</th>
                 <th className="px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Plan</th>

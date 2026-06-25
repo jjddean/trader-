@@ -121,7 +121,7 @@ export default function TelemetryPage() {
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-left">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
+                  <tr className="border-b border-slate-200 bg-white">
                     <th className="px-3 py-2 text-[0.625rem] font-semibold tracking-widest text-slate-500 uppercase">Date</th>
                     <th className="px-3 py-2 text-[0.625rem] font-semibold tracking-widest text-slate-500 uppercase">Requirement Updates</th>
                     <th className="px-3 py-2 text-[0.625rem] font-semibold tracking-widest text-slate-500 uppercase">Docs Saved</th>

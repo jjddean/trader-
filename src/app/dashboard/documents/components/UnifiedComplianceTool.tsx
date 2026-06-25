@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import {
   Globe,
@@ -87,6 +87,7 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
   const [error, setError] = useState<string | null>(null);
   const [isSavingRequirements, setIsSavingRequirements] = useState(false);
   const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
+  const seededItemFormRef = useRef<string | null>(null);
 
   const certMapping: Record<string, string> = {
     N865: docTypeName("N865"),
@@ -114,9 +115,17 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
   }
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      seededItemFormRef.current = null;
+      return;
+    }
     if (!declarationRef || !itemOptions.length) return;
+
+    const seedKey = `${declarationRef}:${itemOptions[0]?.key ?? ""}`;
+    if (seededItemFormRef.current === seedKey) return;
+
     const first = itemOptions[0];
+    seededItemFormRef.current = seedKey;
     setSelectedItemKey(first.key);
     applyItemToForm(first.item);
   }, [isOpen, declarationRef, itemOptions]);
