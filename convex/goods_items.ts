@@ -87,6 +87,7 @@ export const addItem = mutation({
 
     const itemId = await ctx.db.insert("goods_items", {
       ...args,
+      valueCurrency: "GBP",
       ownerId: identity.subject,
     });
     await refreshReadModels(ctx, args.declarationId);
@@ -162,6 +163,9 @@ export const updateItem = mutation({
     const patch = Object.fromEntries(
       Object.entries(updates).filter(([, value]) => value !== undefined),
     );
+    if (args.valueAmount !== undefined) {
+      patch.valueCurrency = "GBP";
+    }
     await ctx.db.patch(id, {
       ...patch,
       ownerId: identity.subject,

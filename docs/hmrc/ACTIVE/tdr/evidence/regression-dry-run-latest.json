@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-19T19:27:48.181Z",
+  "timestamp": "2026-06-25T21:23:03.280Z",
   "mode": "DRY_RUN_ONLY",
   "submitEnabled": false,
   "endpoint": "https://test-api.service.hmrc.gov.uk/customs/declarations",

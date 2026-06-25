@@ -129,6 +129,17 @@ describe("H1 mapper and XML renderer", () => {
     assert.doesNotMatch(xml, /<([A-Za-z][\w]*)\s*>\s*<\/\1>/);
   });
 
+  it("defaults StatisticalValueAmount currency to GBP when item valueCurrency is missing", () => {
+    const payload = mapToCDS_H1(declaration, [{ ...items[0], valueCurrency: undefined }]);
+    const item = payload.Declaration.GoodsShipment.GovernmentAgencyGoodsItem[0];
+    assert.equal(item.StatisticalValueAmount.currencyID, "GBP");
+    assert.equal(item.Commodity.InvoiceLine.ItemChargeAmount.currencyID, "GBP");
+
+    const xml = renderH1Xml(payload);
+    assert.match(xml, /<StatisticalValueAmount currencyID="GBP">2500\.00<\/StatisticalValueAmount>/);
+    assert.match(xml, /<ItemChargeAmount currencyID="GBP">2500\.00<\/ItemChargeAmount>/);
+  });
+
   it("preflight passes when shipping marks are blank (mapper defaults to N/A)", () => {
     const payload = mapToCDS_H1(declaration, [{ ...items[0], shippingMarks: "" }]);
     const xml = renderH1Xml(payload);

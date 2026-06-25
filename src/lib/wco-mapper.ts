@@ -567,7 +567,8 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
               : {}),
             ...(mappedDocs.length > 0 ? { AdditionalDocument: mappedDocs } : {}),
             StatisticalValueAmount: {
-              currencyID: item.valueCurrency || "",
+              // DE 8/6 — statistical value is always sterling regardless of invoice currency.
+              currencyID: "GBP",
               value: formatAmount(item.valueAmount),
             },
             Commodity: {
@@ -599,7 +600,8 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
               },
               InvoiceLine: {
                 ItemChargeAmount: {
-                  currencyID: item.valueCurrency || declaration.invoiceCurrency || "",
+                  // DE 4/14 item charge — practice lane uses GBP (matches statistical value UI).
+                  currencyID: "GBP",
                   value: formatAmount(item.valueAmount),
                 },
               }

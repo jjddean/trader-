@@ -329,7 +329,7 @@ export function renderH1Xml(payloadInfo: unknown): string {
         return `
       <GovernmentAgencyGoodsItem>
         <SequenceNumeric>${xmlEscape(item.SequenceNumeric)}</SequenceNumeric>
-        <StatisticalValueAmount currencyID="${xmlEscape(read(item, "StatisticalValueAmount").currencyID)}">${xmlEscape(read(item, "StatisticalValueAmount").value)}</StatisticalValueAmount>
+        <StatisticalValueAmount currencyID="${xmlEscape(String(read(item, "StatisticalValueAmount").currencyID || "GBP"))}">${xmlEscape(read(item, "StatisticalValueAmount").value)}</StatisticalValueAmount>
         ${additionalDocumentsXml}
         ${additionalInformationXml}
         <Commodity>
