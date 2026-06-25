@@ -3,9 +3,19 @@
 **Single source of truth** for product + engineering work.  
 **HMRC behaviour:** [`AGENT-SPEC.md`](./AGENT-SPEC.md) — this file does not override compliance rules.  
 **Merge gate (HMRC logic):** `npm run test:tdr`  
-**Last updated:** 2026-06-20
+**Last updated:** 2026-06-23
 
-Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) · [`FINANCIAL-ROADMAP.md`](./FINANCIAL-ROADMAP.md) (duty/variance domain) · [`evidence/LOG.md`](./evidence/LOG.md) (HMRC ops timeline)
+Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) · [`FINANCIAL-ROADMAP.md`](./FINANCIAL-ROADMAP.md) (duty/variance domain) · [`evidence/LOG.md`](./evidence/LOG.md) (HMRC ops timeline) · [`PRODUCT-PROGRESS-LOG.md`](./PRODUCT-PROGRESS-LOG.md) (ship log)
+
+---
+
+## Ship log (production)
+
+| Date | Commit | Deploy | Shipped |
+|------|--------|--------|---------|
+| **2026-06-23** | `d6b58cf` | Vercel production (`freightcode.co.uk`) + Convex | **TRE CSV import Phase 1** — `/dashboard/tre-import`, parser, `tre_imports` schema, import API, sidebar link, redirect `/dashboard/import/tre` · **Settings** tab panel stability (no Security tab bounce) · **Reports** Accepted status display · **Slate UI polish** across dashboard tables, admin pages, declaration workspace · CDS expansion docs (future only) |
+
+**Not in this deploy (local / uncommitted):** Convex query-thrash fixes (`getMyDeclarationCounts`, scoped `getDocumentRequirements`, auth-gated queries), header/sidebar mount stability, documents filter styling, route cleanup (tools hub, print pages, user guide).
 
 ---
 
@@ -23,7 +33,7 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 | [`TRE-CSV-IMPORT-PLAN.md`](./TRE-CSV-IMPORT-PLAN.md) | User-facing TRE upload — phased plan |
 | [`../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md`](../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md) | Future: B1 export, I1/C1 simplified — spec + phases |
 | [`DELIVERY-PLAN.md`](./DELIVERY-PLAN.md) | Redirect → here |
-| [`PRODUCT-PROGRESS-LOG.md`](./PRODUCT-PROGRESS-LOG.md) | Redirect → here |
+| [`PRODUCT-PROGRESS-LOG.md`](./PRODUCT-PROGRESS-LOG.md) | Chronological ship log (green ticks per deploy) |
 | [`hmrc-integration-plan.md`](./hmrc-integration-plan.md) | Archived Phase 3 scaffold |
 
 ---
@@ -47,7 +57,7 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 | Developer Hub ToU mapping doc | 🟡 | Controls exist; one-pager missing |
 | AI assurance doc | 🟡 | AI off submit path; governance doc missing |
 | Practice-mode customer UX | 🟢 | Banner, Test User panel, Settings copy, quickstart docs |
-| Live CDS cutover | ⬜ | Prod OAuth + org approval flow |
+| Live CDS cutover | 🟡 | App approved 2026-06-15; load credentials in Vercel to cut over |
 
 ---
 
@@ -79,18 +89,19 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 - [x] **Test mode banner** — `PracticeModeBanner`; inline credentials link + “How practice mode works” modal
 - [x] Practice Test User panel + provision API — explicit **Create HMRC Test User** (no auto-provision on Security)
 - [x] **Disconnect HMRC** — Settings Security + `disconnectToken` + audit
-
----
+- [x] **TRE CSV import (Phase 1)** — `/dashboard/tre-import`, parser, org-scoped `tre_imports`, rate cache refresh, import history drill-down
+- [x] **Reports Accepted status** — customs reports show Accepted from read model
+- [x] **Settings tab stability** — Security tab no longer jumps layout on select
+- [x] **Slate dashboard UI polish** — tables, admin pages, declaration workspace styling
 
 ## P0 — next (pilot customers + audit)
 
 | # | Item | Done when |
 |---|------|-----------|
-| 1 | **Request production access** | Admin form → ops queue → approve flips org to `live` |
-| 2 | **Pilot runbook** | One-page: sign up → Test User → submit → pull notifications |
-| 3 | **Deploy Convex + Vercel sandbox** | `HMRC_ENVIRONMENT=sandbox`, `NEXT_PUBLIC_HMRC_ENV=tdr` on production |
-| 4 | **Legacy migration + hide Personal** | Migrate personal rows; hide Personal in org switcher after migrate |
-| 5 | **Finish multi-item TDR smoke** | 2+ items DMSACC on sandbox (GBP fix landed) |
+| 1 | **Pilot runbook** | One-page: sign up → Test User → submit → pull notifications |
+| 2 | **Deploy Convex + Vercel sandbox** | `HMRC_ENVIRONMENT=sandbox`, `NEXT_PUBLIC_HMRC_ENV=tdr` on production |
+| 3 | **Legacy migration + hide Personal** | Migrate personal rows; hide Personal in org switcher after migrate |
+| 4 | **Finish multi-item TDR smoke** | 2+ items DMSACC on sandbox (GBP fix landed) |
 
 ---
 
@@ -106,7 +117,7 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 | 13 | `AI-GOVERNANCE.md` | Scope, prohibitions, pen-test checklist sync |
 | 14 | Declarations list status badges | Accepted / Amended / Cancelled from read model |
 | 15 | Banner link to customer guide | Optional: add `/docs` or guide link on `PracticeModeBanner` |
-| 16 | **TRE CSV import (Phase 1)** | See [`TRE-CSV-IMPORT-PLAN.md`](./TRE-CSV-IMPORT-PLAN.md) — upload UI + org-scoped parser |
+| 16 | ~~**TRE CSV import (Phase 1)**~~ | **Done** — see ship log 2026-06-23 (`d6b58cf`) |
 | 17 | ~~**Homepage honesty pass**~~ | Done — `landing-page-content.tsx` aligned to shipped CDS workflow |
 
 ---

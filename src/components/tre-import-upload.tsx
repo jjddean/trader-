@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useOrganization } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
@@ -27,6 +27,7 @@ export function TreImportUpload() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<ImportSuccess | null>(null);
   const [selectedImportId, setSelectedImportId] = useState<Id<"tre_imports"> | null>(null);
+  const resultRef = useRef<HTMLDivElement | null>(null);
 
   const importRows = useQuery(
     api.tre_imports.listImportRows,
@@ -40,6 +41,13 @@ export function TreImportUpload() {
     setError(null);
     setSuccess(null);
   }, []);
+
+  // Pop the result into view so the user doesn't have to scroll to find it.
+  useEffect(() => {
+    if (preview || success) {
+      resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [preview, success]);
 
   async function handleFile(file: File) {
     reset();
@@ -133,6 +141,8 @@ export function TreImportUpload() {
           />
         </label>
 
+        <div ref={resultRef} aria-hidden className="scroll-mt-24" />
+
         {error && (
           <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
             <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -181,7 +191,7 @@ export function TreImportUpload() {
             {preview.sampleRows.length > 0 && (
               <div className="overflow-x-auto rounded-lg border border-slate-200">
                 <table className="min-w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-500">
+                  <thead className="bg-white text-slate-500">
                     <tr>
                       <th className="px-3 py-2 font-medium">MRN</th>
                       <th className="px-3 py-2 font-medium">Commodity</th>
@@ -231,7 +241,7 @@ export function TreImportUpload() {
           <h3 className="mb-4 text-sm font-semibold text-black">Import history</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-xs">
-              <thead className="border-b border-slate-200 bg-slate-50 text-slate-500">
+              <thead className="border-b border-slate-200 bg-white text-slate-500">
                 <tr>
                   <th className="px-3 py-2 font-medium">Date</th>
                   <th className="px-3 py-2 font-medium">File</th>
@@ -304,7 +314,7 @@ export function TreImportUpload() {
               ) : (
                 <div className="overflow-x-auto rounded-lg border border-slate-200">
                   <table className="min-w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-500">
+                    <thead className="bg-white text-slate-500">
                       <tr>
                         <th className="px-3 py-2 font-medium">MRN</th>
                         <th className="px-3 py-2 font-medium">Commodity</th>

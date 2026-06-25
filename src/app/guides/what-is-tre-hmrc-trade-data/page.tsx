@@ -1,5 +1,6 @@
 import { Metadata } from "next";
-import { WaitlistForm } from "@/components/waitlist-form";
+import Link from "next/link";
+import { SignUpCta } from "@/components/sign-up-cta";
 
 export const metadata: Metadata = {
   title: "What is TRE and How to Use Your HMRC Trade Data | FreightCode",
@@ -152,12 +153,12 @@ export default function Guide2Page() {
           <div>
             <h2 className="text-[18px] font-semibold mb-2 text-white">Enhance TRE with FreightCode</h2>
             <p className="text-[14px] leading-relaxed text-slate-300">
-              While TRE provides access to raw customs data, it does not offer tools for interrogation or analysis. <strong>FreightCode</strong> fills this gap by transforming raw CSVs into actionable intelligence.
+              While TRE provides access to raw customs data, it does not offer tools for interrogation or analysis. <strong>FreightCode</strong> lets you upload TRE CSV exports and review line items in your org workspace.
             </p>
           </div>
           <div className="flex-shrink-0">
             <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-500/20">
-              Professional Analytics
+              Available now
             </span>
           </div>
         </div>
@@ -165,24 +166,27 @@ export default function Guide2Page() {
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 text-[13.5px] text-slate-300">
           <li className="flex items-start gap-2">
             <span className="text-blue-400 mt-1">✓</span>
-            <span>Intelligent dashboards for duty exposure and commodity trends</span>
+            <span>Upload HMRC TRE Item Report CSVs in Import TRE (preview, confirm, org-scoped storage)</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-blue-400 mt-1">✓</span>
-            <span>Anomaly detection for freight misallocation and currency errors</span>
+            <span>Browse imported line items by MRN, commodity code, origin, and duty amounts</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-blue-400 mt-1">✓</span>
-            <span>Duty and VAT estimates from declaration and tariff data, with savings flags for review</span>
+            <span>Preference opportunity scan against UK Trade Tariff measures — flags for review, not advice</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-blue-400 mt-1">✓</span>
-            <span>Audit-ready reports with built-in trails for declaration reviews</span>
+            <span>Reports include TRE history alongside declarations created in Freightcode</span>
           </li>
         </ul>
 
-        <div className="max-w-sm">
-          <WaitlistForm variant="light" />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <SignUpCta variant="light" />
+          <Link href="/dashboard/tre-import" className="text-[14px] font-medium text-slate-300 hover:text-white">
+            Already have an account? Import TRE →
+          </Link>
         </div>
       </div>
     </article>

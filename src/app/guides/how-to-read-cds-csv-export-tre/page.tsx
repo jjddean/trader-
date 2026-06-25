@@ -1,5 +1,6 @@
 import { Metadata } from "next";
-import { WaitlistForm } from "@/components/waitlist-form";
+import Link from "next/link";
+import { SignUpCta } from "@/components/sign-up-cta";
 
 export const metadata: Metadata = {
   title: "How to Read Your CDS CSV Export from TRE | FreightCode",
@@ -199,10 +200,13 @@ export default function Guide4Page() {
       <div className="mt-12 p-8 bg-[#0f172a] rounded-2xl text-white">
         <h2 className="text-[18px] font-semibold mb-3">Use this data in Freightcode</h2>
         <p className="text-[14px] leading-relaxed text-slate-300 mb-6">
-          Freightcode is building TRE CSV import and analysis to help you review line items, spot possible preference gaps, and keep declaration history alongside your CDS workspace — without filtering thousands of rows in Excel.
+          Upload your TRE Item Report CSV in Import TRE to store line items in your org workspace, scan for possible preference gaps, and keep history alongside your CDS declarations — without filtering thousands of rows in Excel.
         </p>
-        <div className="max-w-sm">
-          <WaitlistForm variant="light" />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <SignUpCta variant="light" />
+          <Link href="/dashboard/tre-import" className="text-[14px] font-medium text-slate-300 hover:text-white">
+            Already have an account? Import TRE →
+          </Link>
         </div>
       </div>
     </article>

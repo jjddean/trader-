@@ -202,7 +202,7 @@ export function LandingPageContent() {
                 What&apos;s in the product today
               </h2>
               <p className="mx-auto max-w-2xl text-[18px] leading-[1.6] text-slate-600">
-                CDS declaration workspace with validation, HMRC connectivity, documents, and duty estimates — plus roadmap items for TRE history and savings review.
+                CDS declaration workspace with validation, HMRC connectivity, documents, duty estimates, and TRE CSV import for declaration history.
               </p>
             </div>
 
@@ -240,13 +240,13 @@ export function LandingPageContent() {
                 },
                 { 
                   id: 'historical', 
-                  label: 'TRE import (planned)',
-                  benefit: 'Upload HMRC TRE CSV exports to structure past line items for HS suggestions and savings review — see roadmap.',
+                  label: 'TRE CSV import',
+                  benefit: 'Upload HMRC TRE Item Report CSVs in Import TRE. Line items are org-scoped, deduplicated, and available in reports alongside new declarations.',
                 },
                 { 
                   id: 'savings', 
-                  label: 'Savings hints (early)',
-                  benefit: 'Dashboard and reports surface possible overpayment patterns from declarations in the app. Not a reclaim filing service.',
+                  label: 'Preference opportunities',
+                  benefit: 'After a TRE import, scan history for lines where a preferential duty rate may have applied. Indicative flags for review — not reclaim filing.',
                 },
                 { 
                   id: 'practice', 
@@ -271,10 +271,10 @@ export function LandingPageContent() {
               <h2 className="mb-4 text-[36px] font-bold tracking-tight leading-[1.15] text-[#020817] md:text-[42px]">
                 HMRC TRE data — export yourself,
                 <br />
-                analyse in Freightcode (roadmap)
+                analyse in Freightcode
               </h2>
               <p className="mx-auto max-w-2xl text-[18px] leading-[1.6] text-slate-600">
-                From 31 March 2026, TRE is HMRC&apos;s route to your declaration reports. OAuth connects CDS submit — it does not bulk-download TRE history. We are building CSV import so you can upload exports and review line items alongside new declarations.
+                From 31 March 2026, TRE is HMRC&apos;s route to your declaration reports. OAuth connects CDS submit — it does not bulk-download TRE history. Export CSV from HMRC, then upload in <Link href="/dashboard/tre-import" className="font-medium text-blue-600 hover:text-blue-700">Import TRE</Link> to review line items next to new declarations.
               </p>
             </div>
 
@@ -295,9 +295,9 @@ export function LandingPageContent() {
                 <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-md bg-[#111827] text-white">
                   <ArrowRight className="h-4 w-4" />
                 </div>
-                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Upload & structure (planned)</h3>
+                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Upload & review</h3>
                 <p className="text-[15px] leading-[1.6] text-slate-600">
-                  Import CSVs into your org workspace for structured line history — deduplicated and scoped to your team, without Excel gymnastics.
+                  Import CSVs in your org workspace — preview columns, confirm import, and browse stored line items without Excel gymnastics.
                 </p>
               </div>
 
@@ -313,9 +313,12 @@ export function LandingPageContent() {
               </div>
             </div>
 
-            <div className="mt-12 text-center">
+            <div className="mt-12 flex flex-col items-center gap-4 text-center sm:flex-row sm:justify-center">
               <Link href="/guides/what-is-tre-hmrc-trade-data" className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700">
                 Learn more about HMRC TRE Data <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+              <Link href="/dashboard/tre-import" className="inline-flex items-center text-sm font-semibold text-slate-700 hover:text-slate-900">
+                Go to Import TRE <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </div>
           </div>

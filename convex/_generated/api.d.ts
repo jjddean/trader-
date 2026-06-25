@@ -51,6 +51,7 @@ import type * as lib_replay_declaration_status from "../lib/replay_declaration_s
 import type * as lib_rule_engine from "../lib/rule_engine.js";
 import type * as lib_stripe_plan from "../lib/stripe_plan.js";
 import type * as lib_tariff_parser from "../lib/tariff_parser.js";
+import type * as lib_tre_opportunity from "../lib/tre_opportunity.js";
 import type * as lib_user_role from "../lib/user_role.js";
 import type * as notifications from "../notifications.js";
 import type * as org_hmrc from "../org_hmrc.js";
@@ -63,6 +64,7 @@ import type * as stripe_webhooks from "../stripe_webhooks.js";
 import type * as submissions from "../submissions.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as tariff_internal from "../tariff_internal.js";
+import type * as tre_analytics from "../tre_analytics.js";
 import type * as tre_imports from "../tre_imports.js";
 import type * as users from "../users.js";
 import type * as validation_results from "../validation_results.js";
@@ -119,6 +121,7 @@ declare const fullApi: ApiFromModules<{
   "lib/rule_engine": typeof lib_rule_engine;
   "lib/stripe_plan": typeof lib_stripe_plan;
   "lib/tariff_parser": typeof lib_tariff_parser;
+  "lib/tre_opportunity": typeof lib_tre_opportunity;
   "lib/user_role": typeof lib_user_role;
   notifications: typeof notifications;
   org_hmrc: typeof org_hmrc;
@@ -131,6 +134,7 @@ declare const fullApi: ApiFromModules<{
   submissions: typeof submissions;
   subscriptions: typeof subscriptions;
   tariff_internal: typeof tariff_internal;
+  tre_analytics: typeof tre_analytics;
   tre_imports: typeof tre_imports;
   users: typeof users;
   validation_results: typeof validation_results;

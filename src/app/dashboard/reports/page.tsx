@@ -18,7 +18,9 @@ export default function ReportsPage() {
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const canQueryReports = isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated;
   const reports = useQuery(api.declarations.getReports, canQueryReports ? {} : "skip");
+  const treImports = useQuery(api.tre_imports.listImports, canQueryReports ? {} : "skip");
   const isReportsLoading = canQueryReports && reports === undefined;
+  const includesTreHistory = (treImports ?? []).some((row: { lineItemsStored: number }) => row.lineItemsStored > 0);
   
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedReport, setSelectedReport] = useState<any | null>(null);
@@ -123,9 +125,17 @@ export default function ReportsPage() {
       {portal}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900">
-            Customs Reports
-          </h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl font-semibold tracking-tight text-slate-900">
+              Customs Reports
+            </h1>
+            {includesTreHistory && (
+              <span className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700">
+                <FileText className="h-3 w-3" />
+                Includes TRE history
+              </span>
+            )}
+          </div>
           <p className="mt-1 text-sm text-slate-500">
             Historical declaration batches and compliance scoring.
           </p>
@@ -199,8 +209,25 @@ export default function ReportsPage() {
         </div>
 
           {isReportsLoading ? (
-            <div className="flex h-40 flex-col items-center justify-center gap-2">
-              <p className="text-xs text-slate-400">Loading reports…</p>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-white">
+                    <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-slate-500 uppercase">Entry No (MRN)</th>
+                    <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-slate-500 uppercase">Date of Entry</th>
+                    <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-slate-500 uppercase">Clearing Broker</th>
+                    <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-slate-500 uppercase">Compliance Score</th>
+                    <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-slate-500 uppercase text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-sm text-slate-400">
+                      Loading reports…
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           ) : filteredReports.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -211,7 +238,7 @@ export default function ReportsPage() {
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-left">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
+                <tr className="border-b border-slate-200 bg-white">
                   <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-slate-500 uppercase">Entry No (MRN)</th>
                   <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-slate-500 uppercase">Date of Entry</th>
                   <th className="px-6 py-3 text-[0.625rem] font-semibold tracking-wider text-slate-500 uppercase">Clearing Broker</th>
@@ -389,7 +416,7 @@ export default function ReportsPage() {
                   {selectedReport.items && selectedReport.items.length > 0 ? (
                     <div className="overflow-hidden rounded-lg border border-slate-200 shadow-xs">
                       <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-100/50 border-b border-slate-200">
+                        <thead className="border-b border-slate-200 bg-white">
                           <tr>
                             <th className="px-4 py-3 text-[0.625rem] font-semibold uppercase tracking-wider text-slate-500">#</th>
                             <th className="px-4 py-3 text-[0.625rem] font-semibold uppercase tracking-wider text-slate-500">Classification</th>
