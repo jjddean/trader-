@@ -290,7 +290,7 @@ function DutyByHsChart({ data }: { data: Array<{ code: string; duty: number }> }
       </div>
       <div className="min-h-0 flex-1 p-4">
         {hasData ? (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={280} minWidth={0}>
             <BarChart
               data={chartRows}
               layout="vertical"
