@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalMutation, internalQuery, query } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 
 export const getSubscription = query({
   args: { userId: v.optional(v.string()) },
@@ -57,6 +57,24 @@ export async function updateSubscriptionImpl(
 
   return await ctx.db.insert("subscriptions", args);
 }
+
+/** Drop a stale or synthetic Stripe customer id so checkout can create a real one. */
+export const clearStripeCustomer = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const existing = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .unique();
+
+    if (!existing) return null;
+    await ctx.db.patch(existing._id, { stripeCustomerId: undefined });
+    return existing._id;
+  },
+});
 
 /** CLI/script verification after Stripe webhook tests — internal only. */
 export const getSubscriptionByUserIdInternal = internalQuery({

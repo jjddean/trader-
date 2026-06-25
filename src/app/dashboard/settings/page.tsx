@@ -9,6 +9,7 @@ import { useUser, useOrganization, useClerk } from "@clerk/nextjs";
 import { User, CreditCard, Bell, ExternalLink, Shield, Users, Link2, Unlink, Download, Lock, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { planBadgeClass } from "@/lib/stripe-plans";
+import { isSyntheticStripeCustomerId } from "@/lib/stripe-customer";
 import { PracticeSandboxTestUser } from "@/components/practice-sandbox-test-user";
 import { compactProfileModalAppearance } from "@/lib/clerk-compact";
 
@@ -67,18 +68,26 @@ function SettingsPageContent() {
       : "profile",
   );
   const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeError, setStripeError] = useState<string | null>(null);
   const checkoutSuccess = searchParams.get("success") === "true";
+  const stripeCustomerId =
+    typeof subscription?.stripeCustomerId === "string" ? subscription.stripeCustomerId : "";
+  const canManageBilling =
+    Boolean(stripeCustomerId) && !isSyntheticStripeCustomerId(stripeCustomerId);
 
   async function openBillingPortal() {
     setStripeLoading(true);
+    setStripeError(null);
     try {
       const res = await fetch("/api/stripe/portal", { method: "POST" });
+      const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
       if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || "Portal failed");
+        setStripeError(body.error || "Could not open billing portal.");
+        return;
       }
-      const data = (await res.json()) as { url?: string };
-      if (data.url) window.location.href = data.url;
+      if (body.url) window.location.href = body.url;
+    } catch {
+      setStripeError("Could not open billing portal.");
     } finally {
       setStripeLoading(false);
     }
@@ -321,15 +330,29 @@ function SettingsPageContent() {
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={openBillingPortal}
-                disabled={stripeLoading}
-                className="flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-normal text-white transition-colors hover:bg-slate-800 disabled:opacity-60"
-              >
-                {stripeLoading ? "Opening…" : "Manage subscription"}
-                <ExternalLink className="h-3 w-3" />
-              </button>
+              {stripeError && (
+                <div className="rounded-md border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                  {stripeError}
+                </div>
+              )}
+              {canManageBilling ? (
+                <button
+                  type="button"
+                  onClick={openBillingPortal}
+                  disabled={stripeLoading}
+                  className="flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-normal text-white transition-colors hover:bg-slate-800 disabled:opacity-60"
+                >
+                  {stripeLoading ? "Opening…" : "Manage subscription"}
+                  <ExternalLink className="h-3 w-3" />
+                </button>
+              ) : (
+                <Link
+                  href="/dashboard/pricing"
+                  className="inline-flex h-8 items-center rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-slate-800"
+                >
+                  View plans
+                </Link>
+              )}
             </div>
           ) : (
             <div className="py-6 text-center">

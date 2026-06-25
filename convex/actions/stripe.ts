@@ -12,6 +12,7 @@ import {
   priceIdForPlan,
   type PlanSlug,
 } from "../lib/stripe_plan";
+import { isSyntheticStripeCustomerId } from "../lib/stripe_customer";
 
 const getStripe = () => {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -85,11 +86,26 @@ export const createPortalSession = action({
       stripeCustomerId?: string;
     } | null;
     const customerId = subscription?.stripeCustomerId;
-    if (!customerId) {
-      throw new Error("No Stripe customer linked to this account");
+    if (!customerId || typeof customerId !== "string") {
+      throw new Error("No billing account linked. View plans to subscribe.");
+    }
+    if (isSyntheticStripeCustomerId(customerId)) {
+      await ctx.runMutation(api.subscriptions.clearStripeCustomer, {});
+      throw new Error("Billing account was reset. View plans to subscribe.");
     }
 
     const stripe = getStripe();
+    try {
+      await stripe.customers.retrieve(customerId);
+    } catch (error) {
+      const stripeError = error as { code?: string };
+      if (stripeError?.code === "resource_missing") {
+        await ctx.runMutation(api.subscriptions.clearStripeCustomer, {});
+        throw new Error("Billing account not found. View plans to subscribe again.");
+      }
+      throw error;
+    }
+
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${appBaseUrl()}/dashboard/settings?tab=subscription`,
