@@ -6,6 +6,10 @@ import { useQuery, useConvexAuth } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
+import {
+  getRememberedDeclarationLane,
+  rememberDeclarationLane,
+} from "@/lib/declaration-lane-cache";
 import { FileText, ListChecks, UploadCloud, Activity, Send, Loader2, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -35,6 +39,11 @@ export default function DeclarationWorkspaceLayout({
     api.declarations.getLane,
     authReady && declarationId ? { id: declarationId } : "skip",
   );
+  if (declaration !== undefined && declarationId) {
+    rememberDeclarationLane(String(declarationId), declaration);
+  }
+  const resolvedDeclaration =
+    declaration ?? getRememberedDeclarationLane(declarationId ? String(declarationId) : undefined);
   const financialEstimate = useQuery(
     api.declarations.getDeclarationFinancialEstimate,
     authReady && declarationId ? { declarationId } : "skip",
@@ -45,37 +54,41 @@ export default function DeclarationWorkspaceLayout({
   );
   const estimateReady = financialEstimate !== undefined;
 
-  const isSessionLoading = !isLoaded || (authReady && declaration === undefined);
+  const isSessionLoading =
+    !isLoaded ||
+    (authReady &&
+      declaration === undefined &&
+      getRememberedDeclarationLane(declarationId ? String(declarationId) : undefined) === undefined);
   const isSignedOut = isLoaded && !isConvexAuthLoading && !isSignedIn;
   const isConvexMissing = isLoaded && isSignedIn && !isConvexAuthLoading && !isAuthenticated;
   const isNotFound = authReady && declaration === null;
-  const hasDeclaration = authReady && Boolean(declaration);
+  const hasDeclaration = authReady && Boolean(resolvedDeclaration);
 
   const steps = [
     { id: "overview", name: "1. Core Schema", icon: FileText, path: `/dashboard/declarations/${declarationId}` },
     { id: "items", name: "2. Goods Items", icon: ListChecks, path: `/dashboard/declarations/${declarationId}/items` },
     { id: "submit", name: "3. Submission", icon: Send, path: `/dashboard/declarations/${declarationId}/submit` },
     { id: "status", name: "4. HMRC Status", icon: Activity, path: `/dashboard/declarations/${declarationId}/status` },
-    { id: "documents", name: "5. Secure Upload", icon: UploadCloud, path: `/dashboard/declarations/${declarationId}/documents`, disabled: !declaration?.mrn },
+    { id: "documents", name: "5. Secure Upload", icon: UploadCloud, path: `/dashboard/declarations/${declarationId}/documents`, disabled: !resolvedDeclaration?.mrn },
   ];
 
   const declarationTitle =
-    hasDeclaration && declaration!.mrn && String(declaration!.mrn).trim().length > 0
-      ? declaration!.mrn
+    hasDeclaration && resolvedDeclaration!.mrn && String(resolvedDeclaration!.mrn).trim().length > 0
+      ? resolvedDeclaration!.mrn
       : "Draft CDS Entry";
 
   const rowBadge = hasDeclaration
     ? resolveDeclarationRowBadge({
-        status: declaration!.status,
-        cdsBadgeLabel: (declaration as { cdsBadgeLabel?: string }).cdsBadgeLabel,
-        cdsBadgeTone: (declaration as { cdsBadgeTone?: string }).cdsBadgeTone,
+        status: resolvedDeclaration!.status,
+        cdsBadgeLabel: (resolvedDeclaration as { cdsBadgeLabel?: string }).cdsBadgeLabel,
+        cdsBadgeTone: (resolvedDeclaration as { cdsBadgeTone?: string }).cdsBadgeTone,
       })
     : { label: "Loading", tone: "neutral" as const };
 
   const headerBadgeLabel = rowBadge.label;
   const headerBadgeTone = rowBadge.tone;
   const headerSubtitle = hasDeclaration
-    ? declarationHumanSubtitle(headerBadgeLabel, declaration!.status, headerBadgeTone)
+    ? declarationHumanSubtitle(headerBadgeLabel, resolvedDeclaration!.status, headerBadgeTone)
     : "";
   const HeaderBadgeIcon = hasDeclaration ? badgeIconForTone(headerBadgeTone) : Loader2;
   const headerBadgeClass = badgeToneClassName(headerBadgeTone);
@@ -110,7 +123,7 @@ export default function DeclarationWorkspaceLayout({
                     <p className={cn("text-xs font-medium", mrnSubtitleClass(headerBadgeTone))}>{headerSubtitle}</p>
                   )}
                   <p className="text-xs text-slate-500">
-                    EORI: {declaration!.eori || "Not set"} • Route: {declaration!.route || "Unknown"}
+                    EORI: {resolvedDeclaration!.eori || "Not set"} • Route: {resolvedDeclaration!.route || "Unknown"}
                   </p>
                 </div>
 
@@ -191,7 +204,7 @@ export default function DeclarationWorkspaceLayout({
                   <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
                 </div>
               )}
-              <div className={isSessionLoading ? "hidden" : undefined}>{children}</div>
+              {!isSessionLoading && children}
             </>
           )}
         </div>

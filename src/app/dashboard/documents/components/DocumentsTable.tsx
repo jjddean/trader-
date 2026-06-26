@@ -19,7 +19,6 @@ import {
   DropdownMenuItem 
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { ClientOnly } from "@/components/client-only";
 import { DOCUMENT_TYPES } from "@/lib/utils/document-utils";
 import {
   ENTERPRISE_DROPDOWN_ITEM,
@@ -68,21 +67,12 @@ export const DocumentsTable = React.memo(function DocumentsTable({
     });
   }, [documents, declarationFilter, typeFilter]);
 
-  const filterSkeleton = (
-    <>
-      <div className="h-9 w-full animate-pulse rounded-md border border-slate-200 bg-slate-100" />
-      <div className="h-9 w-full animate-pulse rounded-md border border-slate-200 bg-slate-100" />
-      <div className="h-9 w-full animate-pulse rounded-md border border-slate-200 bg-slate-100" />
-    </>
-  );
-
   return (
     <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none">
       {/* FILTER BAR */}
       <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
         <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-4">
-          <ClientOnly fallback={filterSkeleton}>
-            <div className="contents">
+          <div className="contents">
               <Select value={declarationFilter} onValueChange={onDeclarationFilterChange}>
                 <SelectTrigger className={FILTER_CONTROL_CLASS}>
                   <SelectValue placeholder="All declarations" />
@@ -133,7 +123,6 @@ export const DocumentsTable = React.memo(function DocumentsTable({
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          </ClientOnly>
 
           <Button
             variant="ghost"

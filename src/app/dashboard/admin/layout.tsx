@@ -4,11 +4,14 @@ import { useEffect, useState } from "react";
 import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import { ConvexSessionMissing } from "@/components/declaration-session-states";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const { isLoaded: isClerkLoaded, isSignedIn } = useAuth();
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const userData = useQuery(api.users.current, isAuthenticated ? {} : "skip");
   const [authorized, setAuthorized] = useState(false);
@@ -21,7 +24,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, []);
 
   useEffect(() => {
-    if (isConvexAuthLoading) return;
+    if (isConvexAuthLoading || !isClerkLoaded) return;
+    if (isSignedIn && !isAuthenticated) return;
     if (!isAuthenticated) {
       router.replace("/sign-in");
       return;
@@ -37,7 +41,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     setDenied(false);
     setAuthorized(true);
-  }, [isConvexAuthLoading, isAuthenticated, userData, router]);
+  }, [isClerkLoaded, isSignedIn, isConvexAuthLoading, isAuthenticated, userData, router]);
+
+  if (isClerkLoaded && isSignedIn && !isConvexAuthLoading && !isAuthenticated) {
+    return <ConvexSessionMissing />;
+  }
 
   if (denied) {
     return (

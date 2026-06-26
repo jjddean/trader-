@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, Search, Building2, Landmark, CheckCircle2, Copy, ChevronRight, Printer } from "lucide-react";
 import { useDirectPrint } from "@/components/print/direct-print";
 import { FinancialRecordPrintContent } from "@/components/print/financial-record-document";
@@ -10,15 +10,30 @@ import { FINANCIAL_LABELS as FL } from "@/lib/financial-labels";
 import Link from "next/link";
 import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
+import {
+  getRememberedRecordsSnapshot,
+  rememberRecordsSnapshot,
+} from "@/lib/dashboard-compliance-cache";
 
 export default function RecordsPage() {
   const { isLoaded, isSignedIn } = useAuth();
+  const { user } = useUser();
+  const clerkUserId = user?.id ?? "";
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const { print, portal } = useDirectPrint();
   const canQuery = isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated;
   const recordsData = useQuery(api.declarations.getFinancialRecords, canQuery ? {} : "skip");
-  const isRecordsLoading = canQuery && recordsData === undefined;
+
+  const remembered = clerkUserId ? getRememberedRecordsSnapshot(clerkUserId) : null;
+  const resolvedRecordsData = (recordsData ?? remembered?.records) as typeof recordsData;
+
+  useEffect(() => {
+    if (!clerkUserId || recordsData === undefined) return;
+    rememberRecordsSnapshot(clerkUserId, recordsData as Record<string, unknown>[]);
+  }, [clerkUserId, recordsData]);
+
+  const isRecordsLoading = canQuery && resolvedRecordsData === undefined;
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecord, setSelectedRecord] = useState<any | null>(null);
@@ -70,7 +85,7 @@ export default function RecordsPage() {
     URL.revokeObjectURL(url);
   };
 
-  const filteredRecords = (recordsData || []).filter((record: any) => {
+  const filteredRecords = (resolvedRecordsData || []).filter((record: any) => {
     const term = searchQuery.toLowerCase();
     if (!term) return true;
 
@@ -93,7 +108,7 @@ export default function RecordsPage() {
       .filter((r) => authoritativeOnly === undefined || r.isAuthoritative === authoritativeOnly)
       .reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
 
-  const allRecords = recordsData || [];
+  const allRecords = resolvedRecordsData || [];
   const totalDuty = sumByType(allRecords, "Duty");
   const totalVat = sumByType(allRecords, "VAT");
   const confirmedDuty = sumByType(allRecords, "Duty", true);
@@ -165,7 +180,7 @@ export default function RecordsPage() {
   };
 
   return (
-    <div className="space-y-8 p-8">
+    <div className="mx-auto max-w-7xl space-y-8 p-8">
       {portal}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>

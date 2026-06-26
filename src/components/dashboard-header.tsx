@@ -43,22 +43,11 @@ interface DashboardHeaderProps {
 }
 
 function HeaderOrgSwitcher({ hidePersonal }: { hidePersonal?: boolean }) {
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <div
-        className="h-8 w-[160px] shrink-0 rounded-md border border-slate-200 bg-white shadow-sm"
-        aria-hidden
-      />
-    );
-  }
-
-  return <OrgSwitcher hidePersonal={hidePersonal} />;
+  return (
+    <div className="shrink-0" suppressHydrationWarning>
+      <OrgSwitcher hidePersonal={hidePersonal} />
+    </div>
+  );
 }
 
 export const DashboardHeader = ({
@@ -90,7 +79,9 @@ export const DashboardHeader = ({
         <div className="flex items-center gap-2">
           <SidebarTrigger className="-ml-1 size-5 [&_svg]:size-2.5 [&_svg]:stroke-[1.5]" />
           <div className="h-4 w-px bg-slate-200 mx-1" />
-          <h1 className="shrink-0 text-sm font-semibold tracking-normal text-slate-900">{title}</h1>
+          <h1 className="max-w-[14rem] truncate shrink-0 text-sm font-semibold tracking-normal text-slate-900 sm:max-w-[18rem]">
+            {title}
+          </h1>
         </div>
         {badge && (
           <span

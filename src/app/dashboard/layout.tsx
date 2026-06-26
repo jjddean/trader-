@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { UserSync } from "@/components/auth/user-sync";
 import { OrgWorkspaceGate } from "@/components/auth/org-workspace-gate";
@@ -14,6 +14,11 @@ import { useQuery, useConvexAuth } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
+import {
+  getRememberedDeclarationLane,
+  rememberDeclarationLane,
+} from "@/lib/declaration-lane-cache";
+import { preloadHsCodeRows } from "@/lib/hs-codes-static-cache";
 
 export default function DashboardLayout({
   children,
@@ -58,20 +63,35 @@ export default function DashboardLayout({
       ? { id: declarationId as Id<"declarations"> }
       : "skip",
   );
+  if (declaration !== undefined && declarationId) {
+    rememberDeclarationLane(declarationId, declaration);
+  }
+  const resolvedDeclaration =
+    declaration ?? getRememberedDeclarationLane(declarationId ?? undefined);
 
   let config = routeConfigs[pathname] || { title: "FreightCode", badge: "BETA" };
   
   // Override title for declaration workspaces
-  if (declarationId && declaration) {
-    const declarationTitle = declaration.mrn && String(declaration.mrn).trim().length > 0 ? declaration.mrn : "Draft CDS Entry";
+  if (declarationId && resolvedDeclaration) {
+    const declarationTitle = resolvedDeclaration.mrn && String(resolvedDeclaration.mrn).trim().length > 0 ? resolvedDeclaration.mrn : "Draft CDS Entry";
     config = { 
         title: declarationTitle, 
         badge: "WORKSPACE", 
         badgeVariant: "blue" 
     };
-  } else if (declarationId && !declaration) {
+  } else if (declarationId && !resolvedDeclaration) {
     config = { title: "Declaration Workspace", badge: "LOADING" };
   }
+
+  const mainScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    void preloadHsCodeRows();
+  }, []);
+
+  useEffect(() => {
+    mainScrollRef.current?.scrollTo(0, 0);
+  }, [pathname]);
 
   return (
     <OrgWorkspaceGate>
@@ -84,13 +104,13 @@ export default function DashboardLayout({
           badge={config.badge}
           badgeVariant={config.badgeVariant}
         />
-        <main className="flex-1 overflow-y-auto [scrollbar-gutter:stable]">
+        <div ref={mainScrollRef} className="flex-1 overflow-y-auto [scrollbar-gutter:stable]">
           <Suspense fallback={null}>
             {pathname === "/dashboard" && <PracticeModeBanner />}
             <HmrcConnectBanner />
           </Suspense>
           {children}
-        </main>
+        </div>
       </SidebarInset>
     </SidebarProvider>
     </OrgWorkspaceGate>

@@ -1,7 +1,7 @@
 "use client";
 
 import { FINANCIAL_LABELS as FL } from "@/lib/financial-labels";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, Filter, ShieldAlert, ShieldCheck, Download, Copy, FileText, CheckCircle2, Printer } from "lucide-react";
 import { useDirectPrint } from "@/components/print/direct-print";
 import { CustomsReportPrintContent } from "@/components/print/customs-report-document";
@@ -10,17 +10,39 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { useQuery } from "convex/react";
 import { useConvexAuth } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
+import {
+  getRememberedReportsSnapshot,
+  rememberReportsSnapshot,
+} from "@/lib/dashboard-compliance-cache";
 
 export default function ReportsPage() {
   const { print, portal } = useDirectPrint();
   const { isLoaded, isSignedIn } = useAuth();
+  const { user } = useUser();
+  const clerkUserId = user?.id ?? "";
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const canQueryReports = isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated;
   const reports = useQuery(api.declarations.getReports, canQueryReports ? {} : "skip");
   const treImports = useQuery(api.tre_imports.listImports, canQueryReports ? {} : "skip");
-  const isReportsLoading = canQueryReports && reports === undefined;
-  const includesTreHistory = (treImports ?? []).some((row: { lineItemsStored: number }) => row.lineItemsStored > 0);
+
+  const remembered = clerkUserId ? getRememberedReportsSnapshot(clerkUserId) : null;
+  const resolvedReports = (reports ?? remembered?.reports) as typeof reports;
+  const resolvedTreImports = (treImports ?? remembered?.treImports) as typeof treImports;
+
+  useEffect(() => {
+    if (!clerkUserId || reports === undefined || treImports === undefined) return;
+    rememberReportsSnapshot(
+      clerkUserId,
+      reports as Record<string, unknown>[],
+      treImports as Record<string, unknown>[],
+    );
+  }, [clerkUserId, reports, treImports]);
+
+  const isReportsLoading = canQueryReports && resolvedReports === undefined;
+  const includesTreHistory = (resolvedTreImports ?? []).some(
+    (row: { lineItemsStored: number }) => row.lineItemsStored > 0,
+  );
   
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedReport, setSelectedReport] = useState<any | null>(null);
@@ -28,7 +50,7 @@ export default function ReportsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const filteredReports = (reports || []).filter((report: any) => {
+  const filteredReports = (resolvedReports || []).filter((report: any) => {
     const matchesSearch =
       !searchQuery ||
       report.mrn?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -121,11 +143,11 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="space-y-8 p-8">
+    <div className="mx-auto max-w-7xl space-y-8 p-8">
       {portal}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex min-h-7 flex-wrap items-center gap-2">
             <h1 className="text-xl font-semibold tracking-tight text-slate-900">
               Customs Reports
             </h1>

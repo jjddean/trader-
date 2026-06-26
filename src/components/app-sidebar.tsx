@@ -66,12 +66,6 @@ export function AppSidebar() {
   const userData = useQuery(api.users.current, isAuthenticated ? {} : "skip");
   const isAdmin = userData?.role === "admin";
 
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const declarationCounts = useQuery(
     api.declarations.getMyDeclarationCounts,
     isAuthenticated ? {} : "skip",
@@ -112,41 +106,13 @@ export function AppSidebar() {
                   const isAnyChildActive = item.items?.some(subItem => 
                     pathname === subItem.href || (subItem.href !== "/dashboard" && pathname.startsWith(subItem.href))
                   );
-
-                  // Radix Collapsible generates unstable ids on SSR — render after mount only.
-                  if (!mounted) {
-                    return (
-                      <SidebarMenuItem key={item.label}>
-                        <SidebarMenuButton
-                          tooltip={item.label}
-                          className={cn(
-                            "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal text-slate-500",
-                          )}
-                        >
-                          <Icon className="h-3.5 w-3.5 text-slate-400" />
-                          <span className="flex-1">{item.label}</span>
-                          <ChevronRight className="ml-auto h-3 w-3 rotate-90 text-slate-400" />
-                        </SidebarMenuButton>
-                        <SidebarMenuSub className="ml-5 border-l border-slate-200 pl-2">
-                          {item.items?.map((subItem) => (
-                            <SidebarMenuSubItem key={subItem.label}>
-                              <SidebarMenuSubButton asChild className="px-2 py-1 text-xs font-normal text-slate-500">
-                                <Link href={subItem.href}>
-                                  <span>{subItem.label}</span>
-                                </Link>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          ))}
-                        </SidebarMenuSub>
-                      </SidebarMenuItem>
-                    );
-                  }
+                  const defaultExpanded = item.label === "Compliance" ? true : isAnyChildActive;
 
                   return (
                     <Collapsible
                       key={item.label}
                       asChild
-                      defaultOpen={item.label === "Compliance" ? true : isAnyChildActive}
+                      defaultOpen={defaultExpanded}
                       className="group/collapsible"
                     >
                       <SidebarMenuItem>
@@ -163,7 +129,7 @@ export function AppSidebar() {
                             <ChevronRight className="ml-auto h-3 w-3 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                           </SidebarMenuButton>
                         </CollapsibleTrigger>
-                        <CollapsibleContent>
+                        <CollapsibleContent forceMount className="data-[state=closed]:hidden">
                           <SidebarMenuSub className="ml-5 border-l border-slate-200 pl-2">
                             {item.items?.map((subItem) => {
                               const isSubActive = pathname === subItem.href || (subItem.href !== "/dashboard" && pathname.startsWith(subItem.href));
@@ -290,30 +256,17 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        {mounted ? (
-          <div className="flex min-h-[42px] items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1">
-            <SidebarUserButton />
-            <div className="flex min-w-0 flex-col">
-              <span className="max-w-[100px] truncate text-xs font-normal text-slate-700">
-                {clerkUser?.fullName || "User"}
-              </span>
-              <span className="max-w-[100px] truncate text-[10px] text-slate-400">
-                {isAdmin ? "Admin" : organization?.name ?? "Personal account"}
-              </span>
-            </div>
+        <div className="flex min-h-[42px] items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1">
+          <SidebarUserButton />
+          <div className="flex min-w-0 flex-col">
+            <span className="max-w-[100px] truncate text-xs font-normal text-slate-700">
+              {clerkUser?.fullName || "User"}
+            </span>
+            <span className="max-w-[100px] truncate text-[10px] text-slate-400">
+              {isAdmin ? "Admin" : organization?.name ?? "Personal account"}
+            </span>
           </div>
-        ) : (
-          <div
-            className="flex min-h-[42px] items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1"
-            aria-hidden
-          >
-            <div className="h-7 w-7 shrink-0 rounded-full bg-slate-100" />
-            <div className="flex min-w-0 flex-col gap-1">
-              <div className="h-3 w-16 rounded bg-slate-100" />
-              <div className="h-2 w-10 rounded bg-slate-100" />
-            </div>
-          </div>
-        )}
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

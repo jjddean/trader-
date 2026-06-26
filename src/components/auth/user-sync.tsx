@@ -4,6 +4,7 @@ import { useAuth, useOrganization, useUser } from "@clerk/nextjs";
 import { useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useEffect, useRef } from "react";
+import { clearDashboardUserCaches } from "@/lib/clear-dashboard-user-caches";
 
 export function UserSync() {
   const { user, isLoaded: isClerkLoaded } = useUser();
@@ -13,10 +14,24 @@ export function UserSync() {
   const syncUser = useMutation(api.users.syncUser);
   const ensureOrgPractice = useMutation(api.org_hmrc.ensurePracticeMode);
   const syncedKey = useRef<string | null>(null);
+  const previousUserIdRef = useRef<string | undefined>(undefined);
 
   const userId = user?.id;
   const userRole = String(user?.publicMetadata?.role ?? "");
   const userEmail = user?.primaryEmailAddress?.emailAddress ?? "";
+
+  useEffect(() => {
+    if (previousUserIdRef.current !== userId) {
+      if (previousUserIdRef.current !== undefined) {
+        clearDashboardUserCaches();
+      }
+      syncedKey.current = null;
+      previousUserIdRef.current = userId;
+    }
+    if (!userId) {
+      syncedKey.current = null;
+    }
+  }, [userId]);
 
   useEffect(() => {
     if (!isClerkLoaded || !isAuthLoaded || !userId || !isAuthenticated) return;
