@@ -14,6 +14,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+const HMRC_TEST_USER_SIGN_IN_COPY =
+  "Sign in with these credentials on the HMRC screen when you click Connect HMRC — not your live Government Gateway. Use your real EORI on declaration forms.";
+
 function CopyValueButton({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -109,15 +112,12 @@ export function PracticeSandboxTestUser({
         compact ? "p-3" : "p-4",
       )}
     >
-      <p className="text-xs font-medium text-amber-950">HMRC Test User (practice OAuth)</p>
-      <p className="mt-1 text-[11px] leading-relaxed text-amber-900/90">
-        Sign in with these credentials on the HMRC screen when you click Connect HMRC — not your
-        live Government Gateway. Use your real EORI on declaration forms.
-      </p>
+      <p className="text-xs font-semibold text-amber-950">HMRC Test User (sandbox OAuth)</p>
+      <p className="mt-1 text-xs leading-snug text-amber-900/90">{HMRC_TEST_USER_SIGN_IN_COPY}</p>
 
       <div className="mt-3 min-h-[8.25rem]">
       {waitingForStored && (
-        <div className="flex items-center gap-2 text-[11px] text-amber-900">
+        <div className="flex items-center gap-2 text-sm text-amber-900">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
           Loading…
         </div>
@@ -134,7 +134,7 @@ export function PracticeSandboxTestUser({
       )}
 
       {loading && !creds && (
-        <div className="flex items-center gap-2 text-[11px] text-amber-900">
+        <div className="flex items-center gap-2 text-sm text-amber-900">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
           Creating HMRC test user…
         </div>
@@ -209,34 +209,22 @@ export function PracticeModeGuideModalLink({
           {children}
         </button>
       </DialogTrigger>
-      <DialogContent className="gap-0 overflow-hidden border-slate-200 p-0 sm:max-w-md">
+      <DialogContent className="gap-0 overflow-hidden border-slate-200 p-0 sm:max-w-lg">
         <div className="p-6">
-          <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-4">
-            <DialogTitle className="text-sm font-semibold text-amber-950">Practice mode</DialogTitle>
+          <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-5">
+            <DialogTitle className="text-xs font-semibold text-amber-950">Practice mode</DialogTitle>
             <DialogDescription asChild>
-              <div className="mt-3 space-y-3 text-[11px] leading-relaxed text-amber-950/90">
-                <div>
-                  <p className="font-semibold">1. Create test credentials</p>
-                  <p className="mt-0.5">
-                    In the banner, open <strong>HMRC Test User</strong> and copy your sandbox
-                    sign-in.
-                  </p>
-                </div>
-                <div>
-                  <p className="font-semibold">2. Connect HMRC in Settings</p>
-                  <p className="mt-0.5">
-                    Use those test credentials on the HMRC screen — not your live Government
-                    Gateway. Enter your <strong>real EORI</strong> on declaration forms.
-                  </p>
-                </div>
-                <div>
-                  <p className="font-semibold">3. Go live when ready</p>
-                  <p className="mt-0.5">
-                    A platform admin can switch your organisation to live CDS in{" "}
-                    <strong>Admin → Users &amp; HMRC</strong>.
-                  </p>
-                </div>
-              </div>
+              <ul className="mt-2.5 list-disc space-y-2.5 pl-5 text-xs leading-relaxed text-amber-900/90">
+                <li>
+                  Connect your <strong>HMRC Test User</strong> to submit sandbox declarations.
+                </li>
+                <li>{HMRC_TEST_USER_SIGN_IN_COPY}</li>
+                <li>
+                  Validate workflows and familiarise yourself with Freightcode before enabling live
+                  customs submissions. When you are ready, a platform admin can switch your
+                  organisation to live CDS in <strong>Admin → Users &amp; HMRC</strong>.
+                </li>
+              </ul>
             </DialogDescription>
           </div>
         </div>

@@ -30,7 +30,7 @@ export function PracticeModeBanner() {
       <div className="mx-auto flex max-w-6xl items-start gap-2 sm:gap-3">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" aria-hidden />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">HMRC Testing Environment</p>
+          <p className="text-xs font-semibold">HMRC Testing Environment</p>
           <ul className="mt-1 space-y-0.5 text-xs leading-snug text-amber-900/90">
             <li>
               Connect your{" "}
