@@ -2,14 +2,17 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { canAccessDeclaration } from "./lib/org_access";
+const hmrcEnvironment = v.union(v.literal("sandbox"), v.literal("production"));
+type HmrcEnvironment = "sandbox" | "production";
 
 export const saveToken = mutation({
   args: {
     userId: v.optional(v.string()), // Clerk userId — cross-checked against the authenticated identity
-    accessToken: v.string(),
-    refreshToken: v.optional(v.string()),
+    environment: hmrcEnvironment,
+    accessTokenEncrypted: v.string(),
+    refreshTokenEncrypted: v.optional(v.string()),
     expiresIn: v.number(),
-    eori: v.optional(v.string())
+    eori: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // HMRC tokens are credentials — writes MUST be authenticated. The caller's
@@ -26,65 +29,80 @@ export const saveToken = mutation({
     const effectiveUserId = identity.subject;
 
     const expiresAt = Date.now() + args.expiresIn * 1000;
-    
-    // Check if user already has a token record
+
+    const tokenPatch = {
+      environment: args.environment,
+      accessToken: undefined,
+      refreshToken: undefined,
+      accessTokenEncrypted: args.accessTokenEncrypted,
+      refreshTokenEncrypted: args.refreshTokenEncrypted,
+      expiresAt,
+      eori: args.eori,
+    };
+
     const existing = await ctx.db
       .query("hmrc_tokens")
-      .withIndex("by_user", (q) => q.eq("userId", effectiveUserId))
+      .withIndex("by_user_and_environment", (q) =>
+        q.eq("userId", effectiveUserId).eq("environment", args.environment),
+      )
       .first();
-      
+
     let tokenId;
     if (existing) {
       tokenId = existing._id;
-      await ctx.db.patch(existing._id, {
-        accessToken: args.accessToken,
-        refreshToken: args.refreshToken,
-        expiresAt,
-        eori: args.eori
-      });
+      await ctx.db.patch(existing._id, tokenPatch);
     } else {
       tokenId = await ctx.db.insert("hmrc_tokens", {
         userId: effectiveUserId,
-        accessToken: args.accessToken,
-        refreshToken: args.refreshToken,
-        expiresAt,
-        eori: args.eori
+        ...tokenPatch,
       });
     }
 
-    // 3. Audit Log Entry
     await ctx.db.insert("auditLogs", {
       userId: effectiveUserId,
       action: "hmrc_auth_linked",
       details: JSON.stringify({
+        environment: args.environment,
         eori: args.eori,
-        expiresAt: expiresAt
+        expiresAt,
       }),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
-    
+
     return tokenId;
   },
 });
 
 export const disconnectToken = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: { environment: v.optional(hmrcEnvironment) },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
 
+    const environment: HmrcEnvironment = args.environment ?? "sandbox";
     const existing = await ctx.db
       .query("hmrc_tokens")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .withIndex("by_user_and_environment", (q) =>
+        q.eq("userId", identity.subject).eq("environment", environment),
+      )
       .first();
 
-    if (existing) {
-      await ctx.db.delete(existing._id);
+    const legacySandbox =
+      !existing && environment === "sandbox"
+        ? await ctx.db
+            .query("hmrc_tokens")
+            .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+            .first()
+        : null;
+
+    const row = existing ?? legacySandbox;
+    if (row) {
+      await ctx.db.delete(row._id);
 
       await ctx.db.insert("auditLogs", {
         userId: identity.subject,
         action: "hmrc_auth_disconnected",
-        details: JSON.stringify({ timestamp: Date.now() }),
+        details: JSON.stringify({ environment, timestamp: Date.now() }),
         timestamp: Date.now(),
       });
     }
@@ -93,22 +111,39 @@ export const disconnectToken = mutation({
 
 /** OAuth connection status only — never returns access/refresh tokens to the client. */
 export const getToken = query({
-  args: { userId: v.optional(v.string()) },
+  args: {
+    userId: v.optional(v.string()),
+    environment: v.optional(hmrcEnvironment),
+  },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
     if (args.userId && args.userId !== identity.subject) return null;
 
+    const environment: HmrcEnvironment = args.environment ?? "sandbox";
     const row = await ctx.db
       .query("hmrc_tokens")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .withIndex("by_user_and_environment", (q) =>
+        q.eq("userId", identity.subject).eq("environment", environment),
+      )
       .first();
-    if (!row) return null;
+
+    const legacySandbox =
+      !row && environment === "sandbox"
+        ? await ctx.db
+            .query("hmrc_tokens")
+            .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+            .first()
+        : null;
+
+    const tokenRow = row ?? legacySandbox;
+    if (!tokenRow) return null;
 
     return {
       connected: true,
-      expiresAt: row.expiresAt,
-      eori: row.eori ?? null,
+      environment,
+      expiresAt: tokenRow.expiresAt,
+      eori: tokenRow.eori ?? null,
     };
   },
 });
@@ -118,6 +153,7 @@ export const scheduleNotificationPulls = mutation({
   args: {
     declarationId: v.id("declarations"),
     conversationId: v.string(),
+    environment: v.optional(hmrcEnvironment),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -129,12 +165,14 @@ export const scheduleNotificationPulls = mutation({
       throw new Error("Unauthorized");
     }
 
+    const environment = args.environment ?? "sandbox";
     const delaysMs = [0, 4000, 12000, 30000];
     for (const delayMs of delaysMs) {
       await ctx.scheduler.runAfter(delayMs, internal.hmrc_actions.pullNotificationsScheduled, {
         userId: identity.subject,
         declarationId: args.declarationId,
         conversationId: args.conversationId,
+        environment,
         source: delayMs === 0 ? "scheduled_immediate" : `scheduled_${delayMs}ms`,
       });
     }

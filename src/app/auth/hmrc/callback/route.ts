@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 import { hmrcOAuthBaseUrl, hmrcOAuthCredentials } from "../../../../lib/hmrc-oauth";
-import { hmrcOAuthStateNonce, hmrcPkceCookieName } from "../../../../lib/hmrc-pkce";
+import { hmrcOAuthStateNonce, hmrcPkceCookieName, HMRC_OAUTH_STATE_COOKIE } from "../../../../lib/hmrc-pkce";
 import { getAuthenticatedConvex } from "../../../../lib/hmrc-route-session";
 import { resolveOrgHmrcRoutingForOrg } from "../../../../lib/hmrc-org-routing";
 
@@ -34,10 +34,15 @@ export async function GET(request: Request) {
   // userId is only used to detect a session/state mismatch (CSRF guard).
   const clerkAuth = await auth();
   const sessionUserId = clerkAuth.userId;
-  const state = searchParams.get("state") || "";
+  const state = searchParams.get("state") ?? "";
   const userIdFromState = state.includes(".") ? state.split(".").slice(1).join(".") : null;
 
   try {
+    if (!state) {
+      console.error("HMRC callback: missing OAuth state — refusing.");
+      return NextResponse.redirect(new URL("/dashboard?error=state_mismatch", request.url));
+    }
+
     if (!sessionUserId) {
       console.error("HMRC callback without Clerk session — sending user to sign-in with return URL.");
       const returnUrl = new URL(request.url);
@@ -77,6 +82,12 @@ export async function GET(request: Request) {
     }
 
     const cookieStore = await cookies();
+    const expectedState = cookieStore.get(HMRC_OAUTH_STATE_COOKIE)?.value;
+    if (!expectedState || expectedState !== state) {
+      console.error("HMRC callback: OAuth state cookie mismatch — refusing.");
+      return NextResponse.redirect(new URL("/dashboard?error=state_mismatch", request.url));
+    }
+
     const pkceCookieName = hmrcPkceCookieName(stateNonce);
     let codeVerifier = cookieStore.get(pkceCookieName)?.value ?? null;
 
@@ -123,17 +134,23 @@ export async function GET(request: Request) {
     }
 
     const data = await response.json();
-    
-    // Save tokens to Convex and link to workspace
-    await convex.mutation(api.hmrc.saveToken, {
-      userId,
+
+    const encrypted = await convex.action(api.actions.hmrc_token_encrypt.encryptOAuthTokens, {
       accessToken: data.access_token,
       refreshToken: data.refresh_token,
+    });
+
+    await convex.mutation(api.hmrc.saveToken, {
+      userId,
+      environment: hmrcContext.environment,
+      accessTokenEncrypted: encrypted.accessTokenEncrypted,
+      refreshTokenEncrypted: encrypted.refreshTokenEncrypted,
       expiresIn: data.expires_in ?? 14400,
     });
 
     const success = NextResponse.redirect(new URL("/dashboard?success=hmrc_connected", request.url));
     success.cookies.delete(pkceCookieName);
+    success.cookies.delete(HMRC_OAUTH_STATE_COOKIE);
     return success;
 
   } catch (err: unknown) {
