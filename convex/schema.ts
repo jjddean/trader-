@@ -83,11 +83,19 @@ export default defineSchema({
 
   hmrc_tokens: defineTable({
     userId: v.optional(v.any()), // clerkId
+    /** sandbox | production. Missing legacy rows are treated as sandbox only. */
+    environment: v.optional(v.union(v.literal("sandbox"), v.literal("production"))),
+    /** @deprecated Plaintext — migrate to accessTokenEncrypted; cleared on write when encryption enabled. */
     accessToken: v.optional(v.any()),
+    /** @deprecated Plaintext — migrate to refreshTokenEncrypted; cleared on write when encryption enabled. */
     refreshToken: v.optional(v.any()),
+    accessTokenEncrypted: v.optional(v.string()),
+    refreshTokenEncrypted: v.optional(v.string()),
     expiresAt: v.optional(v.any()),
     eori: v.optional(v.any()), // Optionally store the linked EORI
-  }).index("by_user", ["userId"]),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_environment", ["userId", "environment"]),
 
   /** Short-lived PKCE verifiers for HMRC OAuth (survives cross-site redirect without cookies). */
   hmrc_oauth_pkce: defineTable({
@@ -149,6 +157,13 @@ export default defineSchema({
   declarations: defineTable({
     userId: v.optional(v.any()), // clerkId
     orgId: v.optional(v.string()), // Clerk org — shared within team
+    /**
+     * HMRC environment this declaration is bound to (sandbox | production).
+     * Stamped at creation from org mode and locked on first submission so a
+     * sandbox declaration can never be sent to Live (or vice-versa).
+     * Legacy rows without this field are treated as sandbox.
+     */
+    environment: v.optional(v.union(v.literal("sandbox"), v.literal("production"))),
     workspaceId: v.optional(v.any()),
     status: v.optional(v.any()),
     eori: v.optional(v.any()),
@@ -207,11 +222,51 @@ export default defineSchema({
     defermentAccountNumber: v.optional(v.string()),
     // DE 4/8 — method of payment code (e.g. "E" deferment).
     paymentMethodCode: v.optional(v.string()),
+    // DE 3/19-3/21 — customs representation. Omitted/undefined is treated as
+    // self-representation for existing declarations.
+    representationType: v.optional(v.union(v.literal("self"), v.literal("direct"), v.literal("indirect"))),
+    representativeEori: v.optional(v.string()),
+    representativeName: v.optional(v.string()),
+    representativeAddressLine: v.optional(v.string()),
+    representativeCity: v.optional(v.string()),
+    representativePostcode: v.optional(v.string()),
+    representativeCountry: v.optional(v.string()),
+    authorityVerified: v.optional(v.boolean()),
+    authorityValidFrom: v.optional(v.number()),
+    authorityValidTo: v.optional(v.number()),
+    representationUpdatedAt: v.optional(v.number()),
+    // The broker's client this declaration is filed for (the represented
+    // trader). Optional — self-serve declarations have no separate client.
+    clientId: v.optional(v.id("clients")),
   })
     .index("by_user", ["userId"])
     .index("by_org", ["orgId"])
     .index("by_mrn", ["mrn"])
     .index("by_conversationId", ["conversationId"]),
+
+  // Broker's client/trader profiles. A reusable party record (the importer the
+  // broker files on behalf of) scoped to the broker's Clerk org. This is DATA
+  // only — a client is never an app login. A read-only client portal would be a
+  // separate layer that maps a Clerk user to one of these records.
+  clients: defineTable({
+    userId: v.string(), // clerkId of the creator
+    orgId: v.optional(v.string()), // Clerk org — shared within the broker team
+    name: v.string(),
+    eori: v.optional(v.string()),
+    addressLine: v.optional(v.string()),
+    city: v.optional(v.string()),
+    postcode: v.optional(v.string()),
+    country: v.optional(v.string()),
+    contactName: v.optional(v.string()),
+    contactEmail: v.optional(v.string()),
+    contactPhone: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    status: v.union(v.literal("active"), v.literal("archived")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_org", ["orgId"])
+    .index("by_user", ["userId"]),
 
   goods_items: defineTable({
     ownerId: v.optional(v.any()),
@@ -296,6 +351,8 @@ export default defineSchema({
   notifications: defineTable({
     mrn: v.optional(v.any()),
     conversationId: v.optional(v.any()),
+    /** sandbox | production — stamped at ingest from pull env or linked declaration. */
+    environment: v.optional(v.union(v.literal("sandbox"), v.literal("production"))),
     idempotencyKey: v.optional(v.string()),
     hmrcNotificationId: v.optional(v.string()),
     source: v.optional(v.string()),
@@ -376,6 +433,52 @@ export default defineSchema({
     timestamp: v.optional(v.any()),
     archived: v.optional(v.any()),
   }).index("by_timestamp", ["timestamp"]).index("by_user", ["userId"]),
+
+  declaration_approvals: defineTable({
+    declarationId: v.id("declarations"),
+    userId: v.string(),
+    orgId: v.optional(v.string()),
+    approverName: v.string(),
+    approverEmail: v.optional(v.string()),
+    approvedAt: v.number(),
+    reason: v.string(),
+    riskScore: v.number(),
+    exposureAmount: v.optional(v.number()),
+    exposureCurrency: v.optional(v.string()),
+    exposureReason: v.optional(v.string()),
+    declarationLastUpdatedAt: v.optional(v.number()),
+    materialFingerprint: v.optional(v.string()),
+    declarationSnapshot: v.any(),
+    itemsSnapshot: v.any(),
+    representationSnapshot: v.any(),
+    approvalMethod: v.string(),
+    status: v.union(v.literal("approved"), v.literal("revoked")),
+    revokedAt: v.optional(v.number()),
+    revokedBy: v.optional(v.string()),
+    revocationReason: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_declaration", ["declarationId"])
+    .index("by_declaration_and_status", ["declarationId", "status"])
+    .index("by_user", ["userId"])
+    .index("by_org", ["orgId"]),
+
+  financial_exposures: defineTable({
+    declarationId: v.id("declarations"),
+    userId: v.string(),
+    orgId: v.optional(v.string()),
+    exposureAmount: v.number(),
+    currency: v.string(),
+    exposureReason: v.optional(v.string()),
+    sourceApprovalId: v.optional(v.id("declaration_approvals")),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_declaration", ["declarationId"])
+    .index("by_user", ["userId"])
+    .index("by_org", ["orgId"]),
+
   // Pre-computed historical duty/VAT rate map per user.
   // Rebuilt only when historical_declarations are ingested — prevents getReports and
   // getFinancialRecords from scanning 2,000 historical rows on every subscription refresh.
@@ -550,6 +653,8 @@ export default defineSchema({
   submissions: defineTable({
     declarationId: v.id("declarations"),
     userId: v.string(),
+    /** HMRC environment this request was sent to (sandbox | production). */
+    environment: v.optional(v.union(v.literal("sandbox"), v.literal("production"))),
     operation: v.string(), // "submit" | "amend" | "cancel"
     outcome: v.optional(v.string()), // "accepted" | "rejected" | "error"
     conversationId: v.optional(v.string()),
