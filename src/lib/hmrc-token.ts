@@ -5,9 +5,13 @@ import { api } from "../../convex/_generated/api";
 export async function resolveHmrcAccessToken(
   convex: ConvexHttpClient,
   userId: string,
+  environment: "sandbox" | "production" = "sandbox",
 ): Promise<{ token: string } | { error: NextResponse }> {
   try {
-    const result = await convex.action(api.hmrc_actions.resolveAccessToken, { userId });
+    const result = await convex.action(api.hmrc_actions.resolveAccessToken, {
+      userId,
+      environment,
+    });
     if (!result?.token) {
       return {
         error: NextResponse.json(

@@ -904,11 +904,16 @@ export const getHmrcTokenForUser = internalQuery({
 });
 
 export const getHmrcTokenRowForUser = internalQuery({
-  args: { userId: v.string() },
+  args: {
+    userId: v.string(),
+    environment: v.union(v.literal("sandbox"), v.literal("production")),
+  },
   returns: v.union(
     v.object({
       accessToken: v.optional(v.string()),
       refreshToken: v.optional(v.string()),
+      accessTokenEncrypted: v.optional(v.string()),
+      refreshTokenEncrypted: v.optional(v.string()),
       expiresAt: v.optional(v.number()),
       eori: v.optional(v.string()),
     }),
@@ -917,14 +922,29 @@ export const getHmrcTokenRowForUser = internalQuery({
   handler: async (ctx, args) => {
     const row = await ctx.db
       .query("hmrc_tokens")
-      .withIndex("by_user", (q: any) => q.eq("userId", args.userId))
+      .withIndex("by_user_and_environment", (q: any) =>
+        q.eq("userId", args.userId).eq("environment", args.environment),
+      )
       .first();
-    if (!row) return null;
+
+    const legacySandbox =
+      !row && args.environment === "sandbox"
+        ? await ctx.db
+            .query("hmrc_tokens")
+            .withIndex("by_user", (q: any) => q.eq("userId", args.userId))
+            .first()
+        : null;
+
+    const tokenRow = row ?? legacySandbox;
+    if (!tokenRow) return null;
+
     return {
-      accessToken: row.accessToken,
-      refreshToken: row.refreshToken,
-      expiresAt: row.expiresAt,
-      eori: row.eori,
+      accessToken: tokenRow.accessToken,
+      refreshToken: tokenRow.refreshToken,
+      accessTokenEncrypted: tokenRow.accessTokenEncrypted,
+      refreshTokenEncrypted: tokenRow.refreshTokenEncrypted,
+      expiresAt: tokenRow.expiresAt,
+      eori: tokenRow.eori,
     };
   },
 });
