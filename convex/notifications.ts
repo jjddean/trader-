@@ -12,12 +12,15 @@ import { statusAfterNotification } from "./lib/notification_status";
 import { collectDeclarationNotifications } from "./lib/collect_declaration_notifications";
 import { canAccessDeclaration, listNotificationsForTenant, orgIdFromDeclaration } from "./lib/org_access";
 
+const hmrcEnvironment = v.union(v.literal("sandbox"), v.literal("production"));
+
 export const saveWebhook = mutation({
   args: {
     ingestSecret: v.string(),
     mrn: v.string(),
     conversationId: v.string(),
     notificationType: v.string(),
+    environment: v.optional(hmrcEnvironment),
     idempotencyKey: v.optional(v.string()),
     errorCodes: v.optional(v.array(v.string())),
     fieldErrors: v.optional(v.array(v.object({
@@ -90,6 +93,7 @@ export const saveWebhook = mutation({
     const notificationId = await ctx.db.insert("notifications", {
       mrn: args.mrn,
       conversationId: args.conversationId,
+      environment: args.environment ?? "sandbox",
       idempotencyKey: args.idempotencyKey,
       hmrcNotificationId: args.hmrcNotificationId,
       source: args.source,
@@ -210,6 +214,7 @@ export const saveWebhook = mutation({
         userId: declaration.userId,
         declarationId: declaration._id,
         orgId: orgIdFromDeclaration(declaration),
+        environment: args.environment ?? declaration.environment ?? "sandbox",
       });
     }
   }

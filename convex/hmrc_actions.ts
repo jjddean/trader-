@@ -8,6 +8,9 @@ import { pullHmrcNotificationsServer, type PullSaveArgs } from "./lib/hmrc_pull_
 import { resolveAccessTokenForUser } from "./lib/hmrc_token_refresh";
 import type { ActionCtx } from "./_generated/server";
 
+type HmrcEnvironment = "sandbox" | "production";
+const hmrcEnvironment = v.union(v.literal("sandbox"), v.literal("production"));
+
 /** SHA-256 of trimmed payload — must match src/lib/hmrc-notification-idempotency.ts */
 function buildHmrcNotificationIdempotencyKey(rawPayload: string): string {
     const normalized = rawPayload.trim();
@@ -15,7 +18,7 @@ function buildHmrcNotificationIdempotencyKey(rawPayload: string): string {
     return `hmrc:${hash}`;
 }
 
-function makeSavePulledNotification(ctx: ActionCtx) {
+function makeSavePulledNotification(ctx: ActionCtx, environment: HmrcEnvironment) {
     const ingestSecret = process.env.NOTIFICATION_INGEST_SECRET?.trim();
     if (!ingestSecret) {
         throw new Error("NOTIFICATION_INGEST_SECRET is not configured");
@@ -24,6 +27,7 @@ function makeSavePulledNotification(ctx: ActionCtx) {
     return async (saveArgs: PullSaveArgs) => {
         await ctx.runMutation(api.notifications.saveWebhook, {
             ...saveArgs,
+            environment,
             ingestSecret,
             idempotencyKey: buildHmrcNotificationIdempotencyKey(saveArgs.rawPayload),
         });
@@ -74,6 +78,7 @@ export const pullNotificationsScheduled = internalAction({
         userId: v.string(),
         declarationId: v.optional(v.id("declarations")),
         conversationId: v.string(),
+        environment: hmrcEnvironment,
         source: v.string(),
     },
     returns: v.object({
@@ -82,7 +87,7 @@ export const pullNotificationsScheduled = internalAction({
         saved: v.number(),
     }),
     handler: async (ctx, args) => {
-        const token = await resolveAccessTokenForUser(ctx, args.userId);
+        const token = await resolveAccessTokenForUser(ctx, args.userId, args.environment);
         if (!token) {
             console.warn(`[HMRC-PULL-SCHEDULED] No token for user ${args.userId}`);
             return { conversationId: args.conversationId, total: 0, saved: 0 };
@@ -103,8 +108,9 @@ export const pullNotificationsScheduled = internalAction({
             const result = await pullHmrcNotificationsServer(
                 conversationId,
                 token,
+                args.environment,
                 args.source,
-                makeSavePulledNotification(ctx),
+                makeSavePulledNotification(ctx, args.environment),
             );
             total += result.total;
             saved += result.saved;
@@ -133,6 +139,7 @@ export const recoverStuckDeclarations = internalAction({
         const stuckDeclarations: Array<{
             _id: string;
             userId?: string;
+            orgId?: string;
             conversationId?: string | null;
             status?: string;
         }> = await ctx.runQuery(internal.declarations.getStuckProcessingDeclarations, {
@@ -150,7 +157,11 @@ export const recoverStuckDeclarations = internalAction({
                 continue;
             }
 
-            const token = await resolveAccessTokenForUser(ctx, decl.userId);
+            const mode = decl.orgId
+                ? await ctx.runQuery(internal.org_hmrc.getModeForOrgInternal, { orgId: decl.orgId })
+                : { hmrcMode: "practice" as const };
+            const environment: HmrcEnvironment = mode.hmrcMode === "live" ? "production" : "sandbox";
+            const token = await resolveAccessTokenForUser(ctx, decl.userId, environment);
             if (!token) {
                 skippedNoToken += 1;
                 console.warn(`[RECOVER] No token for declaration ${decl._id} (user ${decl.userId})`);
@@ -171,8 +182,9 @@ export const recoverStuckDeclarations = internalAction({
                     const result = await pullHmrcNotificationsServer(
                         conversationId,
                         token,
+                        environment,
                         "cron_recover",
-                        makeSavePulledNotification(ctx),
+                        makeSavePulledNotification(ctx, environment),
                     );
                     declTotal += result.total;
                     declSaved += result.saved;
@@ -203,7 +215,10 @@ export const recoverStuckDeclarations = internalAction({
 
 /** Server-side HMRC API routes — resolves access token via internal store + refresh. */
 export const resolveAccessToken = action({
-    args: { userId: v.optional(v.string()) },
+    args: {
+        userId: v.optional(v.string()),
+        environment: hmrcEnvironment,
+    },
     handler: async (ctx, args) => {
         const identity = await ctx.auth.getUserIdentity();
         if (!identity) {
@@ -213,7 +228,7 @@ export const resolveAccessToken = action({
             throw new Error("Forbidden");
         }
 
-        const token = await resolveAccessTokenForUser(ctx, identity.subject);
+        const token = await resolveAccessTokenForUser(ctx, identity.subject, args.environment);
         if (!token) {
             throw new Error("HMRC OAuth Token not found. Please connect your account.");
         }

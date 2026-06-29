@@ -14,8 +14,8 @@ export type PullSaveArgs = {
   timestamp: string;
 };
 
-function hmrcBaseUrl(): string {
-  return process.env.HMRC_ENVIRONMENT === "sandbox"
+function hmrcBaseUrl(environment: "sandbox" | "production"): string {
+  return environment === "sandbox"
     ? process.env.HMRC_SANDBOX_BASE_URL || "https://test-api.service.hmrc.gov.uk"
     : process.env.HMRC_PRODUCTION_BASE_URL || "https://api.service.hmrc.gov.uk";
 }
@@ -113,10 +113,11 @@ async function hmrcGet(url: string, accessToken: string): Promise<Response> {
 export async function pullHmrcNotificationsServer(
   conversationId: string,
   accessToken: string,
+  environment: "sandbox" | "production",
   source: string,
   saveFn: (args: PullSaveArgs) => Promise<unknown>,
 ): Promise<{ conversationId: string; total: number; saved: number }> {
-  const hmrcBase = hmrcBaseUrl();
+  const hmrcBase = hmrcBaseUrl(environment);
   const listUrl = `${hmrcBase}/notifications/conversationId/${encodeURIComponent(conversationId)}/unpulled`;
   const listResponse = await hmrcGet(listUrl, accessToken);
 

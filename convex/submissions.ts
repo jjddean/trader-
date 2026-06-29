@@ -36,6 +36,7 @@ async function distinctConversationIdsForDeclaration(
 export const recordSubmission = mutation({
   args: {
     declarationId: v.id("declarations"),
+    environment: v.optional(v.union(v.literal("sandbox"), v.literal("production"))),
     operation: v.string(),
     outcome: v.optional(v.string()),
     conversationId: v.optional(v.string()),
@@ -60,6 +61,7 @@ export const recordSubmission = mutation({
     return await ctx.db.insert("submissions", {
       declarationId: args.declarationId,
       userId: identity.subject,
+      environment: args.environment,
       operation: args.operation,
       outcome: args.outcome,
       conversationId: args.conversationId,

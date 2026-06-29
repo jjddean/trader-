@@ -1,15 +1,18 @@
-function isHmrcSandbox(): boolean {
+type HmrcEnvironment = "sandbox" | "production";
+
+function isHmrcSandbox(environment?: HmrcEnvironment): boolean {
+  if (environment) return environment === "sandbox";
   return process.env.HMRC_ENVIRONMENT === "sandbox";
 }
 
-function hmrcOAuthBaseUrl(): string {
-  return isHmrcSandbox()
+function hmrcOAuthBaseUrl(environment?: HmrcEnvironment): string {
+  return isHmrcSandbox(environment)
     ? process.env.HMRC_SANDBOX_BASE_URL || "https://test-api.service.hmrc.gov.uk"
     : process.env.HMRC_PRODUCTION_BASE_URL || "https://api.service.hmrc.gov.uk";
 }
 
-export function hmrcOAuthCredentials(): { clientId: string; clientSecret: string } {
-  if (isHmrcSandbox()) {
+export function hmrcOAuthCredentials(environment?: HmrcEnvironment): { clientId: string; clientSecret: string } {
+  if (isHmrcSandbox(environment)) {
     return {
       clientId: process.env.HMRC_SANDBOX_CLIENT_ID || process.env.HMRC_CLIENT_ID || "",
       clientSecret: process.env.HMRC_SANDBOX_CLIENT_SECRET || process.env.HMRC_CLIENT_SECRET || "",

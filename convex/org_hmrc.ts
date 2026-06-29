@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalQuery, mutation, query } from "./_generated/server";
 import { getActiveOrgId } from "./lib/org_access";
 import { evaluateOrgLiveReadiness } from "./lib/org_live_readiness";
 import { requireAdmin } from "./lib/user_role";
@@ -38,6 +38,21 @@ export const getModeForOrg = query({
   },
 });
 
+
+export const getModeForOrgInternal = internalQuery({
+  args: { orgId: v.string() },
+  handler: async (ctx, args) => {
+    const orgId = args.orgId.trim();
+    if (!orgId) return { hmrcMode: "practice" as const };
+
+    const row = await ctx.db
+      .query("org_hmrc_settings")
+      .withIndex("by_org", (q) => q.eq("orgId", orgId))
+      .unique();
+
+    return { hmrcMode: (row?.hmrcMode ?? "practice") as OrgHmrcMode };
+  },
+});
 export const getSandboxTestUserForOrg = query({
   args: { orgId: v.string() },
   handler: async (ctx, args) => {
