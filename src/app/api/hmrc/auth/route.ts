@@ -5,7 +5,7 @@ import {
   hmrcOAuthCredentialError,
   hmrcOAuthCredentials,
 } from "../../../../lib/hmrc-oauth";
-import { createPkcePair, hmrcPkceCookieName } from "../../../../lib/hmrc-pkce";
+import { createPkcePair, hmrcPkceCookieName, HMRC_OAUTH_STATE_COOKIE } from "../../../../lib/hmrc-pkce";
 import { getAuthenticatedConvex } from "../../../../lib/hmrc-route-session";
 import { resolveOrgHmrcRoutingForOrg } from "../../../../lib/hmrc-org-routing";
 
@@ -63,6 +63,13 @@ export async function GET() {
 
   const response = NextResponse.redirect(hmrcAuthUrl.toString());
   response.cookies.set(hmrcPkceCookieName(stateNonce), codeVerifier, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 600,
+    path: "/",
+  });
+  response.cookies.set(HMRC_OAUTH_STATE_COOKIE, state, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

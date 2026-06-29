@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "crypto";
 
 export const HMRC_PKCE_COOKIE_PREFIX = "hmrc_pkce_";
+export const HMRC_OAUTH_STATE_COOKIE = "hmrc_oauth_state";
 
 /** Cookie name for the PKCE verifier tied to a specific OAuth state nonce. */
 export function hmrcPkceCookieName(stateNonce: string): string {
