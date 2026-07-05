@@ -1,0 +1,52 @@
+{
+  "version": "test-fixture",
+  "sourceRef": "UK Sanctions List",
+  "sourceUrl": "https://sanctionslist.fcdo.gov.uk/docs/UK-Sanctions-List.xml",
+  "govPublicationUrl": "https://www.gov.uk/government/publications/the-uk-sanctions-list",
+  "dateGenerated": "2026-06-26",
+  "entityCount": 3,
+  "entities": [
+    {
+      "uniqueId": "AFG0001",
+      "groupType": "entity",
+      "regimeName": "The Afghanistan (Sanctions) (EU Exit) Regulations 2020",
+      "measures": ["asset_freeze"],
+      "names": [
+        { "nameType": "Primary Name", "fullName": "HAJI KHAIRULLAH HAJI SATTAR MONEY EXCHANGE", "nameParts": {} },
+        { "nameType": "Alias", "fullName": "Haji Alim Hawala", "nameParts": {} }
+      ],
+      "nonLatinNames": [],
+      "addresses": [{ "lines": ["Ansari Market"], "country": "Afghanistan" }],
+      "dobs": [],
+      "identifiers": [],
+      "lastUpdated": "2026-04-16",
+      "dateDesignated": "2012-06-29"
+    },
+    {
+      "uniqueId": "TST0001",
+      "groupType": "individual",
+      "regimeName": "Test Regime",
+      "measures": ["asset_freeze"],
+      "names": [{ "nameType": "Primary name", "fullName": "John Smith", "nameParts": {} }],
+      "nonLatinNames": [],
+      "addresses": [],
+      "dobs": ["1980-01-01", "1981-01-01"],
+      "identifiers": [{ "type": "passport", "value": "AB123456" }],
+      "lastUpdated": "2026-01-01",
+      "dateDesignated": "2020-01-01"
+    },
+    {
+      "uniqueId": "DPR0075",
+      "groupType": "ship",
+      "regimeName": "DPRK Regime",
+      "measures": ["prohibition_of_port_entry"],
+      "names": [{ "nameType": "Primary name", "fullName": "Petrel 8", "nameParts": {} }],
+      "nonLatinNames": [],
+      "addresses": [],
+      "dobs": [],
+      "identifiers": [{ "type": "imo", "value": "1234567" }],
+      "lastUpdated": "2021-12-18",
+      "dateDesignated": "2017-10-03"
+    }
+  ]
+}

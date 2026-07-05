@@ -30,5 +30,17 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "cloudagent"]
+  "exclude": [
+    "node_modules",
+    "cloudagent",
+    "lora-dataset-legacy-do-not-train-representation",
+    "lora-dataset",
+    "lora-dataset-v2",
+    "lora-dataset-reasoning",
+    "lora-output",
+    "lora-runpod-bundle",
+    "data",
+    "test-evidence",
+    "scripts/lora"
+  ]
 }
