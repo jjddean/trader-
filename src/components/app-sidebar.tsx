@@ -47,10 +47,9 @@ const navItems = [
     label: "Compliance",
     icon: ShieldCheck,
     items: [
-      { href: "/dashboard/trade-compliance", label: "Trade Compliance" },
+      { href: "/dashboard/trade-compliance", label: "Export Controls" },
       { href: "/dashboard/tools/hscode-lookup", label: "HS Code Lookup" },
       { href: "/dashboard/tre-import", label: "Import TRE" },
-      { href: "/dashboard/audit", label: "Compliance Audit" },
       { href: "/dashboard/reports", label: "Customs Reports" },
       { href: "/dashboard/records", label: "Financial Records" },
     ],
