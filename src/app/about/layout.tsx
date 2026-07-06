@@ -1,17 +1,5 @@
-import { Metadata } from "next";
+import { MarketingPageShell } from "@/components/marketing-page-shell";
 
-export const metadata: Metadata = {
-  title: "About Us | Enterprise Customs Intelligence | FreightCode",
-  description: "FreightCode is building the foundational intelligence layer for global trade data, starting with UK HMRC CDS declarations and compliance tooling.",
-  alternates: {
-    canonical: "/about",
-  },
-};
-
-export default function AboutLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return <>{children}</>;
+export default function AboutLayout({ children }: { children: React.ReactNode }) {
+  return <MarketingPageShell badge="About">{children}</MarketingPageShell>;
 }

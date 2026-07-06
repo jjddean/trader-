@@ -1,14 +1,88 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
-import { ArrowRight, Plus, Minus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ArrowRight } from "lucide-react";
 import { SignUpCta } from "@/components/sign-up-cta";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { WaitlistForm } from "@/components/waitlist-form";
 import { HomeDashboardPreview } from "@/components/home-dashboard-preview";
+
+const landingGuideCard = "rounded-2xl border border-slate-200 bg-white p-8";
+
+const howItWorksSteps = [
+  {
+    step: 1,
+    title: "Build your declaration",
+    body: "Upload commercial invoices to extract line items automatically, or add goods manually. Use HS lookup, attach documents, and capture EORI, valuation, and payment details — you review before submit.",
+  },
+  {
+    step: 2,
+    title: "Validate with dry-run",
+    body: "Run pre-submit checks against CDS rules and schema before any HMRC call. Fix field errors and document gaps while the declaration is still a draft.",
+  },
+  {
+    step: 3,
+    title: "Submit and track",
+    body: "Connect HMRC via OAuth, submit to CDS (or TDR in practice mode), then follow status and DMS notifications. Amend or cancel where HMRC allows.",
+  },
+];
+
+const coreCapabilities = [
+  {
+    id: "declarations",
+    label: "Declaration workspace",
+    benefit:
+      "Create and edit import declarations with goods items, documents, dry-run, submit, amend, and cancel through HMRC CDS APIs.",
+  },
+  {
+    id: "hmrc",
+    label: "HMRC OAuth",
+    benefit:
+      "Connect in Settings to authorise submit and status. Practice orgs use HMRC Test User credentials; live orgs use Government Gateway.",
+  },
+  {
+    id: "prefill",
+    label: "HS lookup & invoice extract",
+    benefit:
+      "Look up commodity codes and apply them to line items. Upload commercial invoices to pre-fill goods fields — you review before submit.",
+  },
+  {
+    id: "estimates",
+    label: "Duty estimates",
+    benefit:
+      "Pre-clearance duty and VAT estimates from Trade Tariff data on your draft. HMRC DMSTAX still overrides on acceptance.",
+  },
+  {
+    id: "notifications",
+    label: "Status & notifications",
+    benefit:
+      "Pull HMRC notifications and map DMS codes to declaration status. Webhook receiver for push events when configured.",
+  },
+  {
+    id: "storage",
+    label: "Document vault",
+    benefit:
+      "Attach invoices and supporting documents to declarations. Organised by MRN for audit retrieval.",
+  },
+];
+
+const trePillars = [
+  {
+    title: "Export from HMRC TRE",
+    body: "Request CSV reports in HMRC\u2019s Trade Reporting service \u2014 the same data brokers used to buy from third parties.",
+  },
+  {
+    title: "Upload & review",
+    body: "Import CSVs in your org workspace \u2014 preview columns, confirm import, and browse stored line items without Excel gymnastics.",
+  },
+  {
+    title: "Review opportunities",
+    body: "Flag possible preference or duty mismatches for review with your customs adviser \u2014 indicative hints, not automatic reclaim filing.",
+  },
+];
 
 const faqs = [
   {
@@ -34,7 +108,6 @@ const faqs = [
 ];
 
 export function LandingPageContent() {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
   const { isSignedIn } = useAuth();
 
   return (
@@ -48,7 +121,7 @@ export function LandingPageContent() {
             "name": "Freightcode",
             "applicationCategory": "BusinessApplication",
             "operatingSystem": "Web",
-            "description": "UK customs declaration software for HMRC CDS — build, validate, and submit declarations with duty estimates and compliance tooling."
+            "description": "Customs & Trade Compliance OS for UK importers — draft CDS declarations, dry-run validate, submit via HMRC OAuth, and track DMS notifications in one workspace."
           })
         }}
       />
@@ -80,11 +153,11 @@ export function LandingPageContent() {
                 <span className="text-[18px] leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.25)]">🛃</span>
               </div>
               <span className="text-[16px] font-medium tracking-normal text-[#020817]">
-                UK Customs Declaration Software
+                Customs & Trade Compliance OS
               </span>
             </div>
 
-            <h1 className="mb-3 text-[34px] md:text-[44px] font-bold tracking-tight leading-[1.1] text-[#020817]">
+            <h1 className="mb-3 text-[34px] font-bold leading-[1.1] tracking-tight text-[#020817] md:text-[44px]">
               Full control of your customs
               <br />
               declarations, duties, and compliance.
@@ -112,84 +185,28 @@ export function LandingPageContent() {
         <section className="bg-white px-[24px] pb-[72px]">
           <div className="mx-auto max-w-[1200px] text-center">
             <HomeDashboardPreview />
-            <div className="mx-auto mt-36 max-w-[900px]">
-              <h2 className="text-[34px] leading-[1.06] font-bold tracking-tight text-[#020817] md:text-[44px]">
-                Build declarations. Validate before submit. Stay audit-ready.
-              </h2>
-              <p className="mx-auto mt-4 max-w-[760px] text-[18px] leading-[1.6] text-slate-600">
-                Create goods items with HS lookup and invoice extraction, pre-check XML with dry-run, submit to HMRC CDS, and keep documents and notification history with each declaration.
-              </p>
-            </div>
           </div>
         </section>
-
-        {/* Stats + Audience Strip */}
-        <section className="border-y border-gray-100 bg-gray-50/50 py-28">
-          <div className="mx-auto max-w-[1280px] px-[24px]">
-            <div className="flex flex-col items-center justify-center gap-6 sm:flex-row sm:gap-16">
-              <div className="text-center">
-                <p className="text-[24px] font-bold tracking-tight text-[#020817]">£4.8bn</p>
-                <p className="mt-1 text-[13px] text-slate-500">UK customs duty paid annually</p>
-              </div>
-              <div className="hidden h-8 w-px bg-gray-200 sm:block" />
-              <div className="text-center">
-                <p className="text-[24px] font-bold tracking-tight text-[#020817]">3 years</p>
-                <p className="mt-1 text-[13px] text-slate-500">Typical HMRC window to review overpaid duty</p>
-              </div>
-              <div className="hidden h-8 w-px bg-gray-200 sm:block" />
-              <div className="text-center">
-                <p className="text-[24px] font-bold tracking-tight text-[#020817]">28 Mar 2026</p>
-                <p className="mt-1 text-[13px] text-slate-500">CDS 5.1.0 enforcement live</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* How It Works Section */}
         <section id="how-it-works" className="py-[96px]">
           <div className="mx-auto max-w-[1280px] px-[24px]">
-            <div className="mb-[64px] text-center">
-              <h2 className="mb-4 text-[36px] font-bold tracking-tight text-[#020817] md:text-[42px]">
-                How It Works
-              </h2>
-              <p className="mx-auto max-w-2xl text-[18px] leading-[1.6] text-slate-600">
+            <div className="mb-12 text-center">
+              <h2 className="mb-4 text-3xl font-bold tracking-tight text-slate-900">How It Works</h2>
+              <p className="mx-auto max-w-2xl text-[16px] leading-relaxed text-slate-600">
                 Three steps from draft declaration to HMRC acceptance — with validation and document support built in.
               </p>
             </div>
 
-            <div className="grid gap-[32px] md:grid-cols-3">
-              {/* Step 1 */}
-              <div className="relative text-center px-[16px]">
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-[24px] font-bold text-[#1d6fc0]">
-                  1
+            <div className="grid gap-6 md:grid-cols-3">
+              {howItWorksSteps.map((item) => (
+                <div key={item.step} className={landingGuideCard}>
+                  <p className="mb-3 text-[13px] font-semibold uppercase tracking-widest text-blue-600">
+                    Step {item.step}
+                  </p>
+                  <h3 className="mb-3 text-lg font-semibold tracking-tight text-slate-900">{item.title}</h3>
+                  <p className="text-[15px] leading-relaxed text-slate-600">{item.body}</p>
                 </div>
-                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Build your declaration</h3>
-                <p className="text-[16px] leading-[1.6] text-slate-600">
-                  Add goods items manually or from invoice PDFs. Use HS lookup, attach documents, and capture EORI, valuation, and payment details on the form.
-                </p>
-              </div>
-
-              {/* Step 2 */}
-              <div className="relative text-center px-[16px]">
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-[24px] font-bold text-[#1d6fc0]">
-                  2
-                </div>
-                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Validate with dry-run</h3>
-                <p className="text-[16px] leading-[1.6] text-slate-600">
-                  Run pre-submit checks against CDS rules and schema before any HMRC call. Fix field errors and document gaps while the declaration is still a draft.
-                </p>
-              </div>
-
-              {/* Step 3 */}
-              <div className="relative text-center px-[16px]">
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-[24px] font-bold text-[#1d6fc0]">
-                  3
-                </div>
-                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Submit and track</h3>
-                <p className="text-[16px] leading-[1.6] text-slate-600">
-                  Connect HMRC via OAuth, submit to CDS (or TDR in practice mode), then follow status and DMS notifications. Amend or cancel where HMRC allows.
-                </p>
-              </div>
+              ))}
             </div>
           </div>
         </section>
@@ -197,103 +214,42 @@ export function LandingPageContent() {
         {/* Core Capabilities Grid Section */}
         <section id="features" className="bg-gray-50/30 py-[96px]">
           <div className="mx-auto max-w-[1280px] px-[24px]">
-            <div className="mb-[64px] text-center">
-              <h2 className="mb-4 text-[36px] font-bold tracking-tight text-[#020817] md:text-[42px]">
-                Core Capabilities
-              </h2>
-              <p className="mx-auto max-w-2xl text-[18px] leading-[1.6] text-slate-600">
+            <div className="mb-12 text-center">
+              <h2 className="mb-4 text-3xl font-bold tracking-tight text-slate-900">Core Capabilities</h2>
+              <p className="mx-auto max-w-2xl text-[16px] leading-relaxed text-slate-600">
                 Build and submit UK import declarations through HMRC CDS — with duty estimates, documents, and status tracking.
               </p>
             </div>
 
-            <div className="grid gap-[24px] md:grid-cols-2 lg:grid-cols-3">
-              {[
-                { 
-                  id: 'declarations', 
-                  label: 'Declaration workspace',
-                  benefit: 'Create and edit import declarations with goods items, documents, dry-run, submit, amend, and cancel through HMRC CDS APIs.',
-                },
-                { 
-                  id: 'hmrc', 
-                  label: 'HMRC OAuth',
-                  benefit: 'Connect in Settings to authorise submit and status. Practice orgs use HMRC Test User credentials; live orgs use Government Gateway.',
-                },
-                { 
-                  id: 'prefill', 
-                  label: 'HS lookup & invoice extract',
-                  benefit: 'Look up commodity codes and apply them to line items. Upload commercial invoices to pre-fill goods fields — you review before submit.',
-                },
-                { 
-                  id: 'estimates', 
-                  label: 'Duty estimates',
-                  benefit: 'Pre-clearance duty and VAT estimates from Trade Tariff data on your draft. HMRC DMSTAX still overrides on acceptance.',
-                },
-                { 
-                  id: 'notifications', 
-                  label: 'Status & notifications',
-                  benefit: 'Pull HMRC notifications and map DMS codes to declaration status. Webhook receiver for push events when configured.',
-                },
-                { 
-                  id: 'storage', 
-                  label: 'Document vault',
-                  benefit: 'Attach invoices and supporting documents to declarations. Organised by MRN for audit retrieval.',
-                },
-              ].map((item) => (
-                <div key={item.id} className="group relative overflow-hidden rounded-xl border border-[#e9e9e7] bg-white shadow-sm transition-all hover:shadow-md flex flex-col p-[24px] h-full">
-                  <h3 className="mb-2 text-[18px] font-bold text-[#37352f]">{item.label}</h3>
-                  <p className="text-[14.5px] leading-[1.6] text-[#5f5e58] flex-grow">
-                    {item.benefit}
-                  </p>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {coreCapabilities.map((item) => (
+                <div key={item.id} className={`${landingGuideCard} flex h-full flex-col`}>
+                  <h3 className="mb-3 text-lg font-semibold tracking-tight text-slate-900">{item.label}</h3>
+                  <p className="flex-grow text-[15px] leading-relaxed text-slate-600">{item.benefit}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
         {/* TRE Data Analysis Section */}
-        <section id="tre-analysis" className="py-[96px] bg-white">
+        <section id="tre-analysis" className="bg-white py-[96px]">
           <div className="mx-auto max-w-[1280px] px-[24px]">
-            <div className="mb-[64px] text-center">
-              <h2 className="mb-4 text-[36px] font-bold tracking-tight leading-[1.15] text-[#020817] md:text-[42px]">
+            <div className="mb-12 text-center">
+              <h2 className="mb-4 text-3xl font-bold leading-snug tracking-tight text-slate-900">
                 Import and review declaration history from HMRC TRE
               </h2>
-              <p className="mx-auto max-w-2xl text-[18px] leading-[1.6] text-slate-600">
+              <p className="mx-auto max-w-2xl text-[16px] leading-relaxed text-slate-600">
                 HMRC Trade Reporting gives you CSV exports of past declarations. Upload them in Import TRE to browse line items, run preference checks, and keep history next to new declarations.
               </p>
             </div>
 
-            <div className="grid gap-[32px] md:grid-cols-3">
-              {/* Pillar 1 */}
-              <div className="rounded-2xl border border-[#e9e9e7] bg-gray-50/50 p-8 transition-all hover:bg-white hover:shadow-lg">
-                <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-md bg-[#111827] text-white">
-                  <ArrowRight className="h-4 w-4" />
+            <div className="grid gap-6 md:grid-cols-3">
+              {trePillars.map((item) => (
+                <div key={item.title} className={landingGuideCard}>
+                  <h3 className="mb-3 text-lg font-semibold tracking-tight text-slate-900">{item.title}</h3>
+                  <p className="text-[15px] leading-relaxed text-slate-600">{item.body}</p>
                 </div>
-                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Export from HMRC TRE</h3>
-                <p className="text-[15px] leading-[1.6] text-slate-600">
-                  Request CSV reports in HMRC&apos;s Trade Reporting service — the same data brokers used to buy from third parties.
-                </p>
-              </div>
-
-              {/* Pillar 2 */}
-              <div className="rounded-2xl border border-[#e9e9e7] bg-gray-50/50 p-8 transition-all hover:bg-white hover:shadow-lg">
-                <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-md bg-[#111827] text-white">
-                  <ArrowRight className="h-4 w-4" />
-                </div>
-                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Upload & review</h3>
-                <p className="text-[15px] leading-[1.6] text-slate-600">
-                  Import CSVs in your org workspace — preview columns, confirm import, and browse stored line items without Excel gymnastics.
-                </p>
-              </div>
-
-              {/* Pillar 3 */}
-              <div className="rounded-2xl border border-[#e9e9e7] bg-gray-50/50 p-8 transition-all hover:bg-white hover:shadow-lg">
-                <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-md bg-[#111827] text-white">
-                  <ArrowRight className="h-4 w-4" />
-                </div>
-                <h3 className="mb-3 text-[20px] font-bold text-[#020817]">Review opportunities</h3>
-                <p className="text-[15px] leading-[1.6] text-slate-600">
-                  Flag possible preference or duty mismatches for review with your customs adviser — indicative hints, not automatic reclaim filing.
-                </p>
-              </div>
+              ))}
             </div>
 
             <div className="mt-12 text-center">
@@ -305,29 +261,29 @@ export function LandingPageContent() {
         </section>
 
 
-        {/* Free Calculators Promotion section */}
+        {/* Pre-clearance financial tools */}
         <section id="resources" className="py-[96px]">
-          <div className="mx-auto max-w-[1280px] px-[24px]">
-             <div className="rounded-2xl border border-slate-100 bg-[#0f172a] p-[48px] md:p-[64px] relative overflow-hidden flex flex-col items-center text-center">
-                {/* Decorative background elements */}
-                <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl"></div>
-                <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl"></div>
-                
-                <h2 className="mb-6 text-[32px] leading-tight font-bold tracking-tight text-white md:text-[36px] relative z-10">
-                  Try our Free Customs Tooling
-                </h2>
-                <p className="mb-8 text-[18px] leading-[1.6] text-slate-300 max-w-2xl relative z-10">
-                   As we are currently in beta, use our suite of standalone intelligent calculators to estimate UK Import Duty, Anti-Dumping tariffs, and Postponed VAT Accounting completely free of charge.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full justify-center px-6 sm:px-0">
-                   <Link href="/hs-code-lookup" className="h-[42px] px-6 rounded-md bg-white text-slate-900 text-[14px] font-medium flex items-center justify-center hover:bg-slate-100 transition-colors w-full sm:w-auto">
-                      Try HS Code Lookup
-                   </Link>
-                   <Link href="/tools" className="h-[42px] px-6 rounded-md border border-white/20 text-white text-[14px] font-medium flex items-center justify-center hover:bg-white/10 transition-colors w-full sm:w-auto">
-                      Open Calculators
-                   </Link>
-                </div>
-             </div>
+          <div className="mx-auto max-w-[768px] px-[24px]">
+            <div className="rounded-2xl bg-[#0f172a] p-8 text-white">
+              <h2 className="mb-3 text-[18px] font-semibold">Pre-clearance duty and VAT estimates</h2>
+              <p className="mb-6 text-[14px] leading-relaxed text-slate-300">
+                Estimate duty, VAT, and landed cost from Trade Tariff data before you file. Look up commodity codes and model PVA cashflow — the same logic used in your declaration workspace. HMRC-confirmed amounts always override on acceptance.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/hs-code-lookup"
+                  className="inline-flex items-center rounded-md bg-white px-4 py-2 text-[13px] font-semibold text-slate-900 transition-colors hover:bg-slate-100"
+                >
+                  HS Code Lookup
+                </Link>
+                <Link
+                  href="/tools"
+                  className="inline-flex items-center rounded-md bg-slate-700 px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-slate-600"
+                >
+                  Duty &amp; VAT estimates
+                </Link>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -343,40 +299,21 @@ export function LandingPageContent() {
               </p>
             </div>
 
-            <div className="space-y-4">
-              {faqs.map((faq, index) => (
-                <div
-                  key={index}
-                  className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md"
-                >
-                  <button
-                    onClick={() => setOpenFaq(openFaq === index ? null : index)}
-                    className="group flex w-full items-center justify-between p-[24px] text-left"
-                  >
-                    <span className="text-[16px] font-bold text-slate-900">{faq.question}</span>
-                    <div
-                      className={cn(
-                        "flex h-8 w-8 items-center justify-center rounded-full transition-all",
-                        openFaq === index ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600",
-                      )}
-                    >
-                      {openFaq === index ? (
-                        <Minus className="h-4 w-4" />
-                      ) : (
-                        <Plus className="h-4 w-4" />
-                      )}
-                    </div>
-                  </button>
-                  <div
-                    className={cn(
-                      "overflow-hidden px-[24px] transition-all duration-300 ease-in-out",
-                      openFaq === index ? "max-h-[200px] pb-[24px]" : "max-h-0",
-                    )}
-                  >
-                    <p className="text-[16px] leading-relaxed text-slate-600">{faq.answer}</p>
-                  </div>
+            <div className="space-y-8">
+              {faqs.map((faq) => (
+                <div key={faq.question} className="border-b border-slate-200 pb-8 last:border-0 last:pb-0">
+                  <h3 className="mb-2 text-[16px] font-bold text-slate-900">{faq.question}</h3>
+                  <p className="text-[16px] leading-relaxed text-slate-600">{faq.answer}</p>
                 </div>
               ))}
+            </div>
+
+            <div className="mt-12 rounded-2xl bg-[#0f172a] p-8 text-white">
+              <h3 className="mb-3 text-[18px] font-semibold">Sign up for beta access</h3>
+              <p className="mb-6 text-[14px] leading-relaxed text-slate-300">
+                Leave your work email and we&apos;ll reach out when a spot opens up.
+              </p>
+              <WaitlistForm variant="card" />
             </div>
           </div>
         </section>
@@ -386,3 +323,5 @@ export function LandingPageContent() {
     </div>
   );
 }
+
+

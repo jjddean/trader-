@@ -2,62 +2,71 @@
 
 import { TariffUnifiedTool } from '@/components/TariffUnifiedTool';
 
+const workflowSteps = [
+  {
+    title: 'Estimate landed cost',
+    body: 'Run pre-clearance duty, VAT, and border charge estimates from Trade Tariff data. Results are indicative — HMRC DMSTAX overrides on acceptance.',
+  },
+  {
+    title: 'Classify goods',
+    body: 'Confirm commodity codes and tariff measures before filing. Incorrect classification affects duty rates, compliance risk, and clearance outcomes.',
+  },
+  {
+    title: 'Carry into declarations',
+    body: 'Use the same logic in your declaration workspace. When HMRC notifications arrive, compare estimates against confirmed duty and VAT amounts.',
+  },
+];
+
 export default function ToolsPage() {
-    return (
-        <div className="min-h-screen flex flex-col">
-            <main className="flex-1 bg-slate-50">
-                <section className="pt-24 pb-12 px-6 relative">
-                    <div className="max-w-5xl mx-auto">
-                        {/* Tariff Tool */}
-                        <div className="relative">
-                            <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-                                <div className="p-8 md:p-12 bg-slate-50/50 border-b border-slate-100">
-                                    <div className="text-center mb-8">
-                                        <div className="inline-flex items-center px-3 py-1 bg-blue-50 rounded-full mb-4">
-                                            <span className="text-blue-600 text-xs font-bold uppercase tracking-wider">Tariff Tool</span>
-                                        </div>
-                                        <h2 className="text-3xl font-bold text-slate-900 mb-3">
-                                            UK Import <span className="text-blue-600">Calculator</span>
-                                        </h2>
-                                        <p className="text-slate-500 text-base max-w-2xl mx-auto">
-                                            Estimate UK Import Duty, VAT, and total landed costs using simplified and advanced audit modes.
-                                        </p>
-                                    </div>
-                                    <div className="max-w-2xl mx-auto">
-                                        <TariffUnifiedTool />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+  return (
+    <div className="flex min-h-screen flex-col">
+      <main className="flex-1 bg-slate-50">
+        <section className="relative px-6 pb-12 pt-24">
+          <div className="mx-auto max-w-5xl">
+            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+              <div className="border-b border-slate-100 bg-slate-50/50 p-8 md:p-12">
+                <div className="mb-8 text-center">
+                  <p className="mb-3 text-[13px] font-semibold uppercase tracking-widest text-blue-600">
+                    Pre-clearance
+                  </p>
+                  <h1 className="mb-3 text-3xl font-bold tracking-tight text-slate-900">
+                    Duty &amp; VAT estimates
+                  </h1>
+                  <p className="mx-auto max-w-2xl text-[16px] leading-relaxed text-slate-600">
+                    Estimate duty, VAT, and landed cost from Trade Tariff data before you file. Model cashflow impact and review tariff measures ahead of CDS submission.
+                  </p>
+                </div>
+                <div className="mx-auto max-w-2xl">
+                  <TariffUnifiedTool />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
-                {/* Compliance Note */}
-                <section className="py-24 bg-white text-slate-900 border-t border-slate-200 relative overflow-hidden">
-                    <div className="max-w-5xl mx-auto px-6 text-center relative z-10">
-                        <h2 className="text-2xl font-bold mb-6 text-slate-900">Declaration support</h2>
-                        <p className="text-slate-500 mb-16 max-w-2xl mx-auto text-base">
-                            Our internal compliance team reviews all Import Declarations for accuracy.
-                            We track the entire import lifecycle in your Freightcode dashboard.
-                        </p>
+        <section className="relative overflow-hidden border-t border-slate-200 bg-white py-24 text-slate-900">
+          <div className="relative z-10 mx-auto max-w-5xl px-6">
+            <div className="mb-12 text-center">
+              <h2 className="mb-4 text-3xl font-bold tracking-tight text-slate-900">In your declaration workspace</h2>
+              <p className="mx-auto max-w-2xl text-[16px] leading-relaxed text-slate-600">
+                These checks support filing decisions — dry-run validation, pre-clearance estimates, and HMRC notification tracking in one place.
+              </p>
+            </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-                            <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-200 transition-colors group">
-                                <div className="text-blue-600 font-bold text-lg mb-4 italic tracking-tighter group-hover:translate-x-1 transition-transform inline-block">01. ESTIMATE</div>
-                                <p className="text-sm text-slate-500 leading-relaxed">Use the calculator to evaluate landed costs and identify applicable duty rates.</p>
-                            </div>
-                            <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-200 transition-colors group">
-                                <div className="text-blue-600 font-bold text-lg mb-4 italic tracking-tighter group-hover:translate-x-1 transition-transform inline-block">02. UPLOAD</div>
-                                <p className="text-sm text-slate-500 leading-relaxed">Securely upload your Commercial Invoices and Packing Lists. Extracted fields help pre-fill goods items on declarations.</p>
-                            </div>
-                            <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-200 transition-colors group">
-                                <div className="text-blue-600 font-bold text-lg mb-4 italic tracking-tighter group-hover:translate-x-1 transition-transform inline-block">03. MANAGE</div>
-                                <p className="text-sm text-slate-500 leading-relaxed">We process the declarations and update your status to <span className="text-emerald-600 font-medium">"Clearance in Progress"</span>. Track every shipment in real-time.</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </main>
-        </div>
-    );
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              {workflowSteps.map((step) => (
+                <div
+                  key={step.title}
+                  className="rounded-2xl border border-slate-200 bg-white p-8"
+                >
+                  <h3 className="mb-3 text-lg font-semibold tracking-tight text-slate-900">{step.title}</h3>
+                  <p className="text-[15px] leading-relaxed text-slate-600">{step.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
 }
