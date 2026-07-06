@@ -41,7 +41,10 @@
     "lora:prepare:worker-json-v2": "python scripts/lora/generate_worker_json_correction_dataset.py --out lora-dataset-worker-json-v2 && python scripts/lora/validate_worker_json_dataset.py lora-dataset-worker-json-v2",
     "lora:validate:worker-json-v2": "python scripts/lora/validate_worker_json_dataset.py lora-dataset-worker-json-v2",
     "lora:train:worker-json-v2:dry-run": "python scripts/lora/train_worker_json_unsloth.py",
-    "lora:train:worker-json-v2": "python scripts/lora/train_worker_json_unsloth.py --execute"
+    "lora:train:worker-json-v2": "python scripts/lora/train_worker_json_unsloth.py --execute",
+    "lora:runpod:worker-json-v2:validate": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/lora/runpod-worker-json.ps1 -Action Validate",
+    "lora:runpod:worker-json-v2:prepare": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/lora/runpod-worker-json.ps1 -Action Prepare",
+    "lora:runpod:worker-json-v2:launch": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/lora/runpod-worker-json.ps1 -Action Launch"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1003.0",
@@ -104,4 +107,3 @@
     "typescript": "^5"
   }
 }
-
