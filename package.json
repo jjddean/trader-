@@ -39,7 +39,9 @@
     "lora:deploy": "node scripts/lora/run.mjs deploy",
     "lora:all": "node scripts/lora/refuse_legacy_lora.mjs",
     "lora:prepare:worker-json-v2": "python scripts/lora/generate_worker_json_correction_dataset.py --out lora-dataset-worker-json-v2 && python scripts/lora/validate_worker_json_dataset.py lora-dataset-worker-json-v2",
-    "lora:validate:worker-json-v2": "python scripts/lora/validate_worker_json_dataset.py lora-dataset-worker-json-v2"
+    "lora:validate:worker-json-v2": "python scripts/lora/validate_worker_json_dataset.py lora-dataset-worker-json-v2",
+    "lora:train:worker-json-v2:dry-run": "python scripts/lora/train_worker_json_unsloth.py",
+    "lora:train:worker-json-v2": "python scripts/lora/train_worker_json_unsloth.py --execute"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1003.0",
