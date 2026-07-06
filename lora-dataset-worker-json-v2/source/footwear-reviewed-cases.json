@@ -1,0 +1,506 @@
+[
+  {
+    "id": "fw-train-001",
+    "split": "train",
+    "product": "women's ankle boot, leather upper, leather outer sole, insole 25 cm",
+    "code": "6403519900",
+    "sex": "women",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-train-002",
+    "split": "train",
+    "product": "men's ankle boot, leather upper, leather outer sole, insole 27 cm",
+    "code": "6403519500",
+    "sex": "men",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-train-003",
+    "split": "train",
+    "product": "women's leather ankle boots with leather soles, size 39",
+    "code": "6403519900",
+    "sex": "women",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-train-004",
+    "split": "train",
+    "product": "men's leather ankle boots with full leather outer sole",
+    "code": "6403519500",
+    "sex": "men",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-train-005",
+    "split": "train",
+    "product": "women's leather upper ankle boots with rubber outer sole",
+    "code": "6403919800",
+    "sex": "women",
+    "sole": "rubber/plastics",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-train-006",
+    "split": "train",
+    "product": "men's leather upper ankle boots with rubber sole, not safety footwear",
+    "code": "6403919600",
+    "sex": "men",
+    "sole": "rubber/plastics",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-train-007",
+    "split": "train",
+    "product": "women's leather dress shoes, leather uppers, rubber outer soles, not ankle boots",
+    "code": "6403999800",
+    "sex": "women",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-train-008",
+    "split": "train",
+    "product": "men's leather dress shoes with rubber soles, not covering ankle",
+    "code": "6403999600",
+    "sex": "men",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-train-009",
+    "split": "train",
+    "product": "women's court shoes, leather upper, plastic outer sole",
+    "code": "6403999800",
+    "sex": "women",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-train-010",
+    "split": "train",
+    "product": "men's formal leather shoes with synthetic rubber outsole",
+    "code": "6403999600",
+    "sex": "men",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-train-011",
+    "split": "train",
+    "product": "children's leather upper shoes, rubber outer sole, insole 22 cm",
+    "code": "6403999100",
+    "sex": "child/less than 24 cm",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-train-012",
+    "split": "train",
+    "product": "children's leather ankle boots, leather outer sole, insole 22 cm",
+    "code": "6403519100",
+    "sex": "child/less than 24 cm",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-train-013",
+    "split": "train",
+    "product": "women's leather riding-style ankle boot with leather sole, not sports footwear",
+    "code": "6403519900",
+    "sex": "women",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-train-014",
+    "split": "train",
+    "product": "men's smart ankle boot, leather upper and leather sole",
+    "code": "6403519500",
+    "sex": "men",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-train-015",
+    "split": "train",
+    "product": "women's leather loafers, rubber sole, do not cover ankle",
+    "code": "6403999800",
+    "sex": "women",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-train-016",
+    "split": "train",
+    "product": "men's leather loafers with rubber outer sole",
+    "code": "6403999600",
+    "sex": "men",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-train-017",
+    "split": "train",
+    "product": "leather upper shoes with rubber outer soles, cannot identify men's or women's, insole 26 cm",
+    "code": "6403999300",
+    "sex": "unisex/unknown",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-train-018",
+    "split": "train",
+    "product": "leather upper ankle boots with rubber soles, cannot identify men's or women's, insole 26 cm",
+    "code": "6403919300",
+    "sex": "unisex/unknown",
+    "sole": "rubber/plastics",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-train-019",
+    "split": "train",
+    "product": "women's ankle boot described as leather shoe, but outsole is rubber",
+    "code": "6403919800",
+    "sex": "women",
+    "sole": "rubber/plastics",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-train-020",
+    "split": "train",
+    "product": "men's ankle boot described as leather shoe, but outsole is rubber",
+    "code": "6403919600",
+    "sex": "men",
+    "sole": "rubber/plastics",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-train-021",
+    "split": "train",
+    "product": "women's leather ankle boot, leather sole, 24.5 cm insole",
+    "code": "6403519900",
+    "sex": "women",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-train-022",
+    "split": "train",
+    "product": "men's leather ankle boot, leather sole, 28 cm insole",
+    "code": "6403519500",
+    "sex": "men",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-train-023",
+    "split": "train",
+    "product": "women's leather shoes, composition leather sole, not covering ankle",
+    "code": "6403999800",
+    "sex": "women",
+    "sole": "composition leather",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-train-024",
+    "split": "train",
+    "product": "men's leather shoes, composition leather sole, not covering ankle",
+    "code": "6403999600",
+    "sex": "men",
+    "sole": "composition leather",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-eval-001",
+    "split": "eval",
+    "product": "ladies leather upper boots covering ankle with leather outer sole",
+    "code": "6403519900",
+    "sex": "women",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-eval-002",
+    "split": "eval",
+    "product": "mens leather ankle boot, leather outsole, fashion boot",
+    "code": "6403519500",
+    "sex": "men",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-eval-003",
+    "split": "eval",
+    "product": "ladies leather shoes with rubber outsole, below ankle",
+    "code": "6403999800",
+    "sex": "women",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-eval-004",
+    "split": "eval",
+    "product": "mens leather shoes with plastic sole, not covering ankle",
+    "code": "6403999600",
+    "sex": "men",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-eval-005",
+    "split": "eval",
+    "product": "child leather upper footwear, rubber sole, insole under 24 cm",
+    "code": "6403999100",
+    "sex": "child/less than 24 cm",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-eval-006",
+    "split": "eval",
+    "product": "child ankle boot, leather upper and leather outsole, insole under 24 cm",
+    "code": "6403519100",
+    "sex": "child/less than 24 cm",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-eval-007",
+    "split": "eval",
+    "product": "women leather ankle boot with rubber sole, not protective toe cap",
+    "code": "6403919800",
+    "sex": "women",
+    "sole": "rubber/plastics",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-eval-008",
+    "split": "eval",
+    "product": "men leather ankle boot with rubber sole, non-safety fashion boot",
+    "code": "6403919600",
+    "sex": "men",
+    "sole": "rubber/plastics",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-test-001",
+    "split": "locked-test",
+    "product": "women's black leather ankle boots, leather uppers and leather outer soles",
+    "code": "6403519900",
+    "sex": "women",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-test-002",
+    "split": "locked-test",
+    "product": "men's brown leather ankle boots, leather sole, insole 27 cm",
+    "code": "6403519500",
+    "sex": "men",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-test-003",
+    "split": "locked-test",
+    "product": "ladies leather brogues with rubber outsole, not covering the ankle",
+    "code": "6403999800",
+    "sex": "women",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-test-004",
+    "split": "locked-test",
+    "product": "men's leather oxford shoes, synthetic rubber outer sole",
+    "code": "6403999600",
+    "sex": "men",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-test-005",
+    "split": "locked-test",
+    "product": "leather upper ankle boot for women with rubber sole",
+    "code": "6403919800",
+    "sex": "women",
+    "sole": "rubber/plastics",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-test-006",
+    "split": "locked-test",
+    "product": "leather upper ankle boot for men with plastic sole",
+    "code": "6403919600",
+    "sex": "men",
+    "sole": "rubber/plastics",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-test-007",
+    "split": "locked-test",
+    "product": "children's leather upper shoes with rubber soles, 23 cm insole",
+    "code": "6403999100",
+    "sex": "child/less than 24 cm",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-test-008",
+    "split": "locked-test",
+    "product": "children's leather ankle boot with leather outsole, 23 cm insole",
+    "code": "6403519100",
+    "sex": "child/less than 24 cm",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-test-009",
+    "split": "locked-test",
+    "product": "women's formal leather shoes, outer sole of composition leather",
+    "code": "6403999800",
+    "sex": "women",
+    "sole": "composition leather",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-test-010",
+    "split": "locked-test",
+    "product": "men's formal leather shoes, outer sole of composition leather",
+    "code": "6403999600",
+    "sex": "men",
+    "sole": "composition leather",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-test-011",
+    "split": "locked-test",
+    "product": "women leather Chelsea boot, covers ankle, leather outer sole",
+    "code": "6403519900",
+    "sex": "women",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-test-012",
+    "split": "locked-test",
+    "product": "men leather Chelsea boot, covers ankle, leather outer sole",
+    "code": "6403519500",
+    "sex": "men",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-test-013",
+    "split": "locked-test",
+    "product": "ladies leather court shoe with plastic sole",
+    "code": "6403999800",
+    "sex": "women",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-test-014",
+    "split": "locked-test",
+    "product": "mens leather derby shoe with rubber sole",
+    "code": "6403999600",
+    "sex": "men",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-test-015",
+    "split": "locked-test",
+    "product": "unisex leather upper shoe, rubber outsole, 25 cm insole",
+    "code": "6403999300",
+    "sex": "unisex/unknown",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-test-016",
+    "split": "locked-test",
+    "product": "unisex leather ankle boot, rubber outsole, 25 cm insole",
+    "code": "6403919300",
+    "sex": "unisex/unknown",
+    "sole": "rubber/plastics",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-test-017",
+    "split": "locked-test",
+    "product": "women's ankle boot, leather upper, rubber outsole despite leather product description",
+    "code": "6403919800",
+    "sex": "women",
+    "sole": "rubber/plastics",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-test-018",
+    "split": "locked-test",
+    "product": "men's ankle boot, leather upper, rubber outsole despite leather product description",
+    "code": "6403919600",
+    "sex": "men",
+    "sole": "rubber/plastics",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-test-019",
+    "split": "locked-test",
+    "product": "women's leather sole ankle boots, leather uppers, size 40",
+    "code": "6403519900",
+    "sex": "women",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-test-020",
+    "split": "locked-test",
+    "product": "men's leather sole ankle boots, leather uppers, size 44",
+    "code": "6403519500",
+    "sex": "men",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-test-021",
+    "split": "locked-test",
+    "product": "girls leather shoes, rubber soles, 22 cm insole",
+    "code": "6403999100",
+    "sex": "child/less than 24 cm",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-test-022",
+    "split": "locked-test",
+    "product": "boys leather ankle boot, leather sole, 22 cm insole",
+    "code": "6403519100",
+    "sex": "child/less than 24 cm",
+    "sole": "leather",
+    "covers_ankle": true
+  },
+  {
+    "id": "fw-test-023",
+    "split": "locked-test",
+    "product": "ladies slip-on leather shoes, rubber sole, below ankle",
+    "code": "6403999800",
+    "sex": "women",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  },
+  {
+    "id": "fw-test-024",
+    "split": "locked-test",
+    "product": "mens slip-on leather shoes, rubber sole, below ankle",
+    "code": "6403999600",
+    "sex": "men",
+    "sole": "rubber/plastics",
+    "covers_ankle": false
+  }
+]
