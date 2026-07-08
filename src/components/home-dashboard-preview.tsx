@@ -150,7 +150,7 @@ export function HomeDashboardPreview() {
                     <span>Compliance</span>
                   </div>
                   <div className="ml-4 space-y-1.5 border-l border-slate-200 pl-3 text-[10px]">
-                    <div className="text-slate-500">Export Controls</div>
+                    <div className="text-slate-500">Export Control</div>
                     <div className="text-slate-500">HS Code Lookup</div>
                     <div className="text-slate-500">Import TRE</div>
                     <div className="font-medium text-black">Customs Reports</div>

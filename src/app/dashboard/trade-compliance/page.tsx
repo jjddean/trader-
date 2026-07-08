@@ -31,7 +31,7 @@ const workspaceTabs: Array<{ id: WorkspaceTab; label: string }> = [
 const assessmentTabs: Array<{ id: AssessmentTab; label: string }> = [
   { id: "overview", label: "Overview" },
   { id: "documents", label: "Documents" },
-  { id: "export", label: "Export Controls" },
+  { id: "export", label: "Export Control" },
   { id: "sanctions", label: "Sanctions" },
   { id: "licences", label: "Licences" },
   { id: "audit", label: "Audit Log" },
