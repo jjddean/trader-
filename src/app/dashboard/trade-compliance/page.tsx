@@ -31,7 +31,7 @@ const workspaceTabs: Array<{ id: WorkspaceTab; label: string }> = [
 const assessmentTabs: Array<{ id: AssessmentTab; label: string }> = [
   { id: "overview", label: "Overview" },
   { id: "documents", label: "Documents" },
-  { id: "export", label: "Control List" },
+  { id: "export", label: "Export Controls" },
   { id: "sanctions", label: "Sanctions" },
   { id: "licences", label: "Licences" },
   { id: "audit", label: "Audit Log" },
@@ -255,7 +255,7 @@ export default function TradeCompliancePage() {
     <div className="space-y-8 p-8">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900">Export Controls</h1>
+            <h1 className="text-xl font-semibold tracking-tight text-slate-900">Export Control</h1>
           <p className="mt-1 text-sm text-slate-500">Shipment compliance checks and assessments.</p>
         </div>
         <button

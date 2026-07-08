@@ -55,6 +55,7 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
   );
 
   const [loadingProductId, setLoadingProductId] = useState<string | null>(null);
+  const [activeProductId, setActiveProductId] = useState<Id<"export_products"> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [resultsByProduct, setResultsByProduct] = useState<Record<string, ClassificationResponse>>({});
 
@@ -62,6 +63,7 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
 
   const handleClassify = async (productId: Id<"export_products">) => {
     if (!canQuery) return;
+    setActiveProductId(productId);
     setLoadingProductId(productId);
     setError(null);
 
@@ -86,7 +88,11 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
     }
   };
 
-  const activeResult = Object.values(resultsByProduct)[0]?.classification;
+  const activeProduct =
+    activeProductId ? products.find((p) => p._id === activeProductId) : undefined;
+  const activeResult = activeProductId ? resultsByProduct[activeProductId]?.classification : undefined;
+  const hasCandidates =
+    activeResult ? [...activeResult.matches, ...activeResult.possible_matches].length > 0 : false;
 
   return (
     <div className="space-y-6">
@@ -114,14 +120,33 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
               const latestRun = product.classificationRuns?.[0];
               const liveResult = resultsByProduct[product._id];
               const isLoading = loadingProductId === product._id;
+              const isActive = activeProductId === product._id;
+              const candidateCount = liveResult
+                ? [
+                    ...liveResult.classification.matches,
+                    ...liveResult.classification.possible_matches,
+                  ].length
+                : 0;
 
               return (
-                <div key={product._id} className="rounded-lg border border-slate-200 p-4">
+                <div
+                  key={product._id}
+                  className={cn(
+                    "rounded-lg border p-4",
+                    isActive ? "border-slate-400 bg-slate-50/40" : "border-slate-200",
+                  )}
+                >
                   <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
                     <div>
                       <p className="text-xs font-medium text-slate-900">{product.name}</p>
                       {product.techDescription && (
                         <p className="mt-1 line-clamp-2 text-xs text-slate-500">{product.techDescription}</p>
+                      )}
+                      {liveResult && (
+                        <p className="mt-2 text-[11px] text-slate-500">
+                          Latest: {candidateCount === 0 ? "no candidates" : `${candidateCount} candidate${candidateCount === 1 ? "" : "s"}`} ·{" "}
+                          {Math.round(liveResult.classification.confidence * 100)}% confidence
+                        </p>
                       )}
                       {latestRun && !liveResult && (
                         <p className="mt-2 text-[11px] text-slate-400">
@@ -151,13 +176,30 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
         )}
       </section>
 
+      {activeProductId && !resultsByProduct[activeProductId] && (
+        <section className="rounded-xl border border-slate-200 bg-white p-5">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Running classification{activeProduct?.name ? ` for ${activeProduct.name}` : ""}…
+          </div>
+        </section>
+      )}
+
       {activeResult && (
         <section className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             {[
               ["Confidence", `${Math.round(activeResult.confidence * 100)}%`, "border-slate-200 bg-slate-50 text-slate-800"],
               ["Control list", activeResult.controlListVersion, "border-slate-200 bg-slate-50 text-slate-800"],
-              ["Review", "Required", "border-amber-200 bg-amber-50 text-amber-800"],
+              [
+                "Outcome",
+                activeResult.requiresReview ? "Review" : hasCandidates ? "Check" : "No candidates",
+                activeResult.requiresReview
+                  ? "border-amber-200 bg-amber-50 text-amber-800"
+                  : hasCandidates
+                    ? "border-slate-200 bg-slate-50 text-slate-700"
+                    : "border-green-200 bg-green-50 text-green-800",
+              ],
             ].map(([label, value, tone]) => (
               <div key={label as string} className={cn("rounded-lg border px-4 py-3", tone)}>
                 <p className="text-[0.625rem] font-semibold tracking-widest uppercase opacity-70">{label as string}</p>
@@ -166,7 +208,12 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
             ))}
           </div>
 
-          <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+          <p
+            className={cn(
+              "rounded-lg border p-3 text-xs",
+              hasCandidates ? "border-amber-200 bg-amber-50 text-amber-900" : "border-slate-200 bg-slate-50 text-slate-700",
+            )}
+          >
             <ShieldAlert className="mb-0.5 mr-1 inline h-3.5 w-3.5" />
             {activeResult.disclaimer}
           </p>
@@ -197,8 +244,10 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
           <div className="rounded-xl border border-slate-200 bg-white p-5">
             <h3 className="text-xs font-semibold text-slate-900">Candidate control entries</h3>
             <div className="mt-3 space-y-3">
-              {[...activeResult.matches, ...activeResult.possible_matches].length === 0 ? (
-                <p className="text-xs text-slate-500">No strong candidates — check product facts or upload richer specs.</p>
+              {![...activeResult.matches, ...activeResult.possible_matches].length ? (
+                <p className="text-xs text-slate-600">
+                  No candidates found for this product. If you expected a control entry, upload a technical datasheet (crypto, ranges, accuracy, materials, tolerances) and re-run.
+                </p>
               ) : (
                 [...activeResult.matches, ...activeResult.possible_matches].map((item) => (
                   <div key={`${item.entryCode}-${item.clausePath}`} className="rounded-lg border border-slate-200 p-4">

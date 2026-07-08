@@ -199,6 +199,7 @@ AI proposes, deterministic layer constrains, human decides. No auto-clear in thi
 - [x] Confidence model — `src/lib/export-controls/confidence.ts`
 - [x] Classification run persistence — `POST /api/export-controls/classify` → `recordClassificationRun`
 - [x] In-app test UI — **Classify** tab on `/dashboard/trade-compliance` (`export-classification-panel.tsx`)
+- [x] Per-product feedback (loading + no-candidates result) — makes every **Classify** action visible
 - [ ] Review UI: approve/reject per product — **return-to RT-04**
 - [ ] Labelled data from human overrides — **return-to RT-06**
 - [x] Golden tests: retrieval + predicates + confidence — `tests/export-controls/retrieval.test.ts`
