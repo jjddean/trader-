@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     const docType = typeof body.docType === "string" ? body.docType : "commercial_invoice";
     const documentId = typeof body.documentId === "string" ? body.documentId : undefined;
     const runExtraction = body.runExtraction !== false;
+    const declarationIdRaw = typeof body.declarationId === "string" ? body.declarationId : undefined;
 
     if (!rawText.trim()) {
       return NextResponse.json({ error: "rawText is required" }, { status: 400 });
@@ -61,13 +62,26 @@ export async function POST(request: Request) {
     }
 
     const assessmentIdRaw = typeof body.assessmentId === "string" ? body.assessmentId : undefined;
-    if (extracted && assessmentIdRaw) {
+    let resolvedAssessmentId: Id<"export_assessments"> | null = assessmentIdRaw
+      ? (assessmentIdRaw as Id<"export_assessments">)
+      : null;
+    let persisted: { productIds: string[] } | null = null;
+
+    if (extracted) {
       const convexToken = await getToken({ template: "convex" });
       if (convexToken) {
         convex.setAuth(convexToken);
         try {
-          await convex.mutation(api.export_controls.persistExtraction, {
-            assessmentId: assessmentIdRaw as Id<"export_assessments">,
+          if (!resolvedAssessmentId) {
+            resolvedAssessmentId = await convex.mutation(api.export_controls.createAssessment, {
+              declarationId: declarationIdRaw ? (declarationIdRaw as Id<"declarations">) : undefined,
+              destinationCountry: extracted.shipment.destinationCountry ?? undefined,
+              originJurisdiction: "GB",
+            });
+          }
+
+          const persistedResult = await convex.mutation(api.export_controls.persistExtraction, {
+            assessmentId: resolvedAssessmentId,
             destinationCountry: extracted.shipment.destinationCountry ?? undefined,
             consignee: extracted.shipment.consignee,
             endUser: extracted.shipment.endUser,
@@ -92,6 +106,9 @@ export async function POST(request: Request) {
               })),
             })),
           });
+          persisted = {
+            productIds: (persistedResult?.productIds ?? []).map((id: unknown) => String(id)),
+          };
         } catch (err) {
           console.warn("Failed to persist extraction to assessment:", err);
         }
@@ -102,6 +119,8 @@ export async function POST(request: Request) {
       status: audit.status,
       riskChecklist: audit.riskChecklist,
       extractedData: audit.extractedData,
+      assessmentId: resolvedAssessmentId,
+      persisted,
     });
   } catch (error: unknown) {
     console.error("Document audit error:", error);

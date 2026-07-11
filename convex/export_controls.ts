@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import {
   assertAssessmentAccess,
   canAccessAssessment,
@@ -8,6 +8,7 @@ import {
   listAssessmentsForTenant,
   resolveOrgIdForNewRecord,
 } from "./lib/org_access";
+import { resolveSubmissionRoute } from "./lib/export_routing";
 
 function buildReference(now = Date.now()) {
   const year = new Date(now).getFullYear();
@@ -40,6 +41,50 @@ async function logExportAction(
   } catch {
     // Non-fatal
   }
+}
+
+async function collectApprovedControlEntries(ctx: any, assessmentId: Id<"export_assessments">) {
+  const products = await ctx.db
+    .query("export_products")
+    .withIndex("by_assessment", (q: any) => q.eq("assessmentId", assessmentId))
+    .collect();
+
+  const entries: string[] = [];
+  for (const product of products) {
+    const runs = await ctx.db
+      .query("export_classification_runs")
+      .withIndex("by_product", (q: any) => q.eq("productId", product._id))
+      .collect();
+    const latest = runs.sort((a: { createdAt: number }, b: { createdAt: number }) => b.createdAt - a.createdAt)[0];
+    if (latest && latest.requiresReview === false) {
+      entries.push(latest.finalControlEntry ?? "");
+    }
+  }
+  return entries;
+}
+
+async function refreshSubmissionRouteForAssessment(ctx: any, assessmentId: Id<"export_assessments">) {
+  const assessment = await ctx.db.get(assessmentId);
+  if (!assessment) return null;
+
+  const approvedControlEntries = await collectApprovedControlEntries(ctx, assessmentId);
+  const routing = resolveSubmissionRoute({
+    originJurisdiction: assessment.originJurisdiction,
+    destinationCountry: assessment.destinationCountry,
+    approvedControlEntries,
+  });
+
+  const patch: Record<string, unknown> = {
+    submissionRoute: routing.route,
+    updatedAt: Date.now(),
+  };
+
+  if (routing.niReviewRequired && assessment.status === "clear") {
+    patch.status = "review_required";
+  }
+
+  await ctx.db.patch(assessmentId, patch);
+  return routing;
 }
 
 export const listAssessments = query({
@@ -308,7 +353,7 @@ export const recordClassificationRun = mutation({
     if (!product) throw new Error("Product not found");
     await getAssessmentOrThrow(ctx, identity.subject, product.assessmentId);
 
-    return await ctx.db.insert("export_classification_runs", {
+    const runId = await ctx.db.insert("export_classification_runs", {
       productId: args.productId,
       assessmentId: product.assessmentId,
       candidates: args.candidates,
@@ -321,6 +366,10 @@ export const recordClassificationRun = mutation({
       modelVersion: args.modelVersion,
       createdAt: Date.now(),
     });
+
+    await refreshSubmissionRouteForAssessment(ctx, product.assessmentId);
+
+    return runId;
   },
 });
 
@@ -351,6 +400,8 @@ export const reviewClassificationRun = mutation({
       finalControlEntry: args.finalControlEntry,
       reviewNote: args.reviewNote,
     });
+
+    await refreshSubmissionRouteForAssessment(ctx, run.assessmentId);
 
     return args.runId;
   },
@@ -546,24 +597,58 @@ export const persistExtraction = mutation({
       updatedAt: now,
     });
 
+    const existingProducts = await ctx.db
+      .query("export_products")
+      .withIndex("by_assessment", (q) => q.eq("assessmentId", args.assessmentId))
+      .collect();
+    const existingByKey = new Map<string, Doc<"export_products">>();
+    for (const product of existingProducts) {
+      const key = `${String(product.sourceDocumentId ?? "")}::${product.name.toLowerCase()}`;
+      existingByKey.set(key, product);
+    }
+
     const productIds: Id<"export_products">[] = [];
     for (const product of args.products) {
-      const productId = await ctx.db.insert("export_products", {
-        assessmentId: args.assessmentId,
-        name: product.name,
-        manufacturer: product.manufacturer,
-        modelNo: product.modelNo,
-        partNo: product.partNo,
-        quantity: product.quantity,
-        valueGbp: product.valueGbp,
-        techDescription: product.techDescription,
-        sourceDocumentId: args.sourceDocumentId,
-        createdAt: now,
-        updatedAt: now,
-      });
+      const key = `${String(args.sourceDocumentId ?? "")}::${product.name.toLowerCase()}`;
+      const existing = args.sourceDocumentId ? existingByKey.get(key) : undefined;
+
+      const productId = existing
+        ? existing._id
+        : await ctx.db.insert("export_products", {
+            assessmentId: args.assessmentId,
+            name: product.name,
+            manufacturer: product.manufacturer,
+            modelNo: product.modelNo,
+            partNo: product.partNo,
+            quantity: product.quantity,
+            valueGbp: product.valueGbp,
+            techDescription: product.techDescription,
+            sourceDocumentId: args.sourceDocumentId,
+            createdAt: now,
+            updatedAt: now,
+          });
+      if (existing) {
+        await ctx.db.patch(productId, {
+          manufacturer: product.manufacturer,
+          modelNo: product.modelNo,
+          partNo: product.partNo,
+          quantity: product.quantity,
+          valueGbp: product.valueGbp,
+          techDescription: product.techDescription,
+          updatedAt: now,
+        });
+      }
       productIds.push(productId);
 
+      const existingSpecs = await ctx.db
+        .query("export_product_specs")
+        .withIndex("by_product", (q) => q.eq("productId", productId))
+        .collect();
+      const specKeys = new Set(existingSpecs.map((s) => `${s.key}::${s.valueRaw}`));
+
       for (const spec of product.specs ?? []) {
+        const specKey = `${spec.key}::${spec.valueRaw}`;
+        if (specKeys.has(specKey)) continue;
         await ctx.db.insert("export_product_specs", {
           productId,
           key: spec.key,
@@ -576,6 +661,7 @@ export const persistExtraction = mutation({
           confidence: spec.confidence,
           createdAt: now,
         });
+        specKeys.add(specKey);
       }
     }
 
@@ -583,6 +669,18 @@ export const persistExtraction = mutation({
       productCount: productIds.length,
     });
 
+    await refreshSubmissionRouteForAssessment(ctx, args.assessmentId);
+
     return { productIds };
+  },
+});
+
+export const refreshSubmissionRoute = mutation({
+  args: { assessmentId: v.id("export_assessments") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
+    return await refreshSubmissionRouteForAssessment(ctx, args.assessmentId);
   },
 });

@@ -2,7 +2,7 @@
 
 **Status:** Agreed working plan · tick boxes as work completes  
 **Created:** 2026-07-03  
-**Last updated:** 2026-07-04 (post-plan automation note §Post-plan revisit)  
+**Last updated:** 2026-07-09 (§Consultant loop · multi-consultant · scope now/later)  
 **Scope:** UK export-control LITE draft packs — decision-support and draft-generation only. FreightCode never submits to government systems and never gives binding legal advice.
 
 ---
@@ -103,7 +103,7 @@ Export Controls is a **module inside FreightCode**, not a new app. It reuses the
 | RT-13 | Sanctions confirm/dismiss screening UI | 4 | open | UI calls `reviewSanctionsScreening` with justification; logged to audit |
 | RT-10 | Assessments / Overview / Sanctions / Licences mock UI | 9 | open | Tabs read from `export_assessments` etc.; kill `TC-2026-00184` hardcode |
 | RT-11 | SPIRE/OTSI routing + draft pack + expert queue | 5–7 | open | Respective phase deliverables + tests |
-| RT-12 | LoRA / fine-tuned control-entry model | — | **out of scope** | Not required for Phase 3; Groq + R2 + rules is the path. Revisit only if product asks after Phase 8 |
+| RT-12 | LoRA / fine-tuned control-entry model | — | **deferred → Phase 8+** | See §ML/LoRA. Not for compliance determinism; optional recall/explanation assist after ≥200 reviewed cases (RT-06). Existing `lora-dataset/` is HS-side only |
 
 ### Phase closure gates (all return-to rows for that phase must be done)
 
@@ -346,6 +346,183 @@ Do not open to customers until every box is ticked.
 
 ---
 
+## V1 Engineering Spec — deferred backlog (agreed 2026-07-09)
+
+Captured from the *Freightcode Export Controls v1* product spec. **Do not build until Phases 7–9 foundations are closed** unless product explicitly reprioritises. Items marked **aligned** already exist under different names — extend, don’t rewrite.
+
+### Agreed principles (keep forever)
+
+| Principle | Status |
+|-----------|--------|
+| Compliance module inside Freightcode, not a separate product | **aligned** — Trade Compliance page + assessment sheet |
+| Clipboard companion → human pastes into GOV.UK (no auto-submit) | **aligned** — Draft Pack copy fields + Licences record-back |
+| AI explains; never invents or finalises control values | **aligned** — `.cursorrules` #2–3, BUILD-PLAN §1 |
+| UK **control entry / rating** — never "ECCN" in UK UI | **aligned** — reject v1 mockups that say ECCN |
+| Four stoplight statuses on declarations | **partial** — map `draft`→Not Assessed, `clear`→Cleared, `review_required`, `flagged`→Blocked |
+| Trade Compliance Engine internal tree (Export · Sanctions · Country · Licence · AI) | **aligned** — implement as libs + Convex, not microservices |
+
+### Declaration & goods integration (Phase 9)
+
+| ID | Item | Notes |
+|----|------|--------|
+| V1-01 | Declaration expandable **Trade Compliance** section (Customs Representation UX pattern) | `tradeComplianceAssessmentId` + status on declaration; "Open Assessment" deep-links to sheet in declaration context |
+| V1-02 | Goods Items badge only: `Not Assessed` / `Cleared` / `Review Required` — no clutter on line editor | Minimal surface; link to assessment |
+| V1-03 | **Attach to Declaration** functional | Wire header button; persist link both ways |
+| V1-04 | Pre-CDS gate: Not Assessed → allow (warn optional); Cleared → allow; Review Required → warn; Blocked → prevent | Product default: warn-only on Review Required |
+
+### Consultant & audit artefacts (Phase 7–8)
+
+| ID | Item | Notes |
+|----|------|--------|
+| V1-05 | **Expert review & sign-off** — Settings consultant config, email + magic link, record-back on link page | Phase 7 | **partial** — link-first shipped; invited-user path optional later |
+| V1-06 | Consultant sign-off unlocks **Attach to Declaration** on FLAGGED cases | Go-live gate (Phase 10) |
+| V1-07 | **NLR (No Licence Required) audit note** PDF when Cleared | Exact params checked + control-list version timestamp — legal shield for consultants |
+| V1-08 | Audit Log tab wired to `auditLogs` | Immutable history: assessment, engine version, dataset version, reviewer |
+
+### Draft pack & LITE companion enhancements (Phase 6+)
+
+| ID | Item | Notes |
+|----|------|--------|
+| V1-09 | Split-pane on **declaration page**: customs entry left, LITE companion right when licence indicated | v1 HTML mockup; extend current Draft Pack tab pattern |
+| V1-10 | **EUS / EUSU generator** — pre-filled End-User Statement PDF + "Email to buyer" | AI knows specs + control entry; reduces LITE RFI loops |
+| V1-11 | ECJU-style field ordering on printable PDF | Open question — walk live LITE form first |
+| V1-12 | **ECJU case-officer persona** for technical summary wording | Reduces RFI risk; LLM prompt version, not compliance logic |
+
+### Contextual & engine depth (Phase 8)
+
+| ID | Item | Notes |
+|----|------|--------|
+| V1-13 | **Military catch-all / end-use context** — flag defence/nuclear/aerospace buyer even when specs clear | Deterministic party/industry signals + AI explanation; never auto-clear |
+| V1-14 | Separate reference tables: military vs dual-use vs country restrictions vs licence types | Today: single consolidated UK list in R2; split when ingest matures |
+| V1-15 | HS → control-entry correlation table with confidence | Assist retrieval; human confirms |
+| V1-16 | Low / Medium / High risk display | Map from existing `flagged` / `review_required` / `clear` + screening bands |
+
+### Post-go-live / data expansion (not UK v1)
+
+| ID | Item | Notes |
+|----|------|--------|
+| V1-17 | US EAR, OFAC, BIS, EU dual-use datasets | Data expansion on fixed engine architecture — not architecture rewrite |
+| V1-18 | OGEL / OIEL / SITCL licence management | Out of scope v1; SIEL + F680 first |
+| V1-19 | Batch multi-shipment screening | AEB-style; broker demand |
+
+### Consultant dispatch (V1-20 — shipped partial)
+
+| Step | What |
+|------|------|
+| Config | **Settings → Team** — consultant name, email, firm, role (adviser / applies on behalf / EOR) |
+| Send | **Overview → Send to consultant** — email with link; packet not attached |
+| Review | **`/r/export/{token}`** — draft pack copy fields, GOV.UK link, advisory notes, app/licence refs |
+| Complete | Sign off (clear) or Block — updates assessment + `expert_requests` + optional `export_licences` |
+| Email | Resend when `RESEND_API_KEY` set; otherwise link shown for manual copy |
+
+**Optional later:** invite consultant as Freightcode user (portal path) — same assessment sheet, no magic link.
+
+### Consultant loop — scope now vs later
+
+**One app (Freightcode).** Magic links are extra pages inside the same product (`/r/export/...`, later `/r/end-user/...`). Not a separate consultant app. Not declaration integration in this slice.
+
+#### Who uses what
+
+| User | What they do | Send to consultant? |
+|------|----------------|---------------------|
+| **Exporter / broker** | Self-serve: classify → sanctions → draft pack → LITE → record licence | **Optional** — only if they want an external reviewer |
+| **Consultancy (logged in)** | Run assessment for a client; classify, draft pack, apply on LITE | **No** — they work in the dashboard; they do not email a link to themselves |
+| **Other consultant(s)** | Receive email + link; review, EUS, sign off, record refs | **Yes** — broker *or* consultancy sends **to someone else** |
+| **End user (buyer)** | End-user statement form on link (next build) | Sent by consultant from review page |
+
+**Rule:** consultant dispatch is **optional**. Never required to use draft pack or record a licence. Go-live gates (later) must allow **self sign-off** when no external consultant is used.
+
+#### Multiple consultants
+
+Consultancies and brokers often use **more than one** external consultant (partner firm, specialist, second opinion). Plan:
+
+| Now | Next |
+|-----|------|
+| One default in Settings → Team + override email on send (API already accepts `consultantEmail`) | **Consultant roster** in org settings (name, email, firm) |
+| One active link per send; history on `expert_requests` | **Pick consultant** dropdown on Send; resend to different consultant if needed |
+| | Optional: “primary” consultant for default only |
+
+Logged-in consultancy user: runs the case in Trade Compliance; when they need **another** consultant, they use **Send to consultant** and pick or enter that person’s email — same as a broker would.
+
+#### Close the loop (build now)
+
+| Step | Status |
+|------|--------|
+| Broker/consultancy runs assessment | Done |
+| Send to **other** consultant (email + `/r/export/{token}`) | Done |
+| Consultant reviews, GOV.UK, sign off, licence refs | Done |
+| **Send to end user** (EUS link `/r/end-user/{token}`) | **Next** |
+| Sanctions one-liner on consultant review page | **Next** (minimal) |
+| Broker/consultancy sees Cleared on Overview | Done |
+
+#### Explicitly later (not this slice)
+
+- Declaration **Attach to Declaration** / goods badge (V1-01–03) — broker–declaration link, not consultant loop
+- NLR audit note PDF, ECJU AI summary, military catch-all
+- Consultant as invited Freightcode user instead of magic link
+- Mandatory consultant gate on all Flagged cases
+
+---
+
+## ML / LoRA — when and how (deferred Phase 8+)
+
+**Short answer:** Yes, LoRA *can* be used here — but **not** for binding compliance outcomes. It is a **recall and language assist** layer on top of deterministic rules, human review, and R2 retrieval.
+
+### Hard rules (never LoRA)
+
+Per `.cursorrules` #2–3 and BUILD-PLAN §1 — these stay **hardcoded TypeScript**:
+
+| Concern | Why LoRA is wrong |
+|---------|-------------------|
+| Final control entry / Cleared vs Blocked | Legal liability; must be rules + human |
+| SPIRE/LITE routing, destination tables | Compliance logic |
+| Sanctions match thresholds (0.65 / 0.80 bands) | Deterministic scoring |
+| Tariff / VAT / CDS validation | Separate domain |
+
+### Where LoRA **can** help (later)
+
+| Use case | Role | Phase |
+|----------|------|-------|
+| **Control-entry candidate recall** | Rank / suggest entries from product description + specs when lexical retrieval misses | Phase 8 parallel-run vs rules |
+| **Cat 3 / Cat 5 electronics** | Fine-tune on labelled cases (RT-06) for microwave, crypto, computing clauses | After ≥200 reviewed overrides |
+| **HS → control correlation** | Suggest possible entries from HS + description | Assist only; never auto-approve |
+| **ECJU technical summary** | Wording for LITE paste fields (V1-12); ECJU vocabulary | Phase 6+ prompt / optional LoRA |
+| **End-use / catch-all context** | Classify buyer business description for defence-adjacent flags (V1-13) | Explanation + flag; human decides |
+| **NLR audit note prose** | Template narrative from checked predicates | Generated from deterministic facts; LoRA optional for tone |
+
+### Training data path (required before any control-entry LoRA)
+
+1. **Now:** `reviewClassificationRun` + consultant overrides → **RT-06 labelled corpus**
+2. Export format: `{ product, specs, retrievalHits, approvedEntry, rejectedCandidates, controlListVersion }`
+3. **Not usable today:** `lora-dataset-worker-json-v2/` and `generate_industrial_dataset.py` — **HS classification awareness only**, not UK control-entry ratings
+4. **Infra exists:** `scripts/lora/` (Tinker register/train), `npm run lora:tinker:*` — reuse pipeline with a **new dataset name** when corpus is ready
+
+### Recommended sequence
+
+```
+Phase 3–7 (now)     Groq + R2 retrieval + predicates + human review
+        ↓
+Phase 8             Rule compiler + parallel-run disagreement dashboard
+        ↓
+RT-06 corpus        ≥200 reviewed cases exported
+        ↓
+Phase 8b (optional) LoRA fine-tune for recall on top categories (3, 4, 5)
+        ↓
+Production          LoRA proposes candidates; rules + human still authoritative
+```
+
+### Decision gate for starting LoRA work
+
+- [ ] RT-06 export path live
+- [ ] ≥200 human-reviewed cases with `finalControlEntry` set
+- [ ] Category-level FP/FN baseline from Phase 8 parallel-run
+- [ ] Legal/product sign-off that LoRA output is labelled "candidate" in UI
+- [ ] New dataset JSONL (control-entry labels), not HS worker-json
+
+Until then: **Groq + R2 + predicates** remains the path (open question Phase 3 — keep checked as deferred).
+
+---
+
 ## Out of scope (explicit)
 
 - Direct submission to LITE/SPIRE (no public API; browser automation is banned)
@@ -356,6 +533,6 @@ Do not open to customers until every box is ticked.
 ## Open questions (decide before the relevant phase)
 
 - [x] Phase 1a: PDF parsing quality — **480 entries parsed; golden tests pass.** Sub-clause refs like `8A002o4` live inside parent entry text (not separate top-level rows). Monitor on next list update.
-- [ ] Phase 3: **Groq + R2 retrieval** for classification pass (recommended for now). Existing `lora-dataset/` has HS-side export *awareness* only — not control-entry LoRA. New LoRA optional later.
+- [x] Phase 3: **Groq + R2 retrieval** for classification pass (current path). LoRA deferred — see §ML/LoRA; existing `lora-dataset/` is HS-side only
 - [ ] Phase 6: does the draft pack PDF need ECJU-style field ordering to mirror the LITE form? Needs a walkthrough of the live LITE form fields
 - [ ] Phase 9: should a FLAGGED export assessment ever block CDS submission, or warn only? (Product decision — default: warn only)

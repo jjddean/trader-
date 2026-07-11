@@ -39,9 +39,15 @@ Weight: 120 KG`;
 
 interface DocumentAuditPanelProps {
   assessmentId?: Id<"export_assessments">;
+  onAssessmentCreated?: (assessmentId: Id<"export_assessments">) => void;
+  onExtractionComplete?: (productCount: number) => void;
 }
 
-export function DocumentAuditPanel({ assessmentId }: DocumentAuditPanelProps) {
+export function DocumentAuditPanel({
+  assessmentId,
+  onAssessmentCreated,
+  onExtractionComplete,
+}: DocumentAuditPanelProps) {
   const [rawText, setRawText] = useState("");
   const [docType, setDocType] = useState("commercial_invoice");
   const [loading, setLoading] = useState(false);
@@ -49,7 +55,7 @@ export function DocumentAuditPanel({ assessmentId }: DocumentAuditPanelProps) {
   const [inputTab, setInputTab] = useState<"manual" | "upload">("upload");
   const [dragActive, setDragActive] = useState(false);
   const [uploadStage, setUploadStage] = useState("");
-  const [selectedMrn, setSelectedMrn] = useState<string>("unlinked");
+  const [selectedDeclarationId, setSelectedDeclarationId] = useState<string>("unlinked");
 
   const { user, isLoaded, isSignedIn } = useUser();
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
@@ -65,6 +71,11 @@ export function DocumentAuditPanel({ assessmentId }: DocumentAuditPanelProps) {
     setLoading(true);
     setResult(null);
     try {
+      const selectedDeclaration =
+        selectedDeclarationId === "unlinked"
+          ? null
+          : (declarations.find((d: any) => String(d.declarationId) === selectedDeclarationId) ?? null);
+
       const res = await fetch("/api/export-controls/audit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -74,6 +85,7 @@ export function DocumentAuditPanel({ assessmentId }: DocumentAuditPanelProps) {
           documentId,
           runExtraction: true,
           assessmentId,
+          declarationId: selectedDeclaration ? String(selectedDeclaration.declarationId) : undefined,
         }),
       });
       if (!res.ok) {
@@ -82,6 +94,9 @@ export function DocumentAuditPanel({ assessmentId }: DocumentAuditPanelProps) {
       }
       const data = await res.json();
       setResult(data);
+      if (!assessmentId && data?.assessmentId && onAssessmentCreated) {
+        onAssessmentCreated(data.assessmentId as Id<"export_assessments">);
+      }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Audit failed";
       setResult({
@@ -129,12 +144,18 @@ export function DocumentAuditPanel({ assessmentId }: DocumentAuditPanelProps) {
 
       setRawText(extractedText);
 
+      const selectedDeclaration =
+        selectedDeclarationId === "unlinked"
+          ? null
+          : (declarations.find((d: any) => String(d.declarationId) === selectedDeclarationId) ?? null);
+
       setUploadStage("Saving metadata to database...");
       const documentId = await saveDocument({
         storageId,
         userId: user?.id || "unknown",
         fileName: file.name,
-        mrn: selectedMrn === "unlinked" ? undefined : selectedMrn,
+        declarationId: selectedDeclaration ? (selectedDeclaration.declarationId as Id<"declarations">) : undefined,
+        mrn: selectedDeclaration?.mrn ? String(selectedDeclaration.mrn) : undefined,
         fileType: docType,
         auditStatus: "pending",
         ocrText: extractedText,
@@ -257,7 +278,7 @@ export function DocumentAuditPanel({ assessmentId }: DocumentAuditPanelProps) {
                 <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
                   Link to Declaration (MRN)
                 </label>
-                <Select.Root value={selectedMrn} onValueChange={setSelectedMrn}>
+                <Select.Root value={selectedDeclarationId} onValueChange={setSelectedDeclarationId}>
                   <Select.Trigger className={ENTERPRISE_SELECT_TRIGGER}>
                     <Select.Value placeholder="Select MRN..." />
                     <Select.Icon>
@@ -275,14 +296,14 @@ export function DocumentAuditPanel({ assessmentId }: DocumentAuditPanelProps) {
                         </Select.Item>
                         {declarations?.filter((d: any) => d.mrn).map((d: any) => (
                           <Select.Item
-                            key={d.mrn}
-                            value={d.mrn}
+                            key={String(d.declarationId)}
+                            value={String(d.declarationId)}
                             className={cn(ENTERPRISE_SELECT_ITEM, "relative flex select-none items-center px-8 outline-none")}
                           >
                             <Select.ItemIndicator className="absolute left-2 inline-flex items-center">
                               <Check className="h-3.5 w-3.5 text-slate-500" />
                             </Select.ItemIndicator>
-                            <Select.ItemText>{d.mrn}</Select.ItemText>
+                            <Select.ItemText>{String(d.mrn)}</Select.ItemText>
                           </Select.Item>
                         ))}
                       </Select.Viewport>
@@ -450,6 +471,24 @@ export function DocumentAuditPanel({ assessmentId }: DocumentAuditPanelProps) {
               )}
             </div>
           </div>
+
+          {result.persisted?.productIds?.length > 0 && (
+            <div className="rounded-lg border border-slate-200 bg-white p-4">
+              <p className="text-xs text-slate-700">
+                {result.persisted.productIds.length} product
+                {result.persisted.productIds.length === 1 ? "" : "s"} saved to this assessment.
+              </p>
+              {onExtractionComplete && (
+                <button
+                  type="button"
+                  onClick={() => onExtractionComplete(result.persisted.productIds.length)}
+                  className="mt-3 flex h-8 items-center gap-2 rounded-md bg-black px-3 text-xs font-medium text-white hover:bg-slate-800"
+                >
+                  Open Export Controls
+                </button>
+              )}
+            </div>
+          )}
 
           {result.extractedData && (
             <details className="mt-2 cursor-pointer rounded border border-slate-100 bg-slate-50 p-2 text-xs text-slate-500">

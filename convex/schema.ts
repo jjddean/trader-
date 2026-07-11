@@ -116,9 +116,13 @@ export default defineSchema({
     orgId: v.optional(v.string()),
     importId: v.optional(v.id("tre_imports")),
     sourceRowHash: v.optional(v.string()),
+    reportKind: v.optional(v.string()), // import_item | import_header | import_tax_lines | export_item
     entryIdentifierMrn: v.optional(v.any()),
     declarantEori: v.optional(v.any()),
+    importerEori: v.optional(v.any()),
     countryOfOriginCode: v.optional(v.any()),
+    countryOfDispatchCode: v.optional(v.any()),
+    destinationCountryCode: v.optional(v.any()),
     preferenceCode: v.optional(v.any()),
     itemCustomsValue: v.optional(v.any()),
     taxLineTotalAmount: v.optional(v.any()),
@@ -126,7 +130,16 @@ export default defineSchema({
     customsProcedureCodeCpc: v.optional(v.any()),
     taxType: v.optional(v.any()),
     commodityCode: v.optional(v.any()),
+    dutyRatePercent: v.optional(v.number()),
     acceptanceDate: v.optional(v.any()),
+    goodsDescription: v.optional(v.string()),
+    netMassKg: v.optional(v.number()),
+    documentCodes: v.optional(v.string()),
+    invoiceTotalGbp: v.optional(v.number()),
+    transportCostGbp: v.optional(v.number()),
+    totalDutyGbp: v.optional(v.number()),
+    totalVatGbp: v.optional(v.number()),
+    goodsDepartureDate: v.optional(v.string()),
     createdAt: v.optional(v.any()),
   })
     .index("by_user", ["userId"])
@@ -141,6 +154,7 @@ export default defineSchema({
     orgId: v.optional(v.string()),
     userId: v.string(),
     filename: v.string(),
+    reportFormat: v.optional(v.string()),
     rowCount: v.number(),
     lineItemsStored: v.number(),
     lineItemsSkipped: v.number(),
@@ -452,6 +466,7 @@ export default defineSchema({
     consignee: v.optional(v.any()),
     endUser: v.optional(v.any()),
     intendedUse: v.optional(v.string()),
+    endUserStatement: v.optional(v.any()),
     submissionRoute: v.optional(
       v.union(v.literal("lite"), v.literal("spire"), v.literal("otsi"), v.literal("none")),
     ),
@@ -536,9 +551,53 @@ export default defineSchema({
     slaDueAt: v.optional(v.number()),
     status: v.string(),
     assessmentSnapshot: v.any(),
+    consultantEmail: v.optional(v.string()),
+    consultantName: v.optional(v.string()),
+    advisoryNotes: v.optional(v.string()),
+    outcome: v.optional(v.union(v.literal("cleared"), v.literal("blocked"))),
+    applicationRef: v.optional(v.string()),
+    licenceRef: v.optional(v.string()),
+    completedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_assessment", ["assessmentId"]),
+
+  export_review_tokens: defineTable({
+    assessmentId: v.id("export_assessments"),
+    expertRequestId: v.id("expert_requests"),
+    orgId: v.optional(v.string()),
+    token: v.string(),
+    consultantEmail: v.string(),
+    consultantName: v.optional(v.string()),
+    consultantRole: v.optional(
+      v.union(v.literal("adviser"), v.literal("applies_on_behalf"), v.literal("eor")),
+    ),
+    senderNote: v.optional(v.string()),
+    expiresAt: v.number(),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    openedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    revoked: v.optional(v.boolean()),
+  })
+    .index("by_token", ["token"])
+    .index("by_assessment", ["assessmentId"]),
+
+  export_end_user_tokens: defineTable({
+    assessmentId: v.id("export_assessments"),
+    reviewTokenId: v.optional(v.id("export_review_tokens")),
+    token: v.string(),
+    recipientEmail: v.string(),
+    senderNote: v.optional(v.string()),
+    expiresAt: v.number(),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    openedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    revoked: v.optional(v.boolean()),
+  })
+    .index("by_token", ["token"])
+    .index("by_assessment", ["assessmentId"]),
 
   export_licences: defineTable({
     assessmentId: v.id("export_assessments"),
