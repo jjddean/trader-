@@ -17,10 +17,13 @@ export async function sendConsultantReviewEmail(input: ConsultantDispatchEmailIn
   reason?: string;
 }> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.RESEND_FROM_EMAIL?.trim() || "Freightcode <onboarding@resend.dev>";
+  const from = process.env.RESEND_FROM_EMAIL?.trim();
 
   if (!apiKey) {
     return { sent: false, reason: "RESEND_API_KEY not configured" };
+  }
+  if (!from) {
+    return { sent: false, reason: "RESEND_FROM_EMAIL not configured (must be a verified domain address)" };
   }
 
   const expiry = new Date(input.expiresAt).toLocaleDateString("en-GB", {
