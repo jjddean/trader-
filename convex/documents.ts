@@ -170,6 +170,32 @@ export const saveDocument = mutation({
   }
 });
 
+export const recordDocumentAudit = mutation({
+  args: {
+    documentId: v.id("documents"),
+    auditStatus: v.string(),
+    auditResult: v.optional(v.any()),
+    ocrText: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const document = await ctx.db.get(args.documentId);
+    if (!document || !(await canAccessDocument(ctx, identity.subject, document))) {
+      throw new Error("Unauthorized");
+    }
+
+    await ctx.db.patch(args.documentId, {
+      auditStatus: args.auditStatus,
+      auditResult: args.auditResult,
+      ocrText: args.ocrText ?? document.ocrText,
+    });
+
+    return args.documentId;
+  },
+});
+
 export const getDocuments = query({
   args: { userId: v.optional(v.string()) },
   handler: async (ctx) => {

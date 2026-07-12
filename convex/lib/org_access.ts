@@ -230,3 +230,45 @@ export async function canAccessDeclarationById(ctx: Ctx, userId: string, declara
   return { allowed, declaration: allowed ? declaration : null };
 }
 
+export async function canAccessAssessment(
+  ctx: Ctx,
+  userId: string,
+  assessment: { userId?: unknown; orgId?: unknown } | null | undefined,
+): Promise<boolean> {
+  if (!assessment) return false;
+  if (String(assessment.userId ?? "") === userId) return true;
+
+  const activeOrgId = await getActiveOrgId(ctx, userId);
+  const assessmentOrgId = normalizeOrgId(assessment.orgId);
+  return Boolean(activeOrgId && assessmentOrgId && activeOrgId === assessmentOrgId);
+}
+
+export async function assertAssessmentAccess(
+  ctx: Ctx,
+  userId: string,
+  assessment: { userId?: unknown; orgId?: unknown } | null | undefined,
+): Promise<void> {
+  if (!(await canAccessAssessment(ctx, userId, assessment))) {
+    throw new Error("Unauthorized");
+  }
+}
+
+export async function listAssessmentsForTenant(ctx: Ctx, userId: string, take = 200) {
+  const activeOrgId = await getActiveOrgId(ctx, userId);
+  if (activeOrgId) {
+    return await ctx.db
+      .query("export_assessments")
+      .withIndex("by_org", (q) => q.eq("orgId", activeOrgId))
+      .order("desc")
+      .take(take);
+  }
+
+  const rows = await ctx.db
+    .query("export_assessments")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .order("desc")
+    .take(take);
+
+  return rows.filter((row) => isPersonalScopedRecord(row.orgId));
+}
+

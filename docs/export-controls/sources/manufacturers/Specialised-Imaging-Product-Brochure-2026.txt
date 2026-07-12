@@ -1,0 +1,1975 @@
+Ultra high speed framing
+cameras & tracking systems
+for scientific research
+1 billion frames per
+second and beyond
+
+-- 1 of 40 --
+
+Delivering individual, specific
+ultra high-speed solutions that
+meet our clients needs exactly,
+whatever the application.
+That's our commitment.
+
+-- 2 of 40 --
+
+Specialised Imaging is an internationally
+renowned company that focuses on
+the design and manufacture of
+ultra-high-speed imaging cameras
+for industrial, scientific and defence
+research applications.
+The company was formed in 2003,
+its founder members having previously
+worked together in the high-speed
+imaging field and bringing over 80
+years’ combined experience to the
+venture.
+Specialised Imaging has successfully
+launched many new and innovative
+ultra-high-speed imaging systems.
+The company is at the forefront of
+world-wide innovation in the high-speed
+imaging field, having won the BEEA’s
+Small Company of the Year award in
+2009, the Queen’s Award for Enterprise
+in 2011 and 2016.
+This commitment to development
+has enabled the company to establish
+a reputation as an exciting and creative
+player in the high-speed camera market.
+Our company
+
+-- 3 of 40 --
+
+Innovative imaging solutions
+that incorporate the latest
+technological advances.
+That's our passion.
+
+-- 4 of 40 --
+
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com
+Up to 20 Million images/second capture speed
+900 x 740 pixel, 10-bit sensor resolution
+The Ultimate High-Speed
+Video Camera
+The Specialised Imaging AURORA is the latest Ultra
+high-speed video camera that combines the flexibility of
+a video camera with the speed/resolutions approaching
+those only available with Framing cameras.
+The unique custom design sensor offers 180 images at
+capture speeds up to 20 Million Images/second at full
+resolution. Now offers 360 images at capture speeds up
+to 20 Million Images/second at 900x370 pixel resolution.
+In line with high-speed video cameras the AURORA can
+be Frame synchronised with an external device such as
+another KIRANA, AURORA or laser. The AURORA can
+also be recording prior to the event and triggered before,
+during or after the event.
+Aurora5M Up to 5 Mfps
+Aurora10M Up to 10 Mfps
+Aurora20M Up to 20 Mfps
+F Up to 20 Million images/second
+F Adjustable exposure down to 25ns
+F Novel, patented sensor architecture
+F Pre & Post event triggering
+F External synchronisation
+F Nikon lens mount fitting
+F Gigabit ethernet communications
+F Compact and rugged design
+FEATURES
+180/360 images
+25ns minimum exposure
+
+-- 5 of 40 --
+
+specialised-imaging.com 	info@specialised-imaging.com
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate.
+FM 87429
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc, 1131 S.
+La Canada, Suite 100, Green Valley
+AZ 85614 United States
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+The Ultimate High-Speed Video Camera
+Aurora5M
+Frame Rate
+(Frames per second) 	Up to 5 Mfps 	Up to 10 Mfps 	Up to 20 Mfps
+Exposure Time
+(minimum) 	25ns
+Trigger Mode Start on Trigger, Stop on Trigger
+(user defined post trigger frames)
+Aurora10M 	Aurora20M
+Sensor 	μCMOS - BSI (Patented Technology)
+Number of Active Pixels
+Number of Frames
+900 (W) x 740 (H)
+180 Frames
+900 (W) x 370 (H)
+360 Frames
+Pixel Size 	30μm
+Digitisation 	10bits
+Trigger (2 off)
+(BNC)
+Electrical signal
+Threshold variable from ± 25V
+Maximum Input level 50V
+Integrated velocity timing system
+Positive or Negative polarity, Make/Break
+50Ω or 1KΩ termination
+Video Out 	XVGA
+Aux Out (x4)
+(BNC)
+FSync or user programmable pulse width and
+position for strobe/laser illumination sources.
+TTL into 50Ω
+Sync In 	Input to allow the synchronisation of two
+cameras in Master-Slave configuration
+Camera Control 	Remote control via Standard 1Gbps
+Ethernet
+Software 	Custom software compatible with Microsoft
+Windows Operating Systems for control and
+data archiving in various file formats
+Electrical input 	Mains 100-240V AC 50-60Hz
+Saved Image Format 	TIFF, JPEG, AVI or RAW
+Lenses 	Nikon F-Mount
+Shutter 	Electro-mechanical
+Distortion 	Zero
+TIMING PARAMETERS
+System Clock 	200MHz quartz crystal controlled
+Exposure time 	25ns
+Framing rates 	1000fps - 5Mfps / 10Mfps / 20Mfps
+Dimension mm
+(w/d/h)
+Head:
+22.8cm x 42cm x 19cm (without lens)
+Power supply:
+19.5cm x 39.5cm x 19.5cm (inc. handle)
+Weights 	Head:
+10.6Kg (23lbs) without lens.
+Power Supply:
+4.8Kg (10.5lbs)
+Tripod Mounting 	3/8-16 UNC Female in base.
+SIL-7100-01-Q03
+MODEL SPECIFICATION 	TIMING PARAMETERS
+MECHANICAL
+INPUT / OUTPUT SIGNALS
+Storage temperature 	-10°C to +50°C
+Operating temperature -5°C to +40°C
+Humidity 	10—90% RH non condensing
+Vibration shock 	10—40 Hz Max. 10g in any direction
+EMC 	Meets all UKCA/EU harmonised standards
+ENVIRONMENTAL
+OPTICAL
+INTENSIFIER / SENSOR
+
+-- 6 of 40 --
+
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com
+The Specialised Imaging SIM Framing Camera range offers from
+16 to 32 images without creating shading, or parallax. Highly
+accurate timing and fully flexible intensified CCD sensors provide
+almost infinite control over interframe time, gain and exposure
+to capture even the most difficult ultra-fast phenomena.
+Comprehensive triggering adjustment and a wide range of
+output signals are controlled using the custom software package
+which also includes measurement and image enhancement
+functions.
+The SIM has an optional port for the addition of a high-speed
+video, or streak camera to allow simultaneous long duration or
+ultra high temporal resolution capture.
+SIM Intensified
+Framing
+Cameras
+F 1360 x 1024 pixel sensor resolution
+F Up to 16 discrete intensified optical
+channels
+F Adjustable inter-frame time in 1ns steps
+F Fully adjustable exposure down to 3ns
+F Gain adjustment up to 10,000X
+F Programmable output triggers
+F Nikon lens mount (standard)
+F Canon lens mount (optional)
+F Gigabit Ethernet communications
+F High system resolution configuration
+F User interchangeable filters
+FEATURES BOTH MODELS
+MULTI-SPECTRAL
+Up to 1 Billion frames
+per second capture speed
+
+-- 7 of 40 --
+
+specialised-imaging.com 	info@specialised-imaging.com
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate.
+FM 87429
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc, 1131 S.
+La Canada, Suite 100, Green Valley
+AZ 85614 United States
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+System Clock 	1GHz quartz crystal controlled
+Exposure Mode (each
+image)
+Single exposure or multiple exposures
+(Max. 8) per channel
+Exposure Time 	3ns - 10ms in 1ns steps independently variable
+Separation Time
+(multiple exposure mode)
+30ns - 20ms in 1ns steps independently variable
+Interframe Time 	0ns - 20ms in 1ns steps independently variable
+Delay to 1st exposure 	65ns to 10ms in 1ns steps, independently variable
+Flash Outputs 	5ns - 1ms in 1ns steps independently variable
+Framing rates 	up to 1 Billion fps
+SIM 	Intensified Framing Cameras
+SIL-3001-03-Q01
+SPECIFICATION BOTH MODELS
+SIMD SIMD8 	SIMD16 SIMD20 SIMD24 SIMD32
+Number of
+Channels 	4 	8 	10 	12 	16
+Number of
+images 	8 	16 	20 	24 	32
+Single and multiple channel upgrades are available up to a maximum of 16
+channels.
+MORE IMAGES
+Optics 	Single input beam splitting optics
+Lenses 	Nikon F-Mount (Standard)
+Canon Mount (Optional)
+Internal electro-
+mechanical iris
+f2.8 - f22
+Shutter 	Electro-mechanical
+Distortion 	Nominally zero
+Channel Registration 	Within one pixel after software correction
+Intensity Variation 	Better than 5% across the image
+OPTICAL
+SIMX4 	SIMX8 	SIMX10 SIMX12 SIMX16
+Number of
+Channels 	4 	8 	10 	12 	16
+Number of
+images 	4 	8 	10 	12 	16
+Single and multiple channel upgrades are available up to a maximum of 16
+channels.
+SIMX
+HIGHER RESOLUTION
+INTENSIFIER / SENSOR	
+Image Sensor 	ICX285AL
+Active CCD Pixel 	1360 (H) x 1024 (V)
+Pixel Size 	6.45 μm (H) x 6.45 μm (V)
+Digitisation 	12 bits
+Intensifier 	Gen II 18mm High resolution MCP
+Input window Fused Silica
+Output window Fibre Optic
+Photocathode S25, others available on request
+SIMD Phosphor screen P46
+SIMX Phosphor screen P43
+Other Image Intensifier options available. Please contact us to discuss.
+Gain 	Variable up to 10,000
+System resolution 	>50 lp/mm (SIMX)
+>36 lp/mm (SIMD)
+INTENSIFIER / SENSOR
+Dimensions in cm
+(LxWxH)
+57.2 x 43.8 x 31.9 (> 8CH, without lens)
+57.2 x 23.8 x 31.9 (< 8CH, without lens)
+Mount 	3/8-16 UNC Female
+Weight 	37.5Kg (< 8CH, without lens)
+24Kg (> 8CH, without lens)
+MECHANICAL
+TIMING PARAMETERS
+Trigger 1
+(BNC)
+Electrical signal
+Threshold variable from ± 25V
+Positive or Negative polarity, Make/Break
+50Ω or 1KΩ termination
+Trigger 2
+(BNC)
+Electrical signal
+Threshold variable from ± 25V
+Positive or Negative polarity, Make/Break
+50Ω or 1KΩ termination
+Timing Monitor Pulses
+(BNC)
+Pulse width (min. 3ns) and position user programmable
+TTL into 50Ω
+Flash Trigger Outputs 	Pulse width (min. 5ns) and position user programmable
+TTL into 50Ω
+Camera control 	Data and command transfer via Gigabit ethernet
+cable length 10m (standard), other lengths up
+to 100m. Optional Fibre Optic ethernet link (up to 2Km)
+Software 	Custom software compatible with Microsoft Windows
+Operating Systems for camera control, image data
+archiving in various file formats.
+Electrical input 	Mains 100-240V AC 50-60Hz
+INPUT / OUTPUT SIGNALS
+Storage temperature 	-10°C to +50°C
+Operating temperature 	-5°C to +40°C
+Humidity 	10 - 90% RH non condensing
+Vibration shock 	10 - 40 Hz Max. 10g in any direction
+EMC 	Meets all UKCA/EU harmonised standards
+ENVIRONMENTAL
+
+-- 8 of 40 --
+
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com
+SIR3
+High Resolution Double Image
+Intensified camera
+Single or Double image
+capture
+Up to 10.7 MegaPixel
+12-bit images
+Lightweight and
+Rugged construction
+F 100μs minimum delay between 2 images
+F Fully adjustable exposure down to 10ns
+F Gain adjustment up to 10,000X
+F Adjustable output triggers
+F Nikon lens mount fitting
+F Gigabit ethernet communications
+The Specialised Imaging SIR3 Framing
+Camera offers up to 2 high resolution
+images, 100μs apart. Fully flexible
+intensified CCD sensor provides control over
+interframe time, gain and exposure.
+Comprehensive triggering adjustment and a
+wide range of output signals are controlled
+using the custom software package which
+also includes measurement and image
+enhancement functions.
+FEATURES
+
+-- 9 of 40 --
+
+specialised-imaging.com 	info@specialised-imaging.com
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate.
+FM 87429
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc, 1131 S.
+La Canada, Suite 100, Green Valley
+AZ 85614 United States
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+Lenses 	Nikon F-mount (ruggedized mounting system)
+System Aperture 	f 2
+Shutter 	Electro-mechanical
+Distortion 	Nominally zero
+Coupling 	Optical
+Vignetting 	<3%
+Intensity variation 	Better than 5% across the image
+Optical Viewfinder 	Optional
+System Clock 	200MHz quartz crystal controlled
+Inherent Delay 	<130ns
+Imaging Mode 	Single or Double image
+Exposure Modes 	Single exposure
+Multiple exposures
+(Max. 16 - subject to imaging conditions).
+Exposure Times 	10ns – 10ms in 5ns steps
+independently variable
+Separation
+(Multiple Exposure
+Mode)
+30ns to 20ms in 5ns steps
+independently variable
+Delay to 2nd Image 	100μS – 10mS in 5ns steps.
+Flash output 	20ns to 1ms in 5ns steps
+independently variable
+Trigger 1
+(BNC)
+Electrical signal
+Threshold variable from ± 25V
+Positive or Negative polarity, Make/Break
+50Ω or 1KΩ termination
+Maximum Voltage +/- 50V
+Trigger 2
+(BNC)
+Electrical signal
+Threshold variable from ± 25V
+Positive or Negative polarity, Make/Break
+50Ω or 1KΩ termination
+Maximum Voltage +/- 50V
+Flash Trigger Output
+(BNC)
+Pulse width (min. 10ns) and position user
+programmable.
+TTL into 50Ω
+Camera Control 	Data and command transfer via Gigabit
+Ethernet Cable length 100m (standard)
+1000FX fibre optic Ethernet link (up to 2Km) -
+optional
+Software 	Custom software compatible with Microsoft
+Windows Operating Systems for camera
+control, image data archiving in various file
+formats.
+Electrical input 	Mains 100-240V AC 50-60Hz
+Storage temperature 	-10°C to +50°C
+Operating temperature 	-5°C to +40°C
+Humidity 	10—90% RH non condensing
+Vibration shock 	10—40 Hz Max. 10g in any direction
+EMC 	Meets all UKCA/EU harmonised standards
+Dimension mm (w/d/h) 	17.0cm x 48.5cm x 19.3cm (without lens)
+Tripod Mount 	1/4 - 20 UNC and 3/8 - 16 UNC female
+Weight 	15Kg (33lbs) without lens
+SIR3-25D 	SIR3-40D
+Image Sensor 	KAI4021M 	KAI11002M
+Active CCD Pixel 	2048 (H) x
+2048 (V)
+4008 (H) x
+2688 (V)
+Pixel Size 	7.4 μm (H) x
+7.4 μm (V)
+9 μm (H) x
+9 μm (V)
+Dynamic Range 	12 bits 	12 bits
+Intensifier diameter 	25mm MCP 	40mm MCP
+Photocathode 	All models: S25
+Phosphor / decay 	FS/10μs 	FS/10μs
+Input / Output windows 	All models: Glass / Fibre
+Gain 	Variable up to 10,000 all models
+SIR3 	Compact range camera
+SIL-2300-01-Q03
+TIMING PARAMETERS
+MECHANICAL
+INPUT / OUTPUT SIGNALS
+ENVIRONMENTAL
+OPTICAL
+INTENSIFIER / SENSOR
+
+-- 10 of 40 --
+
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com
+SI-OT4
+Optical Trigger Unit
+F Small and lightweight
+F Low ripple rugged AC power unit
+F Nikon lens mount fitting
+F User adjustable sensitivity
+FEATURES
+Rugged Design
+Optimisable
+Background,
+High Contrast
+detection
+Shadow &
+Flash Detector
+The Specialised Imaging OT4 provides
+a reliable optical trigger for either
+projectile “shadow” detection or flash
+detection. Our low-ripple AC power
+unit, with a rugged enclosure allows
+the OT4 to be used outside in all
+weathers.
+
+-- 11 of 40 --
+
+specialised-imaging.com 	info@specialised-imaging.com
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate.
+FM 87429
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc, 1131 S.
+La Canada, Suite 100, Green Valley
+AZ 85614 United States
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+SI-OT4 	Optical Trigger Unit
+Output (BNC) 	Positive 5V
+Trigger indicator 	LED
+Electrical input 	18-24V DC
+AC Power Unit Storage temperature 	-10°C to +60°C
+Operating temperature 	-5°C to +45°C
+Humidity 	10—90% RH non condensing
+Vibration shock 	10—40 Hz Max. 10g in any direction
+EMC 	Meets all UKCA/EU harmonised standards
+Lenses 	Nikon F-Mount
+Alignment 	Optical viewport
+Dimension mm (L x W x H) 	OT4 Unit (without lens)
+160mm x 140mm x 85mm
+6.3” x 5.” x 3.3”
+AC Power Unit
+150mm x 120mm x 80mm
+5.9” x 4.7” x 3.1”,
+Weights 	OT4 Unit
+1.1Kg / 2.4lb
+AC Power Unit
+2Kg / 4.4lb
+Sensor head mounting 	1/4 - 20 UNC Female
+Base and top
+Sensor 	Multi-Segment Photodiode array.
+400nm – 700nm range
+SIL-4901-01-Q04
+OPTICAL 	MECHANICAL
+INPUT / OUTPUT SIGNALS
+ENVIRONMENTAL
+SENSOR
+
+-- 12 of 40 --
+
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com
+SIL3
+Range of Intensifier
+tube options
+Up to 40lp/mm
+resolution
+Gate times down
+to 10ns
+Comprehensive triggering for
+High-speed video and other cameras
+Compact image intensifier/
+converter
+The Specialised Imaging SIL3 image intensifier is the
+latest generation of intensifier that can be synchronised
+to almost any high-speed video,conventional video or
+stills camera.
+Maximum equivalent frame rates ranging from
+100,000fps to 1,000,000fps and minimum gate
+(exposure) time of 10ns.
+All Intensifier tube options use fused silica input windows
+as standard. The two possible output window diameters,
+Phosphor decay times and Wavelength responses
+options (inc. UV) allows the SIL3 to be configured as a
+unique enhancement to any camera.
+Intuitive custom control software allows gain, gate/
+exposure and delay adjustment via Ethernet.
+F 18mm, 25mm & 40mm
+Intensifier tube options
+F Fully adjustable gating times
+down to 10ns
+F Gain adjustment up to
+500,000X
+F Nikon lens mount fitting
+F Optical camera coupling
+F Ethernet communications
+F UV wavelength conversion
+option
+FEATURES
+
+-- 13 of 40 --
+
+specialised-imaging.com 	info@specialised-imaging.com
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate.
+FM 87429
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc, 1131 S.
+La Canada, Suite 100, Green Valley
+AZ 85614 United States
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+Front Lens mount 	F-mount
+Optical Coupling 	F-mount
+System Clock 	200MHz, quartz crystal controlled.
+Inherent Delay (5ns jitter) 	60ns
+Exposure Time 	50ns—DC in 5ns steps independently
+variable
+Inter Exposure Time 	50ns—25ms in 5ns steps independently
+variable
+Number of exposures 	Up to 64 in pulsed mode.
+Unlimited in REP (synchronous) mode
+Triggers
+(BNC)
+2 Independent Inputs
+Electrical signal
+Maximum Input level 50V
+Threshold variable from ± 25V
+Positive or Negative polarity, Make/Break
+50Ω or 1KΩ termination
+Aux Outputs
+(BNC)
+Pulse width and position user
+programmable (min. 5ns)
+TTL into 50Ω
+Control Interface 	Remote control via Standard 100Mbps
+Ethernet
+Inhibit Input (BNC) 	5V TTL (user input brightness protection)
+Software 	Custom software compatible with
+Microsoft Windows Operating Systems
+for control
+Electrical input 	Mains 100-240V AC 50-60Hz
+Storage temperature 	-10°C to +50°C
+Operating temperature 	-5° to +40°C
+Humidity 	10 - 90% RH non condensing
+Vibration shock 	10 - 40Hz Max. 10g in any direction
+EMC 	Meets all UKCA/EU harmonised standards
+SIL3 Compact image intensifier/converter
+Dimension mm (w/d/h) 	17.8cm x 18.5cm x 19.7cm
+(7.0” x 7.3” x 7.8”) without lenses
+Tripod Mount 	3/8-16UNC Female
+Weight 	4.8Kg (10.6lbs) without lenses
+Lens/Camera Support 	Option available
+SIL-1200-01-Q04
+SIZE 	Gain 	Minimum Gating Time 	Photo-cathode 	Phosphor 	"Max. Frequency
+(Hz)"
+"Typical Resolution
+(lp/mm)"
+"Typical
+Resolution
+(μm )"
+SIL3 18
+NG (7,000) 	50 	S20UV 	P46 	1M 	50lp/mm 	10
+20 	S25
+10
+HG (70,000) 	50 	s20UV 	P46 	1M 	35lp/mm 	14.3
+20 	S25
+20
+SIL3 25
+NG (10,000) 	50 	S20UV 	FS 	100K 	40lp/mm 	12.5
+20 	S25 	P46 	1M 	32lp/mm 	15.6
+HG (100,000) 	50 	S20UV 	FS 	100K 	28lp/mm 	17.8
+20 	S25 	P46 	1M 	22lp/mm 	23
+EG (500,000) 	50 	S20UV 	FS 	100K 	26lp/mm 	19.2
+20 	S25 	P46 	1M 	20lp/mm 	25
+SIL3 40
+NG (10,000) 	50 	S20UV 	FS 	100K 	28lp/mm 	17.8
+S25 	P46 	1M 	22lp/mm 	23
+HG (100,000) 	50 	S20UV 	FS 	100K 	20lp/mm 	25
+S25 	P46 	1M 	16lp/mm 	31.25
+EG (500,000) 	50 	S20UV 	FS 	100K 	19lp/mm 	26.3
+S25 	P46 	1M 	15lp/mm 	33
+MODEL SPECIFICATION
+TIMING PARAMETERS
+MECHANICAL
+INPUT / OUTPUT SIGNALS
+ENVIRONMENTAL
+OPTICAL
+
+-- 14 of 40 --
+
+The Fused Silica input window
+used in the SIL3 allows
+transmission down to 180nm.
+This feature improves the
+spectral response normally
+limited by the transmission of
+other input window materials,
+such as borosilicate or Fibre
+optic glass which have an
+inherent cut off frequency
+around 300 - 350nm.
+Photocathode
+Spectral
+sensitivities:
+specialised-imaging.com 	info@specialised-imaging.com
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate.
+FM 87429
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc, 1131 S.
+La Canada, Suite 100, Green Valley
+AZ 85614 United States
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+SIL3 Compact image
+intensifier/converter
+SIL-1210-02-Q04
+
+-- 15 of 40 --
+
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com
+T-Cami
+High Resolution
+intensified camera
+F Fully adjustable exposure from 5ns to 10ms
+F Adjustable output triggers
+F Nikon lens mount fitting
+F Gigabit ethernet communications
+The Specialised Imaging T-Cami offers
+high resolution single or double image
+intensified monochrome images.
+Comprehensive triggering adjustment
+and a wide range of output signals are
+controlled using the custom software
+package which includes measurement
+and image enhancement functions.
+FEATURES
+Single image capture
+Up to 1.3 MegaPixel
+12-bit images
+Compact and rugged construction
+
+-- 16 of 40 --
+
+specialised-imaging.com 	info@specialised-imaging.com
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate.
+FM 87429
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc, 1131 S.
+La Canada, Suite 100, Green Valley
+AZ 85614 United States
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+Lenses 	Nikon F-mount
+System Aperture 	Limited by lens
+Distortion 	Nominally zero
+Trigger 1
+(BNC)
+Electrical signal
+Threshold variable from ± 25V
+Positive or Negative polarity, Make/Break
+50Ω or 1KΩ termination
+Trigger 2
+(BNC)
+Electrical signal
+Threshold variable from ± 25V
+Positive or Negative polarity, Make/Break
+50Ω or 1KΩ termination
+Flash Trigger Output
+(BNC)
+Pulse width (min. 10ns) and position user
+programmable.
+TTL into 50Ω
+Camera Control 	Data and command transfer via Gigabit
+Ethernet.
+Cable length 10m (standard), other lengths up
+to 100m available
+1000FX fibre optic Ethernet link (up to 2Km) -
+optional
+Software 	Custom software compatible with Microsoft
+Windows Operating Systems for camera
+control, image data archiving in various file
+formats.
+Electrical input 	Mains 100-240V AC 50-60Hz
+Storage temperature 	-10°C to +50°C
+Operating temperature 	-5°C to +40°C
+Humidity 	10—90% RH non condensing
+Vibration shock 	10—40 Hz Max. 10g in any direction
+EMC 	Meets all UKCA/EU harmonised standards
+Image Sensor 	ICX285AL
+Active CCD Pixel 	1360 (H) x 1024 (V)
+Pixel Size 	6.45 μm (H) x 6.45 μm (V)
+Dynamic Range 	12 bits
+Intensifier diameter 	18mm MCP
+Photocathode 	S25
+Phosphor / decay 	P46/300ns
+Gain 	Variable up to 10,000
+T-Cami 	High Resolution non-intensified camera
+SIL-5500-01-Q03
+Dimension mm (w/d/h) 	17.8cm x 18.5cm x 19.7cm
+(7.0” x 7.3” x 7.8”) without lenses
+Tripod Mount 	1/4-20 UNC Female
+Weight 	6Kg (13.2lbs) without lens.
+MECHANICAL
+INPUT / OUTPUT SIGNALS
+ENVIRONMENTAL
+OPTICAL
+SENSOR
+
+-- 17 of 40 --
+
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com
+Tracker Lite
+Based on the Trajectory Tracker2 system
+Multiple tracking modes
+Manual positional adjustment
+Integrated with various
+high speed cameras
+Compact High-Speed Linear Tracker System
+The Specialised Imaging Tracker Lite is a smaller, lighter system
+that retains the core functions of the Award winning Tracker2
+system.
+Simplification of the Tracker2 system includes manual
+alignment adjustment with projectile flightpath, and three
+inputs for real time projectile velocity variation adjustment.
+Mounted on heavy, stable tripod, the fully weatherproof
+mirror/camera housing allows smaller high-speed video
+cameras with long focal length lenses to be used.
+Custom software controls the Tracker and triggering set up,
+provides calculators for camera fields-of-view and depth of
+focus for different cameras, lenses and Tracker locations.
+F Multiple operating modes
+allow capture of decelerating,
+accelerating, user defined
+velocity profiled projectiles
+F Scan ratio (SR) range from
+1 to 100
+F Typical scanning accuracy
+of ± 0.2o .
+F Gigabit ethernet
+communications
+F Built in camera power,
+communications and trigger
+F No calibration required
+F Optional 32 trigger inputs
+FEATURES
+
+-- 18 of 40 --
+
+specialised-imaging.com 	info@specialised-imaging.com
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate.
+FM 87429
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc, 1131 S.
+La Canada, Suite 100, Green Valley
+AZ 85614 United States
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+Tracker Lite Compact High-Speed Linear Tracker System
+Type 	Optical flat elliptical surface silvered
+Size (HxW) mm 	135 x 90
+Scan Ratio (SR) 	1 to 100
+(defined as the ratio of projectile velocity/
+stand-off distance)
+Scanning range (Max.) 	-50º to +50 º
+Scanning Distance 	≥ 2 x standoff distance (shortest distance
+between Tracker and line of flight)
+Scanning Accuracy 	± 0.2o
+Calibration 	Not required
+Projectile Velocity 	SR x Standoff distance
+Projectile Drag 	0 to 100 m/s/m
+Acceleration Angle 	1° - 5° depending on scan rate
+(defined as the angle required to accelerate
+the mirror from rest to full scanning speed)
+System Clock 	10MHz quartz crystal controlled
+Trigger Jitter 	<1us
+Detector In 	BNC
+Number of inputs 	3 (Optional 32)
+Trigger In (BNC) 	Make/Break, Positive or Negative edge,
+Threshold variable to ± 17V
+50Ω or 1KΩ termination
+Camera Trigger 	TTL positive pulse
+Communication
+Interface
+Data and command transfer via 1Gbps
+ethernet cable
+Software 	Custom software compatible with Microsoft
+Windows Operating Systems for control and
+data archiving in various file formats
+Electrical input 	Mains 100-240V AC 50-60Hz
+Storage temperature 	-10°C to +74°C
+Operating temperature 	-5°C to +45°C
+Warmup Period 	Not Required
+Humidity 	10 - 90% RH non-condensing
+Operational vibration 	10G, 10-40Hz Max, any direction
+EMC 	Meets all UKCA/EU harmonised standards
+Dimensions mm (w/d/h) 	650 x 230 x 310 (without tripod)
+Weight 	16kg / 35lbs (without camera and lens)
+Tripod Mount 	3/8-16 UNC Female
+SIL-4400-01-Q03
+Fixed Velocity 	Single trigger using assumed initial velocity
+Velocity 	The scan is corrected using the measured
+velocity from 2 detectors.
+Drag / Acceleration 	The scan is corrected using the measured
+velocities and calculated drag from 3
+detector inputs.
+Pre-defined profile 	Programmable Velocity vs Time curve.
+Triggered using single trigger. Used for non-
+linear projectile trajectories.
+Position 	The scan position is corrected by detector
+inputs
+Advanced User
+Functions
+Specialised Imaging is prepared to
+customise modes of operation to user
+requirements.
+Skewed Geometry 	Allows asymmetric scan
+OPERATING PARAMETERS	OPERATING MODES
+MECHANICAL
+INPUT / OUTPUT SIGNALS
+ENVIRONMENTAL
+MIRROR
+CONTROL UNIT
+
+-- 19 of 40 --
+
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com
+Tracker 2
+Tracker2 sets the benchmark for
+flight-follower systems
+Multiple tracking modes
+Remote control motorised adjustment
+Accept various high speed cameras
+Comprehensive High-Speed Linear Tracker System
+The Specialised Imaging Tracker2 is
+the next generation of projectile
+tracking platforms for high-speed
+video and measurement.
+Full motorised remote control of three axis
+rotation and multiple inputs for real-time
+velocity adjustment contribute to the evolution
+of this benchmark system.
+Built on a sturdy mount, the fully weatherproofed mirror
+and camera housings allow a large range of high-speed
+video cameras and long focal length lens options.
+Custom software controls the Tracker system and
+provides calculators for Tracker placement, camera
+fields-of-view and velocities.
+F Full remote control operation
+F Multiple operating modes
+allow capture of decelerating,
+accelerating, user defined velocity
+profiled projectiles
+F Scan ratio range from 0.1 to 100
+F Scanning accuracy of ± 0.2o
+F Gigabit ethernet communications
+F Built in camera power,
+communications and trigger
+F No calibration required
+FEATURES
+
+-- 20 of 40 --
+
+specialised-imaging.com 	info@specialised-imaging.com
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate.
+FM 87429
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc, 1131 S.
+La Canada, Suite 100, Green Valley
+AZ 85614 United States
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+Type 	Optical flat elliptical Silicon Carbide Mirror
+Size (HxW) mm 	135 x 90 x 2
+Scan Ratio (SR) 	0.1 to 100
+(defined as the ratio of projectile velocity/
+stand-off distance)
+Scanning range (Max.) -60º to +60 º
+Scanning Distance 	>=2x standoff distance (distance from the line
+of flight to Tracker2)
+Scanning Accuracy 	±0.2º
+Positional Accuracy 	±0.018°
+Calibration 	Not required
+Projectile Velocity 	SR x Standoff distance
+Projectile Drag 	0 to 100 m/s/m
+Acceleration Angle 	1° - 5° depending on scan rate
+(defined as the angle required to accelerate the
+mirror from rest to full scanning speed)
+System Clock 	10MHz quartz crystal controlled
+Trigger Jitter 	<1us
+Detector In 	BNC
+Number of inputs 	8 (Optional 32)
+Trigger In (BNC) 	Make/Break, Positive or Negative edge,
+Threshold variable to ± 17V
+50Ω or 1KΩ termination
+Camera Trigger 	TTL positive pulse
+Communication
+Interface
+Data and command transfer via 1Gbps ethernet
+cable length 100m (standard). Other lenths
+available 1000FX fibre optic ethernet link (up to
+2Km) - optional
+Software 	Custom software compatible with Microsoft
+Windows Operating Systems for control and
+data archiving in various file formats
+Electrical input 	Mains 100-240V AC 50-60Hz
+Storage temperature 	-10°C to +74°C
+Operating temperature 	-5°C to +50°C
+Warmup Period 	Not Required
+Humidity 	10 - 90% RH non-condensing
+Operational vibration 	10G, 10-40Hz Max, any direction
+EMC 	Meets all UKCA/EU harmonised standards
+Fixed Velocity 	Single trigger using assumed initial velocity
+Velocity 	The scan is corrected using the measured
+velocity from 2 detectors.
+Drag / Acceleration 	The scan is corrected using the measured
+velocities and calculated drag from 3
+detector inputs.
+Pre-defined profile 	Programmable Velocity vs Time curve.
+Triggered using single trigger. Used for non-
+linear projectile trajectories.
+Position 	The scan position is corrected by detector
+inputs
+Advanced User
+Functions
+Specialised Imaging is prepared to
+customise modes of operation to user
+requirements.
+Skewed Geometry 	Allows asymmetric scan
+Tracker 2
+Dimensions mm (w/d/h) 	1340 x 670 x 590 (without tripod)
+Mount 	Tripod Included
+Comprehensive High-Speed Linear Tracker System
+SIL-4200-01-Q03
+OPERATING PARAMETERS	OPERATING MODES
+MECHANICAL
+INPUT / OUTPUT SIGNALS	ENVIRONMENTAL
+MIRROR 	CONTROL UNIT
+
+-- 21 of 40 --
+
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com
+SI-1CU
+The Specialised Imaging Single Channel
+Control Unit is built within a compact
+enclosure and utilises a 200MHz quartz
+system clock providing 5ns timing
+accuracy.
+Accepts a wide range of input signals.
+The TTL output can be used to trigger
+a range of devices including strobes,
+laser and flash unit. The enable input
+signal can be used as a gate to allow the
+output pulses only when it is needed.
+Single Channel Control Unit
+F Ethernet communication
+F Programmable
+200MHz, System Clock
+5ns Resolution
+Enable function
+1 input channel / 1 output channel
+FEATURES
+
+-- 22 of 40 --
+
+specialised-imaging.com 	info@specialised-imaging.com
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate.
+FM 87429
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc, 1131 S.
+La Canada, Suite 100, Green Valley
+AZ 85614 United States
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+SI-1CU
+System Clock 	200MHz, quartz crystal controlled
+Inherent Delay 	50ns
+Range 	5ns to 1s in 5ns steps independently variable
+Jitter (trigger) 	5ns
+Single Channel Control Unit
+MECHANICAL
+Dimension mm (w/d/h)
+Dimension inches (w/d/h)
+220mm x 120mm x 90mm (+15mm)
+8.7" x 4.7" x 3.5"
+Weight 	2Kg (4.4lbs)
+ENVIRONMENTAL	Storage temperature 	-10°C to +50°C
+Operating Temperature 	-5°C to +40°C
+Humidity 	10 - 90% RH non condensing
+Vibration shock 	10 - 40 Hz Max. 10g in any direction
+EMC 	Meets all UKCA/EU harmonised standards
+Input (BNC) 	Threshold variable from ±25V
+Positive or Negative polarity, Make/Break
+50Ω or 1KΩ termination
+Output (BNC) 	Pulse width (min. 5ns)
+User programmable TTL into 50Ω
+Enable (BNC) 	+ve TTL Enable
+0V Disable
+Control interface 	100Mbps Ethernet
+Programmable
+Output
+Disabled
+Max 30μs
+User selectable
+Software 	Custom software compatible with
+Microsoft Windows Operating Systems
+for Control and data archiving.
+Electrical input 	Mains 100-240V AC 50-60Hz
+SIL-1450-01-Q04
+TIMING PARAMETERS 	MECHANICAL
+ENVIRONMENTAL
+INPUT / OUTPUT SIGNALS
+
+-- 23 of 40 --
+
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com
+SI-4CDG
+200MHz, System Clock
+5ns Resolution
+3 independent input channels
+4 independent output channels
+The Specialised Imaging 4 Channel Delay
+generator is built within a compact IP65
+rated enclosure and utilises a 200MHz
+quartz system clock providing 5ns
+timing accuracy.
+Three independent inputs accept a wide
+range of electrical signals, while four
+independent outputs provide precise
+triggering of peripheral devices such as
+framing cameras, ultra-high speed video
+cameras, and flash, laser, or strobe
+illumination systems.
+4 Channel Delay Generator
+F Ethernet communication
+F 19" Rack mount option
+F Software driven
+FEATURES
+
+-- 24 of 40 --
+
+specialised-imaging.com 	info@specialised-imaging.com
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate.
+FM 87429
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc, 1131 S.
+La Canada, Suite 100, Green Valley
+AZ 85614 United States
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+SI-4CDG
+System Clock 	200MHz, quartz crystal controlled
+Inherent Delay 	50ns
+Range 	5ns to 1s in 5ns steps independently
+variable
+Jitter (trigger) 	5ns
+Jitter (channel to channel) Less than 250ps
+4 Channel Delay Generator
+Dimension mm (w/d/h)
+Dimension inches (w/d/h)
+360mm x 200mm x 77mm (with handles)
+14.17" x 7.87" x 3.03" (with handles)
+IP rating 	IP65
+Weight 	4Kg (8.8lbs)
+Storage temperature 	-10°C to +50°C
+Operating Temperature 	-5°C to +40°C
+Humidity 	10 - 90% RH non condensing
+Vibration shock 	10 - 40 Hz Max. 10g in any direction
+EMC 	Meets all UKCA/EU harmonised standards
+Input/trigger
+channels
+(BNC)
+3 (independent)
+Electrical signal (Max +/- 50V)
+Threshold variable from ±25V
+Positive or Negative polarity, Make/Break
+50Ω or 1KΩ termination
+Output channels
+(BNC)
+4 (independent)
+Pulse width (min. 5ns) and position user
+programmable TTL into 50Ω
+Control interface 	100Mbps Ethernet
+Software 	Custom software compatible with
+Microsoft Windows Operating Systems
+for Control and data archiving.
+Electrical input 	Mains 100-240V AC 50-60Hz
+Rack mount option
+SIL-1400-01-Q04
+TIMING PARAMETERS 	MECHANICAL
+ENVIRONMENTAL
+INPUT / OUTPUT SIGNALS
+
+-- 25 of 40 --
+
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com
+AD-500
+Single or multiple head high intensity flash system
+500J Flash head with
+2ms duration
+Up to four independent
+flash heads
+40s recycle time
+Trigger options -
+short or positive
+pulse
+Signal Input 	Four independent Channels
+Trigger Mode 	1. Independent -
+All channels trigger separately
+2. Simultaneous -
+Any channel triggers all channels
+Trigger Source 	Short Circuit
+5-100V positive pulse
+Input Impedance 	50Ω
+Mains Input 	IEC socket
+Electrical input 	Mains 100-240V AC 50-60Hz
+Dimensions mm 	(LxWxH) 220mm x 110mm x 128mm
+Weight 	3.7kg
+EMC 	Meets all UKCA/EU harmonised standards
+Light Duration (Typ) 	2ms measured to 50% of peak output
+Stored Charge (max) 	500J
+Charge Voltage 	340V
+Light Source 	U-Shape Xenon flashtube
+Rise Time 	50μs
+Delay (typ) 	30μs
+Recycling TIme (typ) 	40 seconds
+Dimensions 	(LxDia) 270mm x 170mm
+Weight (Kg) 	5.25kg
+Lamp cable length 	2.5m
+EMC 	Meets all UKCA/EU harmonised standards
+The Specialised Imaging AD500 Flash
+system offers the flexibility of up to four
+controllable high intensity flash heads for
+use in scientific and industrial environments.
+specialised-imaging.com 	info@specialised-imaging.com
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc.
+40935 County Center Dr. Suite D
+Temecula, CA 92591, USA
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate. 	SIL-9020-01-Q04
+CONTROL UNIT 	FLASH HEAD
+FM 87429
+
+-- 26 of 40 --
+
+MSFH-370
+Signal Input 	Four independent Channels
+Trigger Mode 	1. Independent -
+All channels trigger separately
+2. Simultaneous -
+Any channel triggers all channels
+Trigger Source 	Short Circuit
+5-100V positive edge
+Input Impedance 	50Ω
+Mains Input 	IEC socket
+Electrical input 	Mains 100-240V AC 50-60Hz
+Dimensions mm 	(LxWxH) 220 x 120 x 90 mm
+Weight 	4.5 kg
+EMC 	Meets all UKCA/EU harmonised standards
+Light Duration (Typ) 	750μs measured to 50% of peak output
+Stored Charge (max) 	370J
+Charge Voltage 	340V
+Light Source 	Linear spark source flashtube
+Rise Time 	50μs
+Delay (typ) 	30μs
+Recycling TIme (typ) 	40 seconds
+Dimensions 	(LxDia) 270 x 170 mm
+Weight (Kg) 	6 kg (Including handle, legs, FO mounting)
+Lamp cable length 	2.5m
+EMC 	Meets all UKCA/EU harmonised standards
+High intensity flash
+with dedicated fibre
+optic output
+5mm diameter FO output
+370J Flash head with 750μs duration
+Up to four independent flash heads
+40s recycle time
+Trigger options - short or positive edge
+The Specialised Imaging MSFH370 Flash system
+offers the flexibility of up to four controllable
+high intensity flash heads for use in scientific
+and industrial environments.
+CONTROL UNIT 	FLASH HEAD
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com	specialised-imaging.com 	info@specialised-imaging.com
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc.
+40935 County Center Dr. Suite D
+Temecula, CA 92591, USA
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate. 	SIL-9020-01-Q04
+FM 87429
+
+-- 27 of 40 --
+
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com
+SI-AT1
+The Specialised Imaging SI-AT1
+provides a reliable acoustic trigger for
+blast or shockwave detection.
+Built in battery power within a
+compact, rugged enclosure allows the
+AT1 to be used outside in all weathers
+and independent of mains power for
+up to 8 hours.
+F Small and rugged
+F Battery powered for up to 8 hours
+F User adjustable sensitivity
+F Standard tripod mounting threads
+Acoustic trigger Unit
+Built in NiMH
+battery
+Compact size
+User selectable
+sensitivity settings
+TTL trigger output
+FEATURES
+
+-- 28 of 40 --
+
+specialised-imaging.com 	info@specialised-imaging.com
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate.
+FM 87429
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc, 1131 S.
+La Canada, Suite 100, Green Valley
+AZ 85614 United States
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+SI-AT1 	Acoustic trigger unit
+Storage temperature 	-20°C to +50°C
+Operating temperature 	-15°C to +50°C
+Charging temperature 	0°C to +40°C
+Humidity 	10—90% RH non condensing
+Vibration shock 	10—40 Hz Max. 10g in any direction
+EMC 	Meets all UKCA/EU harmonised standards
+Dimension mm (w/d/h) 	Unit
+152mm x 88mm (5.9” x 3.46”)
+Tripod mount block
+16mm high (0.62”)
+Weight 	1Kg (2.2lbs)
+Tripod mount 	1 x 1/4-20UNC
+1 x 3/8-16UNC
+Sensor 	Piezoelectric acoustic sensor
+SIL-4800-01-Q03
+TIMING PARAMETERS 	MECHANICAL
+ENVIRONMENTAL
+INPUT / OUTPUT SIGNALS
+Output (BNC) 	Positive 5V TTL into 50Ω
+Pulse width 	30mS (Standard)
+10mS (Optional)
+Trigger indicator 	LED
+Electrical input 	Battery powered (Built in)
+Battery charger included
+Low power indicator 	LED
+
+-- 29 of 40 --
+
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com
+Up to 8 camera heads per control module
+1360 x 1024 pixel, 12-bit sensor resolution
+Cerberus
+The Specialised Imaging CERBERUS camera system offers
+framing camera image capture performance with the
+addition of multiple camera control.
+Each camera head can capture either one or two 1.4
+MegaPixel 12-bit images with exposure times down to 5ns.
+A maximum of 8 Control modules can be connected to
+allow a total of 64 cameras controlled from a single PC.
+The CERBERUS system is flexible enough to allow multiple
+3D/Stereoscopic image pairs or sequential images with
+a 5ns interframe time, equating to 200 Million Frames/
+second.
+F Control up to 64 camera
+heads
+F Adjustable exposure down
+to 5ns
+F Head to Head adjustable
+interframe time down to
+5ns
+F Nikon lens mount fitting
+F Ethernet communications
+F Compact and rugged design
+FEATURES
+Multi-head Intensified
+Camera System
+Single or double image capture
+5ns minimum shutter
+
+-- 30 of 40 --
+
+specialised-imaging.com 	info@specialised-imaging.com
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate.
+FM 87429
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc, 1131 S.
+La Canada, Suite 100, Green Valley
+AZ 85614 United States
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+Housing 	19” Rack Mount 2U case
+Storage temperature 	-10°C to +50°C
+Operating Temperature 	-5°C to +40°C
+Humidity 	10 - 90% RH non condensing
+Vibration shock 	10 - 40 Hz Max. 10g in any direction
+EMC 	Meets all UKCA/EU harmonised standards
+System Clock 	200MHz quartz crystal control
+Inherent Delay 	500ns
+Exposure Mode
+(each head)
+Single exposure or multiple exposures (Max. 8)
+per head
+Exposure Time 	5ns – 10ms in 5ns steps
+Interframe Time
+(head-to-head)
+5ns – 20ms in 5ns steps
+Delay to 1st exposure 	500ns – 10ms in 5ns steps
+Flash Outputs 	5ns to 1ms in 5ns steps
+Separation Time 	30ns – 20ms in 5ns steps (multiple exposures
+on same channel)
+Trigger 1
+(BNC)
+Electrical signal
+Threshold variable from ± 25V
+Positive or Negative polarity, Make/Break
+50Ω or 1KΩ termination
+Trigger 2
+(BNC)
+Electrical signal
+Threshold variable from ± 25V
+Positive or Negative polarity, Make/Break
+50Ω or 1KΩ termination
+Timing Monitor Pulse 	Pulse width (min. 5ns) and position user
+programmable TTL into 50Ω
+Flash Trigger Outputs 	Pulse width (min. 5ns) and position user
+programmable TTL into 50Ω
+Remote Camera
+Interface
+Data and command transfer via custom
+10m cable.
+Camera head control 	Data and command transfer via 100Mbps
+Ethernet cable length 10m (standard), other
+lengths up to 100m available 100FX
+Fibre optic Ethernet link (up to 2Km) - optional
+Software 	Custom software compatible with Microsoft
+Windows Operating Systems for cameracontrol,
+image data archiving in various file formats.
+Electrical input 	Mains 100-240V AC 50-60Hz
+Multi-head Intensified Camera System
+Dimension mm (w/d/h) 	Head (without lens)
+9.4cm x 21cm x 9.4cm (3.7” 8.2” x 3.7”)
+Controller
+19” rack mount 3U case
+Weights 	Head
+3kg (6.6lbs)
+Controller
+7kg (15.4lbs)
+Tripod Mount 	3/8-16 UNC Female in head base
+Lenses 	Nikon F-mount (ruggedized mounting system)
+Shutter 	Electro-mechanical
+Distortion 	Nominally zero
+Intensity variation 	Better than 5% across the image
+X-HEAD 	D-HEAD
+Image Sensor 	ICX285AL (Intensified)
+Active CCD Pixel 	1360 (H) x 1024 (V) pixels
+Pixel Size 	6.45 μm (H) x 6.45 μm (V)
+Dynamic Range 	12 bits
+Intensifier 	8mm High resolution MCP
+Input window 	Fused Silica
+Output window 	Fibre Optic
+Photocathode 	S25, others on request
+Phosphor screen 	P43 	P46
+Gain 	Variable up to 10,000
+Dynamic resolution 	50lp/mm 	>36lp/mm
+Images 	Single 	Two
+(550ns interframe time)
+SIL-3500-01-Q03
+Cerberus
+TIMING PARAMETERS
+INPUT / OUTPUT SIGNALS
+OPTICAL
+MECHANICAL
+ENVIRONMENTAL
+INTENSIFIER / SENSOR
+
+-- 31 of 40 --
+
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com
+SI-LUX2
+Up to 400W
+lighting power
+660nm
+wavelength
+Flexible triggering/
+synchronisation
+F Low coherence
+F Pulse width from 10ns – 30μs
+F Pulse frequency range from
+single to 10MHz
+F Compact design
+The Specialised Imaging LUX2 laser illumination system
+provides up to 400W of lighting power at pulse frequencies
+up to 10MHz or single pulses up to 30μS.
+Simple triggering allows the SI-LUX2 to interface with most
+high-speed cameras ranging from High-speed video to Ultra
+highspeed framing cameras.
+The 2m laser output light guide includes user
+interchangeable low coherence beam expanders.
+FEATURES
+Laser illumination system
+
+-- 32 of 40 --
+
+specialised-imaging.com 	info@specialised-imaging.com
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate.
+FM 87429
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc, 1131 S.
+La Canada, Suite 100, Green Valley
+AZ 85614 United States
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+SI-LUX2 	Laser illumination system
+Beam Expanders 	φ25mm and φ50mm versions
+Wavelength 	660nm ± 20nm
+Output power 	200W (-10/ + 30%) or 400W (-10/ + 20%)
+Power drop 	~ 0.2% / μs for pulses less than 5μs
+Max pulse rate 	10MHz
+Min. single pulse
+duration
+~10ns
+Max. single pulse
+duration
+30μs (max. power drop 20%)
+Rise time 	~10ns (10%…90%)
+Fall time 	~5ns
+Delay 	80ns ±10ns between input to start of light pulse
+(incl. control cable delay)
+Jitter 	<5ns
+Operating limits 	Max. 0.03% duty cycle for unlimited operation
+Max. 100% duty cycle for 30μs laser operation
+Dimension (w/d/h) 	Laser:
+6.2cm x 15cm x 3.6cm (6” x 2.4” x 1.4”)
+Master control box:
+12cm x 6cm x 12cm (4.7” x 2.4” x 4.7”)
+Weight 	Laser:
+0.5Kg (1.1lbs)
+Master control box:
+0.5Kg (1.1lbs)
+Light guide 	2m
+Control cable 	2m between control/safety box & laser
+Sync. Input
+(BNC)
++5V TTL
+(laser pulse duration = duration of +5V state)
+Indicators 	Green LED – Laser is powered & ready
+Electrical Input 	Mains 100-240V AC 50-60Hz
+Laser rating 	Class 3b
+Safety features 	Key operated master control power on/off
+Connector for remote Interlock
+Capping shutter on lens and laser head
+Visual indicator 	Green LED = Laser is powered & ready
+Red LED = interlock indicator
+Laser classification stated on unit
+Storage temperature 	-10°C to +50°C
+Operating temperature 	+10°C to +25°C
+Humidity 	10—90% RH non condensing
+Vibration shock 	10—40 Hz Max. 10g in any direction
+EMC 	Meets all UKCA/EU harmonised standards
+SIL-9600-01-Q05
+OPTICAL 	TIMING PARAMETERS
+MECHANICAL
+ENVIRONMENTAL
+INPUT / OUTPUT SIGNALS
+SAFETY FEATURES
+
+-- 33 of 40 --
+
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com
+F 6J in 300ns (typ)
+F Ability to daisy chain multiple
+units
+F Charge indicator LED indicates
+when unit is ready to fire.
+F Unit will not trigger until the ready
+led is lit. This ensures repeatable
+light output.
+F Charge voltage on flash capacitors
+is regulated to maintain
+consistent repeatable light
+output.
+F Input circuits transient &
+overvoltage protected.
+The SI-Monoflash spark source has been designed to
+emit a single high energy spark, typically 6 Joules, with a
+duration (FWHM) of approximately 300ns. The emitted
+light has a spectrum from UV to the infrared region
+and is ideally suited for many high speed photographic
+applications.
+The single spark, at 300ns, will stop the motion of
+fast subjects and is typically used for shadowgraph
+photography.
+Easy to use, simply point the SI-Monoflash at the object in
+the camera's field of view and apply a TTL trigger signal.
+The SI-Monoflash can be operated in stand-alone mode
+or several units can be daisy-chained together to provide
+status information for a multi-station setup.
+SI-Monoflash
+FEATURES
+High intensity short duration flash to freeze motion.
+
+-- 34 of 40 --
+
+specialised-imaging.com 	info@specialised-imaging.com
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate.
+FM 87429
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc, 1131 S.
+La Canada, Suite 100, Green Valley
+AZ 85614 United States
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+SI-Monoflash
+Duration 	Typical 300ns (FWHM)
+Capacitance 	400nF
+Power (max) 	6J
+Charge Voltage 	5KV
+Light Source 	Spark Gap
+Delay (typ) 	600ns
+Jitter 	Less than ±20ns
+Rise Time (typ) 	50ns
+Recycle Time 	20s approx.
+Storage temperature 	-10°C to +60°C
+Operating temperature 	-5°C to +45°C
+Humidity 	10—90% RH non condensing
+Vibration shock 	10—40 Hz Max. 10g in any direction
+EMC 	Meets all UKCA/EU harmonised standards
+Input (BNC) 	2-5V Positive Edge Triggered
+Input Impendence 	50 Ω
+Dimension mm (w/d/h) 	224 (L) x 125 (W) x 125 (H)
+Weight 	2.2 Kg/4.85lbs
+Housing 	Aluminium
+Main Connector 	Switched IEC input socket with built-in RFI/
+EMI power line filter
+90-250V AC
+50-60Hz
+Fuse 	2A 20mm (F) Fast blow
+Charge Indicator 	Illuminated when unit is ready
+LED's 	Triggering disabled until unit is ready
+SIL-9500-01-Q03
+0ns 	400ns 	800ns 	1.2us 	1.6us 	2us 	2.4us 	2.8us 	3.2us 	3.6us 	4.0us
+TRIGGER SOURCE 	MECHANICAL
+ENVIRONMENTAL
+POWER
+LIGHT OUTPUT
+
+-- 35 of 40 --
+
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com
+The Specialised Imaging SST1
+provides a reliable optical
+trigger for projectile “shadow”
+detection.
+The rugged enclosure allows
+the SST1 to be used outside in
+all weather. Our low-ripple AC
+power unit provides constant
+power for all day operation.
+Optical Sky Screen
+Trigger Unit
+Rugged Design
+Accurate Detection
+Shadow Detector
+SI-SST1
+F Small and lightweight
+F Low ripple rugged AC power unit
+F Nikon lens mount fitting
+F Local sensitivity adjustment
+FEATURES
+
+-- 36 of 40 --
+
+specialised-imaging.com 	info@specialised-imaging.com
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate.
+FM 87429
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc, 1131 S.
+La Canada, Suite 100, Green Valley
+AZ 85614 United States
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+Optical Sky Screen Trigger Unit	SI-SST1
+Output (BNC) 	Positive 5V
+Trigger indicator 	LED
+Electrical input 	AC Power Unit
+Storage temperature 	-10°C to +60°C
+Operating temperature 	-5°C to +45°C
+Humidity 	10—90% RH non condensing
+Vibration shock 	10—40 Hz Max. 10g in any direction
+EMC 	Meets all UKCA/EU harmonised standards
+Lenses 	Nikon F-Mount
+Alignment 	Engraved Datum lines
+Input 	AC Power Unit
+Dimension mm (w/d/h) 	Unit with Standard cover
+28cm x 28cm x 29cm (11" x 11" x 11.5")
+Unit with Extended cover (Optional)
+28cm x 28cm x 38cm (11" x 11" x 15")
+AC Power Unit
+150mm x 120mm x 80mm
+5.9” x 4.7” x 3.1”,
+Weights 	Standard unit
+5.8Kg (12.7lbs)
+Extended cover unit (Optional)
+6Kg (13.2lbs)
+AC Power Unit
+2Kg / 4.4lb
+Sensor 	Multi-Segment Photodiode array.
+400nm – 700nm range
+SIL-4930-02-Q04
+OPTICAL
+POWER
+MECHANICAL
+INPUT / OUTPUT SIGNALS
+ENVIRONMENTAL
+SENSOR
+
+-- 37 of 40 --
+
+International sales +44 (0) 1442 827728 	USA & Canada +1 951-296-6406 	specialised-imaging.com
+SI-VT2
+3,330 measurements / second
+Up to 9,000 measurements storage
+5ns Resolution
+3 independent input channels
+4 independent output channels
+The Specialised Imaging VT2 system
+performs time of flight and/or velocity
+measurements using 3 input channels.
+Capture rates up to 3,330
+measurements per second (200,000
+rounds per minute) can be measured
+and up to 9,000 measurements can be
+stored locally in the Unit head.
+The four independent Output channels
+can be used as a delay generator for
+other instrumentation to ensure correct
+triggering of framing, ultra high-speed
+and high speed video cameras.
+Ballistic Velocity Measurement System
+F Velocity measurement
+F Time of flight measurement
+F Ethernet communication
+F Built in 4 channel delay generator
+F Battery powered option
+F 19" Rack mount option
+FEATURES
+
+-- 38 of 40 --
+
+specialised-imaging.com 	info@specialised-imaging.com
+As part of our on-going commitment to improvement we reserve the right to alter specifications, designs or figures, without prior notice. All dimensions and weights are approximate.
+FM 87429
+UK (Head Office / Factory)
+6 Harvington Park,
+Pitstone Green Business Park
+Pitstone. LU7 9GX England
+Tel 	+44 (0) 1442 827728
+USA
+Specialised Imaging Inc, 1131 S.
+La Canada, Suite 100, Green Valley
+AZ 85614 United States
+Tel 	+1 951-296-6406
+GERMANY
+Bahnhofstr. 26 D,
+82256 Fürstenfeldbruck,
+Germany
+Tel 	+49 8141 666 89 50
+SI-VT2
+System Clock 	200MHz, quartz crystal controlled
+Inherent Delay 	50ns
+Range 	5ns to 1s in 5ns steps independently
+variable
+Jitter (trigger) 	5ns
+Jitter (channel to channel) 	<250ps
+Measurements 	Time of flight or Velocity
+Max. rate of capture/fire 	200,000 measurements/minute
+(3,330 Hz)
+Max. storage 	9,000 measurements
+(velocity or time of flight)
+Ballistic Velocity Measurement System
+Dimension mm (w/d/h)
+Dimension inches (w/d/h)
+360mm x 200mm x 77mm (with handles)
+14.17" x 7.87" x 3.03" (with handles)
+IP rating 	IP65
+Weight 	4Kg (8.8lbs)
+Storage temperature 	-10°C to +50°C
+Operating Temperature 	-5°C to +40°C
+Humidity 	10 - 90% RH non condensing
+Vibration shock 	10 - 40 Hz Max. 10g in any direction
+EMC 	Meets all UKCA/EU harmonised standards
+Input/trigger channels
+(BNC)
+3 (independent)
+Electrical signal
+Threshold variable from ±25V
+Positive or Negative polarity, Make/Break
+50Ω or 1KΩ termination
+Output channels
+(BNC)
+4 (independent)
+Pulse width (min. 5ns) and position user
+programmable TTL into 50Ω
+Control interface 	100Mbps Ethernet
+Software 	Custom software compatible with
+Microsoft Windows Operating Systems
+for Control and data archiving.
+Electrical input 	Mains 100-240V AC 50-60Hz
+Battery option (inc. charger)
+Rack mount option
+SIL-1510-01-Q04
+TIMING PARAMETERS
+MECHANICAL
+INPUT / OUTPUT SIGNALS
+ENVIRONMENTAL
+OPTICAL
+
+-- 39 of 40 --
+
+To provide you with a total ultra-high-speed
+imaging solution, we have formed strong, strategic
+relationships with manufacturers in a variety of
+related fields. These strategic partnerships enable
+us to offer fully optimised imaging systems that
+include illumination, optical components,
+supports and triggering devices.
+Close cooperation with our major suppliers also
+allows us to access and incorporate custom-
+designed components to specifically enhance
+the performance of our systems
+Our reputation today extends worldwide with
+customers in North America, Asia-Pacific,
+Europe and the Middle East regions.
+At Specialised Imaging we relish new technological
+challenges, and we enjoy creating effective
+solutions. Producing a system that exactly meets
+your requirements, demands a company prepared
+and able to create specific optimised solutions.
+Specialised Imaging has a strong track record in
+working with clients to design and develop new
+functions and facilities that fulfil their requirements.
+This level of commitment and support continues
+throughout the life of your product – on-going
+advice, problem-solving and the design and
+reconfiguration of software are all part of our
+after-sales service.
+Supporting you…
+and your camera
+World-wide partnerships
+
+-- 40 of 40 --
+
