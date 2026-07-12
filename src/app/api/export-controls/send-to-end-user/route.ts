@@ -2,15 +2,12 @@ import { ConvexHttpClient } from "convex/browser";
 import { NextResponse } from "next/server";
 import { api } from "../../../../../convex/_generated/api";
 import { sendEndUserStatementEmail } from "@/lib/export-controls/end-user-email";
+import { emailPathUrl } from "@/lib/export-controls/email-link-base";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 function formUrl(token: string, request: Request): string {
-  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (configured) return `${configured.replace(/\/$/, "")}/r/end-user/${token}`;
-  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-  const proto = request.headers.get("x-forwarded-proto") ?? "http";
-  return `${proto}://${host}/r/end-user/${token}`;
+  return emailPathUrl(`/r/end-user/${token}`, request);
 }
 
 export async function POST(request: Request) {
