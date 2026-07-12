@@ -18,7 +18,12 @@ const normalize = (value: string) => value
 test("every pilot manufacturer source is archived with its recorded hash", () => {
   for (const archived of manifest.records) {
     const bytes = fs.readFileSync(`${root}/${archived.archivePath}`);
-    assert.equal(createHash("sha256").update(bytes).digest("hex").toUpperCase(), archived.sha256);
+    // Text archives may be checked out with CRLF on Windows; compare on LF bytes.
+    const hashed =
+      /\.(html?|txt)$/i.test(archived.archivePath)
+        ? Buffer.from(bytes.toString("utf8").replace(/\r\n/g, "\n"), "utf8")
+        : bytes;
+    assert.equal(createHash("sha256").update(hashed).digest("hex").toUpperCase(), archived.sha256);
   }
 });
 

@@ -1,0 +1,3 @@
+# Keep archived manufacturer sources byte-stable for SHA-256 audit tests.
+docs/export-controls/sources/** text eol=lf
+*.pdf binary
