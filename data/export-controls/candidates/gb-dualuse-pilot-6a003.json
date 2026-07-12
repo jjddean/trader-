@@ -1,0 +1,161 @@
+{
+  "records": [
+    {
+      "recordId": "gb-dualuse-0001",
+      "manufacturer": "Specialised Imaging Ltd.",
+      "model": "SIMX",
+      "controlEntry": "6A003.a.4",
+      "compositionRole": "APPEARS_TO_MEET",
+      "cameraTypeResult": "MET",
+      "frameRateValue": 1000000000,
+      "frameRateResult": "MET",
+      "candidateStatus": "POSSIBLY_LISTED",
+      "reasoning": "The supplied evidence describes the SIMX as a 'Scientific Framing Camera' with 'flexible intensified CCD sensors' and 'Up to 1 Billion frames per second capture speed'. On the supplied evidence, this appears to be an electronic framing camera and the stated speed appears to exceed the 1,000,000 frames/s threshold in control entry 6A003.a.4. Final legal classification is not determined here.",
+      "evidenceQuotes": [
+        "SIMX Scientific Framing Camera",
+        "flexible intensified CCD sensors",
+        "Up to 1 Billion frames per second capture speed"
+      ],
+      "sourceUrl": "https://specialised-imaging.com/products/framing-cameras/simx/",
+      "unresolvedQuestions": [
+        "Whether the product is unequivocally an 'electronic framing camera' as defined in the relevant control text, beyond the supplied marketing description.",
+        "Whether the quoted capture speed is directly equivalent to the controlled 'frames/s' metric under the entry, rather than a related marketing specification."
+      ],
+      "testedEntryResult": "MET",
+      "neighbourEntries": [],
+      "finalControlEntry": null,
+      "finalStatus": null,
+      "reviewerReasoning": null
+    },
+    {
+      "recordId": "gb-dualuse-0002",
+      "manufacturer": "Cordin Company",
+      "model": "560",
+      "controlEntry": "6A003.a.4",
+      "compositionRole": "HARD_NEGATIVE",
+      "cameraTypeResult": "NOT_MET",
+      "frameRateValue": 4000000,
+      "frameRateResult": "MET",
+      "candidateStatus": "POSSIBLY_LISTED",
+      "reasoning": "The evidence explicitly says the Model 560 is a 'HIGH SPEED ROTATING MIRROR CMOS CAMERA' and that 'The system uses a rotating mirror optical system'. Rotating mirror is not electronic, so on the supplied evidence this is not an electronic framing camera for control entry 6A003.a.4, even though a maximum framing rate of 4 million fps is stated.",
+      "evidenceQuotes": [
+        "Model 560 HIGH SPEED ROTATING MIRROR CMOS CAMERA",
+        "Maximum Framing Rate 4 million fps (78 frames)",
+        "The system uses a rotating mirror optical system"
+      ],
+      "sourceUrl": "https://www.cordin.com/pdfs/Cordin560.pdf",
+      "unresolvedQuestions": [
+        "None material from the supplied evidence; the rotating-mirror description is the key disqualifying feature for this entry."
+      ],
+      "testedEntryResult": "NOT_MET",
+      "neighbourEntries": [],
+      "neighbourEntryCheckCompleted": true,
+      "finalControlEntry": null,
+      "finalStatus": null,
+      "reviewerReasoning": null,
+      "entryAssessments": [
+        {
+          "controlEntry": "6A003.a.4",
+          "testedEntryResult": "NOT_MET",
+          "cameraTypeResult": "NOT_MET",
+          "frameRateResult": "MET"
+        },
+        {
+          "controlEntry": "6A203.b.1",
+          "controlText": "1. Framing cameras with recording rates greater than 225 000 frames per second;",
+          "conditionResults": [
+            {
+              "conditionId": "N1",
+              "attribute": "itemType",
+              "comparisonResult": "MET",
+              "evidenceQuotes": [
+                "Model 560 HIGH SPEED ROTATING MIRROR CMOS CAMERA"
+              ],
+              "explanation": "Manufacturer identifies a framing camera."
+            },
+            {
+              "conditionId": "N2",
+              "attribute": "recordingRate",
+              "comparisonResult": "MET",
+              "evidenceQuotes": [
+                "Maximum Framing Rate 4 million fps (78 frames)"
+              ],
+              "explanation": "4,000,000 frames/s exceeds 225,000 frames/s."
+            },
+            {
+              "conditionId": "N3",
+              "attribute": "otherThan6A003",
+              "comparisonResult": "MET",
+              "evidenceQuotes": [
+                "Model 560 HIGH SPEED ROTATING MIRROR CMOS CAMERA",
+                "The system uses a rotating mirror optical system"
+              ],
+              "explanation": "Preserved 6A003.a.4 result is NOT_MET because the camera is mechanical rotating-mirror, not electronic."
+            }
+          ],
+          "testedEntryResult": "MET",
+          "decisiveFacts": [
+            "Rotating-mirror framing camera",
+            "Maximum framing rate 4,000,000 frames/s",
+            "6A003.a.4 result NOT_MET"
+          ],
+          "missingEvidence": [],
+          "reasoning": "Evidence appears to meet 6A203.b.1; candidate only, pending consultant review."
+        }
+      ],
+      "candidateControlEntry": "6A203.b.1"
+    },
+    {
+      "recordId": "gb-dualuse-0003",
+      "manufacturer": "Specialised Imaging Ltd.",
+      "model": "SIR3",
+      "controlEntry": "6A003.a.4",
+      "compositionRole": "INSUFFICIENT_PUBLIC_EVIDENCE",
+      "cameraTypeResult": "CANNOT_DETERMINE",
+      "frameRateValue": null,
+      "frameRateResult": "CANNOT_DETERMINE",
+      "candidateStatus": "INSUFFICIENT_EVIDENCE",
+      "reasoning": "The supplied brochure evidence confirms the SIR3 is a framing camera and gives interframe timing details, but does not provide an explicit maximum framing rate or an explicit statement that it is an electronic framing camera. Under the supplied evidence, there is not enough to assess it as meeting the threshold in control entry 6A003.a.4.",
+      "evidenceQuotes": [
+        "The Specialised Imaging SIR3 Framing Camera offers up to 2 high resolution images, 100µs apart.",
+        "Fully flexible intensified CCD sensor provides control over interframe time, gain and exposure."
+      ],
+      "sourceUrl": "https://www.specialised-imaging.com/application/files/5617/1511/5341/SI_Product_Brochure_2024_02_Q03_.pdf",
+      "unresolvedQuestions": [
+        "What is the explicit maximum framing rate, if any?",
+        "Is the SIR3 explicitly an electronic framing camera under the relevant control terminology?",
+        "Do the 100µs-apart images correspond to a framing rate above 1,000,000 frames/s, or only to a two-image interframe specification?"
+      ],
+      "testedEntryResult": "CANNOT_DETERMINE",
+      "neighbourEntries": [],
+      "finalControlEntry": null,
+      "finalStatus": null,
+      "reviewerReasoning": null
+    }
+  ],
+  "validation": {
+    "accepted": true,
+    "errors": [],
+    "validator": "dedalus-machine-deterministic-v1"
+  },
+  "run": {
+    "provider": "openai",
+    "model": "gpt-5.4-mini-2026-03-17",
+    "prompt_tokens": 564,
+    "completion_tokens": 867,
+    "total_tokens": 1431,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "recordLimit": 3,
+    "machineId": "dm-019f5259-53d7-7b28-a12b-2b293e3bf44a",
+    "keySentToDedalus": false
+  }
+}

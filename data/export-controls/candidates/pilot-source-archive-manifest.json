@@ -1,0 +1,33 @@
+{
+  "auditDate": "2026-07-11",
+  "records": [
+    {
+      "recordId": "gb-dualuse-0001",
+      "model": "SIMX",
+      "originalSourceUrl": "https://specialised-imaging.com/products/framing-cameras/simx/",
+      "archivePath": "docs/export-controls/sources/manufacturers/Specialised-Imaging-SIMX.html",
+      "sha256": "C06FA345236DB1CFBDCE4833DF39F53AE0A973CFDEA18944B8D36614D4FF0C5E",
+      "sourceStatus": "CURRENT_PRIMARY_SOURCE"
+    },
+    {
+      "recordId": "gb-dualuse-0002",
+      "model": "560",
+      "originalSourceUrl": "https://www.cordin.com/pdfs/Cordin560.pdf",
+      "archivePath": "docs/export-controls/sources/manufacturers/Cordin560.pdf",
+      "sha256": "4A77784DA6931F0E62787635BFB9A0BA4D71BD7E7E9B4F8508149D68AE2086DC",
+      "sourceStatus": "ARCHIVED_PRIMARY_SOURCE"
+    },
+    {
+      "recordId": "gb-dualuse-0003",
+      "model": "SIR3",
+      "originalSourceUrl": "https://www.specialised-imaging.com/application/files/5617/1511/5341/SI_Product_Brochure_2024_02_Q03_.pdf",
+      "originalSourceStatus": "HTTP_404_ON_2026-07-11",
+      "successorSourceUrl": "https://specialised-imaging.com/wp-content/uploads/2026/03/SI_Product_Brochure_2026_.pdf",
+      "archivePath": "docs/export-controls/sources/manufacturers/Specialised-Imaging-Product-Brochure-2026.pdf",
+      "extractedTextPath": "docs/export-controls/sources/manufacturers/Specialised-Imaging-Product-Brochure-2026.txt",
+      "sha256": "5D8F31C247FCD3B5E7ECF182B7BAA3CD93A709630AE07A39A3C9B23C446B9C30",
+      "sourceStatus": "CURRENT_PRIMARY_SUCCESSOR_SOURCE",
+      "documentLocation": "PDF pages 9-10 (viewer pages 8-9)"
+    }
+  ]
+}
