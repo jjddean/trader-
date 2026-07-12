@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
+import { assertAssessmentAccess, canAccessAssessment } from "./lib/org_access";
 
 const TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
@@ -28,6 +29,49 @@ async function getValidEndUserToken(ctx: any, token: string) {
   return row;
 }
 
+async function insertEndUserToken(
+  ctx: any,
+  args: {
+    assessmentId: Id<"export_assessments">;
+    reviewTokenId?: Id<"export_review_tokens">;
+    recipientEmail: string;
+    senderNote?: string;
+    createdBy: string;
+  },
+) {
+  const email = args.recipientEmail.trim();
+  if (!email) throw new Error("Recipient email required");
+
+  const now = Date.now();
+  const token = generateToken();
+  const expiresAt = now + TOKEN_TTL_MS;
+  const tokenId = await ctx.db.insert("export_end_user_tokens", {
+    assessmentId: args.assessmentId,
+    reviewTokenId: args.reviewTokenId,
+    token,
+    recipientEmail: email,
+    senderNote: args.senderNote?.trim() || undefined,
+    expiresAt,
+    createdBy: args.createdBy,
+    createdAt: now,
+  });
+
+  await ctx.db.insert("auditLogs", {
+    userId: args.createdBy,
+    action: "end_user_dispatch_created",
+    details: {
+      assessmentId: args.assessmentId,
+      tokenId,
+      recipientEmail: email,
+    },
+    timestamp: now,
+    archived: false,
+  });
+
+  return { token, recipientEmail: email, expiresAt };
+}
+
+/** Public path — secured by consultant review token. */
 export const createEndUserDispatch = mutation({
   args: {
     reviewToken: v.string(),
@@ -38,35 +82,69 @@ export const createEndUserDispatch = mutation({
     const review = await getValidReviewToken(ctx, args.reviewToken);
     if (!review) throw new Error("Review link expired or invalid");
 
-    const email = args.recipientEmail.trim();
-    if (!email) throw new Error("Recipient email required");
-
-    const now = Date.now();
-    const token = generateToken();
-    const tokenId = await ctx.db.insert("export_end_user_tokens", {
+    return insertEndUserToken(ctx, {
       assessmentId: review.assessmentId,
       reviewTokenId: review._id,
-      token,
-      recipientEmail: email,
-      senderNote: args.senderNote?.trim() || undefined,
-      expiresAt: now + TOKEN_TTL_MS,
+      recipientEmail: args.recipientEmail,
+      senderNote: args.senderNote,
       createdBy: review.consultantEmail,
-      createdAt: now,
     });
+  },
+});
 
-    await ctx.db.insert("auditLogs", {
-      userId: review.consultantEmail,
-      action: "end_user_dispatch_created",
-      details: {
-        assessmentId: review.assessmentId,
-        tokenId,
-        recipientEmail: email,
-      },
-      timestamp: now,
-      archived: false,
+/** App path — authenticated assessment owner / org member. */
+export const createEndUserDispatchFromAssessment = mutation({
+  args: {
+    assessmentId: v.id("export_assessments"),
+    recipientEmail: v.string(),
+    senderNote: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const assessment = await ctx.db.get(args.assessmentId);
+    if (!assessment) throw new Error("Assessment not found");
+    await assertAssessmentAccess(ctx, identity.subject, assessment);
+
+    return insertEndUserToken(ctx, {
+      assessmentId: args.assessmentId,
+      recipientEmail: args.recipientEmail,
+      senderNote: args.senderNote,
+      createdBy: identity.subject,
     });
+  },
+});
 
-    return { token, recipientEmail: email, expiresAt: now + TOKEN_TTL_MS };
+export const getEndUserDispatchStatus = query({
+  args: { assessmentId: v.id("export_assessments") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const assessment = await ctx.db.get(args.assessmentId);
+    if (!assessment || !(await canAccessAssessment(ctx, identity.subject, assessment))) {
+      return null;
+    }
+
+    const tokens = await ctx.db
+      .query("export_end_user_tokens")
+      .withIndex("by_assessment", (q) => q.eq("assessmentId", args.assessmentId))
+      .collect();
+
+    const active = tokens
+      .filter((t) => !t.revoked && !t.completedAt && t.expiresAt > Date.now())
+      .sort((a, b) => b.createdAt - a.createdAt)[0];
+
+    const latest = tokens
+      .filter((t) => !t.revoked)
+      .sort((a, b) => b.createdAt - a.createdAt)[0];
+
+    return {
+      activeToken: active ?? null,
+      latestToken: latest ?? null,
+      statement: (assessment as Doc<"export_assessments">).endUserStatement ?? null,
+    };
   },
 });
 

@@ -33,6 +33,7 @@ import { ExportClassificationPanel } from "@/components/trade-compliance/export-
 import { ExportSanctionsPanel } from "@/components/trade-compliance/export-sanctions-panel";
 import { ExportRoutingBanner } from "@/components/trade-compliance/export-routing-banner";
 import { ConsultantSignoffCard } from "@/components/trade-compliance/consultant-signoff-card";
+import { EndUserSendCard } from "@/components/trade-compliance/end-user-send-card";
 import { ExportDraftPackPanel, buildDraftPackFromDetail } from "@/components/trade-compliance/export-draft-pack-panel";
 import { ExportLicencesPanel } from "@/components/trade-compliance/export-licences-panel";
 import { openDraftPackPrintDialog } from "@/lib/export-controls/draft-pack";
@@ -249,6 +250,9 @@ function AssessmentSheetBody({
                 status={assessment.status}
                 variant="result"
               />
+            )}
+            {assessment && (
+              <EndUserSendCard assessmentId={assessmentId} variant="result" />
             )}
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
             <section className="rounded-xl border border-slate-200 bg-white p-6">

@@ -16,6 +16,7 @@ import {
   type DraftPackScreeningInput,
 } from "@/lib/export-controls/draft-pack";
 import { ConsultantSignoffCard } from "@/components/trade-compliance/consultant-signoff-card";
+import { EndUserSendCard } from "@/components/trade-compliance/end-user-send-card";
 import { cn } from "@/lib/utils";
 
 interface ExportDraftPackPanelProps {
@@ -120,6 +121,7 @@ export function ExportDraftPackPanel({
   return (
     <div className="space-y-6">
       <ConsultantSignoffCard assessmentId={assessmentId} status={assessmentStatus} variant="send" />
+      <EndUserSendCard assessmentId={assessmentId} variant="send" />
 
       {/* Timeline */}
       <section className="rounded-xl border border-slate-200 bg-white p-5">
