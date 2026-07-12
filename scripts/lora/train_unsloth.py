@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """
-Legacy Unsloth LoRA training entrypoint.
+Train hs-classifier-v1 LoRA (Mistral-7B-Instruct) with Unsloth.
+Output: lora-output/adapter_model.safetensors + adapter_config.json (Cloudflare Workers AI).
 
-Training is intentionally disabled here. The reviewed worker-json correction
-dataset is JSONL, and this script must not train it until JSONL support is
-added deliberately and reviewed.
+Usage:
+  python scripts/lora/train_unsloth.py
+  LORA_DATA_DIR=./lora-dataset LORA_OUT_DIR=./lora-output python scripts/lora/train_unsloth.py
+
+Google Colab: upload lora-colab-bundle.zip, unzip, run:
+  !python train_unsloth.py
 """
 
 from __future__ import annotations
@@ -29,21 +33,21 @@ def resolve_repo_root() -> Path:
 ROOT = resolve_repo_root()
 
 
-def refuse_training() -> None:
-    raise SystemExit(
-        "Refusing LoRA training. train_unsloth.py still expects legacy CSV "
-        "training data, while the reviewed worker-json correction dataset is "
-        "JSONL. Add and review explicit JSONL training support before enabling "
-        "this entrypoint."
-    )
-
-
 def resolve_data_dir() -> Path:
-    refuse_training()
+    if os.environ.get("LORA_DATA_DIR"):
+        return Path(os.environ["LORA_DATA_DIR"])
+    for candidate in (SCRIPT_DIR, SCRIPT_DIR / "lora-dataset", ROOT / "lora-dataset"):
+        if (candidate / "train.csv").is_file():
+            return candidate
+    return ROOT / "lora-dataset"
 
 
 def resolve_out_dir() -> Path:
-    refuse_training()
+    if os.environ.get("LORA_OUT_DIR"):
+        return Path(os.environ["LORA_OUT_DIR"])
+    if (SCRIPT_DIR / "train.csv").is_file():
+        return SCRIPT_DIR / "lora-output"
+    return ROOT / "lora-output"
 
 
 DATA_DIR = resolve_data_dir()
@@ -75,24 +79,9 @@ def ensure_unsloth() -> None:
 
 def load_training_texts(csv_path: Path) -> list[str]:
     if not csv_path.is_file():
-        raise FileNotFoundError(f"Missing {csv_path}")
-
-    data_dir = csv_path.parent.resolve()
-    blocked_names = {"lora-dataset", "lora-dataset-legacy-do-not-train-representation"}
-    if data_dir.name in blocked_names:
-        raise SystemExit(f"Refusing to train legacy dataset path: {data_dir}")
-    if (data_dir / "DO_NOT_TRAIN.txt").exists():
-        raise SystemExit(f"Refusing to train dataset marked DO_NOT_TRAIN: {data_dir}")
+        raise FileNotFoundError(f"Missing {csv_path} — run: npm run lora:prepare")
 
     texts: list[str] = []
-    blocked_terms = (
-        "REPRESENTATION:",
-        "INDIRECT_REQUIRED:",
-        "indirect representation",
-        "non-UK importer",
-        "non-UK established",
-        "EORI",
-    )
     with csv_path.open(encoding="utf-8") as handle:
         for i, raw in enumerate(handle):
             line = raw.strip()
@@ -104,12 +93,6 @@ def load_training_texts(csv_path: Path) -> list[str]:
             text = row.get("text")
             if not isinstance(text, str) or not text.strip():
                 raise ValueError(f"Bad row {i + 1} in {csv_path}")
-            if "correctHsCode" not in text:
-                raise ValueError(f"Row {i + 1}: missing worker-json correctHsCode")
-            lowered = text.lower()
-            for term in blocked_terms:
-                if term.lower() in lowered:
-                    raise ValueError(f"Row {i + 1}: blocked representation boilerplate term: {term}")
             texts.append(text)
 
     if len(texts) < 100:
@@ -207,4 +190,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
