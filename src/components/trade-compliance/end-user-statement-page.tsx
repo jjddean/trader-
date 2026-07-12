@@ -135,7 +135,7 @@ export function EndUserStatementPage({ token }: { token: string }) {
     <div className="min-h-screen bg-slate-50">
       <header className="border-b border-slate-200 bg-white px-6 py-5">
         <p className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">Freightcode · End-user statement</p>
-        <h1 className="mt-1 font-mono text-lg font-semibold text-slate-900">{data.assessment.reference}</h1>
+        <h1 className="mt-1 text-lg font-semibold text-slate-900">{data.assessment.reference}</h1>
         <p className="mt-1 text-xs text-slate-500">
           Complete this form for export compliance. Destination: {data.assessment.destinationCountry ?? "—"}
         </p>

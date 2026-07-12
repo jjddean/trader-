@@ -47,7 +47,7 @@ export function ConsultantSignoffCard({
         </p>
         {latest?.advisoryNotes && <p className="mt-2 text-xs text-green-800">{latest.advisoryNotes}</p>}
         {(latest?.applicationRef || latest?.licenceRef) && (
-          <p className="mt-2 font-mono text-[11px] text-green-900">
+          <p className="mt-2 text-[11px] text-green-900">
             {latest.applicationRef && `App: ${latest.applicationRef}`}
             {latest.licenceRef && ` · Licence: ${latest.licenceRef}`}
           </p>
@@ -118,7 +118,7 @@ export function ConsultantSignoffCard({
           </p>
           {latest?.advisoryNotes && <p className="mt-2 text-green-800">{latest.advisoryNotes}</p>}
           {(latest?.applicationRef || latest?.licenceRef) && (
-            <p className="mt-2 font-mono text-[11px]">
+            <p className="mt-2 text-[11px]">
               {latest.applicationRef && `App: ${latest.applicationRef}`}
               {latest.licenceRef && ` · Licence: ${latest.licenceRef}`}
             </p>

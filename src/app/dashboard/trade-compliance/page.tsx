@@ -193,7 +193,7 @@ function AssessmentSheetBody({
       <SheetHeader className="sticky top-0 z-10 shrink-0 border-b border-slate-100 bg-white px-6 pt-6 pb-5 sm:px-8">
         <div className="flex flex-col gap-4 pr-8 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <SheetTitle className="truncate font-mono text-lg font-semibold text-slate-900">
+            <SheetTitle className="truncate text-lg font-semibold text-slate-900">
               {assessment?.reference ?? "…"}
             </SheetTitle>
             <SheetDescription className="mt-1 text-xs text-slate-500">
@@ -217,7 +217,7 @@ function AssessmentSheetBody({
               onClick={handleDownloadPdf}
               className="flex h-9 items-center gap-2 rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
             >
-              <              Download className="h-3.5 w-3.5" />
+              <Download className="h-3.5 w-3.5" />
               Print / save PDF
             </button>
             <button
@@ -407,15 +407,17 @@ export default function TradeCompliancePage() {
           <h1 className="text-xl font-semibold tracking-tight text-slate-900">Trade Compliance</h1>
           <p className="mt-1 text-sm text-slate-500">Shipment compliance checks and assessments.</p>
         </div>
-        <button
-          type="button"
-          disabled={!canQuery || creating}
-          onClick={() => void handleNewAssessment()}
-          className="flex h-9 shrink-0 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
-        >
-          {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
-          New Assessment
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            disabled={!canQuery || creating}
+            onClick={() => void handleNewAssessment()}
+            className="flex h-9 shrink-0 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+          >
+            {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
+            New Assessment
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -555,7 +557,7 @@ export default function TradeCompliancePage() {
                   >
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="font-mono text-xs font-semibold text-black transition-colors group-hover:text-black">
+                        <span className="text-xs font-medium text-black transition-colors group-hover:text-black">
                           {row.reference}
                         </span>
                         <span className="mt-0.5 text-[0.625rem] font-medium text-slate-500">

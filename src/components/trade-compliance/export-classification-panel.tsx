@@ -280,7 +280,7 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
                             Not controlled
                           </span>
                         ) : (
-                          <span className="rounded bg-green-100 px-1.5 py-0.5 font-mono text-[10px] font-medium text-green-700">
+                          <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700">
                             {approval}
                           </span>
                         )}
@@ -449,7 +449,7 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
                                 >
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0">
-                                      <p className="font-mono text-sm font-semibold text-slate-900">{item.entryCode}</p>
+                                      <p className="text-sm font-semibold text-slate-900">{item.entryCode}</p>
                                       <p className="mt-0.5 text-[11px] text-slate-500">{item.clausePath}</p>
                                     </div>
                                     {isApproved ? (

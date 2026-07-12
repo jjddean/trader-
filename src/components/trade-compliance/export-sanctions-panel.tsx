@@ -127,7 +127,7 @@ export function ExportSanctionsPanel({ assessmentId }: ExportSanctionsPanelProps
                       {screening.subjectType}: {screening.subjectName}
                     </p>
                     {screening.matchedUniqueId && (
-                      <p className="mt-1 font-mono text-xs text-slate-600">
+                      <p className="mt-1 text-xs text-slate-600">
                         {screening.matchedUniqueId} · score {screening.score ?? "—"}
                       </p>
                     )}
@@ -204,7 +204,7 @@ export function ExportSanctionsPanel({ assessmentId }: ExportSanctionsPanelProps
                   {party.matches.map((match: any) => (
                     <div key={match.uniqueId} className="rounded-lg border border-slate-200 p-4">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="font-mono text-sm font-semibold">{match.uniqueId}</p>
+                        <p className="text-sm font-semibold">{match.uniqueId}</p>
                         <span
                           className={cn(
                             "rounded-md border px-2 py-0.5 text-[10px] font-medium uppercase",

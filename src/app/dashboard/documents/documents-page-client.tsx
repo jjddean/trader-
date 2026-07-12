@@ -616,57 +616,69 @@ export function DocumentsPageClient({ requestedDeclarationId = null }: Documents
         <SheetContent side="right" className="overflow-y-auto sm:max-w-none w-full p-0" style={{ maxWidth: '800px' }}>
           {selectedDocument && (
             <div className="flex flex-col min-h-full">
-              <SheetHeader className="px-6 sm:px-8 pt-6 pb-6 border-b border-slate-100 flex flex-row items-center justify-between shrink-0 sticky top-0 bg-white z-10">
-                <div>
-                  <SheetTitle className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-                    <FileText className="h-4 w-4 text-slate-400" />
-                    <span className="truncate max-w-[300px]">{selectedDocument.name}</span>
-                    {selectedDocument.status === 'verified' && (
-                      <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 ml-2 rounded-md font-medium text-[0.625rem]">Verified</Badge>
-                    )}
-                    {selectedDocument.status === 'review' && (
-                      <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100 ml-2 rounded-md font-medium text-[0.625rem]">Review</Badge>
-                    )}
-                    {selectedDocument.status === 'missing' && (
-                      <Badge variant="secondary" className="bg-red-100 text-red-700 hover:bg-red-100 ml-2 rounded-md font-medium text-[0.625rem]">Missing</Badge>
-                    )}
-                  </SheetTitle>
-                  <SheetDescription className="mt-1 flex items-center gap-2 text-xs">
-                    <span>{selectedDocument.typeName} ({selectedDocument.type})</span>
-                    <span className="h-1 w-1 rounded-full bg-slate-300" />
-                    <span>{selectedDocument.date}</span>
-                  </SheetDescription>
+              <SheetHeader className="sticky top-0 z-10 shrink-0 border-b border-slate-100 bg-white px-6 pt-6 pb-6 sm:px-8">
+                <div className="relative rounded-xl border border-slate-100/80 bg-slate-50/80 px-4 py-3 shadow-sm">
+                  {!selectedDocument.isVirtual && (
+                    <div className="absolute top-2 right-2 z-10 flex items-center gap-0.5">
+                      <button
+                        type="button"
+                        aria-label="Replace document"
+                        onClick={handleTriggerReplace}
+                        disabled={isDocActionLoading}
+                        className="flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-white hover:text-slate-700 disabled:opacity-50"
+                      >
+                        <Upload className="h-3 w-3" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Remove document"
+                        onClick={handleRemoveDocument}
+                        disabled={isDocActionLoading}
+                        className="flex h-6 w-6 items-center justify-center rounded text-red-400 transition-colors hover:bg-white hover:text-red-600 disabled:opacity-50"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Download document"
+                        onClick={handleDownloadDocument}
+                        disabled={isDocActionLoading}
+                        className="flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-white hover:text-slate-700 disabled:opacity-50"
+                      >
+                        <Download className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pr-20">
+                    <FileText className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                    <div className="min-w-0">
+                      <SheetTitle className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                        <span className="break-all">{selectedDocument.name}</span>
+                        {selectedDocument.status === "verified" && (
+                          <Badge variant="secondary" className="shrink-0 rounded-md bg-green-100 text-[0.625rem] font-medium text-green-700 hover:bg-green-100">
+                            Verified
+                          </Badge>
+                        )}
+                        {selectedDocument.status === "review" && (
+                          <Badge variant="secondary" className="shrink-0 rounded-md bg-amber-100 text-[0.625rem] font-medium text-amber-700 hover:bg-amber-100">
+                            Review
+                          </Badge>
+                        )}
+                        {selectedDocument.status === "missing" && (
+                          <Badge variant="secondary" className="shrink-0 rounded-md bg-red-100 text-[0.625rem] font-medium text-red-700 hover:bg-red-100">
+                            Missing
+                          </Badge>
+                        )}
+                      </SheetTitle>
+                      <SheetDescription className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                        <span>{selectedDocument.typeName} ({selectedDocument.type})</span>
+                        <span className="h-1 w-1 rounded-full bg-slate-300" />
+                        <span>{selectedDocument.date}</span>
+                      </SheetDescription>
+                    </div>
+                  </div>
                 </div>
-                
-                {/* Minimal Action Buttons Matching Documents Page Style */}
-                {!selectedDocument.isVirtual && (
-                <div className="flex items-center gap-2 mr-8">
-                  <button
-                    onClick={handleTriggerReplace}
-                    disabled={isDocActionLoading}
-                    className="group flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-1.5 transition-colors hover:bg-slate-100 cursor-pointer disabled:opacity-50"
-                  >
-                    <span className="text-[0.6875rem] text-slate-700 font-medium tracking-wide">REPLACE</span>
-                    <Upload className="h-3 w-3 text-slate-300 transition-colors group-hover:text-slate-500" />
-                  </button>
-                  <button
-                    onClick={handleRemoveDocument}
-                    disabled={isDocActionLoading}
-                    className="group flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-1.5 transition-colors hover:bg-red-50 cursor-pointer disabled:opacity-50"
-                  >
-                    <span className="text-[0.6875rem] text-red-600 font-medium tracking-wide">REMOVE</span>
-                    <Trash2 className="h-3 w-3 text-red-400 transition-colors group-hover:text-red-500" />
-                  </button>
-                  <button
-                    onClick={handleDownloadDocument}
-                    disabled={isDocActionLoading}
-                    className="group flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-1.5 transition-colors hover:bg-slate-100 cursor-pointer disabled:opacity-50"
-                  >
-                    <span className="text-[0.6875rem] text-slate-700 font-medium tracking-wide">DOWNLOAD</span>
-                    <Download className="h-3 w-3 text-slate-300 transition-colors group-hover:text-slate-500" />
-                  </button>
-                </div>
-                )}
               </SheetHeader>
 
               <div className="pt-6 px-6 sm:px-8 pb-12 space-y-8">

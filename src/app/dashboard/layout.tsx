@@ -47,8 +47,8 @@ export default function DashboardLayout({
     "/dashboard/pricing": { title: "Plans", badge: "STRIPE", badgeVariant: "success" },
     "/dashboard/tools/hscode-lookup": { title: "HS Code Lookup", badge: "TOOLS", badgeVariant: "default" },
     "/dashboard/tre-import": { title: "Import TRE Data", badge: "TRE", badgeVariant: "default" },
-    "/dashboard/audit": { title: "Export Control", badge: "EXPORT", badgeVariant: "default" },
-    "/dashboard/trade-compliance": { title: "Export Control", badge: "EXPORT", badgeVariant: "default" },
+    "/dashboard/audit": { title: "Trade Compliance", badge: "COMPLIANCE", badgeVariant: "default" },
+    "/dashboard/trade-compliance": { title: "Trade Compliance", badge: "COMPLIANCE", badgeVariant: "default" },
     "/dashboard/admin": { title: "Admin Overview", badge: "ADMIN", badgeVariant: "blue" },
     "/dashboard/admin/subscriptions": { title: "Vendor Stack", badge: "ADMIN", badgeVariant: "blue" },
   };
