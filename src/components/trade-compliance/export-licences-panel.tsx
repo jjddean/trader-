@@ -178,13 +178,13 @@ export function ExportLicencesPanel({ assessmentId }: ExportLicencesPanelProps) 
                   {licence.applicationRef && (
                     <p className="mt-2 text-xs text-slate-700">
                       <span className="text-slate-500">Application:</span>{" "}
-                      <span className="font-mono font-medium">{licence.applicationRef}</span>
+                      <span className="font-medium">{licence.applicationRef}</span>
                     </p>
                   )}
                   {licence.licenceRef && (
                     <p className="mt-1 text-xs text-slate-700">
                       <span className="text-slate-500">Licence:</span>{" "}
-                      <span className="font-mono font-medium">{licence.licenceRef}</span>
+                      <span className="font-medium">{licence.licenceRef}</span>
                     </p>
                   )}
                   {licence.route && (

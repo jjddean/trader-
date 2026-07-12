@@ -49,6 +49,7 @@ const navItems = [
     items: [
       { href: "/dashboard/trade-compliance", label: "Trade Compliance" },
       { href: "/dashboard/tools/hscode-lookup", label: "HS Code Lookup" },
+      { href: "/dashboard/tools/control-list", label: "Control List" },
       { href: "/dashboard/tre-import", label: "Import TRE" },
       { href: "/dashboard/reports", label: "Customs Reports" },
       { href: "/dashboard/records", label: "Financial Records" },

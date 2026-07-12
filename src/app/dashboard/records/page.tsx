@@ -353,45 +353,52 @@ export default function RecordsPage() {
         <SheetContent side="right" className="overflow-y-auto sm:max-w-none w-full p-0" style={{ maxWidth: '800px' }}>
           {selectedRecord && (
             <div className="flex flex-col min-h-full">
-              <SheetHeader className="px-6 sm:px-8 pt-6 pb-6 border-b border-slate-100 flex flex-row items-center justify-between shrink-0 sticky top-0 bg-white z-10">
-                <div>
-                  <SheetTitle className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-                    <Landmark className="h-4 w-4 text-slate-400" />
-                    Tax Line Record
-                  </SheetTitle>
-                  <SheetDescription className="mt-1 flex items-center gap-2 text-xs">
-                    <span>{selectedRecord.date}</span>
-                    <span className="h-1 w-1 rounded-full bg-slate-300" />
-                    <span>{selectedRecord.mrn}</span>
-                  </SheetDescription>
-                </div>
-                
-                {/* Minimal Action Buttons Matching Documents Page Style */}
-                <div className="flex items-center gap-2 mr-8">
-                  <button onClick={handleCopy} className="group flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-1.5 transition-colors hover:bg-slate-100 cursor-pointer">
-                    <span className="text-[0.6875rem] text-slate-700 font-medium tracking-wide">
-                        {isCopied ? "COPIED" : "COPY"}
-                    </span>
-                    {isCopied ? (
+              <SheetHeader className="sticky top-0 z-10 shrink-0 border-b border-slate-100 bg-white px-6 pt-6 pb-6 sm:px-8">
+                <div className="relative rounded-xl border border-slate-100/80 bg-slate-50/80 px-4 py-3 shadow-sm">
+                  <div className="absolute top-2 right-2 z-10 flex items-center gap-0.5">
+                    <button
+                      type="button"
+                      aria-label={isCopied ? "Copied" : "Copy record"}
+                      onClick={handleCopy}
+                      className="flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-white hover:text-slate-700"
+                    >
+                      {isCopied ? (
                         <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    ) : (
-                        <Copy className="h-3 w-3 text-slate-300 transition-colors group-hover:text-slate-500" />
-                    )}
-                  </button>
-                  <button
-                    onClick={handlePrintRecord}
-                    className="group flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-1.5 transition-colors hover:bg-slate-100 cursor-pointer"
-                  >
-                    <span className="text-[0.6875rem] text-slate-700 font-medium tracking-wide">PRINT</span>
-                    <Printer className="h-3 w-3 text-slate-300 transition-colors group-hover:text-slate-500" />
-                  </button>
-                  <button
-                    onClick={handleDownloadRecord}
-                    className="group flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-1.5 transition-colors hover:bg-slate-100 cursor-pointer"
-                  >
-                    <span className="text-[0.6875rem] text-slate-700 font-medium tracking-wide">DOWNLOAD</span>
-                    <Download className="h-3 w-3 text-slate-300 transition-colors group-hover:text-slate-500" />
-                  </button>
+                      ) : (
+                        <Copy className="h-3 w-3" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Print record"
+                      onClick={handlePrintRecord}
+                      className="flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-white hover:text-slate-700"
+                    >
+                      <Printer className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Download record"
+                      onClick={handleDownloadRecord}
+                      className="flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-white hover:text-slate-700"
+                    >
+                      <Download className="h-3 w-3" />
+                    </button>
+                  </div>
+
+                  <div className="flex gap-2 pr-20">
+                    <Landmark className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                    <div className="min-w-0">
+                      <SheetTitle className="text-sm font-semibold text-slate-900">
+                        Tax Line Record
+                      </SheetTitle>
+                      <SheetDescription className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                        <span>{selectedRecord.date}</span>
+                        <span className="h-1 w-1 rounded-full bg-slate-300" />
+                        <span>{selectedRecord.mrn}</span>
+                      </SheetDescription>
+                    </div>
+                  </div>
                 </div>
               </SheetHeader>
 
