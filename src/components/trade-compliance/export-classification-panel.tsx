@@ -37,7 +37,7 @@ interface ClassificationResponse {
     controlListVersion: string;
     disclaimer: string;
   };
-  runId?: string;
+  runId?: Id<"export_classification_runs">;
 }
 
 const CLASSIFICATION_DISCLAIMER =
@@ -109,7 +109,7 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
   const [activeProductId, setActiveProductId] = useState<Id<"export_products"> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [resultsByProduct, setResultsByProduct] = useState<Record<string, ClassificationResponse>>({});
-  const [reviewingRunId, setReviewingRunId] = useState<string | null>(null);
+  const [reviewingRunId, setReviewingRunId] = useState<Id<"export_classification_runs"> | null>(null);
   const [localApprovedByProduct, setLocalApprovedByProduct] = useState<Record<string, string | null>>({});
 
   const products = (detail?.products ?? []) as ProductRow[];
@@ -154,7 +154,13 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
       }
 
       const data = (await res.json()) as ClassificationResponse;
-      setResultsByProduct((prev) => ({ ...prev, [productId]: data }));
+      setResultsByProduct((prev) => ({
+        ...prev,
+        [productId]: {
+          ...data,
+          runId: data.runId as Id<"export_classification_runs"> | undefined,
+        },
+      }));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Classification failed");
     } finally {
@@ -164,9 +170,9 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
 
   const activeProduct = activeProductId ? products.find((p) => p._id === activeProductId) : undefined;
   const activeResult = activeProductId ? resultsByProduct[activeProductId]?.classification : undefined;
-  const activeRunId =
+  const activeRunId: Id<"export_classification_runs"> | undefined =
     (activeProductId ? resultsByProduct[activeProductId]?.runId : undefined) ??
-    (activeProduct?.classificationRuns?.[0]?._id as Id<"export_classification_runs"> | undefined);
+    activeProduct?.classificationRuns?.[0]?._id;
   const latestRun = activeProduct?.classificationRuns?.[0];
   const localApproval = activeProductId ? localApprovedByProduct[activeProductId] : undefined;
   const resolvedApproval = productApproval(latestRun, localApproval);
