@@ -8,6 +8,7 @@ import {
   FileText,
   Settings,
   Compass,
+  Ship,
   ShieldCheck,
   ChevronRight,
   Shield,
@@ -43,13 +44,14 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/documents", label: "Documents", icon: FileText },
   { href: "/dashboard/declarations", label: "Declarations", icon: Compass },
+  { href: "/dashboard/trade-lanes", label: "Trade Lanes", icon: Ship },
   {
     label: "Compliance",
     icon: ShieldCheck,
     items: [
       { href: "/dashboard/trade-compliance", label: "Trade Compliance" },
-      { href: "/dashboard/tools/hscode-lookup", label: "HS Code Lookup" },
       { href: "/dashboard/tools/control-list", label: "Control List" },
+      { href: "/dashboard/tools/hscode-lookup", label: "HS Code Lookup" },
       { href: "/dashboard/tre-import", label: "Import TRE" },
       { href: "/dashboard/reports", label: "Customs Reports" },
       { href: "/dashboard/records", label: "Financial Records" },
