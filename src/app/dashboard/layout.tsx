@@ -41,6 +41,7 @@ export default function DashboardLayout({
     "/dashboard": { title: "Customs Dashboard", badge: dashboardBadge, badgeVariant: (dashboardBadgeVariant as "default") },
     "/dashboard/settings": { title: "Account Settings", badge: "PREFERENCES", badgeVariant: "default" },
     "/dashboard/declarations": { title: "Declarations", badge: "CDS", badgeVariant: "default" },
+    "/dashboard/trade-lanes": { title: "Trade Lanes", badge: "LANES", badgeVariant: "default" },
     "/dashboard/documents": { title: "Documents", badge: "DOCS", badgeVariant: "success" },
     "/dashboard/reports": { title: "Customs Audit Reports", badge: "REPORTS", badgeVariant: "default" },
     "/dashboard/records": { title: "Financial Records", badge: "LEDGER", badgeVariant: "default" },
@@ -56,6 +57,9 @@ export default function DashboardLayout({
   // Extract declaration ID if in a declaration workspace
   const declarationIdMatch = pathname.match(/\/dashboard\/declarations\/([^\/]+)/);
   const declarationId = declarationIdMatch ? declarationIdMatch[1] : null;
+
+  const tradeLaneIdMatch = pathname.match(/\/dashboard\/trade-lanes\/([^\/]+)/);
+  const tradeLaneId = tradeLaneIdMatch ? tradeLaneIdMatch[1] : null;
   
   // Fetch declaration data to get the name
   const declaration = useQuery(
@@ -82,6 +86,8 @@ export default function DashboardLayout({
     };
   } else if (declarationId && !resolvedDeclaration) {
     config = { title: "Declaration Workspace", badge: "LOADING" };
+  } else if (tradeLaneId) {
+    config = { title: "Trade Lane", badge: "WORKSPACE", badgeVariant: "blue" };
   }
 
   const mainScrollRef = useRef<HTMLDivElement>(null);
