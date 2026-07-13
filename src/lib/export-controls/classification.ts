@@ -89,6 +89,63 @@ export function validateClassificationOutput(raw: unknown): Pick<ClassificationR
   };
 }
 
+async function completeClassificationJson(messages: Array<{ role: "system" | "user"; content: string }>): Promise<{
+  content: string;
+  modelVersion: string;
+}> {
+  const openaiKey = process.env.OPENAI_API_KEY?.trim();
+  const preferOpenAI =
+    process.env.EXPORT_CLASSIFY_PROVIDER === "openai" ||
+    (process.env.EXPORT_CLASSIFY_PROVIDER !== "groq" && Boolean(openaiKey));
+
+  if (preferOpenAI && openaiKey) {
+    const model = process.env.OPENAI_CLASSIFY_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini";
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${openaiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.1,
+        response_format: { type: "json_object" },
+        messages,
+      }),
+    });
+
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      throw new Error(`OpenAI classify failed (${response.status}): ${detail.slice(0, 300)}`);
+    }
+
+    const payload = (await response.json()) as {
+      choices?: Array<{ message?: { content?: string | null } }>;
+    };
+    return {
+      content: payload.choices?.[0]?.message?.content || "{}",
+      modelVersion: `openai:${model}`,
+    };
+  }
+
+  const groqApiKey = process.env.GROQ_API_KEY;
+  if (!groqApiKey) throw new Error("Groq API Key not configured");
+
+  const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+  const groq = new Groq({ apiKey: groqApiKey });
+  const completion = await groq.chat.completions.create({
+    messages,
+    model,
+    temperature: 0.1,
+    response_format: { type: "json_object" },
+  });
+
+  return {
+    content: completion.choices[0]?.message?.content || "{}",
+    modelVersion: `groq:${model}`,
+  };
+}
+
 export async function classifyProductAgainstControlList(input: {
   product: ExportProduct;
   retrievalHits: RetrievalHit[];
@@ -96,12 +153,6 @@ export async function classifyProductAgainstControlList(input: {
   controlListVersion: string;
   missingFields?: string[];
 }): Promise<ClassificationResult> {
-  const groqApiKey = process.env.GROQ_API_KEY;
-  if (!groqApiKey) throw new Error("Groq API Key not configured");
-
-  const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
-  const groq = new Groq({ apiKey: groqApiKey });
-
   const candidatePayload = input.retrievalHits.map((h) => ({
     entry_code: h.entryCode,
     clause_path: h.clausePath,
@@ -112,25 +163,19 @@ export async function classifyProductAgainstControlList(input: {
     matched_terms: h.matchedTerms,
   }));
 
-  const completion = await groq.chat.completions.create({
-    messages: [
-      { role: "system", content: EXPORT_CLASSIFY_SYSTEM_PROMPT },
-      {
-        role: "user",
-        content: JSON.stringify({
-          product: input.product,
-          predicate_results: input.predicateHits,
-          candidate_entries: candidatePayload,
-          missing_fields: input.missingFields ?? [],
-        }),
-      },
-    ],
-    model,
-    temperature: 0.1,
-    response_format: { type: "json_object" },
-  });
+  const { content: responseContent, modelVersion } = await completeClassificationJson([
+    { role: "system", content: EXPORT_CLASSIFY_SYSTEM_PROMPT },
+    {
+      role: "user",
+      content: JSON.stringify({
+        product: input.product,
+        predicate_results: input.predicateHits,
+        candidate_entries: candidatePayload,
+        missing_fields: input.missingFields ?? [],
+      }),
+    },
+  ]);
 
-  const responseContent = completion.choices[0]?.message?.content || "{}";
   let parsed: unknown;
   try {
     parsed = JSON.parse(responseContent);
@@ -157,7 +202,7 @@ export async function classifyProductAgainstControlList(input: {
     requiresReview: true,
     controlListVersion: input.controlListVersion,
     promptVersion: EXPORT_CLASSIFICATION_PROMPT_VERSION,
-    modelVersion: model,
+    modelVersion,
     retrievalHits: input.retrievalHits,
     disclaimer: hasMatch
       ? "Candidate control entries identified — human review required before any export decision."
