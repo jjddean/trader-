@@ -8,14 +8,8 @@ import { buildDraftPackBundle } from "@/lib/export-controls/draft-pack";
 import { resolveSubmissionRoute } from "@/lib/export-controls/routing";
 import { sanctionsOneLiner } from "@/lib/export-controls/sanctions-summary";
 
-function roleGuidance(role?: string) {
-  if (role === "adviser") {
-    return "Review this packet and record your advisory decision. The client applies on GOV.UK LITE/SPIRE using their own account.";
-  }
-  if (role === "eor") {
-    return "You may act as exporter of record. Apply on GOV.UK using your credentials and record application and licence references below.";
-  }
-  return "You may apply on GOV.UK on the client's behalf using your LITE account. Record application and licence references when complete.";
+function roleGuidance(_role?: string) {
+  return "Export licence application draft pack for your review.";
 }
 
 function CopyButton({ value }: { value: string }) {

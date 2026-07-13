@@ -55,7 +55,7 @@ export async function sendConsultantReviewEmail(input: ConsultantDispatchEmailIn
         </a>
       </p>
       <p style="font-size:11px;color:#94a3b8">
-        Link expires ${expiry}. Freightcode does not submit to government systems — apply on GOV.UK LITE/SPIRE separately and record references in the packet.
+        Link expires ${expiry}. This packet is shared for review only — Freightcode does not submit to government systems.
       </p>
     </div>
   `;
