@@ -6,9 +6,6 @@ import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 
-/** Temporary client-side routing until consultant email moves to server config. */
-const IN_HOUSE_CONSULTANT_EMAIL = "consultant@freightcode.co.uk";
-
 const CONSULTANT_BIO = "UK export controls — dual-use classification and licence review.";
 
 interface ConsultantSignoffCardProps {
@@ -30,6 +27,7 @@ export function ConsultantSignoffCard({
     isAuthenticated ? { assessmentId } : "skip",
   );
 
+  const [consultantEmail, setConsultantEmail] = useState("");
   const [senderNote, setSenderNote] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +60,12 @@ export function ConsultantSignoffCard({
   if (!showCard) return null;
 
   const handleSend = async () => {
+    const email = consultantEmail.trim();
+    if (!email) {
+      setError("Consultant email is required");
+      return;
+    }
+
     setSending(true);
     setError(null);
     setEmailNote(null);
@@ -73,7 +77,7 @@ export function ConsultantSignoffCard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           assessmentId,
-          consultantEmail: IN_HOUSE_CONSULTANT_EMAIL,
+          consultantEmail: email,
           senderNote: senderNote.trim() || undefined,
         }),
       });
@@ -135,6 +139,20 @@ export function ConsultantSignoffCard({
             <p className="mt-1.5 text-xs leading-relaxed text-slate-700">{CONSULTANT_BIO}</p>
           </div>
 
+          <div>
+            <label htmlFor="consultant-email" className="text-[11px] font-medium text-slate-600">
+              Consultant email <span className="text-red-600">*</span>
+            </label>
+            <input
+              id="consultant-email"
+              type="email"
+              value={consultantEmail}
+              onChange={(e) => setConsultantEmail(e.target.value)}
+              placeholder="consultant@example.com"
+              className="mt-1 h-9 w-full rounded-md border border-slate-200 px-3 text-xs outline-none focus:border-slate-400"
+            />
+          </div>
+
           <textarea
             value={senderNote}
             onChange={(e) => setSenderNote(e.target.value)}
@@ -159,7 +177,7 @@ export function ConsultantSignoffCard({
 
           <button
             type="button"
-            disabled={sending}
+            disabled={sending || !consultantEmail.trim()}
             onClick={() => void handleSend()}
             className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
           >
