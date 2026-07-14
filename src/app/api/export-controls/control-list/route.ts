@@ -1,6 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import type { ControlListEntry } from "@/lib/export-controls/control-list";
+import {
+  canonicalControlListEntries,
+  type ControlListEntry,
+} from "@/lib/export-controls/control-list";
 import { loadControlListForUser } from "@/lib/export-controls/load-control-list-server";
 
 const ENTRY_TYPES = new Set(["military", "dual_use", "firearms", "radioactive"]);
@@ -13,6 +16,11 @@ function matchesQuery(entry: ControlListEntry, q: string): boolean {
     entry.category,
     entry.fullText.slice(0, 800),
     ...entry.notes.slice(0, 3),
+    ...(entry.additionalOccurrences ?? []).flatMap((occurrence) => [
+      occurrence.title,
+      occurrence.fullText.slice(0, 800),
+      ...occurrence.notes.slice(0, 3),
+    ]),
   ]
     .join(" ")
     .toLowerCase();
@@ -39,9 +47,10 @@ export async function GET(request: Request) {
     const offset = Math.max(Number(searchParams.get("offset") ?? 0) || 0, 0);
 
     const snapshot = await loadControlListForUser(convexToken);
+    const entries = canonicalControlListEntries(snapshot.entries);
 
     if (entryCode) {
-      const entry = snapshot.entries.find((e) => e.entryCode.toUpperCase() === entryCode);
+      const entry = entries.find((e) => e.entryCode.toUpperCase() === entryCode);
       if (!entry) {
         return NextResponse.json({ error: "Entry not found" }, { status: 404 });
       }
@@ -54,7 +63,7 @@ export async function GET(request: Request) {
       });
     }
 
-    const filtered = snapshot.entries.filter((entry) => {
+    const filtered = entries.filter((entry) => {
       if (type !== "all" && ENTRY_TYPES.has(type) && entry.entryType !== type) return false;
       return matchesQuery(entry, q);
     });
@@ -76,7 +85,7 @@ export async function GET(request: Request) {
       firearms: 0,
       radioactive: 0,
     };
-    for (const entry of snapshot.entries) {
+    for (const entry of entries) {
       if (entry.entryType in typeCounts) {
         typeCounts[entry.entryType as keyof typeof typeCounts] += 1;
       }
@@ -87,7 +96,7 @@ export async function GET(request: Request) {
       sourceRef: snapshot.sourceRef,
       govSourceUrl: snapshot.govSourceUrl,
       effectiveDate: snapshot.effectiveDate,
-      entryCount: snapshot.entryCount,
+      entryCount: entries.length,
       typeCounts,
       total: filtered.length,
       offset,
