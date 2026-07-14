@@ -462,7 +462,7 @@ function SettingsPageContent() {
                 <p className="mt-1 text-[11px] text-slate-500">
                   {orgHmrcMode?.hmrcMode === "live"
                     ? "Your organisation is on live CDS. Submissions have legal effect."
-                    : "Your organisation is in practice mode (HMRC sandbox / TDR). Submissions are not legally binding."}
+                    : "Your organisation is in the test environment (HMRC sandbox / TDR). Submissions are not legally binding."}
                 </p>
                 <div className="mt-3">
                   <span
@@ -473,7 +473,7 @@ function SettingsPageContent() {
                         : "bg-blue-100 text-blue-800",
                     )}
                   >
-                    {orgHmrcMode?.hmrcMode === "live" ? "Live CDS" : "Practice (sandbox)"}
+                    {orgHmrcMode?.hmrcMode === "live" ? "Live CDS" : "Test environment"}
                   </span>
                 </div>
               </div>

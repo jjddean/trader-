@@ -85,10 +85,10 @@ export function assertOrgHmrcRoutingAllowed(orgMode: HmrcOrgMode | null | undefi
   const mode = orgMode === "live" ? "live" : "practice";
   const deploymentSandbox = process.env.HMRC_ENVIRONMENT === "sandbox";
   if (mode === "live" && deploymentSandbox && !process.env.HMRC_ALLOW_LIVE_ON_SANDBOX_DEPLOY) {
-    return "Organisation is set to Live CDS but this deployment is sandbox-only. Contact support or flip org to practice.";
+    return "Organisation is set to Live CDS but this deployment is sandbox-only. Contact support or switch the org to the test environment.";
   }
   if (mode === "practice" && !deploymentSandbox && process.env.HMRC_REQUIRE_ORG_LIVE_ON_PROD === "true") {
-    return "Organisation is in practice mode but this deployment expects live CDS. Request production access for your org.";
+    return "Organisation is in the test environment but this deployment expects live CDS. Request production access for your org.";
   }
   return null;
 }

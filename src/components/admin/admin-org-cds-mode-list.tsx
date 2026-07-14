@@ -116,7 +116,7 @@ export function AdminOrgCdsModeList() {
                         <p className="mt-0.5 text-[10px] font-medium text-blue-700">Selected</p>
                       )}
                       {!row.hasSettingsRow && (
-                        <p className="mt-0.5 text-[10px] text-slate-400">Default practice</p>
+                        <p className="mt-0.5 text-[10px] text-slate-400">Default test environment</p>
                       )}
                     </td>
                     <td className="px-6 py-3">
@@ -126,7 +126,7 @@ export function AdminOrgCdsModeList() {
                           isLive ? "bg-emerald-100 text-emerald-800" : "bg-blue-100 text-blue-800",
                         )}
                       >
-                        {isLive ? "Live CDS" : "Practice"}
+                        {isLive ? "Live CDS" : "Test environment"}
                       </span>
                     </td>
                     <td className="px-6 py-3 text-xs text-slate-600">
@@ -143,7 +143,7 @@ export function AdminOrgCdsModeList() {
                         }
                         className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                       >
-                        {isPending ? "Saving…" : isLive ? "→ Practice" : "→ Live"}
+                        {isPending ? "Saving…" : isLive ? "→ Test environment" : "→ Live"}
                       </button>
                     </td>
                   </tr>

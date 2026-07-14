@@ -212,7 +212,7 @@ export function PracticeModeGuideModalLink({
       <DialogContent className="gap-0 overflow-hidden border-slate-200 p-0 sm:max-w-lg">
         <div className="p-6">
           <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-5">
-            <DialogTitle className="text-xs font-semibold text-amber-950">Practice mode</DialogTitle>
+            <DialogTitle className="text-xs font-semibold text-amber-950">Test environment</DialogTitle>
             <DialogDescription asChild>
               <ul className="mt-2.5 list-disc space-y-2.5 pl-5 text-xs leading-relaxed text-amber-900/90">
                 <li>

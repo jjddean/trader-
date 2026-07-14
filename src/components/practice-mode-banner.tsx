@@ -46,7 +46,7 @@ export function PracticeModeBanner() {
           </ul>
         </div>
         <PracticeModeGuideModalLink className="shrink-0 text-xs font-medium text-amber-900 underline hover:text-amber-950">
-          How practice mode works
+          How the test environment works
         </PracticeModeGuideModalLink>
       </div>
     </div>

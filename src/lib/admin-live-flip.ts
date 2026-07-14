@@ -3,7 +3,7 @@ import { api } from "../../convex/_generated/api";
 
 export function confirmPracticeFlip(displayLabel: string): boolean {
   return window.confirm(
-    `Switch ${displayLabel} to practice (sandbox)? Submissions will go to HMRC test environment only.`,
+    `Switch ${displayLabel} to the test environment (sandbox)? Submissions will go to HMRC test environment only.`,
   );
 }
 
