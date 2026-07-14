@@ -8,14 +8,8 @@ import { buildDraftPackBundle } from "@/lib/export-controls/draft-pack";
 import { resolveSubmissionRoute } from "@/lib/export-controls/routing";
 import { sanctionsOneLiner } from "@/lib/export-controls/sanctions-summary";
 
-function roleGuidance(role?: string) {
-  if (role === "adviser") {
-    return "Review this packet and record your advisory decision. The client applies on GOV.UK LITE/SPIRE using their own account.";
-  }
-  if (role === "eor") {
-    return "You may act as exporter of record. Apply on GOV.UK using your credentials and record application and licence references below.";
-  }
-  return "You may apply on GOV.UK on the client's behalf using your LITE account. Record application and licence references when complete.";
+function roleGuidance() {
+  return "Export licence application draft pack for your review.";
 }
 
 function CopyButton({ value }: { value: string }) {
@@ -162,7 +156,7 @@ export function ConsultantReviewPage({ token }: { token: string }) {
       <header className="border-b border-slate-200 bg-white px-6 py-5">
         <p className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">Freightcode · Consultant review</p>
         <h1 className="mt-1 text-lg font-semibold text-slate-900">{data.assessment.reference}</h1>
-        <p className="mt-1 text-xs text-slate-500">{roleGuidance(data.consultantRole)}</p>
+        <p className="mt-1 text-xs text-slate-500">{roleGuidance()}</p>
         {data.senderNote && (
           <p className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
             <span className="font-medium">Note from sender:</span> {data.senderNote}

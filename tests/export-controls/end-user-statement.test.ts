@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { sanctionsOneLiner } from "../../src/lib/export-controls/sanctions-summary.ts";
-import { endUserStatementPrintableHtml } from "../../src/lib/export-controls/end-user-statement.ts";
+import { sanctionsOneLiner } from "../../src/lib/export-controls/sanctions-summary";
+import { endUserStatementPrintableHtml } from "../../src/lib/export-controls/end-user-statement";
 
 describe("sanctionsOneLiner", () => {
   it("reports when screening not run", () => {

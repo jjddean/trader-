@@ -16,6 +16,7 @@ import {
   type DraftPackScreeningInput,
 } from "@/lib/export-controls/draft-pack";
 import { ConsultantSignoffCard } from "@/components/trade-compliance/consultant-signoff-card";
+import { EndUserSendCard } from "@/components/trade-compliance/end-user-send-card";
 import { cn } from "@/lib/utils";
 
 interface ExportDraftPackPanelProps {
@@ -188,6 +189,8 @@ export function ExportDraftPackPanel({
           tab.
         </p>
       </section>
+
+      <EndUserSendCard assessmentId={assessmentId} variant="send" />
 
       {/* Missing fields warning */}
       {bundle.missingMandatory.length > 0 && (

@@ -6,6 +6,8 @@ import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 
+const CONSULTANT_BIO = "UK export controls — dual-use classification and licence review.";
+
 interface ConsultantSignoffCardProps {
   assessmentId: Id<"export_assessments">;
   status: string;
@@ -26,7 +28,6 @@ export function ConsultantSignoffCard({
   );
 
   const [consultantEmail, setConsultantEmail] = useState("");
-  const [consultantName, setConsultantName] = useState("");
   const [senderNote, setSenderNote] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,8 +43,7 @@ export function ConsultantSignoffCard({
       <section className="rounded-xl border border-green-200 bg-green-50 p-5">
         <h2 className="text-sm font-semibold text-green-900">Consultant sign-off</h2>
         <p className="mt-2 text-xs font-medium text-green-900">
-          {latest?.status === "completed" ? "Signed off" : "Blocked"} by{" "}
-          {latest?.consultantName ?? latest?.consultantEmail}
+          {latest?.status === "completed" ? "Signed off" : "Blocked"} by consultant
         </p>
         {latest?.advisoryNotes && <p className="mt-2 text-xs text-green-800">{latest.advisoryNotes}</p>}
         {(latest?.applicationRef || latest?.licenceRef) && (
@@ -78,7 +78,6 @@ export function ConsultantSignoffCard({
         body: JSON.stringify({
           assessmentId,
           consultantEmail: email,
-          consultantName: consultantName.trim() || undefined,
           senderNote: senderNote.trim() || undefined,
         }),
       });
@@ -102,10 +101,11 @@ export function ConsultantSignoffCard({
       <div className="flex items-start gap-3">
         <Mail className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold text-black">Consultant sign-off</h2>
+          <h2 className="text-sm font-semibold text-black">Consultant review and sign-off</h2>
           <p className="mt-1 text-xs text-slate-500">
-            Send a secure link to a compliance consultant. They review the packet on the web — not over email
-            attachments.
+            Have an experienced export controls consultant review this draft pack before submission. They can
+            confirm the assessment, request changes, and record their decision through a secure link. No
+            documents are sent as email attachments.
           </p>
         </div>
       </div>
@@ -113,8 +113,7 @@ export function ConsultantSignoffCard({
       {isComplete ? (
         <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-xs text-green-900">
           <p className="font-medium">
-            {latest?.status === "completed" ? "Signed off" : "Blocked"} by{" "}
-            {latest?.consultantName ?? latest?.consultantEmail}
+            {latest?.status === "completed" ? "Signed off" : "Blocked"} by consultant
           </p>
           {latest?.advisoryNotes && <p className="mt-2 text-green-800">{latest.advisoryNotes}</p>}
           {(latest?.applicationRef || latest?.licenceRef) && (
@@ -133,38 +132,32 @@ export function ConsultantSignoffCard({
             </p>
           )}
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label htmlFor="consultant-email" className="text-[11px] font-medium text-slate-600">
-                Consultant email <span className="text-red-600">*</span>
-              </label>
-              <input
-                id="consultant-email"
-                type="email"
-                value={consultantEmail}
-                onChange={(e) => setConsultantEmail(e.target.value)}
-                placeholder="consultant@example.com"
-                className="mt-1 h-9 w-full rounded-md border border-slate-200 px-3 text-xs outline-none focus:border-slate-400"
-              />
-            </div>
-            <div>
-              <label htmlFor="consultant-name" className="text-[11px] font-medium text-slate-600">
-                Name (optional)
-              </label>
-              <input
-                id="consultant-name"
-                value={consultantName}
-                onChange={(e) => setConsultantName(e.target.value)}
-                className="mt-1 h-9 w-full rounded-md border border-slate-200 px-3 text-xs outline-none focus:border-slate-400"
-              />
-            </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+              Review scope
+            </p>
+            <p className="mt-1.5 text-xs leading-relaxed text-slate-700">{CONSULTANT_BIO}</p>
+          </div>
+
+          <div>
+            <label htmlFor="consultant-email" className="text-[11px] font-medium text-slate-600">
+              Consultant email <span className="text-red-600">*</span>
+            </label>
+            <input
+              id="consultant-email"
+              type="email"
+              value={consultantEmail}
+              onChange={(e) => setConsultantEmail(e.target.value)}
+              placeholder="consultant@example.com"
+              className="mt-1 h-9 w-full rounded-md border border-slate-200 px-3 text-xs outline-none focus:border-slate-400"
+            />
           </div>
 
           <textarea
             value={senderNote}
             onChange={(e) => setSenderNote(e.target.value)}
             rows={2}
-            placeholder="Optional note for consultant…"
+            placeholder="Optional note for the consultant…"
             className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:border-slate-400"
           />
 
@@ -189,7 +182,7 @@ export function ConsultantSignoffCard({
             className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
           >
             {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-            Send to consultant
+            Request sign-off
           </button>
         </div>
       )}

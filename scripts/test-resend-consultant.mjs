@@ -8,7 +8,7 @@ for (const line of env.split(/\r?\n/)) {
 
 const to = process.argv[2] || process.env.COMPLIANCE_CONSULTANT_DEFAULT_EMAIL || "jasondeanfitness@outlook.com";
 const key = process.env.RESEND_API_KEY;
-const from = process.env.RESEND_FROM_EMAIL || "Freightcode <onboarding@resend.dev>";
+const from = process.env.RESEND_FROM_EMAIL || "freightcode <onboarding@resend.dev>";
 
 if (!key) {
   console.error("RESEND_API_KEY missing");

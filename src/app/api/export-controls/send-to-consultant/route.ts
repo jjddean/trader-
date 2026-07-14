@@ -4,15 +4,12 @@ import { NextResponse } from "next/server";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { sendConsultantReviewEmail } from "@/lib/export-controls/consultant-email";
+import { emailPathUrl } from "@/lib/export-controls/email-link-base";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 function reviewUrl(token: string, request: Request): string {
-  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (configured) return `${configured.replace(/\/$/, "")}/r/export/${token}`;
-  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-  const proto = request.headers.get("x-forwarded-proto") ?? "http";
-  return `${proto}://${host}/r/export/${token}`;
+  return emailPathUrl(`/r/export/${token}`, request);
 }
 
 export async function POST(request: Request) {

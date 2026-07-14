@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { buildDraftPackBundle, draftPackPrintableHtml } from "../../src/lib/export-controls/draft-pack.ts";
+import { buildDraftPackBundle, draftPackPrintableHtml } from "../../src/lib/export-controls/draft-pack";
 
 describe("buildDraftPackBundle", () => {
   it("flags missing mandatory fields and routes to LITE by default", () => {
