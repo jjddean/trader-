@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Check, CheckCircle2, Loader2, Play, ShieldAlert, X } from "lucide-react";
 import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { useUser } from "@clerk/nextjs";
@@ -56,12 +56,54 @@ type StoredRun = {
   finalControlEntry?: string;
 };
 
+type ProductSpec = {
+  key: string;
+  valueRaw: string;
+  unit?: string;
+};
+
 type ProductRow = {
   _id: Id<"export_products">;
   name: string;
+  manufacturer?: string;
+  modelNo?: string;
+  partNo?: string;
   techDescription?: string;
+  specs?: ProductSpec[];
   classificationRuns?: StoredRun[];
 };
+
+const CLASSIFY_STAGES = [
+  "Checking product details",
+  "Searching control-list entries",
+  "Assessing technical matches",
+  "Preparing results",
+] as const;
+
+function findSpecValue(specs: ProductSpec[] | undefined, keys: string[]): string | null {
+  if (!specs?.length) return null;
+  const normalised = keys.map((k) => k.toLowerCase());
+  const hit = specs.find((s) => normalised.some((k) => s.key.toLowerCase().includes(k)));
+  if (!hit?.valueRaw?.trim()) return null;
+  return hit.unit ? `${hit.valueRaw} ${hit.unit}` : hit.valueRaw;
+}
+
+function productMetaLines(product: ProductRow): string[] {
+  const lines: string[] = [];
+  const hs =
+    findSpecValue(product.specs, ["hs", "commodity", "tariff", "hts"]) ?? null;
+  if (hs) lines.push(`HS ${hs}`);
+  if (product.manufacturer?.trim()) lines.push(product.manufacturer.trim());
+  if (product.modelNo?.trim()) lines.push(`Model ${product.modelNo.trim()}`);
+  else if (product.partNo?.trim()) lines.push(`Part ${product.partNo.trim()}`);
+
+  const description = product.techDescription?.trim();
+  if (description && description.toLowerCase() !== product.name.trim().toLowerCase()) {
+    lines.push(description);
+  }
+
+  return lines;
+}
 
 function classificationFromRun(run: StoredRun): ClassificationResponse {
   return {
@@ -111,14 +153,36 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
   const [resultsByProduct, setResultsByProduct] = useState<Record<string, ClassificationResponse>>({});
   const [reviewingRunId, setReviewingRunId] = useState<Id<"export_classification_runs"> | null>(null);
   const [localApprovedByProduct, setLocalApprovedByProduct] = useState<Record<string, string | null>>({});
+  const [classifyStageIndex, setClassifyStageIndex] = useState(0);
 
-  const products = (detail?.products ?? []) as ProductRow[];
+  const products = useMemo(
+    () => (detail?.products ?? []) as ProductRow[],
+    [detail?.products],
+  );
 
   useEffect(() => {
     if (products.length > 0 && !activeProductId) {
       setActiveProductId(products[0]._id);
     }
   }, [products, activeProductId]);
+
+  useEffect(() => {
+    if (!loadingProductId) {
+      setClassifyStageIndex(0);
+      return;
+    }
+
+    setClassifyStageIndex(0);
+    const timers = [
+      window.setTimeout(() => setClassifyStageIndex(1), 700),
+      window.setTimeout(() => setClassifyStageIndex(2), 1600),
+      window.setTimeout(() => setClassifyStageIndex(3), 2600),
+    ];
+
+    return () => {
+      for (const timer of timers) window.clearTimeout(timer);
+    };
+  }, [loadingProductId]);
 
   const openProduct = (productId: Id<"export_products">) => {
     setActiveProductId(productId);
@@ -178,6 +242,7 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
   const resolvedApproval = productApproval(latestRun, localApproval);
   const isReviewBusy = reviewingRunId != null;
   const isClassifying = activeProductId != null && loadingProductId === activeProductId;
+  const activeMetaLines = activeProduct ? productMetaLines(activeProduct) : [];
   const hasCandidates =
     activeResult ? [...activeResult.matches, ...activeResult.possible_matches].length > 0 : false;
 
@@ -270,7 +335,9 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
                       <p className="line-clamp-2 text-xs font-medium text-slate-900">{product.name}</p>
                       <div className="mt-1.5 flex items-center gap-1.5">
                         {isLoading ? (
-                          <Loader2 className="h-3 w-3 animate-spin text-slate-400" />
+                          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                            Classifying
+                          </span>
                         ) : approval === null ? (
                           <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
                             Pending
@@ -302,8 +369,16 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <h3 className="text-sm font-semibold text-slate-900">{activeProduct.name}</h3>
-                      {activeProduct.techDescription && (
-                        <p className="mt-1 text-xs leading-relaxed text-slate-500">{activeProduct.techDescription}</p>
+                      {activeMetaLines.length > 0 ? (
+                        <div className="mt-1.5 space-y-1">
+                          {activeMetaLines.slice(0, 3).map((line) => (
+                            <p key={line} className="text-xs leading-relaxed text-slate-500">
+                              {line}
+                            </p>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-1 text-xs text-slate-400">No manufacturer, HS, or description yet.</p>
                       )}
                       {resolvedApproval !== null && (
                         <p className="mt-2 text-[11px] font-medium text-slate-600">
@@ -317,12 +392,8 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
                       onClick={() => void handleClassify(activeProduct._id)}
                       className="flex h-9 shrink-0 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
                     >
-                      {isClassifying ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Play className="h-3.5 w-3.5" />
-                      )}
-                      {activeResult ? "Re-run Classify" : "Classify"}
+                      {!isClassifying && <Play className="h-3.5 w-3.5" />}
+                      {isClassifying ? "Classifying…" : activeResult ? "Re-run Classify" : "Classify"}
                     </button>
                   </div>
                 </div>
@@ -333,9 +404,38 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
                   )}
 
                   {isClassifying && (
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Running classification…
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-medium text-slate-800">Running classification…</p>
+                      <ol className="mt-3 space-y-2.5">
+                        {CLASSIFY_STAGES.map((stage, index) => {
+                          const done = index < classifyStageIndex;
+                          const current = index === classifyStageIndex;
+                          return (
+                            <li key={stage} className="flex items-center gap-2.5 text-xs">
+                              <span
+                                className={cn(
+                                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold",
+                                  done && "border-green-300 bg-green-100 text-green-700",
+                                  current && "border-slate-400 bg-white text-slate-700",
+                                  !done && !current && "border-slate-200 bg-white text-slate-400",
+                                )}
+                              >
+                                {done ? <Check className="h-3 w-3" /> : index + 1}
+                              </span>
+                              <span
+                                className={cn(
+                                  current && "font-medium text-slate-800",
+                                  done && "text-slate-600",
+                                  !done && !current && "text-slate-400",
+                                )}
+                              >
+                                {stage}
+                                {current ? "…" : ""}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ol>
                     </div>
                   )}
 

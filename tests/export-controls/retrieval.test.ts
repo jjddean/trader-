@@ -34,6 +34,29 @@ describe("control list retrieval", () => {
     const hits = retrieveControlListCandidates(snapshot, product, { limit: 6 });
     assert.ok(hits.some((h) => h.entryCode.startsWith("ML")));
   });
+
+  it("does not surface ML1 for an industrial centrifugal pump on generic wording", () => {
+    const product = specsToProduct({
+      name: "Industrial centrifugal pump",
+      techDescription: "Industrial centrifugal pump for water transfer",
+    });
+
+    const hits = retrieveControlListCandidates(snapshot, product, { limit: 12 });
+    assert.equal(
+      hits.some((h) => h.entryCode === "ML1"),
+      false,
+    );
+  });
+
+  it("retains a precise single-term candidate", () => {
+    const product = specsToProduct({
+      name: "Magnetometers",
+      techDescription: "Magnetometers",
+    });
+
+    const hits = retrieveControlListCandidates(snapshot, product, { limit: 12 });
+    assert.ok(hits.some((hit) => hit.entryCode === "6A006"));
+  });
 });
 
 describe("5A002 predicates", () => {
