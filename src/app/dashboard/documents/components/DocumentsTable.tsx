@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { 
-  ChevronDown
-} from "lucide-react";
+import { ChevronDown, FilePlus2, FileText, ListChecks, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -27,16 +25,40 @@ import {
 } from "@/lib/enterprise-select-styles";
 
 const FILTER_CONTROL_CLASS =
-  "flex h-9 w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 text-xs text-slate-700 shadow-sm transition-colors focus:border-slate-400 focus:outline-none data-[placeholder]:text-slate-400";
+  "group flex h-9 min-w-0 flex-1 shrink items-center justify-between gap-2 whitespace-nowrap rounded-md border-0 bg-transparent px-3 py-2 text-xs font-medium text-slate-500 shadow-none transition-all outline-none hover:bg-slate-200/60 hover:text-slate-900 focus:bg-white focus:text-black focus:shadow-sm focus:outline-none focus-visible:ring-0 data-[state=open]:bg-white data-[state=open]:text-black data-[state=open]:shadow-sm data-[placeholder]:text-slate-500";
 
+const FILTER_ICON_CLASS =
+  "size-3.5 shrink-0 text-slate-400 group-focus:text-blue-600 group-data-[state=open]:text-blue-600";
+
+interface DocumentTableRow {
+  id: string;
+  declarationId: string;
+  name: string;
+  method: string;
+  date: string;
+  type: string;
+  typeName: string;
+  mrn: string;
+  status: string;
+  de23: string;
+  flag?: string;
+  requirementLevel?: string;
+  isVirtual: boolean;
+  ocrText?: string;
+}
+
+interface DeclarationOption {
+  id: string;
+  mrn: string;
+}
 interface DocumentsTableProps {
-  documents: any[];
+  documents: DocumentTableRow[];
   declarationFilter: string;
   onDeclarationFilterChange: (val: string) => void;
   typeFilter: string;
   onTypeFilterChange: (val: string) => void;
-  allDeclarationOptions: any[];
-  onSelectDocument: (doc: any) => void;
+  allDeclarationOptions: DeclarationOption[];
+  onSelectDocument: (doc: DocumentTableRow) => void;
   onActiveToolChange: (tool: string) => void;
   onGenerateTemplates: () => void;
   isGeneratingTemplates: boolean;
@@ -68,14 +90,15 @@ export const DocumentsTable = React.memo(function DocumentsTable({
   }, [documents, declarationFilter, typeFilter]);
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none">
-      {/* FILTER BAR */}
-      <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
-        <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-4">
+    <div className="space-y-4">
+      <div className="flex w-full gap-1 overflow-hidden rounded-lg bg-slate-100/80 p-1">
           <div className="contents">
               <Select value={declarationFilter} onValueChange={onDeclarationFilterChange}>
                 <SelectTrigger className={FILTER_CONTROL_CLASS}>
-                  <SelectValue placeholder="All declarations" />
+                  <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+                    <FileText className={FILTER_ICON_CLASS} />
+                    <SelectValue placeholder="All declarations" className="min-w-0 flex-1 truncate text-left" />
+                  </span>
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={4} className={ENTERPRISE_SELECT_CONTENT}>
                   <SelectItem value="all" className={ENTERPRISE_SELECT_ITEM}>All declarations</SelectItem>
@@ -89,7 +112,10 @@ export const DocumentsTable = React.memo(function DocumentsTable({
 
               <Select value={typeFilter} onValueChange={onTypeFilterChange}>
                 <SelectTrigger className={FILTER_CONTROL_CLASS}>
-                  <SelectValue placeholder="All types" />
+                  <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+                    <ListChecks className={FILTER_ICON_CLASS} />
+                    <SelectValue placeholder="All types" className="min-w-0 flex-1 truncate text-left" />
+                  </span>
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={4} className={ENTERPRISE_SELECT_CONTENT}>
                   <SelectItem value="all" className={ENTERPRISE_SELECT_ITEM}>All types</SelectItem>
@@ -102,8 +128,11 @@ export const DocumentsTable = React.memo(function DocumentsTable({
               </Select>
 
               <DropdownMenu>
-                <DropdownMenuTrigger className={cn(FILTER_CONTROL_CLASS, "flex items-center justify-between px-3 transition-colors hover:border-slate-400 focus:outline-none")}>
-                  <span>Compliance Tools</span>
+                <DropdownMenuTrigger className={FILTER_CONTROL_CLASS}>
+                  <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+                    <ShieldCheck className={FILTER_ICON_CLASS} />
+                    <span className="truncate">Compliance Tools</span>
+                  </span>
                   <ChevronDown className="h-4 w-4 text-slate-400" />
                 </DropdownMenuTrigger>
 
@@ -126,17 +155,19 @@ export const DocumentsTable = React.memo(function DocumentsTable({
 
           <Button
             variant="ghost"
-            className={cn(FILTER_CONTROL_CLASS, "transition-colors hover:border-slate-400 hover:bg-slate-50")}
+            className={cn(FILTER_CONTROL_CLASS, "justify-center")}
             onClick={onGenerateTemplates}
             disabled={isGeneratingTemplates || !canGenerateTemplates}
           >
-            {isGeneratingTemplates ? "Generating..." : "Generate templates"}
+            <FilePlus2 className="size-3.5 text-slate-400 group-focus:text-blue-600" />
+            <span className="truncate">
+              {isGeneratingTemplates ? "Generating..." : "Generate templates"}
+            </span>
           </Button>
-        </div>
       </div>
 
-      {/* TABLE */}
-      <div className="w-full overflow-x-auto">
+      <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none">
+        <div className="w-full overflow-x-auto">
         <table className="w-full border-collapse text-left">
           <thead>
             <tr className="border-b border-slate-200 bg-white">
@@ -156,8 +187,20 @@ export const DocumentsTable = React.memo(function DocumentsTable({
               </tr>
             ) : filteredDocuments.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-slate-500 text-xs italic">
-                  No documents found matching these filters.
+                <td colSpan={5}>
+                  <div className="flex flex-col items-center py-6 text-center">
+                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+                      <FileText className="h-4 w-4 text-slate-300" />
+                    </div>
+                    <h4 className="text-sm font-semibold text-slate-900">
+                      {documents.length === 0 ? "No documents yet" : "No matching documents"}
+                    </h4>
+                    <p className="mt-1 max-w-sm text-xs text-slate-500">
+                      {documents.length === 0
+                        ? "Uploaded and generated documents will appear here."
+                        : "No documents match the selected filters. Try changing your filter options."}
+                    </p>
+                  </div>
                 </td>
               </tr>
             ) : (
@@ -220,7 +263,8 @@ export const DocumentsTable = React.memo(function DocumentsTable({
               })
             )}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
     </div>
   );
