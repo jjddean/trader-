@@ -525,17 +525,6 @@ export default function TradeCompliancePage() {
                 ? "No assessments match your search or selected filters."
                 : "Create one to upload documents and run export control checks."}
             </p>
-            {!hasActiveFilters && (
-                <button
-                  type="button"
-                  disabled={!canQuery || creating}
-                  onClick={() => void handleNewAssessment()}
-                  className="mt-4 inline-flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
-                >
-                  {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
-                  New Assessment
-                </button>
-              )}
           </div>
         ) : (
           <div className="overflow-x-auto">
