@@ -64,12 +64,34 @@ export default function DeclarationWorkspaceLayout({
   const isNotFound = authReady && declaration === null;
   const hasDeclaration = authReady && Boolean(resolvedDeclaration);
 
+  const LIVE_HMRC_STATUSES = new Set([
+    "Processing",
+    "Accepted",
+    "Amended",
+    "Amendment Processing",
+    "Cancellation Requested",
+  ]);
+  const declarationStatus = String(resolvedDeclaration?.status ?? "Draft");
+  const isLiveDeclaration = LIVE_HMRC_STATUSES.has(declarationStatus);
+
   const steps = [
     { id: "overview", name: "1. Core Schema", icon: FileText, path: `/dashboard/declarations/${declarationId}` },
     { id: "items", name: "2. Goods Items", icon: ListChecks, path: `/dashboard/declarations/${declarationId}/items` },
-    { id: "submit", name: "3. Submission", icon: Send, path: `/dashboard/declarations/${declarationId}/submit` },
+    {
+      id: "submit",
+      name: "3. Submission",
+      icon: Send,
+      path: `/dashboard/declarations/${declarationId}/submit`,
+      disabled: isLiveDeclaration,
+    },
     { id: "status", name: "4. HMRC Status", icon: Activity, path: `/dashboard/declarations/${declarationId}/status` },
-    { id: "documents", name: "5. Secure Upload", icon: UploadCloud, path: `/dashboard/declarations/${declarationId}/documents`, disabled: !resolvedDeclaration?.mrn },
+    {
+      id: "documents",
+      name: "5. Secure Upload",
+      icon: UploadCloud,
+      path: `/dashboard/declarations/${declarationId}/documents`,
+      disabled: !resolvedDeclaration?.mrn,
+    },
   ];
 
   const declarationTitle =
@@ -152,6 +174,15 @@ export default function DeclarationWorkspaceLayout({
                     key={step.id}
                     onClick={() => !step.disabled && router.push(step.path)}
                     disabled={step.disabled}
+                    title={
+                      step.disabled
+                        ? step.id === "documents"
+                          ? "Secure Upload is available after HMRC acceptance (MRN required)."
+                          : step.id === "submit"
+                            ? "This declaration is already live with HMRC. Use actions on the Status step."
+                            : "This step is currently unavailable."
+                        : undefined
+                    }
                     className={cn(
                       "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all",
                       isActive
