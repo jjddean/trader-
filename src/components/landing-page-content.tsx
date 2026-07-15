@@ -84,6 +84,21 @@ const trePillars = [
   },
 ];
 
+const financialControlPoints = [
+  {
+    title: "Estimate before clearance",
+    body: "Model duty, import VAT, and landed cost from Trade Tariff measures before submitting your declaration.",
+  },
+  {
+    title: "Confirm against HMRC",
+    body: "Keep estimated amounts separate from HMRC-confirmed duty and VAT when DMSTAX notifications arrive.",
+  },
+  {
+    title: "Keep records by MRN",
+    body: "Review A00 duty and B00 import VAT lines with their source, payment context, and exportable declaration record.",
+  },
+];
+
 const faqs = [
   {
     question: "What does the beta program include?",
@@ -231,6 +246,44 @@ export function LandingPageContent() {
             </div>
           </div>
         </section>
+
+        {/* Financial control — one focused section within the wider customs workflow. */}
+        <section id="financial-control" className="bg-white py-[96px]">
+          <div className="mx-auto max-w-[1280px] px-[24px]">
+            <div className="overflow-hidden rounded-2xl bg-[#0f172a] px-8 py-10 text-white md:px-12 md:py-14">
+              <div className="grid gap-10 lg:grid-cols-[0.9fr_1.4fr] lg:items-start">
+                <div>
+                  <p className="mb-3 text-[12px] font-semibold uppercase tracking-[0.18em] text-blue-300">
+                    Financial control
+                  </p>
+                  <h2 className="text-3xl font-bold tracking-tight">
+                    Understand customs costs before and after clearance.
+                  </h2>
+                  <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-300">
+                    Connect estimates, HMRC assessments, and financial records to the same declaration so every
+                    amount keeps its source and MRN context.
+                  </p>
+                  <Link
+                    href="/tools"
+                    className="mt-6 inline-flex items-center text-sm font-semibold text-white hover:text-blue-200"
+                  >
+                    Try duty and VAT estimates <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-3">
+                  {financialControlPoints.map((item) => (
+                    <div key={item.title} className="rounded-xl border border-white/10 bg-white/5 p-5">
+                      <h3 className="text-[15px] font-semibold text-white">{item.title}</h3>
+                      <p className="mt-2 text-[13px] leading-relaxed text-slate-300">{item.body}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* TRE Data Analysis Section */}
         <section id="tre-analysis" className="bg-white py-[96px]">
           <div className="mx-auto max-w-[1280px] px-[24px]">
@@ -323,5 +376,3 @@ export function LandingPageContent() {
     </div>
   );
 }
-
-
