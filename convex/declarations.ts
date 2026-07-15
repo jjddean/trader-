@@ -489,12 +489,29 @@ function financialsFromPreview(preview: Doc<"declaration_preview">): ReturnType<
   };
 }
 
+interface FinancialRecord {
+  id: string;
+  mrn: string;
+  type: string;
+  amount: number;
+  method: string;
+  date: string;
+  accountNumber: string;
+  statementContext: string;
+  paymentLimit: string;
+  calculationMethod: string;
+  natureOfTransaction: string;
+  provenance: string;
+  provenanceLabel: string;
+  isAuthoritative: boolean;
+}
+
 function buildFinancialRecordsForDeclaration(
   decl: Doc<"declarations">,
   financials: ReturnType<typeof computeDeclarationFinancials>,
   payment: { label: string; accountNumber: string },
 ) {
-  const records: Array<Record<string, unknown>> = [];
+  const records: FinancialRecord[] = [];
   const { declValue, duty, vat, hasConfirmedFinancials } = financials;
 
   const dateStr = new Date(decl.created || Date.now()).toLocaleDateString("en-GB", {
@@ -516,7 +533,7 @@ function buildFinancialRecordsForDeclaration(
   if (duty > 0) {
     records.push({
       id: `${decl._id}-duty`,
-      mrn: decl.mrn,
+      mrn: String(decl.mrn || "—"),
       type: "Duty (A00)",
       amount: duty,
       method: payment.label,
@@ -537,7 +554,7 @@ function buildFinancialRecordsForDeclaration(
   if (vat > 0) {
     records.push({
       id: `${decl._id}-vat`,
-      mrn: decl.mrn,
+      mrn: String(decl.mrn || "—"),
       type: "Import VAT (B00)",
       amount: vat,
       method: payment.label,
@@ -1934,7 +1951,7 @@ export const getFinancialRecords = query({
     const decls = await listDeclarationsForTenant(ctx, identity.subject, 200);
 
     const historicalRates = await getHistoricalRateMap(ctx, identity.subject);
-    const records: Array<Record<string, unknown>> = [];
+    const records: FinancialRecord[] = [];
     const declarationIds = decls.map((decl) => String(decl._id));
     const itemsByDeclaration = await getItemsByDeclarationForUser(ctx, identity.subject, declarationIds);
     const notificationsByDeclaration = await buildNotificationsByDeclaration(ctx, identity.subject);

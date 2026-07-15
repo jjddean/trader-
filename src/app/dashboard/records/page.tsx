@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { FINANCIAL_LABELS as FL } from "@/lib/financial-labels";
 import Link from "next/link";
 import { useQuery, useConvexAuth } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { api } from "../../../../convex/_generated/api";
 import { useAuth, useUser } from "@clerk/nextjs";
 import {
@@ -16,6 +17,7 @@ import {
   rememberRecordsSnapshot,
 } from "@/lib/dashboard-compliance-cache";
 
+type FinancialRecord = FunctionReturnType<typeof api.declarations.getFinancialRecords>[number];
 export default function RecordsPage() {
   const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
@@ -26,17 +28,17 @@ export default function RecordsPage() {
   const recordsData = useQuery(api.declarations.getFinancialRecords, canQuery ? {} : "skip");
 
   const remembered = clerkUserId ? getRememberedRecordsSnapshot(clerkUserId) : null;
-  const resolvedRecordsData = (recordsData ?? remembered?.records) as typeof recordsData;
+  const resolvedRecordsData = recordsData ?? remembered?.records;
 
   useEffect(() => {
     if (!clerkUserId || recordsData === undefined) return;
-    rememberRecordsSnapshot(clerkUserId, recordsData as Record<string, unknown>[]);
+    rememberRecordsSnapshot(clerkUserId, recordsData);
   }, [clerkUserId, recordsData]);
 
   const isRecordsLoading = canQuery && resolvedRecordsData === undefined;
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRecord, setSelectedRecord] = useState<any | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<FinancialRecord | null>(null);
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -85,7 +87,7 @@ export default function RecordsPage() {
     URL.revokeObjectURL(url);
   };
 
-  const filteredRecords = (resolvedRecordsData || []).filter((record: any) => {
+  const filteredRecords = (resolvedRecordsData || []).filter((record) => {
     const term = searchQuery.toLowerCase();
     if (!term) return true;
 
@@ -102,7 +104,7 @@ export default function RecordsPage() {
   const formatAmount = (value: number) =>
     value.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const sumByType = (records: any[], typeMatch: string, authoritativeOnly?: boolean) =>
+  const sumByType = (records: FinancialRecord[], typeMatch: string, authoritativeOnly?: boolean) =>
     records
       .filter((r) => r.type?.includes(typeMatch))
       .filter((r) => authoritativeOnly === undefined || r.isAuthoritative === authoritativeOnly)
@@ -134,7 +136,7 @@ export default function RecordsPage() {
           ? FL.pendingAssessment
           : "Import VAT from declaration ledgers";
   const handleExportCsv = () => {
-    const grouped = filteredRecords.reduce((acc: Record<string, { mrn: string; date: string; dutyPaid: number; vat: number }>, record: any) => {
+    const grouped = filteredRecords.reduce((acc: Record<string, { mrn: string; date: string; dutyPaid: number; vat: number }>, record) => {
       const key = `${record.mrn}__${record.date}`;
       if (!acc[key]) {
         acc[key] = { mrn: record.mrn, date: record.date, dutyPaid: 0, vat: 0 };
@@ -267,12 +269,17 @@ export default function RecordsPage() {
             </table>
           </div>
         ) : filteredRecords.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Landmark className="mb-4 h-8 w-8 text-slate-300" />
-            <p className="text-sm font-medium text-slate-500">
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+              <Landmark className="h-4 w-4 text-slate-300" />
+            </div>
+            <h4 className="text-sm font-semibold text-slate-900">
+              {searchQuery ? "No matching financial records" : "No financial records yet"}
+            </h4>
+            <p className="mt-1 max-w-sm text-xs text-slate-500">
               {searchQuery
-                ? "No financial records match these filters."
-                : "No financial ledgers generated yet."}
+                ? "No financial records match your search. Try using a different term."
+                : "Financial records will appear here once declaration charges are available."}
             </p>
           </div>
         ) : (
@@ -289,7 +296,7 @@ export default function RecordsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {filteredRecords.map((record: any, idx: number) => (
+                {filteredRecords.map((record, idx) => (
                   <tr
                     key={record.id || idx}
                     onClick={() => setSelectedRecord(record)}

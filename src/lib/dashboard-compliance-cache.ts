@@ -1,6 +1,9 @@
+import type { FunctionReturnType } from "convex/server";
+import type { api } from "../../convex/_generated/api";
+
 type ReportRow = Record<string, unknown>;
 type TreImportRow = Record<string, unknown>;
-type FinancialRecordRow = Record<string, unknown>;
+type FinancialRecordRow = FunctionReturnType<typeof api.declarations.getFinancialRecords>[number];
 
 let reportsSnapshot: { userId: string; reports: ReportRow[]; treImports: TreImportRow[] } | null = null;
 let recordsSnapshot: { userId: string; records: FinancialRecordRow[] } | null = null;
