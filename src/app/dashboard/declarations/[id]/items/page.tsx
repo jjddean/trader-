@@ -30,6 +30,10 @@ import {
   DeclarationLoadingSpinner,
   isConvexSessionMissing,
 } from "@/components/declaration-session-states";
+import {
+  enrichExtractedLine,
+  type ExtractedInvoiceLine,
+} from "@/lib/invoice-extract-enrichment";
 
 export default function GoodsItemsPage() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -51,6 +55,7 @@ export default function GoodsItemsPage() {
   const addItem = useMutation(api.goods_items.addItem);
   const removeItem = useMutation(api.goods_items.removeItem);
   const updateItem = useMutation(api.goods_items.updateItem);
+  type AddItemArgs = Parameters<typeof addItem>[0];
 
   const [isUploading, setIsUploading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -351,7 +356,7 @@ export default function GoodsItemsPage() {
     // engine + form-required attributes flag what still needs filling.
     setIsAdding(true);
     try {
-      const payload: Record<string, unknown> = {
+      const payload: AddItemArgs = {
         declarationId,
         sequenceNumber: (items?.length || 0) + 1,
       };
@@ -361,7 +366,7 @@ export default function GoodsItemsPage() {
       if (trimmedHs) payload.commodityCode = trimmedHs;
       if (trimmedDesc) payload.description = trimmedDesc;
       if (trimmedOrigin) payload.originCountry = trimmedOrigin;
-      await addItem(payload as any);
+      await addItem(payload);
       setShowAddRowModal(false);
       setHsCode("");
       setDescription("");
@@ -402,25 +407,13 @@ export default function GoodsItemsPage() {
       // sees what the AI couldn't determine and fills it in explicitly.
       if (data.items && Array.isArray(data.items)) {
         for (let i = 0; i < data.items.length; i++) {
-          const item = data.items[i];
-          const payload: Record<string, unknown> = {
+          const item = data.items[i] as ExtractedInvoiceLine;
+          const payload: AddItemArgs = {
             declarationId,
             sequenceNumber: (items?.length || 0) + i + 1,
+            ...enrichExtractedLine(item),
           };
-          const cc = String(item.commodityCode || "").trim();
-          const desc = String(item.description || "").trim();
-          const origin = String(item.originCountry || "").trim().toUpperCase();
-          const cpc = String(item.procedureCode || "").trim();
-          const valueRaw = item.valueAmount;
-          const valueParsed = valueRaw == null || valueRaw === "" ? undefined : Number(valueRaw);
-          const currency = String(item.valueCurrency || "").trim().toUpperCase();
-          if (cc) payload.commodityCode = cc;
-          if (desc) payload.description = desc;
-          if (origin) payload.originCountry = origin;
-          if (cpc) payload.procedureCode = cpc;
-          if (Number.isFinite(valueParsed) && (valueParsed as number) > 0) payload.valueAmount = valueParsed;
-          payload.valueCurrency = currency || "GBP";
-          await addItem(payload as any);
+          await addItem(payload);
         }
       }
 
