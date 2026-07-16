@@ -56,7 +56,9 @@ export default function ClientsPage() {
   const updateClient = useMutation(api.clients.update);
   const setStatus = useMutation(api.clients.setStatus);
 
-  const isLoading = authReady && clients === undefined;
+  // Hold the loading state until auth is ready AND the first query result
+  // arrives — otherwise empty state flashes before Convex answers.
+  const isLoading = !authReady || clients === undefined;
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showModal, setShowModal] = useState(false);
