@@ -519,7 +519,8 @@ export function DocumentsPageClient({ requestedDeclarationId = null }: Documents
       {/* PAGE HEADER */}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900">Documents</h1>
+          <p className="mt-1 text-sm text-slate-500">
             Supporting documents required for CDS declarations
           </p>
         </div>

@@ -151,9 +151,9 @@ export default function ReportsPage() {
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <div className="flex min-h-7 flex-wrap items-center gap-2">
-            <p className="text-sm text-slate-500">
-              Historical declaration batches and compliance scoring.
-            </p>
+            <h1 className="text-xl font-semibold tracking-tight text-slate-900">
+              Customs Reports
+            </h1>
             {includesTreHistory && (
               <span className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700">
                 <FileText className="h-3 w-3" />
@@ -161,6 +161,9 @@ export default function ReportsPage() {
               </span>
             )}
           </div>
+          <p className="mt-1 text-sm text-slate-500">
+            Historical declaration batches and compliance scoring.
+          </p>
         </div>
       </div>
 

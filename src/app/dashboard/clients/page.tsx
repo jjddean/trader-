@@ -156,7 +156,8 @@ export default function ClientsPage() {
     <div className="space-y-6 p-8">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-xl font-semibold tracking-tight text-slate-900">Clients</h1>
+          <p className="mt-1 text-sm text-slate-500">
             The traders you file declarations on behalf of. Reusable importer details and contacts.
           </p>
         </div>
