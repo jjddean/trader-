@@ -184,55 +184,44 @@ export default function ClientsPage() {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
-              <thead>
-                <tr className="border-b border-slate-200 bg-white">
-                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Name</th>
-                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">EORI</th>
-                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Country</th>
-                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Contact</th>
-                  <th className="w-[110px] px-6 py-3 text-right text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Action</th>
-                </tr>
-              </thead>
-              <tbody>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-left">
+            <thead>
+              <tr className="border-b border-slate-200 bg-white">
+                <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Name</th>
+                <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">EORI</th>
+                <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Country</th>
+                <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Contact</th>
+                <th className="w-[110px] px-6 py-3 text-right text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {isLoading ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-8 text-center text-sm text-slate-400">
                     Loading clients…
                   </td>
                 </tr>
-              </tbody>
-            </table>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-6 text-center">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
-              <Users className="h-4 w-4 text-slate-300" />
-            </div>
-            <h4 className="text-sm font-semibold text-slate-900">
-              {searchQuery ? "No matching clients" : "No clients yet"}
-            </h4>
-            <p className="mt-1 max-w-sm text-xs text-slate-500">
-              {searchQuery
-                ? "No clients match your search. Try using a different term."
-                : "Add the traders you file declarations for."}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
-              <thead>
-                <tr className="border-b border-slate-200 bg-white">
-                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Name</th>
-                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">EORI</th>
-                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Country</th>
-                  <th className="px-6 py-3 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Contact</th>
-                  <th className="w-[110px] px-6 py-3 text-right text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Action</th>
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>
+                    <div className="flex flex-col items-center py-6 text-center">
+                      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+                        <Users className="h-4 w-4 text-slate-300" />
+                      </div>
+                      <h4 className="text-sm font-semibold text-slate-900">
+                        {searchQuery ? "No matching clients" : "No clients yet"}
+                      </h4>
+                      <p className="mt-1 max-w-sm text-xs text-slate-500">
+                        {searchQuery
+                          ? "No clients match your search. Try using a different term."
+                          : "Add the traders you file declarations for."}
+                      </p>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {filtered.map((client) => (
+              ) : (
+                filtered.map((client) => (
                   <tr
                     key={client._id}
                     className={cn(
@@ -299,11 +288,11 @@ export default function ClientsPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
