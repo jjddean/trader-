@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { SignUpCta } from "@/components/sign-up-cta";
 
 export const metadata: Metadata = {
   title: "What is TRE and How to Use Your HMRC Trade Data | FreightCode",
@@ -182,12 +181,12 @@ export default function Guide2Page() {
           </li>
         </ul>
 
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <SignUpCta variant="light" />
-          <Link href="/dashboard/tre-import" className="text-[14px] font-medium text-slate-300 hover:text-white">
-            Already have an account? Import TRE →
-          </Link>
-        </div>
+        <Link
+          href="/guides/how-to-read-cds-csv-export-tre"
+          className="inline-flex text-[14px] font-medium text-slate-300 hover:text-white"
+        >
+          Next guide →
+        </Link>
       </div>
     </article>
     </>
