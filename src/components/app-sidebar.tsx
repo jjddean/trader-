@@ -81,7 +81,7 @@ export function AppSidebar() {
     <Sidebar className="!h-screen border-r border-slate-200 bg-white [&_[data-sidebar=sidebar]]:bg-white">
       <SidebarHeader className="flex h-[55px] shrink-0 flex-row items-center border-b border-slate-200 px-6">
         <Link
-          href="/"
+          href="/dashboard"
           className="flex w-full items-center gap-2 transition-opacity hover:opacity-80"
         >
           <div className="flex items-baseline whitespace-nowrap text-[#020817] leading-none">
