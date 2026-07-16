@@ -324,7 +324,10 @@ export default function ClientsPage() {
                 <label htmlFor="country" className={FIELD_LABEL}>
                   Country
                 </label>
-                <Select value={form.country} onValueChange={(v) => setField("country", v)}>
+                <Select
+                  value={form.country || undefined}
+                  onValueChange={(v) => setField("country", v)}
+                >
                   <SelectTrigger id="country" className="h-9 w-full rounded-md border-slate-200 bg-slate-50 text-xs text-slate-700">
                     <SelectValue placeholder="Select country" />
                   </SelectTrigger>
