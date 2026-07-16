@@ -408,8 +408,7 @@ export default function TradeCompliancePage() {
     <div className="mx-auto max-w-7xl space-y-8 p-8">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900">Trade Compliance</h1>
-          <p className="mt-1 text-sm text-slate-500">Shipment compliance checks and assessments.</p>
+          <p className="text-sm text-slate-500">Shipment compliance checks and assessments.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button

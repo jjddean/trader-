@@ -140,8 +140,7 @@ export default function DeclarationsPage() {
     <div className="space-y-6 p-8">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900">Declarations</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="text-sm text-slate-500">
             Manage your live HMRC CDS filings and draft entries.
           </p>
         </div>

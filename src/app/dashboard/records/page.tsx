@@ -186,10 +186,7 @@ export default function RecordsPage() {
       {portal}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900">
-            Financial Records
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="text-sm text-slate-500">
             {FL.recordsPageIntro}
           </p>
         </div>
