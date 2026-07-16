@@ -139,7 +139,7 @@ export default function RecordsPage() {
     const grouped = filteredRecords.reduce((acc: Record<string, { mrn: string; date: string; dutyPaid: number; vat: number }>, record) => {
       const key = `${record.mrn}__${record.date}`;
       if (!acc[key]) {
-        acc[key] = { mrn: record.mrn, date: record.date, dutyPaid: 0, vat: 0 };
+        acc[key] = { mrn: record.mrn ?? "", date: record.date, dutyPaid: 0, vat: 0 };
       }
       if (record.type?.includes("Duty")) acc[key].dutyPaid += Number(record.amount) || 0;
       if (record.type?.includes("VAT")) acc[key].vat += Number(record.amount) || 0;

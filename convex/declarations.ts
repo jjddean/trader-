@@ -595,12 +595,29 @@ function financialsFromPreview(preview: Doc<"declaration_preview">): ReturnType<
   };
 }
 
+interface FinancialRecordRow {
+  id: string;
+  mrn: string | undefined;
+  type: string;
+  amount: number;
+  method: string;
+  date: string;
+  accountNumber: string;
+  statementContext: string;
+  paymentLimit: string;
+  calculationMethod: string;
+  natureOfTransaction: string;
+  provenance: string;
+  provenanceLabel: string;
+  isAuthoritative: boolean;
+}
+
 function buildFinancialRecordsForDeclaration(
   decl: Doc<"declarations">,
   financials: ReturnType<typeof computeDeclarationFinancials>,
   payment: { label: string; accountNumber: string },
-) {
-  const records: Array<Record<string, unknown>> = [];
+): FinancialRecordRow[] {
+  const records: FinancialRecordRow[] = [];
   const { declValue, duty, vat, hasConfirmedFinancials } = financials;
 
   const dateStr = new Date(decl.created || Date.now()).toLocaleDateString("en-GB", {
@@ -2204,7 +2221,7 @@ export const getFinancialRecords = query({
     const decls = await listDeclarationsForTenant(ctx, identity.subject, 200);
 
     const historicalRates = await getHistoricalRateMap(ctx, identity.subject);
-    const records: Array<Record<string, unknown>> = [];
+    const records: FinancialRecordRow[] = [];
     const declarationIds = decls.map((decl) => String(decl._id));
     const itemsByDeclaration = await getItemsByDeclarationForUser(ctx, identity.subject, declarationIds);
     const notificationsByDeclaration = await buildNotificationsByDeclaration(ctx, identity.subject);

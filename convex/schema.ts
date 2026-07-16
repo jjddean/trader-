@@ -464,6 +464,176 @@ export default defineSchema({
     archived: v.optional(v.any()),
   }).index("by_timestamp", ["timestamp"]).index("by_user", ["userId"]),
 
+  // --- Export controls module (UK strategic export assessments) ---
+  export_assessments: defineTable({
+    userId: v.string(),
+    orgId: v.optional(v.string()),
+    declarationId: v.optional(v.id("declarations")),
+    reference: v.string(),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("clear"),
+      v.literal("flagged"),
+      v.literal("review_required"),
+    ),
+    originJurisdiction: v.optional(v.union(v.literal("GB"), v.literal("NI"))),
+    destinationCountry: v.optional(v.string()),
+    consignee: v.optional(v.any()),
+    endUser: v.optional(v.any()),
+    intendedUse: v.optional(v.string()),
+    endUserStatement: v.optional(v.any()),
+    submissionRoute: v.optional(
+      v.union(v.literal("lite"), v.literal("spire"), v.literal("otsi"), v.literal("none")),
+    ),
+    controlListVersion: v.optional(v.string()),
+    sanctionsVersion: v.optional(v.string()),
+    promptVersion: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_org", ["orgId"])
+    .index("by_declaration", ["declarationId"]),
+
+  export_products: defineTable({
+    assessmentId: v.id("export_assessments"),
+    name: v.string(),
+    manufacturer: v.optional(v.string()),
+    modelNo: v.optional(v.string()),
+    partNo: v.optional(v.string()),
+    quantity: v.optional(v.number()),
+    valueGbp: v.optional(v.number()),
+    techDescription: v.optional(v.string()),
+    sourceDocumentId: v.optional(v.id("documents")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_assessment", ["assessmentId"]),
+
+  export_product_specs: defineTable({
+    productId: v.id("export_products"),
+    key: v.string(),
+    valueRaw: v.string(),
+    valueNum: v.optional(v.number()),
+    unit: v.optional(v.string()),
+    sourceDocId: v.optional(v.id("documents")),
+    sourcePage: v.optional(v.number()),
+    sourceQuote: v.optional(v.string()),
+    confidence: v.optional(v.number()),
+    createdAt: v.number(),
+  }).index("by_product", ["productId"]),
+
+  export_classification_runs: defineTable({
+    productId: v.id("export_products"),
+    assessmentId: v.id("export_assessments"),
+    candidates: v.optional(v.any()),
+    finalControlEntry: v.optional(v.string()),
+    confidence: v.optional(v.number()),
+    requiresReview: v.boolean(),
+    controlListVersion: v.optional(v.string()),
+    sanctionsVersion: v.optional(v.string()),
+    promptVersion: v.optional(v.string()),
+    modelVersion: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_assessment", ["assessmentId"])
+    .index("by_product", ["productId"]),
+
+  sanctions_screenings: defineTable({
+    assessmentId: v.id("export_assessments"),
+    subjectType: v.union(
+      v.literal("exporter"),
+      v.literal("consignee"),
+      v.literal("end_user"),
+      v.literal("intermediary"),
+      v.literal("vessel"),
+    ),
+    subjectName: v.string(),
+    matchedUniqueId: v.optional(v.string()),
+    score: v.optional(v.number()),
+    matchReason: v.optional(v.string()),
+    scoreBreakdown: v.optional(v.any()),
+    sanctionsVersion: v.optional(v.string()),
+    reviewStatus: v.union(v.literal("pending"), v.literal("confirmed"), v.literal("dismissed")),
+    reviewedBy: v.optional(v.string()),
+    reviewNote: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_assessment", ["assessmentId"]),
+
+  expert_requests: defineTable({
+    assessmentId: v.id("export_assessments"),
+    requestedBy: v.string(),
+    reasonCode: v.string(),
+    slaDueAt: v.optional(v.number()),
+    status: v.string(),
+    assessmentSnapshot: v.any(),
+    consultantEmail: v.optional(v.string()),
+    consultantName: v.optional(v.string()),
+    advisoryNotes: v.optional(v.string()),
+    outcome: v.optional(v.union(v.literal("cleared"), v.literal("blocked"))),
+    applicationRef: v.optional(v.string()),
+    licenceRef: v.optional(v.string()),
+    completedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_assessment", ["assessmentId"]),
+
+  export_review_tokens: defineTable({
+    assessmentId: v.id("export_assessments"),
+    expertRequestId: v.id("expert_requests"),
+    orgId: v.optional(v.string()),
+    token: v.string(),
+    consultantEmail: v.string(),
+    consultantName: v.optional(v.string()),
+    consultantRole: v.optional(
+      v.union(v.literal("adviser"), v.literal("applies_on_behalf"), v.literal("eor")),
+    ),
+    senderNote: v.optional(v.string()),
+    expiresAt: v.number(),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    openedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    revoked: v.optional(v.boolean()),
+  })
+    .index("by_token", ["token"])
+    .index("by_assessment", ["assessmentId"]),
+
+  export_end_user_tokens: defineTable({
+    assessmentId: v.id("export_assessments"),
+    reviewTokenId: v.optional(v.id("export_review_tokens")),
+    token: v.string(),
+    recipientEmail: v.string(),
+    senderNote: v.optional(v.string()),
+    expiresAt: v.number(),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    openedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    revoked: v.optional(v.boolean()),
+  })
+    .index("by_token", ["token"])
+    .index("by_assessment", ["assessmentId"]),
+
+  export_licences: defineTable({
+    assessmentId: v.id("export_assessments"),
+    licenceType: v.union(v.literal("siel"), v.literal("f680"), v.literal("other")),
+    applicationRef: v.optional(v.string()),
+    licenceRef: v.optional(v.string()),
+    route: v.optional(
+      v.union(v.literal("lite"), v.literal("spire"), v.literal("otsi"), v.literal("none")),
+    ),
+    recordedBy: v.string(),
+    recordedAt: v.number(),
+  }).index("by_assessment", ["assessmentId"]),
+
+  sanctions_versions: defineTable({
+    publishedAt: v.string(),
+    sourceHash: v.string(),
+    entityCount: v.number(),
+    storagePath: v.string(),
+    ingestedAt: v.number(),
+  }).index("by_publishedAt", ["publishedAt"]),
+
   declaration_approvals: defineTable({
     declarationId: v.id("declarations"),
     userId: v.string(),
