@@ -15,6 +15,11 @@ const nextConfig: NextConfig = {
         destination: "/dashboard/tre-import",
         permanent: true,
       },
+      {
+        source: "/dashboard/audit",
+        destination: "/dashboard/trade-compliance",
+        permanent: true,
+      },
       // Force www for all non-www requests (http->https handled by Vercel)
       {
         source: "/:path*",

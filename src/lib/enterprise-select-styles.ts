@@ -1,4 +1,4 @@
-/** Filter/form selects — matches Compliance Audit page (`/dashboard/audit`). */
+/** Filter/form selects — matches Trade Compliance / records filter controls. */
 
 export const ENTERPRISE_SELECT_TRIGGER =
   "flex h-9 w-full items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 transition-colors focus:border-slate-400 focus:outline-none data-[placeholder]:text-slate-400";
