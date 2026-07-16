@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import { Plus, Search, Loader2, Pencil, Archive, ArchiveRestore } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -13,13 +13,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { countries } from "@/lib/data/countries";
 import { cn } from "@/lib/utils";
 
@@ -54,9 +47,9 @@ const FIELD_INPUT =
   "h-9 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 transition-colors focus:border-slate-400 focus:outline-none";
 
 export default function ClientsPage() {
-  const { isLoaded: isClerkLoaded, isSignedIn } = useUser();
+  const { isLoaded: isClerkLoaded, isSignedIn } = useAuth();
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
-  const authReady = isClerkLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated;
+  const authReady = Boolean(isClerkLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated);
 
   const clients = useQuery(api.clients.list, authReady ? { includeArchived: true } : "skip");
   const createClient = useMutation(api.clients.create);
@@ -289,6 +282,7 @@ export default function ClientsPage() {
       </div>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
+        {showModal ? (
         <DialogContent className="sm:max-w-[560px]">
           <DialogHeader>
             <DialogTitle>{editingId ? "Edit Client" : "New Client"}</DialogTitle>
@@ -324,21 +318,19 @@ export default function ClientsPage() {
                 <label htmlFor="country" className={FIELD_LABEL}>
                   Country
                 </label>
-                <Select
-                  value={form.country || undefined}
-                  onValueChange={(v) => setField("country", v)}
+                <select
+                  id="country"
+                  value={form.country}
+                  onChange={(e) => setField("country", e.target.value)}
+                  className={FIELD_INPUT}
                 >
-                  <SelectTrigger id="country" className="h-9 w-full rounded-md border-slate-200 bg-slate-50 text-xs text-slate-700">
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent position="popper" className="max-h-[260px]">
-                    {countries.map((c) => (
-                      <SelectItem key={c.code} value={c.code} className="text-xs">
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <option value="">Select country</option>
+                  {countries.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -444,6 +436,7 @@ export default function ClientsPage() {
             </button>
           </DialogFooter>
         </DialogContent>
+        ) : null}
       </Dialog>
     </div>
   );
