@@ -8,10 +8,10 @@ import {
   FileText,
   Settings,
   Compass,
-  Ship,
   ShieldCheck,
   ChevronRight,
   Shield,
+  Users,
 } from "lucide-react";
 import { useOrganization, useUser } from "@clerk/nextjs";
 import { SidebarUserButton } from "@/components/auth/sidebar-user-button";
@@ -44,15 +44,14 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/documents", label: "Documents", icon: FileText },
   { href: "/dashboard/declarations", label: "Declarations", icon: Compass },
-  { href: "/dashboard/trade-lanes", label: "Trade Lanes", icon: Ship },
+  { href: "/dashboard/clients", label: "Clients", icon: Users },
   {
     label: "Compliance",
     icon: ShieldCheck,
     items: [
-      { href: "/dashboard/trade-compliance", label: "Trade Compliance" },
-      { href: "/dashboard/tools/control-list", label: "Control List" },
       { href: "/dashboard/tools/hscode-lookup", label: "HS Code Lookup" },
-      { href: "/dashboard/tre-import", label: "Import TRE" },
+      { href: "/dashboard/tre-import", label: "Customs history" },
+      { href: "/dashboard/audit", label: "Compliance Audit" },
       { href: "/dashboard/reports", label: "Customs Reports" },
       { href: "/dashboard/records", label: "Financial Records" },
     ],
@@ -96,6 +95,9 @@ export function AppSidebar() {
 
       <SidebarContent className="min-h-0 flex-1 overflow-y-auto px-3 pb-1 pt-0">
         <SidebarGroup className="p-0">
+          <SidebarGroupLabel className="mb-0 px-2 text-[10px] font-normal tracking-widest text-slate-400 uppercase">
+            {isAdmin ? "Control Plane" : "Platform"}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
               {navItems.map((item) => {

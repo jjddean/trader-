@@ -169,6 +169,24 @@ export async function POST(request: Request) {
     }
     const { hmrcContext } = orgRouting;
 
+    // Lock the declaration to this HMRC environment (or reject if it was
+    // already bound to a different one). Prevents sandbox↔production crossover.
+    try {
+      await convex.mutation(api.declarations.assertAndStampEnvironment, {
+        declarationId,
+        environment: hmrcContext.environment,
+      });
+    } catch (envErr: unknown) {
+      const m = envErr instanceof Error ? envErr.message : String(envErr);
+      if (m.includes("ENVIRONMENT_MISMATCH")) {
+        return NextResponse.json(
+          { error: m.replace(/^.*ENVIRONMENT_MISMATCH:\s*/, "") },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json({ error: "Failed to verify declaration environment" }, { status: 403 });
+    }
+
     if (providedEori && lane.eori && providedEori !== lane.eori) {
       return NextResponse.json(
         {
@@ -201,7 +219,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const tokenResult = await resolveHmrcAccessToken(convex, userId);
+    const tokenResult = await resolveHmrcAccessToken(convex, userId, hmrcContext);
     if ("error" in tokenResult) {
       return tokenResult.error;
     }
@@ -461,6 +479,7 @@ export async function POST(request: Request) {
       try {
         await convex.mutation(api.submissions.recordSubmission, {
           declarationId,
+          environment: hmrcContext.environment,
           operation: "submit",
           outcome,
           conversationId: convId || undefined,
@@ -498,7 +517,7 @@ export async function POST(request: Request) {
         declarationId,
         reason: "rate_limited",
         hmrcStatus: 429,
-        environment: process.env.HMRC_ENVIRONMENT || "sandbox",
+        environment: hmrcContext.environment,
       });
       return NextResponse.json({ error: "HMRC rate limit reached, please try again shortly" }, { status: 429 });
     }
@@ -514,7 +533,7 @@ export async function POST(request: Request) {
         hmrcStatus: hmrcResponse.status,
         conversationId: hmrcResponse.headers.get("X-Conversation-ID") || null,
         details: errorText.slice(0, 2000),
-        environment: process.env.HMRC_ENVIRONMENT || "sandbox",
+        environment: hmrcContext.environment,
       });
       return NextResponse.json({
         error: "HMRC Sandbox Rejected Payload",
@@ -547,7 +566,7 @@ export async function POST(request: Request) {
         declarationId,
         reason: "missing_conversation_id",
         hmrcStatus: hmrcResponse.status,
-        environment: process.env.HMRC_ENVIRONMENT || "sandbox",
+        environment: hmrcContext.environment,
       });
       return NextResponse.json({
         error: "HMRC accepted response missing X-Conversation-ID",
@@ -594,6 +613,7 @@ export async function POST(request: Request) {
       await convex.mutation(api.hmrc.scheduleNotificationPulls, {
         declarationId,
         conversationId,
+        environment: hmrcContext.environment,
       });
     } catch (schedErr: unknown) {
       const m = schedErr instanceof Error ? schedErr.message : String(schedErr);
@@ -603,7 +623,7 @@ export async function POST(request: Request) {
     // Audit Log Entry (logHmrcAudit is internally non-fatal)
     await logHmrcAudit(convex, userId, "declaration_submitted", {
       declarationId,
-      environment: process.env.HMRC_ENVIRONMENT || "sandbox",
+      environment: hmrcContext.environment,
       conversationId,
       hmrcStatus: hmrcResponse.status,
       statusPersisted,

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Lightbulb, ExternalLink, Info, ShieldCheck } from "lucide-react";
@@ -11,53 +12,58 @@ function formatGbp(amount: number): string {
   return `£${amount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export function TreOpportunities() {
+function Panel({ embedded, children }: { embedded?: boolean; children: ReactNode }) {
+  if (embedded) return <div className="space-y-4">{children}</div>;
+  return <div className="rounded-xl border border-slate-200 bg-white p-6">{children}</div>;
+}
+
+export function TreOpportunities({ embedded = false }: { embedded?: boolean }) {
   const data = useQuery(api.tre_analytics.listOpportunities, {});
 
   if (data === undefined) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
+      <Panel embedded={embedded}>
         <p className="text-xs text-slate-400">Scanning imported history for preference opportunities…</p>
-      </div>
+      </Panel>
     );
   }
 
   if (data.totalRowsScanned === 0) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
+      <Panel embedded={embedded}>
         <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-black">
           <Lightbulb className="h-4 w-4 text-slate-400" />
-          Preference opportunities
+          Duty review
         </div>
         <p className="text-xs leading-relaxed text-slate-500">
-          Import an HMRC TRE Item Report above to scan your history for declarations where a
+          Import HMRC TRE data in the Imports tab to scan your history for declarations where a
           preferential duty rate may have applied.
         </p>
-      </div>
+      </Panel>
     );
   }
 
   if (data.opportunityCount === 0) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
+      <Panel embedded={embedded}>
         <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-black">
           <ShieldCheck className="h-4 w-4 text-green-500" />
-          No preference opportunities found
+          No duty reviews needed
         </div>
         <p className="text-xs leading-relaxed text-slate-500">
           We scanned {data.totalRowsScanned.toLocaleString("en-GB")} imported line items and found no
           declarations where a cheaper preferential rate clearly applied. This is a deterministic check
           against UK Trade Tariff measures, not advice on eligibility.
         </p>
-      </div>
+      </Panel>
     );
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6">
+    <Panel embedded={embedded}>
       <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-black">
         <Lightbulb className="h-4 w-4 text-amber-500" />
-        Preference opportunities
+        Declarations to review
       </div>
       <p className="text-xs leading-relaxed text-slate-500">
         {data.opportunityCount.toLocaleString("en-GB")} of {data.candidateCount.toLocaleString("en-GB")}{" "}
@@ -135,6 +141,6 @@ export function TreOpportunities() {
           <ExternalLink className="h-3 w-3" />
         </a>
       </div>
-    </div>
+    </Panel>
   );
 }

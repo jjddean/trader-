@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { FINANCIAL_LABELS as FL } from "./lib/financial_labels";
+import { internal } from "./_generated/api";
 import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
@@ -8,12 +9,19 @@ import { replayDeclarationStatus } from "./lib/replay_declaration_status";
 import { collectDeclarationNotifications } from "./lib/collect_declaration_notifications";
 import { resolveDeclarationCdsBadge } from "./lib/cds_badge";
 import { requireAdmin } from "./lib/user_role";
+import { getIndirectRepresentationApprovalStatus } from "./representation";
 import type { RuleDefinition } from "./lib/rule_engine";
 import {
   estimateItemDutyFromTariff,
   evaluatePreferenceOptions,
 } from "./lib/duty_rate_parser";
 import type { TariffJsonApi } from "./lib/tariff_parser";
+import {
+  type FxRatesSnapshot,
+  itemValueCurrency,
+  resolveCustomsValueGbp,
+} from "./lib/currency_conversion";
+import { computeFinancialVariance, type VarianceKind } from "./lib/financial_variance";
 import {
   canAccessDeclaration,
   getActiveOrgId,
@@ -231,12 +239,35 @@ async function loadTariffCachesForCommodityCodes(
   return map;
 }
 
+async function loadLatestFxRates(
+  ctx: Pick<QueryCtx, "db"> | Pick<MutationCtx, "db">,
+): Promise<FxRatesSnapshot | null> {
+  const row = await ctx.db
+    .query("fx_rates_cache")
+    .withIndex("by_updatedAt", (q) => q)
+    .order("desc")
+    .first();
+  if (!row?.rates || typeof row.rates !== "object") return null;
+  return {
+    base: String(row.base || "USD"),
+    rates: row.rates as Record<string, number>,
+  };
+}
+
 function estimateItemFinancials(
   item: any,
   historicalRates: HistoricalRateMap,
   tariffByCommodityCode?: TariffCacheMap,
+  fxContext?: { fx: FxRatesSnapshot | null; declarationCurrency?: string | null },
 ) {
-  const val = Number(item.valueAmount || 0);
+  const rawVal = Number(item.valueAmount || 0);
+  const currency = itemValueCurrency(item, fxContext?.declarationCurrency);
+  const {
+    customsValueGbp: val,
+    fxUnavailable,
+  } = resolveCustomsValueGbp(rawVal, currency, fxContext?.fx ?? null);
+
+  let estimateIncompleteFx = fxUnavailable && currency !== "GBP";
   const code = String(item?.commodityCode || "").trim();
   const tariffDoc = code.length === 10 ? tariffByCommodityCode?.[code] : undefined;
   const input = {
@@ -262,7 +293,8 @@ function estimateItemFinancials(
         itemVat,
         tariffSource: tariffEstimate.source as string | undefined,
         estimateMethod: "tariff_measures" as const,
-        incompleteInput: false,
+        incompleteInput: estimateIncompleteFx,
+        fxApplied: currency !== "GBP" && !fxUnavailable,
       };
     }
 
@@ -274,6 +306,7 @@ function estimateItemFinancials(
         tariffSource: tariffEstimate.source as string | undefined,
         estimateMethod: "tariff_measures" as const,
         incompleteInput: true,
+        fxApplied: currency !== "GBP" && !fxUnavailable,
       };
     }
   }
@@ -285,13 +318,15 @@ function estimateItemFinancials(
     itemVat: (val + val * dutyRate) * vatRate,
     tariffSource: undefined as string | undefined,
     estimateMethod: "historical_fallback" as const,
-    incompleteInput: false,
+    incompleteInput: estimateIncompleteFx,
+    fxApplied: currency !== "GBP" && !fxUnavailable,
   };
 }
 
 function computePotentialPreferenceSaving(
   items: any[],
   tariffByCommodityCode?: TariffCacheMap,
+  fxContext?: { fx: FxRatesSnapshot | null; declarationCurrency?: string | null },
 ): number | null {
   if (!tariffByCommodityCode) return null;
 
@@ -303,7 +338,13 @@ function computePotentialPreferenceSaving(
     const tariffDoc = code.length === 10 ? tariffByCommodityCode[code] : undefined;
     if (!tariffDoc) continue;
 
-    const val = Number(item.valueAmount || 0);
+    const rawVal = Number(item.valueAmount || 0);
+    const currency = itemValueCurrency(item, fxContext?.declarationCurrency);
+    const { customsValueGbp: val } = resolveCustomsValueGbp(
+      rawVal,
+      currency,
+      fxContext?.fx ?? null,
+    );
     const input = {
       customsValueGbp: val,
       netWeightKg: item?.netWeightKg != null ? Number(item.netWeightKg) : undefined,
@@ -336,30 +377,32 @@ function computeDeclarationFinancials(
   notifications: any[],
   historicalRates: HistoricalRateMap,
   tariffByCommodityCode?: TariffCacheMap,
+  fxContext?: { fx: FxRatesSnapshot | null; declarationCurrency?: string | null },
 ) {
   let derivedDuty = 0;
   let derivedVat = 0;
   let declValue = 0;
   let usedFallback = false;
   let estimateIncomplete = false;
+  let fxConversionUsed = false;
 
   for (const item of items) {
-    const { val, itemDuty, itemVat, estimateMethod, incompleteInput } = estimateItemFinancials(
-      item,
-      historicalRates,
-      tariffByCommodityCode,
-    );
+    const { val, itemDuty, itemVat, estimateMethod, incompleteInput, fxApplied } =
+      estimateItemFinancials(item, historicalRates, tariffByCommodityCode, fxContext);
     declValue += val;
     derivedDuty += itemDuty;
     derivedVat += itemVat;
     if (estimateMethod === "historical_fallback") usedFallback = true;
     if (incompleteInput) estimateIncomplete = true;
+    if (fxApplied) fxConversionUsed = true;
   }
 
   const confirmed = extractConfirmedFinancials(notifications);
   const hasConfirmedFinancials = !!(confirmed && (confirmed.duty > 0 || confirmed.vat > 0));
   const duty = hasConfirmedFinancials ? confirmed!.duty : derivedDuty;
   const vat = hasConfirmedFinancials ? confirmed!.vat : derivedVat;
+  const confirmedDuty = confirmed?.duty ?? 0;
+  const confirmedVat = confirmed?.vat ?? 0;
 
   let estimateMethod: EstimateMethod = "tariff_measures";
   if (hasConfirmedFinancials) {
@@ -370,7 +413,15 @@ function computeDeclarationFinancials(
 
   const potentialPreferenceSaving = hasConfirmedFinancials
     ? null
-    : computePotentialPreferenceSaving(items, tariffByCommodityCode);
+    : computePotentialPreferenceSaving(items, tariffByCommodityCode, fxContext);
+
+  const variance = computeFinancialVariance({
+    derivedDuty,
+    derivedVat,
+    confirmedDuty,
+    confirmedVat,
+    hasConfirmedFinancials,
+  });
 
   return {
     declValue,
@@ -384,6 +435,12 @@ function computeDeclarationFinancials(
     estimateMethod,
     estimateIncomplete,
     potentialPreferenceSaving,
+    fxConversionUsed,
+    dutyVarianceAmount: variance?.dutyVarianceAmount ?? undefined,
+    vatVarianceAmount: variance?.vatVarianceAmount ?? undefined,
+    varianceAlert: variance?.varianceAlert ?? false,
+    varianceKinds: variance?.varianceKinds ?? [],
+    varianceAssessedAt: variance?.varianceAlert ? Date.now() : undefined,
   };
 }
 
@@ -441,11 +498,18 @@ async function buildFinancialPreviewFields(
     ctx,
     items.map((item) => String(item?.commodityCode || "")),
   );
+  const fx = await loadLatestFxRates(ctx);
+  const fxContext = {
+    fx,
+    declarationCurrency:
+      declaration.invoiceCurrency != null ? String(declaration.invoiceCurrency) : null,
+  };
   const financials = computeDeclarationFinancials(
     items,
     notificationRows,
     historicalRates,
     tariffByCommodityCode,
+    fxContext,
   );
   const payment = resolvePaymentMethodLabel(declaration, financials.hasConfirmedFinancials);
   const dmstaxUpdatedAt = financials.hasConfirmedFinancials
@@ -467,43 +531,68 @@ async function buildFinancialPreviewFields(
     dmstaxUpdatedAt,
     defermentAccountNumber: payment.accountNumber !== "—" ? payment.accountNumber : undefined,
     paymentMethodLabel: payment.label,
+    dutyVarianceAmount: financials.dutyVarianceAmount,
+    vatVarianceAmount: financials.vatVarianceAmount,
+    varianceAlert: financials.varianceAlert || undefined,
+    varianceKinds: financials.varianceKinds?.length ? financials.varianceKinds : undefined,
+    varianceAssessedAt: financials.varianceAssessedAt,
+    fxConversionUsed: financials.fxConversionUsed || undefined,
   };
+}
+
+function normalizeVarianceKinds(raw: string[] | undefined): VarianceKind[] {
+  const allowed = new Set<VarianceKind>([
+    "duty_higher_than_hmrc",
+    "duty_lower_than_hmrc",
+    "vat_higher_than_hmrc",
+    "vat_lower_than_hmrc",
+  ]);
+  return (raw ?? []).filter((k): k is VarianceKind => allowed.has(k as VarianceKind));
 }
 
 function financialsFromPreview(preview: Doc<"declaration_preview">): ReturnType<typeof computeDeclarationFinancials> {
   const hasConfirmedFinancials = preview.financialSource === "hmrc_confirmed";
+  const derivedDuty = Number(preview.derivedDutyAmount || 0);
+  const derivedVat = Number(preview.derivedVatAmount || 0);
+  const confirmedDuty = hasConfirmedFinancials ? Number(preview.dutyAmount || 0) : 0;
+  const confirmedVat = hasConfirmedFinancials ? Number(preview.vatAmount || 0) : 0;
+  const variance =
+    preview.varianceAlert != null
+      ? {
+          dutyVarianceAmount: Number(preview.dutyVarianceAmount || 0),
+          vatVarianceAmount: Number(preview.vatVarianceAmount || 0),
+          varianceAlert: Boolean(preview.varianceAlert),
+          varianceKinds: normalizeVarianceKinds(preview.varianceKinds as string[] | undefined),
+        }
+      : computeFinancialVariance({
+          derivedDuty,
+          derivedVat,
+          confirmedDuty,
+          confirmedVat,
+          hasConfirmedFinancials,
+        });
+
   return {
     declValue: Number(preview.customsValue || 0),
     duty: Number(preview.dutyAmount || 0),
     vat: Number(preview.vatAmount || 0),
-    derivedDuty: Number(preview.derivedDutyAmount || 0),
-    derivedVat: Number(preview.derivedVatAmount || 0),
+    derivedDuty,
+    derivedVat,
     hasConfirmedFinancials,
-    confirmedDuty: hasConfirmedFinancials ? Number(preview.dutyAmount || 0) : null,
-    confirmedVat: hasConfirmedFinancials ? Number(preview.vatAmount || 0) : null,
+    confirmedDuty: hasConfirmedFinancials ? confirmedDuty : null,
+    confirmedVat: hasConfirmedFinancials ? confirmedVat : null,
     estimateMethod:
       preview.estimateMethod ??
       (hasConfirmedFinancials ? "hmrc_confirmed" : "historical_fallback"),
     estimateIncomplete: preview.estimateIncomplete ?? false,
     potentialPreferenceSaving: preview.potentialPreferenceSaving ?? null,
+    fxConversionUsed: preview.fxConversionUsed ?? false,
+    dutyVarianceAmount: variance?.dutyVarianceAmount,
+    vatVarianceAmount: variance?.vatVarianceAmount,
+    varianceAlert: variance?.varianceAlert ?? false,
+    varianceKinds: variance?.varianceKinds ?? [],
+    varianceAssessedAt: preview.varianceAssessedAt,
   };
-}
-
-interface FinancialRecord {
-  id: string;
-  mrn: string;
-  type: string;
-  amount: number;
-  method: string;
-  date: string;
-  accountNumber: string;
-  statementContext: string;
-  paymentLimit: string;
-  calculationMethod: string;
-  natureOfTransaction: string;
-  provenance: string;
-  provenanceLabel: string;
-  isAuthoritative: boolean;
 }
 
 function buildFinancialRecordsForDeclaration(
@@ -511,7 +600,7 @@ function buildFinancialRecordsForDeclaration(
   financials: ReturnType<typeof computeDeclarationFinancials>,
   payment: { label: string; accountNumber: string },
 ) {
-  const records: FinancialRecord[] = [];
+  const records: Array<Record<string, unknown>> = [];
   const { declValue, duty, vat, hasConfirmedFinancials } = financials;
 
   const dateStr = new Date(decl.created || Date.now()).toLocaleDateString("en-GB", {
@@ -533,7 +622,7 @@ function buildFinancialRecordsForDeclaration(
   if (duty > 0) {
     records.push({
       id: `${decl._id}-duty`,
-      mrn: String(decl.mrn || "—"),
+      mrn: decl.mrn,
       type: "Duty (A00)",
       amount: duty,
       method: payment.label,
@@ -554,7 +643,7 @@ function buildFinancialRecordsForDeclaration(
   if (vat > 0) {
     records.push({
       id: `${decl._id}-vat`,
-      mrn: String(decl.mrn || "—"),
+      mrn: decl.mrn,
       type: "Import VAT (B00)",
       amount: vat,
       method: payment.label,
@@ -802,6 +891,12 @@ async function upsertDeclarationPreviewByDeclaration(
           dmstaxUpdatedAt: undefined,
           defermentAccountNumber: undefined,
           paymentMethodLabel: undefined,
+          dutyVarianceAmount: undefined,
+          vatVarianceAmount: undefined,
+          varianceAlert: undefined,
+          varianceKinds: undefined,
+          varianceAssessedAt: undefined,
+          fxConversionUsed: undefined,
         };
 
   const nextPreview = {
@@ -831,6 +926,24 @@ async function upsertDeclarationPreviewByDeclaration(
     }
   } else {
     await ctx.db.insert("declaration_preview", nextPreview);
+  }
+
+  if (
+    declarationUserId &&
+    financialFields.varianceAlert &&
+    !existingPreview?.varianceAlert
+  ) {
+    await ctx.runMutation(internal.audit.logAction, {
+      action: "financial_variance_detected",
+      userId: declarationUserId,
+      entityId: String(declarationId),
+      metadata: {
+        mrn: declaration.mrn ? String(declaration.mrn) : undefined,
+        dutyVarianceAmount: financialFields.dutyVarianceAmount,
+        vatVarianceAmount: financialFields.vatVarianceAmount,
+        varianceKinds: financialFields.varianceKinds,
+      },
+    });
   }
 
   if (!declarationUserId) return;
@@ -882,6 +995,7 @@ export const getStuckProcessingDeclarations = internalQuery({
     v.object({
       _id: v.id("declarations"),
       userId: v.optional(v.string()),
+      orgId: v.optional(v.string()),
       conversationId: v.optional(v.string()),
       status: v.optional(v.string()),
       lastUpdated: v.optional(v.number()),
@@ -899,6 +1013,7 @@ export const getStuckProcessingDeclarations = internalQuery({
       .map((r: any) => ({
         _id: r._id,
         userId: r.userId || undefined,
+        orgId: typeof r.orgId === "string" ? r.orgId : undefined,
         conversationId: r.conversationId || undefined,
         status: r.status || undefined,
         lastUpdated: Number(r.lastUpdated || r.created || 0),
@@ -908,15 +1023,30 @@ export const getStuckProcessingDeclarations = internalQuery({
 });
 
 export const getHmrcTokenForUser = internalQuery({
-  args: { userId: v.string() },
+  args: {
+    userId: v.string(),
+    environment: v.union(v.literal("sandbox"), v.literal("production")),
+  },
   returns: v.union(v.object({ accessToken: v.optional(v.string()) }), v.null()),
   handler: async (ctx, args) => {
     const row = await ctx.db
       .query("hmrc_tokens")
-      .withIndex("by_user", (q: any) => q.eq("userId", args.userId))
+      .withIndex("by_user_and_environment", (q: any) =>
+        q.eq("userId", args.userId).eq("environment", args.environment),
+      )
       .first();
-    if (!row) return null;
-    return { accessToken: row.accessToken };
+
+    const legacySandbox =
+      !row && args.environment === "sandbox"
+        ? await ctx.db
+            .query("hmrc_tokens")
+            .withIndex("by_user", (q: any) => q.eq("userId", args.userId))
+            .first()
+        : null;
+
+    const tokenRow = row ?? legacySandbox;
+    if (!tokenRow) return null;
+    return { accessToken: tokenRow.accessToken };
   },
 });
 
@@ -954,7 +1084,6 @@ export const getHmrcTokenRowForUser = internalQuery({
 
     const tokenRow = row ?? legacySandbox;
     if (!tokenRow) return null;
-
     return {
       accessToken: tokenRow.accessToken,
       refreshToken: tokenRow.refreshToken,
@@ -965,7 +1094,6 @@ export const getHmrcTokenRowForUser = internalQuery({
     };
   },
 });
-
 export const upsertDeclarationPreview = internalMutation({
   args: { declarationId: v.id("declarations") },
   handler: async (ctx, args) => {
@@ -1122,6 +1250,11 @@ export const getDeclarationFinancialEstimate = query({
           paymentMethodLabel: preview.paymentMethodLabel,
           defermentAccountNumber: preview.defermentAccountNumber,
           dmstaxUpdatedAt: preview.dmstaxUpdatedAt,
+          dutyVarianceAmount: preview.dutyVarianceAmount ?? null,
+          vatVarianceAmount: preview.vatVarianceAmount ?? null,
+          varianceAlert: preview.varianceAlert ?? false,
+          varianceKinds: preview.varianceKinds ?? [],
+          fxConversionUsed: preview.fxConversionUsed ?? false,
           updatedAt: preview.lastUpdated,
         };
       }
@@ -1153,6 +1286,11 @@ export const getDeclarationFinancialEstimate = query({
         paymentMethodLabel: fields.paymentMethodLabel,
         defermentAccountNumber: fields.defermentAccountNumber,
         dmstaxUpdatedAt: fields.dmstaxUpdatedAt,
+        dutyVarianceAmount: fields.dutyVarianceAmount ?? null,
+        vatVarianceAmount: fields.vatVarianceAmount ?? null,
+        varianceAlert: fields.varianceAlert ?? false,
+        varianceKinds: fields.varianceKinds ?? [],
+        fxConversionUsed: fields.fxConversionUsed ?? false,
         updatedAt: Date.now(),
       };
     } catch {
@@ -1222,10 +1360,23 @@ export const createDeclaration = mutation({
 
     const { initialItem, ...declarationArgs } = args;
     const orgId = await resolveOrgIdForNewRecord(ctx, identity.subject);
+
+    // Bind the declaration to the org's current HMRC environment so a draft
+    // created in practice can never be submitted to Live after a mode flip.
+    let environment: "sandbox" | "production" = "sandbox";
+    if (orgId) {
+      const orgSettings = await ctx.db
+        .query("org_hmrc_settings")
+        .withIndex("by_org", (q) => q.eq("orgId", orgId))
+        .unique();
+      if (orgSettings?.hmrcMode === "live") environment = "production";
+    }
+
     const declarationId = await ctx.db.insert("declarations", {
       ...declarationArgs,
       userId: identity.subject, // Override argument with identity
       ...(orgId ? { orgId } : {}),
+      environment,
       created: Date.now(),
       lastUpdated: Date.now(),
     });
@@ -1247,6 +1398,45 @@ export const createDeclaration = mutation({
     await upsertDeclarationPreviewByDeclaration(ctx, declarationId);
 
     return declarationId;
+  },
+});
+
+/**
+ * Verify a declaration may be sent to the given HMRC environment and lock it in.
+ * Called by submit/amend/cancel routes *before* contacting HMRC. A declaration
+ * already bound to a different environment (sandbox vs production) is rejected,
+ * preventing cross-environment submissions after an org mode flip. Legacy rows
+ * with no stamp are treated as sandbox.
+ */
+export const assertAndStampEnvironment = mutation({
+  args: {
+    declarationId: v.id("declarations"),
+    environment: v.union(v.literal("sandbox"), v.literal("production")),
+  },
+  returns: v.object({
+    environment: v.union(v.literal("sandbox"), v.literal("production")),
+  }),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const decl = await ctx.db.get(args.declarationId);
+    if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
+      throw new Error("Unauthorized");
+    }
+
+    const stamped = (decl.environment as "sandbox" | "production" | undefined) ?? "sandbox";
+    if (decl.environment && stamped !== args.environment) {
+      throw new Error(
+        `ENVIRONMENT_MISMATCH: declaration is bound to the ${stamped} HMRC environment and cannot be sent to ${args.environment}.`,
+      );
+    }
+
+    if (decl.environment !== args.environment) {
+      await ctx.db.patch(args.declarationId, { environment: args.environment });
+    }
+
+    return { environment: args.environment };
   },
 });
 
@@ -1330,6 +1520,15 @@ export const beginSubmission = mutation({
       );
     }
 
+    const representationApproval = await getIndirectRepresentationApprovalStatus(ctx, existing);
+    if (
+      representationApproval.approvalRequired &&
+      (!representationApproval.approved || !representationApproval.approvalCurrent)
+    ) {
+      throw new Error(
+        `SUBMIT_BLOCKED: ${representationApproval.reason || "Indirect representation requires current internal approval before HMRC submission."}`,
+      );
+    }
     await ctx.db.patch(args.id, { status: "Processing", lastUpdated: Date.now() });
     await upsertDeclarationPreviewByDeclaration(ctx, args.id);
     return { prevStatus: status, prevMrn: String(existing.mrn ?? "") };
@@ -1705,6 +1904,49 @@ export const getDashboardAnalytics = query({
         continue;
       }
 
+      if (preview.varianceAlert) {
+        const dutyDelta = Number(preview.dutyVarianceAmount || 0);
+        const vatDelta = Number(preview.vatVarianceAmount || 0);
+        const kinds = (preview.varianceKinds as string[] | undefined) ?? [];
+
+        if (kinds.includes("duty_higher_than_hmrc") && dutyDelta > 0) {
+          overpayments.push({
+            title: String(preview.mrn || decl?.mrn || "Draft declaration"),
+            subtitle: FL.varianceDutyHigher,
+            amount: dutyDelta,
+            declarationId: declId,
+          });
+          continue;
+        }
+        if (kinds.includes("duty_lower_than_hmrc") && dutyDelta < 0) {
+          overpayments.push({
+            title: String(preview.mrn || decl?.mrn || "Draft declaration"),
+            subtitle: FL.varianceDutyLower,
+            amount: Math.abs(dutyDelta),
+            declarationId: declId,
+          });
+          continue;
+        }
+        if (kinds.includes("vat_higher_than_hmrc") && vatDelta > 0) {
+          overpayments.push({
+            title: String(preview.mrn || decl?.mrn || "Draft declaration"),
+            subtitle: FL.varianceVatHigher,
+            amount: vatDelta,
+            declarationId: declId,
+          });
+          continue;
+        }
+        if (kinds.includes("vat_lower_than_hmrc") && vatDelta < 0) {
+          overpayments.push({
+            title: String(preview.mrn || decl?.mrn || "Draft declaration"),
+            subtitle: FL.varianceVatLower,
+            amount: Math.abs(vatDelta),
+            declarationId: declId,
+          });
+          continue;
+        }
+      }
+
       if (confirmed && derivedDuty > duty + 0.01) {
         overpayments.push({
           title: String(preview.mrn || decl?.mrn || "Draft declaration"),
@@ -1856,21 +2098,32 @@ export const getReports = query({
       ctx,
       allItems.map((item) => String(item?.commodityCode || "")),
     );
+    const fx = await loadLatestFxRates(ctx);
 
     for (const decl of decls) {
       const items = itemsByDeclaration.get(String(decl._id)) || [];
       const declarationNotifications = notificationsByDeclaration.get(String(decl._id)) || [];
+      const fxContext = {
+        fx,
+        declarationCurrency:
+          decl.invoiceCurrency != null ? String(decl.invoiceCurrency) : null,
+      };
       const financials = computeDeclarationFinancials(
         items,
         declarationNotifications,
         historicalRates,
         tariffByCommodityCode,
+        fxContext,
       );
 
       let totalValue = 0;
       const mappedItems = items.slice(0, 50).map((item, idx) => {
-        const val = Number(item.valueAmount || 0);
-        const { itemDuty, itemVat } = estimateItemFinancials(item, historicalRates, tariffByCommodityCode);
+        const { val, itemDuty, itemVat } = estimateItemFinancials(
+          item,
+          historicalRates,
+          tariffByCommodityCode,
+          fxContext,
+        );
         totalValue += val;
 
         return {
@@ -1951,7 +2204,7 @@ export const getFinancialRecords = query({
     const decls = await listDeclarationsForTenant(ctx, identity.subject, 200);
 
     const historicalRates = await getHistoricalRateMap(ctx, identity.subject);
-    const records: FinancialRecord[] = [];
+    const records: Array<Record<string, unknown>> = [];
     const declarationIds = decls.map((decl) => String(decl._id));
     const itemsByDeclaration = await getItemsByDeclarationForUser(ctx, identity.subject, declarationIds);
     const notificationsByDeclaration = await buildNotificationsByDeclaration(ctx, identity.subject);
@@ -1960,6 +2213,7 @@ export const getFinancialRecords = query({
       ctx,
       allItems.map((item) => String(item?.commodityCode || "")),
     );
+    const fx = await loadLatestFxRates(ctx);
 
     const previews = await listDeclarationPreviewsForTenant(ctx, identity.subject, 500);
     const previewByDeclarationId = new Map(
@@ -1989,6 +2243,11 @@ export const getFinancialRecords = query({
           declarationNotifications,
           historicalRates,
           tariffByCommodityCode,
+          {
+            fx,
+            declarationCurrency:
+              decl.invoiceCurrency != null ? String(decl.invoiceCurrency) : null,
+          },
         );
         payment = resolvePaymentMethodLabel(decl, financials.hasConfirmedFinancials);
       }

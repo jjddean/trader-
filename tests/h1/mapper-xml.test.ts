@@ -222,3 +222,117 @@ describe("H1 mapper and XML renderer", () => {
     );
   });
 });
+
+describe("DE 3/19-3/21 representation", () => {
+  const base = {
+    _id: "kn7representationh1box",
+    eori: "GB531765313922",
+    declarationType: "H1",
+    route: "Route 1",
+    destinationCountry: "GB",
+    dispatchCountry: "DE",
+    presentationOffice: "",
+    exporterName: "Acme Export GmbH",
+    exporterCity: "Hamburg",
+    exporterLine: "1 Hafenstrasse",
+    exporterPostcode: "20095",
+    locationId: "GBAUFXTFXTFXT",
+    goodsLocationKind: "port",
+    invoiceCurrency: "GBP",
+    invoiceTotal: 2500,
+    incoterms: "CIF",
+    incotermLocation: "Felixstowe",
+    transactionNatureCode: "11",
+    transportMode: "1",
+    transportIdType: "11",
+    transportId: "CSCL GLOBE",
+  };
+  const items = [
+    {
+      sequenceNumber: 1,
+      commodityCode: "6109100010",
+      description: "Cotton t-shirts",
+      originCountry: "DE",
+      procedureCode: "4000",
+      additionalProcedureCode: "000",
+      valueAmount: 2500,
+      valueCurrency: "GBP",
+      grossWeightKg: 120,
+      netWeightKg: 115,
+      packageCount: 10,
+      packageType: "CT",
+      additionalDocuments: [{ CategoryCode: "N", TypeCode: "935", ID: "INV-2026-0001" }],
+    },
+  ];
+
+  it("self-representation (declarant = importer): AI 00500, no Agent", () => {
+    const mapped = mapToCDS_H1({ ...base, importerEori: base.eori }, items).Declaration;
+    assert.equal(mapped.Agent, undefined);
+    assert.equal(mapped.GoodsShipment.Importer.ID, base.eori);
+    const item = mapped.GoodsShipment.GovernmentAgencyGoodsItem[0];
+    assert.deepEqual(item.AdditionalInformation, [
+      { StatementCode: "00500", StatementDescription: "Importer" },
+    ]);
+  });
+
+  it("indirect, broker is declarant: DE 3/21 status only, no DE 3/19/3/20, no 00500", () => {
+    const mapped = mapToCDS_H1(
+      { ...base, representationType: "indirect", importerEori: "GB553202734852" },
+      items,
+    ).Declaration;
+    assert.deepEqual(mapped.Agent, { FunctionCode: "3" });
+    assert.equal(mapped.GoodsShipment.Importer.ID, "GB553202734852");
+    const item = mapped.GoodsShipment.GovernmentAgencyGoodsItem[0];
+    assert.equal(item.AdditionalInformation, undefined);
+  });
+
+  it("direct, distinct representative EORI populates DE 3/20", () => {
+    const mapped = mapToCDS_H1(
+      {
+        ...base,
+        representationType: "direct",
+        importerEori: "GB553202734852",
+        representativeEori: "GB999999999991",
+      },
+      items,
+    ).Declaration;
+    assert.deepEqual(mapped.Agent, { ID: "GB999999999991", FunctionCode: "2" });
+  });
+
+  it("representative EORI equal to declarant collapses to status-only", () => {
+    const mapped = mapToCDS_H1(
+      {
+        ...base,
+        representationType: "indirect",
+        importerEori: "GB553202734852",
+        representativeEori: base.eori,
+      },
+      items,
+    ).Declaration;
+    assert.deepEqual(mapped.Agent, { FunctionCode: "3" });
+  });
+
+  it("regression: representation never emits the self-rep 00500 even if importer = declarant", () => {
+    const mapped = mapToCDS_H1(
+      { ...base, representationType: "indirect", importerEori: base.eori },
+      items,
+    ).Declaration;
+    const item = mapped.GoodsShipment.GovernmentAgencyGoodsItem[0];
+    assert.equal(item.AdditionalInformation, undefined);
+    assert.deepEqual(mapped.Agent, { FunctionCode: "3" });
+  });
+
+  it("renders DE 3/21 status-only Agent as valid XML", () => {
+    const xml = renderH1Xml(
+      mapToCDS_H1(
+        { ...base, representationType: "indirect", importerEori: "GB553202734852" },
+        items,
+      ),
+    );
+    assert.match(xml, /<Agent>\s*<FunctionCode>3<\/FunctionCode>\s*<\/Agent>/);
+    assert.ok(xml.indexOf("<Agent>") < xml.indexOf("<BorderTransportMeans>"));
+    assert.ok(xml.indexOf("<Agent>") < xml.indexOf("<Declarant>"));
+    assert.doesNotMatch(xml, /<StatementCode>00500<\/StatementCode>/);
+    assert.doesNotMatch(xml, /<([A-Za-z][\w]*)\s*>\s*<\/\1>/);
+  });
+});

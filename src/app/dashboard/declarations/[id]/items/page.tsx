@@ -27,13 +27,9 @@ import { countries } from "@/lib/data/countries";
 import { DeclarationModePromote } from "@/components/declaration-mode-promote";
 import {
   ConvexSessionMissing,
-  DeclarationLoadingSpinner,
+  DeclarationPageSkeleton,
   isConvexSessionMissing,
 } from "@/components/declaration-session-states";
-import {
-  enrichExtractedLine,
-  type ExtractedInvoiceLine,
-} from "@/lib/invoice-extract-enrichment";
 
 export default function GoodsItemsPage() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -378,6 +374,31 @@ export default function GoodsItemsPage() {
     }
   };
 
+  const parsePositiveNumber = (value: unknown) => {
+    if (value == null || value === "") return undefined;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+  };
+
+  const parsePositiveInteger = (value: unknown) => {
+    const parsed = parsePositiveNumber(value);
+    return parsed == null ? undefined : Math.trunc(parsed);
+  };
+
+  const buildExtractedDocuments = (item: Record<string, unknown>) => {
+    const docs: AdditionalDocumentInput[] = [];
+    const invoiceReference = String(item.invoiceReference || item.invoiceNo || item.invoiceNumber || "").trim();
+    const packingListReference = String(item.packingListReference || item.packingListRef || "").trim();
+
+    if (invoiceReference) {
+      docs.push({ CategoryCode: "N", TypeCode: "935", ID: invoiceReference });
+    }
+    if (packingListReference) {
+      docs.push({ CategoryCode: "N", TypeCode: "271", ID: packingListReference });
+    }
+
+    return docs;
+  };
   const handleAIUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -402,17 +423,48 @@ export default function GoodsItemsPage() {
       }
 
       // Persist exactly what the AI extracted. No invented fallbacks
-      // (no implicit "GB" origin, no "Unknown Item" description, no "4000"
-      // CPC, no zero value, no GBP). Missing fields stay empty so the user
-      // sees what the AI couldn't determine and fills it in explicitly.
+      // (no implicit "GB" origin, no "Unknown Item", no zero value). Missing
+      // fields stay empty so the user sees what still needs explicit review.
       if (data.items && Array.isArray(data.items)) {
         for (let i = 0; i < data.items.length; i++) {
-          const item = data.items[i] as ExtractedInvoiceLine;
+          const item = data.items[i] as Record<string, unknown>;
           const payload: AddItemArgs = {
             declarationId,
             sequenceNumber: (items?.length || 0) + i + 1,
-            ...enrichExtractedLine(item),
           };
+          const cc = String(item.commodityCode || "").trim();
+          const desc = String(item.description || "").trim();
+          const origin = String(item.originCountry || "").trim().toUpperCase();
+          const cpc = String(item.procedureCode || "").trim();
+          const additionalProcedureCode = String(item.additionalProcedureCode || "").trim();
+          const currency = String(item.valueCurrency || "").trim().toUpperCase();
+          const packageType = String(item.packageType || "").trim().toUpperCase();
+          const shippingMarks = String(item.shippingMarks || "").trim();
+          const valueAmount = parsePositiveNumber(item.valueAmount);
+          const grossWeightKg = parsePositiveNumber(item.grossWeightKg);
+          const netWeightKg = parsePositiveNumber(item.netWeightKg);
+          const supplementaryUnitQty = parsePositiveInteger(item.supplementaryUnitQty);
+          const packageCount = parsePositiveInteger(item.packageCount);
+          const additionalDocuments = buildExtractedDocuments(item);
+
+          if (cc) payload.commodityCode = cc;
+          if (desc) payload.description = desc;
+          if (origin) payload.originCountry = origin;
+          if (cpc) payload.procedureCode = cpc;
+          if (additionalProcedureCode) payload.additionalProcedureCode = additionalProcedureCode;
+          if (valueAmount != null) payload.valueAmount = valueAmount;
+          if (currency) payload.valueCurrency = currency;
+          if (grossWeightKg != null) payload.grossWeightKg = grossWeightKg;
+          if (netWeightKg != null) payload.netWeightKg = netWeightKg;
+          if (supplementaryUnitQty != null) {
+            payload.supplementaryUnitQty = supplementaryUnitQty;
+            payload.supplementaryUnitCode = "NAR";
+          }
+          if (packageCount != null) payload.packageCount = packageCount;
+          if (packageType) payload.packageType = packageType;
+          if (shippingMarks) payload.shippingMarks = shippingMarks;
+          if (additionalDocuments.length > 0) payload.additionalDocuments = additionalDocuments;
+
           await addItem(payload);
         }
       }
@@ -426,16 +478,12 @@ export default function GoodsItemsPage() {
     }
   };
 
-  if (!isLoaded) {
-    return <DeclarationLoadingSpinner />;
-  }
-
   if (isConvexSessionMissing(isLoaded, Boolean(isSignedIn), isConvexAuthLoading, isAuthenticated)) {
     return <ConvexSessionMissing />;
   }
 
-  if (isSignedIn && isAuthenticated && (declaration === undefined || items === undefined)) {
-    return <DeclarationLoadingSpinner />;
+  if (declaration === undefined || items === undefined) {
+    return <DeclarationPageSkeleton />;
   }
 
   if (!declaration) {

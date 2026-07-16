@@ -20,6 +20,33 @@ function buildUserMap<T extends { clerkId?: unknown; email?: unknown; name?: unk
   return map;
 }
 
+/** One row per user for admin UI — drops legacy duplicate sandbox rows. */
+function dedupeTokensForDisplay<
+  T extends { userId?: unknown; environment?: unknown; expiresAt?: unknown },
+>(tokens: T[]): T[] {
+  const byUser = new Map<string, T>();
+  for (const token of tokens) {
+    const userId = String(token.userId ?? "");
+    if (!userId) continue;
+    const existing = byUser.get(userId);
+    if (!existing) {
+      byUser.set(userId, token);
+      continue;
+    }
+    const existingExplicit = existing.environment != null;
+    const incomingExplicit = token.environment != null;
+    if (incomingExplicit && !existingExplicit) {
+      byUser.set(userId, token);
+      continue;
+    }
+    if (existingExplicit && !incomingExplicit) continue;
+    if (Number(token.expiresAt ?? 0) > Number(existing.expiresAt ?? 0)) {
+      byUser.set(userId, token);
+    }
+  }
+  return [...byUser.values()];
+}
+
 export const getOverview = query({
   args: {},
   handler: async (ctx) => {
@@ -179,7 +206,7 @@ export const getIntegrationPanel = query({
       if (userId) tokenByUser.set(userId, token);
     }
 
-    const hmrcConnections = tokens
+    const hmrcConnections = dedupeTokensForDisplay(tokens)
       .map((token) => {
         const userId = String(token.userId ?? "");
         const owner = userMap.get(userId);
@@ -225,7 +252,7 @@ export const getHmrcConnections = query({
     const userMap = buildUserMap(users);
     const now = Date.now();
 
-    return tokens
+    return dedupeTokensForDisplay(tokens)
       .map((token) => {
         const userId = String(token.userId ?? "");
         const owner = userMap.get(userId);

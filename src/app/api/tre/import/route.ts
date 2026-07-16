@@ -9,6 +9,38 @@ import {
   TRE_IMPORT_MAX_ROWS,
 } from "@/lib/tre-csv-parser";
 
+function rowToCommitPayload(row: ReturnType<typeof parseTreCsvRows>[number]) {
+  return {
+    reportKind: row.reportKind,
+    entryIdentifierMrn: row.entryIdentifierMrn,
+    sourceRowHash: row.sourceRowHash,
+    sourceLineNumber: row.sourceLineNumber,
+    itemNumber: row.itemNumber,
+    declarantEori: row.declarantEori,
+    importerEori: row.importerEori,
+    commodityCode: row.commodityCode,
+    countryOfOriginCode: row.countryOfOriginCode,
+    countryOfDispatchCode: row.countryOfDispatchCode,
+    destinationCountryCode: row.destinationCountryCode,
+    preferenceCode: row.preferenceCode,
+    itemCustomsValue: row.itemCustomsValue,
+    taxLineTotalAmount: row.taxLineTotalAmount,
+    methodOfPaymentCode: row.methodOfPaymentCode,
+    customsProcedureCodeCpc: row.customsProcedureCodeCpc,
+    taxType: row.taxType,
+    dutyRatePercent: row.dutyRatePercent,
+    acceptanceDate: row.acceptanceDate,
+    goodsDescription: row.goodsDescription,
+    netMassKg: row.netMassKg,
+    documentCodes: row.documentCodes,
+    invoiceTotalGbp: row.invoiceTotalGbp,
+    transportCostGbp: row.transportCostGbp,
+    totalDutyGbp: row.totalDutyGbp,
+    totalVatGbp: row.totalVatGbp,
+    goodsDepartureDate: row.goodsDepartureDate,
+  };
+}
+
 export async function POST(request: Request) {
   try {
     const clerkAuth = await auth();
@@ -51,7 +83,10 @@ export async function POST(request: Request) {
 
     if (preview.format === "unknown") {
       return NextResponse.json(
-        { error: "Unrecognised CSV format. Use an HMRC Import Item Report export." },
+        {
+          error:
+            "Unrecognised CSV format. Use an HMRC TRE report (Import Item, Import Header, Import Tax Lines, or Export Item).",
+        },
         { status: 400 },
       );
     }
@@ -67,26 +102,11 @@ export async function POST(request: Request) {
 
     const result = await convex.mutation(api.tre_imports.commitImport, {
       filename: file.name,
+      reportFormat: preview.format,
       checksum: preview.checksum,
       rowCount: preview.rowCount,
       warnings: preview.warnings.map((w) => w.message),
-      rows: rows.map((row) => ({
-        entryIdentifierMrn: row.entryIdentifierMrn,
-        sourceRowHash: row.sourceRowHash,
-        sourceLineNumber: row.sourceLineNumber,
-        itemNumber: row.itemNumber,
-        declarantEori: row.declarantEori,
-        importerEori: row.importerEori,
-        commodityCode: row.commodityCode,
-        countryOfOriginCode: row.countryOfOriginCode,
-        preferenceCode: row.preferenceCode,
-        itemCustomsValue: row.itemCustomsValue,
-        taxLineTotalAmount: row.taxLineTotalAmount,
-        methodOfPaymentCode: row.methodOfPaymentCode,
-        customsProcedureCodeCpc: row.customsProcedureCodeCpc,
-        taxType: row.taxType,
-        acceptanceDate: row.acceptanceDate,
-      })),
+      rows: rows.map(rowToCommitPayload),
     });
 
     return NextResponse.json({ preview, result });

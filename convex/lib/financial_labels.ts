@@ -32,5 +32,16 @@ export const FINANCIAL_LABELS = {
   overpaymentAfterAssessment:
     "Repayment and savings opportunities appear after HMRC confirms duty and VAT on a declaration.",
   estimateHigherThanHmrc: "Your estimate was higher than HMRC's assessed duty",
+  estimateLowerThanHmrc: "HMRC assessed more duty than your estimate",
+  estimateHigherThanHmrcVat: "Your estimate was higher than HMRC's assessed VAT",
+  estimateLowerThanHmrcVat: "HMRC assessed more VAT than your estimate",
+  varianceDutyHigher: "Pre-clearance duty estimate exceeded HMRC assessed duty (A00)",
+  varianceDutyLower: "HMRC assessed duty exceeded your pre-clearance estimate (A00)",
+  varianceVatHigher: "Pre-clearance VAT estimate exceeded HMRC assessed VAT (B00)",
+  varianceVatLower: "HMRC assessed VAT exceeded your pre-clearance estimate (B00)",
+  fxConversionFootnote:
+    "Non-GBP invoice values converted to GBP using synced Open Exchange Rates for this estimate.",
+  fxUnavailableFootnote:
+    "Non-GBP invoice currency detected but exchange rates are unavailable — duty estimate may be incomplete.",
   savingsOpportunity: "Possible duty savings (review required)",
 } as const;

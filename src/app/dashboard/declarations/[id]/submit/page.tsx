@@ -12,7 +12,7 @@ import { generateClientFraudHeaders } from "@/lib/hmrc-fraud-headers";
 import { getHmrcRequirementSetForDeclaration } from "@/lib/utils/document-utils";
 import {
   ConvexSessionMissing,
-  DeclarationLoadingSpinner,
+  DeclarationPageSkeleton,
   isConvexSessionMissing,
 } from "@/components/declaration-session-states";
 
@@ -39,11 +39,29 @@ export default function SubmitPage() {
     api.declaration_completeness.getStatus,
     isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId ? { declarationId } : "skip",
   );
+  const representationStatus = useQuery(
+    api.representation.getStatus,
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId ? { declarationId } : "skip",
+  );
+  const orgHmrc = useQuery(
+    api.org_hmrc.getModeForDeclaration,
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId ? { declarationId } : "skip",
+  );
   const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
+  const setRepresentationDetails = useMutation(api.representation.setRepresentationDetails);
+  const approveIndirectRepresentation = useMutation(api.representation.approveIndirectRepresentation);
 
+  const hmrcEnvironment = orgHmrc?.hmrcMode === "live" ? "production" : "sandbox";
   const hmrcTokens = useQuery(
     api.hmrc_internal.getTokens,
-    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && userId ? { userId } : "skip",
+    isLoaded &&
+      isSignedIn &&
+      !isConvexAuthLoading &&
+      isAuthenticated &&
+      userId &&
+      orgHmrc !== undefined
+      ? { userId, environment: hmrcEnvironment }
+      : "skip",
   );
   const hydratedRequirementsRef = useRef(false);
   const failedRequirementsHydrationRef = useRef(false);
@@ -108,6 +126,13 @@ export default function SubmitPage() {
   const [error, setError] = useState<string | null>(null);
   const [dryRunResult, setDryRunResult] = useState<DryRunPayload | null>(null);
   const [dryRunPassed, setDryRunPassed] = useState(false);
+  const [approvalAcknowledged, setApprovalAcknowledged] = useState(false);
+  const [approvalReason, setApprovalReason] = useState("");
+  const [approvalRiskScore, setApprovalRiskScore] = useState(50);
+  const [approvalExposureAmount, setApprovalExposureAmount] = useState("");
+  const [approvalError, setApprovalError] = useState<string | null>(null);
+  const [isApproving, setIsApproving] = useState(false);
+  const [liveSubmitConfirmed, setLiveSubmitConfirmed] = useState(false);
 
   const readResponsePayload = async (res: Response) => {
     try {
@@ -152,6 +177,13 @@ export default function SubmitPage() {
   const completenessReady = completeness?.ready === true;
   const completenessMissing = completeness?.missing ?? [];
   const isReady = completenessReady && missingBlockingRequirements.length === 0;
+  // Org-level Live (production) CDS mode — distinct from declaration *status*.
+  const isOrgLiveMode = orgHmrc?.hmrcMode === "live";
+  // Live submissions are legally binding; require an explicit confirmation.
+  const liveConfirmSatisfied = !isOrgLiveMode || liveSubmitConfirmed;
+  const representationRequiresApproval = representationStatus?.approvalRequired === true;
+  const representationApprovalReady = !representationRequiresApproval
+    || (representationStatus?.approved === true && representationStatus?.approvalCurrent === true);
 
   const ruleEngineBlocked =
     dryRunResult?.localPreflight?.ruleEngine === "blocked"
@@ -194,6 +226,52 @@ export default function SubmitPage() {
     debugGoodsLocation?.goodsLocationName || debugGoodsLocation?.goodsLocationId,
   ].filter(Boolean).join(" / ");
 
+  const handleApproveIndirectRepresentation = async () => {
+    setIsApproving(true);
+    setApprovalError(null);
+    try {
+      if (!approvalAcknowledged) {
+        throw new Error("Confirm that authority documents and liability routing have been reviewed.");
+      }
+      const exposureAmount = approvalExposureAmount.trim() === ""
+        ? null
+        : Number(approvalExposureAmount);
+      if (exposureAmount !== null && (!Number.isFinite(exposureAmount) || exposureAmount < 0)) {
+        throw new Error("Exposure amount must be a positive number.");
+      }
+      const rep = representationStatus?.representation;
+      if (rep?.representationType === "indirect" && !rep.authorityVerified) {
+        await setRepresentationDetails({
+          declarationId,
+          representationType: "indirect",
+          representativeEori: rep.representativeEori ?? null,
+          representativeName: rep.representativeName ?? null,
+          representativeAddressLine: rep.representativeAddressLine ?? null,
+          representativeCity: rep.representativeCity ?? null,
+          representativePostcode: rep.representativePostcode ?? null,
+          representativeCountry: rep.representativeCountry ?? null,
+          authorityVerified: true,
+          authorityValidFrom: rep.authorityValidFrom ?? null,
+          authorityValidTo: rep.authorityValidTo ?? null,
+        });
+      }
+      await approveIndirectRepresentation({
+        declarationId,
+        reason: approvalReason,
+        riskScore: approvalRiskScore,
+        exposureAmount,
+        exposureCurrency: "GBP",
+        exposureReason: exposureAmount === null ? null : "Pre-clearance exposure estimate",
+      });
+      setApprovalReason("");
+      setApprovalExposureAmount("");
+      setApprovalAcknowledged(false);
+    } catch (err: unknown) {
+      setApprovalError(err instanceof Error ? err.message : "Failed to approve indirect representation");
+    } finally {
+      setIsApproving(false);
+    }
+  };
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setError(null);
@@ -330,41 +408,19 @@ export default function SubmitPage() {
     }
   };
 
-  if (!isLoaded) {
-    return <DeclarationLoadingSpinner />;
-  }
-
   if (isConvexSessionMissing(isLoaded, Boolean(isSignedIn), isConvexAuthLoading, isAuthenticated)) {
     return <ConvexSessionMissing />;
   }
 
   if (
-    isSignedIn &&
-    isAuthenticated &&
-    (declaration === undefined ||
-      items === undefined ||
-      requirements === undefined ||
-      completeness === undefined)
+    declaration === undefined ||
+    items === undefined ||
+    requirements === undefined ||
+    completeness === undefined ||
+    representationStatus === undefined ||
+    orgHmrc === undefined
   ) {
-    return <DeclarationLoadingSpinner />;
-  }
-
-  if (!isSignedIn) {
-    return (
-      <div className="rounded-md border border-red-200 bg-red-50 p-4">
-        <h4 className="text-xs font-bold text-red-800 uppercase tracking-widest mb-1">HMRC API Error</h4>
-        <p className="text-sm text-red-700 font-mono whitespace-pre-wrap">Session expired or not signed in. Please sign in again and retry.</p>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="rounded-md border border-red-200 bg-red-50 p-4">
-        <h4 className="text-xs font-bold text-red-800 uppercase tracking-widest mb-1">HMRC API Error</h4>
-        <p className="text-sm text-red-700 font-mono whitespace-pre-wrap">Convex authentication is not active for this session. Refresh the page and sign in again.</p>
-      </div>
-    );
+    return <DeclarationPageSkeleton />;
   }
 
   return (
@@ -435,6 +491,25 @@ export default function SubmitPage() {
               </div>
             </li>
 
+            {representationRequiresApproval && (
+              <li className="flex items-start gap-3">
+                {!representationApprovalReady ? <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
+                <div>
+                  <p className={`text-sm font-medium ${!representationApprovalReady ? "text-red-700" : "text-slate-900"}`}>Indirect Representation Approval</p>
+                  <p className="text-xs text-slate-500">
+                    Required before HMRC submission when DE 3/21 is indirect representation.
+                    {representationStatus?.approval ? (
+                      <span className="block mt-1 text-slate-600">
+                        Approved by {representationStatus.approval.approverName} · risk {representationStatus.approval.riskScore}/100
+                      </span>
+                    ) : null}
+                    {!representationApprovalReady && representationStatus?.reason ? (
+                      <span className="block mt-1 text-red-600">{representationStatus.reason}</span>
+                    ) : null}
+                  </p>
+                </div>
+              </li>
+            )}
             <li className="flex items-start gap-3">
               {!dryRunFullyPassed ? <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
               <div>
@@ -463,6 +538,69 @@ export default function SubmitPage() {
             </div>
           )}
 
+          {representationRequiresApproval && !representationApprovalReady && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-amber-800 mb-3">
+                Internal approval required
+              </h4>
+              <div className="space-y-3">
+                <label className="flex items-start gap-2 text-xs text-amber-950">
+                  <input
+                    type="checkbox"
+                    checked={approvalAcknowledged}
+                    onChange={(e) => setApprovalAcknowledged(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-amber-300"
+                  />
+                  <span>I confirm I have reviewed authority documents and accept liability routing.</span>
+                </label>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="text-[11px] font-semibold uppercase tracking-wider text-amber-900">Reason</label>
+                    <textarea
+                      value={approvalReason}
+                      onChange={(e) => setApprovalReason(e.target.value)}
+                      rows={3}
+                      className="w-full rounded-md border border-amber-200 bg-white p-2 text-xs outline-none focus:border-amber-500"
+                      placeholder="Why this indirect representation is approved"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold uppercase tracking-wider text-amber-900">Risk score: {approvalRiskScore}</label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={approvalRiskScore}
+                      onChange={(e) => setApprovalRiskScore(Number(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold uppercase tracking-wider text-amber-900">Exposure GBP</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={approvalExposureAmount}
+                      onChange={(e) => setApprovalExposureAmount(e.target.value)}
+                      className="w-full rounded-md border border-amber-200 bg-white p-2 text-xs outline-none focus:border-amber-500"
+                      placeholder="Optional"
+                    />
+                  </div>
+                </div>
+                {approvalError && <p className="text-xs text-red-700">{approvalError}</p>}
+                <button
+                  type="button"
+                  onClick={handleApproveIndirectRepresentation}
+                  disabled={isApproving || !approvalAcknowledged}
+                  className="flex h-8 w-full items-center justify-center gap-2 rounded-md bg-black px-3 text-xs font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {isApproving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4 text-green-400" />}
+                  {isApproving ? "Recording Approval..." : "Approve Indirect Representation"}
+                </button>
+              </div>
+            </div>
+          )}
           {error && (
             <div className="rounded-md border border-red-200 bg-red-50 p-4">
                <h4 className="text-xs font-bold text-red-800 uppercase tracking-widest mb-1">
@@ -669,6 +807,33 @@ export default function SubmitPage() {
         </div>
 
         <div className="border-t border-slate-100 bg-slate-50/50 p-4 px-6 flex flex-col items-center justify-center gap-3">
+          <div className={`w-full rounded-md border px-3 py-2 text-center ${
+            isOrgLiveMode
+              ? "border-red-300 bg-red-50 text-red-800"
+              : "border-amber-200 bg-amber-50 text-amber-800"
+          }`}>
+            <p className="text-[10px] font-bold uppercase tracking-widest">
+              {isOrgLiveMode
+                ? "Live CDS — production HMRC (legally binding)"
+                : "Practice / Sandbox — no legal effect"}
+            </p>
+          </div>
+
+          {isOrgLiveMode && (
+            <label className="flex w-full items-start gap-2 rounded-md border border-red-200 bg-white px-3 py-2 text-left">
+              <input
+                type="checkbox"
+                checked={liveSubmitConfirmed}
+                onChange={(e) => setLiveSubmitConfirmed(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-red-600"
+              />
+              <span className="text-xs text-slate-700">
+                I understand this is a <span className="font-semibold">legally binding LIVE submission</span> to
+                HMRC production CDS and confirm the declaration data is accurate.
+              </span>
+            </label>
+          )}
+
           <p className="text-[10px] text-slate-500 text-center uppercase tracking-widest font-medium">
             By submitting, you confirm authorization to act as the legal Declarant.
           </p>
@@ -682,11 +847,17 @@ export default function SubmitPage() {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!isReady || !dryRunFullyPassed || isSubmitting || isDryRunning || isLiveDeclaration}
-            className="flex w-full h-8 rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
+            disabled={!isReady || !dryRunFullyPassed || !representationApprovalReady || !liveConfirmSatisfied || isSubmitting || isDryRunning || isLiveDeclaration}
+            className={`flex w-full h-8 rounded-md px-4 text-xs font-normal text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2 ${
+              isOrgLiveMode ? "bg-red-700 hover:bg-red-800" : "bg-black hover:bg-slate-800"
+            }`}
           >
             {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-4 w-4 text-green-400" />}
-            {isSubmitting ? "Transmitting to HMRC..." : "Submit to Customs Declarations API"}
+            {isSubmitting
+              ? "Transmitting to HMRC..."
+              : isOrgLiveMode
+                ? "Submit LIVE declaration to HMRC"
+                : "Submit to Customs Declarations API"}
           </button>
         </div>
       </div>

@@ -28,6 +28,22 @@ export const updateDatasetVersion = internalMutation({
   },
 });
 
+export const saveFxRatesCache = internalMutation({
+  args: {
+    base: v.string(),
+    rates: v.any(),
+    sourceVersion: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("fx_rates_cache", {
+      base: args.base,
+      rates: args.rates,
+      sourceVersion: args.sourceVersion,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
 export const listAllDatasets = query({
   handler: async (ctx) => {
     return await ctx.db.query("referenceDatasets").order("desc").take(200);

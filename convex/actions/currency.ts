@@ -54,6 +54,14 @@ export const syncExchangeRates = internalAction({
       storageUrl: `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${key}`,
     });
 
+    if (data?.base && data?.rates) {
+      await ctx.runMutation(internal.reference_data.saveFxRatesCache, {
+        base: String(data.base),
+        rates: data.rates,
+        sourceVersion: version,
+      });
+    }
+
     console.log(`Successfully synced exchange rates (${version})`);
     return { version, key };
   },

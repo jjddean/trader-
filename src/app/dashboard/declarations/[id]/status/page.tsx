@@ -21,7 +21,7 @@ import { generateClientFraudHeaders } from "@/lib/hmrc-fraud-headers";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import {
   ConvexSessionMissing,
-  DeclarationLoadingSpinner,
+  DeclarationPageSkeleton,
   isConvexSessionMissing,
 } from "@/components/declaration-session-states";
 
@@ -125,16 +125,17 @@ export default function StatusTimelinePage() {
     }
   }
 
-  if (!isLoaded) {
-    return <DeclarationLoadingSpinner />;
-  }
-
   if (isConvexSessionMissing(isLoaded, Boolean(isSignedIn), isConvexAuthLoading, isAuthenticated)) {
     return <ConvexSessionMissing />;
   }
 
-  if (isSignedIn && isAuthenticated && declaration === undefined) {
-    return <DeclarationLoadingSpinner />;
+  if (
+    declaration === undefined ||
+    notifications === undefined ||
+    submissions === undefined ||
+    auditLogs === undefined
+  ) {
+    return <DeclarationPageSkeleton />;
   }
 
   if (!declaration) {
