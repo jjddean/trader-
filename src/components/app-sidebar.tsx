@@ -111,7 +111,8 @@ export function AppSidebar() {
                   const isAnyChildActive = item.items?.some(subItem => 
                     pathname === subItem.href || (subItem.href !== "/dashboard" && pathname.startsWith(subItem.href))
                   );
-                  const defaultExpanded = item.label === "Compliance" ? true : isAnyChildActive;
+                  // Compliance stays collapsed until the user opens it.
+                  const defaultExpanded = item.label === "Compliance" ? false : isAnyChildActive;
 
                   return (
                     <Collapsible
