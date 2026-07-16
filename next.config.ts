@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
   redirects: async () => {
     return [
       {
+        source: "/dashborad",
+        destination: "/dashboard",
+        permanent: false,
+      },
+      {
         source: "/dashboard/import/tre",
         destination: "/dashboard/tre-import",
         permanent: true,
