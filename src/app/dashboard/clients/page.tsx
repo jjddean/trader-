@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
-import { Plus, Search, Loader2, Pencil, Archive, ArchiveRestore, Users } from "lucide-react";
+import { Plus, Search, Loader2, Archive, ArchiveRestore, Users, ArrowRight } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import {
@@ -13,6 +13,14 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countries } from "@/lib/data/countries";
 import { cn } from "@/lib/utils";
 
@@ -46,57 +54,91 @@ const FIELD_LABEL = "mb-1.5 block text-[0.625rem] font-semibold tracking-widest 
 const FIELD_INPUT =
   "h-9 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700 transition-colors focus:border-slate-400 focus:outline-none";
 
-export default function ClientsPage() {
-  const { isLoaded: isClerkLoaded, isSignedIn } = useAuth();
-  const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
-  const authReady = Boolean(isClerkLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated);
+const FORM_LABEL = "text-[11px] font-medium text-slate-600";
+const FORM_INPUT =
+  "mt-1 h-9 w-full rounded-md border border-slate-200 px-3 text-xs text-slate-800 outline-none focus:border-slate-400";
+const FORM_TEXTAREA =
+  "mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-xs text-slate-800 outline-none focus:border-slate-400";
 
-  const clients = useQuery(api.clients.list, authReady ? { includeArchived: true } : "skip");
-  const createClient = useMutation(api.clients.create);
+function CountrySelect({
+  id,
+  value,
+  onChange,
+  triggerClassName,
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  triggerClassName?: string;
+}) {
+  return (
+    <Select
+      value={value || "__none__"}
+      onValueChange={(next) => onChange(next === "__none__" ? "" : next)}
+    >
+      <SelectTrigger id={id} className={triggerClassName ?? cn(FORM_INPUT, "bg-white")}>
+        <SelectValue placeholder="Select country" />
+      </SelectTrigger>
+      <SelectContent position="popper" className="z-[110] max-h-[300px]">
+        <SelectItem value="__none__" className="text-xs">
+          Select country
+        </SelectItem>
+        {countries.map((c) => (
+          <SelectItem key={c.code} value={c.code} className="text-xs">
+            {c.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function clientToForm(client: NonNullable<ReturnType<typeof useQuery<typeof api.clients.get>>>): ClientForm {
+  return {
+    name: client.name ?? "",
+    eori: client.eori ?? "",
+    addressLine: client.addressLine ?? "",
+    city: client.city ?? "",
+    postcode: client.postcode ?? "",
+    country: client.country ?? "",
+    contactName: client.contactName ?? "",
+    contactEmail: client.contactEmail ?? "",
+    contactPhone: client.contactPhone ?? "",
+    notes: client.notes ?? "",
+  };
+}
+
+function statusTone(status: string) {
+  if (status === "archived") return "border-slate-200 bg-slate-50 text-slate-700";
+  return "border-green-200 bg-green-50 text-green-800";
+}
+
+function ClientWorkspaceBody({
+  clientId,
+  client,
+  onArchive,
+  isArchiving,
+}: {
+  clientId: Id<"clients">;
+  client: ReturnType<typeof useQuery<typeof api.clients.get>>;
+  onArchive: () => Promise<void>;
+  isArchiving: boolean;
+}) {
   const updateClient = useMutation(api.clients.update);
-  const setStatus = useMutation(api.clients.setStatus);
-
-  // Hold the loading state until auth is ready AND the first query result
-  // arrives — otherwise empty state flashes before Convex answers.
-  const isLoading = !authReady || clients === undefined;
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState<Id<"clients"> | null>(null);
-  const [form, setForm] = useState<ClientForm>(EMPTY_FORM);
+  const [form, setForm] = useState<ClientForm | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (client) setForm(clientToForm(client));
+  }, [client]);
 
   const setField = (key: keyof ClientForm, value: string) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
 
-  const openCreate = () => {
-    setEditingId(null);
-    setForm(EMPTY_FORM);
-    setError(null);
-    setShowModal(true);
-  };
-
-  const openEdit = (client: NonNullable<typeof clients>[number]) => {
-    setEditingId(client._id);
-    setForm({
-      name: client.name ?? "",
-      eori: client.eori ?? "",
-      addressLine: client.addressLine ?? "",
-      city: client.city ?? "",
-      postcode: client.postcode ?? "",
-      country: client.country ?? "",
-      contactName: client.contactName ?? "",
-      contactEmail: client.contactEmail ?? "",
-      contactPhone: client.contactPhone ?? "",
-      notes: client.notes ?? "",
-    });
-    setError(null);
-    setShowModal(true);
-  };
-
-  const handleSave = async () => {
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form) return;
     if (form.name.trim().length < 2) {
       setError("Client name is required.");
       return;
@@ -104,7 +146,8 @@ export default function ClientsPage() {
     setIsSaving(true);
     setError(null);
     try {
-      const payload = {
+      await updateClient({
+        clientId,
         name: form.name,
         eori: form.eori,
         addressLine: form.addressLine,
@@ -115,13 +158,295 @@ export default function ClientsPage() {
         contactEmail: form.contactEmail,
         contactPhone: form.contactPhone,
         notes: form.notes,
-      };
-      if (editingId) {
-        await updateClient({ clientId: editingId, ...payload });
-      } else {
-        await createClient(payload);
-      }
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save client.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex min-h-full flex-col">
+      <SheetHeader className="sticky top-0 z-10 shrink-0 border-b border-slate-100 bg-white px-6 pt-6 pb-5 sm:px-8">
+        <div className="flex flex-col gap-4 pr-8 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <SheetTitle className="truncate text-lg font-semibold text-slate-900">
+              {client?.name ?? "…"}
+            </SheetTitle>
+            <SheetDescription className="mt-1 text-xs text-slate-500">
+              Trader profile for declarations you file on their behalf
+            </SheetDescription>
+            {client && (
+              <span
+                className={cn(
+                  "mt-2 inline-flex rounded-md border px-2 py-0.5 text-[10px] font-medium tracking-wider uppercase",
+                  statusTone(client.status),
+                )}
+              >
+                {client.status === "archived" ? "Archived" : "Active"}
+              </span>
+            )}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void onArchive()}
+              disabled={!client || isArchiving}
+              className="flex h-9 items-center gap-2 rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            >
+              {isArchiving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : client?.status === "archived" ? (
+                <ArchiveRestore className="h-3.5 w-3.5" />
+              ) : (
+                <Archive className="h-3.5 w-3.5" />
+              )}
+              {client?.status === "archived" ? "Restore" : "Archive"}
+            </button>
+          </div>
+        </div>
+      </SheetHeader>
+
+      <div className="flex-1 space-y-6 px-6 py-6 sm:px-8">
+        {!client || !form ? (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading client…
+          </div>
+        ) : (
+          <section className="rounded-xl border border-slate-200 bg-white p-5">
+            <h2 className="text-sm font-semibold text-black">Client profile</h2>
+            <p className="mt-1 text-xs leading-relaxed text-slate-500">
+              Reusable importer details for declarations. Update fields here when the trader&apos;s address, EORI, or
+              contact changes. FreightCode does not register EORI on your behalf.
+            </p>
+
+            <form onSubmit={(e) => void handleSave(e)} className="mt-5 space-y-6">
+              <div>
+                <h3 className="text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">Trader</h3>
+                <div className="mt-2 space-y-4 rounded-lg border border-slate-200 p-4">
+                  <div>
+                    <label htmlFor="client-name" className={FORM_LABEL}>
+                      Client / Trader name
+                    </label>
+                    <input
+                      id="client-name"
+                      type="text"
+                      value={form.name}
+                      onChange={(e) => setField("name", e.target.value)}
+                      className={FORM_INPUT}
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="client-eori" className={FORM_LABEL}>
+                        EORI (optional)
+                      </label>
+                      <input
+                        id="client-eori"
+                        type="text"
+                        value={form.eori}
+                        onChange={(e) => setField("eori", e.target.value)}
+                        placeholder="e.g. GB123456789000"
+                        className={FORM_INPUT}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="client-country" className={FORM_LABEL}>
+                        Country
+                      </label>
+                      <CountrySelect
+                        id="client-country"
+                        value={form.country}
+                        onChange={(value) => setField("country", value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">Address</h3>
+                <div className="mt-2 space-y-4 rounded-lg border border-slate-200 p-4">
+                  <div>
+                    <label htmlFor="client-address" className={FORM_LABEL}>
+                      Address line
+                    </label>
+                    <input
+                      id="client-address"
+                      type="text"
+                      value={form.addressLine}
+                      onChange={(e) => setField("addressLine", e.target.value)}
+                      className={FORM_INPUT}
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="client-city" className={FORM_LABEL}>
+                        City
+                      </label>
+                      <input
+                        id="client-city"
+                        type="text"
+                        value={form.city}
+                        onChange={(e) => setField("city", e.target.value)}
+                        className={FORM_INPUT}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="client-postcode" className={FORM_LABEL}>
+                        Postcode
+                      </label>
+                      <input
+                        id="client-postcode"
+                        type="text"
+                        value={form.postcode}
+                        onChange={(e) => setField("postcode", e.target.value)}
+                        className={FORM_INPUT}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
+                  Contact &amp; notes
+                </h3>
+                <div className="mt-2 space-y-4 rounded-lg border border-slate-200 p-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="client-contact-name" className={FORM_LABEL}>
+                        Contact name
+                      </label>
+                      <input
+                        id="client-contact-name"
+                        type="text"
+                        value={form.contactName}
+                        onChange={(e) => setField("contactName", e.target.value)}
+                        className={FORM_INPUT}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="client-contact-phone" className={FORM_LABEL}>
+                        Contact phone
+                      </label>
+                      <input
+                        id="client-contact-phone"
+                        type="text"
+                        value={form.contactPhone}
+                        onChange={(e) => setField("contactPhone", e.target.value)}
+                        className={FORM_INPUT}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="client-contact-email" className={FORM_LABEL}>
+                      Contact email
+                    </label>
+                    <input
+                      id="client-contact-email"
+                      type="email"
+                      value={form.contactEmail}
+                      onChange={(e) => setField("contactEmail", e.target.value)}
+                      className={FORM_INPUT}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="client-notes" className={FORM_LABEL}>
+                      Notes
+                    </label>
+                    <textarea
+                      id="client-notes"
+                      value={form.notes}
+                      onChange={(e) => setField("notes", e.target.value)}
+                      rows={3}
+                      className={FORM_TEXTAREA}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {error && (
+                <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSaving || form.name.trim().length < 2}
+                className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+              >
+                {isSaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Save changes
+              </button>
+            </form>
+          </section>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function ClientsPage() {
+  const { isLoaded: isClerkLoaded, isSignedIn } = useAuth();
+  const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
+  const authReady = Boolean(isClerkLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated);
+
+  const clients = useQuery(api.clients.list, authReady ? { includeArchived: true } : "skip");
+  const createClient = useMutation(api.clients.create);
+  const setStatus = useMutation(api.clients.setStatus);
+
+  const [selectedClientId, setSelectedClientId] = useState<Id<"clients"> | null>(null);
+  const selectedClient = useQuery(
+    api.clients.get,
+    authReady && selectedClientId ? { clientId: selectedClientId } : "skip",
+  );
+
+  const isLoading = !authReady || clients === undefined;
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState<ClientForm>(EMPTY_FORM);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [isArchiving, setIsArchiving] = useState(false);
+
+  const setField = (key: keyof ClientForm, value: string) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
+
+  const openClient = (id: Id<"clients">) => setSelectedClientId(id);
+  const closeClient = () => setSelectedClientId(null);
+
+  const openCreate = () => {
+    setForm(EMPTY_FORM);
+    setError(null);
+    setShowModal(true);
+  };
+
+  const handleCreate = async () => {
+    if (form.name.trim().length < 2) {
+      setError("Client name is required.");
+      return;
+    }
+    setIsSaving(true);
+    setError(null);
+    try {
+      const result = await createClient({
+        name: form.name,
+        eori: form.eori,
+        addressLine: form.addressLine,
+        city: form.city,
+        postcode: form.postcode,
+        country: form.country,
+        contactName: form.contactName,
+        contactEmail: form.contactEmail,
+        contactPhone: form.contactPhone,
+        notes: form.notes,
+      });
       setShowModal(false);
+      openClient(result.clientId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save client.");
     } finally {
@@ -138,6 +463,19 @@ export default function ClientsPage() {
       });
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const handleSheetArchive = async () => {
+    if (!selectedClient) return;
+    setIsArchiving(true);
+    try {
+      await setStatus({
+        clientId: selectedClient._id,
+        status: selectedClient.status === "archived" ? "active" : "archived",
+      });
+    } finally {
+      setIsArchiving(false);
     }
   };
 
@@ -172,7 +510,7 @@ export default function ClientsPage() {
 
       <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none">
         <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
-          <div className="relative max-w-md">
+          <div className="relative flex-1">
             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
@@ -224,9 +562,11 @@ export default function ClientsPage() {
                 filtered.map((client) => (
                   <tr
                     key={client._id}
+                    onClick={() => openClient(client._id)}
                     className={cn(
-                      "group transition-colors hover:bg-slate-50",
+                      "group cursor-pointer transition-colors hover:bg-slate-50",
                       client.status === "archived" && "opacity-50",
+                      selectedClientId === client._id && "bg-slate-50",
                     )}
                   >
                     <td className="px-6 py-4">
@@ -261,20 +601,15 @@ export default function ClientsPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                      <div className="inline-flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => openEdit(client)}
-                          className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                          title="Edit"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleArchive(client)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleToggleArchive(client);
+                          }}
                           disabled={busyId === client._id}
-                          className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                          className="rounded-md p-1.5 text-slate-400 opacity-0 transition-opacity hover:bg-slate-100 hover:text-slate-700 group-hover:opacity-100"
                           title={client.status === "archived" ? "Restore" : "Archive"}
                         >
                           {busyId === client._id ? (
@@ -285,6 +620,7 @@ export default function ClientsPage() {
                             <Archive className="h-4 w-4" />
                           )}
                         </button>
+                        <ArrowRight className="h-4 w-4 text-slate-400 opacity-0 transition-opacity group-hover:opacity-100" />
                       </div>
                     </td>
                   </tr>
@@ -295,161 +631,171 @@ export default function ClientsPage() {
         </div>
       </div>
 
+      <Sheet open={!!selectedClientId} onOpenChange={(open) => !open && closeClient()}>
+        <SheetContent
+          side="right"
+          className="w-full overflow-y-auto p-0 sm:max-w-none"
+          style={{ width: "calc(100vw - 15rem)", maxWidth: "calc(100vw - 15rem)" }}
+        >
+          {selectedClientId && (
+            <ClientWorkspaceBody
+              clientId={selectedClientId}
+              client={selectedClient}
+              onArchive={handleSheetArchive}
+              isArchiving={isArchiving}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+
       <Dialog open={showModal} onOpenChange={setShowModal}>
         {showModal ? (
-        <DialogContent className="sm:max-w-[560px]">
-          <DialogHeader>
-            <DialogTitle>{editingId ? "Edit Client" : "New Client"}</DialogTitle>
-          </DialogHeader>
-          <div className="grid max-h-[60vh] gap-4 overflow-y-auto py-2 pr-1">
-            <div>
-              <label htmlFor="name" className={FIELD_LABEL}>
-                Client / Trader name <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="name"
-                value={form.name}
-                onChange={(e) => setField("name", e.target.value)}
-                placeholder="e.g. Acme Imports Ltd"
-                className={FIELD_INPUT}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
+          <DialogContent className="sm:max-w-[560px]">
+            <DialogHeader>
+              <DialogTitle>New Client</DialogTitle>
+            </DialogHeader>
+            <div className="grid max-h-[60vh] gap-4 overflow-y-auto py-2 pr-1">
               <div>
-                <label htmlFor="eori" className={FIELD_LABEL}>
-                  EORI (optional)
+                <label htmlFor="name" className={FIELD_LABEL}>
+                  Client / Trader name <span className="text-red-500">*</span>
                 </label>
                 <input
-                  id="eori"
-                  value={form.eori}
-                  onChange={(e) => setField("eori", e.target.value)}
-                  placeholder="e.g. GB123456789000"
+                  id="name"
+                  value={form.name}
+                  onChange={(e) => setField("name", e.target.value)}
+                  placeholder="e.g. Acme Imports Ltd"
                   className={FIELD_INPUT}
                 />
               </div>
-              <div>
-                <label htmlFor="country" className={FIELD_LABEL}>
-                  Country
-                </label>
-                <select
-                  id="country"
-                  value={form.country}
-                  onChange={(e) => setField("country", e.target.value)}
-                  className={FIELD_INPUT}
-                >
-                  <option value="">Select country</option>
-                  {countries.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="eori" className={FIELD_LABEL}>
+                    EORI (optional)
+                  </label>
+                  <input
+                    id="eori"
+                    value={form.eori}
+                    onChange={(e) => setField("eori", e.target.value)}
+                    placeholder="e.g. GB123456789000"
+                    className={FIELD_INPUT}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="country" className={FIELD_LABEL}>
+                    Country
+                  </label>
+                  <CountrySelect
+                    id="country"
+                    value={form.country}
+                    onChange={(value) => setField("country", value)}
+                    triggerClassName={FIELD_INPUT}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label htmlFor="addressLine" className={FIELD_LABEL}>
-                Address line
-              </label>
-              <input
-                id="addressLine"
-                value={form.addressLine}
-                onChange={(e) => setField("addressLine", e.target.value)}
-                placeholder="Street and number"
-                className={FIELD_INPUT}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="city" className={FIELD_LABEL}>
-                  City
+                <label htmlFor="addressLine" className={FIELD_LABEL}>
+                  Address line
                 </label>
                 <input
-                  id="city"
-                  value={form.city}
-                  onChange={(e) => setField("city", e.target.value)}
+                  id="addressLine"
+                  value={form.addressLine}
+                  onChange={(e) => setField("addressLine", e.target.value)}
+                  placeholder="Street and number"
                   className={FIELD_INPUT}
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="city" className={FIELD_LABEL}>
+                    City
+                  </label>
+                  <input
+                    id="city"
+                    value={form.city}
+                    onChange={(e) => setField("city", e.target.value)}
+                    className={FIELD_INPUT}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="postcode" className={FIELD_LABEL}>
+                    Postcode
+                  </label>
+                  <input
+                    id="postcode"
+                    value={form.postcode}
+                    onChange={(e) => setField("postcode", e.target.value)}
+                    className={FIELD_INPUT}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="contactName" className={FIELD_LABEL}>
+                    Contact name
+                  </label>
+                  <input
+                    id="contactName"
+                    value={form.contactName}
+                    onChange={(e) => setField("contactName", e.target.value)}
+                    className={FIELD_INPUT}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="contactPhone" className={FIELD_LABEL}>
+                    Contact phone
+                  </label>
+                  <input
+                    id="contactPhone"
+                    value={form.contactPhone}
+                    onChange={(e) => setField("contactPhone", e.target.value)}
+                    className={FIELD_INPUT}
+                  />
+                </div>
+              </div>
+
               <div>
-                <label htmlFor="postcode" className={FIELD_LABEL}>
-                  Postcode
+                <label htmlFor="contactEmail" className={FIELD_LABEL}>
+                  Contact email
                 </label>
                 <input
-                  id="postcode"
-                  value={form.postcode}
-                  onChange={(e) => setField("postcode", e.target.value)}
+                  id="contactEmail"
+                  type="email"
+                  value={form.contactEmail}
+                  onChange={(e) => setField("contactEmail", e.target.value)}
                   className={FIELD_INPUT}
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="contactName" className={FIELD_LABEL}>
-                  Contact name
+                <label htmlFor="notes" className={FIELD_LABEL}>
+                  Notes
                 </label>
-                <input
-                  id="contactName"
-                  value={form.contactName}
-                  onChange={(e) => setField("contactName", e.target.value)}
-                  className={FIELD_INPUT}
+                <textarea
+                  id="notes"
+                  value={form.notes}
+                  onChange={(e) => setField("notes", e.target.value)}
+                  rows={2}
+                  className={cn(FIELD_INPUT, "h-auto py-2")}
                 />
               </div>
-              <div>
-                <label htmlFor="contactPhone" className={FIELD_LABEL}>
-                  Contact phone
-                </label>
-                <input
-                  id="contactPhone"
-                  value={form.contactPhone}
-                  onChange={(e) => setField("contactPhone", e.target.value)}
-                  className={FIELD_INPUT}
-                />
-              </div>
-            </div>
 
-            <div>
-              <label htmlFor="contactEmail" className={FIELD_LABEL}>
-                Contact email
-              </label>
-              <input
-                id="contactEmail"
-                type="email"
-                value={form.contactEmail}
-                onChange={(e) => setField("contactEmail", e.target.value)}
-                className={FIELD_INPUT}
-              />
+              {error && <p className="text-xs text-red-600">{error}</p>}
             </div>
-
-            <div>
-              <label htmlFor="notes" className={FIELD_LABEL}>
-                Notes
-              </label>
-              <textarea
-                id="notes"
-                value={form.notes}
-                onChange={(e) => setField("notes", e.target.value)}
-                rows={2}
-                className={cn(FIELD_INPUT, "h-auto py-2")}
-              />
-            </div>
-
-            {error && <p className="text-xs text-red-600">{error}</p>}
-          </div>
-          <DialogFooter>
-            <button
-              disabled={isSaving || form.name.trim().length < 2}
-              onClick={handleSave}
-              className="flex h-9 w-full items-center justify-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-slate-800 disabled:opacity-50 sm:w-auto"
-            >
-              {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-              {editingId ? "Save changes" : "Create client"}
-            </button>
-          </DialogFooter>
-        </DialogContent>
+            <DialogFooter>
+              <button
+                disabled={isSaving || form.name.trim().length < 2}
+                onClick={() => void handleCreate()}
+                className="flex h-9 w-full items-center justify-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-slate-800 disabled:opacity-50 sm:w-auto"
+              >
+                {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+                Create client
+              </button>
+            </DialogFooter>
+          </DialogContent>
         ) : null}
       </Dialog>
     </div>

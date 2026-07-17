@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  BookOpen,
   ChevronDown,
   ExternalLink,
+  Filter,
   Loader2,
   Search,
 } from "lucide-react";
@@ -78,18 +78,33 @@ function typeTone(type: EntryType) {
 export function ControlListBrowser() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [type, setType] = useState<"all" | EntryType>("all");
+  const [type, setType] = useState<"all" | EntryType | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
   const [data, setData] = useState<BrowseResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [detail, setDetail] = useState<EntryDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  const isBrowseActive = type !== null || debouncedQuery.length > 0;
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedQuery(query.trim()), 250);
     return () => window.clearTimeout(timer);
   }, [query]);
+
+  useEffect(() => {
+    if (!showFilters) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setShowFilters(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showFilters]);
 
   const loadList = useCallback(
     async (offset = 0, append = false) => {
@@ -101,7 +116,7 @@ export function ControlListBrowser() {
           offset: String(offset),
         });
         if (debouncedQuery) params.set("q", debouncedQuery);
-        if (type !== "all") params.set("type", type);
+        if (type && type !== "all") params.set("type", type);
         const res = await fetch(`/api/export-controls/control-list?${params}`);
         const json = (await res.json()) as BrowseResponse & { error?: string };
         if (!res.ok)
@@ -124,8 +139,9 @@ export function ControlListBrowser() {
   );
 
   useEffect(() => {
+    if (!isBrowseActive) return;
     void loadList(0, false);
-  }, [loadList]);
+  }, [isBrowseActive, loadList]);
 
   useEffect(() => {
     if (!selectedCode) {
@@ -163,89 +179,89 @@ export function ControlListBrowser() {
   const hasMore = data ? data.entries.length < data.total : false;
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-slate-500" />
-            <h1 className="text-sm font-semibold text-slate-900">
-              Control List
-            </h1>
+    <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none">
+      <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search entry code, title, category…"
+              className="h-9 w-full rounded-md border border-slate-200 bg-white pl-8 pr-4 text-xs text-slate-700 outline-none transition-colors focus:border-slate-400"
+            />
           </div>
-          <p className="mt-1 text-xs text-slate-500">
-            Browse UK military, dual-use, firearms and radioactive entries.
-            Classification still requires human review.
-          </p>
+          <div className="relative" ref={filterRef}>
+            <button
+              type="button"
+              onClick={() => setShowFilters((prev) => !prev)}
+              className={cn(
+                "flex h-9 items-center gap-2 rounded-md border bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50",
+                type !== null && type !== "all" ? "border-slate-400" : "border-slate-200",
+              )}
+            >
+              <Filter className="h-3 w-3" />
+              Filter
+            </button>
+            {showFilters && (
+              <div className="absolute right-0 top-10 z-[120] w-44 rounded-md border border-slate-200 bg-white p-2 shadow-md">
+                {TYPE_FILTERS.map((filter) => (
+                  <button
+                    key={filter.value}
+                    type="button"
+                    onClick={() => {
+                      setType(filter.value);
+                      setSelectedCode(null);
+                      setShowFilters(false);
+                    }}
+                    className={cn(
+                      "block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100",
+                      type === filter.value && "bg-slate-100 font-medium text-black",
+                    )}
+                  >
+                    {filter.label}
+                    {data && filter.value !== "all"
+                      ? ` (${data.typeCounts[filter.value]})`
+                      : ""}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
+      </div>
+
+      <div className="px-5 pb-5 pt-4">
         {data && (
-          <div className="text-right text-[11px] text-slate-500">
-            <p>
-              Version{" "}
-              <span className="font-medium text-slate-700">{data.version}</span>
-            </p>
-            <p>Effective {data.effectiveDate}</p>
+          <p className="text-[11px] text-slate-500">
+            Showing {data.entries.length} of {data.total.toLocaleString()}{" "}
+            matching · {data.entryCount.toLocaleString()} total entries
+            {" · "}
+            Version {data.version} · Effective {data.effectiveDate}
+            {" · "}
             <a
               href={data.govSourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 inline-flex items-center gap-1 text-blue-600 hover:underline"
+              className="inline-flex items-center gap-1 text-blue-600 hover:underline"
             >
               GOV.UK source <ExternalLink className="h-3 w-3" />
             </a>
+          </p>
+        )}
+        {error && (
+          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
+            {error}
           </div>
         )}
-      </div>
 
-      <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search entry code, title, category…"
-            className="h-9 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-slate-400"
-          />
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {TYPE_FILTERS.map((filter) => (
-            <button
-              key={filter.value}
-              type="button"
-              onClick={() => {
-                setType(filter.value);
-                setSelectedCode(null);
-              }}
-              className={cn(
-                "h-8 rounded-md px-3 text-[11px] font-medium transition-colors",
-                type === filter.value
-                  ? "bg-slate-900 text-white"
-                  : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
-              )}
-            >
-              {filter.label}
-              {data && filter.value !== "all"
-                ? ` (${data.typeCounts[filter.value]})`
-                : ""}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {data && (
-        <p className="mt-3 text-[11px] text-slate-500">
-          Showing {data.entries.length} of {data.total.toLocaleString()}{" "}
-          matching · {data.entryCount.toLocaleString()} total entries
-        </p>
-      )}
-      {error && (
-        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-          {error}
-        </div>
-      )}
-
-      <div className="mt-4 max-h-[560px] overflow-y-auto rounded-md border border-slate-100 bg-white">
-        {loading && !data ? (
+        <div className="mt-4 max-h-[560px] overflow-y-auto rounded-md border border-slate-100 bg-white">
+        {!isBrowseActive ? (
+          <p className="px-6 py-16 text-center text-xs text-slate-500">
+            Search or choose a category from Filter to browse the control list.
+          </p>
+        ) : loading && !data ? (
           <div className="flex items-center justify-center gap-2 px-6 py-16 text-xs text-slate-500">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading control list…
@@ -438,7 +454,8 @@ export function ControlListBrowser() {
             )}
           </>
         )}
+        </div>
       </div>
-    </section>
+    </div>
   );
 }

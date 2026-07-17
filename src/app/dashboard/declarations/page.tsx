@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -62,6 +62,18 @@ export default function DeclarationsPage() {
 
   const deleteDecl = useMutation(api.declarations.deleteDeclaration);
   const [deletingId, setDeletingId] = useState<Id<"declarations"> | null>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showFilters) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setShowFilters(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showFilters]);
 
   const handleDelete = async (e: React.MouseEvent, id: Id<"declarations">) => {
     e.stopPropagation();
@@ -168,7 +180,7 @@ export default function DeclarationsPage() {
                 className="h-9 w-full rounded-md border border-slate-200 bg-white pl-8 pr-4 text-xs text-slate-700 outline-none transition-colors focus:border-slate-400"
               />
             </div>
-            <div className="relative">
+            <div className="relative" ref={filterRef}>
               <button
                 type="button"
                 onClick={() => setShowFilters((prev) => !prev)}

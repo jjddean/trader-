@@ -7,14 +7,11 @@ import {
   AlertCircle,
   Copy,
   Check,
-  BookOpen,
   ExternalLink,
   Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useAction, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -337,50 +334,46 @@ export function HSCodeLookup({
 
   if (variant === "card") {
     return (
-      <div className={cn("rounded-lg border border-slate-200 bg-white p-5 shadow-sm", className)}>
-        <div className="mb-3 flex items-center gap-2">
-          <BookOpen className="h-4 w-4 text-slate-500" />
-          <h3 className="text-sm font-semibold text-slate-900">HS Code Lookup</h3>
-          {!isDbLoaded && <span className="text-[11px] text-slate-400">Loading database…</span>}
+      <div className={cn("flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none", className)}>
+        <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by product description or HS Code..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              disabled={!isDbLoaded}
+              className="h-9 w-full rounded-md border border-slate-200 bg-white pl-8 pr-4 text-xs text-slate-700 outline-none transition-colors focus:border-slate-400 disabled:opacity-50"
+            />
+            {loading && (
+              <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-slate-400" />
+            )}
+          </div>
         </div>
 
-        <div className="flex gap-2">
-          <Input
-            type="text"
-            placeholder="Enter product description or HS Code (e.g. 'Coffee', '8517')"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            disabled={!isDbLoaded}
-            className="h-9 flex-1 border-slate-200 bg-white text-xs shadow-none placeholder:text-slate-400 focus-visible:border-slate-300 focus-visible:ring-0"
-          />
-          <Button
-            type="button"
-            size="icon"
-            onClick={handleSearch}
-            disabled={!isDbLoaded || loading || !searchTerm.trim()}
-            className="size-9 shrink-0 bg-[#0f172a] text-white hover:bg-slate-800"
-          >
-            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
-          </Button>
-        </div>
+        <div className="p-5">
+          {!isDbLoaded && (
+            <p className="mb-3 text-[11px] text-slate-400">Loading database…</p>
+          )}
 
         {searched && displayResults.length === 0 && !loading && (
-          <div className="mt-4 flex items-center gap-2 rounded-md border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-xs text-slate-500">
+          <div className="flex items-center gap-2 rounded-md border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-xs text-slate-500">
             <AlertCircle className="h-4 w-4 shrink-0" />
             No HS codes found for &ldquo;{searchTerm}&rdquo;
           </div>
         )}
 
         {displayResults.length > 0 && (
-          <div className="mt-3 space-y-3">
+          <div className="space-y-3">
             <DescriptionGuidance compact />
             {resultsPanel}
           </div>
         )}
 
         {!searched && !loading && (
-          <div className="mt-6 flex flex-col items-center py-6 text-center">
+          <div className="flex flex-col items-center py-6 text-center">
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
               <Search className="h-4 w-4 text-slate-300" />
             </div>
@@ -399,6 +392,7 @@ export function HSCodeLookup({
               : "Initializing…"}
           </span>
           <span>Source: HMRC Trade Tariff API</span>
+        </div>
         </div>
       </div>
     );

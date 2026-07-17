@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -35,11 +35,14 @@ import { ExportRoutingBanner } from "@/components/trade-compliance/export-routin
 import { ConsultantSignoffCard } from "@/components/trade-compliance/consultant-signoff-card";
 import { EndUserSendCard } from "@/components/trade-compliance/end-user-send-card";
 import { ExportDraftPackPanel, buildDraftPackFromDetail } from "@/components/trade-compliance/export-draft-pack-panel";
-import { ExportLicencesPanel } from "@/components/trade-compliance/export-licences-panel";
 import { openDraftPackPrintDialog } from "@/lib/export-controls/draft-pack";
 import { countries } from "@/lib/data/countries";
+import {
+  getRememberedAssessmentsSnapshot,
+  rememberAssessmentsSnapshot,
+} from "@/lib/dashboard-compliance-cache";
 
-type AssessmentTab = "overview" | "export" | "sanctions" | "draft" | "licences" | "documents" | "audit";
+type AssessmentTab = "overview" | "export" | "sanctions" | "draft" | "documents" | "audit";
 
 const STATUS_FILTER_OPTIONS = [
   { value: "all", label: "All statuses" },
@@ -54,8 +57,7 @@ const assessmentTabs: Array<{ id: AssessmentTab; label: string }> = [
   { id: "documents", label: "Documents" },
   { id: "export", label: "Export Controls" },
   { id: "sanctions", label: "Sanctions" },
-  { id: "draft", label: "Draft Pack" },
-  { id: "licences", label: "Licences" },
+  { id: "draft", label: "Licence management" },
   { id: "audit", label: "Audit Log" },
 ];
 
@@ -325,11 +327,8 @@ function AssessmentSheetBody({
           <ExportDraftPackPanel
             assessmentId={assessmentId}
             assessmentStatus={assessment.status}
-            onOpenLicences={() => onTabChange("licences")}
           />
         )}
-
-        {assessmentTab === "licences" && <ExportLicencesPanel assessmentId={assessmentId} />}
 
         {assessmentTab === "audit" && (
           <PlaceholderPane
@@ -343,7 +342,8 @@ function AssessmentSheetBody({
 }
 
 export default function TradeCompliancePage() {
-  const { isLoaded, isSignedIn } = useUser();
+  const { isLoaded, isSignedIn, user } = useUser();
+  const clerkUserId = user?.id ?? "";
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const canQuery = isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated;
 
@@ -355,6 +355,14 @@ export default function TradeCompliancePage() {
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTER_OPTIONS)[number]["value"]>("all");
 
   const assessments = useQuery(api.export_controls.listAssessments, canQuery ? {} : "skip");
+  const remembered = clerkUserId ? getRememberedAssessmentsSnapshot(clerkUserId) : null;
+  const resolvedAssessments = assessments ?? remembered?.assessments;
+
+  useEffect(() => {
+    if (!clerkUserId || assessments === undefined) return;
+    rememberAssessmentsSnapshot(clerkUserId, assessments);
+  }, [clerkUserId, assessments]);
+
   const assessmentDetail = useQuery(
     api.export_controls.getAssessment,
     canQuery && selectedAssessmentId ? { assessmentId: selectedAssessmentId } : "skip",
@@ -381,14 +389,20 @@ export default function TradeCompliancePage() {
     }
   };
 
-  const reviewCount =
-    assessments?.filter((a) => a.status === "flagged" || a.status === "review_required").length ?? 0;
-  const draftCount = assessments?.filter((a) => a.status === "draft").length ?? 0;
+  // Only first load (no live query and no remembered snapshot) shows placeholders.
+  const isAssessmentsLoading = resolvedAssessments === undefined;
+  const reviewCount = resolvedAssessments
+    ? resolvedAssessments.filter((a) => a.status === "flagged" || a.status === "review_required").length
+    : null;
+  const draftCount = resolvedAssessments
+    ? resolvedAssessments.filter((a) => a.status === "draft").length
+    : null;
+  const openCount = resolvedAssessments ? resolvedAssessments.length : null;
 
   const filteredAssessments = useMemo(() => {
-    if (!assessments) return [];
+    if (!resolvedAssessments) return [];
 
-    return assessments.filter((row) => {
+    return resolvedAssessments.filter((row) => {
       const query = searchQuery.trim().toLowerCase();
       const destinationLabel = resolveCountryLabel(row.destinationCountry).toLowerCase();
       const matchesSearch =
@@ -399,9 +413,8 @@ export default function TradeCompliancePage() {
       const matchesStatus = statusFilter === "all" || row.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [assessments, searchQuery, statusFilter]);
+  }, [resolvedAssessments, searchQuery, statusFilter]);
 
-  const isAssessmentsLoading = canQuery && assessments === undefined;
   const hasActiveFilters = searchQuery.trim().length > 0 || statusFilter !== "all";
 
   return (
@@ -426,7 +439,7 @@ export default function TradeCompliancePage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         {[
-          { label: "Open assessments", value: assessments?.length ?? "—", icon: ClipboardList, hint: "All active checks" },
+          { label: "Open assessments", value: openCount, icon: ClipboardList, hint: "All active checks" },
           { label: "Review required", value: reviewCount, icon: AlertTriangle, hint: "Flagged or needs review" },
           { label: "Draft", value: draftCount, icon: CheckCircle2, hint: "Not yet submitted" },
         ].map(({ label, value, icon: Icon, hint }) => (
@@ -435,7 +448,11 @@ export default function TradeCompliancePage() {
               <p className="text-[0.625rem] font-semibold tracking-widest text-slate-500 uppercase">{label}</p>
               <Icon className="h-4 w-4 text-slate-400" />
             </div>
-            <p className="mt-3 text-2xl font-medium tracking-tight text-slate-900 tabular-nums">{value}</p>
+            {value === null ? (
+              <div className="mt-3 h-8 w-16 animate-pulse rounded bg-slate-100" aria-hidden />
+            ) : (
+              <p className="mt-3 text-2xl font-medium tracking-tight text-slate-900 tabular-nums">{value}</p>
+            )}
             <p className="mt-1 text-[0.625rem] text-slate-500">{hint}</p>
           </div>
         ))}
