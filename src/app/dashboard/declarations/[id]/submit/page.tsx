@@ -15,6 +15,12 @@ import {
   DeclarationPageSkeleton,
   isConvexSessionMissing,
 } from "@/components/declaration-session-states";
+import type { Doc } from "../../../../../../convex/_generated/dataModel";
+
+type DocumentRequirementRow = Pick<
+  Doc<"document_requirements">,
+  "status" | "requirementLevel" | "code"
+>;
 
 export default function SubmitPage() {
   const { isLoaded, isSignedIn, userId } = useAuth();
@@ -48,7 +54,6 @@ export default function SubmitPage() {
     isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId ? { declarationId } : "skip",
   );
   const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
-  const setRepresentationDetails = useMutation(api.representation.setRepresentationDetails);
   const approveIndirectRepresentation = useMutation(api.representation.approveIndirectRepresentation);
 
   const hmrcEnvironment = orgHmrc?.hmrcMode === "live" ? "production" : "sandbox";
@@ -126,20 +131,19 @@ export default function SubmitPage() {
   const [error, setError] = useState<string | null>(null);
   const [dryRunResult, setDryRunResult] = useState<DryRunPayload | null>(null);
   const [dryRunPassed, setDryRunPassed] = useState(false);
-  const [approvalAcknowledged, setApprovalAcknowledged] = useState(false);
-  const [approvalReason, setApprovalReason] = useState("");
-  const [approvalRiskScore, setApprovalRiskScore] = useState(50);
-  const [approvalExposureAmount, setApprovalExposureAmount] = useState("");
   const [approvalError, setApprovalError] = useState<string | null>(null);
   const [isApproving, setIsApproving] = useState(false);
   const [liveSubmitConfirmed, setLiveSubmitConfirmed] = useState(false);
 
   const readResponsePayload = async (res: Response) => {
+    const text = await res.text();
+    if (!text.trim()) {
+      return { error: `Request failed (HTTP ${res.status})` };
+    }
     try {
-      return await res.json();
+      return JSON.parse(text) as Record<string, unknown>;
     } catch {
-      const text = await res.text();
-      return { error: text || `HTTP ${res.status}` };
+      return { error: text.slice(0, 800) || `HTTP ${res.status}` };
     }
   };
 
@@ -164,15 +168,17 @@ export default function SubmitPage() {
 
   // Submit gate: rule engine completeness (single source of truth) + persisted doc requirements.
   const missingBlockingRequirements = (requirements || []).filter(
-    (req: any) => req.status === "missing" && (req.requirementLevel || "blocking") === "blocking",
+    (req: DocumentRequirementRow) =>
+      req.status === "missing" && (req.requirementLevel || "blocking") === "blocking",
   );
   const missingAdvisoryRequirements = (requirements || []).filter(
-    (req: any) => req.status === "missing" && (req.requirementLevel || "blocking") === "advisory",
+    (req: DocumentRequirementRow) =>
+      req.status === "missing" && (req.requirementLevel || "blocking") === "advisory",
   );
   const missingBlockingCodes = missingBlockingRequirements
-    .map((req: any) => String(req.code || "UNKNOWN"));
+    .map((req: DocumentRequirementRow) => String(req.code || "UNKNOWN"));
   const missingAdvisoryCodes = missingAdvisoryRequirements
-    .map((req: any) => String(req.code || "UNKNOWN"));
+    .map((req: DocumentRequirementRow) => String(req.code || "UNKNOWN"));
 
   const completenessReady = completeness?.ready === true;
   const completenessMissing = completeness?.missing ?? [];
@@ -210,12 +216,11 @@ export default function SubmitPage() {
   
   // Generate the WCO payload for preview (mapper throws if overseas exporter missing).
   let wcoPayloadPreview: ReturnType<typeof mapToCDS_H1> | null = null;
-  let wcoPreviewError: string | null = null;
   if (isReady && declaration && items) {
     try {
       wcoPayloadPreview = mapToCDS_H1(declaration, items);
-    } catch (err: unknown) {
-      wcoPreviewError = err instanceof Error ? err.message : "Failed to build WCO payload preview";
+    } catch {
+      wcoPayloadPreview = null;
     }
   }
   const debugGoodsLocation = dryRunResult?.payloadDebug?.goodsShipment?.consignment;
@@ -230,42 +235,7 @@ export default function SubmitPage() {
     setIsApproving(true);
     setApprovalError(null);
     try {
-      if (!approvalAcknowledged) {
-        throw new Error("Confirm that authority documents and liability routing have been reviewed.");
-      }
-      const exposureAmount = approvalExposureAmount.trim() === ""
-        ? null
-        : Number(approvalExposureAmount);
-      if (exposureAmount !== null && (!Number.isFinite(exposureAmount) || exposureAmount < 0)) {
-        throw new Error("Exposure amount must be a positive number.");
-      }
-      const rep = representationStatus?.representation;
-      if (rep?.representationType === "indirect" && !rep.authorityVerified) {
-        await setRepresentationDetails({
-          declarationId,
-          representationType: "indirect",
-          representativeEori: rep.representativeEori ?? null,
-          representativeName: rep.representativeName ?? null,
-          representativeAddressLine: rep.representativeAddressLine ?? null,
-          representativeCity: rep.representativeCity ?? null,
-          representativePostcode: rep.representativePostcode ?? null,
-          representativeCountry: rep.representativeCountry ?? null,
-          authorityVerified: true,
-          authorityValidFrom: rep.authorityValidFrom ?? null,
-          authorityValidTo: rep.authorityValidTo ?? null,
-        });
-      }
-      await approveIndirectRepresentation({
-        declarationId,
-        reason: approvalReason,
-        riskScore: approvalRiskScore,
-        exposureAmount,
-        exposureCurrency: "GBP",
-        exposureReason: exposureAmount === null ? null : "Pre-clearance exposure estimate",
-      });
-      setApprovalReason("");
-      setApprovalExposureAmount("");
-      setApprovalAcknowledged(false);
+      await approveIndirectRepresentation({ declarationId });
     } catch (err: unknown) {
       setApprovalError(err instanceof Error ? err.message : "Failed to approve indirect representation");
     } finally {
@@ -327,20 +297,22 @@ export default function SubmitPage() {
             ? `${data.error || "Validation failed"}\n\nMissing:\n${missingFields}`
           : fieldErrors
             ? `${data.error || "Validation failed"}\n\n${fieldErrors}`
+          : data.message && data.error && data.message !== data.error
+            ? `${data.error}\n\n${data.message}`
+          : data.message
+            ? String(data.message)
           : data.error
             ? String(data.error)
-            : data.message
-              ? String(data.message)
-              : `Request failed (HTTP ${res.status})`;
+            : `Request failed (HTTP ${res.status})`;
         throw new Error(errorMessage);
       }
 
       // 3. Advance to Status timeline page to await the MRN webhook
       router.push(`/dashboard/declarations/${declarationId}/status`);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Submission failed:", err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Submission failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -400,8 +372,8 @@ export default function SubmitPage() {
 
       setDryRunResult(data as DryRunPayload);
       setDryRunPassed(data.success === true);
-    } catch (err: any) {
-      setError(err.message || "Dry run failed");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Dry run failed");
       setDryRunPassed(false);
     } finally {
       setIsDryRunning(false);
@@ -500,7 +472,7 @@ export default function SubmitPage() {
                     Required before HMRC submission when DE 3/21 is indirect representation.
                     {representationStatus?.approval ? (
                       <span className="block mt-1 text-slate-600">
-                        Approved by {representationStatus.approval.approverName} · risk {representationStatus.approval.riskScore}/100
+                        Approved by {representationStatus.approval.approverName}
                       </span>
                     ) : null}
                     {!representationApprovalReady && representationStatus?.reason ? (
@@ -540,65 +512,22 @@ export default function SubmitPage() {
 
           {representationRequiresApproval && !representationApprovalReady && (
             <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-amber-800 mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-amber-800 mb-2">
                 Internal approval required
               </h4>
-              <div className="space-y-3">
-                <label className="flex items-start gap-2 text-xs text-amber-950">
-                  <input
-                    type="checkbox"
-                    checked={approvalAcknowledged}
-                    onChange={(e) => setApprovalAcknowledged(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-amber-300"
-                  />
-                  <span>I confirm I have reviewed authority documents and accept liability routing.</span>
-                </label>
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div className="space-y-1 md:col-span-2">
-                    <label className="text-[11px] font-semibold uppercase tracking-wider text-amber-900">Reason</label>
-                    <textarea
-                      value={approvalReason}
-                      onChange={(e) => setApprovalReason(e.target.value)}
-                      rows={3}
-                      className="w-full rounded-md border border-amber-200 bg-white p-2 text-xs outline-none focus:border-amber-500"
-                      placeholder="Why this indirect representation is approved"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-semibold uppercase tracking-wider text-amber-900">Risk score: {approvalRiskScore}</label>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={approvalRiskScore}
-                      onChange={(e) => setApprovalRiskScore(Number(e.target.value))}
-                      className="w-full"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-semibold uppercase tracking-wider text-amber-900">Exposure GBP</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={approvalExposureAmount}
-                      onChange={(e) => setApprovalExposureAmount(e.target.value)}
-                      className="w-full rounded-md border border-amber-200 bg-white p-2 text-xs outline-none focus:border-amber-500"
-                      placeholder="Optional"
-                    />
-                  </div>
-                </div>
-                {approvalError && <p className="text-xs text-red-700">{approvalError}</p>}
-                <button
-                  type="button"
-                  onClick={handleApproveIndirectRepresentation}
-                  disabled={isApproving || !approvalAcknowledged}
-                  className="flex h-8 w-full items-center justify-center gap-2 rounded-md bg-black px-3 text-xs font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {isApproving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4 text-green-400" />}
-                  {isApproving ? "Recording Approval..." : "Approve Indirect Representation"}
-                </button>
-              </div>
+              <p className="mb-3 text-xs text-amber-900">
+                Confirm you are filing under indirect representation for this importer, then approve to unlock submit.
+              </p>
+              {approvalError && <p className="mb-3 text-xs text-red-700">{approvalError}</p>}
+              <button
+                type="button"
+                onClick={handleApproveIndirectRepresentation}
+                disabled={isApproving}
+                className="flex h-8 w-full items-center justify-center gap-2 rounded-md bg-black px-3 text-xs font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isApproving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4 text-green-400" />}
+                {isApproving ? "Recording Approval..." : "Approve Indirect Representation"}
+              </button>
             </div>
           )}
           {error && (

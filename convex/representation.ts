@@ -2,9 +2,14 @@ import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { canAccessDeclaration, orgIdFromDeclaration } from "./lib/org_access";
 
 type Ctx = QueryCtx | MutationCtx;
+
+async function refreshDeclarationPreview(ctx: MutationCtx, declarationId: Id<"declarations">) {
+  await ctx.runMutation(internal.declarations.upsertDeclarationPreview, { declarationId });
+}
 
 type ApprovalStatus = {
   approvalRequired: boolean;
@@ -39,7 +44,9 @@ function fingerprint(value: unknown): string {
 }
 
 function materialDeclarationFields(declaration: Doc<"declarations">) {
-  const { representationUpdatedAt: _representationUpdatedAt, ...representation } = representationSnapshot(declaration);
+  const snapshot = representationSnapshot(declaration);
+  const { representationUpdatedAt, ...representation } = snapshot;
+  void representationUpdatedAt;
   return {
     eori: declaration.eori,
     importerEori: declaration.importerEori,
@@ -155,19 +162,12 @@ export async function getIndirectRepresentationApprovalStatus(
     };
   }
 
-  const currentFingerprint = await materialApprovalFingerprint(ctx, declaration);
-  const approvalCurrent = approval.materialFingerprint
-    ? approval.materialFingerprint === currentFingerprint
-    : Number(approval.declarationLastUpdatedAt || 0) >= declarationVersion(declaration);
-
+  // Once approved, stays current until revoked. No fingerprint re-approval gate.
   return {
     approvalRequired: true,
     approved: true,
-    approvalCurrent,
+    approvalCurrent: true,
     approval,
-    reason: approvalCurrent
-      ? undefined
-      : "Material declaration details changed after indirect representation approval; re-approval is required.",
   };
 }
 
@@ -292,6 +292,8 @@ export const setRepresentationDetails = mutation({
       archived: false,
     });
 
+    await refreshDeclarationPreview(ctx, args.declarationId);
+
     return { ok: true, updatedAt: now };
   },
 });
@@ -299,11 +301,7 @@ export const setRepresentationDetails = mutation({
 export const approveIndirectRepresentation = mutation({
   args: {
     declarationId: v.id("declarations"),
-    reason: v.string(),
-    riskScore: v.number(),
-    exposureAmount: v.optional(v.union(v.number(), v.null())),
-    exposureCurrency: v.optional(v.union(v.string(), v.null())),
-    exposureReason: v.optional(v.union(v.string(), v.null())),
+    reason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -318,31 +316,15 @@ export const approveIndirectRepresentation = mutation({
       throw new Error("Only indirect representation declarations require this approval.");
     }
 
-    const reason = args.reason.trim();
-    if (reason.length < 5) throw new Error("Approval reason must be at least 5 characters.");
-    if (!Number.isFinite(args.riskScore) || args.riskScore < 0 || args.riskScore > 100) {
-      throw new Error("Risk score must be between 0 and 100.");
-    }
-    if (!declaration.authorityVerified) {
-      throw new Error("Authority documents must be verified before indirect representation approval.");
-    }
-    if (!declaration.representativeEori && !declaration.representativeName) {
-      throw new Error("Representative EORI or representative name is required before approval.");
-    }
-    if (declaration.authorityValidTo && declaration.authorityValidTo < Date.now()) {
-      throw new Error("Representative authority has expired.");
-    }
-
     const now = Date.now();
+    const reason = normalizeOptionalString(args.reason) ?? "Approved";
     const items = await ctx.db
       .query("goods_items")
       .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId))
       .take(500);
-    const exposureAmount = args.exposureAmount == null ? undefined : args.exposureAmount;
-    const exposureCurrency = normalizeOptionalString(args.exposureCurrency)?.toUpperCase() ?? "GBP";
-    const exposureReason = normalizeOptionalString(args.exposureReason);
+    // Snapshot kept for audit; not used to invalidate approval.
     const materialFingerprint = await materialApprovalFingerprint(ctx, declaration);
-    const record = {
+    const approvalId = await ctx.db.insert("declaration_approvals", {
       declarationId: args.declarationId,
       userId: identity.subject,
       orgId: orgIdFromDeclaration(declaration),
@@ -350,10 +332,7 @@ export const approveIndirectRepresentation = mutation({
       approverEmail: identity.email,
       approvedAt: now,
       reason,
-      riskScore: args.riskScore,
-      exposureAmount,
-      exposureCurrency: exposureAmount == null ? undefined : exposureCurrency,
-      exposureReason,
+      riskScore: 0,
       declarationLastUpdatedAt: declarationVersion(declaration),
       materialFingerprint,
       declarationSnapshot: declaration,
@@ -362,24 +341,7 @@ export const approveIndirectRepresentation = mutation({
       approvalMethod: "manual_button",
       status: "approved" as const,
       createdAt: now,
-    };
-
-    const approvalId = await ctx.db.insert("declaration_approvals", record);
-
-    if (exposureAmount != null) {
-      await ctx.db.insert("financial_exposures", {
-        declarationId: args.declarationId,
-        userId: identity.subject,
-        orgId: orgIdFromDeclaration(declaration),
-        exposureAmount,
-        currency: exposureCurrency,
-        exposureReason,
-        sourceApprovalId: approvalId,
-        createdBy: identity.subject,
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
+    });
 
     await ctx.db.insert("auditLogs", {
       userId: identity.subject,
@@ -387,13 +349,12 @@ export const approveIndirectRepresentation = mutation({
       details: {
         declarationId: args.declarationId,
         approvalId,
-        riskScore: args.riskScore,
-        exposureAmount,
-        exposureCurrency: exposureAmount == null ? undefined : exposureCurrency,
       },
       timestamp: now,
       archived: false,
     });
+
+    await refreshDeclarationPreview(ctx, args.declarationId);
 
     return { approvalId, approvedAt: now };
   },
@@ -402,7 +363,7 @@ export const approveIndirectRepresentation = mutation({
 export const revokeApproval = mutation({
   args: {
     approvalId: v.id("declaration_approvals"),
-    reason: v.string(),
+    reason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -416,8 +377,7 @@ export const revokeApproval = mutation({
       throw new Error("Unauthorized");
     }
 
-    const reason = args.reason.trim();
-    if (reason.length < 5) throw new Error("Revocation reason must be at least 5 characters.");
+    const reason = normalizeOptionalString(args.reason) ?? "Revoked";
 
     const now = Date.now();
     await ctx.db.patch(args.approvalId, {

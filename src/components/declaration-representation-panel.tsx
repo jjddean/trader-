@@ -369,7 +369,7 @@ export function DeclarationRepresentationFields({
                 )}
               >
                 {representationStatus?.approvalCurrent
-                  ? `Approved — re-approve on Submit if details change.`
+                  ? `Approved — submit unlocked.`
                   : representationStatus?.reason ??
                     "Internal approval required on Submit tab before HMRC submission."}
               </p>

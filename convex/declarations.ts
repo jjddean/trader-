@@ -267,7 +267,7 @@ function estimateItemFinancials(
     fxUnavailable,
   } = resolveCustomsValueGbp(rawVal, currency, fxContext?.fx ?? null);
 
-  let estimateIncompleteFx = fxUnavailable && currency !== "GBP";
+  const estimateIncompleteFx = fxUnavailable && currency !== "GBP";
   const code = String(item?.commodityCode || "").trim();
   const tariffDoc = code.length === 10 ? tariffByCommodityCode?.[code] : undefined;
   const input = {
@@ -926,6 +926,7 @@ async function upsertDeclarationPreviewByDeclaration(
     mrn: declaration.mrn ? String(declaration.mrn) : undefined,
     eori: declaration.eori ? String(declaration.eori) : undefined,
     declarationType: declaration.declarationType ? String(declaration.declarationType) : undefined,
+    representationType: declaration.representationType ?? "self",
     completenessReady: completeness.ready,
     missingCount: completeness.missing.length,
     ...financialFields,
@@ -1538,12 +1539,9 @@ export const beginSubmission = mutation({
     }
 
     const representationApproval = await getIndirectRepresentationApprovalStatus(ctx, existing);
-    if (
-      representationApproval.approvalRequired &&
-      (!representationApproval.approved || !representationApproval.approvalCurrent)
-    ) {
+    if (representationApproval.approvalRequired && !representationApproval.approved) {
       throw new Error(
-        `SUBMIT_BLOCKED: ${representationApproval.reason || "Indirect representation requires current internal approval before HMRC submission."}`,
+        `SUBMIT_BLOCKED: ${representationApproval.reason || "Indirect representation requires internal approval before HMRC submission."}`,
       );
     }
     await ctx.db.patch(args.id, { status: "Processing", lastUpdated: Date.now() });
@@ -2048,6 +2046,7 @@ export const getDeclarationPreviews = query({
         declarationType: declaration.declarationType
           ? String(declaration.declarationType)
           : undefined,
+        representationType: declaration.representationType ?? "self",
         lastUpdated: Number(
           declaration.lastUpdated || declaration.created || declaration._creationTime || 0,
         ),
