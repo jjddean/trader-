@@ -36,6 +36,10 @@ import {
   ConvexSessionMissing,
   isConvexSessionMissing,
 } from "@/components/declaration-session-states";
+import {
+  normalizeRepresentationType,
+  representationListChipLabel,
+} from "@/lib/representation-display";
 
 export default function DeclarationsPage() {
   const { user, isLoaded: isClerkLoaded, isSignedIn } = useUser();
@@ -261,6 +265,11 @@ export default function DeclarationsPage() {
                   filteredDeclarations.map((dec) => {
                     const { label: badgeLabel, tone } = resolveDeclarationRowBadge(dec);
                     const subtitleLabel = declarationHumanSubtitle(badgeLabel, dec.status, tone);
+                    const repChip = representationListChipLabel(
+                      normalizeRepresentationType(
+                        (dec as { representationType?: string }).representationType,
+                      ),
+                    );
 
                     return (
                     <tr
@@ -270,9 +279,16 @@ export default function DeclarationsPage() {
                     >
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <span className={cn("text-xs font-semibold transition-colors", mrnTitleClass(tone))}>
-                            {dec.mrn || "Pending CDS"}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className={cn("text-xs font-semibold transition-colors", mrnTitleClass(tone))}>
+                              {dec.mrn || "Pending CDS"}
+                            </span>
+                            {repChip && (
+                              <span className="inline-flex rounded-md bg-violet-100 px-1.5 py-0.5 text-[0.625rem] font-medium text-violet-800">
+                                {repChip}
+                              </span>
+                            )}
+                          </div>
                           <span className={cn("mt-0.5 text-[0.625rem] font-medium", mrnSubtitleClass(tone))}>
                             {subtitleLabel}
                           </span>

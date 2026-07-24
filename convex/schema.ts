@@ -410,6 +410,9 @@ export default defineSchema({
     mrn: v.optional(v.string()),
     eori: v.optional(v.string()),
     declarationType: v.optional(v.string()),
+    representationType: v.optional(
+      v.union(v.literal("self"), v.literal("direct"), v.literal("indirect")),
+    ),
     // Completeness state — derived from convex/lib/declaration_completeness.ts.
     // The single source of truth for "is this declaration submittable". Recomputed
     // on every declaration/items write via upsertDeclarationPreviewByDeclaration.
