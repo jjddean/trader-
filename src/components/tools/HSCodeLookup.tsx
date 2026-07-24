@@ -79,7 +79,7 @@ function ResultActionButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex min-w-[88px] items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all",
+        "flex h-8 min-w-[88px] items-center justify-center gap-1 rounded-md border px-2 text-[10px] font-semibold uppercase tracking-wide transition-colors",
         isCopied
           ? "border-emerald-300 bg-emerald-50 text-emerald-700"
           : variant === "secondary"
@@ -147,7 +147,7 @@ function HSCodeResultRow({
             type="button"
             disabled={applying}
             onClick={() => onApply(item.code, item.description)}
-            className="flex min-w-[88px] items-center justify-center rounded-md border border-slate-900 bg-slate-900 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
+            className="flex h-8 min-w-[88px] items-center justify-center rounded-md border border-slate-900 bg-slate-900 px-2 text-[10px] font-semibold uppercase tracking-wide text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
           >
             {applying ? "Applying…" : "Apply"}
           </button>
@@ -169,7 +169,7 @@ function HSCodeResultRow({
           href={tariffUrl(item.code)}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex min-w-[88px] items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+          className="flex h-8 min-w-[88px] items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-600 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
         >
           <ExternalLink className="h-3 w-3 opacity-70" />
           Tariff
@@ -358,41 +358,59 @@ export function HSCodeLookup({
             <p className="mb-3 text-[11px] text-slate-400">Loading database…</p>
           )}
 
-        {searched && displayResults.length === 0 && !loading && (
-          <div className="flex items-center gap-2 rounded-md border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-xs text-slate-500">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            No HS codes found for &ldquo;{searchTerm}&rdquo;
-          </div>
-        )}
-
-        {displayResults.length > 0 && (
-          <div className="space-y-3">
-            <DescriptionGuidance compact />
-            {resultsPanel}
-          </div>
-        )}
-
-        {!searched && !loading && (
-          <div className="flex flex-col items-center py-6 text-center">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
-              <Search className="h-4 w-4 text-slate-300" />
+          <div className="flex min-h-[420px] flex-col">
+            <div className="min-h-0 flex-1 overflow-hidden rounded-md border border-slate-100 bg-white">
+              {loading && displayResults.length === 0 ? (
+                <div className="flex h-full min-h-[420px] items-center justify-center gap-2 text-xs text-slate-500">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Querying Trade Tariff…
+                </div>
+              ) : displayResults.length > 0 ? (
+                <div className="max-h-[420px] overflow-y-auto">
+                  <div className="border-b border-slate-100 p-3">
+                    <DescriptionGuidance compact />
+                  </div>
+                  <div className="divide-y divide-slate-100">
+                    {displayResults.map((item, idx) => (
+                      <HSCodeResultRow
+                        key={`${item.code}-${idx}`}
+                        item={item}
+                        itemId={itemId}
+                        declarationId={declarationId}
+                        onApply={itemId ? handleApplyToItem : undefined}
+                        applying={applying}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : searched && !loading ? (
+                <div className="flex h-full min-h-[420px] items-center justify-center gap-2 px-4 text-xs text-slate-500">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  No HS codes found for &ldquo;{searchTerm}&rdquo;
+                </div>
+              ) : (
+                <div className="flex h-full min-h-[420px] flex-col items-center justify-center px-4 py-6 text-center">
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+                    <Search className="h-4 w-4 text-slate-300" />
+                  </div>
+                  <p className="text-sm font-semibold text-slate-900">Instant tariff search</p>
+                  <p className="mt-1 max-w-sm text-xs text-slate-500">
+                    Find commodity codes from HMRC Trade Tariff. Copy the code onto your declaration item; use tariff
+                    text as a reference for your trade description.
+                  </p>
+                </div>
+              )}
             </div>
-            <h4 className="text-sm font-semibold text-slate-900">Instant tariff search</h4>
-            <p className="mt-1 max-w-sm text-xs text-slate-500">
-              Find commodity codes from HMRC Trade Tariff. Copy the code onto your declaration item; use tariff
-              text as a reference for your trade description.
-            </p>
           </div>
-        )}
 
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-[10px] text-slate-400">
-          <span>
-            {isDbLoaded
-              ? `Database ready (${staticCodes.length.toLocaleString()} codes)`
-              : "Initializing…"}
-          </span>
-          <span>Source: HMRC Trade Tariff API</span>
-        </div>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-[10px] text-slate-400">
+            <span>
+              {isDbLoaded
+                ? `Database ready (${staticCodes.length.toLocaleString()} codes)`
+                : "Initializing…"}
+            </span>
+            <span>Source: HMRC Trade Tariff API</span>
+          </div>
         </div>
       </div>
     );

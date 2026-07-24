@@ -2,14 +2,7 @@ import { ControlListBrowser } from "@/components/trade-compliance/control-list-b
 
 export default function ControlListPage() {
   return (
-    <div className="space-y-6 p-8">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight text-slate-900">Control List</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Browse UK military, dual-use, firearms and radioactive export control entries.
-        </p>
-      </div>
-
+    <div className="p-8">
       <ControlListBrowser />
     </div>
   );
