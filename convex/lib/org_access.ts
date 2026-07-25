@@ -70,6 +70,25 @@ export async function listDeclarationsForTenant(ctx: Ctx, userId: string, take =
   return rows.filter((row) => isPersonalScopedRecord(row.orgId));
 }
 
+export async function listFinancialObligationsForTenant(ctx: Ctx, userId: string, take = 500) {
+  const activeOrgId = await getActiveOrgId(ctx, userId);
+  if (activeOrgId) {
+    return await ctx.db
+      .query("financial_obligations")
+      .withIndex("by_org", (q) => q.eq("orgId", activeOrgId))
+      .order("desc")
+      .take(take);
+  }
+
+  const rows = await ctx.db
+    .query("financial_obligations")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .order("desc")
+    .take(take);
+
+  return rows.filter((row) => isPersonalScopedRecord(row.orgId));
+}
+
 export async function listDeclarationPreviewsForTenant(ctx: Ctx, userId: string, take = 500) {
   const activeOrgId = await getActiveOrgId(ctx, userId);
   if (activeOrgId) {

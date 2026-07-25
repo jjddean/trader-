@@ -23,10 +23,16 @@ import {
 } from "./lib/currency_conversion";
 import { computeFinancialVariance, type VarianceKind } from "./lib/financial_variance";
 import {
+  deleteFinancialObligationsForDeclaration,
+  financialRecordRowsFromObligations,
+  syncFinancialObligationsFromPreview,
+} from "./lib/financial_obligations";
+import {
   canAccessDeclaration,
   getActiveOrgId,
   listDeclarationPreviewsForTenant,
   listDeclarationsForTenant,
+  listFinancialObligationsForTenant,
   orgIdFromDeclaration,
   resolveOrgIdForNewRecord,
 } from "./lib/org_access";
@@ -853,6 +859,7 @@ async function upsertDeclarationPreviewByDeclaration(
 
   if (!declaration) {
     if (existingPreview) await ctx.db.delete(existingPreview._id);
+    await deleteFinancialObligationsForDeclaration(ctx, declarationId);
     return;
   }
 
@@ -944,6 +951,23 @@ async function upsertDeclarationPreviewByDeclaration(
     }
   } else {
     await ctx.db.insert("declaration_preview", nextPreview);
+  }
+
+  if (declarationUserId && financialFields.financialSource !== undefined) {
+    await syncFinancialObligationsFromPreview(ctx, {
+      declaration,
+      declarationId,
+      userId: declarationUserId,
+      declarationStatus: replayedStatus,
+      financialSource: financialFields.financialSource,
+      dutyAmount: financialFields.dutyAmount,
+      vatAmount: financialFields.vatAmount,
+      derivedDutyAmount: financialFields.derivedDutyAmount,
+      derivedVatAmount: financialFields.derivedVatAmount,
+      dmstaxUpdatedAt: financialFields.dmstaxUpdatedAt,
+    });
+  } else if (declarationUserId) {
+    await deleteFinancialObligationsForDeclaration(ctx, declarationId);
   }
 
   if (
@@ -1481,6 +1505,8 @@ export const deleteDeclaration = mutation({
       .withIndex("by_declaration", (q) => q.eq("declarationId", args.id))
       .take(1000);
     await Promise.all(items.map((item) => ctx.db.delete(item._id)));
+
+    await deleteFinancialObligationsForDeclaration(ctx, args.id);
 
     await ctx.db.delete(args.id);
     if (existingPreview) await ctx.db.delete(existingPreview._id);
@@ -2236,10 +2262,36 @@ export const getFinancialRecords = query({
       previews.map((preview) => [String(preview.declarationId), preview]),
     );
 
+    const obligationRows = await listFinancialObligationsForTenant(ctx, identity.subject, 500);
+    const obligationsByDeclarationId = new Map<string, Doc<"financial_obligations">[]>();
+    for (const row of obligationRows) {
+      const key = String(row.declarationId);
+      const bucket = obligationsByDeclarationId.get(key);
+      if (bucket) bucket.push(row);
+      else obligationsByDeclarationId.set(key, [row]);
+    }
+
     for (const decl of decls) {
       if (decl.status === "Draft" || !decl.mrn) continue;
 
       const preview = previewByDeclarationId.get(String(decl._id));
+      const storedObligations = obligationsByDeclarationId.get(String(decl._id));
+
+      if (storedObligations && storedObligations.length > 0) {
+        const customsValue = Number(preview?.customsValue ?? 0);
+        const hasConfirmed = storedObligations.some((row) => row.authority === "hmrc");
+        const payment = {
+          label:
+            preview?.paymentMethodLabel ||
+            resolvePaymentMethodLabel(decl, hasConfirmed).label,
+          accountNumber: preview?.defermentAccountNumber || "—",
+        };
+        records.push(
+          ...financialRecordRowsFromObligations(decl, storedObligations, payment, customsValue),
+        );
+        continue;
+      }
+
       let financials: ReturnType<typeof computeDeclarationFinancials>;
       let payment: { label: string; accountNumber: string };
 

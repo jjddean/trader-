@@ -48,6 +48,7 @@ import type * as lib_declaration_completeness from "../lib/declaration_completen
 import type * as lib_duty_rate_parser from "../lib/duty_rate_parser.js";
 import type * as lib_export_routing from "../lib/export_routing.js";
 import type * as lib_financial_labels from "../lib/financial_labels.js";
+import type * as lib_financial_obligations from "../lib/financial_obligations.js";
 import type * as lib_financial_variance from "../lib/financial_variance.js";
 import type * as lib_hmrc_notification_parser from "../lib/hmrc_notification_parser.js";
 import type * as lib_hmrc_oauth from "../lib/hmrc_oauth.js";
@@ -135,6 +136,7 @@ declare const fullApi: ApiFromModules<{
   "lib/duty_rate_parser": typeof lib_duty_rate_parser;
   "lib/export_routing": typeof lib_export_routing;
   "lib/financial_labels": typeof lib_financial_labels;
+  "lib/financial_obligations": typeof lib_financial_obligations;
   "lib/financial_variance": typeof lib_financial_variance;
   "lib/hmrc_notification_parser": typeof lib_hmrc_notification_parser;
   "lib/hmrc_oauth": typeof lib_hmrc_oauth;

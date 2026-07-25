@@ -682,6 +682,26 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_org", ["orgId"]),
 
+  financial_obligations: defineTable({
+    declarationId: v.id("declarations"),
+    userId: v.string(),
+    orgId: v.optional(v.string()),
+    clientId: v.optional(v.id("clients")),
+    mrn: v.optional(v.string()),
+    obligationType: v.union(v.literal("duty_a00"), v.literal("vat_b00")),
+    amount: v.number(),
+    currency: v.string(),
+    authority: v.union(v.literal("derived"), v.literal("hmrc")),
+    status: v.union(v.literal("estimated"), v.literal("confirmed")),
+    estimateAmount: v.optional(v.number()),
+    confirmedAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  })
+    .index("by_declaration", ["declarationId"])
+    .index("by_declaration_and_type", ["declarationId", "obligationType"])
+    .index("by_user", ["userId"])
+    .index("by_org", ["orgId"]),
+
   // Pre-computed historical duty/VAT rate map per user.
   // Rebuilt only when historical_declarations are ingested — prevents getReports and
   // getFinancialRecords from scanning 2,000 historical rows on every subscription refresh.
