@@ -39,6 +39,12 @@ type StatusTimelineNotification = {
   errorCodes?: string[];
 };
 
+function formatTimestamp(value: string | number | undefined): string {
+  if (value === undefined) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
+}
+
 export default function StatusTimelinePage() {
   const { isLoaded, isSignedIn, userId } = useAuth();
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
@@ -267,10 +273,10 @@ export default function StatusTimelinePage() {
   const amendInFlight = declaration.status === "Amendment Processing";
 
   const metaForNotification = (notif: {
-    rawPayload?: string;
+    rawPayload?: string | null;
     fieldErrors?: Array<{ field: string; code?: string; reason: string }>;
     errorCodes?: string[];
-    notificationType?: string;
+    notificationType?: string | null;
   }) => {
     const type = normalizeNotificationType(notif.notificationType);
     const preset = notificationMeta[type];
@@ -312,8 +318,7 @@ export default function StatusTimelinePage() {
   const latestNotificationType = normalizeNotificationType(latestNotif?.notificationType) || "DMSUB";
   const latestIsInvalidationSuccess = latestCtx ? isInvalidationAccepted(latestCtx) : false;
   const submittedAt =
-    (typeof declaration.submittedAt === "number" ? declaration.submittedAt : undefined)
-    ?? declaration.created
+    (typeof declaration.created === "number" ? declaration.created : undefined)
     ?? declaration._creationTime;
 
   const cdsBadge = resolveDeclarationCdsBadge(
@@ -586,7 +591,7 @@ export default function StatusTimelinePage() {
                   <div className="absolute -left-6 top-1 h-3 w-3 rounded-full border-2 border-white bg-blue-500" />
                   <div className="flex flex-col gap-1">
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      {new Date(submittedAt).toLocaleString()}
+                      {formatTimestamp(submittedAt)}
                     </p>
                     <p className="text-sm font-medium text-slate-900">Declaration Submitted</p>
                     <p className="text-xs text-slate-600">Payload successfully validated and stored by HMRC Hub.</p>
@@ -600,7 +605,7 @@ export default function StatusTimelinePage() {
                     <div className={`absolute -left-6 top-1 h-3 w-3 rounded-full border-2 border-white ${meta.color}`} />
                     <div className="flex flex-col gap-1 mt-1">
                       <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        {new Date(notif.timestamp).toLocaleString()}
+                        {formatTimestamp(notif.timestamp)}
                       </p>
                       <div className="flex items-center gap-2">
                          <p className="text-sm font-medium text-slate-900">

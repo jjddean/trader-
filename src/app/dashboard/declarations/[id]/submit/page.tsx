@@ -279,8 +279,9 @@ export default function SubmitPage() {
         console.log("HMRC validation details:", data.details, data.fields);
         if (res.status === 409 && data.code === "SUBMIT_BLOCKED") {
           throw new Error(
-            data.error ||
-              "This declaration is already live with HMRC. Use Amend on the Status page, or create a new declaration.",
+            typeof data.error === "string" && data.error
+              ? data.error
+              : "This declaration is already live with HMRC. Use Amend on the Status page, or create a new declaration.",
           );
         }
         const fieldErrors = Array.isArray(data.fields)
