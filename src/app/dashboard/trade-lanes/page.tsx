@@ -63,8 +63,8 @@ export default function TradeLanesPage() {
         </button>
       </div>
 
-      <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none">
-        <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
+      <div className="flex flex-col rounded-xl border border-slate-200 bg-white shadow-none">
+        <div className="relative z-20 overflow-visible border-b border-slate-200 bg-slate-50 px-5 py-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />

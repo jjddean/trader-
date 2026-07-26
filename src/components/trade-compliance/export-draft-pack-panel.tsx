@@ -120,6 +120,7 @@ export function ExportDraftPackPanel({
   return (
     <div className="space-y-6">
       <ConsultantSignoffCard assessmentId={assessmentId} status={assessmentStatus} variant="send" />
+      <EndUserSendCard assessmentId={assessmentId} variant="send" />
 
       {/* Timeline */}
       <section className="rounded-xl border border-slate-200 bg-white p-5">
