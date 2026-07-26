@@ -9,6 +9,7 @@
     "lint": "eslint",
     "lint:security": "eslint src/lib/secrets-equal.ts src/lib/api-rate-limiter.ts src/app/api/hmrc src/app/api/stripe src/app/api/ai/extract src/app/api/ai/classify src/app/api/ai/smart-upload src/app/api/ai/chat src/app/api/ai/gir-audit convex/http.ts convex/stripe_webhooks.ts convex/hmrc_internal.ts convex/subscriptions.ts convex/notifications.ts convex/documents.ts --max-warnings 0",
     "test:h1": "node --test --import tsx \"tests/h1/*.test.ts\"",
+    "test:fo": "node --test --import tsx tests/h1/financial-obligations.test.ts && node scripts/check-financial-obligations.mjs",
     "test:tre": "node --test --import tsx \"tests/tre/*.test.ts\"",
     "test:tdr-dry-run": "node scripts/tdr-dry-run.mjs",
     "test:audit-smoke": "node scripts/smoke-audit-log-shape.mjs",

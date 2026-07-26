@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Info, Loader2, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CompactCheckbox } from "@/components/ui/compact-checkbox";
 import { countries } from "@/lib/data/countries";
 
 const selectTriggerClassName =
@@ -329,11 +330,10 @@ export function DeclarationRepresentationFields({
           <div className="md:col-span-2 rounded-lg border border-amber-200 bg-amber-50/50 p-4 space-y-3">
             <p className="text-xs font-medium text-amber-900">Authority documents (indirect)</p>
             <label className="flex items-center gap-2 text-xs text-amber-900">
-              <input
-                type="checkbox"
+              <CompactCheckbox
+                border="amber"
                 checked={repForm.authorityVerified}
                 onChange={(e) => setRepForm({ ...repForm, authorityVerified: e.target.checked })}
-                className="rounded border-amber-300"
               />
               Authority documents verified
             </label>

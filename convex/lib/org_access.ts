@@ -114,11 +114,27 @@ export async function listDeclarationPreviewsForTenant(ctx: Ctx, userId: string,
 export async function listDocumentsForTenant(ctx: Ctx, userId: string, take = 500) {
   const activeOrgId = await getActiveOrgId(ctx, userId);
   if (activeOrgId) {
-    return await ctx.db
+    const orgRows = await ctx.db
       .query("documents")
       .withIndex("by_org", (q) => q.eq("orgId", activeOrgId))
       .order("desc")
       .take(take);
+
+    const userRows = await ctx.db
+      .query("documents")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .order("desc")
+      .take(take);
+
+    const legacy = userRows.filter((row) => isPersonalScopedRecord(row.orgId));
+    const seen = new Set(orgRows.map((row) => row._id));
+    const merged = [...orgRows];
+    for (const row of legacy) {
+      if (!seen.has(row._id)) merged.push(row);
+    }
+
+    merged.sort((a, b) => documentSortKey(b) - documentSortKey(a));
+    return merged.slice(0, take);
   }
 
   const rows = await ctx.db
@@ -128,6 +144,16 @@ export async function listDocumentsForTenant(ctx: Ctx, userId: string, take = 50
     .take(take);
 
   return rows.filter((row) => isPersonalScopedRecord(row.orgId));
+}
+
+function documentSortKey(doc: { uploadDate?: unknown; _creationTime?: number }): number {
+  const raw = doc.uploadDate;
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+  if (typeof raw === "string") {
+    const parsed = Date.parse(raw);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return doc._creationTime ?? 0;
 }
 
 export async function listNotificationsForTenant(ctx: Ctx, userId: string, take = 50) {

@@ -33,6 +33,7 @@ import type * as declaration_completeness from "../declaration_completeness.js";
 import type * as declarations from "../declarations.js";
 import type * as documents from "../documents.js";
 import type * as export_controls from "../export_controls.js";
+import type * as financial_obligations from "../financial_obligations.js";
 import type * as goods_items from "../goods_items.js";
 import type * as hmrc from "../hmrc.js";
 import type * as hmrc_actions from "../hmrc_actions.js";
@@ -64,6 +65,7 @@ import type * as lib_replay_declaration_status from "../lib/replay_declaration_s
 import type * as lib_rule_engine from "../lib/rule_engine.js";
 import type * as lib_stripe_customer from "../lib/stripe_customer.js";
 import type * as lib_stripe_plan from "../lib/stripe_plan.js";
+import type * as lib_stuck_declarations from "../lib/stuck_declarations.js";
 import type * as lib_tariff_parser from "../lib/tariff_parser.js";
 import type * as lib_tre_links from "../lib/tre_links.js";
 import type * as lib_tre_opportunity from "../lib/tre_opportunity.js";
@@ -121,6 +123,7 @@ declare const fullApi: ApiFromModules<{
   declarations: typeof declarations;
   documents: typeof documents;
   export_controls: typeof export_controls;
+  financial_obligations: typeof financial_obligations;
   goods_items: typeof goods_items;
   hmrc: typeof hmrc;
   hmrc_actions: typeof hmrc_actions;
@@ -152,6 +155,7 @@ declare const fullApi: ApiFromModules<{
   "lib/rule_engine": typeof lib_rule_engine;
   "lib/stripe_customer": typeof lib_stripe_customer;
   "lib/stripe_plan": typeof lib_stripe_plan;
+  "lib/stuck_declarations": typeof lib_stuck_declarations;
   "lib/tariff_parser": typeof lib_tariff_parser;
   "lib/tre_links": typeof lib_tre_links;
   "lib/tre_opportunity": typeof lib_tre_opportunity;

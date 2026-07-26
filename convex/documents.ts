@@ -4,6 +4,7 @@ import {
   canAccessDeclaration,
   canAccessDocument,
   getActiveOrgId,
+  resolveOrgIdForNewRecord,
   listDocumentsForTenant,
   listDeclarationsForTenant,
   orgIdFromDeclaration,
@@ -141,10 +142,14 @@ export const saveDocument = mutation({
       }
     }
 
+    const orgFromDeclaration = orgIdFromDeclaration(declaration);
+    const orgId =
+      orgFromDeclaration ?? (await resolveOrgIdForNewRecord(ctx, identity.subject));
+
     const documentId = await ctx.db.insert("documents", {
       fileId: args.storageId,
       userId: identity.subject, // Enforce session ID
-      orgId: orgIdFromDeclaration(declaration),
+      ...(orgId ? { orgId } : {}),
       fileName: args.fileName,
       mrn: args.mrn,
       declarationId: args.declarationId,

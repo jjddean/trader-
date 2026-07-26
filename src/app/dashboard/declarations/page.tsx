@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, Suspense } from "react";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Plus, Search, Filter, Loader2, ArrowRight, Trash2, FileText } from "lucide-react";
 import {
   Dialog,
@@ -42,6 +42,22 @@ import {
 } from "@/lib/representation-display";
 
 export default function DeclarationsPage() {
+  return (
+    <Suspense fallback={<DeclarationsPageFallback />}>
+      <DeclarationsPageContent />
+    </Suspense>
+  );
+}
+
+function DeclarationsPageFallback() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+    </div>
+  );
+}
+
+function DeclarationsPageContent() {
   const { user, isLoaded: isClerkLoaded, isSignedIn } = useUser();
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const userId = user?.id || "";
@@ -154,6 +170,7 @@ export default function DeclarationsPage() {
 
   return (
     <div className="space-y-6 p-8">
+      <CreateModalFromQuery setOpen={setShowCreateModal} />
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-slate-900">Declarations</h1>
@@ -387,4 +404,25 @@ export default function DeclarationsPage() {
       </Dialog>
     </div>
   );
+}
+
+function CreateModalFromQuery({
+  setOpen,
+}: {
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (searchParams.get("new") !== "1") return;
+    setOpen(true);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("new");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [searchParams, router, pathname, setOpen]);
+
+  return null;
 }

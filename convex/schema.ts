@@ -256,7 +256,10 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_org", ["orgId"])
     .index("by_mrn", ["mrn"])
-    .index("by_conversationId", ["conversationId"]),
+    .index("by_conversationId", ["conversationId"])
+    // Stuck-declaration recovery scans by status + staleness. Without this the
+    // hourly cron reads the whole table.
+    .index("by_status_and_updated", ["status", "lastUpdated"]),
 
   // Broker's client/trader profiles. A reusable party record (the importer the
   // broker files on behalf of) scoped to the broker's Clerk org. This is DATA
