@@ -370,10 +370,6 @@ export async function POST(request: Request) {
         const message = persistErr instanceof Error ? persistErr.message : String(persistErr);
         console.warn("[VALIDATION] Failed to persist rule results (non-critical):", message);
       }
-      const ruleEnginePass =
-        ruleResults.length === 0
-          ? true
-          : !ruleResults.some((r) => r.status === "fail" && r.severity === "blocking");
       const eoriConsistencyPass = !providedEori || !lane.eori || providedEori === lane.eori;
       // Extract document summary from XML for visual verification — no HMRC call made
       const docMatches = [...xmlPayload.matchAll(/<AdditionalDocument>[\s\S]*?<\/AdditionalDocument>/g)];
