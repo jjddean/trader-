@@ -33,6 +33,9 @@ jobs:
 
       - name: TDR v1 dry-run preflight
         run: npm run test:tdr-dry-run
+        env:
+          # Presence-only check; dry-run makes no HMRC calls
+          HMRC_CLIENT_ID: ci-placeholder
 
       - name: Production build
         run: npm run build
