@@ -138,7 +138,11 @@ export default function CoreSchemaPage() {
       invoiceTotal: d.invoiceTotal != null ? String(d.invoiceTotal) : "",
       incoterms: (d.incoterms as string) || "",
       incotermLocation: (d.incotermLocation as string) || "",
-      goodsLocationKind: inferGoodsLocationKind({ goodsLocationKind: d.goodsLocationKind }) || "",
+      goodsLocationKind:
+        inferGoodsLocationKind({
+          goodsLocationKind: d.goodsLocationKind,
+          locationId: d.locationId,
+        }) || "",
       locationId: (d.locationId as string) || "",
       presentationOffice: (d.presentationOffice as string) || "",
       exporterName: (d.exporterName as string) || "",
