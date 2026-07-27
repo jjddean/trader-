@@ -125,12 +125,15 @@ export function ConsultantSignoffCard({
         </div>
       ) : (
         <div className="mt-4 space-y-3">
-          {dispatchStatus?.activeToken && (
-            <p className="text-[11px] text-slate-500">
-              Active link sent · expires{" "}
-              {new Date(dispatchStatus.activeToken.expiresAt).toLocaleDateString("en-GB")}
-            </p>
-          )}
+          {/* Fixed height: the status only exists once the query resolves, so the slot is
+              reserved to stop the form below shifting down. */}
+          <p className="h-4 truncate text-[11px] leading-4 text-slate-500">
+            {dispatchStatus?.activeToken
+              ? `Active link sent · expires ${new Date(
+                  dispatchStatus.activeToken.expiresAt,
+                ).toLocaleDateString("en-GB")}`
+              : ""}
+          </p>
 
           <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
             <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">

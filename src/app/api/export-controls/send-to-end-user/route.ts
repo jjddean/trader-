@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { NextResponse } from "next/server";
 import { api } from "../../../../../convex/_generated/api";
@@ -40,9 +40,13 @@ export async function POST(request: Request) {
       }
       convex.setAuth(convexToken);
 
+      const sender = await currentUser();
+      const notifyEmail = sender?.primaryEmailAddress?.emailAddress?.trim();
+
       dispatch = await convex.mutation(api.compliance_end_user.createEndUserDispatchFromAssessment, {
         assessmentId,
         recipientEmail,
+        notifyEmail: notifyEmail || undefined,
         senderNote,
       });
     } else {

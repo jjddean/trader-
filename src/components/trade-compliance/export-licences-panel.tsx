@@ -12,6 +12,19 @@ interface ExportLicencesPanelProps {
   assessmentId: Id<"export_assessments">;
 }
 
+type LicenceType = "siel" | "sitcl" | "sitl" | "f680" | "oiel" | "ogel" | "otsi" | "other";
+
+const licenceTypeOptions: Array<{ value: LicenceType; label: string }> = [
+  { value: "siel", label: "SIEL" },
+  { value: "sitcl", label: "SITCL" },
+  { value: "sitl", label: "SITL" },
+  { value: "f680", label: "F680" },
+  { value: "oiel", label: "OIEL" },
+  { value: "ogel", label: "OGEL" },
+  { value: "otsi", label: "OTSI (sanctions)" },
+  { value: "other", label: "Other" },
+];
+
 function formatRecordedAt(ts: number) {
   return new Date(ts).toLocaleString("en-GB", {
     day: "numeric",
@@ -33,7 +46,7 @@ export function ExportLicencesPanel({ assessmentId }: ExportLicencesPanelProps) 
   );
   const recordLicence = useMutation(api.export_controls.recordExportLicence);
 
-  const [licenceType, setLicenceType] = useState<"siel" | "f680" | "other">("siel");
+  const [licenceType, setLicenceType] = useState<LicenceType>("siel");
   const [applicationRef, setApplicationRef] = useState("");
   const [licenceRef, setLicenceRef] = useState("");
   const [saving, setSaving] = useState(false);
@@ -93,7 +106,7 @@ export function ExportLicencesPanel({ assessmentId }: ExportLicencesPanelProps) 
             </label>
             <Select
               value={licenceType}
-              onValueChange={(value) => setLicenceType(value as "siel" | "f680" | "other")}
+              onValueChange={(value) => setLicenceType(value as LicenceType)}
             >
               <SelectTrigger
                 id="licence-type"
@@ -102,15 +115,11 @@ export function ExportLicencesPanel({ assessmentId }: ExportLicencesPanelProps) 
                 <SelectValue placeholder="Select licence type" />
               </SelectTrigger>
               <SelectContent position="popper" className="z-[110]">
-                <SelectItem value="siel" className="text-xs">
-                  SIEL
-                </SelectItem>
-                <SelectItem value="f680" className="text-xs">
-                  F680
-                </SelectItem>
-                <SelectItem value="other" className="text-xs">
-                  Other
-                </SelectItem>
+                {licenceTypeOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value} className="text-xs">
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

@@ -609,20 +609,54 @@ export default defineSchema({
     reviewTokenId: v.optional(v.id("export_review_tokens")),
     token: v.string(),
     recipientEmail: v.string(),
+    /** Where to send the "EUSU submitted" notification. */
+    notifyEmail: v.optional(v.string()),
     senderNote: v.optional(v.string()),
     expiresAt: v.number(),
     createdBy: v.string(),
     createdAt: v.number(),
     openedAt: v.optional(v.number()),
     completedAt: v.optional(v.number()),
+    notifiedAt: v.optional(v.number()),
     revoked: v.optional(v.boolean()),
   })
     .index("by_token", ["token"])
     .index("by_assessment", ["assessmentId"]),
 
+  // Product evidence attached to an assessment for the DBT/ECJU supporting-doc bundle.
+  export_evidence: defineTable({
+    assessmentId: v.id("export_assessments"),
+    orgId: v.optional(v.string()),
+    kind: v.union(
+      v.literal("technical_description"),
+      v.literal("datasheet"),
+      v.literal("brochure"),
+      v.literal("web_page"),
+      v.literal("commercial_invoice"),
+      v.literal("eusu_signed"),
+      v.literal("other"),
+    ),
+    label: v.string(),
+    documentId: v.optional(v.id("documents")),
+    url: v.optional(v.string()),
+    note: v.optional(v.string()),
+    productId: v.optional(v.id("export_products")),
+    addedBy: v.string(),
+    addedAt: v.number(),
+  }).index("by_assessment", ["assessmentId"]),
+
   export_licences: defineTable({
     assessmentId: v.id("export_assessments"),
-    licenceType: v.union(v.literal("siel"), v.literal("f680"), v.literal("other")),
+    licenceType: v.union(
+      v.literal("siel"),
+      v.literal("sitcl"),
+      v.literal("sitl"),
+      v.literal("f680"),
+      v.literal("oiel"),
+      v.literal("ogel"),
+      v.literal("otsi"),
+      v.literal("other"),
+    ),
     applicationRef: v.optional(v.string()),
     licenceRef: v.optional(v.string()),
     route: v.optional(

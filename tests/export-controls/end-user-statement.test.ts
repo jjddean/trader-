@@ -33,6 +33,8 @@ describe("endUserStatementPrintableHtml", () => {
     });
     assert.match(html, /EXP-001/);
     assert.match(html, /Acme GmbH/);
-    assert.match(html, /prohibited end use/);
+    assert.match(html, /End-user and stockist undertaking \(EUSU\)/);
+    assert.match(html, /chemical, biological or nuclear weapons/);
+    assert.match(html, /Section 8: End-user sign and date/);
   });
 });

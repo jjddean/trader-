@@ -17,6 +17,7 @@ import {
 } from "@/lib/export-controls/draft-pack";
 import { ConsultantSignoffCard } from "@/components/trade-compliance/consultant-signoff-card";
 import { EndUserSendCard } from "@/components/trade-compliance/end-user-send-card";
+import { ExportEvidencePanel } from "@/components/trade-compliance/export-evidence-panel";
 import { ExportLicencesPanel } from "@/components/trade-compliance/export-licences-panel";
 import { cn } from "@/lib/utils";
 
@@ -79,6 +80,7 @@ export function ExportDraftPackPanel({
       products: detail.products,
       screenings: detail.screenings,
       licences: detail.licences,
+      evidence: detail.evidence,
     });
   }, [detail]);
 
@@ -121,6 +123,7 @@ export function ExportDraftPackPanel({
     <div className="space-y-6">
       <ConsultantSignoffCard assessmentId={assessmentId} status={assessmentStatus} variant="send" />
       <EndUserSendCard assessmentId={assessmentId} variant="send" />
+      <ExportEvidencePanel assessmentId={assessmentId} />
 
       {/* Timeline */}
       <section className="rounded-xl border border-slate-200 bg-white p-5">
@@ -185,8 +188,6 @@ export function ExportDraftPackPanel({
           at the bottom of this tab.
         </p>
       </section>
-
-      <EndUserSendCard assessmentId={assessmentId} variant="send" />
 
       {/* Missing fields warning */}
       {bundle.missingMandatory.length > 0 && (

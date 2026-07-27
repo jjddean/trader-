@@ -35,6 +35,7 @@ async function insertEndUserToken(
     assessmentId: Id<"export_assessments">;
     reviewTokenId?: Id<"export_review_tokens">;
     recipientEmail: string;
+    notifyEmail?: string;
     senderNote?: string;
     createdBy: string;
   },
@@ -50,6 +51,7 @@ async function insertEndUserToken(
     reviewTokenId: args.reviewTokenId,
     token,
     recipientEmail: email,
+    notifyEmail: args.notifyEmail?.trim() || undefined,
     senderNote: args.senderNote?.trim() || undefined,
     expiresAt,
     createdBy: args.createdBy,
@@ -86,6 +88,7 @@ export const createEndUserDispatch = mutation({
       assessmentId: review.assessmentId,
       reviewTokenId: review._id,
       recipientEmail: args.recipientEmail,
+      notifyEmail: review.consultantEmail,
       senderNote: args.senderNote,
       createdBy: review.consultantEmail,
     });
@@ -97,6 +100,7 @@ export const createEndUserDispatchFromAssessment = mutation({
   args: {
     assessmentId: v.id("export_assessments"),
     recipientEmail: v.string(),
+    notifyEmail: v.optional(v.string()),
     senderNote: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -110,6 +114,7 @@ export const createEndUserDispatchFromAssessment = mutation({
     return insertEndUserToken(ctx, {
       assessmentId: args.assessmentId,
       recipientEmail: args.recipientEmail,
+      notifyEmail: args.notifyEmail ?? (typeof identity.email === "string" ? identity.email : undefined),
       senderNote: args.senderNote,
       createdBy: identity.subject,
     });
@@ -186,6 +191,43 @@ export const getEndUserFormByToken = query({
   },
 });
 
+const eusuDetailsValidator = v.object({
+  roles: v.object({
+    consignee: v.boolean(),
+    endUser: v.boolean(),
+    intermediateUser: v.boolean(),
+    ultimateEndUser: v.boolean(),
+    stockistNoOrders: v.boolean(),
+    stockistConfirmed: v.boolean(),
+  }),
+  exporterName: v.optional(v.string()),
+  exporterLicenceRef: v.optional(v.string()),
+  items: v.optional(
+    v.array(
+      v.object({
+        description: v.string(),
+        quantity: v.optional(v.string()),
+        unit: v.optional(v.string()),
+      }),
+    ),
+  ),
+  consigneeName: v.optional(v.string()),
+  consigneeAddress: v.optional(v.string()),
+  endUserWebsite: v.optional(v.string()),
+  armedForces: v.optional(v.boolean()),
+  incorporation: v.optional(v.boolean()),
+  soleUser: v.optional(v.boolean()),
+  otherSupportingInfo: v.optional(v.string()),
+  intermediateUserDetails: v.optional(v.string()),
+  intermediateUse: v.optional(v.string()),
+  newProductDescription: v.optional(v.string()),
+  ultimateEndUserDetails: v.optional(v.string()),
+  signatureSection: v.optional(v.union(v.literal("end_user"), v.literal("stockist"))),
+  signedJobRole: v.optional(v.string()),
+  stockistReExport: v.optional(v.union(v.literal("no_reexport"), v.literal("likely_exports"))),
+  stockistLikelyExports: v.optional(v.string()),
+});
+
 export const submitEndUserStatement = mutation({
   args: {
     token: v.string(),
@@ -198,6 +240,7 @@ export const submitEndUserStatement = mutation({
     noProhibitedEndUse: v.boolean(),
     noDiversion: v.boolean(),
     signedBy: v.string(),
+    eusu: v.optional(eusuDetailsValidator),
   },
   handler: async (ctx, args) => {
     const row = await getValidEndUserToken(ctx, args.token);
@@ -227,6 +270,7 @@ export const submitEndUserStatement = mutation({
       signedBy,
       signedAt: now,
       tokenId: row._id,
+      eusu: args.eusu,
     };
 
     await ctx.db.patch(row.assessmentId, {
@@ -254,6 +298,49 @@ export const submitEndUserStatement = mutation({
     });
 
     return { assessmentId: row.assessmentId };
+  },
+});
+
+/**
+ * Notification target for a submitted EUSU. Token-gated: only returns a target
+ * once the undertaking is complete and no notification has been sent yet.
+ */
+export const getEusuNotifyTarget = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("export_end_user_tokens")
+      .withIndex("by_token", (q) => q.eq("token", args.token.trim()))
+      .unique();
+
+    if (!row || row.revoked || !row.completedAt || row.notifiedAt) return null;
+    if (!row.notifyEmail) return null;
+
+    const assessment = await ctx.db.get(row.assessmentId);
+    if (!assessment) return null;
+    const statement = (assessment as Doc<"export_assessments">).endUserStatement as
+      | { endUserName?: string; signedBy?: string }
+      | undefined;
+
+    return {
+      notifyEmail: row.notifyEmail,
+      reference: (assessment as Doc<"export_assessments">).reference,
+      destinationCountry: (assessment as Doc<"export_assessments">).destinationCountry,
+      endUserName: statement?.endUserName,
+      signedBy: statement?.signedBy,
+    };
+  },
+});
+
+export const markEusuNotified = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("export_end_user_tokens")
+      .withIndex("by_token", (q) => q.eq("token", args.token.trim()))
+      .unique();
+    if (!row || row.notifiedAt) return;
+    await ctx.db.patch(row._id, { notifiedAt: Date.now() });
   },
 });
 
