@@ -69,6 +69,25 @@ const coreCapabilities = [
   },
 ];
 
+const tradeCompliancePillars = [
+  {
+    title: "Export assessments",
+    body: "Open a tracked case per shipment with status (clear, review required, or flagged), destination, and product lines — ready to attach to a declaration when you file.",
+  },
+  {
+    title: "Control list & routing",
+    body: "Search the UK consolidated strategic export control list and see whether SPIRE, LITE, or other GOV.UK paths may apply. We surface routing hints; you submit on official services.",
+  },
+  {
+    title: "UK sanctions screening",
+    body: "Screen parties against the UK Sanctions List with deterministic matching. Probable hits stay in review until a human confirms — no automatic clearance.",
+  },
+  {
+    title: "Documents & draft packs",
+    body: "Upload specs and commercial documents, audit fields for export facts, and generate draft licence packs with copy-ready text for consultant or end-user sign-off.",
+  },
+];
+
 const trePillars = [
   {
     title: "Export from HMRC TRE",
@@ -243,6 +262,52 @@ export function LandingPageContent() {
                   <p className="flex-grow text-[15px] leading-relaxed text-slate-600">{item.benefit}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* UK export controls & sanctions — same workspace as CDS */}
+        <section id="trade-compliance" className="bg-white py-[96px]">
+          <div className="mx-auto max-w-[1280px] px-[24px]">
+            <div className="mb-12 text-center">
+              <p className="mb-3 text-[13px] font-semibold uppercase tracking-widest text-blue-600">
+                Trade compliance
+              </p>
+              <h2 className="mb-4 text-3xl font-bold leading-snug tracking-tight text-slate-900">
+                UK export controls and sanctions alongside your customs work
+              </h2>
+              <p className="mx-auto max-w-2xl text-[16px] leading-relaxed text-slate-600">
+                Run export-control assessments in the same org workspace as CDS declarations — classification,
+                screening, document audit, and draft licence packs. Decision-support only; not legal advice or
+                government filing.
+              </p>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              {tradeCompliancePillars.map((item) => (
+                <div key={item.title} className={landingGuideCard}>
+                  <h3 className="mb-3 text-lg font-semibold tracking-tight text-slate-900">{item.title}</h3>
+                  <p className="text-[15px] leading-relaxed text-slate-600">{item.body}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-12 text-center">
+              {isSignedIn ? (
+                <Link
+                  href="/dashboard/trade-compliance"
+                  className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700"
+                >
+                  Open Trade Compliance <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              ) : (
+                <Link
+                  href="#signup-cta"
+                  className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700"
+                >
+                  Join the beta to use Trade Compliance <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              )}
             </div>
           </div>
         </section>
