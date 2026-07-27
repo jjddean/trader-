@@ -292,6 +292,9 @@ export const submitEndUserStatement = mutation({
       details: {
         assessmentId: row.assessmentId,
         tokenId: row._id,
+        endUserName,
+        signedBy,
+        endUserCountry: args.endUserCountry.trim() || undefined,
       },
       timestamp: now,
       archived: false,

@@ -28,6 +28,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { AssessmentAuditPanel } from "@/components/trade-compliance/assessment-audit-panel";
 import { DocumentAuditPanel } from "@/components/trade-compliance/document-audit-panel";
 import { ExportClassificationPanel } from "@/components/trade-compliance/export-classification-panel";
 import { ExportSanctionsPanel } from "@/components/trade-compliance/export-sanctions-panel";
@@ -159,15 +160,6 @@ function Tabs<T extends string>({
         </button>
       ))}
     </div>
-  );
-}
-
-function PlaceholderPane({ title, detail }: { title: string; detail: string }) {
-  return (
-    <section className="rounded-xl border border-slate-200 bg-white p-6">
-      <h2 className="text-sm font-semibold text-black">{title}</h2>
-      <p className="mt-3 text-xs leading-relaxed text-slate-500">{detail}</p>
-    </section>
   );
 }
 
@@ -331,10 +323,7 @@ function AssessmentSheetBody({
         )}
 
         {assessmentTab === "audit" && (
-          <PlaceholderPane
-            title="Audit Log"
-            detail="Assessment audit trail from auditLogs — wired in a later pass."
-          />
+          <AssessmentAuditPanel assessmentId={assessmentId} reference={assessment?.reference} />
         )}
       </div>
     </div>

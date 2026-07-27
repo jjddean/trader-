@@ -321,6 +321,47 @@ export const getAssessment = query({
   },
 });
 
+/**
+ * Full audit trail for one assessment, including actions taken by third parties
+ * (consultant sign-off, end-user EUSU submission) which are logged under their
+ * own userId rather than the assessment owner's.
+ */
+export const getAssessmentAuditLogs = query({
+  args: {
+    assessmentId: v.id("export_assessments"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const assessment = await ctx.db.get(args.assessmentId);
+    if (!assessment) return [];
+    if (!(await canAccessAssessment(ctx, identity.subject, assessment))) {
+      throw new Error("Unauthorized");
+    }
+
+    const logs = await ctx.db
+      .query("auditLogs")
+      .withIndex("by_details_assessment", (q) =>
+        q.eq("details.assessmentId", args.assessmentId),
+      )
+      .order("desc")
+      .take(args.limit ?? 200);
+
+    return logs.map((log) => ({
+      _id: log._id,
+      action: typeof log.action === "string" ? log.action : "unknown",
+      actor: typeof log.userId === "string" ? log.userId : undefined,
+      timestamp: typeof log.timestamp === "number" ? log.timestamp : log._creationTime,
+      details:
+        log.details && typeof log.details === "object" && !Array.isArray(log.details)
+          ? (log.details as Record<string, unknown>)
+          : {},
+    }));
+  },
+});
+
 export const getProductForClassification = query({
   args: { productId: v.id("export_products") },
   handler: async (ctx, args) => {

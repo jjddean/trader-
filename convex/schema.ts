@@ -468,7 +468,13 @@ export default defineSchema({
     details: v.optional(v.any()),
     timestamp: v.optional(v.any()),
     archived: v.optional(v.any()),
-  }).index("by_timestamp", ["timestamp"]).index("by_user", ["userId"]),
+  })
+    .index("by_timestamp", ["timestamp"])
+    .index("by_user", ["userId"])
+    // Entity-scoped retrieval. Third-party actions (consultant sign-off, end-user
+    // EUSU submission) are logged under their own userId, so by_user cannot be
+    // used to assemble a complete trail for one assessment.
+    .index("by_details_assessment", ["details.assessmentId"]),
 
   // --- Export controls module (UK strategic export assessments) ---
   export_assessments: defineTable({
