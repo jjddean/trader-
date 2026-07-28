@@ -70,7 +70,7 @@ export default function ExportControlsSolutionPage() {
           <h3 className="mb-3 text-[17px] font-semibold text-slate-900">2. Classification</h3>
           <p className="text-[15px] leading-relaxed text-slate-700">
             AI proposes candidate control entries against the UK Strategic Export Control Lists, with confidence. A
-            person approves or overrides. Nothing is treated as cleared automatically.
+            human in the loop will then approve or override. Nothing is treated as cleared automatically.
           </p>
         </div>
         <div className="min-w-0 flex-1">
@@ -82,7 +82,7 @@ export default function ExportControlsSolutionPage() {
         <h3 className="mb-3 mt-6 text-[17px] font-semibold text-slate-900">3. Sanctions screening</h3>
         <p className="mb-6 text-[15px] leading-relaxed text-slate-700">
           Buyers, consignees, and end users are screened against the UK Sanctions List using rule-based name
-          matching. Probable matches stay in review until a person confirms or dismisses them.
+          matching. Probable matches stay in review until you confirm or dismiss them.
         </p>
 
         <h3 className="mb-3 mt-6 text-[17px] font-semibold text-slate-900">4. Routing</h3>
@@ -144,7 +144,7 @@ export default function ExportControlsSolutionPage() {
           Boundaries
         </h2>
         <ul className="mb-10 list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-slate-700">
-          <li>Control entries are recommendations until a person approves them</li>
+          <li>Control entries are recommendations until you approve them</li>
           <li>Freightcode does not submit licence applications to ECJU or OTSI</li>
           <li>Nothing on the platform is legal advice</li>
           <li>EUSU output follows the official form structure; check against GOV.UK before filing</li>
