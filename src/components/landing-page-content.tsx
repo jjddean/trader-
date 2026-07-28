@@ -7,7 +7,6 @@ import { ArrowRight } from "lucide-react";
 import { SignUpCta } from "@/components/sign-up-cta";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { WaitlistForm } from "@/components/waitlist-form";
 import { HomeDashboardPreview } from "@/components/home-dashboard-preview";
 
 const landingGuideCard = "rounded-2xl border border-slate-200 bg-white p-8";
@@ -16,7 +15,7 @@ const howItWorksSteps = [
   {
     step: 1,
     title: "Build your declaration",
-    body: "Upload commercial invoices to extract line items automatically, or add goods manually. Use HS lookup, attach documents, and capture EORI, valuation, and payment details — you review before submit.",
+    body: "Upload commercial invoices for AI line-item extract, or add goods manually. Use HS lookup, attach documents, and capture EORI, valuation, and payment details — you review before submit.",
   },
   {
     step: 2,
@@ -27,6 +26,29 @@ const howItWorksSteps = [
     step: 3,
     title: "Submit and track",
     body: "Connect HMRC via OAuth, submit to CDS (or TDR in practice mode), then follow status and DMS notifications. Amend or cancel where HMRC allows.",
+  },
+];
+
+const tradeComplianceSteps = [
+  {
+    step: 1,
+    title: "Export controls",
+    body: "Open an assessment per shipment and attach it to your CDS workspace. Upload invoices and specifications; AI extracts product names, technical detail, parties, and destination as facts for review. Attach datasheets and other evidence so the case holds what ECJU expects to see.",
+  },
+  {
+    step: 2,
+    title: "Classification",
+    body: "AI proposes candidate control entries against the UK Strategic Export Control Lists, with confidence. A person approves or overrides on the assessment — nothing is treated as cleared automatically.",
+  },
+  {
+    step: 3,
+    title: "Sanctions & screening",
+    body: "Buyers, consignees, end users, and other parties are screened against the UK Sanctions List with rule-based name matching. Probable hits stay in review until someone confirms or dismisses them, with a note on the assessment.",
+  },
+  {
+    step: 4,
+    title: "Licence management",
+    body: "Send a secure EUSU link for the overseas party to complete online. Assemble a licence draft pack — application fields, undertaking, evidence, and LITE / SPIRE / OTSI routing — then record the GOV.UK application reference and licence number when issued.",
   },
 ];
 
@@ -47,13 +69,13 @@ const coreCapabilities = [
     id: "prefill",
     label: "HS lookup & invoice extract",
     benefit:
-      "Look up commodity codes and apply them to line items. Upload commercial invoices to pre-fill goods fields — you review before submit.",
+      "Look up commodity codes and apply them to line items. AI extracts goods fields from commercial invoices — you review before submit.",
   },
   {
     id: "estimates",
     label: "Duty estimates",
     benefit:
-      "Pre-clearance duty and VAT estimates from Trade Tariff data on your draft. HMRC DMSTAX still overrides on acceptance.",
+      "Pre-clearance duty and VAT calculated from Trade Tariff data on your draft. HMRC DMSTAX still overrides on acceptance.",
   },
   {
     id: "notifications",
@@ -69,25 +91,6 @@ const coreCapabilities = [
   },
 ];
 
-const tradeCompliancePillars = [
-  {
-    title: "Export assessments",
-    body: "Open a tracked case per shipment with status (clear, review required, or flagged), destination, and product lines — ready to attach to a declaration when you file.",
-  },
-  {
-    title: "Control list & routing",
-    body: "Search the UK consolidated strategic export control list and see whether SPIRE, LITE, or other GOV.UK paths may apply. We surface routing hints; you submit on official services.",
-  },
-  {
-    title: "UK sanctions screening",
-    body: "Screen parties against the UK Sanctions List with deterministic matching. Probable hits stay in review until a human confirms — no automatic clearance.",
-  },
-  {
-    title: "Documents & draft packs",
-    body: "Upload specs and commercial documents, audit fields for export facts, and generate draft licence packs with copy-ready text for consultant or end-user sign-off.",
-  },
-];
-
 const trePillars = [
   {
     title: "Export from HMRC TRE",
@@ -99,45 +102,53 @@ const trePillars = [
   },
   {
     title: "Review opportunities",
-    body: "Flag possible preference or duty mismatches for review with your customs adviser \u2014 indicative hints, not automatic reclaim filing.",
+    body: "Flag possible preference or duty mismatches from Trade Tariff rules for review with your customs adviser \u2014 indicative hints, not automatic reclaim filing.",
   },
 ];
 
-const financialControlPoints = [
+const financialControlSteps = [
   {
-    title: "Estimate before clearance",
-    body: "Model duty, import VAT, and landed cost from Trade Tariff measures before submitting your declaration.",
+    step: 1,
+    title: "Know the cost before clearance",
+    body: "Duty, import VAT, and landed cost calculated from Trade Tariff measures on each declaration before you submit — so cash need is visible early.",
   },
   {
-    title: "Confirm against HMRC",
-    body: "Keep estimated amounts separate from HMRC-confirmed duty and VAT when DMSTAX notifications arrive.",
+    step: 2,
+    title: "Separate estimate from HMRC charge",
+    body: "When HMRC confirms duty and VAT, those amounts stay distinct from the estimate. Every figure keeps its source.",
   },
   {
-    title: "Keep records by MRN",
-    body: "Review A00 duty and B00 import VAT lines with their source, payment context, and exportable declaration record.",
+    step: 3,
+    title: "One record per clearance",
+    body: "Duty and import VAT lines sit on the MRN with payment context — exportable for audit, reconciliation, and review.",
+  },
+  {
+    step: 4,
+    title: "Cleared import liability",
+    body: "Each MRN carries HMRC-confirmed duty, VAT, and customs value after clearance — structured fiscal data for cashflow, reconciliation, and external review.",
   },
 ];
 
 const faqs = [
   {
-    question: "What does the beta program include?",
+    question: "What can I do with CDS in freightcode?",
     answer:
-      "Beta participants can practise in HMRC TDR, build and submit CDS declarations, run dry-run validation, connect via OAuth, and use HS lookup and invoice extraction on goods items.",
+      "Draft UK import declarations, attach documents, run dry-run validation, connect via HMRC OAuth, submit to CDS, then track status and DMS notifications. Amend or cancel where HMRC allows. Practice in TDR before you go live.",
   },
   {
-    question: "Do you provide legal or customs advice?",
+    question: "How does freightcode reduce declaration risk before submit?",
     answer:
-      "We provide data-driven insights and reporting based on official HMRC rules. While the platform highlights anomalies and potential savings, we recommend consulting with a certified customs practitioner for complex legal interpretations.",
+      "Dry-run checks against CDS rules and schema while the declaration is still a draft, so field errors and document gaps can be fixed before any HMRC call. You review every line — including HS codes and AI invoice extract — before submit.",
   },
   {
-    question: "Is my HMRC data secure?",
+    question: "What value do I get beyond filing?",
     answer:
-      "We use official HMRC OAuth — we never store your HMRC password. In practice mode you sign in with an HMRC Test User; on live CDS, with your Government Gateway. Declaration data is encrypted in transit and at rest.",
+      "Pre-clearance duty and VAT from Trade Tariff data, documents organised by MRN, financial records that separate estimate from HMRC-confirmed charge, and UK export-control assessments with AI-assisted classification (human approve), sanctions, EUSU, and licence draft pack next to the same workspace.",
   },
   {
-    question: "Who is this platform built for?",
+    question: "How does HMRC access work?",
     answer:
-      "freightcode is built for UK freight forwarders, customs brokers, and high-volume importers who want to mitigate CDS compliance risks and optimize their duty spend.",
+      "Official HMRC OAuth only — we never store your HMRC password. Practice orgs use an HMRC Test User; live orgs use Government Gateway. Tokens refresh in session; declaration data is encrypted in transit and at rest.",
   },
 ];
 
@@ -152,10 +163,10 @@ export function LandingPageContent() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
-            "name": "Freightcode",
+            "name": "freightcode",
             "applicationCategory": "BusinessApplication",
             "operatingSystem": "Web",
-            "description": "Customs & Trade Compliance OS for UK importers — draft CDS declarations, dry-run validate, submit via HMRC OAuth, and track DMS notifications in one workspace."
+            "description": "Customs & Trade Compliance OS for UK importers and exporters — draft CDS declarations, dry-run validate, submit via HMRC OAuth, track DMS notifications, and run export-control assessments in one workspace."
           })
         }}
       />
@@ -198,14 +209,14 @@ export function LandingPageContent() {
             </h1>
 
             <p className="mx-auto mb-6 max-w-[760px] text-[18px] leading-[1.6] text-slate-600">
-              Draft UK import declarations, run dry-run validation, connect to HMRC CDS, and track status and notifications — in one workspace. Practice in TDR before you go live.
+              Draft UK import declarations, run dry-run validation, connect to HMRC CDS, and track status and notifications — with UK export controls and financial control in the same workspace. Practice in TDR before you go live.
             </p>
 
             <div id="signup-cta" className="flex flex-col items-center justify-center gap-[16px] sm:flex-row">
               {isSignedIn ? (
                 <Link
                   href="/dashboard"
-                  className="h-[42px] min-w-[140px] rounded-md bg-[#111827] px-[24px] flex items-center justify-center text-[14px] font-medium text-white transition-all hover:bg-[#374151] shadow-none border-none"
+                  className="h-[42px] min-w-[140px] rounded-md bg-[#0f172a] px-[24px] flex items-center justify-center text-[14px] font-medium text-white transition-all hover:bg-[#1e293b] shadow-none border-none"
                 >
                   Open Dashboard <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Link>
@@ -223,24 +234,42 @@ export function LandingPageContent() {
         </section>
         {/* How It Works Section */}
         <section id="how-it-works" className="py-[96px]">
-          <div className="mx-auto max-w-[1280px] px-[24px]">
-            <div className="mb-12 text-center">
-              <h2 className="mb-4 text-3xl font-bold tracking-tight text-slate-900">How It Works</h2>
-              <p className="mx-auto max-w-2xl text-[16px] leading-relaxed text-slate-600">
-                Three steps from draft declaration to HMRC acceptance — with validation and document support built in.
+          <div className="mx-auto max-w-3xl px-[24px]">
+            <div className="mb-10 text-center">
+              <h2 className="mb-4 text-3xl font-bold leading-snug tracking-tight text-slate-900">
+                Customs declarations
+              </h2>
+              <p className="text-[16px] leading-relaxed text-slate-600">
+                Three steps from draft declaration to HMRC acceptance — with validation and document support built
+                in.
               </p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3">
+            <h3 className="mb-4 mt-8 text-[20px] font-semibold tracking-tight text-slate-900">How it works</h3>
+            <ul className="mb-6 space-y-4 text-[15px] text-slate-700">
               {howItWorksSteps.map((item) => (
-                <div key={item.step} className={landingGuideCard}>
-                  <p className="mb-3 text-[13px] font-semibold uppercase tracking-widest text-blue-600">
-                    Step {item.step}
-                  </p>
-                  <h3 className="mb-3 text-lg font-semibold tracking-tight text-slate-900">{item.title}</h3>
-                  <p className="text-[15px] leading-relaxed text-slate-600">{item.body}</p>
-                </div>
+                <li key={item.step}>
+                  <strong>
+                    {item.step}. {item.title}
+                  </strong>{" "}
+                  — {item.body}
+                </li>
               ))}
+            </ul>
+
+            <div className="mt-12 rounded-2xl bg-[#0f172a] p-8 text-white md:p-10">
+              <h3 className="mb-3 text-[18px] font-semibold">About HMRC CDS</h3>
+              <p className="mb-4 text-[14px] leading-relaxed text-slate-300">
+                The Customs Declaration Service (CDS) is HMRC&apos;s platform for processing UK import and export
+                declarations. freightcode connects directly using HMRC&apos;s official OAuth authentication, allowing
+                you to prepare, validate and submit declarations from a single workspace while maintaining MRNs,
+                supporting documents and declaration history in one auditable record.
+              </p>
+              <p className="text-[14px] leading-relaxed text-slate-300">
+                Validate your declarations in HMRC&apos;s Trader Dress Rehearsal (TDR) environment before moving to
+                production. For live declarations, all customs duty, VAT and other charges are calculated and
+                confirmed by HMRC, with those values taking precedence over any pre-submission estimates.
+              </p>
             </div>
           </div>
         </section>
@@ -266,86 +295,53 @@ export function LandingPageContent() {
           </div>
         </section>
 
-        {/* UK export controls & sanctions — same workspace as CDS */}
-        <section id="trade-compliance" className="bg-white py-[96px]">
-          <div className="mx-auto max-w-[1280px] px-[24px]">
-            <div className="mb-12 text-center">
-              <p className="mb-3 text-[13px] font-semibold uppercase tracking-widest text-blue-600">
-                Trade compliance
-              </p>
+        {/* UK export controls — homepage overview; depth on /solutions/export-controls */}
+        <section id="trade-compliance" className="scroll-mt-20 bg-slate-50/50 py-[96px]">
+          <div className="mx-auto max-w-3xl px-[24px]">
+            <div className="mb-10 text-center">
               <h2 className="mb-4 text-3xl font-bold leading-snug tracking-tight text-slate-900">
-                UK export controls and sanctions alongside your customs work
+                Trade compliance
               </h2>
-              <p className="mx-auto max-w-2xl text-[16px] leading-relaxed text-slate-600">
-                Run export-control assessments in the same org workspace as CDS declarations — classification,
-                screening, document audit, and draft licence packs. Decision-support only; not legal advice or
-                government filing.
+              <p className="text-[16px] leading-relaxed text-slate-600">
+                Strategic and dual-use exports need AI-assisted classification, sanctions screening, an end-user
+                undertaking, and evidence before a LITE or SPIRE application — on one assessment next to your CDS
+                declarations.
               </p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
-              {tradeCompliancePillars.map((item) => (
-                <div key={item.title} className={landingGuideCard}>
-                  <h3 className="mb-3 text-lg font-semibold tracking-tight text-slate-900">{item.title}</h3>
-                  <p className="text-[15px] leading-relaxed text-slate-600">{item.body}</p>
-                </div>
+            <h3 className="mb-4 mt-8 text-[20px] font-semibold tracking-tight text-slate-900">How it works</h3>
+            <ul className="mb-6 space-y-4 text-[15px] text-slate-700">
+              {tradeComplianceSteps.map((item) => (
+                <li key={item.step}>
+                  <strong>
+                    {item.step}. {item.title}
+                  </strong>{" "}
+                  — {item.body}
+                </li>
               ))}
-            </div>
+            </ul>
 
-            <div className="mt-12 text-center">
-              {isSignedIn ? (
-                <Link
-                  href="/dashboard/trade-compliance"
-                  className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700"
-                >
-                  Open Trade Compliance <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              ) : (
-                <Link
-                  href="#signup-cta"
-                  className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700"
-                >
-                  Join the beta to use Trade Compliance <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              )}
+            <div className="mt-12 rounded-2xl bg-[#0f172a] p-8 text-white md:p-10">
+              <h3 className="mb-3 text-[18px] font-semibold">Export Controls Consultancy</h3>
+              <p className="mb-4 text-[14px] leading-relaxed text-slate-300">
+                Our independent consultants review classifications, assess licensing needs, and give a documented
+                compliance opinion. Where required, they can own the licensing process — prepare the pack, submit to
+                the authority, and manage the application through to a decision.
+              </p>
+              <p className="text-[14px] leading-relaxed text-slate-300">
+                Extra assurance on complex or high-risk exports: lower risk of misclassification, licensing errors,
+                and delays — plus a documented record for governance, customer due diligence, and regulatory
+                enquiries. Work starts from a secure review link to the draft pack on your assessment.
+              </p>
             </div>
-          </div>
-        </section>
-
-        {/* Financial control — one focused section within the wider customs workflow. */}
-        <section id="financial-control" className="bg-white py-[96px]">
-          <div className="mx-auto max-w-[1280px] px-[24px]">
-            <div className="overflow-hidden rounded-2xl bg-[#0f172a] px-8 py-10 text-white md:px-12 md:py-14">
-              <div className="grid gap-10 lg:grid-cols-[0.9fr_1.4fr] lg:items-start">
-                <div>
-                  <p className="mb-3 text-[12px] font-semibold uppercase tracking-[0.18em] text-blue-300">
-                    Financial control
-                  </p>
-                  <h2 className="text-3xl font-bold tracking-tight">
-                    Understand customs costs before and after clearance.
-                  </h2>
-                  <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-300">
-                    Connect estimates, HMRC assessments, and financial records to the same declaration so every
-                    amount keeps its source and MRN context.
-                  </p>
-                  <Link
-                    href="/tools"
-                    className="mt-6 inline-flex items-center text-sm font-semibold text-white hover:text-blue-200"
-                  >
-                    Try duty and VAT estimates <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-3">
-                  {financialControlPoints.map((item) => (
-                    <div key={item.title} className="rounded-xl border border-white/10 bg-white/5 p-5">
-                      <h3 className="text-[15px] font-semibold text-white">{item.title}</h3>
-                      <p className="mt-2 text-[13px] leading-relaxed text-slate-300">{item.body}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <p className="mt-6 text-center">
+              <Link
+                href="/solutions/export-controls"
+                className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700"
+              >
+                Full product overview <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </p>
           </div>
         </section>
 
@@ -371,21 +367,44 @@ export function LandingPageContent() {
             </div>
 
             <div className="mt-12 text-center">
-              <Link href="/guides/what-is-tre-hmrc-trade-data" className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700">
-                Learn more about HMRC TRE Data <ArrowRight className="ml-2 h-4 w-4" />
+              <Link href="/solutions#tre" className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700">
+                TRE trade data on Solutions <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </div>
           </div>
         </section>
 
+        {/* Financial control */}
+        <section id="financial-control" className="bg-slate-50/50 py-[96px]">
+          <div className="mx-auto max-w-3xl px-[24px]">
+            <div className="mb-10 text-center">
+              <h2 className="mb-4 text-3xl font-bold leading-snug tracking-tight text-slate-900">
+                Financial control
+              </h2>
+              <p className="text-[16px] leading-relaxed text-slate-600">
+                Know what duty and VAT will cost before you clear, then prove what HMRC charged — on the same MRN,
+                with a record you can stand behind in review.
+              </p>
+            </div>
 
-        {/* Pre-clearance financial tools */}
-        <section id="resources" className="py-[96px]">
-          <div className="mx-auto max-w-[768px] px-[24px]">
-            <div className="rounded-2xl bg-[#0f172a] p-8 text-white">
-              <h2 className="mb-3 text-[18px] font-semibold">Pre-clearance duty and VAT estimates</h2>
+            <h3 className="mb-4 mt-8 text-[20px] font-semibold tracking-tight text-slate-900">How it works</h3>
+            <ul className="mb-6 space-y-4 text-[15px] text-slate-700">
+              {financialControlSteps.map((item) => (
+                <li key={item.step}>
+                  <strong>
+                    {item.step}. {item.title}
+                  </strong>{" "}
+                  — {item.body}
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-12 rounded-2xl bg-[#0f172a] p-8 text-white md:p-10">
+              <h3 className="mb-3 text-[18px] font-semibold">Pre-clearance duty and VAT estimates</h3>
               <p className="mb-6 text-[14px] leading-relaxed text-slate-300">
-                Estimate duty, VAT, and landed cost from Trade Tariff data before you file. Look up commodity codes and model PVA cashflow — the same logic used in your declaration workspace. HMRC-confirmed amounts always override on acceptance.
+                Duty, VAT, and landed cost calculated from Trade Tariff data before you file. Look up
+                commodity codes and model PVA cashflow — the same logic used in your declaration workspace.
+                HMRC-confirmed amounts always override on acceptance.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link
@@ -395,13 +414,21 @@ export function LandingPageContent() {
                   HS Code Lookup
                 </Link>
                 <Link
-                  href="/tools"
+                  href="/solutions/financial-control"
                   className="inline-flex items-center rounded-md bg-slate-700 px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-slate-600"
                 >
                   Duty &amp; VAT estimates
                 </Link>
               </div>
             </div>
+            <p className="mt-6 text-center">
+              <Link
+                href="/solutions/financial-control"
+                className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700"
+              >
+                Full product overview <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </p>
           </div>
         </section>
 
@@ -413,7 +440,7 @@ export function LandingPageContent() {
                 Frequently Asked Questions
               </h2>
               <p className="text-[17px] text-slate-600">
-                Answers about CDS workflows and platform security.
+                Answers about CDS workflows and what you get in the workspace.
               </p>
             </div>
 
@@ -426,12 +453,33 @@ export function LandingPageContent() {
               ))}
             </div>
 
-            <div className="mt-12 rounded-2xl bg-[#0f172a] p-8 text-white">
-              <h3 className="mb-3 text-[18px] font-semibold">Sign up for beta access</h3>
-              <p className="mb-6 text-[14px] leading-relaxed text-slate-300">
-                Leave your work email and we&apos;ll reach out when a spot opens up.
-              </p>
-              <WaitlistForm variant="card" />
+            <div className="mt-24 flex justify-center md:mt-32">
+              <div className="w-full max-w-xl rounded-2xl bg-[#0f172a] p-8 text-center text-white md:p-10">
+                {isSignedIn ? (
+                  <>
+                    <h3 className="mb-3 text-[18px] font-semibold">Continue in your workspace</h3>
+                    <p className="mb-6 text-[14px] leading-relaxed text-slate-300">
+                      Open the dashboard to pick up declarations, compliance, and financial records.
+                    </p>
+                    <Link
+                      href="/dashboard"
+                      className="inline-flex h-[42px] items-center justify-center gap-1.5 rounded-md bg-white px-6 text-[14px] font-medium text-slate-900 hover:bg-slate-50"
+                    >
+                      Open Dashboard <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="mb-3 text-[18px] font-semibold">Create an account</h3>
+                    <p className="mb-6 text-[14px] leading-relaxed text-slate-300">
+                      Sign up to start, or sign in if you already have access.
+                    </p>
+                    <div className="flex justify-center">
+                      <SignUpCta variant="light" />
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </section>

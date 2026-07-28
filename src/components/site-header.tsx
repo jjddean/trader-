@@ -11,7 +11,6 @@ const authButtonClass =
 
 export const navigation = [
   { name: "Solutions", href: "/solutions" },
-  { name: "Resources", href: "/resources" },
   { name: "Docs", href: "/docs" },
   { name: "About", href: "/about" },
   { name: "Contact", href: "/contact" },
@@ -69,7 +68,7 @@ export function SiteHeader() {
                 >
                   <button
                     type="button"
-                    className={`${authButtonClass} border border-transparent bg-[#111827] text-white hover:bg-slate-800`}
+                    className={`${authButtonClass} border border-transparent bg-[#0f172a] text-white hover:bg-[#1e293b]`}
                   >
                     Sign Up
                   </button>
@@ -79,7 +78,7 @@ export function SiteHeader() {
               <div className="flex items-center gap-4">
                 <Link
                   href="/dashboard"
-                  className="h-[32px] rounded border border-transparent bg-[#111827] px-[12px] hidden md:flex items-center text-[14px] font-medium text-white transition-all hover:bg-[#374151] shadow-none"
+                  className="h-[32px] rounded border border-transparent bg-[#0f172a] px-[12px] hidden md:flex items-center text-[14px] font-medium text-white transition-all hover:bg-[#1e293b] shadow-none"
                 >
                   Dashboard <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Link>
