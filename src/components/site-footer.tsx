@@ -61,12 +61,9 @@ export function SiteFooter({ isSignedIn }: { isSignedIn?: boolean }) {
             <h4 className="text-[#020817] font-medium text-xs mb-4">Product</h4>
             <ul className="text-gray-500 text-xs space-y-2">
               <li><Link href="/solutions" className="hover:text-[#020817]">Solutions</Link></li>
-              <li><Link href="/resources" className="hover:text-[#020817]">Resources</Link></li>
-              <li><Link href="/guides/hmrc-cds-complete-guide-uk-importers-2026" className="hover:text-[#020817]">CDS Importers</Link></li>
-              <li><Link href="/guides/what-is-tre-hmrc-trade-data" className="hover:text-[#020817]">What is TRE?</Link></li>
-              <li><Link href="/guides/dmsacc-dmsrog-dmscle-hmrc-cds-notifications" className="hover:text-[#020817]">CDS Status</Link></li>
-              <li><Link href="/guides/how-to-read-cds-csv-export-tre" className="hover:text-[#020817]">TRE Exports</Link></li>
-              <li><Link href="/guides/cds-commodity-codes-how-to-find" className="hover:text-[#020817]">HS Codes</Link></li>
+              <li><Link href="/solutions/export-controls" className="hover:text-[#020817]">Export controls</Link></li>
+              <li><Link href="/solutions/financial-control" className="hover:text-[#020817]">Financial control</Link></li>
+              <li><Link href="/docs" className="hover:text-[#020817]">Docs</Link></li>
             </ul>
           </div>
 

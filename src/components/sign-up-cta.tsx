@@ -16,7 +16,7 @@ export function SignUpCta({ variant = "dark", showSignIn = true }: SignUpCtaProp
   const primaryClass =
     variant === "light"
       ? "bg-white text-slate-900 hover:bg-slate-50"
-      : "bg-[#111827] text-white hover:bg-[#374151]";
+      : "bg-[#0f172a] text-white hover:bg-[#1e293b]";
 
   const signInClass =
     variant === "light" ? "text-white/90 hover:text-white" : "text-slate-600 hover:text-slate-900";
