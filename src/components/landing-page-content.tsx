@@ -209,7 +209,8 @@ export function LandingPageContent() {
             </h1>
 
             <p className="mx-auto mb-6 max-w-[760px] text-[18px] leading-[1.6] text-slate-600">
-              Draft UK import declarations, run dry-run validation, connect to HMRC CDS, and track status and notifications — with UK export controls and financial control in the same workspace. Practice in TDR before you go live.
+              Draft UK import declarations, run dry-run validation, connect to HMRC CDS, and track status and
+              notifications. Test in a sandbox environment before you go live.
             </p>
 
             <div id="signup-cta" className="flex flex-col items-center justify-center gap-[16px] sm:flex-row">

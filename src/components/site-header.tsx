@@ -78,7 +78,7 @@ export function SiteHeader() {
               <div className="flex items-center gap-4">
                 <Link
                   href="/dashboard"
-                  className="h-[32px] rounded border border-transparent bg-[#0f172a] px-[12px] hidden md:flex items-center text-[14px] font-medium text-white transition-all hover:bg-[#1e293b] shadow-none"
+                  className="hidden h-[32px] items-center rounded-md border border-transparent bg-[#0f172a] px-[12px] text-[14px] font-medium text-white shadow-none transition-all hover:bg-[#1e293b] md:flex"
                 >
                   Dashboard <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Link>

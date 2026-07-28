@@ -2,9 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { SignInButton } from "@clerk/nextjs";
 
-export function SiteFooter({ isSignedIn }: { isSignedIn?: boolean }) {
+export function SiteFooter(_props?: { isSignedIn?: boolean }) {
   return (
     <footer className="py-12 px-6 bg-white border-t border-gray-200 mt-24">
       <div className="max-w-6xl mx-auto">
@@ -103,19 +102,10 @@ export function SiteFooter({ isSignedIn }: { isSignedIn?: boolean }) {
         </div>
 
         {/* Bottom bar */}
-        <div className="pt-6 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="pt-6 border-t border-gray-100">
           <p className="text-gray-600 text-xs">
             © {new Date().getFullYear()} Freightcode. All rights reserved.
           </p>
-          <div className="opacity-100 transition-opacity flex items-center">
-            {!isSignedIn && (
-              <SignInButton mode="modal">
-                <button className="text-[10px] text-gray-600 hover:text-gray-700 uppercase tracking-widest cursor-pointer">
-                  Admin Login
-                </button>
-              </SignInButton>
-            )}
-          </div>
         </div>
       </div>
     </footer>

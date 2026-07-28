@@ -35,7 +35,7 @@ export function SignUpCta({ variant = "dark", showSignIn = true }: SignUpCtaProp
             primaryClass,
           )}
         >
-          Start free practice
+          Get started
           <ArrowRight className="h-3.5 w-3.5" />
         </button>
       </SignUpButton>
