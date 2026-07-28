@@ -9,7 +9,7 @@ const marketingNav = [
     group: "Platform",
     pages: [
       { title: "Solutions", href: "/solutions" },
-      { title: "Resources", href: "/resources" },
+      { title: "Docs", href: "/docs" },
     ],
   },
   {
@@ -39,7 +39,7 @@ export function MarketingSidebarNav() {
                     href={page.href}
                     className={cn(
                       "block py-1.5 text-[14px] transition-colors",
-                      pathname === page.href
+                      pathname === page.href || pathname.startsWith(`${page.href}/`)
                         ? "font-medium text-slate-900"
                         : "text-slate-600 hover:text-slate-900",
                     )}
