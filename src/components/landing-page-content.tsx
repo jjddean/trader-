@@ -38,7 +38,7 @@ const tradeComplianceSteps = [
   {
     step: 2,
     title: "Classification",
-    body: "AI proposes candidate control entries against the UK Strategic Export Control Lists, with confidence. A person approves or overrides on the assessment — nothing is treated as cleared automatically.",
+    body: "AI proposes candidate control entries against the UK Strategic Export Control Lists, with confidence. A human in the loop will then approve or override on the assessment — nothing is treated as cleared automatically.",
   },
   {
     step: 3,
