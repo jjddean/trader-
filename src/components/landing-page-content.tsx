@@ -304,9 +304,8 @@ export function LandingPageContent() {
                 Trade compliance
               </h2>
               <p className="text-[16px] leading-relaxed text-slate-600">
-                Strategic and dual-use exports need AI-assisted classification, sanctions screening, an end-user
-                undertaking, and evidence before a LITE or SPIRE application — on one assessment next to your CDS
-                declarations.
+                Strategic and dual-use exports need classification, sanctions screening, an end-user undertaking,
+                and evidence before a LITE or SPIRE application — on one assessment next to your CDS declarations.
               </p>
             </div>
 
