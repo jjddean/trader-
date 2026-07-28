@@ -1,68 +1,86 @@
 import { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Solutions | freightcode®",
   description:
-    "Build and submit UK customs declarations through HMRC CDS, with dry-run validation, document storage, and duty estimates — in one workspace.",
+    "UK customs declarations through HMRC CDS, export controls, and customs financial control — in one workspace.",
   alternates: {
     canonical: "/solutions",
   },
 };
 
-const capabilities = [
+const capabilities: Array<{
+  id: string;
+  label: string;
+  benefit: string;
+  how: string;
+  href?: string;
+}> = [
   {
-    id: "historical",
-    label: "Historical Data Analysis",
-    benefit: "Review past declaration patterns when TRE data is imported (planned).",
-    how: "Export CSV reports from HMRC TRE and import them into Freightcode to structure line items for estimates and HS suggestions.",
+    id: "cds",
+    label: "Customs declarations (CDS)",
+    benefit:
+      "Build, dry-run, and submit UK import declarations to HMRC CDS with documents, notifications, and an audit trail.",
+    how: "WCO-compliant filing in one workspace — you review every line before submit.",
   },
   {
-    id: "savings",
-    label: "Duty Refund Detection",
-    benefit: "Highlight possible preference or duty review opportunities — indicative, not filed reclaims.",
-    how: "When historical data is available, the platform can flag lines where a preference code may have been missed. Your customs adviser confirms before any reclaim.",
+    id: "financial-control",
+    label: "Financial control",
+    benefit:
+      "Pre-clearance duty and VAT calculated from Trade Tariff data, HMRC-confirmed charges on the MRN, Financial Records ledger, and variance review.",
+    how: "Customs finance alongside CDS — estimates stay separate from HMRC-confirmed amounts.",
+    href: "/solutions/financial-control",
   },
   {
-    id: "prefill",
-    label: "Smart Declaration Drafting",
-    benefit: "Create new draft declarations instantly and save time finding the correct HS Commodity Codes.",
-    how: "As you start a declaration, the system looks at your most frequent shipping routes and past successful filings to recommend the most accurate commodity codes.",
+    id: "tre",
+    label: "TRE trade data",
+    benefit:
+      "Import HMRC Trade Reporting CSVs to browse past declaration lines and surface duty or preference review hints.",
+    how: "Historical lines stay in your org workspace for adviser review — Freightcode does not file C285 reclaims.",
   },
   {
-    id: "scoring",
-    label: "Broker Performance Monitoring",
-    benefit: "Track how well your freight forwarders and customs brokers are performing.",
-    how: "We compare successful filings against errors to give you a clear view of which agents are performing best and where improvements are needed.",
-  },
-  {
-    id: "hmrc",
-    label: "HMRC OAuth connection",
-    benefit: "Connect to HMRC to submit declarations and pull status and notifications.",
-    how: "Connect via official HMRC OAuth to submit declarations and pull status and notifications. Tokens refresh in the background while your session stays authorised.",
-  },
-  {
-    id: "storage",
-    label: "Secure Document Storage",
-    benefit: "Keep your invoices, packing lists, and customs documents in one secure, compliant place.",
-    how: "Attach documents directly to your declaration records. We use secure cloud storage to ensure you can find what you need quickly during an HMRC audit.",
+    id: "export-controls",
+    label: "UK export controls",
+    benefit:
+      "Assessments for strategic and dual-use exports: AI-assisted classification (human approve), UK sanctions screening, EUSU, licence draft packs, consultancy support.",
+    how: "One case alongside CDS declarations. Filing stays on GOV.UK (LITE or SPIRE).",
+    href: "/solutions/export-controls",
   },
 ];
 
 export default function SolutionsPage() {
   return (
     <article className="max-w-3xl py-4">
-      <p className="mb-3 text-[13px] font-semibold uppercase tracking-widest text-blue-600">Platform</p>
-      <h1 className="mb-4 text-3xl font-bold leading-snug tracking-tight text-slate-900">Our Services</h1>
+      <p className="mb-3 text-[13px] font-semibold uppercase tracking-widest text-blue-600">
+        Platform
+      </p>
+      <h1 className="mb-4 text-3xl font-bold leading-snug tracking-tight text-slate-900">
+        Solutions
+      </h1>
       <p className="mb-10 text-[16px] leading-relaxed text-slate-600">
-        Build and submit UK customs declarations through HMRC CDS, with dry-run validation, document storage, and duty estimates — in one workspace.
+        UK customs declarations through HMRC CDS, with export controls and customs financial control in the same
+        workspace.
       </p>
 
       {capabilities.map((item) => (
         <div key={item.id} id={item.id} className="scroll-mt-24">
-          <h2 className="mb-4 mt-8 text-[20px] font-semibold tracking-tight text-slate-900">{item.label}</h2>
-          <p className="mb-6 text-[15px] leading-relaxed text-slate-700">
+          <h2 className="mb-4 mt-8 text-[20px] font-semibold tracking-tight text-slate-900">
+            {item.label}
+          </h2>
+          <p className="mb-4 text-[15px] leading-relaxed text-slate-700">
             <strong>{item.benefit}</strong> {item.how}
           </p>
+          {item.href && (
+            <p className="mb-6">
+              <Link
+                href={item.href}
+                className="text-[14px] font-semibold text-blue-600 hover:text-blue-700"
+              >
+                Read the full product page →
+              </Link>
+            </p>
+          )}
         </div>
       ))}
     </article>

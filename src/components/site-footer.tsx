@@ -2,9 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { SignInButton } from "@clerk/nextjs";
 
-export function SiteFooter({ isSignedIn }: { isSignedIn?: boolean }) {
+export function SiteFooter(_props?: { isSignedIn?: boolean }) {
   return (
     <footer className="py-12 px-6 bg-white border-t border-gray-200 mt-24">
       <div className="max-w-6xl mx-auto">
@@ -61,12 +60,9 @@ export function SiteFooter({ isSignedIn }: { isSignedIn?: boolean }) {
             <h4 className="text-[#020817] font-medium text-xs mb-4">Product</h4>
             <ul className="text-gray-500 text-xs space-y-2">
               <li><Link href="/solutions" className="hover:text-[#020817]">Solutions</Link></li>
-              <li><Link href="/resources" className="hover:text-[#020817]">Resources</Link></li>
-              <li><Link href="/guides/hmrc-cds-complete-guide-uk-importers-2026" className="hover:text-[#020817]">CDS Importers</Link></li>
-              <li><Link href="/guides/what-is-tre-hmrc-trade-data" className="hover:text-[#020817]">What is TRE?</Link></li>
-              <li><Link href="/guides/dmsacc-dmsrog-dmscle-hmrc-cds-notifications" className="hover:text-[#020817]">CDS Status</Link></li>
-              <li><Link href="/guides/how-to-read-cds-csv-export-tre" className="hover:text-[#020817]">TRE Exports</Link></li>
-              <li><Link href="/guides/cds-commodity-codes-how-to-find" className="hover:text-[#020817]">HS Codes</Link></li>
+              <li><Link href="/solutions/export-controls" className="hover:text-[#020817]">Export controls</Link></li>
+              <li><Link href="/solutions/financial-control" className="hover:text-[#020817]">Financial control</Link></li>
+              <li><Link href="/docs" className="hover:text-[#020817]">Docs</Link></li>
             </ul>
           </div>
 
@@ -106,19 +102,10 @@ export function SiteFooter({ isSignedIn }: { isSignedIn?: boolean }) {
         </div>
 
         {/* Bottom bar */}
-        <div className="pt-6 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="pt-6 border-t border-gray-100">
           <p className="text-gray-600 text-xs">
             © {new Date().getFullYear()} Freightcode. All rights reserved.
           </p>
-          <div className="opacity-100 transition-opacity flex items-center">
-            {!isSignedIn && (
-              <SignInButton mode="modal">
-                <button className="text-[10px] text-gray-600 hover:text-gray-700 uppercase tracking-widest cursor-pointer">
-                  Admin Login
-                </button>
-              </SignInButton>
-            )}
-          </div>
         </div>
       </div>
     </footer>
