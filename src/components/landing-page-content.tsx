@@ -15,7 +15,7 @@ const howItWorksSteps = [
   {
     step: 1,
     title: "Build your declaration",
-    body: "Upload commercial invoices for AI line-item extract, or add goods manually. Use HS lookup, attach documents, and capture EORI, valuation, and payment details — you review before submit.",
+    body: "Upload commercial invoices for AI line-item extract, or add goods manually. Look up commodity codes, attach documents, and capture EORI, valuation, and payment details — you review before submit.",
   },
   {
     step: 2,
@@ -67,7 +67,7 @@ const coreCapabilities = [
   },
   {
     id: "prefill",
-    label: "HS lookup & invoice extract",
+    label: "Commodity codes & invoice extract",
     benefit:
       "Look up commodity codes and apply them to line items. AI extracts goods fields from commercial invoices — you review before submit.",
   },
