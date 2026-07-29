@@ -13,23 +13,11 @@ export function confirmLiveFlip(displayLabel: string): boolean {
   );
 }
 
+/** Pre-flight for admin → Live. Convex env is the source of truth (same as setOrgMode). */
 export async function collectLiveFlipBlockers(
   convex: ConvexReactClient,
   orgId: string,
 ): Promise<string[]> {
-  const blockers: string[] = [];
-
-  try {
-    const health = await fetch("/api/health").then((res) => res.json());
-    if (!health?.livePlatform?.productionHmrcOAuth) {
-      blockers.push("Production HMRC OAuth is not configured in Vercel.");
-    }
-  } catch {
-    blockers.push("Could not verify platform HMRC configuration.");
-  }
-
   const readiness = await convex.query(api.org_hmrc.getLiveReadinessForOrg, { orgId });
-  blockers.push(...readiness.blockers);
-
-  return blockers;
+  return readiness.blockers;
 }

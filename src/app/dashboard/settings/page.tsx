@@ -1,8 +1,8 @@
 "use client";
 
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useState, useCallback, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useUser, useOrganization, useClerk } from "@clerk/nextjs";
@@ -35,6 +35,8 @@ function SettingsPageContent() {
   const userId = user?.id || "";
   const orgId = organization?.id || "";
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const subscription = useQuery(api.subscriptions.getSubscription, userId ? { userId } : "skip");
   const dbUser = useQuery(api.users.current, isAuthenticated ? {} : "skip");
@@ -72,6 +74,34 @@ function SettingsPageContent() {
     typeof subscription?.stripeCustomerId === "string" ? subscription.stripeCustomerId : "";
   const canManageBilling =
     Boolean(stripeCustomerId) && !isSyntheticStripeCustomerId(stripeCustomerId);
+
+  const setSettingsTab = useCallback(
+    (id: typeof activeTab) => {
+      setActiveTab(id);
+      const params = new URLSearchParams(searchParams.toString());
+      if (id === "profile") {
+        params.delete("tab");
+      } else {
+        params.set("tab", id);
+      }
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname);
+    },
+    [pathname, router, searchParams],
+  );
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (
+      tab === "subscription" ||
+      tab === "team" ||
+      tab === "security" ||
+      tab === "notifications" ||
+      tab === "privacy"
+    ) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   async function openBillingPortal() {
     setStripeLoading(true);
@@ -135,7 +165,7 @@ function SettingsPageContent() {
           <button
             key={id}
             type="button"
-            onClick={() => setActiveTab(id)}
+            onClick={() => setSettingsTab(id)}
             className={cn(
               "inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-xs font-medium transition-colors",
               activeTab === id ? "bg-black text-white" : "text-slate-600 hover:bg-slate-100",
@@ -462,7 +492,7 @@ function SettingsPageContent() {
                 <p className="mt-1 text-[11px] text-slate-500">
                   {orgHmrcMode?.hmrcMode === "live"
                     ? "Your organisation is on live CDS. Submissions have legal effect."
-                    : "Your organisation is in practice mode (HMRC sandbox / TDR). Submissions are not legally binding."}
+                    : "Your organisation is in the test environment (HMRC sandbox / TDR). Submissions are not legally binding."}
                 </p>
                 <div className="mt-3">
                   <span
@@ -473,7 +503,7 @@ function SettingsPageContent() {
                         : "bg-blue-100 text-blue-800",
                     )}
                   >
-                    {orgHmrcMode?.hmrcMode === "live" ? "Live CDS" : "Practice (sandbox)"}
+                    {orgHmrcMode?.hmrcMode === "live" ? "Live CDS" : "Test environment"}
                   </span>
                 </div>
               </div>

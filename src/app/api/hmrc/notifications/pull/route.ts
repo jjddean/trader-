@@ -41,11 +41,6 @@ export async function GET(request: Request) {
       );
     }
 
-    const tokenResult = await resolveHmrcAccessToken(convex, userId);
-    if ("error" in tokenResult) {
-      return tokenResult.error;
-    }
-
     const orgRouting = declarationIdParam
       ? await resolveOrgHmrcRoutingForDeclaration(convex, declarationIdParam as Id<"declarations">)
       : await resolveOrgHmrcRoutingForOrg(convex, clerkAuth.orgId);
@@ -53,6 +48,11 @@ export async function GET(request: Request) {
       return orgRouting.error;
     }
     const { hmrcContext } = orgRouting;
+
+    const tokenResult = await resolveHmrcAccessToken(convex, userId, hmrcContext);
+    if ("error" in tokenResult) {
+      return tokenResult.error;
+    }
 
     let conversationIds: string[] = [];
     if (declarationIdParam) {

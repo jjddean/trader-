@@ -19,6 +19,20 @@ const STOP_WORDS = new Set([
   "be", "as", "at", "from", "that", "this", "not", "has", "have", "was", "were", "it", "its",
 ]);
 
+/**
+ * Catalogue filler — kept in tokenization (may appear in control-list scope text) but cannot
+ * alone justify a lexical candidate. At least one matched term outside this set is required.
+ */
+const WEAK_CATALOGUE_TERMS = new Set([
+  "industrial", "industry", "commercial", "civilian", "general", "standard", "special",
+  "equipment", "system", "systems", "device", "devices", "unit", "units", "module", "modules",
+  "product", "products", "item", "items", "goods", "material", "materials", "part", "parts",
+  "component", "components", "assembly", "machine", "machinery", "tool", "tools", "apparatus",
+  "type", "model", "series", "range", "application", "applications", "use", "used", "using",
+  "designed", "suitable", "including", "related", "other", "such", "than", "less", "more",
+  "technical", "technology", "specification", "specifications", "description", "capacity",
+]);
+
 const DOMAIN_KEYWORDS: Record<string, string[]> = {
   crypto: ["encryption", "cryptographic", "cipher", "aes", "rsa", "ssl", "tls", "vpn", "cryptography"],
   electronics: ["semiconductor", "fpga", "asic", "microprocessor", "transistor", "microwave", "radar"],
@@ -59,6 +73,16 @@ function scoreChunk(tokens: string[], chunkText: string): { score: number; match
 
   const overlap = matchedTerms.length / Math.sqrt(tokens.length * chunkTokens.size);
   return { score: overlap, matchedTerms };
+}
+
+function discriminativeTerms(matchedTerms: string[]): string[] {
+  return matchedTerms.filter((t) => !WEAK_CATALOGUE_TERMS.has(t));
+}
+
+/** Lexical hits need a non-catalogue anchor; explicit entry-code matches are always retained. */
+function isStrongLexicalHit(matchedTerms: string[], entryBoost: number): boolean {
+  if (entryBoost >= 2) return true;
+  return discriminativeTerms(matchedTerms).length >= 1;
 }
 
 function detectDomainBoosts(raw: string): string[] {
@@ -104,7 +128,8 @@ export function retrieveControlListCandidates(
       const chunk = entry.chunks[i];
       const { score, matchedTerms } = scoreChunk(tokens, chunk.text);
       const lexicalScore = score + entryBoost;
-      if (lexicalScore <= 0 && entryBoost === 0) continue;
+      if (!isStrongLexicalHit(matchedTerms, entryBoost)) continue;
+      if (lexicalScore <= 0) continue;
 
       hits.push({
         entryCode: entry.entryCode,
@@ -126,8 +151,9 @@ export function retrieveControlListCandidates(
       });
     }
 
-    if (entry.chunks.length === 0 && entryBoost > 0) {
+    if (entry.chunks.length === 0 && (entryBoost > 0 || explicitCodes.includes(entry.entryCode.toUpperCase()))) {
       const { score, matchedTerms } = scoreChunk(tokens, entry.fullText);
+      if (!isStrongLexicalHit(matchedTerms, entryBoost)) continue;
       hits.push({
         entryCode: entry.entryCode,
         entryType: entry.entryType,

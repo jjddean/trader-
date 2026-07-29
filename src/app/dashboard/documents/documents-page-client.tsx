@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { 
@@ -45,9 +46,16 @@ import {
 
 interface DocumentsPageClientProps {
   requestedDeclarationId?: string | null;
+  initialOpenUpload?: boolean;
 }
 
-export function DocumentsPageClient({ requestedDeclarationId = null }: DocumentsPageClientProps) {
+export function DocumentsPageClient({
+  requestedDeclarationId = null,
+  initialOpenUpload = false,
+}: DocumentsPageClientProps) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const { user, isLoaded, isSignedIn } = useUser();
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const userId = user?.id || "";
@@ -55,7 +63,7 @@ export function DocumentsPageClient({ requestedDeclarationId = null }: Documents
     isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && Boolean(userId);
 
   const [activeTool, setActiveTool] = useState<string | null>(null);
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isUploadOpen, setIsUploadOpen] = useState(initialOpenUpload);
   const [isPasteOpen, setIsPasteOpen] = useState(false);
   const [declarationFilter, setDeclarationFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -141,6 +149,21 @@ export function DocumentsPageClient({ requestedDeclarationId = null }: Documents
   const handleUploadOpenChange = useCallback((open: boolean) => {
     setIsUploadOpen(open);
   }, []);
+
+  useEffect(() => {
+    if (initialOpenUpload) {
+      setIsUploadOpen(true);
+    }
+  }, [initialOpenUpload]);
+
+  useEffect(() => {
+    if (searchParams.get("upload") !== "1") return;
+    setIsUploadOpen(true);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("upload");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [searchParams, router, pathname]);
 
   const [isAuditing, setIsAuditing] = useState(false);
   const [auditResult, setAuditResult] = useState<any>(null);

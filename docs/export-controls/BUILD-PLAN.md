@@ -2,7 +2,7 @@
 
 **Status:** Agreed working plan · tick boxes as work completes  
 **Created:** 2026-07-03  
-**Last updated:** 2026-07-09 (§Consultant loop · multi-consultant · scope now/later)  
+**Last updated:** 2026-07-12 (§Consultant loop — no Settings roster / multi-pick)
 **Scope:** UK export-control LITE draft packs — decision-support and draft-generation only. FreightCode never submits to government systems and never gives binding legal advice.
 
 ---
@@ -374,7 +374,7 @@ Captured from the *Freightcode Export Controls v1* product spec. **Do not build 
 
 | ID | Item | Notes |
 |----|------|--------|
-| V1-05 | **Expert review & sign-off** — Settings consultant config, email + magic link, record-back on link page | Phase 7 | **partial** — link-first shipped; invited-user path optional later |
+| V1-05 | **Expert review & sign-off** — email on send + magic link, record-back on link page | Phase 7 | **done** for link-first path; invited-user path optional later |
 | V1-06 | Consultant sign-off unlocks **Attach to Declaration** on FLAGGED cases | Go-live gate (Phase 10) |
 | V1-07 | **NLR (No Licence Required) audit note** PDF when Cleared | Exact params checked + control-list version timestamp — legal shield for consultants |
 | V1-08 | Audit Log tab wired to `auditLogs` | Immutable history: assessment, engine version, dataset version, reviewer |
@@ -405,21 +405,22 @@ Captured from the *Freightcode Export Controls v1* product spec. **Do not build 
 | V1-18 | OGEL / OIEL / SITCL licence management | Out of scope v1; SIEL + F680 first |
 | V1-19 | Batch multi-shipment screening | AEB-style; broker demand |
 
-### Consultant dispatch (V1-20 — shipped partial)
+### Consultant dispatch (V1-20)
 
 | Step | What |
 |------|------|
-| Config | **Settings → Team** — consultant name, email, firm, role (adviser / applies on behalf / EOR) |
-| Send | **Overview → Send to consultant** — email with link; packet not attached |
+| Send | **Draft Pack → Send to consultant** — enter email on the form; magic link; packet not attached |
 | Review | **`/r/export/{token}`** — draft pack copy fields, GOV.UK link, advisory notes, app/licence refs |
 | Complete | Sign off (clear) or Block — updates assessment + `expert_requests` + optional `export_licences` |
-| Email | Resend when `RESEND_API_KEY` set; otherwise link shown for manual copy |
+| Email | Resend when `RESEND_FROM_EMAIL` + `RESEND_API_KEY` set; otherwise link shown for manual copy |
+
+No Settings roster or consultant multi-pick — enter the email each send. Send again with a different address if needed.
 
 **Optional later:** invite consultant as Freightcode user (portal path) — same assessment sheet, no magic link.
 
 ### Consultant loop — scope now vs later
 
-**One app (Freightcode).** Magic links are extra pages inside the same product (`/r/export/...`, later `/r/end-user/...`). Not a separate consultant app. Not declaration integration in this slice.
+**One app (Freightcode).** Magic links are extra pages inside the same product (`/r/export/...`, `/r/end-user/...`). Not a separate consultant app. Not declaration integration in this slice.
 
 #### Who uses what
 
@@ -428,31 +429,18 @@ Captured from the *Freightcode Export Controls v1* product spec. **Do not build 
 | **Exporter / broker** | Self-serve: classify → sanctions → draft pack → LITE → record licence | **Optional** — only if they want an external reviewer |
 | **Consultancy (logged in)** | Run assessment for a client; classify, draft pack, apply on LITE | **No** — they work in the dashboard; they do not email a link to themselves |
 | **Other consultant(s)** | Receive email + link; review, EUS, sign off, record refs | **Yes** — broker *or* consultancy sends **to someone else** |
-| **End user (buyer)** | End-user statement form on link (next build) | Sent by consultant from review page |
+| **End user (buyer)** | End-user statement on `/r/end-user/{token}` | Sent from Draft Pack **or** consultant review page |
 
 **Rule:** consultant dispatch is **optional**. Never required to use draft pack or record a licence. Go-live gates (later) must allow **self sign-off** when no external consultant is used.
 
-#### Multiple consultants
-
-Consultancies and brokers often use **more than one** external consultant (partner firm, specialist, second opinion). Plan:
-
-| Now | Next |
-|-----|------|
-| One default in Settings → Team + override email on send (API already accepts `consultantEmail`) | **Consultant roster** in org settings (name, email, firm) |
-| One active link per send; history on `expert_requests` | **Pick consultant** dropdown on Send; resend to different consultant if needed |
-| | Optional: “primary” consultant for default only |
-
-Logged-in consultancy user: runs the case in Trade Compliance; when they need **another** consultant, they use **Send to consultant** and pick or enter that person’s email — same as a broker would.
-
-#### Close the loop (build now)
+#### Close the loop
 
 | Step | Status |
 |------|--------|
 | Broker/consultancy runs assessment | Done |
 | Send to **other** consultant (email + `/r/export/{token}`) | Done |
 | Consultant reviews, GOV.UK, sign off, licence refs | Done |
-| **Send to end user** (EUS link `/r/end-user/{token}`) | **Next** |
-| Sanctions one-liner on consultant review page | **Next** (minimal) |
+| **Send to end user** (EUS link `/r/end-user/{token}`) from app + consultant page | Done |
 | Broker/consultancy sees Cleared on Overview | Done |
 
 #### Explicitly later (not this slice)

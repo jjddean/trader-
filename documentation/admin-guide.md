@@ -95,7 +95,7 @@ All config lives in `.env.local`. **Never commit this file** (`.gitignore` cover
 | Declarations | `/dashboard/declarations` | Create, view, manage customs declarations |
 | Documents | `/dashboard/documents` | Upload and manage supporting docs |
 | Reports | `/dashboard/reports` | Customs reports and analytics |
-| Compliance Audit | `/dashboard/audit` | Compliance checks against declarations |
+| Trade Compliance | `/dashboard/trade-compliance` | Compliance checks against declarations |
 | Records | `/dashboard/records` | Historical declaration records |
 | HS Code Lookup | `/dashboard/tools` | Commodity code search via Typesense |
 | AI Assistant | `/dashboard/assistant` | AI-powered customs guidance |

@@ -8,6 +8,7 @@ import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, ExternalLink, ChevronRight } from "lucide-react";
 import type { TreParsePreview } from "@/lib/tre-csv-types";
+import { TRE_FORMAT_LABELS } from "@/lib/tre-csv-types";
 import { parseTreCsv, TRE_IMPORT_MAX_BYTES } from "@/lib/tre-csv-parser";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +18,7 @@ interface ImportSuccess {
   rowCount: number;
 }
 
-export function TreImportUpload() {
+export function TreImportUpload({ embedded = false }: { embedded?: boolean }) {
   const { organization } = useOrganization();
   const imports = useQuery(api.tre_imports.listImports);
   const [preview, setPreview] = useState<TreParsePreview | null>(null);
@@ -67,7 +68,7 @@ export function TreImportUpload() {
     setFileRef(file);
 
     if (parsed.format === "unknown") {
-      setError("This file does not look like an HMRC Import Item Report CSV.");
+      setError("This file does not look like a supported HMRC TRE report CSV.");
     }
   }
 
@@ -97,20 +98,20 @@ export function TreImportUpload() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className={embedded ? "space-y-6" : "space-y-8"}>
       {!organization && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
           Select an organisation workspace before importing. TRE history is shared with your team.
         </div>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
+      <div className={embedded ? "space-y-6" : "rounded-xl border border-slate-200 bg-white p-6"}>
         <div className="mb-6 space-y-2">
           <h2 className="text-sm font-semibold text-black">Upload HMRC TRE CSV</h2>
           <p className="text-xs leading-relaxed text-slate-500">
-            Export an <strong>Import Item Report</strong> from HMRC Trade Reporting and Extracting (TRE), then upload it
-            here. We store up to 1,000 line items per import to improve duty estimates and HS suggestions — we do not
-            file reclaims on your behalf.
+            Export from HMRC Trade Reporting and Extracting (TRE): <strong>Import Item</strong>,{" "}
+            <strong>Import Header</strong>, <strong>Import Tax Lines</strong>, or <strong>Export Item</strong>{" "}
+            reports. We store up to 1,000 rows per import for duty estimates, HS suggestions, and history audits.
           </p>
           <Link
             href="/guides/how-to-read-cds-csv-export-tre"
@@ -171,7 +172,7 @@ export function TreImportUpload() {
                 ["Rows parsed", preview.rowCount],
                 ["Will store", preview.storedRowCount],
                 ["EORIs", preview.eoris.length],
-                ["Format", preview.format === "item_report" ? "Item report" : "Unknown"],
+                ["Format", TRE_FORMAT_LABELS[preview.format]],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                   <div className="text-[10px] uppercase tracking-widest text-slate-400">{label}</div>
@@ -237,7 +238,7 @@ export function TreImportUpload() {
       </div>
 
       {imports && imports.length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6">
+        <div className={embedded ? "border-t border-slate-200 pt-6" : "rounded-xl border border-slate-200 bg-white p-6"}>
           <h3 className="mb-4 text-sm font-semibold text-black">Import history</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-xs">
@@ -245,6 +246,7 @@ export function TreImportUpload() {
                 <tr>
                   <th className="px-3 py-2 font-medium">Date</th>
                   <th className="px-3 py-2 font-medium">File</th>
+                  <th className="px-3 py-2 font-medium">Type</th>
                   <th className="px-3 py-2 font-medium">Stored</th>
                   <th className="px-3 py-2 font-medium">Skipped</th>
                   <th className="px-3 py-2 font-medium">Status</th>
@@ -263,6 +265,9 @@ export function TreImportUpload() {
                         {new Date(row.createdAt).toLocaleDateString("en-GB")}
                       </td>
                       <td className="px-3 py-2">{row.filename}</td>
+                      <td className="px-3 py-2 capitalize">
+                        {row.reportFormat ? String(row.reportFormat).replace(/_/g, " ") : "—"}
+                      </td>
                       <td className="px-3 py-2">{row.lineItemsStored}</td>
                       <td className="px-3 py-2">{row.lineItemsSkipped}</td>
                       <td className="px-3 py-2 capitalize">{row.status}</td>
@@ -324,6 +329,7 @@ export function TreImportUpload() {
                         <th className="px-3 py-2 font-medium">Amount</th>
                         <th className="px-3 py-2 font-medium">Value</th>
                         <th className="px-3 py-2 font-medium">Accepted</th>
+                        <th className="px-3 py-2 font-medium">Declaration</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -341,6 +347,18 @@ export function TreImportUpload() {
                             {row.customsValue != null ? `£${row.customsValue.toFixed(2)}` : "—"}
                           </td>
                           <td className="px-3 py-2">{row.acceptanceDate}</td>
+                          <td className="px-3 py-2">
+                            {row.linkedDeclarationId ? (
+                              <Link
+                                href={`/dashboard/declarations/${row.linkedDeclarationId}`}
+                                className="font-medium text-blue-600 hover:text-blue-700"
+                              >
+                                Open
+                              </Link>
+                            ) : (
+                              <span className="text-slate-400">—</span>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

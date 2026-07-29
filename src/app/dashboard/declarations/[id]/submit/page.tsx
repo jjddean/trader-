@@ -12,9 +12,15 @@ import { generateClientFraudHeaders } from "@/lib/hmrc-fraud-headers";
 import { getHmrcRequirementSetForDeclaration } from "@/lib/utils/document-utils";
 import {
   ConvexSessionMissing,
-  DeclarationLoadingSpinner,
+  DeclarationPageSkeleton,
   isConvexSessionMissing,
 } from "@/components/declaration-session-states";
+import type { Doc } from "../../../../../../convex/_generated/dataModel";
+
+type DocumentRequirementRow = Pick<
+  Doc<"document_requirements">,
+  "status" | "requirementLevel" | "code"
+>;
 
 export default function SubmitPage() {
   const { isLoaded, isSignedIn, userId } = useAuth();
@@ -39,11 +45,28 @@ export default function SubmitPage() {
     api.declaration_completeness.getStatus,
     isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId ? { declarationId } : "skip",
   );
+  const representationStatus = useQuery(
+    api.representation.getStatus,
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId ? { declarationId } : "skip",
+  );
+  const orgHmrc = useQuery(
+    api.org_hmrc.getModeForDeclaration,
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && declarationId ? { declarationId } : "skip",
+  );
   const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
+  const approveIndirectRepresentation = useMutation(api.representation.approveIndirectRepresentation);
 
+  const hmrcEnvironment = orgHmrc?.hmrcMode === "live" ? "production" : "sandbox";
   const hmrcTokens = useQuery(
     api.hmrc_internal.getTokens,
-    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && userId ? { userId } : "skip",
+    isLoaded &&
+      isSignedIn &&
+      !isConvexAuthLoading &&
+      isAuthenticated &&
+      userId &&
+      orgHmrc !== undefined
+      ? { userId, environment: hmrcEnvironment }
+      : "skip",
   );
   const hydratedRequirementsRef = useRef(false);
   const failedRequirementsHydrationRef = useRef(false);
@@ -108,13 +131,19 @@ export default function SubmitPage() {
   const [error, setError] = useState<string | null>(null);
   const [dryRunResult, setDryRunResult] = useState<DryRunPayload | null>(null);
   const [dryRunPassed, setDryRunPassed] = useState(false);
+  const [approvalError, setApprovalError] = useState<string | null>(null);
+  const [isApproving, setIsApproving] = useState(false);
+  const [liveSubmitConfirmed, setLiveSubmitConfirmed] = useState(false);
 
   const readResponsePayload = async (res: Response) => {
+    const text = await res.text();
+    if (!text.trim()) {
+      return { error: `Request failed (HTTP ${res.status})` };
+    }
     try {
-      return await res.json();
+      return JSON.parse(text) as Record<string, unknown>;
     } catch {
-      const text = await res.text();
-      return { error: text || `HTTP ${res.status}` };
+      return { error: text.slice(0, 800) || `HTTP ${res.status}` };
     }
   };
 
@@ -139,19 +168,28 @@ export default function SubmitPage() {
 
   // Submit gate: rule engine completeness (single source of truth) + persisted doc requirements.
   const missingBlockingRequirements = (requirements || []).filter(
-    (req: any) => req.status === "missing" && (req.requirementLevel || "blocking") === "blocking",
+    (req: DocumentRequirementRow) =>
+      req.status === "missing" && (req.requirementLevel || "blocking") === "blocking",
   );
   const missingAdvisoryRequirements = (requirements || []).filter(
-    (req: any) => req.status === "missing" && (req.requirementLevel || "blocking") === "advisory",
+    (req: DocumentRequirementRow) =>
+      req.status === "missing" && (req.requirementLevel || "blocking") === "advisory",
   );
   const missingBlockingCodes = missingBlockingRequirements
-    .map((req: any) => String(req.code || "UNKNOWN"));
+    .map((req: DocumentRequirementRow) => String(req.code || "UNKNOWN"));
   const missingAdvisoryCodes = missingAdvisoryRequirements
-    .map((req: any) => String(req.code || "UNKNOWN"));
+    .map((req: DocumentRequirementRow) => String(req.code || "UNKNOWN"));
 
   const completenessReady = completeness?.ready === true;
   const completenessMissing = completeness?.missing ?? [];
   const isReady = completenessReady && missingBlockingRequirements.length === 0;
+  // Org-level Live (production) CDS mode — distinct from declaration *status*.
+  const isOrgLiveMode = orgHmrc?.hmrcMode === "live";
+  // Live submissions are legally binding; require an explicit confirmation.
+  const liveConfirmSatisfied = !isOrgLiveMode || liveSubmitConfirmed;
+  const representationRequiresApproval = representationStatus?.approvalRequired === true;
+  const representationApprovalReady = !representationRequiresApproval
+    || (representationStatus?.approved === true && representationStatus?.approvalCurrent === true);
 
   const ruleEngineBlocked =
     dryRunResult?.localPreflight?.ruleEngine === "blocked"
@@ -178,12 +216,11 @@ export default function SubmitPage() {
   
   // Generate the WCO payload for preview (mapper throws if overseas exporter missing).
   let wcoPayloadPreview: ReturnType<typeof mapToCDS_H1> | null = null;
-  let wcoPreviewError: string | null = null;
   if (isReady && declaration && items) {
     try {
       wcoPayloadPreview = mapToCDS_H1(declaration, items);
-    } catch (err: unknown) {
-      wcoPreviewError = err instanceof Error ? err.message : "Failed to build WCO payload preview";
+    } catch {
+      wcoPayloadPreview = null;
     }
   }
   const debugGoodsLocation = dryRunResult?.payloadDebug?.goodsShipment?.consignment;
@@ -194,6 +231,17 @@ export default function SubmitPage() {
     debugGoodsLocation?.goodsLocationName || debugGoodsLocation?.goodsLocationId,
   ].filter(Boolean).join(" / ");
 
+  const handleApproveIndirectRepresentation = async () => {
+    setIsApproving(true);
+    setApprovalError(null);
+    try {
+      await approveIndirectRepresentation({ declarationId });
+    } catch (err: unknown) {
+      setApprovalError(err instanceof Error ? err.message : "Failed to approve indirect representation");
+    } finally {
+      setIsApproving(false);
+    }
+  };
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setError(null);
@@ -231,8 +279,9 @@ export default function SubmitPage() {
         console.log("HMRC validation details:", data.details, data.fields);
         if (res.status === 409 && data.code === "SUBMIT_BLOCKED") {
           throw new Error(
-            data.error ||
-              "This declaration is already live with HMRC. Use Amend on the Status page, or create a new declaration.",
+            typeof data.error === "string" && data.error
+              ? data.error
+              : "This declaration is already live with HMRC. Use Amend on the Status page, or create a new declaration.",
           );
         }
         const fieldErrors = Array.isArray(data.fields)
@@ -249,20 +298,22 @@ export default function SubmitPage() {
             ? `${data.error || "Validation failed"}\n\nMissing:\n${missingFields}`
           : fieldErrors
             ? `${data.error || "Validation failed"}\n\n${fieldErrors}`
+          : data.message && data.error && data.message !== data.error
+            ? `${data.error}\n\n${data.message}`
+          : data.message
+            ? String(data.message)
           : data.error
             ? String(data.error)
-            : data.message
-              ? String(data.message)
-              : `Request failed (HTTP ${res.status})`;
+            : `Request failed (HTTP ${res.status})`;
         throw new Error(errorMessage);
       }
 
       // 3. Advance to Status timeline page to await the MRN webhook
       router.push(`/dashboard/declarations/${declarationId}/status`);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Submission failed:", err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Submission failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -322,49 +373,27 @@ export default function SubmitPage() {
 
       setDryRunResult(data as DryRunPayload);
       setDryRunPassed(data.success === true);
-    } catch (err: any) {
-      setError(err.message || "Dry run failed");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Dry run failed");
       setDryRunPassed(false);
     } finally {
       setIsDryRunning(false);
     }
   };
 
-  if (!isLoaded) {
-    return <DeclarationLoadingSpinner />;
-  }
-
   if (isConvexSessionMissing(isLoaded, Boolean(isSignedIn), isConvexAuthLoading, isAuthenticated)) {
     return <ConvexSessionMissing />;
   }
 
   if (
-    isSignedIn &&
-    isAuthenticated &&
-    (declaration === undefined ||
-      items === undefined ||
-      requirements === undefined ||
-      completeness === undefined)
+    declaration === undefined ||
+    items === undefined ||
+    requirements === undefined ||
+    completeness === undefined ||
+    representationStatus === undefined ||
+    orgHmrc === undefined
   ) {
-    return <DeclarationLoadingSpinner />;
-  }
-
-  if (!isSignedIn) {
-    return (
-      <div className="rounded-md border border-red-200 bg-red-50 p-4">
-        <h4 className="text-xs font-bold text-red-800 uppercase tracking-widest mb-1">HMRC API Error</h4>
-        <p className="text-sm text-red-700 font-mono whitespace-pre-wrap">Session expired or not signed in. Please sign in again and retry.</p>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="rounded-md border border-red-200 bg-red-50 p-4">
-        <h4 className="text-xs font-bold text-red-800 uppercase tracking-widest mb-1">HMRC API Error</h4>
-        <p className="text-sm text-red-700 font-mono whitespace-pre-wrap">Convex authentication is not active for this session. Refresh the page and sign in again.</p>
-      </div>
-    );
+    return <DeclarationPageSkeleton />;
   }
 
   return (
@@ -435,6 +464,25 @@ export default function SubmitPage() {
               </div>
             </li>
 
+            {representationRequiresApproval && (
+              <li className="flex items-start gap-3">
+                {!representationApprovalReady ? <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
+                <div>
+                  <p className={`text-sm font-medium ${!representationApprovalReady ? "text-red-700" : "text-slate-900"}`}>Indirect Representation Approval</p>
+                  <p className="text-xs text-slate-500">
+                    Required before HMRC submission when DE 3/21 is indirect representation.
+                    {representationStatus?.approval ? (
+                      <span className="block mt-1 text-slate-600">
+                        Approved by {representationStatus.approval.approverName}
+                      </span>
+                    ) : null}
+                    {!representationApprovalReady && representationStatus?.reason ? (
+                      <span className="block mt-1 text-red-600">{representationStatus.reason}</span>
+                    ) : null}
+                  </p>
+                </div>
+              </li>
+            )}
             <li className="flex items-start gap-3">
               {!dryRunFullyPassed ? <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
               <div>
@@ -463,6 +511,26 @@ export default function SubmitPage() {
             </div>
           )}
 
+          {representationRequiresApproval && !representationApprovalReady && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-amber-800 mb-2">
+                Internal approval required
+              </h4>
+              <p className="mb-3 text-xs text-amber-900">
+                Confirm you are filing under indirect representation for this importer, then approve to unlock submit.
+              </p>
+              {approvalError && <p className="mb-3 text-xs text-red-700">{approvalError}</p>}
+              <button
+                type="button"
+                onClick={handleApproveIndirectRepresentation}
+                disabled={isApproving}
+                className="flex h-8 w-full items-center justify-center gap-2 rounded-md bg-black px-3 text-xs font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isApproving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4 text-green-400" />}
+                {isApproving ? "Recording Approval..." : "Approve Indirect Representation"}
+              </button>
+            </div>
+          )}
           {error && (
             <div className="rounded-md border border-red-200 bg-red-50 p-4">
                <h4 className="text-xs font-bold text-red-800 uppercase tracking-widest mb-1">
@@ -669,6 +737,33 @@ export default function SubmitPage() {
         </div>
 
         <div className="border-t border-slate-100 bg-slate-50/50 p-4 px-6 flex flex-col items-center justify-center gap-3">
+          <div className={`w-full rounded-md border px-3 py-2 text-center ${
+            isOrgLiveMode
+              ? "border-red-300 bg-red-50 text-red-800"
+              : "border-amber-200 bg-amber-50 text-amber-800"
+          }`}>
+            <p className="text-[10px] font-bold uppercase tracking-widest">
+              {isOrgLiveMode
+                ? "Live CDS — production HMRC (legally binding)"
+                : "Practice / Sandbox — no legal effect"}
+            </p>
+          </div>
+
+          {isOrgLiveMode && (
+            <label className="flex w-full items-start gap-2 rounded-md border border-red-200 bg-white px-3 py-2 text-left">
+              <input
+                type="checkbox"
+                checked={liveSubmitConfirmed}
+                onChange={(e) => setLiveSubmitConfirmed(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-red-600"
+              />
+              <span className="text-xs text-slate-700">
+                I understand this is a <span className="font-semibold">legally binding LIVE submission</span> to
+                HMRC production CDS and confirm the declaration data is accurate.
+              </span>
+            </label>
+          )}
+
           <p className="text-[10px] text-slate-500 text-center uppercase tracking-widest font-medium">
             By submitting, you confirm authorization to act as the legal Declarant.
           </p>
@@ -682,11 +777,17 @@ export default function SubmitPage() {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!isReady || !dryRunFullyPassed || isSubmitting || isDryRunning || isLiveDeclaration}
-            className="flex w-full h-8 rounded-md bg-black px-4 text-xs font-normal text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
+            disabled={!isReady || !dryRunFullyPassed || !representationApprovalReady || !liveConfirmSatisfied || isSubmitting || isDryRunning || isLiveDeclaration}
+            className={`flex w-full h-8 rounded-md px-4 text-xs font-normal text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2 ${
+              isOrgLiveMode ? "bg-red-700 hover:bg-red-800" : "bg-black hover:bg-slate-800"
+            }`}
           >
             {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-4 w-4 text-green-400" />}
-            {isSubmitting ? "Transmitting to HMRC..." : "Submit to Customs Declarations API"}
+            {isSubmitting
+              ? "Transmitting to HMRC..."
+              : isOrgLiveMode
+                ? "Submit LIVE declaration to HMRC"
+                : "Submit to Customs Declarations API"}
           </button>
         </div>
       </div>

@@ -17,12 +17,13 @@ import {
 } from "@/lib/export-controls/draft-pack";
 import { ConsultantSignoffCard } from "@/components/trade-compliance/consultant-signoff-card";
 import { EndUserSendCard } from "@/components/trade-compliance/end-user-send-card";
+import { ExportEvidencePanel } from "@/components/trade-compliance/export-evidence-panel";
+import { ExportLicencesPanel } from "@/components/trade-compliance/export-licences-panel";
 import { cn } from "@/lib/utils";
 
 interface ExportDraftPackPanelProps {
   assessmentId: Id<"export_assessments">;
   assessmentStatus: string;
-  onOpenLicences?: () => void;
 }
 
 function CopyFieldButton({ value, disabled }: { value: string; disabled?: boolean }) {
@@ -58,7 +59,6 @@ function groupLabel(group: string) {
 export function ExportDraftPackPanel({
   assessmentId,
   assessmentStatus,
-  onOpenLicences,
 }: ExportDraftPackPanelProps) {
   const { isLoaded, isSignedIn } = useUser();
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
@@ -80,6 +80,7 @@ export function ExportDraftPackPanel({
       products: detail.products,
       screenings: detail.screenings,
       licences: detail.licences,
+      evidence: detail.evidence,
     });
   }, [detail]);
 
@@ -122,6 +123,7 @@ export function ExportDraftPackPanel({
     <div className="space-y-6">
       <ConsultantSignoffCard assessmentId={assessmentId} status={assessmentStatus} variant="send" />
       <EndUserSendCard assessmentId={assessmentId} variant="send" />
+      <ExportEvidencePanel assessmentId={assessmentId} />
 
       {/* Timeline */}
       <section className="rounded-xl border border-slate-200 bg-white p-5">
@@ -179,15 +181,11 @@ export function ExportDraftPackPanel({
           </a>
         )}
         <p className="mt-3 text-[11px] text-slate-500">
-          Copy fields below into the official form. After submitting, record your application reference on the{" "}
-          {onOpenLicences ? (
-            <button type="button" onClick={onOpenLicences} className="font-medium underline">
-              Licences
-            </button>
-          ) : (
-            "Licences"
-          )}{" "}
-          tab.
+          Copy fields below into the official form. After submitting, record your application reference in{" "}
+          <a href="#record-govuk-licence" className="font-medium underline">
+            Record GOV.UK submission
+          </a>{" "}
+          at the bottom of this tab.
         </p>
       </section>
 
@@ -304,6 +302,10 @@ export function ExportDraftPackPanel({
           <p className="mt-4 text-[11px] text-green-700">All mandatory draft pack fields are populated.</p>
         )}
       </section>
+
+      <div id="record-govuk-licence">
+        <ExportLicencesPanel assessmentId={assessmentId} />
+      </div>
     </div>
   );
 }

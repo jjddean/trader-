@@ -70,6 +70,7 @@ export function buildPayloadDebugSnapshot(payloadInfo: unknown) {
       borderTransportMeans: declaration.BorderTransportMeans || null,
       declarantId: text(read(declaration, "Declarant"), "ID"),
       exporterId: text(read(declaration, "Exporter"), "ID"),
+      agent: declaration.Agent || null,
       ucr: text(read(declaration, "UCR"), "TraderAssignedReferenceID"),
     },
     goodsShipment: {
@@ -166,6 +167,28 @@ export function renderH1Xml(payloadInfo: unknown): string {
     </AdditionalDocument>`;
     })
     .join("");
+  const agent = read(d, "Agent");
+  const agentId = String(agent.ID || "").trim();
+  const agentName = String(agent.Name || "").trim();
+  const agentFunctionCode = String(agent.FunctionCode || "").trim();
+  const agentAddress = read(agent, "Address");
+  const agentAddressXml = agentAddress.CityName || agentAddress.CountryCode || agentAddress.Line || agentAddress.PostcodeID
+    ? `
+      <Address>
+        <CityName>${xmlEscape(String(agentAddress.CityName || ""))}</CityName>
+        <CountryCode>${xmlEscape(String(agentAddress.CountryCode || ""))}</CountryCode>
+        <Line>${xmlEscape(String(agentAddress.Line || ""))}</Line>
+        <PostcodeID>${xmlEscape(String(agentAddress.PostcodeID || ""))}</PostcodeID>
+      </Address>`
+    : "";
+  const agentXml = agentId || agentName || agentFunctionCode
+    ? `
+    <Agent>${agentName ? `
+      <Name>${xmlEscape(agentName)}</Name>` : ""}${agentId ? `
+      <ID>${xmlEscape(agentId)}</ID>` : ""}${agentFunctionCode ? `
+      <FunctionCode>${xmlEscape(agentFunctionCode)}</FunctionCode>` : ""}${agentAddressXml}
+    </Agent>`
+    : "";
   const atm = read(consignment, "ArrivalTransportMeans");
   const arrivalTransportMeansXml = atm.ID
     ? `
@@ -203,7 +226,7 @@ export function renderH1Xml(payloadInfo: unknown): string {
     <GoodsItemQuantity>${xmlEscape(d.GoodsItemQuantity)}</GoodsItemQuantity>
     ${String(d.DeclarationOfficeID || "").trim() ? `<DeclarationOfficeID>${xmlEscape(d.DeclarationOfficeID)}</DeclarationOfficeID>\n    ` : ""}<InvoiceAmount currencyID="${xmlEscape(read(d, "InvoiceAmount").currencyID)}">${xmlEscape(read(d, "InvoiceAmount").value)}</InvoiceAmount>
     <TotalGrossMassMeasure unitCode="KGM">${xmlEscape(d.TotalGrossMassMeasure)}</TotalGrossMassMeasure>
-    <TotalPackageQuantity>${xmlEscape(d.TotalPackageQuantity)}</TotalPackageQuantity>${borderTransportMeansXml}${declarationAdditionalDocsXml}
+    <TotalPackageQuantity>${xmlEscape(d.TotalPackageQuantity)}</TotalPackageQuantity>${declarationAdditionalDocsXml}${agentXml}${borderTransportMeansXml}
     <Declarant>
       <ID>${xmlEscape(read(d, "Declarant").ID)}</ID>
     </Declarant>${exporterXml}

@@ -86,6 +86,17 @@ export async function POST(request: Request) {
           - "originCountry": (string, 2-letter ISO country code of origin if stated on invoice, otherwise empty string — do NOT default to GB)
           - "valueAmount": (number, the total price/value for that line item)
           - "valueCurrency": (string, 3-letter currency code, e.g. "USD", "GBP", "EUR")
+          - "procedureCode": (string, 4-digit CPC / requested procedure code if stated, otherwise empty string)
+          - "additionalProcedureCode": (string, 3-digit additional procedure code if stated, otherwise empty string)
+          - "grossWeightKg": (number, gross weight in kilograms if stated for the line item or shipment, otherwise null)
+          - "netWeightKg": (number, net weight in kilograms if stated for the line item or shipment, otherwise null)
+          - "supplementaryUnitQty": (number, number of items / pieces if stated, otherwise null)
+          - "packageCount": (number, package/carton count if stated, otherwise null)
+          - "packageType": (string, package type code such as "CT", "PK", or "BX" if stated, otherwise empty string)
+          - "shippingMarks": (string, marks and numbers / shipping marks if stated, otherwise empty string)
+          - "invoiceReference": (string, commercial invoice reference / invoice number if stated, otherwise empty string)
+          - "packingListReference": (string, packing list reference if stated, otherwise empty string)
+          Use exact values present in the invoice text. Do not invent missing customs values. If a single-item invoice gives shipment-level weights, packages, or marks, apply those values to that item.
           DO NOT include markdown code blocks.`,
         },
         {

@@ -17,9 +17,9 @@ export default function ConnectHmrcPage() {
         freightcode® connects to HMRC&apos;s Customs Declaration Service via official OAuth 2.0. This gives the platform authority to submit declarations and receive notifications on your behalf — without storing your Government Gateway password.
       </p>
 
-      <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">Practice mode (TDR)</h2>
+      <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">Test environment (TDR)</h2>
       <p className="text-[15px] text-slate-700 leading-relaxed mb-4">
-        New organisations start in <strong>practice mode</strong>. Submissions go to HMRC&apos;s test environment (TDR) only — not legally binding.
+        New organisations start in the <strong>test environment</strong>. Submissions go to HMRC&apos;s sandbox (TDR) only — not legally binding.
       </p>
       <ul className="list-disc pl-6 mb-6 space-y-2 text-[15px] text-slate-700">
         <li>Open <strong>Settings → Security</strong> and copy your organisation&apos;s <strong>HMRC Test User</strong> credentials.</li>
@@ -38,7 +38,7 @@ export default function ConnectHmrcPage() {
 
       <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">How to connect</h2>
       <ul className="space-y-4 mb-6 text-[15px] text-slate-700">
-        <li><strong>1.</strong> Go to <strong>Settings → Security</strong> (practice: copy Test User credentials first).</li>
+        <li><strong>1.</strong> Go to <strong>Settings → Security</strong> (test environment: copy Test User credentials first).</li>
         <li><strong>2.</strong> Click <strong>Connect HMRC</strong>.</li>
         <li><strong>3.</strong> Sign in on HMRC&apos;s page and grant freightcode® permission. Click <strong>Allow</strong>.</li>
         <li><strong>4.</strong> You are redirected back. The Dashboard shows <strong>HMRC Connected</strong> when authorised.</li>
@@ -59,7 +59,7 @@ export default function ConnectHmrcPage() {
 
       <h2 className="text-[20px] font-semibold tracking-tight text-slate-900 mt-8 mb-4">Sandbox vs Production</h2>
       <p className="text-[15px] text-slate-700 leading-relaxed mb-6">
-        Practice organisations use HMRC&apos;s sandbox (TDR): Test User at Connect, real EORI on forms. Live organisations use production CDS and real Government Gateway — submissions clear goods at the border.
+        Test-environment organisations use HMRC&apos;s sandbox (TDR): Test User at Connect, real EORI on forms. Live organisations use production CDS and real Government Gateway — submissions clear goods at the border.
       </p>
 
       <div className="mt-12 p-8 bg-[#0f172a] rounded-2xl text-white">

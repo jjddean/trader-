@@ -9,8 +9,10 @@
     "lint": "eslint",
     "lint:security": "eslint src/lib/secrets-equal.ts src/lib/api-rate-limiter.ts src/app/api/hmrc src/app/api/stripe src/app/api/ai/extract src/app/api/ai/classify src/app/api/ai/smart-upload src/app/api/ai/chat src/app/api/ai/gir-audit convex/http.ts convex/stripe_webhooks.ts convex/hmrc_internal.ts convex/subscriptions.ts convex/notifications.ts convex/documents.ts --max-warnings 0",
     "test:h1": "node --test --import tsx \"tests/h1/*.test.ts\"",
+    "test:fo": "node --test --import tsx tests/h1/financial-obligations.test.ts && node scripts/check-financial-obligations.mjs",
     "test:tre": "node --test --import tsx \"tests/tre/*.test.ts\"",
     "test:tdr-dry-run": "node scripts/tdr-dry-run.mjs",
+    "test:audit-smoke": "node scripts/smoke-audit-log-shape.mjs",
     "test:tdr": "npm run test:h1 && npm run test:tre && npm run test:tdr-dry-run",
     "test:file-upload-s3": "node test-evidence/file-upload-s3-e2e.js",
     "test:e2e": "playwright test",
@@ -82,7 +84,8 @@
   "overrides": {
     "esbuild": "0.28.1",
     "ws": "8.21.0",
-    "postcss": "8.5.15"
+    "postcss": "8.5.23",
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
@@ -90,7 +93,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
+    "eslint": "^9.39.5",
     "eslint-config-next": "^16.2.9",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "eslint-plugin-unused-imports": "^4.4.1",

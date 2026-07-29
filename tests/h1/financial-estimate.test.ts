@@ -57,4 +57,21 @@ describe("financial estimate display", () => {
     assert.ok(display.preferenceHint);
     assert.match(display.preferenceHint!, /£135\.00 lower/);
   });
+
+  it("shows variance copy when HMRC differs from estimate", () => {
+    const display = buildFinancialEstimateDisplay({
+      dutyAmount: 100,
+      vatAmount: 20,
+      customsValue: 1000,
+      financialSource: "hmrc_confirmed",
+      varianceAlert: true,
+      varianceKinds: ["duty_lower_than_hmrc"],
+      dutyVarianceAmount: -25,
+      vatVarianceAmount: 0,
+    });
+
+    assert.equal(display.badgeTone, "warning");
+    assert.ok(display.varianceLines.length > 0);
+    assert.match(display.varianceLines[0], /A00/i);
+  });
 });

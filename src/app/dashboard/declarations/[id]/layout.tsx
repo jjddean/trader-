@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useQuery, useConvexAuth } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
@@ -10,7 +11,8 @@ import {
   getRememberedDeclarationLane,
   rememberDeclarationLane,
 } from "@/lib/declaration-lane-cache";
-import { FileText, ListChecks, UploadCloud, Activity, Send, Loader2, ArrowLeft } from "lucide-react";
+import { DeclarationWorkspaceLoader } from "@/components/declaration-session-states";
+import { FileText, ListChecks, UploadCloud, Activity, Send, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   badgeIconForTone,
@@ -54,15 +56,16 @@ export default function DeclarationWorkspaceLayout({
   );
   const estimateReady = financialEstimate !== undefined;
 
+  const isAuthLoading = !isLoaded || isConvexAuthLoading;
   const isSessionLoading =
-    !isLoaded ||
-    (authReady &&
-      declaration === undefined &&
-      getRememberedDeclarationLane(declarationId ? String(declarationId) : undefined) === undefined);
+    authReady &&
+    declaration === undefined &&
+    getRememberedDeclarationLane(declarationId ? String(declarationId) : undefined) === undefined;
   const isSignedOut = isLoaded && !isConvexAuthLoading && !isSignedIn;
   const isConvexMissing = isLoaded && isSignedIn && !isConvexAuthLoading && !isAuthenticated;
   const isNotFound = authReady && declaration === null;
   const hasDeclaration = authReady && Boolean(resolvedDeclaration);
+  const showWorkspaceChrome = hasDeclaration && !isNotFound;
 
   const steps = [
     { id: "overview", name: "1. Core Schema", icon: FileText, path: `/dashboard/declarations/${declarationId}` },
@@ -85,22 +88,22 @@ export default function DeclarationWorkspaceLayout({
       })
     : { label: "Loading", tone: "neutral" as const };
 
-  const headerBadgeLabel = rowBadge.label;
+  const headerBadgeLabel = isSessionLoading && !hasDeclaration ? "Loading…" : rowBadge.label;
   const headerBadgeTone = rowBadge.tone;
   const headerSubtitle = hasDeclaration
     ? declarationHumanSubtitle(headerBadgeLabel, resolvedDeclaration!.status, headerBadgeTone)
     : "";
-  const HeaderBadgeIcon = hasDeclaration ? badgeIconForTone(headerBadgeTone) : Loader2;
+  const HeaderBadgeIcon = hasDeclaration ? badgeIconForTone(headerBadgeTone) : FileText;
   const headerBadgeClass = badgeToneClassName(headerBadgeTone);
   const hmrcIsLive = orgHmrc?.hmrcMode === "live";
   const hmrcEnvironmentLabel = hmrcIsLive ? "Live" : "Sandbox";
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
-      {hasDeclaration && (
+      {showWorkspaceChrome && (
         <div className="px-8 pt-6 pb-4">
           <div className="mx-auto max-w-5xl space-y-4">
-            <div className="relative rounded-md border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="relative rounded-md border border-slate-200 bg-white p-5">
               <button
                 onClick={() => router.push("/dashboard/declarations")}
                 className="group absolute left-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900"
@@ -115,7 +118,7 @@ export default function DeclarationWorkspaceLayout({
                     <span
                       className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[0.625rem] font-medium ${headerBadgeClass}`}
                     >
-                      <HeaderBadgeIcon className={cn("h-3 w-3", isSessionLoading && "animate-spin")} />
+                      <HeaderBadgeIcon className="h-3 w-3" />
                       {headerBadgeLabel}
                     </span>
                   </div>
@@ -123,7 +126,7 @@ export default function DeclarationWorkspaceLayout({
                     <p className={cn("text-xs font-medium", mrnSubtitleClass(headerBadgeTone))}>{headerSubtitle}</p>
                   )}
                   <p className="text-xs text-slate-500">
-                    EORI: {resolvedDeclaration!.eori || "Not set"} • Route: {resolvedDeclaration!.route || "Unknown"}
+                    EORI: {resolvedDeclaration?.eori || "Not set"} • Route: {resolvedDeclaration?.route || "Unknown"}
                   </p>
                 </div>
 
@@ -146,23 +149,34 @@ export default function DeclarationWorkspaceLayout({
               {steps.map((step) => {
                 const isActive = pathname === step.path;
                 const Icon = step.icon;
+                const tabClass = cn(
+                  "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors duration-150",
+                  isActive
+                    ? "bg-white text-black shadow-sm"
+                    : "text-slate-500 hover:bg-slate-200/60 hover:text-slate-900",
+                  step.disabled && "cursor-not-allowed opacity-50 pointer-events-none",
+                );
+
+                if (step.disabled) {
+                  return (
+                    <span key={step.id} className={tabClass} aria-disabled="true">
+                      <Icon className="h-3.5 w-3.5 text-slate-400" />
+                      {step.name}
+                    </span>
+                  );
+                }
 
                 return (
-                  <button
+                  <Link
                     key={step.id}
-                    onClick={() => !step.disabled && router.push(step.path)}
-                    disabled={step.disabled}
-                    className={cn(
-                      "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all",
-                      isActive
-                        ? "bg-white text-black shadow-sm"
-                        : "text-slate-500 hover:bg-slate-200/60 hover:text-slate-900",
-                      step.disabled && "cursor-not-allowed opacity-50 hover:bg-transparent",
-                    )}
+                    href={step.path}
+                    prefetch
+                    aria-current={isActive ? "page" : undefined}
+                    className={tabClass}
                   >
                     <Icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-600" : "text-slate-400")} />
                     {step.name}
-                  </button>
+                  </Link>
                 );
               })}
             </nav>
@@ -176,7 +190,9 @@ export default function DeclarationWorkspaceLayout({
 
       <div className="flex-1 px-8 pb-8">
         <div className="mx-auto max-w-5xl">
-          {isSignedOut ? (
+          {isAuthLoading || isSessionLoading ? (
+            <DeclarationWorkspaceLoader />
+          ) : isSignedOut ? (
             <div className="flex h-[400px] flex-col items-center justify-center space-y-4">
               <p className="text-sm text-slate-500">Session expired or not signed in.</p>
               <button onClick={() => router.push("/")} className="text-xs text-blue-600 hover:underline">
@@ -198,14 +214,12 @@ export default function DeclarationWorkspaceLayout({
               </button>
             </div>
           ) : (
-            <>
-              {isSessionLoading && (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-                </div>
-              )}
-              {!isSessionLoading && children}
-            </>
+            <div
+              key={pathname}
+              className="min-h-[28rem] animate-in fade-in duration-200 fill-mode-both"
+            >
+              {children}
+            </div>
           )}
         </div>
       </div>

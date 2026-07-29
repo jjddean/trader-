@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Bell, Zap, CheckCircle2, FileText, Package, XCircle, Clock, Bot } from "lucide-react";
+import { Bell, Zap, CheckCircle2, FileText, Package, XCircle, Clock } from "lucide-react";
 import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
@@ -113,8 +113,7 @@ export const DashboardHeader = ({
 
         <AssistantSideSheet>
           <button className="flex h-[32px] items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium whitespace-nowrap text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:text-black">
-            <Bot className="h-4 w-4 text-indigo-600" />
-            <span className="hidden sm:inline-block">Help</span>
+            Help
           </button>
         </AssistantSideSheet>
 

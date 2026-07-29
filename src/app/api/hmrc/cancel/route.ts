@@ -34,11 +34,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Declaration not found" }, { status: 404 });
     }
 
-    const tokenResult = await resolveHmrcAccessToken(convex, userId);
-    if ("error" in tokenResult) {
-      return tokenResult.error;
-    }
-
     const orgRouting = await resolveOrgHmrcRoutingForDeclaration(
       convex,
       declarationId as Id<"declarations">,
@@ -47,6 +42,27 @@ export async function POST(request: Request) {
       return orgRouting.error;
     }
     const { hmrcContext } = orgRouting;
+
+    try {
+      await convex.mutation(api.declarations.assertAndStampEnvironment, {
+        declarationId: declarationId as Id<"declarations">,
+        environment: hmrcContext.environment,
+      });
+    } catch (envErr: unknown) {
+      const m = envErr instanceof Error ? envErr.message : String(envErr);
+      if (m.includes("ENVIRONMENT_MISMATCH")) {
+        return NextResponse.json(
+          { error: m.replace(/^.*ENVIRONMENT_MISMATCH:\s*/, "") },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json({ error: "Failed to verify declaration environment" }, { status: 403 });
+    }
+
+    const tokenResult = await resolveHmrcAccessToken(convex, userId, hmrcContext);
+    if ("error" in tokenResult) {
+      return tokenResult.error;
+    }
 
     const eori = String(lane.eori || "").trim();
     if (!/^GB\d{12}$/.test(eori)) {
@@ -89,6 +105,7 @@ export async function POST(request: Request) {
       try {
         await convex.mutation(api.submissions.recordSubmission, {
           declarationId,
+          environment: hmrcContext.environment,
           operation: "cancel",
           outcome,
           conversationId: convId || undefined,
@@ -148,6 +165,7 @@ export async function POST(request: Request) {
         await convex.mutation(api.hmrc.scheduleNotificationPulls, {
           declarationId,
           conversationId,
+          environment: hmrcContext.environment,
         });
       } catch (schedErr: unknown) {
         const m = schedErr instanceof Error ? schedErr.message : String(schedErr);

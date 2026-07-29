@@ -27,6 +27,36 @@ export const saveToken = mutation({
       throw new Error("Forbidden: cannot write HMRC tokens for another user");
     }
     const effectiveUserId = identity.subject;
+    const email =
+      typeof identity.email === "string" && identity.email.trim()
+        ? identity.email.trim()
+        : undefined;
+    const name =
+      typeof identity.name === "string" && identity.name.trim()
+        ? identity.name.trim()
+        : undefined;
+
+    // Ensure admin Platform users / HMRC connection tables can resolve this
+    // account — HMRC connect must not leave a token with no users row.
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", effectiveUserId))
+      .unique();
+    if (existingUser) {
+      const patch: Record<string, string> = {};
+      if (email && existingUser.email !== email) patch.email = email;
+      if (name && existingUser.name !== name) patch.name = name;
+      if (Object.keys(patch).length > 0) {
+        await ctx.db.patch(existingUser._id, patch);
+      }
+    } else {
+      await ctx.db.insert("users", {
+        clerkId: effectiveUserId,
+        email,
+        name,
+        role: "user",
+      });
+    }
 
     const expiresAt = Date.now() + args.expiresIn * 1000;
 

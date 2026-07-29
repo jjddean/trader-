@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { assertAssessmentAccess, canAccessAssessment } from "./lib/org_access";
+import { collectEvidenceWithUrls } from "./export_controls";
 
 const CONSULTANT_ROLE = v.union(
   v.literal("adviser"),
@@ -66,11 +67,14 @@ async function loadAssessmentDetail(ctx: any, assessmentId: Id<"export_assessmen
     .withIndex("by_assessment", (q: any) => q.eq("assessmentId", assessmentId))
     .collect();
 
+  const evidence = await collectEvidenceWithUrls(ctx, assessmentId);
+
   return {
     assessment,
     products: productsWithSpecs,
     screenings,
     licences,
+    evidence,
     expertRequests: expertRequests.sort(
       (a: { createdAt: number }, b: { createdAt: number }) => b.createdAt - a.createdAt,
     ),

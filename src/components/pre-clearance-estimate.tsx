@@ -83,6 +83,13 @@ export function PreClearanceEstimate({
 
       <div className={cn("border-t border-slate-100 bg-slate-50 text-[11px] leading-relaxed text-slate-600", compact ? "px-4 py-3" : "px-5 py-3")}>
         <p>{display.footnote}</p>
+        {display.varianceLines.length > 0 && (
+          <ul className="mt-2 list-disc space-y-1 pl-4 text-amber-900">
+            {display.varianceLines.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        )}
         {display.preferenceHint && (
           <p className="mt-2 text-amber-800">{display.preferenceHint}</p>
         )}

@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { afterEach, describe, it } from "node:test";
 import { emailLinkBaseUrl, emailPathUrl } from "../../src/lib/export-controls/email-link-base";
 
 describe("emailLinkBaseUrl", () => {
@@ -15,14 +16,14 @@ describe("emailLinkBaseUrl", () => {
   it("matches Resend From domain (apex), not www APP_URL", () => {
     process.env.RESEND_FROM_EMAIL = "freightcode <info@freightcode.co.uk>";
     process.env.NEXT_PUBLIC_APP_URL = "https://www.freightcode.co.uk";
-    expect(emailLinkBaseUrl()).toBe("https://freightcode.co.uk");
-    expect(emailPathUrl("/r/export/abc")).toBe("https://freightcode.co.uk/r/export/abc");
+    assert.equal(emailLinkBaseUrl(), "https://freightcode.co.uk");
+    assert.equal(emailPathUrl("/r/export/abc"), "https://freightcode.co.uk/r/export/abc");
   });
 
   it("falls back to APP_URL when From is resend.dev", () => {
     process.env.RESEND_FROM_EMAIL = "freightcode <onboarding@resend.dev>";
     process.env.NEXT_PUBLIC_APP_URL = "https://www.freightcode.co.uk";
-    expect(emailLinkBaseUrl()).toBe("https://www.freightcode.co.uk");
+    assert.equal(emailLinkBaseUrl(), "https://www.freightcode.co.uk");
   });
 
   it("uses localhost request host even when From is production", () => {
@@ -31,13 +32,13 @@ describe("emailLinkBaseUrl", () => {
     const request = new Request("http://localhost:3000/api/export-controls/send-to-consultant", {
       headers: { host: "localhost:3000" },
     });
-    expect(emailLinkBaseUrl(request)).toBe("http://localhost:3000");
-    expect(emailPathUrl("/r/export/abc", request)).toBe("http://localhost:3000/r/export/abc");
+    assert.equal(emailLinkBaseUrl(request), "http://localhost:3000");
+    assert.equal(emailPathUrl("/r/export/abc", request), "http://localhost:3000/r/export/abc");
   });
 
   it("uses local APP_URL when no request", () => {
     process.env.RESEND_FROM_EMAIL = "freightcode <info@freightcode.co.uk>";
     process.env.NEXT_PUBLIC_APP_URL = "http://localhost:3000";
-    expect(emailLinkBaseUrl()).toBe("http://localhost:3000");
+    assert.equal(emailLinkBaseUrl(), "http://localhost:3000");
   });
 });

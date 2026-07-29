@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { sanctionsOneLiner } from "../../src/lib/export-controls/sanctions-summary.ts";
-import { endUserStatementPrintableHtml } from "../../src/lib/export-controls/end-user-statement.ts";
+import { sanctionsOneLiner } from "../../src/lib/export-controls/sanctions-summary";
+import { endUserStatementPrintableHtml } from "../../src/lib/export-controls/end-user-statement";
 
 describe("sanctionsOneLiner", () => {
   it("reports when screening not run", () => {
@@ -33,6 +33,8 @@ describe("endUserStatementPrintableHtml", () => {
     });
     assert.match(html, /EXP-001/);
     assert.match(html, /Acme GmbH/);
-    assert.match(html, /prohibited end use/);
+    assert.match(html, /End-user and stockist undertaking \(EUSU\)/);
+    assert.match(html, /chemical, biological or nuclear weapons/);
+    assert.match(html, /Section 8: End-user sign and date/);
   });
 });

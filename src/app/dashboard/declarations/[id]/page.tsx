@@ -12,10 +12,13 @@ import { countries } from "@/lib/data/countries";
 import {
   GOODS_LOCATION_KIND_OPTIONS,
   inferGoodsLocationKind,
-  PORT_LOCATION_NAME_BY_ID,
   type GoodsLocationKind,
 } from "@/lib/goods-location";
 import { DeclarationModePromote } from "@/components/declaration-mode-promote";
+import {
+  DeclarationClientPicker,
+  DeclarationRepresentationFields,
+} from "@/components/declaration-representation-panel";
 import {
   ConvexSessionMissing,
   DeclarationLoadingSpinner,
@@ -51,6 +54,13 @@ function normalizeTransportIdType(value: unknown): string {
   if (value == null || value === "") return "";
   const raw = String(value).trim();
   const code = raw.match(/^(\d{2})/)?.[1];
+  return code ?? raw;
+}
+
+function normalizeTransportMode(value: unknown): string {
+  if (value == null || value === "") return "";
+  const raw = String(value).trim();
+  const code = raw.match(/^(\d)/)?.[1];
   return code ?? raw;
 }
 
@@ -119,7 +129,7 @@ export default function CoreSchemaPage() {
       declarationType: "H1",
       route: (d.route as string) || "Route 1",
       dispatchCountry: (d.dispatchCountry as string) || "",
-      transportMode: d.transportMode != null ? String(d.transportMode) : "",
+      transportMode: normalizeTransportMode(d.transportMode),
       transportId: (d.transportId as string) || "",
       transportIdType: normalizeTransportIdType(d.transportIdType),
       destinationCountry: (d.destinationCountry as string) || "",
@@ -128,7 +138,11 @@ export default function CoreSchemaPage() {
       invoiceTotal: d.invoiceTotal != null ? String(d.invoiceTotal) : "",
       incoterms: (d.incoterms as string) || "",
       incotermLocation: (d.incotermLocation as string) || "",
-      goodsLocationKind: inferGoodsLocationKind({ goodsLocationKind: d.goodsLocationKind }) || "",
+      goodsLocationKind:
+        inferGoodsLocationKind({
+          goodsLocationKind: d.goodsLocationKind,
+          locationId: d.locationId,
+        }) || "",
       locationId: (d.locationId as string) || "",
       presentationOffice: (d.presentationOffice as string) || "",
       exporterName: (d.exporterName as string) || "",
@@ -147,28 +161,24 @@ export default function CoreSchemaPage() {
     setSaveError(null);
     setSaveSuccess(false);
     try {
+      const validationMessages: string[] = [];
       if (!formData.transportIdType.trim()) {
-        setSaveError("Identification Type (DE 7/9) is required.");
-        return;
+        validationMessages.push("Identification Type (DE 7/9) is required.");
       }
       if (!formData.transportMode.trim()) {
-        setSaveError("Transport Mode (DE 7/4) is required.");
-        return;
+        validationMessages.push("Transport Mode (DE 7/4) is required.");
       }
       const dispatch = formData.dispatchCountry.trim().toUpperCase();
       if (dispatch && dispatch !== "GB" && dispatch !== "XI") {
         if (!formData.exporterName.trim()) {
-          setSaveError("Exporter name (DE 3/1) is required for overseas dispatch.");
-          return;
+          validationMessages.push("Exporter name (DE 3/1) is required for overseas dispatch.");
         }
         if (!formData.exporterCity.trim() || !formData.exporterLine.trim() || !formData.exporterPostcode.trim()) {
-          setSaveError("Exporter city, address line, and postcode (DE 3/1) are required for overseas dispatch.");
-          return;
+          validationMessages.push("Exporter city, address line, and postcode (DE 3/1) are required for overseas dispatch.");
         }
       }
       if (!formData.transactionNatureCode.trim()) {
-        setSaveError("Nature of transaction (DE 8/5) is required.");
-        return;
+        validationMessages.push("Nature of transaction (DE 8/5) is required.");
       }
       const paymentError = validatePaymentFields(
         formData.paymentMethodCode,
@@ -189,9 +199,9 @@ export default function CoreSchemaPage() {
         declarationType: formData.declarationType,
         route: formData.route,
         dispatchCountry: formData.dispatchCountry,
-        transportMode: formData.transportMode.trim(),
+        transportMode: normalizeTransportMode(formData.transportMode),
         transportId: formData.transportId.trim(),
-        transportIdType: formData.transportIdType.trim(),
+        transportIdType: normalizeTransportIdType(formData.transportIdType),
         destinationCountry: formData.destinationCountry,
         importerEori: formData.importerEori.trim(),
         invoiceCurrency: formData.invoiceCurrency.trim().toUpperCase(),
@@ -212,7 +222,11 @@ export default function CoreSchemaPage() {
           : undefined,
       });
       hydratedForIdRef.current = null;
-      setSaveSuccess(true);
+      if (validationMessages.length > 0) {
+        setSaveError(`Saved draft. Still blocking: ${validationMessages[0]}`);
+      } else {
+        setSaveSuccess(true);
+      }
     } catch (e) {
       console.error("Failed to save core schema", e);
       setSaveError(e instanceof Error ? e.message : "Failed to save core details");
@@ -348,9 +362,7 @@ export default function CoreSchemaPage() {
               </Select>
             </div>
 
-            {/* Dispatch Country — DE 5/14. A-mandatory per Appendix 21A.
-                Native <select> instead of shadcn Select so HTML `required`
-                actually fires at form-submit. */}
+            {/* Dispatch Country — DE 5/14. A-mandatory per Appendix 21A. */}
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
                 Dispatch Country (DE 5/14)
@@ -371,6 +383,8 @@ export default function CoreSchemaPage() {
                 Country goods were shipped FROM — never GB for a third-country import.
               </p>
             </div>
+
+            <DeclarationClientPicker declarationId={id} />
 
             {formData.dispatchCountry && formData.dispatchCountry !== "GB" && formData.dispatchCountry !== "XI" && (
               <div className="md:col-span-2 space-y-3 rounded-md border border-slate-200 bg-slate-50/80 p-4">
@@ -659,6 +673,8 @@ export default function CoreSchemaPage() {
               )}
             </div>
           </div>
+
+          <DeclarationRepresentationFields declarationId={id} />
 
           <div className="border-t border-slate-100 pt-6">
             <h3 className="text-sm font-medium text-slate-900">Transport Identity</h3>

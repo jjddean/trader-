@@ -121,6 +121,11 @@ export const pullNotificationsScheduled = internalAction({
                 `[HMRC-PULL-SCHEDULED] ${args.source}: saved ${saved}/${total} across ${conversationIds.length} conversation(s)`,
             );
         }
+        if (args.declarationId) {
+            await ctx.runMutation(internal.declarations.reconcileDeclarationStatusFromNotifications, {
+                declarationId: args.declarationId,
+            });
+        }
         return { conversationId: args.conversationId, total, saved };
     },
 });
@@ -136,6 +141,15 @@ export const recoverStuckDeclarations = internalAction({
     }),
     handler: async (ctx) => {
         const STUCK_THRESHOLD_MS = 30 * 60 * 1000;
+        const reconciled = await ctx.runMutation(
+            internal.declarations.reconcileStaleProcessingStatuses,
+            { olderThanMs: STUCK_THRESHOLD_MS },
+        );
+        if (reconciled.patched > 0) {
+            console.log(
+                `[RECOVER] Reconciled status from stored notifications: ${reconciled.patched}/${reconciled.scanned}`,
+            );
+        }
         const stuckDeclarations: Array<{
             _id: string;
             userId?: string;

@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Mail, Send } from "lucide-react";
-import { useQuery, useConvexAuth } from "convex/react";
+import { Download, Loader2, Mail, Printer, Send, Upload } from "lucide-react";
+import { useMutation, useQuery, useConvexAuth } from "convex/react";
+import { useUser } from "@clerk/nextjs";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import {
+  downloadEndUserStatementHtml,
+  openEndUserStatementPrintDialog,
+  type EndUserStatementInput,
+  type EusuDetails,
+} from "@/lib/export-controls/end-user-statement";
 
 interface EndUserSendCardProps {
   assessmentId: Id<"export_assessments">;
@@ -14,11 +21,19 @@ interface EndUserSendCardProps {
 
 export function EndUserSendCard({ assessmentId, variant = "send" }: EndUserSendCardProps) {
   const { isAuthenticated } = useConvexAuth();
+  const { user } = useUser();
 
   const status = useQuery(
     api.compliance_end_user.getEndUserDispatchStatus,
     isAuthenticated ? { assessmentId } : "skip",
   );
+  const detail = useQuery(
+    api.export_controls.getAssessment,
+    isAuthenticated ? { assessmentId } : "skip",
+  );
+  const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
+  const saveDocument = useMutation(api.documents.saveDocument);
+  const addEvidence = useMutation(api.export_controls.addExportEvidence);
 
   const [recipientEmail, setRecipientEmail] = useState("");
   const [senderNote, setSenderNote] = useState("");
@@ -26,18 +41,94 @@ export function EndUserSendCard({ assessmentId, variant = "send" }: EndUserSendC
   const [error, setError] = useState<string | null>(null);
   const [lastUrl, setLastUrl] = useState<string | null>(null);
   const [emailNote, setEmailNote] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const statement = status?.statement as
-    | { endUserName?: string; signedBy?: string; signedAt?: number }
+    | {
+        endUserName?: string;
+        endUserAddress?: string;
+        endUserCountry?: string;
+        contactName?: string;
+        contactEmail?: string;
+        intendedUse?: string;
+        signedBy?: string;
+        signedAt?: number;
+        eusu?: EusuDetails;
+      }
     | null
     | undefined;
   const isComplete = Boolean(statement) || Boolean(status?.latestToken?.completedAt);
+
+  const signedEvidence = (detail?.evidence ?? []).filter((item) => item.kind === "eusu_signed");
+
+  const printInput: EndUserStatementInput | null =
+    statement && detail?.assessment
+      ? {
+          assessmentReference: detail.assessment.reference,
+          destinationCountry: detail.assessment.destinationCountry,
+          products: detail.products.map((p) => ({
+            name: p.name,
+            techDescription: p.techDescription,
+            quantity: p.quantity,
+          })),
+          endUserName: statement.endUserName ?? "",
+          endUserAddress: statement.endUserAddress ?? "",
+          endUserCountry: statement.endUserCountry ?? "",
+          contactName: statement.contactName ?? "",
+          contactEmail: statement.contactEmail,
+          intendedUse: statement.intendedUse ?? "",
+          signedBy: statement.signedBy ?? "",
+          signedAt: statement.signedAt ?? Date.now(),
+          eusu: statement.eusu,
+        }
+      : null;
+
+  const handleCompletedDoc = (mode: "print" | "download") => {
+    if (!printInput) return;
+    if (mode === "print") openEndUserStatementPrintDialog(printInput);
+    else downloadEndUserStatementHtml(printInput);
+  };
+
+  const handleSignedUpload = async (file: File) => {
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const postUrl = await generateUploadUrl();
+      const uploadResult = await fetch(postUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!uploadResult.ok) throw new Error("Upload failed");
+      const { storageId } = await uploadResult.json();
+
+      const documentId = await saveDocument({
+        storageId,
+        userId: user?.id || "unknown",
+        fileName: file.name,
+        fileType: "eusu_signed",
+        auditStatus: "not_required",
+      });
+
+      await addEvidence({
+        assessmentId,
+        kind: "eusu_signed",
+        label: `Signed EUSU — ${statement?.endUserName ?? "end user"}`,
+        documentId,
+      });
+    } catch (err: unknown) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (variant === "result") {
     if (!isComplete) return null;
     return (
       <section className="rounded-xl border border-green-200 bg-green-50 p-5">
-        <h2 className="text-sm font-semibold text-green-900">End-user statement</h2>
+        <h2 className="text-sm font-semibold text-green-900">End-user and stockist undertaking (EUSU)</h2>
         <p className="mt-2 text-xs font-medium text-green-900">
           Completed{statement?.endUserName ? ` — ${statement.endUserName}` : ""}
           {statement?.signedBy ? ` · signed by ${statement.signedBy}` : ""}
@@ -93,30 +184,104 @@ export function EndUserSendCard({ assessmentId, variant = "send" }: EndUserSendC
       <div className="flex items-start gap-3">
         <Mail className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold text-black">End-user statement</h2>
+          <h2 className="text-sm font-semibold text-black">End-user and stockist undertaking (EUSU)</h2>
           <p className="mt-1 text-xs text-slate-500">
-            Send a secure link to the buyer / end user to complete the statement for LITE supporting docs.
+            Send a secure link to the buyer / end user to complete the undertaking for your SIEL or SITCL
+            application.{" "}
+            <a
+              href="https://www.gov.uk/government/publications/end-user-undertaking-euu-form"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-slate-700"
+            >
+              Official EUSU form on GOV.UK
+            </a>
           </p>
         </div>
       </div>
 
       {isComplete ? (
-        <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-xs text-green-900">
-          <p className="font-medium">
-            Statement completed{statement?.endUserName ? ` — ${statement.endUserName}` : ""}
-          </p>
-          {statement?.signedBy && (
-            <p className="mt-1 text-[11px]">Signed by {statement.signedBy}</p>
-          )}
+        <div className="mt-4 space-y-4">
+          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-xs text-green-900">
+            <p className="font-medium">
+              Statement completed{statement?.endUserName ? ` — ${statement.endUserName}` : ""}
+            </p>
+            {statement?.signedBy && <p className="mt-1 text-[11px]">Signed by {statement.signedBy}</p>}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => handleCompletedDoc("print")}
+                disabled={!printInput}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-green-300 bg-white px-3 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                <Printer className="h-3 w-3" />
+                Print / save PDF
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCompletedDoc("download")}
+                disabled={!printInput}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-green-300 bg-white px-3 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                <Download className="h-3 w-3" />
+                Download
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 px-4 py-3">
+            <p className="text-xs font-medium text-slate-900">Signed official form</p>
+            <p className="mt-1 text-[11px] text-slate-500">
+              If the buyer returns the official GOV.UK form signed, upload it here — ECJU wants a non-editable PDF.
+            </p>
+            {signedEvidence.length > 0 && (
+              <ul className="mt-3 space-y-2">
+                {signedEvidence.map((item) => (
+                  <li key={item._id} className="flex items-center justify-between gap-2 text-[11px] text-slate-700">
+                    <span className="min-w-0 truncate">{item.fileName ?? item.label}</span>
+                    {item.downloadUrl && (
+                      <a
+                        href={item.downloadUrl}
+                        download={item.fileName ?? undefined}
+                        className="flex h-7 shrink-0 items-center gap-1 rounded-md border border-slate-200 px-2 font-medium text-slate-600 hover:bg-slate-50"
+                      >
+                        <Download className="h-3 w-3" />
+                        Download
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <label className="mt-3 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-slate-200 px-3 text-[11px] font-medium text-slate-700 hover:bg-slate-50">
+              {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+              {uploading ? "Uploading…" : "Upload signed PDF"}
+              <input
+                type="file"
+                accept="application/pdf,image/*"
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void handleSignedUpload(file);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {uploadError && <p className="mt-2 text-[11px] text-red-700">{uploadError}</p>}
+          </div>
         </div>
       ) : (
         <div className="mt-4 space-y-3">
-          {status?.activeToken && (
-            <p className="text-[11px] text-slate-500">
-              Active link sent to {status.activeToken.recipientEmail} · expires{" "}
-              {new Date(status.activeToken.expiresAt).toLocaleDateString("en-GB")}
-            </p>
-          )}
+          {/* Fixed height: the status only exists once the query resolves, so the slot is
+              reserved to stop the form below shifting down. */}
+          <p className="h-4 truncate text-[11px] leading-4 text-slate-500">
+            {status?.activeToken
+              ? `Active link sent to ${status.activeToken.recipientEmail} · expires ${new Date(
+                  status.activeToken.expiresAt,
+                ).toLocaleDateString("en-GB")}`
+              : ""}
+          </p>
 
           <div>
             <label htmlFor="end-user-email" className="text-[11px] font-medium text-slate-600">

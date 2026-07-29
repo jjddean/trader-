@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   ChevronRight,
   Shield,
+  Users,
 } from "lucide-react";
 import { useOrganization, useUser } from "@clerk/nextjs";
 import { SidebarUserButton } from "@/components/auth/sidebar-user-button";
@@ -45,6 +46,7 @@ const navItems = [
   { href: "/dashboard/documents", label: "Documents", icon: FileText },
   { href: "/dashboard/declarations", label: "Declarations", icon: Compass },
   { href: "/dashboard/trade-lanes", label: "Trade Lanes", icon: Ship },
+  { href: "/dashboard/clients", label: "Clients", icon: Users },
   {
     label: "Compliance",
     icon: ShieldCheck,
@@ -79,7 +81,7 @@ export function AppSidebar() {
     <Sidebar className="!h-screen border-r border-slate-200 bg-white [&_[data-sidebar=sidebar]]:bg-white">
       <SidebarHeader className="flex h-[55px] shrink-0 flex-row items-center border-b border-slate-200 px-6">
         <Link
-          href="/"
+          href="/dashboard"
           className="flex w-full items-center gap-2 transition-opacity hover:opacity-80"
         >
           <div className="flex items-baseline whitespace-nowrap text-[#020817] leading-none">
@@ -96,6 +98,9 @@ export function AppSidebar() {
 
       <SidebarContent className="min-h-0 flex-1 overflow-y-auto px-3 pb-1 pt-0">
         <SidebarGroup className="p-0">
+          <SidebarGroupLabel className="mb-0 px-2 text-[10px] font-normal tracking-widest text-slate-400 uppercase">
+            {isAdmin ? "Control Plane" : "Platform"}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
               {navItems.map((item) => {
@@ -106,7 +111,8 @@ export function AppSidebar() {
                   const isAnyChildActive = item.items?.some(subItem => 
                     pathname === subItem.href || (subItem.href !== "/dashboard" && pathname.startsWith(subItem.href))
                   );
-                  const defaultExpanded = item.label === "Compliance" ? true : isAnyChildActive;
+                  // Compliance stays collapsed until the user opens it.
+                  const defaultExpanded = item.label === "Compliance" ? false : isAnyChildActive;
 
                   return (
                     <Collapsible

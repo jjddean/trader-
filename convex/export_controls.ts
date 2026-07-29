@@ -87,6 +87,161 @@ async function refreshSubmissionRouteForAssessment(ctx: any, assessmentId: Id<"e
   return routing;
 }
 
+/** Evidence rows with a resolved download URL + file metadata for the DBT bundle. */
+export async function collectEvidenceWithUrls(ctx: any, assessmentId: Id<"export_assessments">) {
+  const rows = await ctx.db
+    .query("export_evidence")
+    .withIndex("by_assessment", (q: any) => q.eq("assessmentId", assessmentId))
+    .collect();
+
+  return await Promise.all(
+    rows
+      .sort((a: Doc<"export_evidence">, b: Doc<"export_evidence">) => b.addedAt - a.addedAt)
+      .map(async (row: Doc<"export_evidence">) => {
+        let fileName: string | undefined;
+        let fileSize: number | undefined;
+        let downloadUrl: string | undefined;
+
+        if (row.documentId) {
+          const document = await ctx.db.get(row.documentId);
+          if (document) {
+            fileName = typeof document.fileName === "string" ? document.fileName : undefined;
+            fileSize = document.fileSize;
+            if (document.fileId) {
+              downloadUrl = (await ctx.storage.getUrl(document.fileId)) ?? undefined;
+            }
+          }
+        }
+
+        return {
+          _id: row._id,
+          kind: row.kind,
+          label: row.label,
+          note: row.note,
+          url: row.url,
+          productId: row.productId,
+          addedAt: row.addedAt,
+          fileName,
+          fileSize,
+          downloadUrl,
+        };
+      }),
+  );
+}
+
+export const addExportEvidence = mutation({
+  args: {
+    assessmentId: v.id("export_assessments"),
+    kind: v.union(
+      v.literal("technical_description"),
+      v.literal("datasheet"),
+      v.literal("brochure"),
+      v.literal("web_page"),
+      v.literal("commercial_invoice"),
+      v.literal("eusu_signed"),
+      v.literal("other"),
+    ),
+    label: v.string(),
+    documentId: v.optional(v.id("documents")),
+    url: v.optional(v.string()),
+    note: v.optional(v.string()),
+    productId: v.optional(v.id("export_products")),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const assessment = await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
+
+    const label = args.label.trim();
+    if (!label) throw new Error("Label is required");
+
+    const url = args.url?.trim() || undefined;
+    if (!args.documentId && !url) {
+      throw new Error("Attach an uploaded document or provide a web page URL");
+    }
+    if (url && !/^https?:\/\//i.test(url)) {
+      throw new Error("URL must start with http:// or https://");
+    }
+
+    const evidenceId = await ctx.db.insert("export_evidence", {
+      assessmentId: args.assessmentId,
+      orgId: assessment.orgId,
+      kind: args.kind,
+      label,
+      documentId: args.documentId,
+      url,
+      note: args.note?.trim() || undefined,
+      productId: args.productId,
+      addedBy: identity.subject,
+      addedAt: Date.now(),
+    });
+
+    await logExportAction(ctx, identity.subject, "export_evidence_added", args.assessmentId, {
+      evidenceId,
+      kind: args.kind,
+    });
+    return evidenceId;
+  },
+});
+
+export const removeExportEvidence = mutation({
+  args: { evidenceId: v.id("export_evidence") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const row = await ctx.db.get(args.evidenceId);
+    if (!row) throw new Error("Evidence not found");
+    await getAssessmentOrThrow(ctx, identity.subject, row.assessmentId);
+
+    await ctx.db.delete(args.evidenceId);
+    await logExportAction(ctx, identity.subject, "export_evidence_removed", row.assessmentId, {
+      evidenceId: args.evidenceId,
+    });
+  },
+});
+
+/** Documents the user can attach as evidence (org / user scoped). */
+export const listAttachableDocuments = query({
+  args: { assessmentId: v.id("export_assessments") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const assessment = await ctx.db.get(args.assessmentId);
+    if (!assessment || !(await canAccessAssessment(ctx, identity.subject, assessment))) return [];
+
+    const byOrg = assessment.orgId
+      ? await ctx.db
+          .query("documents")
+          .withIndex("by_org", (q) => q.eq("orgId", assessment.orgId))
+          .collect()
+      : [];
+    const byUser = await ctx.db
+      .query("documents")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .collect();
+
+    const seen = new Set<string>();
+    return [...byOrg, ...byUser]
+      .filter((doc) => {
+        const key = doc._id as string;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .sort((a, b) => (b._creationTime ?? 0) - (a._creationTime ?? 0))
+      .slice(0, 50)
+      .map((doc) => ({
+        _id: doc._id,
+        fileName: typeof doc.fileName === "string" ? doc.fileName : "Untitled document",
+        fileType: typeof doc.fileType === "string" ? doc.fileType : undefined,
+        fileSize: doc.fileSize,
+      }));
+  },
+});
+
 export const listAssessments = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -142,6 +297,8 @@ export const getAssessment = query({
       .withIndex("by_assessment", (q) => q.eq("assessmentId", args.assessmentId))
       .collect();
 
+    const evidence = await collectEvidenceWithUrls(ctx, args.assessmentId);
+
     const runsByProduct = new Map<string, typeof classificationRuns>();
     for (const run of classificationRuns.sort((a, b) => b.createdAt - a.createdAt)) {
       const key = run.productId as string;
@@ -159,7 +316,49 @@ export const getAssessment = query({
       expertRequests,
       licences,
       classificationRuns,
+      evidence,
     };
+  },
+});
+
+/**
+ * Full audit trail for one assessment, including actions taken by third parties
+ * (consultant sign-off, end-user EUSU submission) which are logged under their
+ * own userId rather than the assessment owner's.
+ */
+export const getAssessmentAuditLogs = query({
+  args: {
+    assessmentId: v.id("export_assessments"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const assessment = await ctx.db.get(args.assessmentId);
+    if (!assessment) return [];
+    if (!(await canAccessAssessment(ctx, identity.subject, assessment))) {
+      throw new Error("Unauthorized");
+    }
+
+    const logs = await ctx.db
+      .query("auditLogs")
+      .withIndex("by_details_assessment", (q) =>
+        q.eq("details.assessmentId", args.assessmentId),
+      )
+      .order("desc")
+      .take(args.limit ?? 200);
+
+    return logs.map((log) => ({
+      _id: log._id,
+      action: typeof log.action === "string" ? log.action : "unknown",
+      actor: typeof log.userId === "string" ? log.userId : undefined,
+      timestamp: typeof log.timestamp === "number" ? log.timestamp : log._creationTime,
+      details:
+        log.details && typeof log.details === "object" && !Array.isArray(log.details)
+          ? (log.details as Record<string, unknown>)
+          : {},
+    }));
   },
 });
 
@@ -517,7 +716,16 @@ export const createExpertRequest = mutation({
 export const recordExportLicence = mutation({
   args: {
     assessmentId: v.id("export_assessments"),
-    licenceType: v.union(v.literal("siel"), v.literal("f680"), v.literal("other")),
+    licenceType: v.union(
+      v.literal("siel"),
+      v.literal("sitcl"),
+      v.literal("sitl"),
+      v.literal("f680"),
+      v.literal("oiel"),
+      v.literal("ogel"),
+      v.literal("otsi"),
+      v.literal("other"),
+    ),
     applicationRef: v.optional(v.string()),
     licenceRef: v.optional(v.string()),
     route: v.optional(

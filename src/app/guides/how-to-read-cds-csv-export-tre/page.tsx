@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { SignUpCta } from "@/components/sign-up-cta";
 
 export const metadata: Metadata = {
   title: "How to Read Your CDS CSV Export from TRE | FreightCode",
@@ -202,12 +201,12 @@ export default function Guide4Page() {
         <p className="text-[14px] leading-relaxed text-slate-300 mb-6">
           Upload your TRE Item Report CSV in Import TRE to store line items in your org workspace, scan for possible preference gaps, and keep history alongside your CDS declarations — without filtering thousands of rows in Excel.
         </p>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <SignUpCta variant="light" />
-          <Link href="/dashboard/tre-import" className="text-[14px] font-medium text-slate-300 hover:text-white">
-            Already have an account? Import TRE →
-          </Link>
-        </div>
+        <Link
+          href="/guides/cds-commodity-codes-how-to-find"
+          className="inline-flex text-[14px] font-medium text-slate-300 hover:text-white"
+        >
+          Next guide →
+        </Link>
       </div>
     </article>
     </>

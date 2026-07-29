@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -28,6 +28,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { AssessmentAuditPanel } from "@/components/trade-compliance/assessment-audit-panel";
 import { DocumentAuditPanel } from "@/components/trade-compliance/document-audit-panel";
 import { ExportClassificationPanel } from "@/components/trade-compliance/export-classification-panel";
 import { ExportSanctionsPanel } from "@/components/trade-compliance/export-sanctions-panel";
@@ -35,11 +36,14 @@ import { ExportRoutingBanner } from "@/components/trade-compliance/export-routin
 import { ConsultantSignoffCard } from "@/components/trade-compliance/consultant-signoff-card";
 import { EndUserSendCard } from "@/components/trade-compliance/end-user-send-card";
 import { ExportDraftPackPanel, buildDraftPackFromDetail } from "@/components/trade-compliance/export-draft-pack-panel";
-import { ExportLicencesPanel } from "@/components/trade-compliance/export-licences-panel";
 import { openDraftPackPrintDialog } from "@/lib/export-controls/draft-pack";
 import { countries } from "@/lib/data/countries";
+import {
+  getRememberedAssessmentsSnapshot,
+  rememberAssessmentsSnapshot,
+} from "@/lib/dashboard-compliance-cache";
 
-type AssessmentTab = "overview" | "export" | "sanctions" | "draft" | "licences" | "documents" | "audit";
+type AssessmentTab = "overview" | "export" | "sanctions" | "draft" | "documents" | "audit";
 
 const STATUS_FILTER_OPTIONS = [
   { value: "all", label: "All statuses" },
@@ -54,8 +58,7 @@ const assessmentTabs: Array<{ id: AssessmentTab; label: string }> = [
   { id: "documents", label: "Documents" },
   { id: "export", label: "Export Controls" },
   { id: "sanctions", label: "Sanctions" },
-  { id: "draft", label: "Draft Pack" },
-  { id: "licences", label: "Licences" },
+  { id: "draft", label: "Licence management" },
   { id: "audit", label: "Audit Log" },
 ];
 
@@ -157,15 +160,6 @@ function Tabs<T extends string>({
         </button>
       ))}
     </div>
-  );
-}
-
-function PlaceholderPane({ title, detail }: { title: string; detail: string }) {
-  return (
-    <section className="rounded-xl border border-slate-200 bg-white p-6">
-      <h2 className="text-sm font-semibold text-black">{title}</h2>
-      <p className="mt-3 text-xs leading-relaxed text-slate-500">{detail}</p>
-    </section>
   );
 }
 
@@ -325,17 +319,11 @@ function AssessmentSheetBody({
           <ExportDraftPackPanel
             assessmentId={assessmentId}
             assessmentStatus={assessment.status}
-            onOpenLicences={() => onTabChange("licences")}
           />
         )}
 
-        {assessmentTab === "licences" && <ExportLicencesPanel assessmentId={assessmentId} />}
-
         {assessmentTab === "audit" && (
-          <PlaceholderPane
-            title="Audit Log"
-            detail="Assessment audit trail from auditLogs — wired in a later pass."
-          />
+          <AssessmentAuditPanel assessmentId={assessmentId} reference={assessment?.reference} />
         )}
       </div>
     </div>
@@ -343,7 +331,8 @@ function AssessmentSheetBody({
 }
 
 export default function TradeCompliancePage() {
-  const { isLoaded, isSignedIn } = useUser();
+  const { isLoaded, isSignedIn, user } = useUser();
+  const clerkUserId = user?.id ?? "";
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const canQuery = isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated;
 
@@ -355,6 +344,14 @@ export default function TradeCompliancePage() {
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTER_OPTIONS)[number]["value"]>("all");
 
   const assessments = useQuery(api.export_controls.listAssessments, canQuery ? {} : "skip");
+  const remembered = clerkUserId ? getRememberedAssessmentsSnapshot(clerkUserId) : null;
+  const resolvedAssessments = assessments ?? remembered?.assessments;
+
+  useEffect(() => {
+    if (!clerkUserId || assessments === undefined) return;
+    rememberAssessmentsSnapshot(clerkUserId, assessments);
+  }, [clerkUserId, assessments]);
+
   const assessmentDetail = useQuery(
     api.export_controls.getAssessment,
     canQuery && selectedAssessmentId ? { assessmentId: selectedAssessmentId } : "skip",
@@ -381,14 +378,20 @@ export default function TradeCompliancePage() {
     }
   };
 
-  const reviewCount =
-    assessments?.filter((a) => a.status === "flagged" || a.status === "review_required").length ?? 0;
-  const draftCount = assessments?.filter((a) => a.status === "draft").length ?? 0;
+  // Only first load (no live query and no remembered snapshot) shows placeholders.
+  const isAssessmentsLoading = resolvedAssessments === undefined;
+  const reviewCount = resolvedAssessments
+    ? resolvedAssessments.filter((a) => a.status === "flagged" || a.status === "review_required").length
+    : null;
+  const draftCount = resolvedAssessments
+    ? resolvedAssessments.filter((a) => a.status === "draft").length
+    : null;
+  const openCount = resolvedAssessments ? resolvedAssessments.length : null;
 
   const filteredAssessments = useMemo(() => {
-    if (!assessments) return [];
+    if (!resolvedAssessments) return [];
 
-    return assessments.filter((row) => {
+    return resolvedAssessments.filter((row) => {
       const query = searchQuery.trim().toLowerCase();
       const destinationLabel = resolveCountryLabel(row.destinationCountry).toLowerCase();
       const matchesSearch =
@@ -399,9 +402,8 @@ export default function TradeCompliancePage() {
       const matchesStatus = statusFilter === "all" || row.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [assessments, searchQuery, statusFilter]);
+  }, [resolvedAssessments, searchQuery, statusFilter]);
 
-  const isAssessmentsLoading = canQuery && assessments === undefined;
   const hasActiveFilters = searchQuery.trim().length > 0 || statusFilter !== "all";
 
   return (
@@ -426,7 +428,7 @@ export default function TradeCompliancePage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         {[
-          { label: "Open assessments", value: assessments?.length ?? "—", icon: ClipboardList, hint: "All active checks" },
+          { label: "Open assessments", value: openCount, icon: ClipboardList, hint: "All active checks" },
           { label: "Review required", value: reviewCount, icon: AlertTriangle, hint: "Flagged or needs review" },
           { label: "Draft", value: draftCount, icon: CheckCircle2, hint: "Not yet submitted" },
         ].map(({ label, value, icon: Icon, hint }) => (
@@ -435,7 +437,11 @@ export default function TradeCompliancePage() {
               <p className="text-[0.625rem] font-semibold tracking-widest text-slate-500 uppercase">{label}</p>
               <Icon className="h-4 w-4 text-slate-400" />
             </div>
-            <p className="mt-3 text-2xl font-medium tracking-tight text-slate-900 tabular-nums">{value}</p>
+            {value === null ? (
+              <div className="mt-3 h-8 w-16 animate-pulse rounded bg-slate-100" aria-hidden />
+            ) : (
+              <p className="mt-3 text-2xl font-medium tracking-tight text-slate-900 tabular-nums">{value}</p>
+            )}
             <p className="mt-1 text-[0.625rem] text-slate-500">{hint}</p>
           </div>
         ))}
@@ -513,27 +519,18 @@ export default function TradeCompliancePage() {
             </table>
           </div>
         ) : filteredAssessments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <FileText className="mb-4 h-8 w-8 text-slate-300" />
-            <p className="text-sm font-medium text-slate-500">
-              {hasActiveFilters ? "No assessments match these filters." : "No assessments yet."}
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+              <FileText className="h-4 w-4 text-slate-300" />
+            </div>
+            <h4 className="text-sm font-semibold text-slate-900">
+              {hasActiveFilters ? "No matching assessments" : "No assessments yet"}
+            </h4>
+            <p className="mt-1 max-w-sm text-xs text-slate-500">
+              {hasActiveFilters
+                ? "No assessments match your search or selected filters."
+                : "Create one to upload documents and run export control checks."}
             </p>
-            {!hasActiveFilters && (
-              <>
-                <p className="mt-1 text-xs text-slate-400">
-                  Create one to upload documents and run export control checks.
-                </p>
-                <button
-                  type="button"
-                  disabled={!canQuery || creating}
-                  onClick={() => void handleNewAssessment()}
-                  className="mt-4 inline-flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
-                >
-                  {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
-                  New Assessment
-                </button>
-              </>
-            )}
           </div>
         ) : (
           <div className="overflow-x-auto">

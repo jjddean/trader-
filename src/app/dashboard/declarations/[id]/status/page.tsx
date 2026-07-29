@@ -21,9 +21,29 @@ import { generateClientFraudHeaders } from "@/lib/hmrc-fraud-headers";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import {
   ConvexSessionMissing,
-  DeclarationLoadingSpinner,
+  DeclarationPageSkeleton,
   isConvexSessionMissing,
 } from "@/components/declaration-session-states";
+import {
+  normalizeRepresentationType,
+  representationSummaryLabel,
+} from "@/lib/representation-display";
+import { cn } from "@/lib/utils";
+
+type StatusTimelineNotification = {
+  _id: string;
+  timestamp?: string | number;
+  notificationType?: string | null;
+  rawPayload?: string | null;
+  fieldErrors?: Array<{ field: string; code?: string; reason: string }>;
+  errorCodes?: string[];
+};
+
+function formatTimestamp(value: string | number | undefined): string {
+  if (value === undefined) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
+}
 
 export default function StatusTimelinePage() {
   const { isLoaded, isSignedIn, userId } = useAuth();
@@ -54,6 +74,11 @@ export default function StatusTimelinePage() {
 
   const auditLogs = useQuery(
     api.audit.getDeclarationAuditLogs,
+    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && id ? { declarationId: id } : "skip",
+  );
+
+  const representationStatus = useQuery(
+    api.representation.getStatus,
     isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && id ? { declarationId: id } : "skip",
   );
 
@@ -125,16 +150,17 @@ export default function StatusTimelinePage() {
     }
   }
 
-  if (!isLoaded) {
-    return <DeclarationLoadingSpinner />;
-  }
-
   if (isConvexSessionMissing(isLoaded, Boolean(isSignedIn), isConvexAuthLoading, isAuthenticated)) {
     return <ConvexSessionMissing />;
   }
 
-  if (isSignedIn && isAuthenticated && declaration === undefined) {
-    return <DeclarationLoadingSpinner />;
+  if (
+    declaration === undefined ||
+    notifications === undefined ||
+    submissions === undefined ||
+    auditLogs === undefined
+  ) {
+    return <DeclarationPageSkeleton />;
   }
 
   if (!declaration) {
@@ -247,10 +273,10 @@ export default function StatusTimelinePage() {
   const amendInFlight = declaration.status === "Amendment Processing";
 
   const metaForNotification = (notif: {
-    rawPayload?: string;
+    rawPayload?: string | null;
     fieldErrors?: Array<{ field: string; code?: string; reason: string }>;
     errorCodes?: string[];
-    notificationType?: string;
+    notificationType?: string | null;
   }) => {
     const type = normalizeNotificationType(notif.notificationType);
     const preset = notificationMeta[type];
@@ -291,7 +317,9 @@ export default function StatusTimelinePage() {
   const latestCtx = latestNotif ? notifContext(latestNotif) : null;
   const latestNotificationType = normalizeNotificationType(latestNotif?.notificationType) || "DMSUB";
   const latestIsInvalidationSuccess = latestCtx ? isInvalidationAccepted(latestCtx) : false;
-  const submittedAt = (declaration as any).submittedAt || declaration.created || declaration._creationTime;
+  const submittedAt =
+    (typeof declaration.created === "number" ? declaration.created : undefined)
+    ?? declaration._creationTime;
 
   const cdsBadge = resolveDeclarationCdsBadge(
     declaration.status,
@@ -305,6 +333,15 @@ export default function StatusTimelinePage() {
     info: "bg-blue-100 text-blue-700",
     neutral: "bg-slate-100 text-slate-700",
   };
+
+  const repType = normalizeRepresentationType(
+    representationStatus?.representation.representationType ?? declaration?.representationType,
+  );
+  const repLabel = representationSummaryLabel(repType);
+  const repApproverName =
+    repType === "indirect" && representationStatus?.approval?.approverName
+      ? String(representationStatus.approval.approverName)
+      : null;
 
   const hmrcActionBtnClass =
     "inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-normal text-slate-800 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40";
@@ -462,52 +499,87 @@ export default function StatusTimelinePage() {
                 )}
               </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="rounded-lg bg-slate-50 p-4 border border-slate-100">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="flex flex-col rounded-lg border border-slate-100 bg-slate-50 p-4">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                   MRN
                 </p>
-                <p className="text-sm font-semibold text-slate-900 truncate">
-                  {declaration.mrn || "— pending"}
-                </p>
+                <div className="flex min-h-[26px] items-center">
+                  <p className="truncate text-sm font-semibold text-slate-900">
+                    {declaration.mrn || "— pending"}
+                  </p>
+                </div>
               </div>
 
-              <div className="rounded-lg bg-slate-50 p-4 border border-slate-100">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">
+              <div className="flex flex-col rounded-lg border border-slate-100 bg-slate-50 p-4">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                   CDS Status
                 </p>
-                <div>
+                <div className="flex min-h-[26px] items-center">
                   {declaration.mrn && String(declaration.mrn).trim().length > 0 ? (
                     <span
-                      className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[0.625rem] font-medium ${cdsBadgeClass[cdsBadge.tone]}`}
+                      className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[0.625rem] font-medium leading-none ${cdsBadgeClass[cdsBadge.tone]}`}
                     >
                       {cdsBadge.tone === "success" ? (
-                        <ShieldCheck className="h-3 w-3" />
+                        <ShieldCheck className="h-3 w-3 shrink-0" />
                       ) : cdsBadge.tone === "danger" ? (
-                        <ShieldAlert className="h-3 w-3" />
+                        <ShieldAlert className="h-3 w-3 shrink-0" />
                       ) : cdsBadge.tone === "neutral" ? (
-                        <FileText className="h-3 w-3" />
+                        <FileText className="h-3 w-3 shrink-0" />
                       ) : (
-                        <AlertCircle className="h-3 w-3" />
+                        <AlertCircle className="h-3 w-3 shrink-0" />
                       )}
                       {cdsBadge.label}
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[0.625rem] font-medium text-slate-700">
-                      <FileText className="h-3 w-3" />
+                    <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[0.625rem] font-medium leading-none text-slate-700">
+                      <FileText className="h-3 w-3 shrink-0" />
                       {declaration.status}
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="rounded-lg bg-slate-50 p-4 border border-slate-100">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+              <div className="flex flex-col rounded-lg border border-slate-100 bg-slate-50 p-4">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                  Representation
+                </p>
+                <div className="flex min-h-[26px] items-center">
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-md px-2 py-0.5 text-[0.625rem] font-medium leading-none",
+                      repType === "indirect"
+                        ? "bg-violet-100 text-violet-800"
+                        : repType === "direct"
+                          ? "bg-slate-200 text-slate-800"
+                          : "bg-slate-100 text-slate-700",
+                    )}
+                  >
+                    {repLabel}
+                  </span>
+                </div>
+                {repApproverName && (
+                  <p className="mt-1.5 text-[11px] text-slate-600 truncate" title={repApproverName}>
+                    Approved by {repApproverName}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-col rounded-lg border border-slate-100 bg-slate-50 p-4">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                   Last Update
                 </p>
-                <p className="text-sm font-semibold text-slate-900 truncate">
-                   {new Date(declaration.lastUpdated || declaration._creationTime).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                </p>
+                <div className="flex min-h-[26px] items-center">
+                  <p className="truncate text-sm font-semibold text-slate-900">
+                    {new Date(declaration.lastUpdated || declaration._creationTime).toLocaleString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -519,21 +591,21 @@ export default function StatusTimelinePage() {
                   <div className="absolute -left-6 top-1 h-3 w-3 rounded-full border-2 border-white bg-blue-500" />
                   <div className="flex flex-col gap-1">
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      {new Date(submittedAt).toLocaleString()}
+                      {formatTimestamp(submittedAt)}
                     </p>
                     <p className="text-sm font-medium text-slate-900">Declaration Submitted</p>
                     <p className="text-xs text-slate-600">Payload successfully validated and stored by HMRC Hub.</p>
                   </div>
                 </div>
 
-                {(notifications || []).map((notif: any) => {
+                {(notifications || []).map((notif: StatusTimelineNotification) => {
                   const meta = metaForNotification(notif);
                   return (
                   <div key={notif._id} className="relative">
                     <div className={`absolute -left-6 top-1 h-3 w-3 rounded-full border-2 border-white ${meta.color}`} />
                     <div className="flex flex-col gap-1 mt-1">
                       <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        {new Date(notif.timestamp).toLocaleString()}
+                        {formatTimestamp(notif.timestamp)}
                       </p>
                       <div className="flex items-center gap-2">
                          <p className="text-sm font-medium text-slate-900">

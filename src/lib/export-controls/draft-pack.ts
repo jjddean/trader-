@@ -47,6 +47,34 @@ export interface DraftPackLicenceInput {
   recordedAt: number;
 }
 
+export type EvidenceKind =
+  | "technical_description"
+  | "datasheet"
+  | "brochure"
+  | "web_page"
+  | "commercial_invoice"
+  | "eusu_signed"
+  | "other";
+
+export interface DraftPackEvidenceInput {
+  kind: EvidenceKind;
+  label: string;
+  fileName?: string;
+  url?: string;
+  note?: string;
+  addedAt: number;
+}
+
+export const EVIDENCE_KIND_LABELS: Record<EvidenceKind, string> = {
+  technical_description: "Technical description",
+  datasheet: "Datasheet / specification",
+  brochure: "Brochure / marketing material",
+  web_page: "Product web page",
+  commercial_invoice: "Commercial invoice",
+  eusu_signed: "Signed EUSU (official form)",
+  other: "Other supporting document",
+};
+
 export interface DraftPackField {
   id: string;
   label: string;
@@ -70,6 +98,7 @@ export interface DraftPackBundle {
   fields: DraftPackField[];
   missingMandatory: string[];
   supportingDocs: Array<{ id: string; label: string; note: string }>;
+  evidence: DraftPackEvidenceInput[];
   routing: RoutingResult;
   timeline: DraftPackTimelineStep[];
   ecjuNote: string;
@@ -113,8 +142,10 @@ export function buildDraftPackBundle(input: {
   products: DraftPackProductInput[];
   screenings: DraftPackScreeningInput[];
   licences: DraftPackLicenceInput[];
+  evidence?: DraftPackEvidenceInput[];
 }): DraftPackBundle {
   const { assessment, products, screenings, licences } = input;
+  const evidence = input.evidence ?? [];
 
   const approvedEntries = products.map((p) => approvedControlEntry(p) ?? "");
   const routing = resolveSubmissionRoute({
@@ -280,18 +311,13 @@ export function buildDraftPackBundle(input: {
     supportingDocs: [
       {
         id: "eusu",
-        label: "End-User Statement Undertaking (EUSU)",
-        note: "Required when end user differs from consignee or for sensitive destinations.",
-      },
-      {
-        id: "euu",
-        label: "End-Use Undertaking (EUU)",
-        note: "Confirm intended use and no diversion to prohibited end uses.",
+        label: "End-user and stockist undertaking (EUSU)",
+        note: "Completed by the overseas end user or consignee. Required for SIEL and SITCL applications — official form on GOV.UK.",
       },
       {
         id: "tech_spec",
         label: "Technical specification / datasheet",
-        note: "Supports control entry classification evidence.",
+        note: "Shows what the item is and what it does — supports the control entry and DBT assessment.",
       },
       {
         id: "commercial_invoice",
@@ -299,6 +325,7 @@ export function buildDraftPackBundle(input: {
         note: "Line items, values, and parties.",
       },
     ],
+    evidence,
     routing,
     timeline,
     ecjuNote: ECJU_NOTE,
@@ -323,6 +350,30 @@ export function draftPackPrintableHtml(bundle: DraftPackBundle, reviewerNotes?: 
   const docs = bundle.supportingDocs
     .map((doc) => `<li><strong>${escapeHtml(doc.label)}</strong> — ${escapeHtml(doc.note)}</li>`)
     .join("");
+
+  const evidenceRows = bundle.evidence
+    .map(
+      (item) => `
+      <tr>
+        <td style="padding:8px;border:1px solid #e2e8f0;vertical-align:top;">${escapeHtml(EVIDENCE_KIND_LABELS[item.kind])}</td>
+        <td style="padding:8px;border:1px solid #e2e8f0;vertical-align:top;">${escapeHtml(item.label)}${item.note ? `<br /><span style="color:#64748b">${escapeHtml(item.note)}</span>` : ""}</td>
+        <td style="padding:8px;border:1px solid #e2e8f0;vertical-align:top;">${escapeHtml(item.fileName ?? item.url ?? "—")}</td>
+      </tr>`,
+    )
+    .join("");
+
+  const evidenceSection = bundle.evidence.length
+    ? `<h2>Product evidence attached</h2>
+  <table>
+    <tr>
+      <td style="padding:8px;border:1px solid #e2e8f0;font-weight:600;">Type</td>
+      <td style="padding:8px;border:1px solid #e2e8f0;font-weight:600;">Description</td>
+      <td style="padding:8px;border:1px solid #e2e8f0;font-weight:600;">File / link</td>
+    </tr>
+    ${evidenceRows}
+  </table>`
+    : `<h2>Product evidence attached</h2>
+  <p class="muted">None recorded. DBT expects documents showing what the item is and what it does (specification, datasheet, brochure or product web page).</p>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -349,6 +400,7 @@ export function draftPackPrintableHtml(bundle: DraftPackBundle, reviewerNotes?: 
   ${reviewerNotes?.trim() ? `<h2>Reviewer notes</h2><p>${escapeHtml(reviewerNotes)}</p>` : ""}
   <h2>Supporting documents checklist</h2>
   <ul>${docs}</ul>
+  ${evidenceSection}
   <p class="muted">${escapeHtml(bundle.ecjuNote)}</p>
 </body>
 </html>`;

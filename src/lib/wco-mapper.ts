@@ -386,6 +386,61 @@ export interface MapOptions {
   forbiddenDocCodes?: string[];
 }
 
+/**
+ * DE 3/19–3/21 representative block (WCO `Agent`).
+ *
+ * Per the CDS Group 3 completion guide: DE 3/19 (name/address) and DE 3/20
+ * (EORI) are only declared where the Representative *differs* from the Declarant
+ * (DE 3/18) — the sub-agent case. In the normal flow the account holder is the
+ * representative acting as declarant, so only the DE 3/21 status code is emitted
+ * (code 2 = direct, 3 = indirect). Self-representation emits no Agent at all.
+ */
+function buildRepresentativeAgentBlock(declaration: any) {
+  const type = String(declaration.representationType || "self").trim();
+  if (type !== "direct" && type !== "indirect") return {};
+
+  const functionCode = type === "indirect" ? "3" : "2";
+  const declarantEori = String(declaration.eori || "").trim().toUpperCase();
+  const repEori = String(declaration.representativeEori || "").trim().toUpperCase();
+  const repName = String(declaration.representativeName || "").trim();
+
+  // Representative differs from the declarant only when a distinct EORI is given,
+  // or a name is given with no EORI. Otherwise the representative IS the declarant.
+  const representativeDiffersFromDeclarant =
+    (Boolean(repEori) && repEori !== declarantEori) || (!repEori && Boolean(repName));
+
+  if (!representativeDiffersFromDeclarant) {
+    // DE 3/21 status code only — DE 3/19/3/20 left blank (representative = declarant).
+    return { Agent: { FunctionCode: functionCode } };
+  }
+
+  if (repEori) {
+    // DE 3/20 — representative EORI (distinct from declarant).
+    return { Agent: { ID: repEori, FunctionCode: functionCode } };
+  }
+
+  // DE 3/19 — distinct representative without an EORI: full name + address required.
+  const line = String(declaration.representativeAddressLine || "").trim();
+  const city = String(declaration.representativeCity || "").trim();
+  const postcode = String(declaration.representativePostcode || "").trim();
+  const country = normalizeCountryCode(declaration.representativeCountry);
+  if (!line || !city || !postcode || !country) {
+    throw new Error("Representative EORI or full representative name and address is required for DE 3/19-3/21.");
+  }
+
+  return {
+    Agent: {
+      Name: repName,
+      FunctionCode: functionCode,
+      Address: {
+        CityName: city,
+        CountryCode: country,
+        Line: line,
+        PostcodeID: postcode,
+      },
+    },
+  };
+}
 export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions = {}) {
   if (!declaration || typeof declaration !== "object") {
     throw new Error("Invalid declaration object provided to H1 mapper.");
@@ -402,8 +457,19 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
   }
   const ducr = declaration.ducr || `${new Date().getFullYear() % 10}GB${String(declaration.eori).trim().replace(/^GB/i, "")}-${declaration._id.substring(0,6).toUpperCase()}`;
   const declarantEori = String(declaration.eori || "").trim();
-  const importerEori = String(declaration.importerEori || declaration.eori || "").trim();
-  const isSelfRepresentation = declarantEori && importerEori && declarantEori === importerEori;
+  const declaredRepType = String(declaration.representationType || "self").trim();
+  // Under direct/indirect representation the importer is a distinct party (the
+  // represented person) and must never silently inherit the declarant's EORI —
+  // doing so mis-states DE 3/16 and collides with the self-rep AI 00500 below.
+  const importerEori = declaredRepType === "self"
+    ? String(declaration.importerEori || declaration.eori || "").trim()
+    : String(declaration.importerEori || "").trim();
+  // DE 2/2 AI 00500 ("Identity between declarant and importer") only applies to
+  // genuine self-representation. Per the Group 3 completion guide, when a
+  // representative is used (DE 3/21 = 2 or 3) the importer differs from the
+  // declarant and 00500 must NOT be declared.
+  const isSelfRepresentation =
+    declaredRepType === "self" && Boolean(declarantEori) && declarantEori === importerEori;
 
   const paymentError = validatePaymentFields(
     declaration.paymentMethodCode,
@@ -443,6 +509,7 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
         ModeCode: declaration.transportMode || "",
       },
       ...(headerDefermentDocs.length > 0 ? { AdditionalDocument: headerDefermentDocs } : {}),
+      ...buildRepresentativeAgentBlock(declaration),
       Declarant: {
         ID: String(declaration.eori || "").trim()
       },
@@ -491,7 +558,7 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
            ID: normalizeCountryCode(declaration.dispatchCountry)
         },
         Importer: {
-           ID: String(declaration.importerEori || declaration.eori || "").trim()
+           ID: importerEori
         },
         // DE 2/1 — Previous documents at GoodsShipment level. Always emit at
         // least the DUCR (CategoryCode Z, TypeCode DCR) so CDS can resolve the

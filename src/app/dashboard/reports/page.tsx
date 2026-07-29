@@ -11,11 +11,14 @@ import { useQuery } from "convex/react";
 import { useConvexAuth } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useAuth, useUser } from "@clerk/nextjs";
+import type { FunctionReturnType } from "convex/server";
 import {
   getRememberedReportsSnapshot,
   rememberReportsSnapshot,
 } from "@/lib/dashboard-compliance-cache";
 
+type CustomsReport = FunctionReturnType<typeof api.declarations.getReports>[number];
+type CustomsReportItem = CustomsReport["items"][number];
 export default function ReportsPage() {
   const { print, portal } = useDirectPrint();
   const { isLoaded, isSignedIn } = useAuth();
@@ -45,12 +48,12 @@ export default function ReportsPage() {
   );
   
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedReport, setSelectedReport] = useState<any | null>(null);
+  const [selectedReport, setSelectedReport] = useState<CustomsReport | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const filteredReports = (resolvedReports || []).filter((report: any) => {
+  const filteredReports = (resolvedReports || []).filter((report) => {
     const matchesSearch =
       !searchQuery ||
       report.mrn?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -252,9 +255,18 @@ export default function ReportsPage() {
               </table>
             </div>
           ) : filteredReports.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <FileText className="mb-4 h-8 w-8 text-slate-300" />
-              <p className="text-sm font-medium text-slate-500">No historical reports generated yet.</p>
+            <div className="flex flex-col items-center justify-center py-6 text-center">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+                <FileText className="h-4 w-4 text-slate-300" />
+              </div>
+              <h4 className="text-sm font-semibold text-slate-900">
+                {searchQuery || statusFilter !== "all" ? "No matching reports" : "No customs reports yet"}
+              </h4>
+              <p className="mt-1 max-w-sm text-xs text-slate-500">
+                {searchQuery || statusFilter !== "all"
+                  ? "No reports match your search or selected filters."
+                  : "Customs reports will appear here once declaration history is available."}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -269,7 +281,7 @@ export default function ReportsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {filteredReports.map((report: any) => (
+                {filteredReports.map((report) => (
                   <tr
                     key={report.id}
                     onClick={() => setSelectedReport(report)}
@@ -457,7 +469,7 @@ export default function ReportsPage() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
-                          {selectedReport.items.map((item: any) => (
+                          {selectedReport.items.map((item: CustomsReportItem) => (
                             <tr key={item.sequence} className="align-top hover:bg-slate-50/50 transition-colors">
                               <td className="px-4 py-4 text-xs font-medium text-slate-400">
                                 {item.sequence}

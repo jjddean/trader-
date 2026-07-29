@@ -12,10 +12,22 @@ export const logAction = internalMutation({
     metadata: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
-    const { metadata, ...rest } = args;
+    const { metadata, entityId, ipAddress, ...rest } = args;
+    const details =
+      metadata && typeof metadata === "object" && !Array.isArray(metadata)
+        ? { ...(metadata as Record<string, unknown>) }
+        : metadata !== undefined
+          ? { value: metadata }
+          : {};
+    if (entityId) {
+      (details as Record<string, unknown>).entityId = entityId;
+    }
+    if (ipAddress) {
+      (details as Record<string, unknown>).ipAddress = ipAddress;
+    }
     return await ctx.db.insert("auditLogs", {
       ...rest,
-      details: metadata,
+      details: Object.keys(details).length > 0 ? details : undefined,
       timestamp: Date.now(),
       archived: false,
     });
@@ -34,11 +46,23 @@ export const logMyAction = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
 
-    const { metadata, ...rest } = args;
+    const { metadata, entityId, ipAddress, ...rest } = args;
+    const details =
+      metadata && typeof metadata === "object" && !Array.isArray(metadata)
+        ? { ...(metadata as Record<string, unknown>) }
+        : metadata !== undefined
+          ? { value: metadata }
+          : {};
+    if (entityId) {
+      (details as Record<string, unknown>).entityId = entityId;
+    }
+    if (ipAddress) {
+      (details as Record<string, unknown>).ipAddress = ipAddress;
+    }
     return await ctx.db.insert("auditLogs", {
       ...rest,
       userId: identity.subject,
-      details: metadata,
+      details: Object.keys(details).length > 0 ? details : undefined,
       timestamp: Date.now(),
       archived: false,
     });

@@ -122,8 +122,11 @@ export default function AdminHmrcPage() {
             <tbody className="divide-y divide-slate-100">
               {hmrcConnections.map((row) => (
                 <tr key={row.userId} className="hover:bg-slate-50/50">
-                  <td className="px-6 py-3 text-xs font-medium text-slate-900">
-                    {row.ownerEmail || row.ownerName || row.userId.slice(0, 16)}
+                  <td className="px-6 py-3">
+                    <p className="text-xs font-medium text-slate-900">
+                      {row.ownerEmail || row.ownerName || "Connected (no profile email yet)"}
+                    </p>
+                    <p className="mt-0.5 font-mono text-[10px] text-slate-400">{row.userId}</p>
                   </td>
                   <td className="px-6 py-3 font-mono text-xs text-slate-600">{row.eori || "—"}</td>
                   <td className="px-6 py-3 text-xs text-slate-600">

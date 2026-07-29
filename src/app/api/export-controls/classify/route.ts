@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { NextResponse } from "next/server";
@@ -10,34 +8,15 @@ import {
   classifyProductAgainstControlList,
   EXPORT_CLASSIFICATION_PROMPT_VERSION,
 } from "@/lib/export-controls/classification";
-import { loadControlListSnapshot, type ControlListSnapshot } from "@/lib/export-controls/control-list";
+import {
+  loadControlListWithFallback,
+  resolveControlListUrl,
+} from "@/lib/export-controls/load-control-list-server";
 import type { ExportProduct, ExportProductSpec } from "@/lib/export-controls/extraction";
 import { runPredicates } from "@/lib/export-controls/predicates";
 import { retrieveControlListCandidates, specsToProduct } from "@/lib/export-controls/retrieval";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-
-async function resolveControlListUrl(convexToken: string): Promise<string> {
-  convex.setAuth(convexToken);
-  const dataset = await convex.query(api.reference_data.getLatestDataset, {
-    name: "export_control_list",
-  });
-  if (dataset?.storageUrl) return dataset.storageUrl;
-  if (dataset?.storagePath && process.env.NEXT_PUBLIC_R2_PUBLIC_URL) {
-    return `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}${dataset.storagePath}`;
-  }
-  throw new Error("Control list dataset URL not configured");
-}
-
-async function loadControlListWithFallback(url: string): Promise<ControlListSnapshot> {
-  try {
-    return await loadControlListSnapshot(url);
-  } catch (error) {
-    const localPath = path.join(process.cwd(), "data", "export-controls", "v2025-12-16.json");
-    const raw = await readFile(localPath, "utf8");
-    return JSON.parse(raw) as ControlListSnapshot;
-  }
-}
 
 function mapConvexSpecs(
   specs: Array<{
@@ -91,7 +70,7 @@ export async function POST(request: Request) {
       | undefined;
 
     let product: ExportProduct;
-    let resolvedProductId: Id<"export_products"> | undefined = productId;
+    const resolvedProductId: Id<"export_products"> | undefined = productId;
 
     if (productId) {
       const loaded = await convex.query(api.export_controls.getProductForClassification, { productId });

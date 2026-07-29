@@ -1,8 +1,11 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { getActiveOrgId } from "./lib/org_access";
+import { getActiveOrgId, listDeclarationsForTenant } from "./lib/org_access";
+import { buildTenantDeclarationMrnLinks } from "./lib/tre_links";
+
 const treRowValidator = v.object({
+  reportKind: v.string(),
   entryIdentifierMrn: v.string(),
   sourceRowHash: v.string(),
   sourceLineNumber: v.number(),
@@ -11,13 +14,24 @@ const treRowValidator = v.object({
   importerEori: v.optional(v.string()),
   commodityCode: v.optional(v.string()),
   countryOfOriginCode: v.optional(v.string()),
+  countryOfDispatchCode: v.optional(v.string()),
+  destinationCountryCode: v.optional(v.string()),
   preferenceCode: v.optional(v.string()),
   itemCustomsValue: v.optional(v.number()),
   taxLineTotalAmount: v.optional(v.number()),
   methodOfPaymentCode: v.optional(v.string()),
   customsProcedureCodeCpc: v.optional(v.string()),
   taxType: v.optional(v.string()),
+  dutyRatePercent: v.optional(v.number()),
   acceptanceDate: v.optional(v.string()),
+  goodsDescription: v.optional(v.string()),
+  netMassKg: v.optional(v.number()),
+  documentCodes: v.optional(v.string()),
+  invoiceTotalGbp: v.optional(v.number()),
+  transportCostGbp: v.optional(v.number()),
+  totalDutyGbp: v.optional(v.number()),
+  totalVatGbp: v.optional(v.number()),
+  goodsDepartureDate: v.optional(v.string()),
 });
 
 const TRE_MAX_ROWS = 1000;
@@ -66,23 +80,35 @@ export const listImportRows = query({
       .withIndex("by_import", (q) => q.eq("importId", args.importId))
       .take(1000);
 
-    return rows.map((row) => ({
-      id: row._id,
-      mrn: String(row.entryIdentifierMrn ?? "—"),
-      commodityCode: row.commodityCode ? String(row.commodityCode) : "—",
-      origin: row.countryOfOriginCode ? String(row.countryOfOriginCode) : "—",
-      preferenceCode: row.preferenceCode ? String(row.preferenceCode) : "—",
-      taxType: row.taxType ? String(row.taxType) : "—",
-      amount: row.taxLineTotalAmount ?? null,
-      customsValue: row.itemCustomsValue ?? null,
-      declarantEori: row.declarantEori ? String(row.declarantEori) : "—",
-      acceptanceDate: row.acceptanceDate ? String(row.acceptanceDate) : "—",
-    }));
+    const tenantDeclarations = await listDeclarationsForTenant(ctx, identity.subject, 1000);
+    const mrnLinks = buildTenantDeclarationMrnLinks(tenantDeclarations);
+
+    return rows.map((row) => {
+      const mrn = String(row.entryIdentifierMrn ?? "");
+      return {
+        id: row._id,
+        mrn: mrn || "—",
+        reportKind: row.reportKind ? String(row.reportKind) : "—",
+        commodityCode: row.commodityCode ? String(row.commodityCode) : "—",
+        origin: row.countryOfOriginCode ? String(row.countryOfOriginCode) : "—",
+        dispatch: row.countryOfDispatchCode ? String(row.countryOfDispatchCode) : "—",
+        preferenceCode: row.preferenceCode ? String(row.preferenceCode) : "—",
+        taxType: row.taxType ? String(row.taxType) : "—",
+        amount: row.taxLineTotalAmount ?? null,
+        customsValue: row.itemCustomsValue ?? null,
+        declarantEori: row.declarantEori ? String(row.declarantEori) : "—",
+        acceptanceDate: row.acceptanceDate ? String(row.acceptanceDate) : "—",
+        description: row.goodsDescription ? String(row.goodsDescription) : "—",
+        linkedDeclarationId: mrnLinks.get(mrn) ?? null,
+      };
+    });
   },
 });
 
-export const commitImport = mutation({  args: {
+export const commitImport = mutation({
+  args: {
     filename: v.string(),
+    reportFormat: v.string(),
     checksum: v.string(),
     rowCount: v.number(),
     warnings: v.array(v.string()),
@@ -109,6 +135,7 @@ export const commitImport = mutation({  args: {
       orgId,
       userId: identity.subject,
       filename: args.filename,
+      reportFormat: args.reportFormat,
       rowCount: args.rowCount,
       lineItemsStored: 0,
       lineItemsSkipped: 0,
@@ -140,9 +167,13 @@ export const commitImport = mutation({  args: {
         orgId,
         importId,
         sourceRowHash: row.sourceRowHash,
+        reportKind: row.reportKind,
         entryIdentifierMrn: row.entryIdentifierMrn,
         declarantEori: row.declarantEori,
+        importerEori: row.importerEori,
         countryOfOriginCode: row.countryOfOriginCode,
+        countryOfDispatchCode: row.countryOfDispatchCode,
+        destinationCountryCode: row.destinationCountryCode,
         preferenceCode: row.preferenceCode,
         itemCustomsValue: row.itemCustomsValue,
         taxLineTotalAmount: row.taxLineTotalAmount,
@@ -150,7 +181,16 @@ export const commitImport = mutation({  args: {
         customsProcedureCodeCpc: row.customsProcedureCodeCpc,
         taxType: row.taxType,
         commodityCode: row.commodityCode,
+        dutyRatePercent: row.dutyRatePercent,
         acceptanceDate: row.acceptanceDate,
+        goodsDescription: row.goodsDescription,
+        netMassKg: row.netMassKg,
+        documentCodes: row.documentCodes,
+        invoiceTotalGbp: row.invoiceTotalGbp,
+        transportCostGbp: row.transportCostGbp,
+        totalDutyGbp: row.totalDutyGbp,
+        totalVatGbp: row.totalVatGbp,
+        goodsDepartureDate: row.goodsDepartureDate,
         createdAt: now,
       });
       lineItemsStored++;
@@ -176,6 +216,7 @@ export const commitImport = mutation({  args: {
         metadata: {
           orgId,
           filename: args.filename,
+          reportFormat: args.reportFormat,
           lineItemsStored,
           lineItemsSkipped,
           rowCount: args.rowCount,

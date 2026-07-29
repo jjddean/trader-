@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Filter, ArrowRight } from "lucide-react";
+import { Plus, Search, Filter, ArrowRight, Ship } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const STATUS_FILTER_OPTIONS = [
@@ -137,10 +137,20 @@ export default function TradeLanesPage() {
               <tbody className="divide-y divide-slate-200">
                 {filteredLanes.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-xs italic text-slate-500">
-                      {hasActiveFilters
-                        ? "No trade lanes match these filters."
-                        : "No trade lanes yet. Create your first lane to get started."}
+                    <td colSpan={5}>
+                      <div className="flex flex-col items-center py-6 text-center">
+                        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+                          <Ship className="h-4 w-4 text-slate-300" />
+                        </div>
+                        <h4 className="text-sm font-semibold text-slate-900">
+                          {hasActiveFilters ? "No matching trade lanes" : "No trade lanes yet"}
+                        </h4>
+                        <p className="mt-1 max-w-sm text-xs text-slate-500">
+                          {hasActiveFilters
+                            ? "No trade lanes match your search or selected filters."
+                            : "Create your first trade lane to get started."}
+                        </p>
+                      </div>
                     </td>
                   </tr>
                 ) : (

@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
-import { Check, Copy, ExternalLink, Loader2, Send } from "lucide-react";
+import { Check, Copy, Download, ExternalLink, Loader2, Send } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
-import { buildDraftPackBundle } from "@/lib/export-controls/draft-pack";
+import {
+  buildDraftPackBundle,
+  EVIDENCE_KIND_LABELS,
+  type EvidenceKind,
+} from "@/lib/export-controls/draft-pack";
 import { resolveSubmissionRoute } from "@/lib/export-controls/routing";
 import { sanctionsOneLiner } from "@/lib/export-controls/sanctions-summary";
 
-function roleGuidance(_role?: string) {
+function roleGuidance() {
   return "Export licence application draft pack for your review.";
 }
 
@@ -85,11 +89,14 @@ export function ConsultantReviewPage({ token }: { token: string }) {
     );
   }
 
+  const evidence = data.evidence ?? [];
+
   const bundle = buildDraftPackBundle({
     assessment: data.assessment,
     products: data.products,
     screenings: data.screenings,
     licences: data.licences,
+    evidence,
   });
 
   const routing = resolveSubmissionRoute({
@@ -156,7 +163,7 @@ export function ConsultantReviewPage({ token }: { token: string }) {
       <header className="border-b border-slate-200 bg-white px-6 py-5">
         <p className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">Freightcode · Consultant review</p>
         <h1 className="mt-1 text-lg font-semibold text-slate-900">{data.assessment.reference}</h1>
-        <p className="mt-1 text-xs text-slate-500">{roleGuidance(data.consultantRole)}</p>
+        <p className="mt-1 text-xs text-slate-500">{roleGuidance()}</p>
         {data.senderNote && (
           <p className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
             <span className="font-medium">Note from sender:</span> {data.senderNote}
@@ -197,18 +204,76 @@ export function ConsultantReviewPage({ token }: { token: string }) {
         </section>
 
         <section className="rounded-xl border border-slate-200 bg-white p-5">
+          <h2 className="text-sm font-semibold text-slate-900">Product evidence</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Documents showing what the items are and what they do, for the DBT application.
+          </p>
+          {evidence.length === 0 ? (
+            <p className="mt-3 text-xs text-slate-500">None attached by the exporter yet.</p>
+          ) : (
+            <ul className="mt-4 divide-y divide-slate-100">
+              {evidence.map((item) => (
+                <li key={item._id} className="flex items-start justify-between gap-3 py-3 first:pt-0">
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-slate-900">{item.label}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">
+                      {EVIDENCE_KIND_LABELS[item.kind as EvidenceKind]}
+                      {item.fileName ? ` · ${item.fileName}` : ""}
+                    </p>
+                    {item.note && <p className="mt-1 text-[11px] text-slate-500">{item.note}</p>}
+                  </div>
+                  <div className="flex shrink-0 gap-1">
+                    {item.downloadUrl && (
+                      <a
+                        href={item.downloadUrl}
+                        download={item.fileName ?? undefined}
+                        className="flex h-7 items-center gap-1 rounded-md border border-slate-200 px-2 text-[10px] font-medium text-slate-600 hover:bg-slate-50"
+                      >
+                        <Download className="h-3 w-3" />
+                        Download
+                      </a>
+                    )}
+                    {item.url && (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex h-7 items-center gap-1 rounded-md border border-slate-200 px-2 text-[10px] font-medium text-slate-600 hover:bg-slate-50"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        Open
+                      </a>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="rounded-xl border border-slate-200 bg-white p-5">
           <h2 className="text-sm font-semibold text-slate-900">Sanctions</h2>
           <p className="mt-2 text-xs text-slate-600">{sanctionsLine}</p>
         </section>
 
         <section className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="text-sm font-semibold text-slate-900">End-user statement</h2>
+          <h2 className="text-sm font-semibold text-slate-900">End-user and stockist undertaking (EUSU)</h2>
           <p className="mt-1 text-xs text-slate-500">
-            Send the buyer a link to complete the end-user statement for LITE supporting docs.
+            {endUserToken?.completedAt
+              ? "Completed by the end user. Check the details against the official form before filing."
+              : "Send the buyer a link to complete the undertaking for the SIEL / SITCL application."}{" "}
+            <a
+              href="https://www.gov.uk/government/publications/end-user-undertaking-euu-form"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-slate-700"
+            >
+              Official EUSU form on GOV.UK
+            </a>
           </p>
           {endUserToken?.completedAt ? (
             <p className="mt-3 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">
-              End-user statement submitted.
+              EUSU submitted.
             </p>
           ) : (
             <div className="mt-4 space-y-3">

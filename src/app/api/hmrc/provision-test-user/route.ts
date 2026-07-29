@@ -25,7 +25,7 @@ export async function POST() {
 
   if (orgRouting.hmrcMode !== "practice") {
     return NextResponse.json(
-      { error: "Sandbox test users are only for practice organisations" },
+      { error: "Sandbox test users are only for test-environment organisations" },
       { status: 400 },
     );
   }

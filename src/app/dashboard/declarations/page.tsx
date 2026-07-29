@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect, Suspense } from "react";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
 import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
-import { Plus, Search, Filter, Loader2, ArrowRight, Trash2 } from "lucide-react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { Plus, Search, Filter, Loader2, ArrowRight, Trash2, FileText } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -35,8 +36,28 @@ import {
   ConvexSessionMissing,
   isConvexSessionMissing,
 } from "@/components/declaration-session-states";
+import {
+  normalizeRepresentationType,
+  representationListChipLabel,
+} from "@/lib/representation-display";
 
 export default function DeclarationsPage() {
+  return (
+    <Suspense fallback={<DeclarationsPageFallback />}>
+      <DeclarationsPageContent />
+    </Suspense>
+  );
+}
+
+function DeclarationsPageFallback() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+    </div>
+  );
+}
+
+function DeclarationsPageContent() {
   const { user, isLoaded: isClerkLoaded, isSignedIn } = useUser();
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const userId = user?.id || "";
@@ -60,9 +81,21 @@ export default function DeclarationsPage() {
   const [description, setDescription] = useState("");
 
   const deleteDecl = useMutation(api.declarations.deleteDeclaration);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<Id<"declarations"> | null>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
 
-  const handleDelete = async (e: React.MouseEvent, id: any) => {
+  useEffect(() => {
+    if (!showFilters) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setShowFilters(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showFilters]);
+
+  const handleDelete = async (e: React.MouseEvent, id: Id<"declarations">) => {
     e.stopPropagation();
     if (confirm("Are you sure you want to delete this draft declaration? This will also delete all associated items.")) {
       setDeletingId(id);
@@ -91,15 +124,14 @@ export default function DeclarationsPage() {
       });
       
       setShowCreateModal(false);
-      // Navigate straight to the items view to see the pre-filled row
-      router.push(`/dashboard/declarations/${newId}/items`);
+      router.push(`/dashboard/declarations/${newId}`);
     } catch (error) {
       console.error("Failed to create declaration:", error);
       setIsCreating(false);
     }
   };
 
-  const filteredDeclarations = (declarations ?? []).filter((dec: any) => {
+  const filteredDeclarations = (declarations ?? []).filter((dec) => {
     const status = dec.status ?? "Draft";
     const { label: badgeLabel } = resolveDeclarationRowBadge(dec);
 
@@ -138,6 +170,7 @@ export default function DeclarationsPage() {
 
   return (
     <div className="space-y-6 p-8">
+      <CreateModalFromQuery setOpen={setShowCreateModal} />
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-slate-900">Declarations</h1>
@@ -155,9 +188,8 @@ export default function DeclarationsPage() {
         </button>
       </div>
 
-      <div className="flex flex-col rounded-xl border border-slate-200 bg-white shadow-none">
-        {/* FILTER BAR — overflow-visible so dropdown isn't clipped (reports pattern) */}
-        <div className="relative z-20 overflow-visible border-b border-slate-200 bg-slate-50 px-5 py-4">
+      <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none">
+        <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
@@ -169,7 +201,7 @@ export default function DeclarationsPage() {
                 className="h-9 w-full rounded-md border border-slate-200 bg-white pl-8 pr-4 text-xs text-slate-700 outline-none transition-colors focus:border-slate-400"
               />
             </div>
-            <div className="relative">
+            <div className="relative" ref={filterRef}>
               <button
                 type="button"
                 onClick={() => setShowFilters((prev) => !prev)}
@@ -230,16 +262,31 @@ export default function DeclarationsPage() {
                   </tr>
                 ) : !filteredDeclarations || filteredDeclarations.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500 text-xs italic">
-                      {hasActiveFilters
-                        ? "No declarations match these filters."
-                        : "No declarations yet. Create your first declaration to get started."}
+                    <td colSpan={5}>
+                      <div className="flex flex-col items-center py-6 text-center">
+                        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+                          <FileText className="h-4 w-4 text-slate-300" />
+                        </div>
+                        <h4 className="text-sm font-semibold text-slate-900">
+                          {hasActiveFilters ? "No matching declarations" : "No declarations yet"}
+                        </h4>
+                        <p className="mt-1 max-w-sm text-xs text-slate-500">
+                          {hasActiveFilters
+                            ? "No declarations match your search or selected filters."
+                            : "Create your first declaration to get started."}
+                        </p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
-                  filteredDeclarations.map((dec: any) => {
+                  filteredDeclarations.map((dec) => {
                     const { label: badgeLabel, tone } = resolveDeclarationRowBadge(dec);
                     const subtitleLabel = declarationHumanSubtitle(badgeLabel, dec.status, tone);
+                    const repChip = representationListChipLabel(
+                      normalizeRepresentationType(
+                        (dec as { representationType?: string }).representationType,
+                      ),
+                    );
 
                     return (
                     <tr
@@ -249,9 +296,16 @@ export default function DeclarationsPage() {
                     >
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <span className={cn("text-xs font-semibold transition-colors", mrnTitleClass(tone))}>
-                            {dec.mrn || "Pending CDS"}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className={cn("text-xs font-semibold transition-colors", mrnTitleClass(tone))}>
+                              {dec.mrn || "Pending CDS"}
+                            </span>
+                            {repChip && (
+                              <span className="inline-flex rounded-md bg-violet-100 px-1.5 py-0.5 text-[0.625rem] font-medium text-violet-800">
+                                {repChip}
+                              </span>
+                            )}
+                          </div>
                           <span className={cn("mt-0.5 text-[0.625rem] font-medium", mrnSubtitleClass(tone))}>
                             {subtitleLabel}
                           </span>
@@ -350,4 +404,25 @@ export default function DeclarationsPage() {
       </Dialog>
     </div>
   );
+}
+
+function CreateModalFromQuery({
+  setOpen,
+}: {
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (searchParams.get("new") !== "1") return;
+    setOpen(true);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("new");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [searchParams, router, pathname, setOpen]);
+
+  return null;
 }

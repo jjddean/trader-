@@ -256,7 +256,10 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_org", ["orgId"])
     .index("by_mrn", ["mrn"])
-    .index("by_conversationId", ["conversationId"]),
+    .index("by_conversationId", ["conversationId"])
+    // Stuck-declaration recovery scans by status + staleness. Without this the
+    // hourly cron reads the whole table.
+    .index("by_status_and_updated", ["status", "lastUpdated"]),
 
   // Broker's client/trader profiles. A reusable party record (the importer the
   // broker files on behalf of) scoped to the broker's Clerk org. This is DATA
@@ -410,6 +413,9 @@ export default defineSchema({
     mrn: v.optional(v.string()),
     eori: v.optional(v.string()),
     declarationType: v.optional(v.string()),
+    representationType: v.optional(
+      v.union(v.literal("self"), v.literal("direct"), v.literal("indirect")),
+    ),
     // Completeness state — derived from convex/lib/declaration_completeness.ts.
     // The single source of truth for "is this declaration submittable". Recomputed
     // on every declaration/items write via upsertDeclarationPreviewByDeclaration.
@@ -435,11 +441,26 @@ export default defineSchema({
     dmstaxUpdatedAt: v.optional(v.number()),
     defermentAccountNumber: v.optional(v.string()),
     paymentMethodLabel: v.optional(v.string()),
+    // F2 — estimate vs HMRC DMSTAX variance (derived − confirmed).
+    dutyVarianceAmount: v.optional(v.number()),
+    vatVarianceAmount: v.optional(v.number()),
+    varianceAlert: v.optional(v.boolean()),
+    varianceKinds: v.optional(v.array(v.string())),
+    varianceAssessedAt: v.optional(v.number()),
+    fxConversionUsed: v.optional(v.boolean()),
     lastUpdated: v.number(),
   })
     .index("by_user", ["userId"])
     .index("by_org", ["orgId"])
     .index("by_declarationId", ["declarationId"]),
+
+  /** Latest Open Exchange Rates snapshot — synced daily from R2 for GBP customs value conversion. */
+  fx_rates_cache: defineTable({
+    base: v.string(),
+    rates: v.any(),
+    sourceVersion: v.optional(v.string()),
+    updatedAt: v.number(),
+  }).index("by_updatedAt", ["updatedAt"]),
 
   auditLogs: defineTable({
     userId: v.optional(v.any()),
@@ -447,7 +468,13 @@ export default defineSchema({
     details: v.optional(v.any()),
     timestamp: v.optional(v.any()),
     archived: v.optional(v.any()),
-  }).index("by_timestamp", ["timestamp"]).index("by_user", ["userId"]),
+  })
+    .index("by_timestamp", ["timestamp"])
+    .index("by_user", ["userId"])
+    // Entity-scoped retrieval. Third-party actions (consultant sign-off, end-user
+    // EUSU submission) are logged under their own userId, so by_user cannot be
+    // used to assemble a complete trail for one assessment.
+    .index("by_details_assessment", ["details.assessmentId"]),
 
   // --- Export controls module (UK strategic export assessments) ---
   export_assessments: defineTable({
@@ -588,20 +615,54 @@ export default defineSchema({
     reviewTokenId: v.optional(v.id("export_review_tokens")),
     token: v.string(),
     recipientEmail: v.string(),
+    /** Where to send the "EUSU submitted" notification. */
+    notifyEmail: v.optional(v.string()),
     senderNote: v.optional(v.string()),
     expiresAt: v.number(),
     createdBy: v.string(),
     createdAt: v.number(),
     openedAt: v.optional(v.number()),
     completedAt: v.optional(v.number()),
+    notifiedAt: v.optional(v.number()),
     revoked: v.optional(v.boolean()),
   })
     .index("by_token", ["token"])
     .index("by_assessment", ["assessmentId"]),
 
+  // Product evidence attached to an assessment for the DBT/ECJU supporting-doc bundle.
+  export_evidence: defineTable({
+    assessmentId: v.id("export_assessments"),
+    orgId: v.optional(v.string()),
+    kind: v.union(
+      v.literal("technical_description"),
+      v.literal("datasheet"),
+      v.literal("brochure"),
+      v.literal("web_page"),
+      v.literal("commercial_invoice"),
+      v.literal("eusu_signed"),
+      v.literal("other"),
+    ),
+    label: v.string(),
+    documentId: v.optional(v.id("documents")),
+    url: v.optional(v.string()),
+    note: v.optional(v.string()),
+    productId: v.optional(v.id("export_products")),
+    addedBy: v.string(),
+    addedAt: v.number(),
+  }).index("by_assessment", ["assessmentId"]),
+
   export_licences: defineTable({
     assessmentId: v.id("export_assessments"),
-    licenceType: v.union(v.literal("siel"), v.literal("f680"), v.literal("other")),
+    licenceType: v.union(
+      v.literal("siel"),
+      v.literal("sitcl"),
+      v.literal("sitl"),
+      v.literal("f680"),
+      v.literal("oiel"),
+      v.literal("ogel"),
+      v.literal("otsi"),
+      v.literal("other"),
+    ),
     applicationRef: v.optional(v.string()),
     licenceRef: v.optional(v.string()),
     route: v.optional(
@@ -661,6 +722,26 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_declaration", ["declarationId"])
+    .index("by_user", ["userId"])
+    .index("by_org", ["orgId"]),
+
+  financial_obligations: defineTable({
+    declarationId: v.id("declarations"),
+    userId: v.string(),
+    orgId: v.optional(v.string()),
+    clientId: v.optional(v.id("clients")),
+    mrn: v.optional(v.string()),
+    obligationType: v.union(v.literal("duty_a00"), v.literal("vat_b00")),
+    amount: v.number(),
+    currency: v.string(),
+    authority: v.union(v.literal("derived"), v.literal("hmrc")),
+    status: v.union(v.literal("estimated"), v.literal("confirmed")),
+    estimateAmount: v.optional(v.number()),
+    confirmedAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  })
+    .index("by_declaration", ["declarationId"])
+    .index("by_declaration_and_type", ["declarationId", "obligationType"])
     .index("by_user", ["userId"])
     .index("by_org", ["orgId"]),
 

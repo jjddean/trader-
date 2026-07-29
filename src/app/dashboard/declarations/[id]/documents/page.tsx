@@ -9,7 +9,7 @@ import { Id } from "../../../../../../convex/_generated/dataModel";
 import { UploadCloud, File, ShieldCheck, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import {
   ConvexSessionMissing,
-  DeclarationLoadingSpinner,
+  DeclarationPageSkeleton,
   isConvexSessionMissing,
 } from "@/components/declaration-session-states";
 
@@ -29,16 +29,12 @@ export default function DocumentsPage() {
   const [uploadedFiles, setUploadedFiles] = useState<{ name: string; type: string; size: string }[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  if (!isLoaded) {
-    return <DeclarationLoadingSpinner />;
-  }
-
   if (isConvexSessionMissing(isLoaded, Boolean(isSignedIn), isConvexAuthLoading, isAuthenticated)) {
     return <ConvexSessionMissing />;
   }
 
-  if (isSignedIn && isAuthenticated && declaration === undefined) {
-    return <DeclarationLoadingSpinner />;
+  if (declaration === undefined) {
+    return <DeclarationPageSkeleton />;
   }
 
   if (!declaration) {
