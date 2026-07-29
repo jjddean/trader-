@@ -84,9 +84,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Notification ingest not configured" }, { status: 500 });
     }
 
+    const webhookEnvironment =
+      process.env.HMRC_ENVIRONMENT === "production" ? "production" : "sandbox";
+
     // Save to Convex for the dashboard to pick up
     await convex.mutation(api.notifications.saveWebhook, {
       ingestSecret,
+      environment: webhookEnvironment,
       mrn,
       conversationId,
       notificationType,

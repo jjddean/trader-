@@ -31,16 +31,16 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Provide mrn, ducr, or ucr query parameter" }, { status: 400 });
     }
 
-    const tokenResult = await resolveHmrcAccessToken(convex, userId);
-    if ("error" in tokenResult) {
-      return tokenResult.error;
-    }
-
     const orgRouting = await resolveOrgHmrcRoutingForOrg(convex, clerkAuth.orgId);
     if ("error" in orgRouting) {
       return orgRouting.error;
     }
     const { hmrcContext } = orgRouting;
+
+    const tokenResult = await resolveHmrcAccessToken(convex, userId, hmrcContext);
+    if ("error" in tokenResult) {
+      return tokenResult.error;
+    }
     const accept = hmrcContext.informationAccept;
 
     let queryPath: string;

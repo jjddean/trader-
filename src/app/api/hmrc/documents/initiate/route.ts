@@ -53,11 +53,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const tokenResult = await resolveHmrcAccessToken(convex, userId);
-    if ("error" in tokenResult) {
-      return tokenResult.error;
-    }
-
     const orgRouting = await resolveOrgHmrcRoutingForDeclaration(
       convex,
       declarationId as Id<"declarations">,
@@ -66,6 +61,11 @@ export async function POST(request: Request) {
       return orgRouting.error;
     }
     const { hmrcContext } = orgRouting;
+
+    const tokenResult = await resolveHmrcAccessToken(convex, userId, hmrcContext);
+    if ("error" in tokenResult) {
+      return tokenResult.error;
+    }
 
     const initiateUrl = `${hmrcContext.apiBaseUrl}/customs/declarations/file-upload`;
     const docType = typeof documentType === "string" && documentType.trim() ? documentType.trim() : "invoice";
