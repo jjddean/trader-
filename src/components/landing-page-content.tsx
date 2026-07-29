@@ -38,7 +38,7 @@ const tradeComplianceSteps = [
   {
     step: 2,
     title: "Classification",
-    body: "AI proposes candidate control entries against the UK Strategic Export Control Lists, with confidence. A person approves or overrides on the assessment — nothing is treated as cleared automatically.",
+    body: "AI proposes candidate control entries against the UK Strategic Export Control Lists, with confidence. A human in the loop will then approve or override on the assessment — nothing is treated as cleared automatically.",
   },
   {
     step: 3,
@@ -304,9 +304,8 @@ export function LandingPageContent() {
                 Trade compliance
               </h2>
               <p className="text-[16px] leading-relaxed text-slate-600">
-                Strategic and dual-use exports need AI-assisted classification, sanctions screening, an end-user
-                undertaking, and evidence before a LITE or SPIRE application — on one assessment next to your CDS
-                declarations.
+                Strategic and dual-use exports need classification, sanctions screening, an end-user undertaking,
+                and evidence before a LITE or SPIRE application — on one assessment next to your CDS declarations.
               </p>
             </div>
 
