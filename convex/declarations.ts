@@ -22,6 +22,11 @@ import {
   orgIdFromDeclaration,
   resolveOrgIdForNewRecord,
 } from "./lib/org_access";
+import {
+  isStaleStuckProcessingRow,
+  isStuckHmrcStatus,
+  STUCK_HMRC_STATUS_VALUES,
+} from "./lib/stuck_declarations";
 
 type EstimateMethod = "tariff_measures" | "historical_fallback" | "hmrc_confirmed";
 
@@ -852,12 +857,80 @@ export const recomputeDashboardSummary = internalMutation({
   },
 });
 
-/** HMRC intermediate states that should receive notification recovery if stale. */
-const STUCK_HMRC_STATUSES = new Set([
-  "processing",
-  "amendment processing",
-  "cancellation requested",
-]);
+/**
+ * Candidate rows for stuck-declaration recovery, read via `by_status_and_updated`
+ * so cost scales with in-flight declarations rather than table size. Staleness is
+ * filtered in code rather than as an index range because `lastUpdated` is
+ * `v.any()` — a non-numeric value would sort outside a numeric range and be missed.
+ */
+async function collectStaleStuckDeclarations(
+  db: QueryCtx["db"],
+  cutoff: number,
+): Promise<Doc<"declarations">[]> {
+  const stale: Doc<"declarations">[] = [];
+  for (const status of STUCK_HMRC_STATUS_VALUES) {
+    const candidates = await db
+      .query("declarations")
+      .withIndex("by_status_and_updated", (q) => q.eq("status", status))
+      .take(1000);
+    for (const row of candidates) {
+      if (isStaleStuckProcessingRow(row.status, row.lastUpdated, row.created, cutoff)) {
+        stale.push(row);
+      }
+    }
+  }
+  return stale;
+}
+
+async function effectiveStatusForDeclaration(
+  db: QueryCtx["db"],
+  declaration: Pick<Doc<"declarations">, "_id" | "status" | "mrn" | "conversationId">,
+): Promise<string> {
+  const notificationRows = await collectDeclarationNotifications(db, {
+    declarationId: declaration._id,
+    conversationId: declaration.conversationId,
+    mrn: declaration.mrn,
+  });
+  return replayDeclarationStatus(
+    String(declaration.status ?? "Draft"),
+    declaration.mrn,
+    notificationRows,
+  );
+}
+
+/** One declaration: stored status ← notifications already in Convex (no HMRC). */
+export const reconcileDeclarationStatusFromNotifications = internalMutation({
+  args: { declarationId: v.id("declarations") },
+  returns: v.object({ patched: v.boolean(), status: v.string() }),
+  handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.declarationId);
+    if (!row) return { patched: false, status: "" };
+    const effectiveStatus = await effectiveStatusForDeclaration(ctx.db, row);
+    if (effectiveStatus === row.status) return { patched: false, status: effectiveStatus };
+    await ctx.db.patch(row._id, { status: effectiveStatus, lastUpdated: Date.now() });
+    return { patched: true, status: effectiveStatus };
+  },
+});
+
+/** Align stored status with notifications already in Convex (no HMRC call). */
+export const reconcileStaleProcessingStatuses = internalMutation({
+  args: { olderThanMs: v.number() },
+  returns: v.object({ scanned: v.number(), patched: v.number() }),
+  handler: async (ctx, args) => {
+    const cutoff = Date.now() - args.olderThanMs;
+    const rows = await collectStaleStuckDeclarations(ctx.db, cutoff);
+    let scanned = 0;
+    let patched = 0;
+    for (const r of rows) {
+      scanned += 1;
+      const effectiveStatus = await effectiveStatusForDeclaration(ctx.db, r);
+      if (effectiveStatus === r.status) continue;
+      await ctx.db.patch(r._id, { status: effectiveStatus, lastUpdated: Date.now() });
+      patched += 1;
+    }
+    return { scanned, patched };
+  },
+});
 
 export const getStuckProcessingDeclarations = internalQuery({
   args: { olderThanMs: v.number() },
@@ -865,6 +938,7 @@ export const getStuckProcessingDeclarations = internalQuery({
     v.object({
       _id: v.id("declarations"),
       userId: v.optional(v.string()),
+      orgId: v.optional(v.string()),
       conversationId: v.optional(v.string()),
       status: v.optional(v.string()),
       lastUpdated: v.optional(v.number()),
@@ -872,20 +946,20 @@ export const getStuckProcessingDeclarations = internalQuery({
   ),
   handler: async (ctx, args) => {
     const cutoff = Date.now() - args.olderThanMs;
-    const rows = await ctx.db.query("declarations").take(5000);
-    const stuck = rows
-      .filter(
-        (r: any) =>
-          STUCK_HMRC_STATUSES.has(String(r.status || "").toLowerCase()) &&
-          Number(r.lastUpdated || r.created || 0) < cutoff,
-      )
-      .map((r: any) => ({
+    const rows = await collectStaleStuckDeclarations(ctx.db, cutoff);
+    const stuck = [];
+    for (const r of rows) {
+      const effectiveStatus = await effectiveStatusForDeclaration(ctx.db, r);
+      if (!isStuckHmrcStatus(effectiveStatus)) continue;
+      stuck.push({
         _id: r._id,
         userId: r.userId || undefined,
+        orgId: typeof r.orgId === "string" ? r.orgId : undefined,
         conversationId: r.conversationId || undefined,
-        status: r.status || undefined,
+        status: effectiveStatus,
         lastUpdated: Number(r.lastUpdated || r.created || 0),
-      }));
+      });
+    }
     return stuck;
   },
 });
@@ -1230,6 +1304,38 @@ export const createDeclaration = mutation({
     await upsertDeclarationPreviewByDeclaration(ctx, declarationId);
 
     return declarationId;
+  },
+});
+
+export const assertAndStampEnvironment = mutation({
+  args: {
+    declarationId: v.id("declarations"),
+    environment: v.union(v.literal("sandbox"), v.literal("production")),
+  },
+  returns: v.object({
+    environment: v.union(v.literal("sandbox"), v.literal("production")),
+  }),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const decl = await ctx.db.get(args.declarationId);
+    if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
+      throw new Error("Unauthorized");
+    }
+
+    const stamped = (decl.environment as "sandbox" | "production" | undefined) ?? "sandbox";
+    if (decl.environment && stamped !== args.environment) {
+      throw new Error(
+        `ENVIRONMENT_MISMATCH: declaration is bound to the ${stamped} HMRC environment and cannot be sent to ${args.environment}.`,
+      );
+    }
+
+    if (decl.environment !== args.environment) {
+      await ctx.db.patch(args.declarationId, { environment: args.environment });
+    }
+
+    return { environment: args.environment };
   },
 });
 

@@ -256,7 +256,9 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_org", ["orgId"])
     .index("by_mrn", ["mrn"])
-    .index("by_conversationId", ["conversationId"]),
+    .index("by_conversationId", ["conversationId"])
+    // Stuck-declaration recovery scans by status + staleness.
+    .index("by_status_and_updated", ["status", "lastUpdated"]),
 
   // Broker's client/trader profiles. A reusable party record (the importer the
   // broker files on behalf of) scoped to the broker's Clerk org. This is DATA
@@ -448,6 +450,13 @@ export default defineSchema({
     timestamp: v.optional(v.any()),
     archived: v.optional(v.any()),
   }).index("by_timestamp", ["timestamp"]).index("by_user", ["userId"]),
+
+  fx_rates_cache: defineTable({
+    base: v.string(),
+    rates: v.any(),
+    sourceVersion: v.optional(v.string()),
+    updatedAt: v.number(),
+  }).index("by_updatedAt", ["updatedAt"]),
 
   // --- Export controls module (UK strategic export assessments) ---
   export_assessments: defineTable({
@@ -661,6 +670,26 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_declaration", ["declarationId"])
+    .index("by_user", ["userId"])
+    .index("by_org", ["orgId"]),
+
+  financial_obligations: defineTable({
+    declarationId: v.id("declarations"),
+    userId: v.string(),
+    orgId: v.optional(v.string()),
+    clientId: v.optional(v.id("clients")),
+    mrn: v.optional(v.string()),
+    obligationType: v.union(v.literal("duty_a00"), v.literal("vat_b00")),
+    amount: v.number(),
+    currency: v.string(),
+    authority: v.union(v.literal("derived"), v.literal("hmrc")),
+    status: v.union(v.literal("estimated"), v.literal("confirmed")),
+    estimateAmount: v.optional(v.number()),
+    confirmedAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  })
+    .index("by_declaration", ["declarationId"])
+    .index("by_declaration_and_type", ["declarationId", "obligationType"])
     .index("by_user", ["userId"])
     .index("by_org", ["orgId"]),
 

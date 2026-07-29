@@ -6,7 +6,7 @@ import type { ResolvedHmrcContext } from "./hmrc-context";
 export async function resolveHmrcAccessToken(
   convex: ConvexHttpClient,
   userId: string,
-  hmrcContext: Pick<ResolvedHmrcContext, "environment">,
+  hmrcContext: Pick<ResolvedHmrcContext, "environment"> = { environment: "sandbox" },
 ): Promise<{ token: string } | { error: NextResponse }> {
   try {
     const result = await convex.action(api.hmrc_actions.resolveAccessToken, {
