@@ -7,6 +7,7 @@ import { useDirectPrint } from "@/components/print/direct-print";
 import { CustomsReportPrintContent } from "@/components/print/customs-report-document";
 import type { CustomsReportPrintData } from "@/lib/print-sheet";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
 import { useQuery } from "convex/react";
 import { useConvexAuth } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
@@ -19,6 +20,48 @@ import {
 
 type CustomsReport = FunctionReturnType<typeof api.declarations.getReports>[number];
 type CustomsReportItem = CustomsReport["items"][number];
+
+function ReportStatusBadge({ status }: { status: string }) {
+  if (status === "Clean") {
+    return (
+      <Badge className="rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700 hover:bg-green-100">
+        <ShieldCheck className="h-3 w-3" />
+        {status}
+      </Badge>
+    );
+  }
+  if (status === "Accepted") {
+    return (
+      <Badge className="rounded-md bg-blue-100 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700 hover:bg-blue-100">
+        <CheckCircle2 className="h-3 w-3" />
+        {status}
+      </Badge>
+    );
+  }
+  if (status === "Submitted") {
+    return (
+      <Badge className="rounded-md bg-amber-100 px-2 py-0.5 text-[0.625rem] font-medium text-amber-700 hover:bg-amber-100">
+        <ShieldAlert className="h-3 w-3" />
+        {status}
+      </Badge>
+    );
+  }
+  if (status === "Draft") {
+    return (
+      <Badge className="rounded-md bg-slate-100 px-2 py-0.5 text-[0.625rem] font-medium text-slate-700 hover:bg-slate-100">
+        <FileText className="h-3 w-3" />
+        {status}
+      </Badge>
+    );
+  }
+  return (
+    <Badge className="rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700 hover:bg-red-100">
+      <ShieldAlert className="h-3 w-3" />
+      {status}
+    </Badge>
+  );
+}
+
 export default function ReportsPage() {
   const { print, portal } = useDirectPrint();
   const { isLoaded, isSignedIn } = useAuth();
@@ -155,10 +198,10 @@ export default function ReportsPage() {
               Customs Reports
             </h1>
             {includesTreHistory && (
-              <span className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700">
+              <Badge className="rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700 hover:bg-blue-50">
                 <FileText className="h-3 w-3" />
                 Includes TRE history
-              </span>
+              </Badge>
             )}
           </div>
           <p className="mt-1 text-sm text-slate-500">
@@ -317,32 +360,7 @@ export default function ReportsPage() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="inline-flex flex-col items-end gap-1">
-                        {report.status === "Clean" ? (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
-                            <ShieldCheck className="h-3 w-3" />
-                            {report.status}
-                          </span>
-                        ) : report.status === "Accepted" ? (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-[0.625rem] font-medium text-blue-700">
-                            <CheckCircle2 className="h-3 w-3" />
-                            {report.status}
-                          </span>
-                        ) : report.status === "Submitted" ? (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-[0.625rem] font-medium text-amber-700">
-                            <ShieldAlert className="h-3 w-3" />
-                            {report.status}
-                          </span>
-                        ) : report.status === "Draft" ? (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[0.625rem] font-medium text-slate-700">
-                            <FileText className="h-3 w-3" />
-                            {report.status}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
-                            <ShieldAlert className="h-3 w-3" />
-                            {report.status}
-                          </span>
-                        )}
+                        <ReportStatusBadge status={report.status} />
                       </div>
                     </td>
                   </tr>

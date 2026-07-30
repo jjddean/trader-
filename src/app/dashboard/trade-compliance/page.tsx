@@ -13,8 +13,6 @@ import {
   Loader2,
   Play,
   Search,
-  ShieldAlert,
-  ShieldCheck,
 } from "lucide-react";
 import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { useUser } from "@clerk/nextjs";
@@ -42,6 +40,11 @@ import {
   getRememberedAssessmentsSnapshot,
   rememberAssessmentsSnapshot,
 } from "@/lib/dashboard-compliance-cache";
+import {
+  TradeComplianceStatusBadge,
+  TradeComplianceStatusCard,
+  tradeComplianceRowTintClass,
+} from "@/lib/trade-compliance-status-display";
 
 type AssessmentTab = "overview" | "export" | "sanctions" | "draft" | "documents" | "audit";
 
@@ -62,20 +65,6 @@ const assessmentTabs: Array<{ id: AssessmentTab; label: string }> = [
   { id: "audit", label: "Audit Log" },
 ];
 
-function statusTone(status: string) {
-  if (status === "clear") return "border-green-200 bg-green-50 text-green-800";
-  if (status === "flagged") return "border-red-200 bg-red-50 text-red-800";
-  if (status === "review_required") return "border-amber-200 bg-amber-50 text-amber-800";
-  return "border-slate-200 bg-slate-50 text-slate-700";
-}
-
-function statusLabel(status: string) {
-  if (status === "clear") return "Clear";
-  if (status === "flagged") return "Flagged";
-  if (status === "review_required") return "Review required";
-  return "Draft";
-}
-
 function formatAssessmentDate(ts: number) {
   return new Date(ts).toLocaleDateString("en-GB", {
     day: "numeric",
@@ -95,44 +84,6 @@ function routeLabel(route?: string) {
   return route.toUpperCase();
 }
 
-function AssessmentStatusBadge({ status }: { status: string }) {
-  if (status === "clear") {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
-        <ShieldCheck className="h-3 w-3" />
-        Clear
-      </span>
-    );
-  }
-  if (status === "flagged") {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
-        <ShieldAlert className="h-3 w-3" />
-        Flagged
-      </span>
-    );
-  }
-  if (status === "review_required") {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-[0.625rem] font-medium text-amber-700">
-        <ShieldAlert className="h-3 w-3" />
-        Review required
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[0.625rem] font-medium text-slate-700">
-      Draft
-    </span>
-  );
-}
-
-function rowTintClass(status: string) {
-  if (status === "flagged") return "bg-red-50/40 hover:bg-red-50";
-  if (status === "review_required") return "bg-amber-50/40 hover:bg-amber-50";
-  return "hover:bg-slate-50";
-}
-
 function Tabs<T extends string>({
   tabs,
   value,
@@ -143,22 +94,24 @@ function Tabs<T extends string>({
   onChange: (value: T) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2 border-b border-slate-200">
-      {tabs.map((tab) => (
-        <button
-          key={tab.id}
-          type="button"
-          onClick={() => onChange(tab.id)}
-          className={cn(
-            "border-b-2 px-1 pb-3 text-xs font-medium transition-colors",
-            value === tab.id
-              ? "border-black text-black"
-              : "border-transparent text-slate-500 hover:text-black",
-          )}
-        >
-          {tab.label}
-        </button>
-      ))}
+    <div className="border-b border-slate-200">
+      <div className="flex flex-wrap gap-2">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => onChange(tab.id)}
+            className={cn(
+              "whitespace-nowrap border-b-2 px-1 pb-3 text-xs font-medium transition-colors",
+              value === tab.id
+                ? "border-black text-black"
+                : "border-transparent text-slate-500 hover:text-black",
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -194,16 +147,7 @@ function AssessmentSheetBody({
             <SheetDescription className="mt-1 text-xs text-slate-500">
               Export control assessment for this shipment
             </SheetDescription>
-            {assessment && (
-              <span
-                className={cn(
-                  "mt-2 inline-flex rounded-md border px-2 py-0.5 text-[10px] font-medium tracking-wider uppercase",
-                  statusTone(assessment.status),
-                )}
-              >
-                {statusLabel(assessment.status)}
-              </span>
-            )}
+            {assessment && <div className="mt-2"><TradeComplianceStatusBadge status={assessment.status} /></div>}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <button
@@ -259,10 +203,7 @@ function AssessmentSheetBody({
               ) : (
                 <>
                   <div className="mt-5 grid gap-4 sm:grid-cols-3">
-                    <div className={cn("rounded-lg border px-4 py-3", statusTone(assessment.status))}>
-                      <p className="text-[0.625rem] font-semibold tracking-widest uppercase opacity-70">Status</p>
-                      <p className="mt-1 text-sm font-semibold">{statusLabel(assessment.status)}</p>
-                    </div>
+                    <TradeComplianceStatusCard status={assessment.status} />
                     <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700">
                       <p className="text-[0.625rem] font-semibold tracking-widest uppercase opacity-70">Destination</p>
                       <p className="mt-1 text-sm font-semibold">{assessment.destinationCountry ?? "—"}</p>
@@ -552,7 +493,7 @@ export default function TradeCompliancePage() {
                     onClick={() => openAssessment(row._id)}
                     className={cn(
                       "group cursor-pointer transition-colors",
-                      rowTintClass(row.status),
+                      tradeComplianceRowTintClass(row.status),
                       selectedAssessmentId === row._id && "bg-slate-50",
                     )}
                   >
@@ -580,7 +521,7 @@ export default function TradeCompliancePage() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="inline-flex items-center gap-2">
-                        <AssessmentStatusBadge status={row.status} />
+                        <TradeComplianceStatusBadge status={row.status} />
                         <ArrowRight className="h-4 w-4 text-slate-400 opacity-0 transition-opacity group-hover:opacity-100" />
                       </div>
                     </td>

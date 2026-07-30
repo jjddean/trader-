@@ -6,6 +6,7 @@ import { useDirectPrint } from "@/components/print/direct-print";
 import { FinancialRecordPrintContent } from "@/components/print/financial-record-document";
 import type { FinancialRecordPrintData } from "@/lib/print-sheet";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
 import { FINANCIAL_LABELS as FL } from "@/lib/financial-labels";
 import Link from "next/link";
 import { useQuery, useConvexAuth } from "convex/react";
@@ -18,6 +19,35 @@ import {
 } from "@/lib/dashboard-compliance-cache";
 
 type FinancialRecord = FunctionReturnType<typeof api.declarations.getFinancialRecords>[number];
+
+function TaxTypeBadge({ type }: { type?: string }) {
+  const toneClass = type?.includes("Duty")
+    ? "bg-amber-100 text-amber-700 hover:bg-amber-100"
+    : type?.includes("VAT")
+      ? "bg-blue-100 text-blue-700 hover:bg-blue-100"
+      : "bg-slate-100 text-slate-700 hover:bg-slate-100";
+
+  return (
+    <Badge className={`rounded-md px-2 py-0.5 text-[0.625rem] font-medium ${toneClass}`}>
+      {type}
+    </Badge>
+  );
+}
+
+function ProvenanceBadge({ authoritative }: { authoritative: boolean }) {
+  return (
+    <Badge
+      className={`rounded-md px-2 py-0.5 text-[0.625rem] font-medium ${
+        authoritative
+          ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
+          : "bg-amber-100 text-amber-700 hover:bg-amber-100"
+      }`}
+    >
+      {authoritative ? "HMRC" : "Estimate"}
+    </Badge>
+  );
+}
+
 export default function RecordsPage() {
   const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
@@ -311,17 +341,7 @@ export default function RecordsPage() {
                       {record.date}
                     </td>
                     <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center rounded-md px-2 py-0.5 text-[0.625rem] font-medium ${
-                          record.type?.includes("Duty")
-                            ? "bg-amber-100 text-amber-700"
-                            : record.type?.includes("VAT")
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-slate-100 text-slate-700"
-                        }`}
-                      >
-                        {record.type}
-                      </span>
+                      <TaxTypeBadge type={record.type} />
                     </td>
                     <td className="px-6 py-4 text-[0.6875rem] text-slate-600">
                       <div className="flex flex-col gap-1">
@@ -332,15 +352,7 @@ export default function RecordsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center rounded-md px-2 py-0.5 text-[0.625rem] font-medium ${
-                          record.isAuthoritative
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-amber-100 text-amber-700"
-                        }`}
-                      >
-                        {record.isAuthoritative ? "HMRC" : "Estimate"}
-                      </span>
+                      <ProvenanceBadge authoritative={record.isAuthoritative} />
                     </td>
                     <td className="px-6 py-4 text-right">
                       <span className="text-sm font-semibold text-black">

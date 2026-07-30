@@ -214,10 +214,7 @@ export default function DeclarationWorkspaceLayout({
               </button>
             </div>
           ) : (
-            <div
-              key={pathname}
-              className="min-h-[28rem] animate-in fade-in duration-200 fill-mode-both"
-            >
+            <div className="min-h-[28rem]">
               {children}
             </div>
           )}
