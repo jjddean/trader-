@@ -55,7 +55,6 @@ export default function TradeLanesPage() {
         <button
           type="button"
           disabled
-          title="Coming soon"
           className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-slate-800 disabled:opacity-50"
         >
           <Plus className="h-4 w-4" />

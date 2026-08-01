@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Search,
   Loader2,
@@ -9,6 +9,7 @@ import {
   Check,
   ExternalLink,
   Info,
+  Filter,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,12 @@ import { useAction, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { commodityRequiresSupplementaryUnit } from "@/lib/wco-mapper";
+import { getCachedHsCodeRows, preloadHsCodeRows } from "@/lib/hs-codes-static-cache";
+import {
+  HS_TARIFF_SECTIONS,
+  hsCodeInSection,
+  type HsTariffSectionValue,
+} from "@/lib/hs-tariff-sections";
 
 interface HSCode {
   code: string;
@@ -190,10 +197,15 @@ export function HSCodeLookup({
   const [results, setResults] = useState<HSCode[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [staticCodes, setStaticCodes] = useState<{ code: string; desc: string }[]>([]);
+  const [staticCodes, setStaticCodes] = useState<{ code: string; desc: string }[]>(
+    () => getCachedHsCodeRows() ?? [],
+  );
   const [instantResults, setInstantResults] = useState<HSCode[]>([]);
-  const [isDbLoaded, setIsDbLoaded] = useState(false);
+  const [isDbLoaded, setIsDbLoaded] = useState(() => getCachedHsCodeRows() != null);
   const [applying, setApplying] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [sectionFilter, setSectionFilter] = useState<HsTariffSectionValue>("all");
+  const filterRef = useRef<HTMLDivElement>(null);
 
   const searchHMRC = useAction(api.hmrc_actions.searchHSCode);
   const updateItem = useMutation(api.goods_items.updateItem);
@@ -224,20 +236,36 @@ export function HSCodeLookup({
   );
 
   useEffect(() => {
-    fetch("/hs-codes.json")
-      .then((res) => res.json())
+    let cancelled = false;
+    void preloadHsCodeRows()
       .then((data) => {
+        if (cancelled) return;
         setStaticCodes(data);
         setIsDbLoaded(true);
       })
       .catch((err) => console.error("Failed to load static HS codes:", err));
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  useEffect(() => {
+    if (!showFilters) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setShowFilters(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showFilters]);
 
   useEffect(() => {
     if (searchTerm.length >= 2 && staticCodes.length > 0) {
       const term = searchTerm.toLowerCase();
       const filtered = staticCodes
         .filter((item) => item.code.includes(term) || item.desc.toLowerCase().includes(term))
+        .filter((item) => hsCodeInSection(item.code, sectionFilter))
         .slice(0, 50)
         .map((item) => ({
           code: item.code,
@@ -250,7 +278,7 @@ export function HSCodeLookup({
       setInstantResults([]);
       if (searchTerm.length < 2) setSearched(false);
     }
-  }, [searchTerm, staticCodes]);
+  }, [searchTerm, staticCodes, sectionFilter]);
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) return;
@@ -309,7 +337,14 @@ export function HSCodeLookup({
     }
   };
 
-  const displayResults = results.length > 0 ? results : instantResults;
+  const displayResults = useMemo(() => {
+    const raw = results.length > 0 ? results : instantResults;
+    if (sectionFilter === "all") return raw;
+    return raw.filter((item) => hsCodeInSection(item.code, sectionFilter));
+  }, [results, instantResults, sectionFilter]);
+
+  const selectedSectionLabel =
+    HS_TARIFF_SECTIONS.find((s) => s.value === sectionFilter)?.label ?? "All sections";
 
   const resultsPanel =
     displayResults.length > 0 ? (
@@ -334,34 +369,65 @@ export function HSCodeLookup({
 
   if (variant === "card") {
     return (
-      <div className={cn("flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none", className)}>
-        <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by product description or HS Code..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              disabled={!isDbLoaded}
-              className="h-9 w-full rounded-md border border-slate-200 bg-white pl-8 pr-4 text-xs text-slate-700 outline-none transition-colors focus:border-slate-400 disabled:opacity-50"
-            />
-            {loading && (
-              <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-slate-400" />
-            )}
+      <div className={cn("relative z-10 flex flex-col overflow-visible rounded-xl border border-slate-200 bg-white shadow-none", className)}>
+        <div className="relative z-20 overflow-visible border-b border-slate-200 bg-slate-50 px-5 py-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by product description or HS Code..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                disabled={!isDbLoaded}
+                className="h-9 w-full rounded-md border border-slate-200 bg-white pl-8 pr-4 text-xs text-slate-700 outline-none transition-colors focus:border-slate-400 disabled:opacity-50"
+              />
+              {loading && (
+                <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-slate-400" />
+              )}
+            </div>
+            <div className="relative" ref={filterRef}>
+              <button
+                type="button"
+                onClick={() => setShowFilters((prev) => !prev)}
+                className={cn(
+                  "flex h-9 items-center gap-2 rounded-md border bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-slate-600 outline-none transition-colors hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus-visible:ring-0",
+                  sectionFilter !== "all" || showFilters ? "border-slate-400" : "border-slate-200",
+                )}
+              >
+                <Filter className="h-3 w-3" />
+                Filter
+              </button>
+              {showFilters && (
+                <div className="absolute right-0 top-10 z-[120] max-h-72 w-72 overflow-y-auto rounded-md border border-slate-200 bg-white p-2 shadow-md">
+                  {HS_TARIFF_SECTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        setSectionFilter(option.value);
+                        setShowFilters(false);
+                      }}
+                      className={cn(
+                        "block w-full rounded px-2 py-1.5 text-left text-xs outline-none hover:bg-slate-100 focus:outline-none focus-visible:ring-0",
+                        sectionFilter === option.value && "bg-slate-100 font-medium text-black",
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="p-5">
-          {!isDbLoaded && (
-            <p className="mb-3 text-[11px] text-slate-400">Loading database…</p>
-          )}
-
-          <div className="flex min-h-[420px] flex-col">
-            <div className="min-h-0 flex-1 overflow-hidden rounded-md border border-slate-100 bg-white">
+          <div className="flex flex-col">
+            <div className="min-h-0 overflow-hidden rounded-md border border-slate-100 bg-white">
               {loading && displayResults.length === 0 ? (
-                <div className="flex h-full min-h-[420px] items-center justify-center gap-2 text-xs text-slate-500">
+                <div className="flex items-center justify-center gap-2 py-16 text-xs text-slate-500">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Querying Trade Tariff…
                 </div>
@@ -384,19 +450,27 @@ export function HSCodeLookup({
                   </div>
                 </div>
               ) : searched && !loading ? (
-                <div className="flex h-full min-h-[420px] items-center justify-center gap-2 px-4 text-xs text-slate-500">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
-                  No HS codes found for &ldquo;{searchTerm}&rdquo;
+                <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+                    <AlertCircle className="h-4 w-4 text-slate-300" />
+                  </div>
+                  <h4 className="text-sm font-semibold text-slate-900">No matching codes</h4>
+                  <p className="mt-1 max-w-sm text-xs text-slate-500">
+                    No HS codes found for &ldquo;{searchTerm}&rdquo;
+                    {sectionFilter !== "all" ? ` in ${selectedSectionLabel.split(" — ")[0]}` : ""}.
+                    Try another search or section.
+                  </p>
                 </div>
               ) : (
-                <div className="flex h-full min-h-[420px] flex-col items-center justify-center px-4 py-6 text-center">
+                <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
                   <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
                     <Search className="h-4 w-4 text-slate-300" />
                   </div>
                   <p className="text-sm font-semibold text-slate-900">Instant tariff search</p>
                   <p className="mt-1 max-w-sm text-xs text-slate-500">
-                    Find commodity codes from HMRC Trade Tariff. Copy the code onto your declaration item; use tariff
-                    text as a reference for your trade description.
+                    {sectionFilter === "all"
+                      ? "Find commodity codes from HMRC Trade Tariff. Copy the code onto your declaration item; use tariff text as a reference for your trade description."
+                      : `Searching within ${selectedSectionLabel}. Enter a product description or code.`}
                   </p>
                 </div>
               )}

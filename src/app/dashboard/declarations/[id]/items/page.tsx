@@ -748,7 +748,6 @@ export default function GoodsItemsPage() {
                       }
                       onBlur={(e) => handleItemFieldBlur(item._id, "supplementaryUnitQty", e.target.value)}
                       placeholder="e.g. 10 (number of laptops)"
-                      title="Number of items (not packages). Required for HS 8471300000 per UK tariff."
                       className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-800 outline-none hover:border-slate-300 focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
                     />
                   </div>
@@ -848,7 +847,6 @@ export default function GoodsItemsPage() {
                             type="button"
                             onClick={() => removeDocSlot(item as GoodsItemRow, slotIdx)}
                             className="col-span-1 h-9 rounded-md border border-slate-200 bg-white text-xs text-slate-400 transition-colors hover:border-red-200 hover:text-red-500"
-                            title="Remove this document slot"
                           >
                             ×
                           </button>

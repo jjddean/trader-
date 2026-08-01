@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Download, Search, Building2, Landmark, CheckCircle2, Copy, ChevronRight, Printer } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Download, Search, Filter, Building2, Landmark, CheckCircle2, Copy, ChevronRight, Printer } from "lucide-react";
 import { useDirectPrint } from "@/components/print/direct-print";
 import { FinancialRecordPrintContent } from "@/components/print/financial-record-document";
 import type { FinancialRecordPrintData } from "@/lib/print-sheet";
@@ -17,8 +17,19 @@ import {
   getRememberedRecordsSnapshot,
   rememberRecordsSnapshot,
 } from "@/lib/dashboard-compliance-cache";
+import { cn } from "@/lib/utils";
 
 type FinancialRecord = FunctionReturnType<typeof api.declarations.getFinancialRecords>[number];
+
+const RECORD_FILTER_OPTIONS = [
+  { value: "all", label: "All" },
+  { value: "duty", label: "Duty" },
+  { value: "vat", label: "VAT" },
+  { value: "hmrc", label: "HMRC" },
+  { value: "estimate", label: "Estimate" },
+] as const;
+
+type RecordFilter = (typeof RECORD_FILTER_OPTIONS)[number]["value"];
 
 function TaxTypeBadge({ type }: { type?: string }) {
   const toneClass = type?.includes("Duty")
@@ -68,8 +79,22 @@ export default function RecordsPage() {
   const isRecordsLoading = canQuery && resolvedRecordsData === undefined;
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [recordFilter, setRecordFilter] = useState<RecordFilter>("all");
   const [selectedRecord, setSelectedRecord] = useState<FinancialRecord | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showFilters) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setShowFilters(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showFilters]);
 
   const handleCopy = async () => {
     if (!selectedRecord) return;
@@ -118,6 +143,11 @@ export default function RecordsPage() {
   };
 
   const filteredRecords = (resolvedRecordsData || []).filter((record) => {
+    if (recordFilter === "duty" && !record.type?.includes("Duty")) return false;
+    if (recordFilter === "vat" && !record.type?.includes("VAT")) return false;
+    if (recordFilter === "hmrc" && !record.isAuthoritative) return false;
+    if (recordFilter === "estimate" && record.isAuthoritative) return false;
+
     const term = searchQuery.toLowerCase();
     if (!term) return true;
 
@@ -130,6 +160,8 @@ export default function RecordsPage() {
       record.provenanceLabel?.toLowerCase().includes(term)
     );
   });
+
+  const hasActiveFilters = searchQuery.trim().length > 0 || recordFilter !== "all";
 
   const formatAmount = (value: number) =>
     value.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -262,22 +294,57 @@ export default function RecordsPage() {
       </div>
 
       {/* Ledger Table Section */}
-      <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none">
-        <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by MRN, Date, Tax Type, or Payment Method..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-9 w-full rounded-md border border-slate-200 bg-white pl-8 pr-4 text-xs text-slate-700 outline-none transition-colors focus:border-slate-400"
-            />
+      <div className="relative z-10 flex flex-col overflow-visible rounded-xl border border-slate-200 bg-white shadow-none">
+        <div className="relative z-20 overflow-visible border-b border-slate-200 bg-slate-50 px-5 py-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by MRN, Date, Tax Type, or Payment Method..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-9 w-full rounded-md border border-slate-200 bg-white pl-8 pr-4 text-xs text-slate-700 outline-none transition-colors focus:border-slate-400"
+              />
+            </div>
+            <div className="relative" ref={filterRef}>
+              <button
+                type="button"
+                onClick={() => setShowFilters((prev) => !prev)}
+                className={cn(
+                  "flex h-9 items-center gap-2 rounded-md border bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-slate-600 outline-none transition-colors hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus-visible:ring-0",
+                  recordFilter !== "all" || showFilters ? "border-slate-400" : "border-slate-200",
+                )}
+              >
+                <Filter className="h-3 w-3" />
+                Filter
+              </button>
+              {showFilters && (
+                <div className="absolute right-0 top-10 z-[120] w-44 rounded-md border border-slate-200 bg-white p-2 shadow-md">
+                  {RECORD_FILTER_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        setRecordFilter(option.value);
+                        setShowFilters(false);
+                      }}
+                      className={cn(
+                        "block w-full rounded px-2 py-1.5 text-left text-xs outline-none hover:bg-slate-100 focus:outline-none focus-visible:ring-0",
+                        recordFilter === option.value && "bg-slate-100 font-medium text-black",
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {isRecordsLoading ? (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-b-xl">
             <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="border-b border-slate-200 bg-white">
@@ -304,16 +371,16 @@ export default function RecordsPage() {
               <Landmark className="h-4 w-4 text-slate-300" />
             </div>
             <h4 className="text-sm font-semibold text-slate-900">
-              {searchQuery ? "No matching financial records" : "No financial records yet"}
+              {hasActiveFilters ? "No matching financial records" : "No financial records yet"}
             </h4>
             <p className="mt-1 max-w-sm text-xs text-slate-500">
-              {searchQuery
-                ? "No financial records match your search. Try using a different term."
+              {hasActiveFilters
+                ? "No financial records match your search or selected filters."
                 : "Financial records will appear here once declaration charges are available."}
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-b-xl">
             <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="border-b border-slate-200 bg-white">

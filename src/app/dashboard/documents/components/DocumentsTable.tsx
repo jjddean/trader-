@@ -25,10 +25,10 @@ import {
 } from "@/lib/enterprise-select-styles";
 
 const FILTER_CONTROL_CLASS =
-  "group flex h-9 min-w-0 flex-1 shrink items-center justify-between gap-2 whitespace-nowrap rounded-md border-0 bg-transparent px-3 py-2 text-xs font-medium text-slate-500 shadow-none transition-all outline-none hover:bg-slate-200/60 hover:text-slate-900 focus:bg-white focus:text-black focus:shadow-sm focus:outline-none focus-visible:ring-0 data-[state=open]:bg-white data-[state=open]:text-black data-[state=open]:shadow-sm data-[placeholder]:text-slate-500";
+  "group flex h-9 min-w-0 flex-1 shrink items-center justify-between gap-2 whitespace-nowrap rounded-md border-0 bg-transparent px-3 py-2 text-xs font-medium text-slate-500 shadow-none transition-all outline-none hover:bg-white hover:text-black hover:shadow-sm focus:bg-white focus:text-black focus:shadow-sm focus:outline-none focus-visible:ring-0 data-[state=open]:bg-white data-[state=open]:text-black data-[state=open]:shadow-sm data-[placeholder]:text-slate-500";
 
 const FILTER_ICON_CLASS =
-  "size-3.5 shrink-0 text-slate-400 group-focus:text-blue-600 group-data-[state=open]:text-blue-600";
+  "size-3.5 shrink-0 text-slate-400 group-hover:text-blue-600 group-focus:text-blue-600 group-data-[state=open]:text-blue-600";
 
 interface DocumentTableRow {
   id: string;

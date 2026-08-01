@@ -388,7 +388,7 @@ export default function TradeCompliancePage() {
         ))}
       </div>
 
-      <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none">
+      <div className="relative z-10 flex flex-col overflow-visible rounded-xl border border-slate-200 bg-white shadow-none">
         <div className="relative z-20 overflow-visible border-b border-slate-200 bg-slate-50 px-5 py-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <div className="relative flex-1">

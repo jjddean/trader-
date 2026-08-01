@@ -17,6 +17,7 @@ import {
   getRememberedReportsSnapshot,
   rememberReportsSnapshot,
 } from "@/lib/dashboard-compliance-cache";
+import { cn } from "@/lib/utils";
 
 type CustomsReport = FunctionReturnType<typeof api.declarations.getReports>[number];
 type CustomsReportItem = CustomsReport["items"][number];
@@ -210,8 +211,8 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-none">
-        <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
+      <div className="relative z-10 flex flex-col overflow-visible rounded-xl border border-slate-200 bg-white shadow-none">
+        <div className="relative z-20 overflow-visible border-b border-slate-200 bg-slate-50 px-5 py-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
@@ -227,46 +228,91 @@ export default function ReportsPage() {
               <button
                 type="button"
                 onClick={() => setShowFilters((prev) => !prev)}
-                className="flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50"
+                className={cn(
+                  "flex h-9 items-center gap-2 rounded-md border bg-white px-3 text-[0.6875rem] font-medium tracking-normal text-slate-600 outline-none transition-colors hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus-visible:ring-0",
+                  statusFilter !== "all" || showFilters ? "border-slate-400" : "border-slate-200",
+                )}
               >
                 <Filter className="h-3 w-3" />
                 Filter
               </button>
               {showFilters && (
-                <div className="absolute right-0 top-10 z-10 w-44 rounded-md border border-slate-200 bg-white p-2 shadow-md">
+                <div className="absolute right-0 top-10 z-[120] w-44 rounded-md border border-slate-200 bg-white p-2 shadow-md">
                   <button
-                    onClick={() => setStatusFilter("all")}
-                    className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100"
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter("all");
+                      setShowFilters(false);
+                    }}
+                    className={cn(
+                      "block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100",
+                      statusFilter === "all" && "bg-slate-100 font-medium text-black",
+                    )}
                   >
                     All statuses
                   </button>
                   <button
-                    onClick={() => setStatusFilter("Clean")}
-                    className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100"
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter("Clean");
+                      setShowFilters(false);
+                    }}
+                    className={cn(
+                      "block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100",
+                      statusFilter === "Clean" && "bg-slate-100 font-medium text-black",
+                    )}
                   >
                     Clean
                   </button>
                   <button
-                    onClick={() => setStatusFilter("Accepted")}
-                    className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100"
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter("Accepted");
+                      setShowFilters(false);
+                    }}
+                    className={cn(
+                      "block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100",
+                      statusFilter === "Accepted" && "bg-slate-100 font-medium text-black",
+                    )}
                   >
                     Accepted
                   </button>
                   <button
-                    onClick={() => setStatusFilter("Submitted")}
-                    className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100"
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter("Submitted");
+                      setShowFilters(false);
+                    }}
+                    className={cn(
+                      "block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100",
+                      statusFilter === "Submitted" && "bg-slate-100 font-medium text-black",
+                    )}
                   >
                     Submitted
                   </button>
                   <button
-                    onClick={() => setStatusFilter("Action Required")}
-                    className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100"
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter("Action Required");
+                      setShowFilters(false);
+                    }}
+                    className={cn(
+                      "block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100",
+                      statusFilter === "Action Required" && "bg-slate-100 font-medium text-black",
+                    )}
                   >
                     Action Required
                   </button>
                   <button
-                    onClick={() => setStatusFilter("Draft")}
-                    className="block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100"
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter("Draft");
+                      setShowFilters(false);
+                    }}
+                    className={cn(
+                      "block w-full rounded px-2 py-1.5 text-left text-xs hover:bg-slate-100",
+                      statusFilter === "Draft" && "bg-slate-100 font-medium text-black",
+                    )}
                   >
                     Draft
                   </button>
@@ -277,7 +323,7 @@ export default function ReportsPage() {
         </div>
 
           {isReportsLoading ? (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-b-xl">
               <table className="w-full border-collapse text-left">
                 <thead>
                   <tr className="border-b border-slate-200 bg-white">
@@ -312,7 +358,7 @@ export default function ReportsPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-b-xl">
               <table className="w-full border-collapse text-left">
               <thead>
                 <tr className="border-b border-slate-200 bg-white">

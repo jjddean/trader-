@@ -124,7 +124,6 @@ export function AppSidebar() {
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
                           <SidebarMenuButton 
-                            tooltip={item.label}
                             className={cn(
                               "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors",
                               isAnyChildActive ? "text-black" : "text-slate-500 hover:bg-slate-100 hover:text-black"

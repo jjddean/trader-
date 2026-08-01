@@ -97,7 +97,6 @@ export default function TradeLaneWorkspaceLayout({
                   type="button"
                   onClick={() => !step.disabled && router.push(step.path)}
                   disabled={step.disabled}
-                  title={step.disabled ? "This step will be available once lanes are wired." : undefined}
                   className={cn(
                     "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all",
                     isActive

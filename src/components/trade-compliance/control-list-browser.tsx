@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ExternalLink,
   Filter,
+  List,
   Loader2,
   Search,
 } from "lucide-react";
@@ -258,9 +259,15 @@ export function ControlListBrowser() {
 
         <div className="mt-4 max-h-[560px] overflow-y-auto rounded-md border border-slate-100 bg-white">
         {!isBrowseActive ? (
-          <p className="px-6 py-16 text-center text-xs text-slate-500">
-            Search or choose a category from Filter to browse the control list.
-          </p>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+              <List className="h-4 w-4 text-slate-300" />
+            </div>
+            <h4 className="text-sm font-semibold text-slate-900">Browse the control list</h4>
+            <p className="mt-1 max-w-sm text-xs text-slate-500">
+              Search or choose a category from Filter to browse the control list.
+            </p>
+          </div>
         ) : loading && !data ? (
           <div className="flex items-center justify-center gap-2 px-6 py-16 text-xs text-slate-500">
             <Loader2 className="h-4 w-4 animate-spin" />

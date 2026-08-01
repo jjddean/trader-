@@ -302,7 +302,6 @@ export default function AdminSubscriptionsPage() {
                         type="button"
                         onClick={() => handleCopy(sub.loginUrl)}
                         className="rounded p-1 text-slate-400 opacity-0 transition-opacity hover:bg-slate-100 hover:text-slate-600 group-hover:opacity-100"
-                        title="Copy URL"
                       >
                         <Copy className="h-3 w-3" />
                       </button>
@@ -319,7 +318,6 @@ export default function AdminSubscriptionsPage() {
                         type="button"
                         onClick={() => openEdit(sub)}
                         className="rounded p-1.5 text-slate-500 hover:bg-slate-100"
-                        title="Edit"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
@@ -327,7 +325,6 @@ export default function AdminSubscriptionsPage() {
                         type="button"
                         onClick={() => handleDelete(sub._id)}
                         className="rounded p-1.5 text-red-500 hover:bg-red-50"
-                        title="Remove"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>

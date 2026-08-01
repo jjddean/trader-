@@ -317,7 +317,6 @@ export function AssistantSideSheet({ children }: { children: React.ReactNode }) 
                 onClick={() => handleSend()}
                 disabled={!input.trim() || loading || conversationStatus === "streaming" || conversationStatus === "thinking"}
                 className="flex h-8 w-8 items-center justify-center rounded-lg bg-black text-white transition-all hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-black"
-                title="Send Message"
               >
                 <Send className="h-4 w-4 -ml-0.5" />
               </button>
