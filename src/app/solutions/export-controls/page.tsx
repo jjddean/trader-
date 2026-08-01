@@ -54,14 +54,42 @@ export default function ExportControlsSolutionPage() {
         </ul>
 
         <h2 className="mb-4 mt-8 text-[20px] font-semibold tracking-tight text-slate-900">
+          Typical path
+        </h2>
+        <ol className="mb-10 space-y-0 text-[15px] leading-relaxed text-slate-700">
+          {[
+            "Assessment created",
+            "Documents uploaded",
+            "Classification approved",
+            "Sanctions complete",
+            "EUSU requested",
+            "EUSU signed",
+            "Application pack generated",
+            "Submitted via GOV.UK",
+            "ECJU information request",
+            "Response uploaded",
+            "Licence granted",
+            "Licence linked to declaration",
+          ].map((step, index, steps) => (
+            <li key={step} className="flex flex-col items-start">
+              <span className="font-medium text-slate-900">{step}</span>
+              {index < steps.length - 1 && (
+                <span className="my-1 pl-1 text-slate-300" aria-hidden>
+                  ↓
+                </span>
+              )}
+            </li>
+          ))}
+        </ol>
+
+        <h2 className="mb-4 mt-8 text-[20px] font-semibold tracking-tight text-slate-900">
           How a case runs
         </h2>
 
         <h3 className="mb-3 mt-6 text-[17px] font-semibold text-slate-900">1. Assessment and documents</h3>
         <p className="mb-6 text-[15px] leading-relaxed text-slate-700">
           Open an export assessment in Trade Compliance. Upload a commercial invoice or specification; AI extracts
-          product names, technical detail, parties, and destination as facts for review. AI does not decide control
-          status or clear a shipment.
+          product names, technical detail, parties, and destination for you to check.
         </p>
       </div>
 
@@ -69,8 +97,8 @@ export default function ExportControlsSolutionPage() {
         <div className="max-w-md shrink-0 xl:w-[340px]">
           <h3 className="mb-3 text-[17px] font-semibold text-slate-900">2. Classification</h3>
           <p className="text-[15px] leading-relaxed text-slate-700">
-            AI proposes candidate control entries against the UK Strategic Export Control Lists, with confidence. A
-            human in the loop will then approve or override. Nothing is treated as cleared automatically.
+            AI proposes candidate control entries against the UK Strategic Export Control Lists, with confidence.
+            You approve or override before anything counts as decided.
           </p>
         </div>
         <div className="min-w-0 flex-1">

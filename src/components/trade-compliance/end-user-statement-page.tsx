@@ -66,7 +66,7 @@ export function EndUserStatementPage({ token }: { token: string }) {
   const markOpened = useMutation(api.compliance_end_user.markEndUserTokenOpened);
   const submit = useMutation(api.compliance_end_user.submitEndUserStatement);
 
-  // Export journey (roles)
+  // Export process (roles)
   const [roles, setRoles] = useState<EusuRoles>(defaultRoles);
   const [rolesSeeded, setRolesSeeded] = useState(false);
 
@@ -315,10 +315,10 @@ export function EndUserStatementPage({ token }: { token: string }) {
 
       <main className="mx-auto max-w-2xl p-6">
         <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
-          {/* Export journey */}
+          {/* Export process */}
           <section className={sectionCls}>
             <div>
-              <h2 className={sectionTitleCls}>Export journey</h2>
+              <h2 className={sectionTitleCls}>Export process</h2>
               <p className="mt-1 text-xs text-slate-500">
                 Mark all relevant parties involved in the export — the sections below appear based on what you mark.
                 Sections 1 and 2 are required for all applications.

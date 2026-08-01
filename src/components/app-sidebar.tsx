@@ -98,9 +98,6 @@ export function AppSidebar() {
 
       <SidebarContent className="min-h-0 flex-1 overflow-y-auto px-3 pb-1 pt-0">
         <SidebarGroup className="p-0">
-          <SidebarGroupLabel className="mb-0 px-2 text-[10px] font-normal tracking-widest text-slate-400 uppercase">
-            {isAdmin ? "Control Plane" : "Platform"}
-          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
               {navItems.map((item) => {
