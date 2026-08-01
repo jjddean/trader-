@@ -13,14 +13,20 @@ describe("emailLinkBaseUrl", () => {
     else process.env.NEXT_PUBLIC_APP_URL = prevApp;
   });
 
-  it("matches Resend From domain (apex), not www APP_URL", () => {
+  it("prefers APP_URL (Clerk canonical) over Resend From domain", () => {
     process.env.RESEND_FROM_EMAIL = "freightcode <info@freightcode.co.uk>";
     process.env.NEXT_PUBLIC_APP_URL = "https://www.freightcode.co.uk";
-    assert.equal(emailLinkBaseUrl(), "https://freightcode.co.uk");
-    assert.equal(emailPathUrl("/r/export/abc"), "https://freightcode.co.uk/r/export/abc");
+    assert.equal(emailLinkBaseUrl(), "https://www.freightcode.co.uk");
+    assert.equal(emailPathUrl("/r/export/abc"), "https://www.freightcode.co.uk/r/export/abc");
   });
 
-  it("falls back to APP_URL when From is resend.dev", () => {
+  it("falls back to Resend From host when APP_URL unset", () => {
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    process.env.RESEND_FROM_EMAIL = "freightcode <info@freightcode.co.uk>";
+    assert.equal(emailLinkBaseUrl(), "https://freightcode.co.uk");
+  });
+
+  it("ignores resend.dev From and uses APP_URL", () => {
     process.env.RESEND_FROM_EMAIL = "freightcode <onboarding@resend.dev>";
     process.env.NEXT_PUBLIC_APP_URL = "https://www.freightcode.co.uk";
     assert.equal(emailLinkBaseUrl(), "https://www.freightcode.co.uk");

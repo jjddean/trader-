@@ -44,6 +44,29 @@ export default defineSchema({
     personalMigratedAt: v.optional(v.number()),
     /** @deprecated Removed from product — strip via stripLegacyClaimedForOrgId then delete from schema */
     legacyClaimedForOrgId: v.optional(v.string()),
+    /** broker | managed_service — set when onboarding form is submitted */
+    onboardingPath: v.optional(v.union(v.literal("broker"), v.literal("managed_service"))),
+    onboardingCompletedAt: v.optional(v.number()),
+  }).index("by_clerk", ["clerkId"]),
+
+  /** Self-serve onboarding form payload (before org for brokers; client create for managed). */
+  onboarding_profiles: defineTable({
+    clerkId: v.string(),
+    path: v.union(v.literal("broker"), v.literal("managed_service")),
+    companyName: v.string(),
+    tradingName: v.optional(v.string()),
+    country: v.string(),
+    addressLine: v.string(),
+    postcode: v.string(),
+    city: v.optional(v.string()),
+    website: v.optional(v.string()),
+    eori: v.optional(v.string()),
+    contactName: v.string(),
+    contactEmail: v.string(),
+    contactPhone: v.optional(v.string()),
+    clientId: v.optional(v.id("clients")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
   }).index("by_clerk", ["clerkId"]),
 
   /** Per Clerk org: practice (sandbox/TDR) vs live (production CDS). */
@@ -259,12 +282,12 @@ export default defineSchema({
     .index("by_conversationId", ["conversationId"])
     // Stuck-declaration recovery scans by status + staleness. Without this the
     // hourly cron reads the whole table.
-    .index("by_status_and_updated", ["status", "lastUpdated"]),
+    .index("by_status_and_updated", ["status", "lastUpdated"])
+    .index("by_client", ["clientId"]),
 
   // Broker's client/trader profiles. A reusable party record (the importer the
   // broker files on behalf of) scoped to the broker's Clerk org. This is DATA
-  // only — a client is never an app login. A read-only client portal would be a
-  // separate layer that maps a Clerk user to one of these records.
+  // only — portal login is a separate layer via portalEmail / portalClerkId.
   clients: defineTable({
     userId: v.string(), // clerkId of the creator
     orgId: v.optional(v.string()), // Clerk org — shared within the broker team
@@ -278,12 +301,34 @@ export default defineSchema({
     contactEmail: v.optional(v.string()),
     contactPhone: v.optional(v.string()),
     notes: v.optional(v.string()),
+    // Client portal auth mapping (Clerk). Lowercased email; clerkId patched on first match.
+    portalEmail: v.optional(v.string()),
+    portalClerkId: v.optional(v.string()),
     status: v.union(v.literal("active"), v.literal("archived")),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_org", ["orgId"])
-    .index("by_user", ["userId"]),
+    .index("by_user", ["userId"])
+    .index("by_portal_email", ["portalEmail"])
+    .index("by_portal_clerk", ["portalClerkId"]),
+
+  // Broker ↔ client portal messaging. Do NOT reuse conversations/messages (AI assistant).
+  // Threads are filing/case-scoped: declarationId XOR assessmentId on new sends.
+  portal_messages: defineTable({
+    declarationId: v.optional(v.id("declarations")),
+    assessmentId: v.optional(v.id("export_assessments")),
+    clientId: v.id("clients"),
+    orgId: v.optional(v.string()),
+    senderRole: v.union(v.literal("broker"), v.literal("client")),
+    senderId: v.string(),
+    body: v.string(),
+    createdAt: v.number(),
+    readAt: v.optional(v.number()),
+  })
+    .index("by_client", ["clientId"])
+    .index("by_declaration", ["declarationId"])
+    .index("by_assessment", ["assessmentId"]),
 
   goods_items: defineTable({
     ownerId: v.optional(v.any()),
@@ -481,6 +526,8 @@ export default defineSchema({
     userId: v.string(),
     orgId: v.optional(v.string()),
     declarationId: v.optional(v.id("declarations")),
+    /** Portal client this assessment belongs to (same idea as declarations.clientId). */
+    clientId: v.optional(v.id("clients")),
     reference: v.string(),
     status: v.union(
       v.literal("draft"),
@@ -505,7 +552,8 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_org", ["orgId"])
-    .index("by_declaration", ["declarationId"]),
+    .index("by_declaration", ["declarationId"])
+    .index("by_client", ["clientId"]),
 
   export_products: defineTable({
     assessmentId: v.id("export_assessments"),

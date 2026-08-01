@@ -391,11 +391,13 @@ export const createAssessment = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthenticated");
 
+    let clientId: Id<"clients"> | undefined;
     if (args.declarationId) {
       const declaration = await ctx.db.get(args.declarationId);
       if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
         throw new Error("Unauthorized");
       }
+      if (declaration.clientId) clientId = declaration.clientId;
     }
 
     const now = Date.now();
@@ -405,6 +407,7 @@ export const createAssessment = mutation({
       userId: identity.subject,
       orgId,
       declarationId: args.declarationId,
+      clientId,
       reference: buildReference(now),
       status: "draft",
       originJurisdiction: args.originJurisdiction,
@@ -440,6 +443,8 @@ export const updateAssessment = mutation({
     controlListVersion: v.optional(v.string()),
     sanctionsVersion: v.optional(v.string()),
     promptVersion: v.optional(v.string()),
+    clientId: v.optional(v.id("clients")),
+    declarationId: v.optional(v.id("declarations")),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -447,6 +452,12 @@ export const updateAssessment = mutation({
 
     const assessment = await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
     const { assessmentId, ...patch } = args;
+
+    // If linking a declaration, inherit its clientId when not explicitly set.
+    if (patch.declarationId && patch.clientId === undefined) {
+      const declaration = await ctx.db.get(patch.declarationId);
+      if (declaration?.clientId) patch.clientId = declaration.clientId;
+    }
 
     await ctx.db.patch(assessmentId, {
       ...patch,

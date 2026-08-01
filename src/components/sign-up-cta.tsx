@@ -5,7 +5,7 @@ import { SignUpButton } from "@clerk/nextjs";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const SIGN_UP_REDIRECT = "/session-tasks/choose-organization";
+const SIGN_UP_REDIRECT = "/after-auth";
 
 interface SignUpCtaProps {
   variant?: "light" | "dark";

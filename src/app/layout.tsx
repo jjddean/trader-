@@ -53,8 +53,8 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider
-      signInFallbackRedirectUrl="/dashboard"
-      signUpFallbackRedirectUrl="/session-tasks/choose-organization"
+      signInFallbackRedirectUrl="/after-auth"
+      signUpFallbackRedirectUrl="/after-auth"
       taskUrls={{ "choose-organization": "/session-tasks/choose-organization" }}
     >
       <html lang="en" suppressHydrationWarning>

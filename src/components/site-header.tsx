@@ -63,8 +63,8 @@ export function SiteHeader() {
                 </SignInButton>
                 <SignUpButton
                   mode="modal"
-                  forceRedirectUrl="/session-tasks/choose-organization"
-                  fallbackRedirectUrl="/session-tasks/choose-organization"
+                  forceRedirectUrl="/after-auth"
+                  fallbackRedirectUrl="/after-auth"
                 >
                   <button
                     type="button"
@@ -136,8 +136,8 @@ export function SiteHeader() {
                 </SignInButton>
                 <SignUpButton
                   mode="modal"
-                  forceRedirectUrl="/session-tasks/choose-organization"
-                  fallbackRedirectUrl="/session-tasks/choose-organization"
+                  forceRedirectUrl="/after-auth"
+                  fallbackRedirectUrl="/after-auth"
                 >
                   <button
                     type="button"

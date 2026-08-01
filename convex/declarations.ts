@@ -141,7 +141,8 @@ function resolveRates(item: any, historicalRates: Record<string, { dutyTotal: nu
   return { dutyRate: effectiveDutyRate, vatRate };
 }
 
-function hmrcStatusForDeclaration(decl: any, notifications: any[]) {
+/** Shared status badge for dashboard + client portal (notification-first, then declaration.status). */
+export function hmrcStatusForDeclaration(decl: any, notifications: any[]) {
   if (decl?.status === "Draft") return { score: 0, status: "Draft" };
   const latestType = notifications[0]?.notificationType;
   if (latestType === "DMSCLE") return { score: 100, status: "Clean" };
@@ -1332,6 +1333,82 @@ export const getLane = query({
   },
 });
 
+/** Deterministic duty/VAT payload (preview row first, then tariff rebuild). No auth — caller must gate. */
+export async function loadDeclarationFinancialEstimate(
+  ctx: QueryCtx,
+  declaration: Doc<"declarations">,
+  declarationId: Id<"declarations">,
+  buildAsUserId: string,
+) {
+  try {
+    const preview = await ctx.db
+      .query("declaration_preview")
+      .withIndex("by_declarationId", (q) => q.eq("declarationId", declarationId))
+      .first();
+
+    if (preview?.financialSource !== undefined) {
+      return {
+        declarationId,
+        dutyAmount: Number(preview.dutyAmount || 0),
+        vatAmount: Number(preview.vatAmount || 0),
+        customsValue: Number(preview.customsValue || 0),
+        derivedDutyAmount: Number(preview.derivedDutyAmount || 0),
+        derivedVatAmount: Number(preview.derivedVatAmount || 0),
+        financialSource: preview.financialSource,
+        estimateMethod: preview.estimateMethod,
+        estimateIncomplete: preview.estimateIncomplete ?? false,
+        potentialPreferenceSaving: preview.potentialPreferenceSaving ?? null,
+        paymentMethodLabel: preview.paymentMethodLabel,
+        defermentAccountNumber: preview.defermentAccountNumber,
+        dmstaxUpdatedAt: preview.dmstaxUpdatedAt,
+        dutyVarianceAmount: preview.dutyVarianceAmount ?? null,
+        vatVarianceAmount: preview.vatVarianceAmount ?? null,
+        varianceAlert: preview.varianceAlert ?? false,
+        varianceKinds: preview.varianceKinds ?? [],
+        fxConversionUsed: preview.fxConversionUsed ?? false,
+        updatedAt: preview.lastUpdated,
+      };
+    }
+
+    const items = await ctx.db
+      .query("goods_items")
+      .withIndex("by_declaration", (q) => q.eq("declarationId", declarationId))
+      .take(500);
+
+    const fields = await buildFinancialPreviewFields(
+      ctx,
+      declaration,
+      declarationId,
+      items,
+      buildAsUserId,
+    );
+
+    return {
+      declarationId,
+      dutyAmount: Number(fields.dutyAmount || 0),
+      vatAmount: Number(fields.vatAmount || 0),
+      customsValue: Number(fields.customsValue || 0),
+      derivedDutyAmount: Number(fields.derivedDutyAmount || 0),
+      derivedVatAmount: Number(fields.derivedVatAmount || 0),
+      financialSource: fields.financialSource,
+      estimateMethod: fields.estimateMethod,
+      estimateIncomplete: fields.estimateIncomplete ?? false,
+      potentialPreferenceSaving: fields.potentialPreferenceSaving ?? null,
+      paymentMethodLabel: fields.paymentMethodLabel,
+      defermentAccountNumber: fields.defermentAccountNumber,
+      dmstaxUpdatedAt: fields.dmstaxUpdatedAt,
+      dutyVarianceAmount: fields.dutyVarianceAmount ?? null,
+      vatVarianceAmount: fields.vatVarianceAmount ?? null,
+      varianceAlert: fields.varianceAlert ?? false,
+      varianceKinds: fields.varianceKinds ?? [],
+      fxConversionUsed: fields.fxConversionUsed ?? false,
+      updatedAt: Date.now(),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export const getDeclarationFinancialEstimate = query({
   args: { declarationId: v.id("declarations") },
   handler: async (ctx, args) => {
@@ -1343,73 +1420,12 @@ export const getDeclarationFinancialEstimate = query({
       return null;
     }
 
-    try {
-      const preview = await ctx.db
-        .query("declaration_preview")
-        .withIndex("by_declarationId", (q) => q.eq("declarationId", args.declarationId))
-        .first();
-
-      if (preview?.financialSource !== undefined) {
-        return {
-          declarationId: args.declarationId,
-          dutyAmount: Number(preview.dutyAmount || 0),
-          vatAmount: Number(preview.vatAmount || 0),
-          customsValue: Number(preview.customsValue || 0),
-          derivedDutyAmount: Number(preview.derivedDutyAmount || 0),
-          derivedVatAmount: Number(preview.derivedVatAmount || 0),
-          financialSource: preview.financialSource,
-          estimateMethod: preview.estimateMethod,
-          estimateIncomplete: preview.estimateIncomplete ?? false,
-          potentialPreferenceSaving: preview.potentialPreferenceSaving ?? null,
-          paymentMethodLabel: preview.paymentMethodLabel,
-          defermentAccountNumber: preview.defermentAccountNumber,
-          dmstaxUpdatedAt: preview.dmstaxUpdatedAt,
-          dutyVarianceAmount: preview.dutyVarianceAmount ?? null,
-          vatVarianceAmount: preview.vatVarianceAmount ?? null,
-          varianceAlert: preview.varianceAlert ?? false,
-          varianceKinds: preview.varianceKinds ?? [],
-          fxConversionUsed: preview.fxConversionUsed ?? false,
-          updatedAt: preview.lastUpdated,
-        };
-      }
-
-      const items = await ctx.db
-        .query("goods_items")
-        .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId))
-        .take(500);
-
-      const fields = await buildFinancialPreviewFields(
-        ctx,
-        declaration,
-        args.declarationId,
-        items,
-        identity.subject,
-      );
-
-      return {
-        declarationId: args.declarationId,
-        dutyAmount: Number(fields.dutyAmount || 0),
-        vatAmount: Number(fields.vatAmount || 0),
-        customsValue: Number(fields.customsValue || 0),
-        derivedDutyAmount: Number(fields.derivedDutyAmount || 0),
-        derivedVatAmount: Number(fields.derivedVatAmount || 0),
-        financialSource: fields.financialSource,
-        estimateMethod: fields.estimateMethod,
-        estimateIncomplete: fields.estimateIncomplete ?? false,
-        potentialPreferenceSaving: fields.potentialPreferenceSaving ?? null,
-        paymentMethodLabel: fields.paymentMethodLabel,
-        defermentAccountNumber: fields.defermentAccountNumber,
-        dmstaxUpdatedAt: fields.dmstaxUpdatedAt,
-        dutyVarianceAmount: fields.dutyVarianceAmount ?? null,
-        vatVarianceAmount: fields.vatVarianceAmount ?? null,
-        varianceAlert: fields.varianceAlert ?? false,
-        varianceKinds: fields.varianceKinds ?? [],
-        fxConversionUsed: fields.fxConversionUsed ?? false,
-        updatedAt: Date.now(),
-      };
-    } catch {
-      return null;
-    }
+    return await loadDeclarationFinancialEstimate(
+      ctx,
+      declaration,
+      args.declarationId,
+      identity.subject,
+    );
   },
 });
 

@@ -4,8 +4,8 @@
  * Local/dev: use the request (or APP_URL) host so the link hits the same
  * Convex deployment that created the token — never force production.
  *
- * Production emails: Resend Deliverability Insights wants link hosts to match
- * the From domain (e.g. `@freightcode.co.uk` → `https://freightcode.co.uk`).
+ * Production emails: prefer NEXT_PUBLIC_APP_URL (Clerk allowlist / www canonical).
+ * Falls back to Resend From host when APP_URL is unset.
  *
  * @see https://resend.com/docs/dashboard/emails/deliverability-insights
  */
@@ -45,12 +45,10 @@ export function emailLinkBaseUrl(request?: Request): string {
     return fromRequest;
   }
 
+  // Prefer explicit app URL (Clerk allowlist / www canonical) over Resend From host.
   const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
   if (configured) {
-    const configuredOrigin = originFromUrl(configured) ?? configured.replace(/\/$/, "");
-    if (isLocalHost(configuredOrigin)) {
-      return configuredOrigin;
-    }
+    return originFromUrl(configured) ?? configured.replace(/\/$/, "");
   }
 
   const from = process.env.RESEND_FROM_EMAIL?.trim() ?? "";
@@ -59,13 +57,9 @@ export function emailLinkBaseUrl(request?: Request): string {
     return `https://${sendingHost}`;
   }
 
-  if (configured) {
-    return originFromUrl(configured) ?? configured.replace(/\/$/, "");
-  }
-
   if (fromRequest) return fromRequest;
 
-  return "https://freightcode.co.uk";
+  return "https://www.freightcode.co.uk";
 }
 
 export function emailPathUrl(path: string, request?: Request): string {
