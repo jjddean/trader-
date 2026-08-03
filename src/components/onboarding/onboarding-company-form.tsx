@@ -27,6 +27,8 @@ import {
 
 export interface OnboardingFormValues {
   companyName: string;
+  legalEntityType: string;
+  companyRegistrationNumber: string;
   tradingName: string;
   country: string;
   addressLine: string;
@@ -35,8 +37,11 @@ export interface OnboardingFormValues {
   website: string;
   eori: string;
   contactName: string;
+  contactJobTitle: string;
   contactEmail: string;
   contactPhone: string;
+  cdsSubscribed: boolean;
+  termsAccepted: boolean;
 }
 
 interface OnboardingCompanyFormProps {
@@ -60,6 +65,8 @@ export function OnboardingCompanyForm({
 
   const [form, setForm] = useState<OnboardingFormValues>({
     companyName: "",
+    legalEntityType: "",
+    companyRegistrationNumber: "",
     tradingName: "",
     country: "GB",
     addressLine: "",
@@ -68,23 +75,32 @@ export function OnboardingCompanyForm({
     website: "",
     eori: "",
     contactName: user?.fullName ?? "",
+    contactJobTitle: "",
     contactEmail: user?.primaryEmailAddress?.emailAddress ?? "",
     contactPhone: "",
+    cdsSubscribed: false,
+    termsAccepted: false,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const set = (key: keyof OnboardingFormValues, value: string) => {
+  const set = <K extends keyof OnboardingFormValues>(key: K, value: OnboardingFormValues[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.legalEntityType) {
+      setError("Select a legal entity type");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
       const payload = {
         companyName: form.companyName,
+        legalEntityType: form.legalEntityType,
+        companyRegistrationNumber: form.companyRegistrationNumber || undefined,
         tradingName: form.tradingName || undefined,
         country: form.country,
         addressLine: form.addressLine,
@@ -93,8 +109,11 @@ export function OnboardingCompanyForm({
         website: form.website || undefined,
         eori: form.eori || undefined,
         contactName: form.contactName,
+        contactJobTitle: form.contactJobTitle,
         contactEmail: form.contactEmail,
         contactPhone: form.contactPhone || undefined,
+        cdsSubscribed: path === "broker" ? form.cdsSubscribed : undefined,
+        termsAccepted: form.termsAccepted,
       };
       if (path === "broker") {
         const res = await completeBroker(payload);
@@ -141,6 +160,44 @@ export function OnboardingCompanyForm({
               value={form.tradingName}
               onChange={(e) => set("tradingName", e.target.value)}
             />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={ONBOARD_LABEL} htmlFor="legalEntityType">
+                Legal entity type *
+              </label>
+              <Select value={form.legalEntityType} onValueChange={(v) => set("legalEntityType", v)}>
+                <SelectTrigger id="legalEntityType" className={ENTERPRISE_SELECT_TRIGGER}>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent position="popper" sideOffset={4} className={ENTERPRISE_SELECT_CONTENT}>
+                  <SelectItem value="limited_company" className={ENTERPRISE_SELECT_ITEM}>Limited company</SelectItem>
+                  <SelectItem value="sole_trader" className={ENTERPRISE_SELECT_ITEM}>Sole trader</SelectItem>
+                  <SelectItem value="partnership" className={ENTERPRISE_SELECT_ITEM}>Partnership</SelectItem>
+                  <SelectItem value="limited_liability_partnership" className={ENTERPRISE_SELECT_ITEM}>Limited liability partnership</SelectItem>
+                  <SelectItem value="other" className={ENTERPRISE_SELECT_ITEM}>Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className={ONBOARD_LABEL} htmlFor="companyRegistrationNumber">
+                Company registration number
+                {form.legalEntityType === "limited_company" ||
+                form.legalEntityType === "limited_liability_partnership"
+                  ? " *"
+                  : ""}
+              </label>
+              <input
+                id="companyRegistrationNumber"
+                required={
+                  form.legalEntityType === "limited_company" ||
+                  form.legalEntityType === "limited_liability_partnership"
+                }
+                className={ONBOARD_INPUT}
+                value={form.companyRegistrationNumber}
+                onChange={(e) => set("companyRegistrationNumber", e.target.value)}
+              />
+            </div>
           </div>
           <div>
             <label className={ONBOARD_LABEL} htmlFor="country">
@@ -190,6 +247,7 @@ export function OnboardingCompanyForm({
               </label>
               <input
                 id="city"
+                required
                 className={ONBOARD_INPUT}
                 value={form.city}
                 onChange={(e) => set("city", e.target.value)}
@@ -215,16 +273,31 @@ export function OnboardingCompanyForm({
           <p className={ONBOARD_SECTION}>Customs details</p>
           <div>
             <label className={ONBOARD_LABEL} htmlFor="eori">
-              EORI number
+              EORI number{path === "broker" ? " *" : ""}
             </label>
             <input
               id="eori"
+              required={path === "broker"}
+              pattern="(GB|XI)[0-9]{12}"
+              title="Enter a GB or XI EORI followed by 12 digits"
               className={ONBOARD_INPUT}
-              placeholder="Optional"
+              placeholder={path === "broker" ? undefined : "Optional"}
               value={form.eori}
               onChange={(e) => set("eori", e.target.value)}
             />
           </div>
+          {path === "broker" && (
+            <label className="flex items-start gap-2 text-[13px] text-slate-600">
+              <input
+                type="checkbox"
+                required
+                className="mt-0.5 h-4 w-4 rounded border-slate-300"
+                checked={form.cdsSubscribed}
+                onChange={(e) => set("cdsSubscribed", e.target.checked)}
+              />
+              <span>I confirm this organisation is subscribed to the Customs Declaration Service.</span>
+            </label>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -239,6 +312,18 @@ export function OnboardingCompanyForm({
               className={ONBOARD_INPUT}
               value={form.contactName}
               onChange={(e) => set("contactName", e.target.value)}
+            />
+          </div>
+          <div>
+            <label className={ONBOARD_LABEL} htmlFor="contactJobTitle">
+              Job title *
+            </label>
+            <input
+              id="contactJobTitle"
+              required
+              className={ONBOARD_INPUT}
+              value={form.contactJobTitle}
+              onChange={(e) => set("contactJobTitle", e.target.value)}
             />
           </div>
           <div>
@@ -267,6 +352,26 @@ export function OnboardingCompanyForm({
             />
           </div>
         </div>
+
+        <label className="flex items-start gap-2 text-[13px] text-slate-600">
+          <input
+            type="checkbox"
+            required
+            className="mt-0.5 h-4 w-4 rounded border-slate-300"
+            checked={form.termsAccepted}
+            onChange={(e) => set("termsAccepted", e.target.checked)}
+          />
+          <span>
+            I agree to the{" "}
+            <a href="/terms" target="_blank" rel="noreferrer" className="font-medium text-slate-900 underline">
+              Terms of Service
+            </a>{" "}
+            and acknowledge the{" "}
+            <a href="/privacy" target="_blank" rel="noreferrer" className="font-medium text-slate-900 underline">
+              Privacy Policy
+            </a>.
+          </span>
+        </label>
 
         {error && (
           <div className="rounded-md border border-red-100 bg-red-50 px-3 py-2 text-[13px] text-red-800">

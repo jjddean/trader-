@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useState, useCallback, useEffect } from "react";
+import React, { Suspense, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
@@ -41,6 +41,7 @@ function SettingsPageContent() {
   const subscription = useQuery(api.subscriptions.getSubscription, userId ? { userId } : "skip");
   const dbUser = useQuery(api.users.current, isAuthenticated ? {} : "skip");
   const orgHmrcMode = useQuery(api.org_hmrc.getModeForOrg, orgId ? { orgId } : "skip");
+  const setMyOrgHmrcMode = useMutation(api.org_hmrc.setMyOrgMode);
   const hmrcConnection = useQuery(api.hmrc.getToken, userId ? { userId } : "skip");
   // Prefetch so Security tab does not pop-in when selected
   useQuery(
@@ -49,6 +50,8 @@ function SettingsPageContent() {
   );
   const disconnectHmrc = useMutation(api.hmrc.disconnectToken);
   const [hmrcDisconnecting, setHmrcDisconnecting] = useState(false);
+  const [hmrcModeSaving, setHmrcModeSaving] = useState(false);
+  const [hmrcModeError, setHmrcModeError] = useState<string | null>(null);
   const [exportLoading, setExportLoading] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const personalMigration = useQuery(api.org_migration.previewPersonalMigration, userId ? {} : "skip");
@@ -70,6 +73,8 @@ function SettingsPageContent() {
   const [stripeLoading, setStripeLoading] = useState(false);
   const [stripeError, setStripeError] = useState<string | null>(null);
   const checkoutSuccess = searchParams.get("success") === "true";
+  const [renderedAt] = useState(() => Date.now());
+  const hmrcConnectionActive = Boolean(hmrcConnection && hmrcConnection.expiresAt > renderedAt);
   const stripeCustomerId =
     typeof subscription?.stripeCustomerId === "string" ? subscription.stripeCustomerId : "";
   const canManageBilling =
@@ -89,19 +94,6 @@ function SettingsPageContent() {
     },
     [pathname, router, searchParams],
   );
-
-  useEffect(() => {
-    const tab = searchParams.get("tab");
-    if (
-      tab === "subscription" ||
-      tab === "team" ||
-      tab === "security" ||
-      tab === "notifications" ||
-      tab === "privacy"
-    ) {
-      setActiveTab(tab);
-    }
-  }, [searchParams]);
 
   async function openBillingPortal() {
     setStripeLoading(true);
@@ -431,10 +423,10 @@ function SettingsPageContent() {
                     <p
                       className={cn(
                         "text-[11px]",
-                        hmrcConnection.expiresAt > Date.now() ? "text-green-700" : "text-amber-700",
+                        hmrcConnectionActive ? "text-green-700" : "text-amber-700",
                       )}
                     >
-                      {hmrcConnection.expiresAt > Date.now() ? "Connected" : "Session expired"} · token
+                      {hmrcConnectionActive ? "Connected" : "Session expired"} · token
                       expires{" "}
                       {new Date(hmrcConnection.expiresAt).toLocaleString("en-GB", {
                         dateStyle: "medium",
@@ -474,7 +466,7 @@ function SettingsPageContent() {
                     href="/api/hmrc/auth"
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-medium",
-                      hmrcConnection && hmrcConnection.expiresAt > Date.now()
+                      hmrcConnectionActive
                         ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                         : "bg-black text-white hover:bg-slate-800",
                     )}
@@ -494,7 +486,7 @@ function SettingsPageContent() {
                     ? "Your organisation is on live CDS. Submissions have legal effect."
                     : "Your organisation is in the test environment (HMRC sandbox / TDR). Submissions are not legally binding."}
                 </p>
-                <div className="mt-3">
+                <div className="mt-3 flex items-center gap-3">
                   <span
                     className={cn(
                       "rounded-md px-2 py-1 text-[10px] font-medium uppercase tracking-wide",
@@ -505,7 +497,28 @@ function SettingsPageContent() {
                   >
                     {orgHmrcMode?.hmrcMode === "live" ? "Live CDS" : "Test environment"}
                   </span>
+                  <button
+                    type="button"
+                    disabled={hmrcModeSaving || !orgHmrcMode}
+                    onClick={async () => {
+                      const next = orgHmrcMode?.hmrcMode === "live" ? "practice" : "live";
+                      if (!window.confirm(`Switch this organisation to ${next === "live" ? "live CDS" : "the test environment"}?`)) return;
+                      setHmrcModeSaving(true);
+                      setHmrcModeError(null);
+                      try {
+                        await setMyOrgHmrcMode({ orgId, hmrcMode: next });
+                      } catch (error) {
+                        setHmrcModeError(error instanceof Error ? error.message : "Could not change CDS environment.");
+                      } finally {
+                        setHmrcModeSaving(false);
+                      }
+                    }}
+                    className="inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-3 text-[11px] font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {hmrcModeSaving ? "Switching…" : orgHmrcMode?.hmrcMode === "live" ? "Switch to sandbox" : "Switch to live"}
+                  </button>
                 </div>
+                {hmrcModeError && <p className="mt-2 text-[11px] text-red-600">{hmrcModeError}</p>}
               </div>
             )}
 
@@ -514,12 +527,6 @@ function SettingsPageContent() {
               <span className="rounded bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
                 Enabled
               </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[0.6875rem] text-slate-600">API Keys</span>
-              <button className="text-[0.625rem] text-slate-400 transition-colors hover:text-black">
-                Manage
-              </button>
             </div>
           </div>
       </div>

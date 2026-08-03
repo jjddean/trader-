@@ -42,7 +42,7 @@ export interface RoutingInput {
   /** Approved control entries across all products (empty string = explicitly not controlled). */
   approvedControlEntries: string[];
   /** Non-SIEL licence paths force SPIRE. */
-  licenceType?: "siel" | "sitcl" | "sitl" | "f680" | "oiel" | "ogel" | "otsi" | "other";
+  licenceType?: "siel" | "sitcl" | "sitl" | "f680" | "oiel" | "oitcl" | "ogel" | "otsi" | "other";
 }
 
 export interface RoutingResult {

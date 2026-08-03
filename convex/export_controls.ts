@@ -733,6 +733,7 @@ export const recordExportLicence = mutation({
       v.literal("sitl"),
       v.literal("f680"),
       v.literal("oiel"),
+      v.literal("oitcl"),
       v.literal("ogel"),
       v.literal("otsi"),
       v.literal("other"),

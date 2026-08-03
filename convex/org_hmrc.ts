@@ -216,6 +216,32 @@ export const getLiveReadinessForOrg = query({
   },
 });
 
+export const setMyOrgMode = mutation({
+  args: {
+    orgId: v.string(),
+    hmrcMode: v.union(v.literal("practice"), v.literal("live")),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    const orgId = args.orgId.trim();
+    if (!orgId) throw new Error("Organisation context required");
+    assertOrgSession(orgId, identity as Record<string, unknown>);
+    if (args.hmrcMode === "live") {
+      const readiness = await evaluateOrgLiveReadiness(ctx, orgId);
+      if (!readiness.canProceed) {
+        throw new Error(`Cannot enable live CDS: ${readiness.blockers.join(" ")}`);
+      }
+    }
+    const existing = await ctx.db.query("org_hmrc_settings")
+      .withIndex("by_org", (q) => q.eq("orgId", orgId)).unique();
+    const patch = { hmrcMode: args.hmrcMode, updatedAt: Date.now(), updatedBy: identity.subject };
+    if (existing) await ctx.db.patch(existing._id, patch);
+    else await ctx.db.insert("org_hmrc_settings", { orgId, ...patch });
+    return { orgId, hmrcMode: args.hmrcMode };
+  },
+});
+
 export const setOrgMode = mutation({
   args: {
     orgId: v.string(),

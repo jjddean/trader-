@@ -17,7 +17,7 @@ interface ExportLicencesPanelProps {
   assessmentId: Id<"export_assessments">;
 }
 
-type LicenceType = "siel" | "sitcl" | "sitl" | "f680" | "oiel" | "ogel" | "otsi" | "other";
+type LicenceType = "siel" | "sitcl" | "sitl" | "f680" | "oiel" | "oitcl" | "ogel" | "otsi" | "other";
 
 const licenceTypeOptions: Array<{ value: LicenceType; label: string }> = [
   { value: "siel", label: "SIEL" },
@@ -25,6 +25,7 @@ const licenceTypeOptions: Array<{ value: LicenceType; label: string }> = [
   { value: "sitl", label: "SITL" },
   { value: "f680", label: "F680" },
   { value: "oiel", label: "OIEL" },
+  { value: "oitcl", label: "OITCL" },
   { value: "ogel", label: "OGEL" },
   { value: "otsi", label: "OTSI (sanctions)" },
   { value: "other", label: "Other" },

@@ -15,6 +15,8 @@ function trimOptional(value: string | undefined | null) {
 
 const formArgs = {
   companyName: v.string(),
+  legalEntityType: v.string(),
+  companyRegistrationNumber: v.optional(v.string()),
   tradingName: v.optional(v.string()),
   country: v.string(),
   addressLine: v.string(),
@@ -23,9 +25,37 @@ const formArgs = {
   website: v.optional(v.string()),
   eori: v.optional(v.string()),
   contactName: v.string(),
+  contactJobTitle: v.string(),
   contactEmail: v.string(),
   contactPhone: v.optional(v.string()),
+  cdsSubscribed: v.optional(v.boolean()),
+  termsAccepted: v.boolean(),
 };
+
+function validateEori(value: string) {
+  const eori = value.trim().toUpperCase();
+  if (!/^(GB|XI)\d{12}$/.test(eori)) {
+    throw new Error("EORI number must start with GB or XI followed by 12 digits");
+  }
+  return eori;
+}
+
+function validateCommonForm(args: {
+  legalEntityType: string;
+  companyRegistrationNumber?: string;
+  contactJobTitle: string;
+  termsAccepted: boolean;
+}) {
+  const legalEntityType = trimRequired(args.legalEntityType, "Legal entity type");
+  const registrationRequired =
+    legalEntityType === "limited_company" || legalEntityType === "limited_liability_partnership";
+  const companyRegistrationNumber = registrationRequired
+    ? trimRequired(args.companyRegistrationNumber ?? "", "Company registration number")
+    : trimOptional(args.companyRegistrationNumber);
+  const contactJobTitle = trimRequired(args.contactJobTitle, "Job title");
+  if (!args.termsAccepted) throw new Error("You must accept the Terms of Service");
+  return { legalEntityType, companyRegistrationNumber, contactJobTitle };
+}
 
 async function requireUser(ctx: MutationCtx) {
   const identity = await ctx.auth.getUserIdentity();
@@ -80,9 +110,15 @@ export const completeBroker = mutation({
     const { identity, dbUser } = await requireUser(ctx);
 
     const companyName = trimRequired(args.companyName, "Company name");
+    const common = validateCommonForm(args);
     const country = trimRequired(args.country, "Country");
     const addressLine = trimRequired(args.addressLine, "Business address");
     const postcode = trimRequired(args.postcode, "Postcode");
+    const city = trimRequired(args.city ?? "", "City");
+    const eori = validateEori(trimRequired(args.eori ?? "", "EORI number"));
+    if (!args.cdsSubscribed) {
+      throw new Error("You must confirm that your organisation is subscribed to CDS");
+    }
     const contactName = trimRequired(args.contactName, "Full name");
     const contactEmail = trimRequired(args.contactEmail, "Email").toLowerCase();
 
@@ -96,16 +132,19 @@ export const completeBroker = mutation({
     const fields = {
       path: "broker" as const,
       companyName,
+      ...common,
       tradingName: trimOptional(args.tradingName),
       country: country.toUpperCase(),
       addressLine,
       postcode,
-      city: trimOptional(args.city),
+      city,
       website: trimOptional(args.website),
-      eori: trimOptional(args.eori)?.toUpperCase(),
+      eori,
       contactName,
       contactEmail,
       contactPhone: trimOptional(args.contactPhone),
+      cdsSubscribed: true,
+      termsAcceptedAt: now,
       updatedAt: now,
     };
 
@@ -146,9 +185,11 @@ export const completeManagedService = mutation({
     }
 
     const companyName = trimRequired(args.companyName, "Company name");
+    const common = validateCommonForm(args);
     const country = trimRequired(args.country, "Country");
     const addressLine = trimRequired(args.addressLine, "Business address");
     const postcode = trimRequired(args.postcode, "Postcode");
+    const city = trimRequired(args.city ?? "", "City");
     const contactName = trimRequired(args.contactName, "Full name");
     const contactEmail = trimRequired(args.contactEmail, "Email").toLowerCase();
 
@@ -212,7 +253,7 @@ export const completeManagedService = mutation({
         name: companyName,
         eori: trimOptional(args.eori)?.toUpperCase(),
         addressLine,
-        city: trimOptional(args.city),
+        city,
         postcode,
         country: country.toUpperCase(),
         contactName,
@@ -232,7 +273,7 @@ export const completeManagedService = mutation({
         name: companyName,
         eori: trimOptional(args.eori)?.toUpperCase(),
         addressLine,
-        city: trimOptional(args.city),
+        city,
         postcode,
         country: country.toUpperCase(),
         contactName,
@@ -256,16 +297,18 @@ export const completeManagedService = mutation({
     const fields = {
       path: "managed_service" as const,
       companyName,
+      ...common,
       tradingName,
       country: country.toUpperCase(),
       addressLine,
       postcode,
-      city: trimOptional(args.city),
+      city,
       website,
-      eori: trimOptional(args.eori)?.toUpperCase(),
+      eori: trimOptional(args.eori) ? validateEori(args.eori!) : undefined,
       contactName,
       contactEmail,
       contactPhone: trimOptional(args.contactPhone),
+      termsAcceptedAt: now,
       clientId,
       updatedAt: now,
     };

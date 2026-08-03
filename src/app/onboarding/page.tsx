@@ -80,9 +80,16 @@ export default function OnboardingWelcomePage() {
     <OnboardingShell>
       <div className="border-b border-slate-100 px-6 py-5">
         <h1 className="text-lg font-semibold tracking-tight text-slate-900">
-          Welcome to FreightCode
+          Welcome to{" "}
+          <span className="inline-flex items-baseline whitespace-nowrap leading-none">
+            <span className="font-bold">freight</span>
+            <span className="font-bold text-slate-600">code</span>
+            <span className="ml-[-1px] -translate-y-1 text-[10px] font-normal text-slate-600">®</span>
+          </span>
         </h1>
-        <p className="mt-1 text-[13px] text-slate-500">How would you like to use FreightCode?</p>
+        <p className="mt-1 text-[13px] text-slate-500">
+          How would you like to use <strong className="font-semibold">freightcode</strong>?
+        </p>
       </div>
       <div className="space-y-3 px-6 py-5">
         <button
@@ -97,7 +104,8 @@ export default function OnboardingWelcomePage() {
         >
           <span className="block text-[13px] font-semibold text-slate-900">Broker</span>
           <span className="mt-0.5 block text-[12px] leading-snug text-slate-500">
-            Manage customs declarations and services for your customers
+            Use <strong className="font-semibold">freightcode</strong> to prepare customs
+            declarations and manage services for the businesses you represent.
           </span>
         </button>
         <button
@@ -112,7 +120,8 @@ export default function OnboardingWelcomePage() {
         >
           <span className="block text-[13px] font-semibold text-slate-900">Managed Service</span>
           <span className="mt-0.5 block text-[12px] leading-snug text-slate-500">
-            FreightCode manages customs declarations for your organisation
+            Appoint <strong className="font-semibold">freightcode</strong> to prepare and manage
+            customs declarations on your behalf.
           </span>
         </button>
         <button
