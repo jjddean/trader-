@@ -152,20 +152,50 @@ export default function ExportControlsSolutionPage() {
           Consultancy
         </h2>
         <p className="mb-4 text-[15px] leading-relaxed text-slate-700">
-          Complete the assessment in your organisation workspace. Use the draft pack to file on LITE or SPIRE,
-          attach the undertaking and evidence, and record references when ECJU responds.
+          Some exports need more than software. Independent specialists can review the assessment, challenge a
+          proposed classification, advise on the appropriate licensing route, and help resolve complex sanctions or
+          brokering questions before goods move.
         </p>
         <p className="mb-6 text-[15px] leading-relaxed text-slate-700">
-          You can engage our independent consultancy on the same assessment. They may advise and sign off only, or
-          manage the licensing process and file on GOV.UK on your behalf — using the pack, undertaking, and evidence
-          already on the case. SPIRE company registration allows authorised users (including consultants) to prepare
-          and submit applications for a company; that filing still happens on the official service, not inside
-          Freightcode.
+          The work starts from the same freightcode assessment, so the classification, parties, undertaking,
+          technical evidence and draft licence pack are already organised in one record. This reduces repeated data
+          gathering and gives the specialist a clear basis for review.
         </p>
         <p className="mb-6 text-[15px] leading-relaxed text-slate-700">
-          Classification approval and sanctions adjudication today remain with the organisation user in the
-          dashboard. The consultancy review link can view the case, dispatch the EUSU, and complete sign-off or
-          block with notes (and record licence references if they filed).
+          Complete the assessment in your organisation workspace, use the draft pack for LITE or SPIRE, attach the
+          undertaking and technical evidence, and retain ECJU correspondence and application references on the same
+          case. The resulting record supports internal governance, customer due diligence and regulatory enquiries.
+        </p>
+        <p className="mb-6 text-[15px] leading-relaxed text-slate-700">
+          You can appoint an independent consultant to advise and sign off, or to manage the licensing process on
+          your behalf using the pack, undertaking and evidence already held in freightcode. Any filing takes place
+          through the relevant official GOV.UK service rather than inside freightcode.
+        </p>
+        <p className="mb-6 text-[15px] leading-relaxed text-slate-700">
+          The secure consultancy review link gives the specialist controlled access to the case. They can review the
+          supporting record, dispatch the EUSU, document their opinion, request changes and complete or block
+          sign-off with notes, without relying on disconnected email attachments.
+        </p>
+        <h3 className="mb-3 mt-6 text-[17px] font-semibold text-slate-900">Available support</h3>
+        <ul className="mb-6 list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-slate-700">
+          <li>Export-control classification and licensing reviews</li>
+          <li>Licence strategy and application-management support</li>
+          <li>Sanctions, trade controls and brokering guidance</li>
+          <li>Mock HMRC export-control audits and remediation support</li>
+          <li>Bespoke export-control training</li>
+        </ul>
+        <p className="mb-6 text-[15px] leading-relaxed text-slate-700">
+          Specialist reviews, training and licence application support are provided by our independent export-control
+          consultancy partner. <br />
+          <Link
+            href="https://www.britishexportcontrol.co.uk/"
+            className="font-semibold text-blue-600 hover:text-blue-700"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View their credentials ↗
+          </Link>
+          .
         </p>
 
         <h2 className="mb-4 mt-8 text-[20px] font-semibold tracking-tight text-slate-900">

@@ -8,8 +8,7 @@ import { SignUpCta } from "@/components/sign-up-cta";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { HomeDashboardPreview } from "@/components/home-dashboard-preview";
-
-const landingGuideCard = "rounded-2xl border border-slate-200 bg-white p-8";
+import { ClientPortalPreview } from "@/components/client-portal-preview";
 
 const howItWorksSteps = [
   {
@@ -55,39 +54,62 @@ const tradeComplianceSteps = [
 const coreCapabilities = [
   {
     id: "declarations",
-    label: "Declaration workspace",
+    label: "Faster declaration workflows",
     benefit:
-      "Create and edit import declarations with goods items, documents, dry-run, submit, amend, and cancel through HMRC CDS APIs.",
+      "Prepare, validate, submit and track customs declarations through one structured workflow.",
   },
   {
-    id: "hmrc",
-    label: "HMRC OAuth",
+    id: "documents",
+    label: "Connected documents and communication",
     benefit:
-      "Connect in Settings to authorise submit and status. Practice orgs use HMRC Test User credentials; live orgs use Government Gateway.",
+      "Connect invoices, supporting evidence, requests, messages and completed documents to the relevant customs activity.",
   },
   {
-    id: "prefill",
-    label: "Commodity codes & invoice extract",
+    id: "visibility",
+    label: "Complete operational visibility",
     benefit:
-      "Look up commodity codes and apply them to line items. AI extracts goods fields from commercial invoices — you review before submit.",
+      "See declaration status, outstanding actions, duty and VAT information, HMRC responses and operational history.",
   },
   {
-    id: "estimates",
-    label: "Duty estimates",
+    id: "compliance",
+    label: "Stronger compliance controls",
     benefit:
-      "Pre-clearance duty and VAT calculated from Trade Tariff data on your draft. HMRC DMSTAX still overrides on acceptance.",
+      "Standardise reviews, retain decision records and maintain an audit-ready history across declarations and trade-compliance activity.",
   },
   {
-    id: "notifications",
-    label: "Status & notifications",
+    id: "collaboration",
+    label: "Secure collaboration",
     benefit:
-      "Pull HMRC notifications and map DMS codes to declaration status. Webhook receiver for push events when configured.",
+      "Give colleagues, customers and representatives secure access to the information and actions relevant to them.",
   },
   {
-    id: "storage",
-    label: "Document vault",
+    id: "scale",
+    label: "Scalable customs operations",
     benefit:
-      "Attach invoices and supporting documents to declarations. Organised by MRN for audit retrieval.",
+      "Manage growing declaration volumes, organisations and customer relationships from the same platform.",
+  },
+];
+
+const internationalTradeSteps = [
+  {
+    step: 1,
+    title: "Establish your UK trade operation",
+    body: "Create your company profile, appoint authorised contacts and put the correct customs representation arrangement in place before goods move.",
+  },
+  {
+    step: 2,
+    title: "Prepare every shipment for the UK border",
+    body: "Provide invoices, packing lists, product details, origin evidence, licences and instructions while your representative prepares and checks the customs declaration.",
+  },
+  {
+    step: 3,
+    title: "Complete customs and compliance requirements",
+    body: "Respond to classification, valuation, origin, licensing or end-use requests and keep every party working from the same shipment record.",
+  },
+  {
+    step: 4,
+    title: "Move goods through customs and retain the history",
+    body: "Follow submission, duty and VAT, HMRC responses and clearance progress, then keep the MRN, documents, approvals and completed declaration ready for future shipments and audit.",
   },
 ];
 
@@ -124,6 +146,11 @@ const financialControlSteps = [
   },
   {
     step: 4,
+    title: "CDSI immediate payment",
+    body: "Use the declaration's payment method to obtain the HMRC CDSI reference required to pay the duty and VAT due on that entry.",
+  },
+  {
+    step: 5,
     title: "Cleared import liability",
     body: "Each MRN carries HMRC-confirmed duty, VAT, and customs value after clearance — structured fiscal data for cashflow, reconciliation, and external review.",
   },
@@ -259,17 +286,23 @@ export function LandingPageContent() {
             </ul>
 
             <div className="mt-12 rounded-2xl bg-[#0f172a] p-8 text-white md:p-10">
-              <h3 className="mb-3 text-[18px] font-semibold">About HMRC CDS</h3>
+              <p className="mb-3 text-[12px] font-semibold uppercase tracking-[0.12em] text-blue-300">
+                Direct HMRC CDS integration
+              </p>
+              <h3 className="mb-4 text-[20px] font-semibold">Know exactly what HMRC has accepted</h3>
               <p className="mb-4 text-[14px] leading-relaxed text-slate-300">
-                The Customs Declaration Service (CDS) is HMRC&apos;s platform for processing UK import and export
-                declarations. freightcode connects directly using HMRC&apos;s official OAuth authentication, allowing
-                you to prepare, validate and submit declarations from a single workspace while maintaining MRNs,
-                supporting documents and declaration history in one auditable record.
+                FreightCode brings HMRC responses directly into your declaration workspace. See acceptance,
+                clearance progress, duty and VAT calculations, queries and required actions against the declaration
+                they relate to.
+              </p>
+              <p className="mb-4 text-[14px] leading-relaxed text-slate-300">
+                Use HMRC&apos;s Trader Dress Rehearsal environment to test your complete workflow before going
+                live—from validation and submission through to notifications and status handling.
               </p>
               <p className="text-[14px] leading-relaxed text-slate-300">
-                Validate your declarations in HMRC&apos;s Trader Dress Rehearsal (TDR) environment before moving to
-                production. For live declarations, all customs duty, VAT and other charges are calculated and
-                confirmed by HMRC, with those values taking precedence over any pre-submission estimates.
+                Every submission, document, MRN and HMRC notification remains connected in one auditable record,
+                giving your team authoritative customs status without checking separate systems or reconstructing
+                events from emails.
               </p>
             </div>
           </div>
@@ -279,25 +312,161 @@ export function LandingPageContent() {
         <section id="features" className="bg-gray-50/30 py-[96px]">
           <div className="mx-auto max-w-[1280px] px-[24px]">
             <div className="mb-12 text-center">
-              <h2 className="mb-4 text-3xl font-bold tracking-tight text-slate-900">Core Capabilities</h2>
+              <h2 className="mb-4 text-3xl font-bold tracking-tight text-slate-900">
+                Core Capabilities
+              </h2>
               <p className="mx-auto max-w-2xl text-[16px] leading-relaxed text-slate-600">
-                Build and submit UK import declarations through HMRC CDS — with duty estimates, documents, and status tracking.
+                Improve every part of your customs operation with connected workflows for declarations, documents,
+                compliance, communication and oversight.
               </p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {coreCapabilities.map((item) => (
-                <div key={item.id} className={`${landingGuideCard} flex h-full flex-col`}>
-                  <h3 className="mb-3 text-lg font-semibold tracking-tight text-slate-900">{item.label}</h3>
-                  <p className="flex-grow text-[15px] leading-relaxed text-slate-600">{item.benefit}</p>
+            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              {coreCapabilities.map((item, index) => (
+                <div key={item.id} className="rounded-xl border border-slate-200 bg-white p-6">
+                  <span className="mb-5 block text-[12px] font-semibold tabular-nums text-slate-400">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <h3 className="mb-2 text-[17px] font-semibold leading-snug tracking-tight text-slate-900">
+                    {item.label}
+                  </h3>
+                  <p className="text-[14px] leading-relaxed text-slate-600">{item.benefit}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
+        {/* International trade */}
+        <section id="international-trade" className="scroll-mt-20 bg-white py-[96px]">
+          <div className="mx-auto max-w-[1180px] px-[24px]">
+            <div className="mx-auto mb-12 max-w-3xl text-center">
+              <h2 className="mb-4 text-3xl font-bold leading-snug tracking-tight text-slate-900">
+                International trade
+              </h2>
+              <p className="mb-4 text-[18px] font-semibold leading-relaxed text-slate-900">
+                We enable international trade by making UK customs accessible to businesses worldwide
+              </p>
+              <p className="text-[16px] leading-relaxed text-slate-600">
+                FreightCode gives international businesses a practical route into the UK market without needing to
+                build their own customs operation.
+              </p>
+              <p className="mt-4 text-[16px] leading-relaxed text-slate-600">
+                Work with an appointed UK representative, use indirect representation where required, provide the
+                information needed for each shipment and keep customs, compliance and clearance activity connected
+                in one secure workspace.
+              </p>
+            </div>
+
+            <div className="mx-auto max-w-3xl">
+              <h3 className="mb-4 mt-8 text-[20px] font-semibold tracking-tight text-slate-900">How it works</h3>
+              <ul className="mb-6 space-y-4 text-[15px] text-slate-700">
+                {internationalTradeSteps.map((item) => (
+                  <li key={item.step}>
+                    <strong>
+                      {item.step}. {item.title}
+                    </strong>{" "}
+                    — {item.body}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-12 rounded-2xl bg-[#0f172a] p-8 text-white md:p-10">
+                <h3 className="mb-3 text-[18px] font-semibold">
+                  Build your UK trade operation without building it from scratch
+                </h3>
+                <p className="mb-4 text-[14px] leading-relaxed text-slate-300">
+                  Expanding into the UK should not require an overseas business to create an internal customs
+                  department, manage unfamiliar HMRC systems or coordinate every shipment through disconnected
+                  emails.
+                </p>
+                <p className="mb-4 text-[14px] leading-relaxed text-slate-300">
+                  FreightCode connects your business with the people handling its UK customs activity and gives both
+                  sides one operational record for declarations, documents, compliance decisions and clearance.
+                </p>
+                <p className="mb-6 text-[14px] leading-relaxed text-slate-300">
+                  Your representative manages the customs process. Your business retains control of the information
+                  supplied, visibility over every shipment and access to the completed trade record.
+                </p>
+                <ul className="grid gap-x-8 gap-y-3 text-[14px] text-slate-200 sm:grid-cols-2">
+                  {[
+                    "UK market access for international businesses",
+                    "Direct and indirect representation workflows",
+                    "Shipment and customs-document exchange",
+                    "Declaration, duty and clearance visibility",
+                    "Customs and compliance collaboration",
+                    "Export-control and EUSU participation",
+                    "Reusable company and product information",
+                    "Complete declaration and audit history",
+                  ].map((capability) => (
+                    <li key={capability} className="flex items-start gap-3">
+                      <span className="mt-0.5 text-blue-400" aria-hidden>
+                        ✓
+                      </span>
+                      <span>{capability}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <p className="mt-6 text-center">
+                <Link
+                  href="/solutions/international-trade"
+                  className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700"
+                >
+                  Explore international trade support <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </p>
+            </div>
+
+          </div>
+        </section>
+
+        {/* Managed customs service */}
+        <section id="managed-service" className="scroll-mt-20 bg-slate-50/50 py-[96px]">
+          <div className="mx-auto max-w-[1180px] px-[24px]">
+            <div className="mx-auto mb-12 max-w-3xl text-center">
+              <h2 className="mb-4 text-3xl font-bold leading-snug tracking-tight text-slate-900">
+                Managed customs service
+              </h2>
+              <p className="text-[16px] leading-relaxed text-slate-600">
+                Customs declarations and operations, managed on your behalf—from document collection and validation
+                through HMRC submission, queries and clearance.
+              </p>
+            </div>
+
+            <div className="grid items-start gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-12">
+              <div>
+                <p className="text-[15px] leading-relaxed text-slate-600">
+                  FreightCode specialists prepare, validate and submit declarations, manage supporting documents
+                  and respond to HMRC activity on your behalf.
+                </p>
+                <p className="mt-4 text-[15px] leading-relaxed text-slate-600">
+                  Your secure portal is part of the managed service. Share shipment information, upload documents,
+                  respond to requests and follow every declaration through to customs clearance.
+                </p>
+                <ul className="mt-6 space-y-3 text-[14px] text-slate-700">
+                  {[
+                    "Declarations prepared and managed for you",
+                    "Documents and requests kept with each shipment",
+                    "Clear visibility from submission to clearance",
+                    "Direct communication with the FreightCode team",
+                  ].map((benefit) => (
+                    <li key={benefit} className="flex items-start gap-3">
+                      <span className="mt-0.5 text-blue-600" aria-hidden>✓</span>
+                      <span>{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="min-w-0">
+                <ClientPortalPreview />
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* UK export controls — homepage overview; depth on /solutions/export-controls */}
-        <section id="trade-compliance" className="scroll-mt-20 bg-slate-50/50 py-[96px]">
+        <section id="trade-compliance" className="scroll-mt-20 bg-white py-[96px]">
           <div className="mx-auto max-w-3xl px-[24px]">
             <div className="mb-10 text-center">
               <h2 className="mb-4 text-3xl font-bold leading-snug tracking-tight text-slate-900">
@@ -322,26 +491,47 @@ export function LandingPageContent() {
             </ul>
 
             <div className="mt-12 rounded-2xl bg-[#0f172a] p-8 text-white md:p-10">
-              <h3 className="mb-3 text-[18px] font-semibold">Export Controls Consultancy</h3>
-              <p className="mb-4 text-[14px] leading-relaxed text-slate-300">
-                Our independent consultants review classifications, assess licensing needs, and give a documented
-                compliance opinion. Where required, they can own the licensing process — prepare the pack, submit to
-                the authority, and manage the application through to a decision.
+              <p className="mb-3 text-[12px] font-semibold uppercase tracking-[0.12em] text-blue-300">
+                Professional services
               </p>
-              <p className="text-[14px] leading-relaxed text-slate-300">
-                Extra assurance on complex or high-risk exports: lower risk of misclassification, licensing errors,
-                and delays — plus a documented record for governance, customer due diligence, and regulatory
-                enquiries. Work starts from a secure review link to the draft pack on your assessment.
+              <h3 className="mb-3 text-[20px] font-semibold">Consultancy</h3>
+              <p className="mb-4 max-w-3xl text-[16px] font-medium leading-relaxed text-white">
+                Get specialist export-control decisions without losing control of the process. freightcode keeps
+                the case, evidence and communication together while an experienced consultant reviews the risks and
+                guides it towards a defensible outcome.
               </p>
-            </div>
-            <p className="mt-6 text-center">
+              <p className="mb-4 max-w-3xl text-[14px] leading-relaxed text-slate-300">
+                Independent consultants review classifications, assess licensing needs and provide a documented
+                compliance opinion. Where required, they can support the licensing process from preparing the pack
+                through to managing the application on the official GOV.UK service.
+              </p>
+              <p className="mb-6 max-w-3xl text-[14px] leading-relaxed text-slate-300">
+                Get additional assurance on complex or high-risk exports, reduce the risk of classification and
+                licensing errors, and retain a documented record for governance and regulatory enquiries. Work
+                starts from a secure review link to the draft pack on your assessment.
+              </p>
+              <ul className="mb-7 grid gap-x-8 gap-y-3 text-[14px] text-slate-200 sm:grid-cols-2">
+                {[
+                  "Classification and control-list reviews",
+                  "Licence strategy and application support",
+                  "Sanctions and brokering guidance",
+                  "Mock audits and team training",
+                ].map((service) => (
+                  <li key={service} className="flex items-start gap-3">
+                    <span className="mt-0.5 text-blue-400" aria-hidden>
+                      ✓
+                    </span>
+                    <span>{service}</span>
+                  </li>
+                ))}
+              </ul>
               <Link
                 href="/solutions/export-controls"
-                className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700"
+                className="inline-flex items-center rounded-md bg-white px-4 py-2 text-[13px] font-semibold text-slate-900 transition-colors hover:bg-slate-100"
               >
-                Full product overview <ArrowRight className="ml-2 h-4 w-4" />
+                Explore consultancy support <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
-            </p>
+            </div>
           </div>
         </section>
 
@@ -357,14 +547,19 @@ export function LandingPageContent() {
               </p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3">
-              {trePillars.map((item) => (
-                <div key={item.title} className={landingGuideCard}>
-                  <h3 className="mb-3 text-lg font-semibold tracking-tight text-slate-900">{item.title}</h3>
-                  <p className="text-[15px] leading-relaxed text-slate-600">{item.body}</p>
-                </div>
-              ))}
-            </div>
+              <div className="grid gap-5 md:grid-cols-3">
+                {trePillars.map((item, index) => (
+                  <div key={item.title} className="rounded-xl border border-slate-200 bg-white p-6">
+                    <span className="mb-5 block text-[12px] font-semibold tabular-nums text-slate-400">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <h3 className="mb-2 text-[17px] font-semibold leading-snug tracking-tight text-slate-900">
+                      {item.title}
+                    </h3>
+                    <p className="text-[14px] leading-relaxed text-slate-600">{item.body}</p>
+                  </div>
+                ))}
+              </div>
 
             <div className="mt-12 text-center">
               <Link href="/solutions#tre" className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700">

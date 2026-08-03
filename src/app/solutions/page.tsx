@@ -47,6 +47,14 @@ const capabilities: Array<{
     how: "One case alongside CDS declarations. Filing stays on GOV.UK (LITE or SPIRE).",
     href: "/solutions/export-controls",
   },
+  {
+    id: "international-trade",
+    label: "International trade",
+    benefit:
+      "A secure workspace for international businesses to exchange documents, monitor UK customs activity and respond to their representative.",
+    how: "Stay connected throughout the customs process without direct access to HMRC systems.",
+    href: "/solutions/international-trade",
+  },
 ];
 
 export default function SolutionsPage() {
