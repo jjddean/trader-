@@ -525,13 +525,28 @@ export function LandingPageContent() {
                   </li>
                 ))}
               </ul>
+              <p className="border-t border-slate-700 pt-5 text-[13px] leading-relaxed text-slate-300">
+                Specialist reviews, training and licence application support are provided by our independent
+                export-control consultancy partner.{" "}
+                <a
+                  href="https://www.britishexportcontrol.co.uk/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-white underline decoration-slate-500 underline-offset-4 hover:decoration-white"
+                >
+                  View their credentials ↗
+                </a>
+                .
+              </p>
+            </div>
+            <p className="mt-6 text-center">
               <Link
                 href="/solutions/export-controls"
-                className="inline-flex items-center rounded-md bg-white px-4 py-2 text-[13px] font-semibold text-slate-900 transition-colors hover:bg-slate-100"
+                className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700"
               >
-                Explore consultancy support <ArrowRight className="ml-2 h-4 w-4" />
+                Explore export controls <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
-            </div>
+            </p>
           </div>
         </section>
 
@@ -540,7 +555,7 @@ export function LandingPageContent() {
           <div className="mx-auto max-w-[1280px] px-[24px]">
             <div className="mb-12 text-center">
               <h2 className="mb-4 text-3xl font-bold leading-snug tracking-tight text-slate-900">
-                Import and review declaration history from HMRC TRE
+                HMRC TRE Data
               </h2>
               <p className="mx-auto max-w-2xl text-[16px] leading-relaxed text-slate-600">
                 HMRC Trade Reporting gives you CSV exports of past declarations. Upload them in Import TRE to browse line items, run preference checks, and keep history next to new declarations.
