@@ -29,10 +29,12 @@ const FIELD_LABEL =
   "mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase";
 
 type ThreadKey =
+  | { kind: "general" }
   | { kind: "declaration"; id: Id<"declarations"> }
   | { kind: "assessment"; id: Id<"export_assessments"> };
 
 function parseThreadValue(value: string): ThreadKey | null {
+  if (value === "general") return { kind: "general" };
   if (value.startsWith("declaration:")) {
     return { kind: "declaration", id: value.slice("declaration:".length) as Id<"declarations"> };
   }
@@ -71,16 +73,15 @@ export default function PortalMessagesClient({
   const defaultValue = useMemo(() => {
     if (initialDeclarationId) return `declaration:${initialDeclarationId}`;
     if (initialAssessmentId) return `assessment:${initialAssessmentId}`;
-    if (declarations && declarations.length > 0) return `declaration:${declarations[0]!._id}`;
-    if (assessments && assessments.length > 0) return `assessment:${assessments[0]!._id}`;
-    return "";
-  }, [initialDeclarationId, initialAssessmentId, declarations, assessments]);
+    return "general";
+  }, [initialDeclarationId, initialAssessmentId]);
 
   const activeValue = selected ?? defaultValue;
   const thread = parseThreadValue(activeValue);
 
   const messageArgs = useMemo(() => {
     if (!authReady || !thread) return "skip" as const;
+    if (thread.kind === "general") return {};
     if (thread.kind === "declaration") return { declarationId: thread.id };
     return { assessmentId: thread.id };
   }, [authReady, thread]);
@@ -98,7 +99,9 @@ export default function PortalMessagesClient({
     setSending(true);
     setError(null);
     try {
-      if (thread.kind === "declaration") {
+      if (thread.kind === "general") {
+        await sendMessage({ body: trimmed });
+      } else if (thread.kind === "declaration") {
         await sendMessage({ body: trimmed, declarationId: thread.id });
       } else {
         await sendMessage({ body: trimmed, assessmentId: thread.id });
@@ -111,8 +114,6 @@ export default function PortalMessagesClient({
     }
   };
 
-  const hasTargets =
-    (declarations?.length ?? 0) > 0 || (assessments?.length ?? 0) > 0;
 
   return (
     <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -121,7 +122,7 @@ export default function PortalMessagesClient({
         <div>
           <h2 className="text-sm font-medium text-black">Messages</h2>
           <p className="text-[11px] text-slate-500">
-            Talk to your broker about a declaration or export assessment
+            Message your customs representative or discuss specific customs activity
           </p>
         </div>
       </div>
@@ -134,18 +135,14 @@ export default function PortalMessagesClient({
           <Select
             value={activeValue || undefined}
             onValueChange={setSelected}
-            disabled={!hasTargets}
           >
             <SelectTrigger id="portal-thread" className={ENTERPRISE_SELECT_TRIGGER}>
-              <SelectValue
-                placeholder={
-                  hasTargets
-                    ? "Choose a declaration or export assessment"
-                    : "Nothing to message about yet"
-                }
-              />
+              <SelectValue placeholder="Choose what this is about" />
             </SelectTrigger>
             <SelectContent position="popper" sideOffset={4} className={ENTERPRISE_SELECT_CONTENT}>
+              <SelectItem value="general" className={ENTERPRISE_SELECT_ITEM}>
+                General enquiry
+              </SelectItem>
               {(declarations ?? []).length > 0 ? (
                 <SelectGroup>
                   <SelectLabel className="px-2 py-1.5 text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
@@ -185,9 +182,9 @@ export default function PortalMessagesClient({
         <PortalMessageThread
           messages={messages}
           viewerRole="client"
-          isIdle={!thread}
-          idleLabel="Choose a declaration or export assessment to see messages."
-          emptyLabel="No messages yet on this one."
+          isIdle={false}
+          idleLabel=""
+          emptyLabel={thread?.kind === "general" ? "No general messages yet." : "No messages yet on this one."}
         />
 
         <div>
@@ -205,7 +202,6 @@ export default function PortalMessagesClient({
                 ? "Ask a question or share an update…"
                 : "Choose what this is about first…"
             }
-            disabled={!thread}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -222,7 +218,7 @@ export default function PortalMessagesClient({
         <button
           type="button"
           onClick={() => void handleSend()}
-          disabled={sending || !thread || body.trim().length < 1}
+          disabled={sending || body.trim().length < 1}
           className="inline-flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-normal text-white hover:bg-slate-800 disabled:opacity-60"
         >
           {sending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}

@@ -505,7 +505,7 @@ export const listPortalMessages = query({
         if (row.clientId !== args.clientId) return false;
         if (args.declarationId) return row.declarationId === args.declarationId;
         if (args.assessmentId) return row.assessmentId === args.assessmentId;
-        return true;
+        return !row.declarationId && !row.assessmentId;
       })
       .map((row) => ({
         _id: row._id,
@@ -541,8 +541,8 @@ export const sendBrokerMessage = mutation({
 
     const hasDeclaration = Boolean(args.declarationId);
     const hasAssessment = Boolean(args.assessmentId);
-    if (hasDeclaration === hasAssessment) {
-      throw new Error("Choose a declaration or an export case");
+    if (hasDeclaration && hasAssessment) {
+      throw new Error("Choose either a declaration or an export case");
     }
 
     if (args.declarationId) {

@@ -323,11 +323,13 @@ function ClientPortalAccessCard({
 }
 
 type BrokerThreadKey =
+  | { kind: "general" }
   | { kind: "declaration"; id: Id<"declarations"> }
   | { kind: "assessment"; id: Id<"export_assessments"> }
   | null;
 
 function parseBrokerThreadValue(value: string): BrokerThreadKey {
+  if (value === "general") return { kind: "general" };
   if (value.startsWith("declaration:")) {
     return { kind: "declaration", id: value.slice("declaration:".length) as Id<"declarations"> };
   }
@@ -342,6 +344,7 @@ function parseBrokerThreadValue(value: string): BrokerThreadKey {
 
 function brokerThreadValue(thread: BrokerThreadKey): string {
   if (!thread) return "";
+  if (thread.kind === "general") return "general";
   return thread.kind === "declaration"
     ? `declaration:${thread.id}`
     : `assessment:${thread.id}`;
@@ -361,23 +364,12 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
     authReady ? { clientId } : "skip",
   );
 
-  const [thread, setThread] = useState<BrokerThreadKey>(null);
-
-  // Default to most recent declaration/case once lists load.
-  const defaultThread = useMemo((): BrokerThreadKey => {
-    if (declarations && declarations.length > 0) {
-      return { kind: "declaration", id: declarations[0]!._id };
-    }
-    if (assessments && assessments.length > 0) {
-      return { kind: "assessment", id: assessments[0]!._id };
-    }
-    return null;
-  }, [declarations, assessments]);
-
-  const activeThread = thread ?? defaultThread;
+  const [thread, setThread] = useState<BrokerThreadKey>({ kind: "general" });
+  const activeThread = thread;
 
   const messageArgs = useMemo(() => {
     if (!authReady || !activeThread) return "skip" as const;
+    if (activeThread.kind === "general") return { clientId };
     if (activeThread.kind === "declaration") {
       return { clientId, declarationId: activeThread.id };
     }
@@ -396,7 +388,9 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
     setIsSending(true);
     setError(null);
     try {
-      if (activeThread.kind === "declaration") {
+      if (activeThread.kind === "general") {
+        await sendBrokerMessage({ clientId, body: trimmed });
+      } else if (activeThread.kind === "declaration") {
         await sendBrokerMessage({
           clientId,
           body: trimmed,
@@ -417,8 +411,6 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
     }
   };
 
-  const hasTargets =
-    (declarations?.length ?? 0) > 0 || (assessments?.length ?? 0) > 0;
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -427,7 +419,7 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
         <div className="min-w-0">
           <h3 className="text-sm font-medium text-black">Portal messages</h3>
           <p className="text-[11px] text-slate-500">
-            Message the client about a declaration or export assessment
+            Message the client generally or about specific customs activity
           </p>
         </div>
       </div>
@@ -439,18 +431,14 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
           <Select
             value={brokerThreadValue(activeThread) || undefined}
             onValueChange={(value) => setThread(parseBrokerThreadValue(value))}
-            disabled={!hasTargets}
           >
             <SelectTrigger id="portal-thread" className={cn(ENTERPRISE_SELECT_TRIGGER, "mt-1")}>
-              <SelectValue
-                placeholder={
-                  hasTargets
-                    ? "Choose a declaration or export assessment"
-                    : "Link a declaration or assessment first"
-                }
-              />
+              <SelectValue placeholder="Choose what this is about" />
             </SelectTrigger>
             <SelectContent position="popper" sideOffset={4} className={ENTERPRISE_SELECT_CONTENT}>
+              <SelectItem value="general" className={ENTERPRISE_SELECT_ITEM}>
+                General enquiry
+              </SelectItem>
               {(declarations ?? []).length > 0 ? (
                 <SelectGroup>
                   <SelectLabel className="px-2 py-1.5 text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
@@ -490,9 +478,9 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
         <PortalMessageThread
           messages={messages}
           viewerRole="broker"
-          isIdle={!activeThread}
-          idleLabel="Choose a declaration or export assessment to message on."
-          emptyLabel="No messages yet. Ask for documents or share a status update."
+          isIdle={false}
+          idleLabel=""
+          emptyLabel={activeThread?.kind === "general" ? "No general messages yet." : "No messages yet on this one."}
         />
 
         <div>
@@ -509,7 +497,6 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
                 ? "Ask for an invoice, packing list, or share a status update…"
                 : "Choose what this is about first…"
             }
-            disabled={!activeThread}
             className={FORM_TEXTAREA}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -527,7 +514,7 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
         <button
           type="button"
           onClick={() => void handleSend()}
-          disabled={isSending || !activeThread || body.trim().length < 1}
+          disabled={isSending || body.trim().length < 1}
           className="inline-flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-normal text-white transition-colors hover:bg-slate-800 disabled:opacity-60"
         >
           {isSending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
