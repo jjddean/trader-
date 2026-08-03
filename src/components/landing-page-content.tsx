@@ -524,7 +524,7 @@ export function LandingPageContent() {
                     "Shipment and customs-document exchange",
                     "Declaration, duty and clearance visibility",
                     "Customs and compliance collaboration",
-                    "Export-control and EUSU participation",
+                    "Export-control assessments and licensing workflows",
                     "Reusable company and product information",
                     "Complete declaration and audit history",
                   ].map((capability) => (
