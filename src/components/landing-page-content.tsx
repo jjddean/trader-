@@ -337,134 +337,6 @@ export function LandingPageContent() {
           </div>
         </section>
 
-        {/* International trade */}
-        <section id="international-trade" className="scroll-mt-20 bg-white py-[96px]">
-          <div className="mx-auto max-w-[1180px] px-[24px]">
-            <div className="mx-auto mb-12 max-w-3xl text-center">
-              <h2 className="mb-4 text-3xl font-bold leading-snug tracking-tight text-slate-900">
-                International trade
-              </h2>
-              <p className="mb-4 text-[18px] font-semibold leading-relaxed text-slate-900">
-                We enable international trade by making UK customs accessible to businesses worldwide
-              </p>
-              <p className="text-[16px] leading-relaxed text-slate-600">
-                FreightCode gives international businesses a practical route into the UK market without needing to
-                build their own customs operation.
-              </p>
-              <p className="mt-4 text-[16px] leading-relaxed text-slate-600">
-                Work with an appointed UK representative, use indirect representation where required, provide the
-                information needed for each shipment and keep customs, compliance and clearance activity connected
-                in one secure workspace.
-              </p>
-            </div>
-
-            <div className="mx-auto max-w-3xl">
-              <h3 className="mb-4 mt-8 text-[20px] font-semibold tracking-tight text-slate-900">How it works</h3>
-              <ul className="mb-6 space-y-4 text-[15px] text-slate-700">
-                {internationalTradeSteps.map((item) => (
-                  <li key={item.step}>
-                    <strong>
-                      {item.step}. {item.title}
-                    </strong>{" "}
-                    — {item.body}
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-12 rounded-2xl bg-[#0f172a] p-8 text-white md:p-10">
-                <h3 className="mb-3 text-[18px] font-semibold">
-                  Build your UK trade operation without building it from scratch
-                </h3>
-                <p className="mb-4 text-[14px] leading-relaxed text-slate-300">
-                  Expanding into the UK should not require an overseas business to create an internal customs
-                  department, manage unfamiliar HMRC systems or coordinate every shipment through disconnected
-                  emails.
-                </p>
-                <p className="mb-4 text-[14px] leading-relaxed text-slate-300">
-                  FreightCode connects your business with the people handling its UK customs activity and gives both
-                  sides one operational record for declarations, documents, compliance decisions and clearance.
-                </p>
-                <p className="mb-6 text-[14px] leading-relaxed text-slate-300">
-                  Your representative manages the customs process. Your business retains control of the information
-                  supplied, visibility over every shipment and access to the completed trade record.
-                </p>
-                <ul className="grid gap-x-8 gap-y-3 text-[14px] text-slate-200 sm:grid-cols-2">
-                  {[
-                    "UK market access for international businesses",
-                    "Direct and indirect representation workflows",
-                    "Shipment and customs-document exchange",
-                    "Declaration, duty and clearance visibility",
-                    "Customs and compliance collaboration",
-                    "Export-control and EUSU participation",
-                    "Reusable company and product information",
-                    "Complete declaration and audit history",
-                  ].map((capability) => (
-                    <li key={capability} className="flex items-start gap-3">
-                      <span className="mt-0.5 text-blue-400" aria-hidden>
-                        ✓
-                      </span>
-                      <span>{capability}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <p className="mt-6 text-center">
-                <Link
-                  href="/solutions/international-trade"
-                  className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700"
-                >
-                  Explore international trade support <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </p>
-            </div>
-
-          </div>
-        </section>
-
-        {/* Managed customs service */}
-        <section id="managed-service" className="scroll-mt-20 bg-slate-50/50 py-[96px]">
-          <div className="mx-auto max-w-[1180px] px-[24px]">
-            <div className="mx-auto mb-12 max-w-3xl text-center">
-              <h2 className="mb-4 text-3xl font-bold leading-snug tracking-tight text-slate-900">
-                Managed customs service
-              </h2>
-              <p className="text-[16px] leading-relaxed text-slate-600">
-                Customs declarations and operations, managed on your behalf—from document collection and validation
-                through HMRC submission, queries and clearance.
-              </p>
-            </div>
-
-            <div className="grid items-start gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-12">
-              <div>
-                <p className="text-[15px] leading-relaxed text-slate-600">
-                  FreightCode specialists prepare, validate and submit declarations, manage supporting documents
-                  and respond to HMRC activity on your behalf.
-                </p>
-                <p className="mt-4 text-[15px] leading-relaxed text-slate-600">
-                  Your secure portal is part of the managed service. Share shipment information, upload documents,
-                  respond to requests and follow every declaration through to customs clearance.
-                </p>
-                <ul className="mt-6 space-y-3 text-[14px] text-slate-700">
-                  {[
-                    "Declarations prepared and managed for you",
-                    "Documents and requests kept with each shipment",
-                    "Clear visibility from submission to clearance",
-                    "Direct communication with the FreightCode team",
-                  ].map((benefit) => (
-                    <li key={benefit} className="flex items-start gap-3">
-                      <span className="mt-0.5 text-blue-600" aria-hidden>✓</span>
-                      <span>{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="min-w-0">
-                <ClientPortalPreview />
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* UK export controls — homepage overview; depth on /solutions/export-controls */}
         <section id="trade-compliance" className="scroll-mt-20 bg-white py-[96px]">
           <div className="mx-auto max-w-3xl px-[24px]">
@@ -547,6 +419,134 @@ export function LandingPageContent() {
                 Explore export controls <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </p>
+          </div>
+        </section>
+
+        {/* Managed customs service */}
+        <section id="managed-service" className="scroll-mt-20 bg-slate-50/50 py-[96px]">
+          <div className="mx-auto max-w-[1180px] px-[24px]">
+            <div className="mx-auto mb-12 max-w-3xl text-center">
+              <h2 className="mb-4 text-3xl font-bold leading-snug tracking-tight text-slate-900">
+                Managed customs service
+              </h2>
+              <p className="text-[16px] leading-relaxed text-slate-600">
+                Customs declarations and operations, managed on your behalf—from document collection and validation
+                through HMRC submission, queries and clearance.
+              </p>
+            </div>
+
+            <div className="grid items-start gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-12">
+              <div>
+                <p className="text-[15px] leading-relaxed text-slate-600">
+                  FreightCode specialists prepare, validate and submit declarations, manage supporting documents
+                  and respond to HMRC activity on your behalf.
+                </p>
+                <p className="mt-4 text-[15px] leading-relaxed text-slate-600">
+                  Your secure portal is part of the managed service. Share shipment information, upload documents,
+                  respond to requests and follow every declaration through to customs clearance.
+                </p>
+                <ul className="mt-6 space-y-3 text-[14px] text-slate-700">
+                  {[
+                    "Declarations prepared and managed for you",
+                    "Documents and requests kept with each shipment",
+                    "Clear visibility from submission to clearance",
+                    "Direct communication with the FreightCode team",
+                  ].map((benefit) => (
+                    <li key={benefit} className="flex items-start gap-3">
+                      <span className="mt-0.5 text-blue-600" aria-hidden>✓</span>
+                      <span>{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="min-w-0">
+                <ClientPortalPreview />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* International trade */}
+        <section id="international-trade" className="scroll-mt-20 bg-white py-[96px]">
+          <div className="mx-auto max-w-[1180px] px-[24px]">
+            <div className="mx-auto mb-12 max-w-3xl text-center">
+              <h2 className="mb-4 text-3xl font-bold leading-snug tracking-tight text-slate-900">
+                International trade
+              </h2>
+              <p className="mb-4 text-[18px] font-semibold leading-relaxed text-slate-900">
+                We enable international trade by making UK customs accessible to businesses worldwide
+              </p>
+              <p className="text-[16px] leading-relaxed text-slate-600">
+                FreightCode gives international businesses a practical route into the UK market without needing to
+                build their own customs operation.
+              </p>
+              <p className="mt-4 text-[16px] leading-relaxed text-slate-600">
+                Work with an appointed UK representative, use indirect representation where required, provide the
+                information needed for each shipment and keep customs, compliance and clearance activity connected
+                in one secure workspace.
+              </p>
+            </div>
+
+            <div className="mx-auto max-w-3xl">
+              <h3 className="mb-4 mt-8 text-[20px] font-semibold tracking-tight text-slate-900">How it works</h3>
+              <ul className="mb-6 space-y-4 text-[15px] text-slate-700">
+                {internationalTradeSteps.map((item) => (
+                  <li key={item.step}>
+                    <strong>
+                      {item.step}. {item.title}
+                    </strong>{" "}
+                    — {item.body}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-12 rounded-2xl bg-[#0f172a] p-8 text-white md:p-10">
+                <h3 className="mb-3 text-[18px] font-semibold">
+                  Build your UK trade operation without building it from scratch
+                </h3>
+                <p className="mb-4 text-[14px] leading-relaxed text-slate-300">
+                  Expanding into the UK should not require an overseas business to create an internal customs
+                  department, manage unfamiliar HMRC systems or coordinate every shipment through disconnected
+                  emails.
+                </p>
+                <p className="mb-4 text-[14px] leading-relaxed text-slate-300">
+                  FreightCode connects your business with the people handling its UK customs activity and gives both
+                  sides one operational record for declarations, documents, compliance decisions and clearance.
+                </p>
+                <p className="mb-6 text-[14px] leading-relaxed text-slate-300">
+                  Your representative manages the customs process. Your business retains control of the information
+                  supplied, visibility over every shipment and access to the completed trade record.
+                </p>
+                <ul className="grid gap-x-8 gap-y-3 text-[14px] text-slate-200 sm:grid-cols-2">
+                  {[
+                    "UK market access for international businesses",
+                    "Direct and indirect representation workflows",
+                    "Shipment and customs-document exchange",
+                    "Declaration, duty and clearance visibility",
+                    "Customs and compliance collaboration",
+                    "Export-control and EUSU participation",
+                    "Reusable company and product information",
+                    "Complete declaration and audit history",
+                  ].map((capability) => (
+                    <li key={capability} className="flex items-start gap-3">
+                      <span className="mt-0.5 text-blue-400" aria-hidden>
+                        ✓
+                      </span>
+                      <span>{capability}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <p className="mt-6 text-center">
+                <Link
+                  href="/solutions/international-trade"
+                  className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700"
+                >
+                  Explore international trade support <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </p>
+            </div>
+
           </div>
         </section>
 
