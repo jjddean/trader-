@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
+import { Info } from "lucide-react";
 import { useOrganization } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -25,16 +25,16 @@ export function PracticeModeBanner() {
   return (
     <div
       role="status"
-      className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-amber-950"
+      className="mx-4 mt-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-slate-900"
     >
       <div className="mx-auto flex max-w-6xl items-start gap-2 sm:gap-3">
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" aria-hidden />
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" aria-hidden />
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold">HMRC Testing Environment</p>
-          <ul className="mt-1 space-y-0.5 text-xs leading-snug text-amber-900/90">
+          <ul className="mt-1 space-y-0.5 text-xs leading-snug text-slate-600">
             <li>
               Connect your{" "}
-              <PracticeSandboxTestUserModalLink className="font-medium underline hover:text-amber-950">
+              <PracticeSandboxTestUserModalLink className="font-medium text-blue-700 underline hover:text-blue-900">
                 HMRC Test User
               </PracticeSandboxTestUserModalLink>{" "}
               to submit sandbox declarations.
@@ -45,7 +45,7 @@ export function PracticeModeBanner() {
             </li>
           </ul>
         </div>
-        <PracticeModeGuideModalLink className="shrink-0 text-xs font-medium text-amber-900 underline hover:text-amber-950">
+        <PracticeModeGuideModalLink className="shrink-0 text-xs font-medium text-blue-700 underline hover:text-blue-900">
           How the test environment works
         </PracticeModeGuideModalLink>
       </div>
