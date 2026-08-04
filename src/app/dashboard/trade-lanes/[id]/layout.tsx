@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { ArrowLeft, FileText, PoundSterling, Package, Activity } from "lucide-react";
+import { ArrowLeft, FileText, PoundSterling, Package, Activity, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function TradeLaneWorkspaceLayout({
@@ -42,6 +42,12 @@ export default function TradeLaneWorkspaceLayout({
       icon: Activity,
       path: `/dashboard/trade-lanes/${laneId}/activity`,
       disabled: true,
+    },
+    {
+      id: "risk",
+      name: "Risk Intelligence",
+      icon: ShieldAlert,
+      path: `/dashboard/trade-lanes/${laneId}/risk`,
     },
   ];
 
@@ -88,7 +94,7 @@ export default function TradeLaneWorkspaceLayout({
 
           <nav className="flex gap-1 rounded-lg bg-slate-100/80 p-1">
             {steps.map((step) => {
-              const isActive = pathname === step.path;
+              const isActive = pathname === step.path || (step.id === "risk" && pathname.startsWith(`${step.path}/`));
               const Icon = step.icon;
 
               return (
