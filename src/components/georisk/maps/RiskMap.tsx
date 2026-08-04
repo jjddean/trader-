@@ -105,8 +105,7 @@ export const RiskMap: React.FC<RiskMapProps> = ({ lanes, scores }) => {
                 {...viewState}
                 onMove={(evt: any) => setViewState(evt.viewState)}
                 style={{ width: '100%', height: '100%' }}
-                mapStyle="mapbox://styles/mapbox/light-v11"
-                mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+                mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
                 interactiveLayerIds={['risk-corridors', 'vessel-markers']}
                 onMouseMove={onHover}
             >

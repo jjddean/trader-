@@ -6,7 +6,7 @@ import { Search, ChevronLeft, ChevronRight, Ship } from "lucide-react";
 import { GeoRiskNavigator, GeoRiskData } from "@/components/georisk/ai/GeoRiskNavigator";
 import { cn } from "@/lib/utils";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8001';
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 export default function Home() {
     const [lanes, setLanes] = useState<any[]>([]);
@@ -21,6 +21,7 @@ export default function Home() {
 
         const fetchData = async () => {
             try {
+                if (!apiUrl) throw new Error("GeoRisk API URL not configured");
                 const [lanesRes, scoresRes] = await Promise.all([
                     fetch(`${apiUrl}/lanes/`, { signal: controller.signal }),
                     fetch(`${apiUrl}/risk-scores/`, { signal: controller.signal })
