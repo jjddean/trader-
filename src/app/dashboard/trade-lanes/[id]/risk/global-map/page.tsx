@@ -4,8 +4,6 @@
 import { useEffect, useState } from "react";
 import { RiskMap } from "@/components/georisk/maps/RiskMap";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
 export default function GlobalMapPage() {
     const [lanes, setLanes] = useState<any[]>([]);
     const [scores, setScores] = useState<any[]>([]);
@@ -16,10 +14,9 @@ export default function GlobalMapPage() {
 
         const fetchData = async () => {
             try {
-                if (!apiUrl) throw new Error("GeoRisk API URL not configured");
                 const [lanesRes, scoresRes] = await Promise.all([
-                    fetch(`${apiUrl}/lanes/`, { signal: controller.signal }),
-                    fetch(`${apiUrl}/risk-scores/`, { signal: controller.signal })
+                    fetch("/api/georisk/lanes", { signal: controller.signal }),
+                    fetch("/api/georisk/risk-scores", { signal: controller.signal })
                 ]);
                 if (!lanesRes.ok || !scoresRes.ok) throw new Error("GeoRisk API offline");
                 setLanes(await lanesRes.json());

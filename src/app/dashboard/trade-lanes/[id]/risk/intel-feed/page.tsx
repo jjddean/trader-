@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ShieldAlert, Zap, Search, Filter, ExternalLink, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface KineticIncident {
     id: string;
-    type: "piracy" | "conflict" | "congestion" | "sanction";
+    type: string;
     severity: "severe" | "high" | "medium";
     title: string;
     location: string;
@@ -16,48 +16,55 @@ interface KineticIncident {
     source: string;
 }
 
-const MOCK_INCIDENTS: KineticIncident[] = [
-    {
-        id: "1",
-        type: "conflict",
-        severity: "severe",
-        title: "Kinetic Strike Near Black Sea Corridor",
-        location: "44.2N, 31.5E",
-        timestamp: "28 mins ago",
-        description: "Confirmed drone engagement targeting merchant vessel infrastructure. Kinetic activity remains high across all northern routes.",
-        recommendation: "IMMEDIATE DEVIATION: Suspend all Odessa-bound traffic until 06:00 UTC.",
-        source: "Conflict Signals NLP"
-    },
-    {
-        id: "2",
-        type: "piracy",
-        severity: "high",
-        title: "Suspected Skiff Activity",
-        location: "Gulf of Aden",
-        timestamp: "2 hours ago",
-        description: "Two high-speed skiffs identified loitering 15nm off Port of Aden. Uncharacteristic behavior detected by AIS pattern analysis.",
-        recommendation: "ENHANCED VIGILANCE: Implement Level 2 security protocols for all transits.",
-        source: "AIS Anomaly Detection"
-    },
-    {
-        id: "3",
-        type: "congestion",
-        severity: "medium",
-        title: "Port Congestion Spike",
-        location: "Rotterdam (Maasvlakte)",
-        timestamp: "5 hours ago",
-        description: "Wait times for mega-vessels have increased by 15% due to sudden localized labor shortage signals in social media feeds.",
-        recommendation: "LOGISTICS ALERT: Advise shippers of potential 24-hour discharge delay.",
-        source: "NLP Logistics Sentiment"
-    }
-];
+interface GeoRiskAlert {
+    id: number;
+    severity: "severe" | "high" | "medium" | "low";
+    title: string;
+    message: string;
+    entity_type: string;
+    entity_id: number;
+    created_at: string;
+}
 
+function toIncident(alert: GeoRiskAlert): KineticIncident {
+    return {
+        id: String(alert.id),
+        type: alert.entity_type,
+        severity: alert.severity === "low" ? "medium" : alert.severity,
+        title: alert.title,
+        location: `${alert.entity_type} ${alert.entity_id}`,
+        timestamp: new Date(alert.created_at).toLocaleString(),
+        description: alert.message,
+        recommendation: alert.message,
+        source: "GeoRisk Alert Engine",
+    };
+}
 import { sendSevereRiskAlert } from "../actions/send-alert";
 
 export default function IntelFeedPage() {
+    const [incidents, setIncidents] = useState<KineticIncident[]>([]);
+    const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const [sent, setSent] = useState(false);
 
+
+    useEffect(() => {
+        const controller = new AbortController();
+        const loadAlerts = async () => {
+            try {
+                const response = await fetch("/api/georisk/alerts", { signal: controller.signal });
+                if (!response.ok) throw new Error("GeoRisk alerts unavailable");
+                const alerts = (await response.json()) as GeoRiskAlert[];
+                setIncidents(alerts.map(toIncident));
+            } catch {
+                if (!controller.signal.aborted) setIncidents([]);
+            } finally {
+                if (!controller.signal.aborted) setLoading(false);
+            }
+        };
+        void loadAlerts();
+        return () => controller.abort();
+    }, []);
     const handleTestAlert = async (incident: KineticIncident) => {
         setSending(true);
         const result = await sendSevereRiskAlert(incident);
@@ -86,8 +93,8 @@ export default function IntelFeedPage() {
 
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={() => handleTestAlert(MOCK_INCIDENTS[0] as KineticIncident)}
-                            disabled={sending}
+                            onClick={() => incidents[0] && handleTestAlert(incidents[0])}
+                            disabled={sending || incidents.length === 0}
                             className={cn(
                                 "h-8 px-3 text-[11px] font-medium rounded-md border transition-all",
                                 sent ? "bg-green-50 text-green-600 border-green-200" : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
@@ -112,7 +119,11 @@ export default function IntelFeedPage() {
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                     <div className="max-w-4xl mx-auto space-y-4">
-                        {MOCK_INCIDENTS.map((incident) => (
+                        {loading ? (
+                            <p className="py-12 text-center text-xs text-gray-400">Loading intelligence…</p>
+                        ) : incidents.length === 0 ? (
+                            <p className="py-12 text-center text-xs text-gray-400">No GeoRisk alerts available.</p>
+                        ) : incidents.map((incident) => (
                             <div
                                 key={incident.id}
                                 className={cn(
