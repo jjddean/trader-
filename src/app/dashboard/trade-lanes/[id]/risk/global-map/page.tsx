@@ -26,18 +26,8 @@ export default function GlobalMapPage() {
                 setScores(await scoresRes.json());
             } catch {
                 if (controller.signal.aborted) return;
-                setLanes([
-                    { id: 1, origin_port: { name: "Mumbai", longitude: 72.8777, latitude: 19.076 }, destination_port: { name: "London", longitude: -0.1276, latitude: 51.5074 } },
-                    { id: 2, origin_port: { name: "Shanghai", longitude: 121.4737, latitude: 31.2304 }, destination_port: { name: "Rotterdam", longitude: 4.4777, latitude: 51.9225 } },
-                    { id: 3, origin_port: { name: "Singapore", longitude: 103.8198, latitude: 1.3521 }, destination_port: { name: "New York", longitude: -74.006, latitude: 40.7128 } },
-                    { id: 4, origin_port: { name: "Dubai", longitude: 55.2708, latitude: 25.2048 }, destination_port: { name: "Hamburg", longitude: 9.9937, latitude: 53.5511 } }
-                ]);
-                setScores([
-                    { entityType: "lane", entityId: 1, score: 82 },
-                    { entityType: "lane", entityId: 2, score: 94 },
-                    { entityType: "lane", entityId: 3, score: 22 },
-                    { entityType: "lane", entityId: 4, score: 45 }
-                ]);
+                setLanes([]);
+                setScores([]);
             } finally {
                 if (!controller.signal.aborted) setLoading(false);
             }
