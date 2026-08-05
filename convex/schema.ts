@@ -59,6 +59,7 @@ export default defineSchema({
     destinationName: v.string(),
     destinationCountryCode: v.string(),
     destinationUNLocode: v.string(),
+    vesselImo: v.optional(v.string()),
     mode: v.union(v.literal("ocean"), v.literal("air"), v.literal("rail"), v.literal("road")),
     status: v.union(v.literal("draft"), v.literal("active"), v.literal("inactive")),
     createdAt: v.number(),

@@ -74,3 +74,15 @@ export const create = mutation({
     });
   },
 });
+export const setVesselImo = mutation({
+  args: { laneId: v.id("trade_lanes"), vesselImo: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    const lane = await ctx.db.get(args.laneId);
+    if (!(await canAccess(ctx, identity.subject, lane))) throw new Error("Trade lane not found");
+    const vesselImo = args.vesselImo?.trim();
+    if (vesselImo && !/^\d{7}$/.test(vesselImo)) throw new Error("IMO number must contain seven digits");
+    await ctx.db.patch(args.laneId, { vesselImo: vesselImo || undefined, updatedAt: Date.now() });
+  },
+});
