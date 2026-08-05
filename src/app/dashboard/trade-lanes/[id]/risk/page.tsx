@@ -1,119 +1,94 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/purity */
 "use client";
 
-import { useState, useEffect } from "react";
-import { Search, ChevronLeft, ChevronRight, Ship } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useQuery } from "convex/react";
+import { useParams } from "next/navigation";
+import { Ship } from "lucide-react";
 import { GeoRiskNavigator, GeoRiskData } from "@/components/georisk/ai/GeoRiskNavigator";
 import { MaerskPortVerification } from "@/components/georisk/maersk-port-verification";
-import { cn } from "@/lib/utils";
+import { api } from "../../../../../../convex/_generated/api";
+import { findGeoRiskLane, type GeoRiskLane, type GeoRiskScore, normalizeGeoRiskScore } from "@/lib/georisk-data";
 
 export default function Home() {
-    const [lanes, setLanes] = useState<any[]>([]);
-    const [scores, setScores] = useState<any[]>([]);
-    const [selectedLaneId, setSelectedLaneId] = useState<number | null>(null);
-    const [startIndex, setStartIndex] = useState(0);
+    const { id } = useParams<{ id: string }>();
+    const workspaceLane = useQuery(api.trade_lanes.get, { laneId: id });
+    const [scores, setScores] = useState<GeoRiskScore[]>([]);
+    const [matchedGeoRiskLane, setMatchedGeoRiskLane] = useState<GeoRiskLane | null>(null);
+    const lanes = workspaceLane ? [{
+        id: workspaceLane._id,
+        origin_port: {
+            id: workspaceLane.originUNLocode,
+            name: workspaceLane.originName,
+            unlocode: workspaceLane.originUNLocode,
+            countryCode: workspaceLane.originCountryCode,
+        },
+        destination_port: {
+            id: workspaceLane.destinationUNLocode,
+            name: workspaceLane.destinationName,
+            unlocode: workspaceLane.destinationUNLocode,
+            countryCode: workspaceLane.destinationCountryCode,
+        },
+    }] : [];
 
-    // Mock Data for "Immediate" Feel if API fails
     useEffect(() => {
         const controller = new AbortController();
-        const timeout = window.setTimeout(() => controller.abort(), 10_000);
+        if (!workspaceLane) return () => controller.abort();
 
-        const fetchData = async () => {
-            try {
-                const [lanesRes, scoresRes] = await Promise.all([
-                    fetch("/api/georisk/lanes", { signal: controller.signal }),
-                    fetch("/api/georisk/risk-scores", { signal: controller.signal })
-                ]);
-                if (lanesRes.ok && scoresRes.ok) {
-                    const lanesData = await lanesRes.json();
-                    setLanes(lanesData);
-                    setScores(await scoresRes.json());
-                    if (lanesData.length > 0) {
-                        setSelectedLaneId(lanesData[0].id);
-                    }
-                } else {
-                    throw new Error("Local API offline");
-                }
-            } catch (error) {
-                console.warn("Using high-fidelity mock data for Vercel demo");
-                // HIGH FIDELITY MOCK FALLBACK
-                const mockLanes = [
-                    { id: 1, origin_port: { name: "Mumbai", longitude: 72.8777, latitude: 19.0760 }, destination_port: { name: "London", longitude: -0.1276, latitude: 51.5074 } },
-                    { id: 2, origin_port: { name: "Shanghai", longitude: 121.4737, latitude: 31.2304 }, destination_port: { name: "Rotterdam", longitude: 4.4777, latitude: 51.9225 } },
-                    { id: 3, origin_port: { name: "Singapore", longitude: 103.8198, latitude: 1.3521 }, destination_port: { name: "New York", longitude: -74.0060, latitude: 40.7128 } },
-                    { id: 4, origin_port: { name: "Dubai", longitude: 55.2708, latitude: 25.2048 }, destination_port: { name: "Hamburg", longitude: 9.9937, latitude: 53.5511 } }
-                ];
-                const mockScores = [
-                    { entityType: 'lane', entityId: 1, score: 82, status: 'watch', breakdown: { customs_friction: 45, weather: 12, zone: 85 } },
-                    { entityType: 'lane', entityId: 2, score: 94, status: 'severe', breakdown: { customs_friction: 88, weather: 40, zone: 95 } },
-                    { entityType: 'lane', entityId: 3, score: 22, status: 'safe', breakdown: { customs_friction: 10, weather: 5, zone: 15 } },
-                    { entityType: 'lane', entityId: 4, score: 45, status: 'watch', breakdown: { customs_friction: 30, weather: 15, zone: 50 } },
-                    { entityType: 'port', entityId: 1, breakdown: { congestion_forecast: 0.8 } },
-                    { entityType: 'port', entityId: 2, breakdown: { congestion_forecast: 0.95 } }
-                ];
-                setLanes(mockLanes);
-                setScores(mockScores);
-                setSelectedLaneId(1);
-            } finally {
-                window.clearTimeout(timeout);
+        void Promise.all([
+            fetch("/api/georisk/lanes", { signal: controller.signal }),
+            fetch("/api/georisk/risk-scores", { signal: controller.signal }),
+        ]).then(async ([lanesResponse, scoresResponse]) => {
+            if (!lanesResponse.ok || !scoresResponse.ok) throw new Error("GeoRisk unavailable");
+            const availableLanes = await lanesResponse.json() as GeoRiskLane[];
+            const rawScores = await scoresResponse.json() as Record<string, unknown>[];
+            if (!controller.signal.aborted) {
+                setMatchedGeoRiskLane(findGeoRiskLane(
+                    availableLanes,
+                    workspaceLane.originUNLocode,
+                    workspaceLane.destinationUNLocode,
+                ) ?? null);
+                setScores(rawScores.map(normalizeGeoRiskScore));
             }
-        };
-        fetchData();
-
-        return () => {
-            window.clearTimeout(timeout);
-            controller.abort();
-        };
-    }, []);
+        }).catch(() => {
+            if (!controller.signal.aborted) {
+                setMatchedGeoRiskLane(null);
+                setScores([]);
+            }
+        });
+        return () => controller.abort();
+    }, [workspaceLane]);
 
     // Helper to join data with ML-enhanced fields
-    const getGeoRiskDataForLane = (lane: any): GeoRiskData => {
-        const scoreData = scores.find(s => s.entityType === 'lane' && s.entityId === lane.id);
-        const score = scoreData?.score || 0;
+    const getGeoRiskDataForLane = (): GeoRiskData => {
+        const scoreData = matchedGeoRiskLane
+            ? scores.find(s => s.entityType === 'lane' && s.entityId === matchedGeoRiskLane.id)
+            : undefined;
+        const score = scoreData?.score ?? 0;
+        const scoreAvailable = Boolean(scoreData);
         let level: 'LOW' | 'MEDIUM' | 'HIGH' | 'SEVERE' = 'LOW';
         if (score >= 90) level = 'SEVERE';
         else if (score >= 80) level = 'HIGH';
         else if (score >= 30) level = 'MEDIUM';
 
-        const originScore = scores.find(s => s.entityType === 'port' && s.entityId === lane.origin_port_id);
-        const destScore = scores.find(s => s.entityType === 'port' && s.entityId === lane.destination_port_id);
-
-        // Default Advisors
-        let advisory = "Standard maritime monitoring active. No anomalies.";
+        let advisory = scoreAvailable
+            ? "Standard maritime monitoring active. No anomalies."
+            : "No GeoRisk score is available for this UN/LOCODE pair yet.";
         if (level === 'SEVERE') advisory = "CRITICAL: Extreme risk levels detected. Immediate deviation recommended.";
-        if (level === 'HIGH') advisory = "CRITICAL: Immediate route assessment required due to active conflict zone proximity.";
-        if (level === 'MEDIUM') advisory = "Advisory: Elevated risk factors detected in transit corridor.";
-
-        // ... existing extraction logic
-        const congestion = (originScore?.breakdown?.congestion_forecast || destScore?.breakdown?.congestion_forecast);
-        const routing = scoreData?.breakdown?.route_alternative ? {
-            has_safer_route: true,
-            alternative: scoreData.breakdown.route_alternative
-        } : undefined;
-
+        if (level === 'HIGH') advisory = "CRITICAL: Immediate route assessment required.";
+        if (level === 'MEDIUM') advisory = "Advisory: Elevated risk factors detected.";
         return {
             score,
             level,
+            available: scoreAvailable,
             advisory,
             factors: {
-                zone: { score: scoreData?.breakdown?.zone || 0, weight: 0.4, details: [] },
-                sanctions: { score: 0, weight: 0.4, details: [], available: true },
-                weather: {
-                    score: scoreData?.breakdown?.weather || 0,
-                    weight: 0.2,
-                    details: { description: "Real-time sync", windSpeed: 0, visibility: 10000 },
-                    available: true
-                },
+                zone: { score: Number(scoreData?.breakdown?.zone ?? 0), weight: 0.4, details: [] },
                 friction: {
-                    score: scoreData?.breakdown?.customs_friction || 0,
+                    score: Number(scoreData?.breakdown?.customs_friction ?? 0),
                     weight: 1.0,
-                    details: scoreData?.breakdown?.customs_friction ? ["Automated NLP detected trade friction signals"] : []
+                    details: scoreData?.breakdown?.customs_friction ? ["Trade friction signal detected by GeoRisk"] : []
                 }
             },
-            congestion,
-            routing,
-            premium: true,
-            lastUpdated: Date.now()
         };
     };
 
@@ -125,130 +100,41 @@ export default function Home() {
                 {/* Top Navigation Bar */}
                 <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-6 z-20">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-[14px] font-normal text-black tracking-tight">Portfolio Overview</h1>
+                        <h1 className="text-[14px] font-normal text-black tracking-tight">Lane Risk Overview</h1>
                         <span className="px-1.5 py-0.5 rounded text-[9px] bg-gray-100 text-gray-500 border border-gray-200 font-normal tracking-wide">
                             LIVE
                         </span>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        <div className="relative">
-                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Search..."
-                                className="h-8 pl-8 pr-3 bg-gray-50 border border-gray-200 rounded-md text-[12px] text-gray-700 focus:outline-none focus:border-gray-400 w-44 transition-colors"
-                            />
-                        </div>
-                        <button className="h-8 px-3 bg-black hover:bg-gray-800 text-white text-[12px] font-normal rounded-md transition-colors">
-                            + Add Asset
-                        </button>
                     </div>
                 </header>
 
                 {/* Dashboard Canvas */}
                 <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
 
-                    {/* Metrics Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                        <div className="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors group">
-                            <p className="text-[9px] font-normal text-gray-400 uppercase tracking-widest mb-1">Total Assets</p>
-                            <p className="text-[14px] font-normal text-black tracking-tight">{lanes.length}</p>
-                        </div>
-                        <div className="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors group">
-                            <p className="text-[9px] font-normal text-gray-400 uppercase tracking-widest mb-1">Critical Risks</p>
-                            <div className="flex items-baseline gap-2">
-                                <p className="text-[14px] font-normal text-black tracking-tight">{scores.filter(s => s.status === 'severe').length}</p>
-                                <span className="text-[10px] text-gray-500 font-normal">Action Req.</span>
-                            </div>
-                        </div>
-                        <div className="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors group">
-                            <p className="text-[9px] font-normal text-gray-400 uppercase tracking-widest mb-1">Warning State</p>
-                            <p className="text-[14px] font-normal text-black tracking-tight">{scores.filter(s => s.status === 'watch').length}</p>
-                        </div>
-                        <div className="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors group">
-                            <p className="text-[9px] font-normal text-gray-400 uppercase tracking-widest mb-1">Intel Signals</p>
-                            <p className="text-[14px] font-normal text-black tracking-tight">12</p>
-                        </div>
-                    </div>
-
-                    {/* Scenario Selector */}
-                    {lanes.length > 0 && (
-                        <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 mb-6 relative group/nav">
-                            <h2 className="text-[9px] font-normal text-gray-400 uppercase tracking-widest mb-3 flex justify-between items-center">
-                                Select Route Intelligence
-                                <div className="flex items-center gap-3">
-                                    <span className="text-gray-300">Viewing {startIndex + 1}-{Math.min(startIndex + 4, lanes.length)} of {lanes.length}</span>
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            disabled={startIndex === 0}
-                                            onClick={() => setStartIndex(Math.max(0, startIndex - 1))}
-                                            className="p-1 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                        >
-                                            <ChevronLeft className="h-3 w-3 text-gray-600" />
-                                        </button>
-                                        <button
-                                            disabled={startIndex + 4 >= lanes.length}
-                                            onClick={() => setStartIndex(Math.min(lanes.length - 4, startIndex + 1))}
-                                            className="p-1 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                        >
-                                            <ChevronRight className="h-3 w-3 text-gray-600" />
-                                        </button>
-                                    </div>
-                                </div>
-                            </h2>
-
-                            <div className="grid grid-cols-4 gap-2 flex-1">
-                                {lanes.slice(startIndex, startIndex + 4).map((lane) => {
-                                    const score = scores.find(s => s.entityType === 'lane' && s.entityId === lane.id)?.score || 0;
-                                    return (
-                                        <button
-                                            key={lane.id}
-                                            onClick={() => setSelectedLaneId(lane.id)}
-                                            className={cn(
-                                                "p-2.5 rounded-md border transition-all text-left bg-white",
-                                                selectedLaneId === lane.id
-                                                    ? "border-gray-500 ring-1 ring-gray-100 shadow-sm"
-                                                    : "border-gray-200 hover:border-gray-300"
-                                            )}
-                                        >
-                                            <div className="flex items-center justify-between mb-0.5">
-                                                <div className="flex items-center gap-1.5 min-w-0">
-                                                    <span className="text-[10px]">
-                                                        {score >= 90 ? '👾' :
-                                                            score >= 80 ? '⛔' :
-                                                                score >= 30 ? '⚠️' :
-                                                                    <span className="text-green-500 font-bold tracking-tight text-[11px]">✓</span>}
-                                                    </span>
-                                                    <span className="text-[10px] font-normal text-black truncate">
-                                                        {lane.origin_port?.name} → {lane.destination_port?.name}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="text-[9px] text-gray-400">
-                                                Risk Score: {score}/100
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                    {/* Lane summary */}
+                    {workspaceLane && (
+                        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+                            <div className="rounded-lg border border-gray-200 bg-white p-4"><p className="mb-1 text-[9px] uppercase tracking-widest text-gray-400">Lane</p><p className="text-[12px] font-medium text-black">{workspaceLane.code}</p></div>
+                            <div className="rounded-lg border border-gray-200 bg-white p-4"><p className="mb-1 text-[9px] uppercase tracking-widest text-gray-400">Origin</p><p className="text-[12px] font-medium text-black">{workspaceLane.originUNLocode}</p></div>
+                            <div className="rounded-lg border border-gray-200 bg-white p-4"><p className="mb-1 text-[9px] uppercase tracking-widest text-gray-400">Destination</p><p className="text-[12px] font-medium text-black">{workspaceLane.destinationUNLocode}</p></div>
+                            <div className="rounded-lg border border-gray-200 bg-white p-4"><p className="mb-1 text-[9px] uppercase tracking-widest text-gray-400">GeoRisk match</p><p className="text-[12px] font-medium text-black">{matchedGeoRiskLane ? "Matched" : "Awaiting data"}</p></div>
                         </div>
                     )}
-
                     {/* Main Feed - Single Card View */}
                     <div className="pb-4 max-w-5xl mx-auto">
                         {lanes.length > 0 ? (
                             (() => {
-                                const selectedLane = lanes.find(l => l.id === selectedLaneId) || lanes[0];
+                                const selectedLane = lanes[0];
                                 return (
                                     <div key={selectedLane.id}>
                                         <MaerskPortVerification
                                             origin={selectedLane.origin_port?.name || "Unknown origin"}
                                             destination={selectedLane.destination_port?.name || "Unknown destination"}
+                                            originUNLocode={selectedLane.origin_port.unlocode}
+                                            destinationUNLocode={selectedLane.destination_port.unlocode}
                                         />
                                         <GeoRiskNavigator
                                             route={`${selectedLane.origin_port?.name} → ${selectedLane.destination_port?.name}`}
-                                            data={getGeoRiskDataForLane(selectedLane)}
+                                            data={getGeoRiskDataForLane()}
                                         />
                                     </div>
                                 );
@@ -258,11 +144,8 @@ export default function Home() {
                                 <div className="mx-auto w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 border border-gray-200">
                                     <Ship className="h-5 w-5 text-gray-400" />
                                 </div>
-                                <h3 className="text-gray-600 font-normal text-[14px] mb-1">No Active Routes</h3>
-                                <p className="text-gray-400 text-[12px] mb-4">Initialize a new route to begin risk analysis.</p>
-                                <button className="px-4 py-1.5 bg-black hover:bg-gray-800 text-white text-[12px] font-normal rounded-md transition-colors">
-                                    Monitor New Route
-                                </button>
+                                <h3 className="text-gray-600 font-normal text-[14px] mb-1">{workspaceLane === undefined ? "Loading lane…" : "Trade lane unavailable"}</h3>
+                                <p className="text-gray-400 text-[12px]">Return to Trade Lanes and select a valid workspace.</p>
                             </div>
                         )}
                     </div>

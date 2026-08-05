@@ -15,6 +15,7 @@ interface RiskFactor {
 
 export interface GeoRiskData {
     score: number;
+    available?: boolean;
     level: 'LOW' | 'MEDIUM' | 'HIGH' | 'SEVERE';
     advisory: string;
     factors?: {
@@ -60,6 +61,7 @@ export const GeoRiskNavigator: React.FC<GeoRiskNavigatorProps> = ({
         if (data.level === 'SEVERE') return 'text-purple-600 bg-purple-50 border-purple-200';
         if (data.level === 'HIGH') return 'text-red-600 bg-red-50 border-red-200';
         if (data.level === 'MEDIUM') return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+        if (data.available === false) return 'text-slate-500 bg-slate-50 border-slate-200';
         return 'text-green-600 bg-green-50 border-green-200';
     };
 
@@ -104,7 +106,7 @@ export const GeoRiskNavigator: React.FC<GeoRiskNavigatorProps> = ({
                     <div>
                         <p className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Route Risk Score</p>
                         <div className="flex items-baseline gap-2">
-                            <span className={cn("text-[24px] font-bold", getScoreColor())}>{data.score}</span>
+                            <span className={cn("text-[24px] font-bold", getScoreColor())}>{data.available === false ? "—" : data.score}</span>
                             <span className="text-[14px] text-slate-500">/ 100</span>
                         </div>
                     </div>
@@ -116,7 +118,8 @@ export const GeoRiskNavigator: React.FC<GeoRiskNavigatorProps> = ({
                                     data.level === 'MEDIUM' ? "bg-yellow-500" : "bg-green-500"
                         )} />
                         <span className="text-[10px] font-medium uppercase tracking-wide">
-                            {data.level === 'LOW' ? 'Low Risk' :
+                            {data.available === false ? 'Awaiting Score' :
+                                data.level === 'LOW' ? 'Low Risk' :
                                 data.level === 'MEDIUM' ? 'Medium Risk' :
                                     data.level === 'HIGH' ? 'High Risk' :
                                         'Severe Risk'}

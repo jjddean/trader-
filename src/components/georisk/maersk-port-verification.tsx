@@ -15,6 +15,7 @@ interface MaerskLocation {
 
 interface VerifiedPort {
   requestedName: string;
+  unlocode: string;
   location?: MaerskLocation;
   loading: boolean;
 }
@@ -35,34 +36,41 @@ function preferredLocation(value: unknown): MaerskLocation | undefined {
 export function MaerskPortVerification({
   origin,
   destination,
+  originUNLocode,
+  destinationUNLocode,
 }: {
   origin: string;
   destination: string;
+  originUNLocode: string;
+  destinationUNLocode: string;
 }) {
   const [ports, setPorts] = useState<VerifiedPort[]>([
-    { requestedName: origin, loading: true },
-    { requestedName: destination, loading: true },
+    { requestedName: origin, unlocode: originUNLocode, loading: true },
+    { requestedName: destination, unlocode: destinationUNLocode, loading: true },
   ]);
 
   useEffect(() => {
     const controller = new AbortController();
-    const names = [origin, destination];
+    const portsToVerify = [
+      { requestedName: origin, unlocode: originUNLocode },
+      { requestedName: destination, unlocode: destinationUNLocode },
+    ];
 
     void Promise.all(
-      names.map(async (requestedName) => {
+      portsToVerify.map(async (port) => {
         try {
-          const query = new URLSearchParams({ cityName: requestedName });
+          const query = new URLSearchParams({ unlocode: port.unlocode });
           const response = await fetch(`/api/maersk/locations?${query}`, {
             signal: controller.signal,
           });
-          if (!response.ok) return { requestedName, loading: false };
+          if (!response.ok) return { ...port, loading: false };
           return {
-            requestedName,
+            ...port,
             location: preferredLocation(await response.json()),
             loading: false,
           };
         } catch {
-          return { requestedName, loading: false };
+          return { ...port, loading: false };
         }
       }),
     ).then((results) => {
@@ -70,7 +78,7 @@ export function MaerskPortVerification({
     });
 
     return () => controller.abort();
-  }, [origin, destination]);
+  }, [origin, destination, originUNLocode, destinationUNLocode]);
 
   return (
     <section className="mb-4 rounded-lg border border-slate-200 bg-white p-4">
@@ -88,7 +96,7 @@ export function MaerskPortVerification({
 
       <div className="grid gap-3 sm:grid-cols-2">
         {ports.map((port, index) => (
-          <div key={`${index}-${port.requestedName}`} className="rounded-md border border-slate-200 p-3">
+          <div key={`${index}-${port.requestedName}`} className="min-h-[92px] rounded-md border border-slate-200 p-3">
             <p className="text-[9px] font-medium tracking-wider text-slate-400 uppercase">
               {index === 0 ? "Origin" : "Destination"}
             </p>

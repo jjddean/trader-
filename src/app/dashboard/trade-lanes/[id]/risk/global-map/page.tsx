@@ -1,73 +1,90 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/purity */
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQuery } from "convex/react";
+import { useParams } from "next/navigation";
+
+import { api } from "../../../../../../../convex/_generated/api";
 import { RiskMap } from "@/components/georisk/maps/RiskMap";
+import {
+  findGeoRiskLane,
+  type GeoRiskLane,
+  type GeoRiskScore,
+  normalizeGeoRiskScore,
+} from "@/lib/georisk-data";
 
 export default function GlobalMapPage() {
-    const [lanes, setLanes] = useState<any[]>([]);
-    const [scores, setScores] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+  const { id } = useParams<{ id: string }>();
+  const workspaceLane = useQuery(api.trade_lanes.get, { laneId: id });
+  const [lanes, setLanes] = useState<GeoRiskLane[]>([]);
+  const [scores, setScores] = useState<GeoRiskScore[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const controller = new AbortController();
+  useEffect(() => {
+    const controller = new AbortController();
+    if (!workspaceLane) return () => controller.abort();
 
-        const fetchData = async () => {
-            try {
-                const [lanesRes, scoresRes] = await Promise.all([
-                    fetch("/api/georisk/lanes", { signal: controller.signal }),
-                    fetch("/api/georisk/risk-scores", { signal: controller.signal })
-                ]);
-                if (!lanesRes.ok || !scoresRes.ok) throw new Error("GeoRisk API offline");
-                setLanes(await lanesRes.json());
-                setScores(await scoresRes.json());
-            } catch {
-                if (controller.signal.aborted) return;
-                setLanes([]);
-                setScores([]);
-            } finally {
-                if (!controller.signal.aborted) setLoading(false);
-            }
-        };
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [lanesRes, scoresRes] = await Promise.all([
+          fetch("/api/georisk/lanes", { signal: controller.signal }),
+          fetch("/api/georisk/risk-scores", { signal: controller.signal }),
+        ]);
+        if (!lanesRes.ok || !scoresRes.ok) throw new Error("GeoRisk API offline");
 
-        void fetchData();
-        return () => controller.abort();
-    }, []);
+        const availableLanes = (await lanesRes.json()) as GeoRiskLane[];
+        const matchedLane = findGeoRiskLane(
+          availableLanes,
+          workspaceLane.originUNLocode,
+          workspaceLane.destinationUNLocode,
+        );
+        const rawScores = (await scoresRes.json()) as Record<string, unknown>[];
+        setLanes(matchedLane ? [matchedLane] : []);
+        setScores(rawScores.map(normalizeGeoRiskScore));
+      } catch {
+        if (!controller.signal.aborted) {
+          setLanes([]);
+          setScores([]);
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
 
-    return (
-        <div className="flex h-[680px] overflow-hidden rounded-lg border border-slate-200 bg-white font-sans text-gray-600">
+    void fetchData();
+    return () => controller.abort();
+  }, [workspaceLane]);
 
-            {/* Main Map View */}
-            <main className="flex-1 flex flex-col relative overflow-hidden">
-                <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-6 z-20">
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-[14px] font-normal text-black tracking-tight">Global Risk Intelligence Map</h1>
-                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-purple-50 text-purple-600 border border-purple-200 font-normal tracking-wide animate-pulse">
-                            SPATIAL INTEL
-                        </span>
-                    </div>
+  return (
+    <div className="flex h-[680px] overflow-hidden rounded-lg border border-slate-200 bg-white font-sans text-gray-600">
+      <main className="relative flex flex-1 flex-col overflow-hidden">
+        <header className="z-20 flex h-14 items-center justify-between border-b border-gray-200 bg-white px-6">
+          <h1 className="text-[14px] font-normal tracking-tight text-black">Lane Risk Map</h1>
+          <span className="rounded border border-purple-200 bg-purple-50 px-1.5 py-0.5 text-[9px] font-normal tracking-wide text-purple-600">
+            SPATIAL INTEL
+          </span>
+        </header>
 
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-green-50 border border-green-100 rounded-full">
-                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping" />
-                            <span className="text-[10px] text-green-700 font-medium">Real-time Feed Active</span>
-                        </div>
-                    </div>
-                </header>
-
-                <div className="flex-1 p-4 bg-gray-50">
-                    {loading ? (
-                        <div className="w-full h-full flex items-center justify-center bg-white border border-gray-200 rounded-xl">
-                            <div className="flex flex-col items-center gap-3">
-                                <div className="w-8 h-8 border-4 border-gray-200 border-t-black rounded-full animate-spin" />
-                                <p className="text-[12px] text-gray-500">Initializing Spatial Engine...</p>
-                            </div>
-                        </div>
-                    ) : (
-                        <RiskMap lanes={lanes} scores={scores} />
-                    )}
-                </div>
-            </main>
+        <div className="flex-1 bg-gray-50 p-4">
+          {loading || workspaceLane === undefined ? (
+            <div className="flex h-full w-full items-center justify-center rounded-xl border border-gray-200 bg-white">
+              <p className="text-[12px] text-gray-500">Loading lane spatial data…</p>
+            </div>
+          ) : lanes.length > 0 ? (
+            <RiskMap lanes={lanes} scores={scores} />
+          ) : (
+            <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-gray-200 bg-white px-6 text-center">
+              <div>
+                <p className="text-[13px] font-medium text-slate-700">Spatial route data unavailable</p>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  GeoRisk has no route matching this lane&apos;s UN/LOCODE pair yet.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
-    );
+      </main>
+    </div>
+  );
 }

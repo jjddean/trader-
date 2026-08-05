@@ -38,6 +38,12 @@ async function maerskGet(path: string, query: URLSearchParams) {
 export function searchMaerskLocations(cityName: string) {
   return maerskGet("/reference-data/locations", new URLSearchParams({ cityName }));
 }
+export function getMaerskLocationsByUNLocode(unlocode: string) {
+  return maerskGet(
+    "/reference-data/locations",
+    new URLSearchParams({ UNLocationCode: unlocode }),
+  );
+}
 
 export function getMaerskVessels(imoNumbers: string[]) {
   return maerskGet(

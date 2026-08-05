@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/purity */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -30,7 +30,6 @@ export const RiskMap: React.FC<RiskMapProps> = ({ lanes, scores }) => {
     const mapData = useMemo(() => {
         const corridors: any[] = [];
         const ports: any[] = [];
-        const vessels: any[] = [];
 
         lanes.forEach(lane => {
             const scoreData = scores.find(s => s.entityType === 'lane' && s.entityId === lane.id);
@@ -57,21 +56,11 @@ export const RiskMap: React.FC<RiskMapProps> = ({ lanes, scores }) => {
                     });
                 }
             });
-
-            // 3. Mock Vessel (midpoint)
-            const midLng = (origin[0] + dest[0]) / 2;
-            const midLat = (origin[1] + dest[1]) / 2;
-            vessels.push({
-                type: 'Feature',
-                properties: { id: `v-${lane.id}`, name: `Vessel-${lane.id.toString().padStart(3, '0')}`, level, score },
-                geometry: { type: 'Point', coordinates: [midLng, midLat] }
-            });
         });
 
         return {
             corridors: { type: 'FeatureCollection', features: corridors },
-            ports: { type: 'FeatureCollection', features: ports },
-            vessels: { type: 'FeatureCollection', features: vessels }
+            ports: { type: 'FeatureCollection', features: ports }
         };
     }, [lanes, scores]);
 
@@ -107,7 +96,7 @@ export const RiskMap: React.FC<RiskMapProps> = ({ lanes, scores }) => {
                 style={{ width: '100%', height: '100%' }}
                 mapStyle="mapbox://styles/mapbox/light-v11"
                 mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-                interactiveLayerIds={['risk-corridors', 'vessel-markers']}
+                interactiveLayerIds={['risk-corridors', 'port-markers']}
                 onMouseMove={onHover}
             >
                 <NavigationControl position="top-right" />
@@ -140,25 +129,7 @@ export const RiskMap: React.FC<RiskMapProps> = ({ lanes, scores }) => {
                             'circle-stroke-color': '#ffffff'
                         }}
                     />
-                </Source>
-
-                {/* Vessel Source */}
-                <Source id="vessel-data" type="geojson" data={mapData.vessels as any}>
-                    <Layer
-                        id="vessel-markers"
-                        type="circle"
-                        paint={{
-                            'circle-radius': 6,
-                            'circle-color': [
-                                'match', ['get', 'level'],
-                                'SEVERE', '#9333ea', 'HIGH', '#dc2626', 'MEDIUM', '#eab308', 'LOW', '#16a34a', '#94a3b8'
-                            ],
-                            'circle-stroke-width': 2,
-                            'circle-stroke-color': '#ffffff'
-                        }}
-                    />
-                </Source>
-
+                </Source>`r`n
                 {hoverInfo && (
                     <div
                         className="absolute z-10 p-2 bg-white/90 backdrop-blur-sm rounded border border-gray-200 shadow-lg pointer-events-none"
