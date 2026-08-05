@@ -49,6 +49,24 @@ export default defineSchema({
     onboardingCompletedAt: v.optional(v.number()),
   }).index("by_clerk", ["clerkId"]),
 
+  trade_lanes: defineTable({
+    userId: v.string(),
+    orgId: v.optional(v.string()),
+    code: v.string(),
+    originName: v.string(),
+    originCountryCode: v.string(),
+    originUNLocode: v.string(),
+    destinationName: v.string(),
+    destinationCountryCode: v.string(),
+    destinationUNLocode: v.string(),
+    mode: v.union(v.literal("ocean"), v.literal("air"), v.literal("rail"), v.literal("road")),
+    status: v.union(v.literal("draft"), v.literal("active"), v.literal("inactive")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_org", ["orgId"]),
+
   /** Self-serve onboarding form payload (before org for brokers; client create for managed). */
   onboarding_profiles: defineTable({
     clerkId: v.string(),
@@ -73,6 +91,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_clerk", ["clerkId"]),
+
 
   /** Per Clerk org: practice (sandbox/TDR) vs live (production CDS). */
   org_hmrc_settings: defineTable({

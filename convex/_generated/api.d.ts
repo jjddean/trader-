@@ -85,6 +85,7 @@ import type * as stripe_webhooks from "../stripe_webhooks.js";
 import type * as submissions from "../submissions.js";
 import type * as subscriptions from "../subscriptions.js";
 import type * as tariff_internal from "../tariff_internal.js";
+import type * as trade_lanes from "../trade_lanes.js";
 import type * as tre_analytics from "../tre_analytics.js";
 import type * as tre_audit from "../tre_audit.js";
 import type * as tre_imports from "../tre_imports.js";
@@ -177,6 +178,7 @@ declare const fullApi: ApiFromModules<{
   submissions: typeof submissions;
   subscriptions: typeof subscriptions;
   tariff_internal: typeof tariff_internal;
+  trade_lanes: typeof trade_lanes;
   tre_analytics: typeof tre_analytics;
   tre_audit: typeof tre_audit;
   tre_imports: typeof tre_imports;
