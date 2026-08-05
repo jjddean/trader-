@@ -76,7 +76,7 @@ export function MaerskPortVerification({
     <section className="mb-4 rounded-lg border border-slate-200 bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <h2 className="text-xs font-semibold text-slate-900">Maersk port verification</h2>
+          <h2 className="text-[12px] font-semibold text-slate-900">Maersk port verification</h2>
           <p className="mt-0.5 text-[10px] text-slate-500">
             Origin and destination matched against Maersk reference data.
           </p>
@@ -93,13 +93,13 @@ export function MaerskPortVerification({
               {index === 0 ? "Origin" : "Destination"}
             </p>
             {port.loading ? (
-              <p className="mt-2 text-xs text-slate-400">Verifying {port.requestedName}…</p>
+              <p className="mt-2 text-[12px] text-slate-400">Verifying {port.requestedName}…</p>
             ) : port.location ? (
               <div className="mt-2 flex items-start gap-2">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="truncate text-xs font-medium text-slate-900">
+                    <p className="truncate text-[12px] font-medium text-slate-900">
                       {port.location.locationName}
                     </p>
                     <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-blue-600" />
@@ -113,7 +113,7 @@ export function MaerskPortVerification({
                 </div>
               </div>
             ) : (
-              <p className="mt-2 text-xs text-slate-400">No Maersk match for {port.requestedName}.</p>
+              <p className="mt-2 text-[12px] text-slate-400">No Maersk match for {port.requestedName}.</p>
             )}
           </div>
         ))}

@@ -27,7 +27,7 @@ export default function TradeLaneRiskLayout({ children }: { children: React.Reac
               key={section.label}
               href={href}
               className={cn(
-                "rounded-md px-3 py-2 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900",
+                "rounded-md px-3 py-2 text-[12px] font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900",
                 pathname === href && "bg-slate-100 text-slate-900",
               )}
             >

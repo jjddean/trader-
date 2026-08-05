@@ -108,7 +108,7 @@ export default function AssetsPage() {
                 {/* Header */}
                 <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-6 z-20">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-sm font-normal text-black tracking-tight flex items-center gap-2">
+                        <h1 className="text-[14px] font-normal text-black tracking-tight flex items-center gap-2">
                             Fleet Asset Portfolio
                         </h1>
                         <span className="px-1.5 py-0.5 rounded text-[9px] bg-blue-50 text-blue-600 border border-blue-100 font-medium tracking-wide">
@@ -122,10 +122,10 @@ export default function AssetsPage() {
                             <input
                                 type="text"
                                 placeholder="Search vessels..."
-                                className="h-8 pl-8 pr-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 w-44 transition-colors"
+                                className="h-8 pl-8 pr-3 bg-gray-50 border border-gray-200 rounded-md text-[12px] text-gray-700 focus:outline-none focus:border-gray-400 w-44 transition-colors"
                             />
                         </div>
-                        <button className="h-8 px-3 bg-black hover:bg-gray-800 text-white text-xs font-normal rounded-md transition-colors">
+                        <button className="h-8 px-3 bg-black hover:bg-gray-800 text-white text-[12px] font-normal rounded-md transition-colors">
                             Manage Groups
                         </button>
                     </div>
@@ -142,8 +142,8 @@ export default function AssetsPage() {
                                 </div>
                                 <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Fleet exposure index</p>
                                 <div className="flex items-baseline gap-2">
-                                    <h2 className="text-2xl font-light text-black">58.4</h2>
-                                    <span className="text-xs text-red-500 flex items-center font-medium">
+                                    <h2 className="text-[24px] font-light text-black">58.4</h2>
+                                    <span className="text-[12px] text-red-500 flex items-center font-medium">
                                         +4.2% <ArrowUpRight className="h-3 w-3" />
                                     </span>
                                 </div>
@@ -186,7 +186,7 @@ export default function AssetsPage() {
                             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white">
                                 <div className="flex items-center gap-3">
                                     <Activity className="h-4 w-4 text-gray-400" />
-                                    <h3 className="text-sm font-medium text-black">Active Asset Monitoring</h3>
+                                    <h3 className="text-[14px] font-medium text-black">Active Asset Monitoring</h3>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button className="flex items-center gap-1.5 text-[11px] text-gray-500 bg-gray-50 px-2 py-1 rounded border border-gray-100 hover:bg-gray-100 transition-colors">
@@ -220,7 +220,7 @@ export default function AssetsPage() {
                                                         <Ship className="h-3.5 w-3.5" />
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs font-medium text-black">{asset.vessel}</p>
+                                                        <p className="text-[12px] font-medium text-black">{asset.vessel}</p>
                                                         <p className="text-[10px] text-gray-400">{asset.type}</p>
                                                     </div>
                                                 </div>
@@ -231,7 +231,7 @@ export default function AssetsPage() {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
                                                     <span className={cn(
-                                                        "text-xs font-semibold px-2 py-0.5 rounded-md",
+                                                        "text-[12px] font-semibold px-2 py-0.5 rounded-md",
                                                         asset.riskScore > 90 ? "bg-red-100 text-red-700" :
                                                             asset.riskScore > 60 ? "bg-orange-100 text-orange-700" :
                                                                 "bg-green-100 text-green-700"

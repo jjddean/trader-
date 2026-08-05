@@ -125,7 +125,7 @@ export default function Home() {
                 {/* Top Navigation Bar */}
                 <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-6 z-20">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-sm font-normal text-black tracking-tight">Portfolio Overview</h1>
+                        <h1 className="text-[14px] font-normal text-black tracking-tight">Portfolio Overview</h1>
                         <span className="px-1.5 py-0.5 rounded text-[9px] bg-gray-100 text-gray-500 border border-gray-200 font-normal tracking-wide">
                             LIVE
                         </span>
@@ -137,10 +137,10 @@ export default function Home() {
                             <input
                                 type="text"
                                 placeholder="Search..."
-                                className="h-8 pl-8 pr-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 w-44 transition-colors"
+                                className="h-8 pl-8 pr-3 bg-gray-50 border border-gray-200 rounded-md text-[12px] text-gray-700 focus:outline-none focus:border-gray-400 w-44 transition-colors"
                             />
                         </div>
-                        <button className="h-8 px-3 bg-black hover:bg-gray-800 text-white text-xs font-normal rounded-md transition-colors">
+                        <button className="h-8 px-3 bg-black hover:bg-gray-800 text-white text-[12px] font-normal rounded-md transition-colors">
                             + Add Asset
                         </button>
                     </div>
@@ -153,22 +153,22 @@ export default function Home() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                         <div className="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors group">
                             <p className="text-[9px] font-normal text-gray-400 uppercase tracking-widest mb-1">Total Assets</p>
-                            <p className="text-sm font-normal text-black tracking-tight">{lanes.length}</p>
+                            <p className="text-[14px] font-normal text-black tracking-tight">{lanes.length}</p>
                         </div>
                         <div className="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors group">
                             <p className="text-[9px] font-normal text-gray-400 uppercase tracking-widest mb-1">Critical Risks</p>
                             <div className="flex items-baseline gap-2">
-                                <p className="text-sm font-normal text-black tracking-tight">{scores.filter(s => s.status === 'severe').length}</p>
+                                <p className="text-[14px] font-normal text-black tracking-tight">{scores.filter(s => s.status === 'severe').length}</p>
                                 <span className="text-[10px] text-gray-500 font-normal">Action Req.</span>
                             </div>
                         </div>
                         <div className="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors group">
                             <p className="text-[9px] font-normal text-gray-400 uppercase tracking-widest mb-1">Warning State</p>
-                            <p className="text-sm font-normal text-black tracking-tight">{scores.filter(s => s.status === 'watch').length}</p>
+                            <p className="text-[14px] font-normal text-black tracking-tight">{scores.filter(s => s.status === 'watch').length}</p>
                         </div>
                         <div className="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors group">
                             <p className="text-[9px] font-normal text-gray-400 uppercase tracking-widest mb-1">Intel Signals</p>
-                            <p className="text-sm font-normal text-black tracking-tight">12</p>
+                            <p className="text-[14px] font-normal text-black tracking-tight">12</p>
                         </div>
                     </div>
 
@@ -258,9 +258,9 @@ export default function Home() {
                                 <div className="mx-auto w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 border border-gray-200">
                                     <Ship className="h-5 w-5 text-gray-400" />
                                 </div>
-                                <h3 className="text-gray-600 font-normal text-sm mb-1">No Active Routes</h3>
-                                <p className="text-gray-400 text-xs mb-4">Initialize a new route to begin risk analysis.</p>
-                                <button className="px-4 py-1.5 bg-black hover:bg-gray-800 text-white text-xs font-normal rounded-md transition-colors">
+                                <h3 className="text-gray-600 font-normal text-[14px] mb-1">No Active Routes</h3>
+                                <p className="text-gray-400 text-[12px] mb-4">Initialize a new route to begin risk analysis.</p>
+                                <button className="px-4 py-1.5 bg-black hover:bg-gray-800 text-white text-[12px] font-normal rounded-md transition-colors">
                                     Monitor New Route
                                 </button>
                             </div>

@@ -82,7 +82,7 @@ export default function IntelFeedPage() {
                 {/* Header */}
                 <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-6 z-20">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-sm font-normal text-black tracking-tight flex items-center gap-2">
+                        <h1 className="text-[14px] font-normal text-black tracking-tight flex items-center gap-2">
                             Strategic Intel Feed
                         </h1>
                         <span className="px-1.5 py-0.5 rounded text-[9px] bg-red-50 text-red-600 border border-red-100 font-medium tracking-wide flex items-center gap-1">
@@ -107,7 +107,7 @@ export default function IntelFeedPage() {
                             <input
                                 type="text"
                                 placeholder="Search intel..."
-                                className="h-8 pl-8 pr-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-700 focus:outline-none focus:border-gray-400 w-44 transition-colors"
+                                className="h-8 pl-8 pr-3 bg-gray-50 border border-gray-200 rounded-md text-[12px] text-gray-700 focus:outline-none focus:border-gray-400 w-44 transition-colors"
                             />
                         </div>
                         <button className="h-8 w-8 flex items-center justify-center border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
@@ -120,9 +120,9 @@ export default function IntelFeedPage() {
                 <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                     <div className="max-w-4xl mx-auto space-y-4">
                         {loading ? (
-                            <p className="py-12 text-center text-xs text-gray-400">Loading intelligence…</p>
+                            <p className="py-12 text-center text-[12px] text-gray-400">Loading intelligence…</p>
                         ) : incidents.length === 0 ? (
-                            <p className="py-12 text-center text-xs text-gray-400">No GeoRisk alerts available.</p>
+                            <p className="py-12 text-center text-[12px] text-gray-400">No GeoRisk alerts available.</p>
                         ) : incidents.map((incident) => (
                             <div
                                 key={incident.id}
@@ -145,7 +145,7 @@ export default function IntelFeedPage() {
                                             )} />
                                         </div>
                                         <div>
-                                            <h3 className="text-sm font-medium text-black">{incident.title}</h3>
+                                            <h3 className="text-[14px] font-medium text-black">{incident.title}</h3>
                                             <div className="flex items-center gap-2 mt-0.5">
                                                 <span className="text-[10px] text-gray-400 font-normal uppercase tracking-wider">{incident.location}</span>
                                                 <span className="text-[10px] text-gray-200">•</span>
@@ -159,7 +159,7 @@ export default function IntelFeedPage() {
                                     </div>
                                 </div>
                                 <div className="p-4 space-y-4">
-                                    <p className="text-xs text-gray-600 leading-relaxed">
+                                    <p className="text-[12px] text-gray-600 leading-relaxed">
                                         {incident.description}
                                     </p>
 
@@ -175,7 +175,7 @@ export default function IntelFeedPage() {
                                             <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">Recommended Action</span>
                                         </div>
                                         <p className={cn(
-                                            "text-xs font-medium",
+                                            "text-[12px] font-medium",
                                             incident.severity === 'severe' ? "text-red-700" : "text-gray-700"
                                         )}>
                                             {incident.recommendation}

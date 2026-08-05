@@ -29,8 +29,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
             <div className="bg-slate-900 border border-slate-700 p-3 rounded shadow-xl max-w-[220px]">
                 <p className="text-slate-400 text-[10px] uppercase font-bold tracking-wide mb-1">{dataPoint.label}</p>
                 <div className="flex items-center gap-2 mb-2">
-                    <span className="text-white font-bold text-lg">{dataPoint.score}</span>
-                    <span className="text-slate-500 text-xs">/ 100 Risk Score</span>
+                    <span className="text-white font-bold text-[18px]">{dataPoint.score}</span>
+                    <span className="text-slate-500 text-[12px]">/ 100 Risk Score</span>
                 </div>
 
                 {dataPoint.event && (
@@ -74,7 +74,7 @@ export const RouteRiskChart: React.FC<RouteRiskChartProps> = ({ route, riskLevel
             <div className="flex items-center justify-between mb-2">
                 <div>
                     <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                        <h3 className="text-[12px] font-bold text-slate-800 uppercase tracking-wider">
                             Route-Level Risk Exposure
                         </h3>
                         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">

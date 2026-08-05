@@ -41,7 +41,7 @@ export default function GlobalMapPage() {
             <main className="flex-1 flex flex-col relative overflow-hidden">
                 <header className="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-6 z-20">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-sm font-normal text-black tracking-tight">Global Risk Intelligence Map</h1>
+                        <h1 className="text-[14px] font-normal text-black tracking-tight">Global Risk Intelligence Map</h1>
                         <span className="px-1.5 py-0.5 rounded text-[9px] bg-purple-50 text-purple-600 border border-purple-200 font-normal tracking-wide animate-pulse">
                             SPATIAL INTEL
                         </span>
@@ -60,7 +60,7 @@ export default function GlobalMapPage() {
                         <div className="w-full h-full flex items-center justify-center bg-white border border-gray-200 rounded-xl">
                             <div className="flex flex-col items-center gap-3">
                                 <div className="w-8 h-8 border-4 border-gray-200 border-t-black rounded-full animate-spin" />
-                                <p className="text-xs text-gray-500">Initializing Spatial Engine...</p>
+                                <p className="text-[12px] text-gray-500">Initializing Spatial Engine...</p>
                             </div>
                         </div>
                     ) : (
