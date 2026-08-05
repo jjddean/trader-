@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { Search, ChevronLeft, ChevronRight, Ship } from "lucide-react";
 import { GeoRiskNavigator, GeoRiskData } from "@/components/georisk/ai/GeoRiskNavigator";
+import { MaerskPortVerification } from "@/components/georisk/maersk-port-verification";
 import { cn } from "@/lib/utils";
 
 export default function Home() {
@@ -240,11 +241,16 @@ export default function Home() {
                             (() => {
                                 const selectedLane = lanes.find(l => l.id === selectedLaneId) || lanes[0];
                                 return (
-                                    <GeoRiskNavigator
-                                        key={selectedLane.id}
-                                        route={`${selectedLane.origin_port?.name} → ${selectedLane.destination_port?.name}`}
-                                        data={getGeoRiskDataForLane(selectedLane)}
-                                    />
+                                    <div key={selectedLane.id}>
+                                        <MaerskPortVerification
+                                            origin={selectedLane.origin_port?.name || "Unknown origin"}
+                                            destination={selectedLane.destination_port?.name || "Unknown destination"}
+                                        />
+                                        <GeoRiskNavigator
+                                            route={`${selectedLane.origin_port?.name} → ${selectedLane.destination_port?.name}`}
+                                            data={getGeoRiskDataForLane(selectedLane)}
+                                        />
+                                    </div>
                                 );
                             })()
                         ) : (
