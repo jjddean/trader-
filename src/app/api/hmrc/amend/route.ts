@@ -14,6 +14,13 @@ import { getAuthenticatedConvex } from "../../../../lib/hmrc-route-session";
 import { resolveOrgHmrcRoutingForDeclaration } from "../../../../lib/hmrc-org-routing";
 import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
 import { logHmrcAudit } from "../../../../lib/audit-log";
+import {
+  collectGovHeaders,
+  FollowUpLrnUnavailableError,
+  resolveFollowUpContext,
+  resolveFollowUpLrn,
+} from "../../../../lib/cns/follow-up";
+import { sendCnsDeclaration } from "../../../../lib/cns/declarations";
 
 /**
  * Curated header-level (DE) fields permitted for amendment. The pointer chain is
@@ -109,9 +116,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Failed to verify declaration environment" }, { status: 403 });
     }
 
-    const tokenResult = await resolveHmrcAccessToken(convex, userId, hmrcContext);
-    if ("error" in tokenResult) {
-      return tokenResult.error;
+    // Amendments follow the route the declaration was created on.
+    const followUp = await resolveFollowUpContext(convex, declarationId as Id<"declarations">);
+
+    // CNS authenticates with Basic credentials — no HMRC OAuth token needed.
+    let hmrcToken = "";
+    if (followUp.transport === "hmrc_direct") {
+      const tokenResult = await resolveHmrcAccessToken(convex, userId, hmrcContext);
+      if ("error" in tokenResult) {
+        return tokenResult.error;
+      }
+      hmrcToken = tokenResult.token;
     }
 
     const firstItem = items[0] as {
@@ -122,7 +137,21 @@ export async function POST(request: Request) {
     const kind = (changeKind as AmendmentChangeKind) || "itemChargeAmount";
     const seq = parseInt(String(itemSequence ?? firstItem.sequence ?? "1"), 10) || 1;
 
-    const amendLrn = buildAmendFunctionalReferenceId(String(declarationId));
+    // CNS requires the ORIGINAL create LRN on an amendment; the direct HMRC path
+    // keeps its existing minted AM- reference and correlates via X-Conversation-ID.
+    let amendLrn: string;
+    try {
+      amendLrn = resolveFollowUpLrn(
+        followUp,
+        buildAmendFunctionalReferenceId(String(declarationId)),
+        "amend",
+      );
+    } catch (lrnErr: unknown) {
+      if (lrnErr instanceof FollowUpLrnUnavailableError) {
+        return NextResponse.json({ error: lrnErr.message, code: "CNS_LRN_UNAVAILABLE" }, { status: 409 });
+      }
+      throw lrnErr;
+    }
 
     let xmlPayload: string;
     if (kind === "headerField") {
@@ -211,19 +240,6 @@ export async function POST(request: Request) {
       });
     }
 
-    const hmrcResponse = await fetchHmrc(
-      declarationsEndpointUrl(hmrcContext.apiBaseUrl, "amend"),
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/xml; charset=UTF-8" },
-        body: xmlPayload,
-      },
-      request,
-      tokenResult.token,
-      eori,
-      hmrcContext,
-    );
-
     const recordAmendEvidence = async (
       outcome: "accepted" | "rejected" | "error",
       hmrcStatus: number,
@@ -248,6 +264,95 @@ export async function POST(request: Request) {
         console.warn("[AMEND] Failed to record submission evidence (non-critical):", m);
       }
     };
+
+    // CNS route — amendment through the CSP gateway.
+    if (followUp.transport === "cns_inventory") {
+      const cnsResult = await sendCnsDeclaration(followUp.config, {
+        operation: "amend",
+        xmlPayload,
+        ucn: followUp.cnsUcn,
+        forwardedGovHeaders: collectGovHeaders(request),
+      });
+
+      if (cnsResult.status === "failed") {
+        const { error: cnsError } = cnsResult;
+        const outcomeUnknown = cnsError.disposition === "outcome_unknown";
+        await recordAmendEvidence(outcomeUnknown ? "error" : "rejected", cnsError.httpStatus, null);
+        await logHmrcAudit(convex, userId, "declaration_amend_failed", {
+          declarationId,
+          mrn: String(mrn).trim(),
+          changeKind: kind,
+          transport: "cns_inventory",
+          reason: outcomeUnknown ? "cns_outcome_unknown" : "cns_rejected",
+          cnsCode: cnsError.code,
+          cnsStatus: cnsError.httpStatus,
+          details: cnsError.message.slice(0, 2000),
+        });
+        return NextResponse.json(
+          {
+            error: outcomeUnknown
+              ? "CNS did not return a definitive response to the amendment. Check notifications before retrying."
+              : "CNS rejected the amendment",
+            code: cnsError.code,
+            message: cnsError.message,
+            details: cnsError.details,
+            outcomeUnknown,
+          },
+          { status: outcomeUnknown ? 504 : cnsError.httpStatus || 502 },
+        );
+      }
+
+      await convex.mutation(api.declarations.updateDeclarationStatus, {
+        id: declarationId,
+        status: "Amendment Processing",
+      });
+      await recordAmendEvidence("accepted", cnsResult.httpStatus, null);
+
+      try {
+        await convex.mutation(api.cns.recordTransportOutcome, {
+          declarationId,
+          transportState: "cns_amend_pending",
+          ...(cnsResult.cspId ? { cspId: cnsResult.cspId } : {}),
+        });
+      } catch (stateErr: unknown) {
+        console.warn("[AMEND/CNS] Failed to persist transport state (non-critical):", stateErr);
+      }
+
+      await logHmrcAudit(convex, userId, "declaration_amended", {
+        declarationId,
+        mrn: String(mrn).trim(),
+        changeKind: kind,
+        transport: "cns_inventory",
+        cspId: cnsResult.cspId,
+        amendLrn,
+        hmrcStatus: cnsResult.httpStatus,
+      });
+
+      return NextResponse.json(
+        {
+          success: true,
+          transport: "cns_inventory",
+          status: "Amendment Processing",
+          cspId: cnsResult.cspId,
+          amendLrn,
+          hmrcStatus: cnsResult.httpStatus,
+        },
+        { status: cnsResult.httpStatus === 202 ? 202 : 200 },
+      );
+    }
+
+    const hmrcResponse = await fetchHmrc(
+      declarationsEndpointUrl(hmrcContext.apiBaseUrl, "amend"),
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/xml; charset=UTF-8" },
+        body: xmlPayload,
+      },
+      request,
+      hmrcToken,
+      eori,
+      hmrcContext,
+    );
 
     if (hmrcResponse.status === 429) {
       await recordAmendEvidence("error", 429, null);

@@ -11,6 +11,7 @@
     "test:h1": "node --test --import tsx \"tests/h1/*.test.ts\"",
     "test:fo": "node --test --import tsx tests/h1/financial-obligations.test.ts && node scripts/check-financial-obligations.mjs",
     "test:tre": "node --test --import tsx \"tests/tre/*.test.ts\"",
+    "test:cns": "node --test --import tsx \"tests/cns/*.test.ts\"",
     "test:tdr-dry-run": "node scripts/tdr-dry-run.mjs",
     "test:audit-smoke": "node scripts/smoke-audit-log-shape.mjs",
     "test:tdr": "npm run test:h1 && npm run test:tre && npm run test:tdr-dry-run",

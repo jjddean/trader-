@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
-import { commodityRequiresSupplementaryUnit, mapToCDS_H1, validateCdsCodeLists, validateOverseasExporter, validateTransactionNatureCode } from "../../../../lib/wco-mapper";
+import { commodityRequiresSupplementaryUnit, mapToCDS_H1, validateCdsCodeLists, validateOverseasExporter, validateTradeTerms, validateTransactionNatureCode } from "../../../../lib/wco-mapper";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
 import { declarationsEndpointUrl } from "../../../../lib/hmrc-config";
 import { resolveOrgHmrcRoutingForDeclaration } from "../../../../lib/hmrc-org-routing";
@@ -11,6 +11,10 @@ import { buildPayloadDebugSnapshot, renderH1Xml, validateXmlPreflight } from "..
 import { validateGoodsLocationForSubmit } from "../../../../lib/goods-location";
 import { validateGoodsItemSequences } from "../../../../lib/submit-goods-items";
 import { logHmrcAudit } from "../../../../lib/audit-log";
+import { readCnsConfig } from "../../../../lib/cns/config";
+import { CnsRoutingError, selectDeclarationTransport } from "../../../../lib/cns/routing";
+import { sendCnsDeclaration } from "../../../../lib/cns/declarations";
+import { INVENTORY_REFERENCE_TYPE_CODE } from "../../../../lib/cns/inventory-xml";
 import { evaluateRules, activeEffects, summarizeFailures, type RuleDefinition, type ScenarioInput } from "../../../../../convex/lib/rule_engine";
 
 type SubmitItemInput = {
@@ -92,6 +96,7 @@ function validateDeclaration(lane: SubmitDeclarationInput, items: SubmitItemInpu
   if (!lane?.invoiceCurrency) errors.push("Missing invoice currency");
   errors.push(...validateOverseasExporter(lane as Record<string, unknown>));
   errors.push(...validateTransactionNatureCode(lane as Record<string, unknown>));
+  errors.push(...validateTradeTerms(lane as Record<string, unknown>));
   if (!Array.isArray(items) || items.length === 0) {
     errors.push("No goods items");
     return errors;
@@ -219,11 +224,78 @@ export async function POST(request: Request) {
       );
     }
 
-    const tokenResult = await resolveHmrcAccessToken(convex, userId, hmrcContext);
-    if ("error" in tokenResult) {
-      return tokenResult.error;
+    // Transport routing (docs/cns/plan/part-1-repo-map.md §5). Decided here,
+    // before mapping, because the CNS route injects the inventory reference into
+    // the XML. A declaration already submitted keeps its original route.
+    const cnsConfig = readCnsConfig();
+    let routingContext: {
+      cnsClearanceEnabled: boolean;
+      cnsBadgeHolder: boolean;
+      storedTransport?: "hmrc_direct" | "cns_inventory";
+      cnsUcn?: string;
+    };
+    try {
+      routingContext = await convex.query(api.cns.getRoutingContext, { declarationId });
+    } catch (routingErr: unknown) {
+      const m = routingErr instanceof Error ? routingErr.message : String(routingErr);
+      console.error("[SUBMIT] Failed to resolve CNS routing context:", m);
+      return NextResponse.json({ error: "Failed to resolve submission routing" }, { status: 500 });
     }
-    const token = tokenResult.token;
+
+    let transport: "hmrc_direct" | "cns_inventory";
+    try {
+      transport = selectDeclarationTransport(
+        { route: lane.route, locationId: lane.locationId, cnsUcn: routingContext.cnsUcn },
+        { cnsClearanceEnabled: routingContext.cnsClearanceEnabled },
+        { cnsBadgeHolder: routingContext.cnsBadgeHolder },
+        cnsConfig,
+      ).transport;
+    } catch (err: unknown) {
+      if (err instanceof CnsRoutingError) {
+        // A declaration at an inventory-linked location that cannot go via CNS
+        // must stop here. Falling through to the direct HMRC route would file a
+        // frontier declaration the port cannot release against.
+        return NextResponse.json({ error: err.message, code: "CNS_ROUTE_BLOCKED" }, { status: 400 });
+      }
+      throw err;
+    }
+
+    // Bind the declaration to this transport (or reject a route change).
+    try {
+      await convex.mutation(api.cns.assertAndStampTransport, {
+        declarationId,
+        transport,
+        ...(transport === "cns_inventory"
+          ? {
+              environment: cnsConfig.environment,
+              badgeId: cnsConfig.badgeId,
+              topic: cnsConfig.topic,
+              goodsLocationCode: cnsConfig.goodsLocationCode,
+              inventoryReferenceType: INVENTORY_REFERENCE_TYPE_CODE,
+            }
+          : {}),
+      });
+    } catch (transportErr: unknown) {
+      const m = transportErr instanceof Error ? transportErr.message : String(transportErr);
+      if (m.includes("TRANSPORT_MISMATCH")) {
+        return NextResponse.json(
+          { error: m.replace(/^[\s\S]*TRANSPORT_MISMATCH:\s*/, "").trim().split("\n")[0] },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json({ error: "Failed to bind submission transport" }, { status: 500 });
+    }
+
+    // CNS authenticates with Basic credentials, not HMRC OAuth — resolving an
+    // HMRC token on that route would block submission on an unrelated consent.
+    let token = "";
+    if (transport === "hmrc_direct") {
+      const tokenResult = await resolveHmrcAccessToken(convex, userId, hmrcContext);
+      if ("error" in tokenResult) {
+        return tokenResult.error;
+      }
+      token = tokenResult.token;
+    }
 
     // Rule engine runs BEFORE mapping so its forbidden-document list can
     // shape the emitted XML. Pure JS — safe to run before the auth/network
@@ -299,7 +371,12 @@ export async function POST(request: Request) {
 
     let payloadInfo;
     try {
-      payloadInfo = mapToCDS_H1(lane, items, { omitAdditionalDocuments, forbiddenDocCodes });
+      payloadInfo = mapToCDS_H1(lane, items, {
+        omitAdditionalDocuments,
+        forbiddenDocCodes,
+        // DE 2/1 Z/MCR inventory reference — CNS route only.
+        ...(transport === "cns_inventory" ? { cnsUcn: routingContext.cnsUcn } : {}),
+      });
     } catch (mappingError: unknown) {
       const message = mappingError instanceof Error ? mappingError.message : "Unknown mapping error";
       return NextResponse.json(
@@ -385,11 +462,18 @@ export async function POST(request: Request) {
         dryRunOnly: true,
         hmrcCallAttempted: false,
         stage: "local_preflight_complete",
+        transport,
+        ...(transport === "cns_inventory"
+          ? { cnsUcn: routingContext.cnsUcn, cnsBadge: cnsConfig.badgeId }
+          : {}),
         requestEvidence: {
           endpoint: "local-preflight",
           method: "POST",
           contentType: "application/xml; charset=UTF-8",
-          accept: hmrcContext.declarationsAccept,
+          accept:
+            transport === "cns_inventory"
+              ? cnsConfig.declarationAccept
+              : hmrcContext.declarationsAccept,
           xmlByteLength: new TextEncoder().encode(xmlPayload).length,
         },
         localPreflight: {
@@ -398,7 +482,8 @@ export async function POST(request: Request) {
           xml: xmlPreflight.valid ? "pass" : "fail",
           xmlFailedChecks: xmlPreflight.failed.length > 0 ? xmlPreflight.failed : undefined,
           validationFields: validationErrors.length === 0 ? "pass" : "fail",
-          token: token ? "pass" : "fail",
+          // CNS uses Basic auth, so there is no HMRC token to check on that route.
+          token: transport === "cns_inventory" ? "n/a" : token ? "pass" : "fail",
           ruleEngine: ruleResults.length === 0
             ? "skipped"
             : ruleResults.some((r) => r.status === "fail" && r.severity === "blocking")
@@ -497,7 +582,127 @@ export async function POST(request: Request) {
       }
     };
 
-    // 4. Fire the POST request to HMRC (org mode selects sandbox vs production host)
+    // 4a. CNS inventory-linked route.
+    //
+    // Diverges from the HMRC branch below in one critical respect: CNS returns
+    // X-CSP-ID on the 202 and never X-Conversation-ID. The HMRC branch treats a
+    // missing X-Conversation-ID as a hard failure, which would reject every
+    // successful CNS submission. A 202 here means only that CNS received and
+    // basic-validated the request — not inventory linking, not CDS acceptance,
+    // not clearance. Everything downstream arrives on topic notifications.
+    if (transport === "cns_inventory") {
+      const forwardedGovHeaders: Record<string, string> = {};
+      request.headers.forEach((value, name) => {
+        if (name.toLowerCase().startsWith("gov-")) forwardedGovHeaders[name] = value;
+      });
+
+      const cnsResult = await sendCnsDeclaration(cnsConfig, {
+        operation: "create",
+        xmlPayload,
+        ucn: routingContext.cnsUcn,
+        forwardedGovHeaders,
+      });
+
+      if (cnsResult.status === "failed") {
+        const { error: cnsError } = cnsResult;
+        // An unknown outcome must NOT revert the claim: CNS may still have
+        // forwarded the declaration, and releasing the claim would let a retry
+        // create a second live declaration under a fresh LRN.
+        const outcomeUnknown = cnsError.disposition === "outcome_unknown";
+        if (!outcomeUnknown) {
+          await revertClaim();
+        }
+        await recordSubmissionEvidence(outcomeUnknown ? "error" : "rejected", cnsError.httpStatus, null);
+        try {
+          await convex.mutation(api.cns.recordTransportOutcome, {
+            declarationId,
+            transportState: outcomeUnknown ? "cns_outcome_unknown" : "cns_request_failed",
+          });
+        } catch (stateErr: unknown) {
+          console.warn("[SUBMIT/CNS] Failed to persist transport state (non-critical):", stateErr);
+        }
+        await logHmrcAudit(convex, userId, "declaration_submit_failed", {
+          declarationId,
+          reason: outcomeUnknown ? "cns_outcome_unknown" : "cns_rejected",
+          transport: "cns_inventory",
+          cnsCode: cnsError.code,
+          cnsStatus: cnsError.httpStatus,
+          details: cnsError.message.slice(0, 2000),
+          environment: hmrcContext.environment,
+        });
+
+        return NextResponse.json(
+          {
+            error: outcomeUnknown
+              ? "CNS did not return a definitive response. The submission may still be in progress — do not resubmit until notifications have been checked."
+              : "CNS rejected the declaration",
+            code: cnsError.code,
+            message: cnsError.message,
+            details: cnsError.details,
+            outcomeUnknown,
+            requestEvidence: {
+              endpoint: "cns:/cds/customs/declarations/",
+              method: "POST",
+              contentType: "application/xml; charset=utf-8",
+              accept: cnsConfig.declarationAccept,
+              badge: cnsConfig.badgeId,
+              xmlByteLength: new TextEncoder().encode(xmlPayload).length,
+            },
+            payloadDebug,
+            xmlPayload,
+          },
+          { status: outcomeUnknown ? 504 : cnsError.httpStatus || 502 },
+        );
+      }
+
+      await recordSubmissionEvidence("accepted", cnsResult.httpStatus, null);
+
+      let cnsStatePersisted = true;
+      try {
+        await convex.mutation(api.cns.recordTransportOutcome, {
+          declarationId,
+          transportState: "cns_received_pending_processing",
+          ...(cnsResult.cspId ? { cspId: cnsResult.cspId } : {}),
+        });
+      } catch (stateErr: unknown) {
+        cnsStatePersisted = false;
+        console.error("[SUBMIT/CNS] CNS accepted (202) but state persist failed:", stateErr);
+      }
+
+      await logHmrcAudit(convex, userId, "declaration_submitted", {
+        declarationId,
+        transport: "cns_inventory",
+        cspId: cnsResult.cspId,
+        badge: cnsConfig.badgeId,
+        topic: cnsConfig.topic,
+        ucn: routingContext.cnsUcn,
+        hmrcStatus: cnsResult.httpStatus,
+        statePersisted: cnsStatePersisted,
+        environment: hmrcContext.environment,
+      });
+
+      return NextResponse.json({
+        success: true,
+        transport: "cns_inventory",
+        // Deliberately not "Accepted": a 202 is receipt by the CSP only.
+        status: "Processing",
+        transportState: "cns_received_pending_processing",
+        statePersisted: cnsStatePersisted,
+        cspId: cnsResult.cspId,
+        hmrcStatus: cnsResult.httpStatus,
+        requestEvidence: {
+          endpoint: "cns:/cds/customs/declarations/",
+          method: "POST",
+          contentType: "application/xml; charset=utf-8",
+          accept: cnsConfig.declarationAccept,
+          badge: cnsConfig.badgeId,
+          topic: cnsConfig.topic,
+          xmlByteLength: new TextEncoder().encode(xmlPayload).length,
+        },
+      });
+    }
+
+    // 4b. Direct HMRC route (org mode selects sandbox vs production host)
     const hmrcEndpoint = declarationsEndpointUrl(hmrcContext.apiBaseUrl, "submit");
 
     const hmrcHeaders = {
