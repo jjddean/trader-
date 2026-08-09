@@ -666,9 +666,18 @@ export default function StatusTimelinePage() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h3 className="text-sm font-semibold text-slate-900">CNS inventory transport</h3>
-              <p className="mt-1 text-xs text-slate-600">
-                {declaration.cnsTransportState?.replaceAll("_", " ") || "Awaiting transport update"}
-              </p>
+              {declaration.cnsInventoryState === "passed" ? (
+                <div className="mt-1.5 flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-semibold text-emerald-700">
+                    <CheckCircle2 className="h-3 w-3" /> Passed
+                  </span>
+                  <span className="text-xs text-slate-600">Forwarded to CDS</span>
+                </div>
+              ) : (
+                <p className="mt-1 text-xs text-slate-600">
+                  {declaration.cnsTransportState?.replaceAll("_", " ") || "Awaiting transport update"}
+                </p>
+              )}
             </div>
             <span className="rounded-md border border-blue-200 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-blue-700">
               CNS
@@ -677,7 +686,7 @@ export default function StatusTimelinePage() {
           <dl className="mt-4 grid gap-3 text-xs sm:grid-cols-2 lg:grid-cols-4">
             <div><dt className="text-slate-500">UCN</dt><dd className="mt-1 font-mono text-slate-900">{declaration.cnsUcn || "—"}</dd></div>
             <div><dt className="text-slate-500">X-CSP-ID</dt><dd className="mt-1 break-all font-mono text-slate-900">{declaration.cnsCspId || latestCnsSubmission?.cspId || "—"}</dd></div>
-            <div><dt className="text-slate-500">Inventory state</dt><dd className="mt-1 text-slate-900">{declaration.cnsInventoryState?.replaceAll("_", " ") || "Pending"}</dd></div>
+            <div><dt className="text-slate-500">Inventory state</dt><dd className={cn("mt-1 font-semibold", declaration.cnsInventoryState === "passed" ? "text-emerald-700" : "text-slate-900")}>{declaration.cnsInventoryState?.replaceAll("_", " ") || "Pending"}</dd></div>
             <div><dt className="text-slate-500">Outcome certainty</dt><dd className="mt-1 text-slate-900">{latestCnsSubmission?.outcomeCertainty || "Pending"}</dd></div>
           </dl>
           {(latestCnsSubmission?.cnsErrorCode || latestCnsSubmission?.cnsErrorMessage) && (
