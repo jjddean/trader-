@@ -54,6 +54,28 @@ export type CnsSubmitResult =
       error: NormalizedCnsError;
     };
 
+export function classifyCnsDeclarationResponse(response: CnsResponse): CnsSubmitResult {
+  if (response.status === 202) {
+    const cspId = readCspId(response.headers);
+    if (!cspId) {
+      return {
+        status: "failed",
+        error: {
+          httpStatus: 202,
+          code: "MISSING_CSP_ID",
+          message: "CNS returned 202 without the required X-CSP-ID correlation header.",
+          details: [],
+          disposition: "outcome_unknown",
+          alert: true,
+          rawBody: response.body.slice(0, 4000),
+        },
+      };
+    }
+    return { status: "accepted", httpStatus: 202, cspId };
+  }
+  return { status: "failed", error: normalizeCnsError(response.status, response.body) };
+}
+
 /**
  * Local invariants enforced before a single byte goes to CNS. Failing here costs
  * nothing; failing at the CSP costs an inventory pre-check and an operator
@@ -112,33 +134,7 @@ export async function sendCnsDeclaration(
   // Note the divergence from the direct HMRC path: CNS returns X-CSP-ID here and
   // never X-Conversation-ID. The submit route's HMRC branch treats a missing
   // X-Conversation-ID as a hard failure — that gate must not be applied here.
-  if (response.status === 202) {
-    const cspId = readCspId(response.headers);
-    if (!cspId) {
-      return {
-        status: "failed",
-        error: {
-          httpStatus: 202,
-          code: "MISSING_CSP_ID",
-          message: "CNS returned 202 without the required X-CSP-ID correlation header.",
-          details: [],
-          disposition: "outcome_unknown",
-          alert: true,
-          rawBody: response.body.slice(0, 4000),
-        },
-      };
-    }
-    return {
-      status: "accepted",
-      httpStatus: response.status,
-      cspId,
-    };
-  }
-
-  return {
-    status: "failed",
-    error: normalizeCnsError(response.status, response.body),
-  };
+  return classifyCnsDeclarationResponse(response);
 }
 
 /**
