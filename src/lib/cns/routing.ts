@@ -98,8 +98,12 @@ export function selectDeclarationTransport(
   reasons.push(`Goods location ${String(declaration.locationId)} is CNS inventory-linked.`);
 
   // Exports are a separate follow-on phase (spec §2.2, §16).
-  const flow = String(declaration.route ?? "import").trim().toLowerCase();
-  if (flow !== "import") {
+  // `route` on FreightCode declarations normally contains the CDS customs
+  // route (for example "Route 1"), not the import/export movement direction.
+  // Only an explicit export marker is an export; H1/Route 1 declarations are
+  // imports and must not be rejected merely because the field is overloaded.
+  const flow = String(declaration.route ?? "").trim().toLowerCase();
+  if (flow === "export" || flow === "exports") {
     throw new CnsRoutingError(
       "CNS inventory linking currently supports imports only. Inventory-linked exports are not implemented.",
     );

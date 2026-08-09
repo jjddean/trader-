@@ -161,6 +161,16 @@ describe("selectDeclarationTransport", () => {
     assert.equal(decision.transport, "cns_inventory");
   });
 
+  it("treats a CDS customs route label as an import movement", () => {
+    const decision = selectDeclarationTransport(
+      { route: "Route 1", locationId: "GBAULGPLGPLGP1", cnsUcn: "LGP100DPS00100" },
+      { cnsClearanceEnabled: true },
+      { cnsBadgeHolder: false },
+      euatConfig(),
+    );
+    assert.equal(decision.transport, "cns_inventory");
+  });
+
   it("routes a non-CNS location direct to HMRC", () => {
     const decision = selectDeclarationTransport(
       { ...importAtCns, locationId: "GBAUFXTFXTFXT" },
