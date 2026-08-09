@@ -97,12 +97,22 @@ export function parseHmrcNotification(rawPayload: string): ParsedNotification {
     }
   }
 
+  const smartErrorReasons = [...rawPayload.matchAll(
+    /<(?:[^>]*:)?AdditionalInformation\b[^>]*>([\s\S]*?)<\/(?:[^>]*:)?AdditionalInformation>/gi,
+  )]
+    .filter((match) => /<(?:[^>]*:)?StatementCode[^>]*>\s*smartErrorMsg\s*<\/(?:[^>]*:)?StatementCode>/i.test(match[1]))
+    .map((match) => match[1].match(
+      /<(?:[^>]*:)?StatementDescription[^>]*>([^<]+)<\/(?:[^>]*:)?StatementDescription>/i,
+    )?.[1]?.trim() || "")
+    .filter(Boolean);
   const errorRegex = /<(?:[^>]*:)?Error[^>]*>([\s\S]*?)<\/(?:[^>]*:)?Error>/gi;
+  let smartErrorIndex = 0;
   while ((errMatch = errorRegex.exec(rawPayload)) !== null) {
     const block = errMatch[1];
     const code =
       block.match(/<(?:[^>]*:)?(?:ValidationCode|ErrorCode|Code)[^>]*>([^<]+)<\/(?:[^>]*:)?(?:ValidationCode|ErrorCode|Code)>/i)?.[1]?.trim() || "";
-    const reason = block.match(/<(?:[^>]*:)?(?:Description|Reason|Text)[^>]*>([^<]+)<\/(?:[^>]*:)?(?:Description|Reason|Text)>/i)?.[1]?.trim() || "";
+    const reason = block.match(/<(?:[^>]*:)?(?:Description|Reason|Text)[^>]*>([^<]+)<\/(?:[^>]*:)?(?:Description|Reason|Text)>/i)?.[1]?.trim() || smartErrorReasons[smartErrorIndex] || "";
+    smartErrorIndex += 1;
     const sectionPointers = [...block.matchAll(/<(?:[^>]*:)?DocumentSectionCode[^>]*>([^<]+)<\/(?:[^>]*:)?DocumentSectionCode>/gi)]
       .map((m) => m[1]?.trim())
       .filter(Boolean);

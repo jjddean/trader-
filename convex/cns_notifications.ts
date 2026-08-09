@@ -426,6 +426,17 @@ export const processNotification = internalMutation({
           lastUpdated: now,
         });
         await ctx.db.patch(notificationId, { processed: true });
+      } else {
+        // Parser replays must refresh previously persisted operator-facing
+        // details without creating a duplicate timeline event.
+        await ctx.db.patch(existing._id, {
+          mrn: parsed.mrn,
+          notificationType: parsed.notificationType,
+          errorCodes: parsed.errorCodes,
+          fieldErrors: parsed.fieldErrors,
+          rawPayload: decoded,
+          processed: true,
+        });
       }
     } else {
       await ctx.db.patch(declarationId, {
