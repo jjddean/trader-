@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
+import type { Id } from "../../../../../convex/_generated/dataModel";
 import { commodityRequiresSupplementaryUnit, mapToCDS_H1, validateCdsCodeLists, validateOverseasExporter, validateTradeTerms, validateTransactionNatureCode } from "../../../../lib/wco-mapper";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
 import { declarationsEndpointUrl } from "../../../../lib/hmrc-config";
@@ -596,6 +597,39 @@ export async function POST(request: Request) {
         if (name.toLowerCase().startsWith("gov-")) forwardedGovHeaders[name] = value;
       });
 
+      const attemptKey = crypto.randomUUID();
+      const hashBytes = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(xmlPayload),
+      );
+      const requestHash = Array.from(new Uint8Array(hashBytes), (byte) =>
+        byte.toString(16).padStart(2, "0"),
+      ).join("");
+      let cnsAttemptId: Id<"submissions">;
+      try {
+        cnsAttemptId = await convex.mutation(api.submissions.beginCnsAttempt, {
+          declarationId,
+          environment: hmrcContext.environment,
+          operation: "submit",
+          attemptKey,
+          requestHash,
+          endpoint: "/cds/customs/declarations/",
+          lrn: submittedLrn,
+          eori: String(lane.eori || ""),
+          priorMrn: claim.prevMrn || undefined,
+          requestXml: xmlPayload,
+          declarationSnapshot: lane,
+          itemsSnapshot: items,
+        });
+      } catch (attemptErr: unknown) {
+        await revertClaim();
+        console.error("[SUBMIT/CNS] Refusing outbound request: attempt persistence failed", attemptErr);
+        return NextResponse.json(
+          { error: "CNS submission was not sent because its audit attempt could not be saved." },
+          { status: 500 },
+        );
+      }
+
       const cnsResult = await sendCnsDeclaration(cnsConfig, {
         operation: "create",
         xmlPayload,
@@ -612,7 +646,14 @@ export async function POST(request: Request) {
         if (!outcomeUnknown) {
           await revertClaim();
         }
-        await recordSubmissionEvidence(outcomeUnknown ? "error" : "rejected", cnsError.httpStatus, null);
+        await convex.mutation(api.submissions.completeCnsAttempt, {
+          submissionId: cnsAttemptId,
+          outcome: outcomeUnknown ? "error" : "rejected",
+          hmrcStatus: cnsError.httpStatus || undefined,
+          outcomeCertainty: outcomeUnknown ? "unknown" : "certain",
+          cnsErrorCode: cnsError.code,
+          cnsErrorMessage: cnsError.message,
+        });
         try {
           await convex.mutation(api.cns.recordTransportOutcome, {
             declarationId,
@@ -655,7 +696,13 @@ export async function POST(request: Request) {
         );
       }
 
-      await recordSubmissionEvidence("accepted", cnsResult.httpStatus, null);
+      await convex.mutation(api.submissions.completeCnsAttempt, {
+        submissionId: cnsAttemptId,
+        outcome: "accepted",
+        hmrcStatus: cnsResult.httpStatus,
+        cspId: cnsResult.cspId || undefined,
+        outcomeCertainty: "certain",
+      });
 
       let cnsStatePersisted = true;
       try {

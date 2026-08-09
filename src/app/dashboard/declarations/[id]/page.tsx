@@ -120,6 +120,8 @@ export default function CoreSchemaPage() {
     transactionNatureCode: "",
     paymentMethodCode: "",
     defermentAccountNumber: "",
+    containerNumber: "",
+    cnsUcn: "",
   });
 
   React.useEffect(() => {
@@ -159,6 +161,8 @@ export default function CoreSchemaPage() {
       transactionNatureCode: (d.transactionNatureCode as string) || "",
       paymentMethodCode: (d.paymentMethodCode as string) || "",
       defermentAccountNumber: (d.defermentAccountNumber as string) || "",
+      containerNumber: (d.containerNumber as string) || "",
+      cnsUcn: (d.cnsUcn as string) || "",
     });
   }, [declaration, id]);
 
@@ -174,6 +178,9 @@ export default function CoreSchemaPage() {
       }
       if (!formData.transportMode.trim()) {
         validationMessages.push("Transport Mode (DE 7/4) is required.");
+      }
+      if (formData.locationId.trim().toUpperCase() === "GBAULGPLGPLGP1" && !formData.cnsUcn.trim()) {
+        validationMessages.push("CNS UCN is required for London Gateway inventory-linked declarations.");
       }
       const dispatch = formData.dispatchCountry.trim().toUpperCase();
       if (dispatch && dispatch !== "GB" && dispatch !== "XI") {
@@ -233,6 +240,8 @@ export default function CoreSchemaPage() {
         defermentAccountNumber: requiresDefermentAccount(formData.paymentMethodCode)
           ? formData.defermentAccountNumber.replace(/\D/g, "")
           : undefined,
+        containerNumber: formData.containerNumber.trim().toUpperCase(),
+        cnsUcn: formData.cnsUcn.trim().toUpperCase(),
       });
       hydratedForIdRef.current = null;
       if (validationMessages.length > 0) {
@@ -528,6 +537,35 @@ export default function CoreSchemaPage() {
                 Official HMRC maritime location codes — not a fixed default port.
               </p>
             </div>
+
+            {locationIdUpper === "GBAULGPLGPLGP1" && (
+              <div className="md:col-span-2 grid gap-4 rounded-md border border-blue-200 bg-blue-50/50 p-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    CNS UCN <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    value={formData.cnsUcn}
+                    onChange={(e) => setFormData({ ...formData, cnsUcn: e.target.value.toUpperCase() })}
+                    placeholder="LGP100DPS00100"
+                    className={`${selectFieldClassName} font-mono`}
+                  />
+                  <p className="text-[10px] text-slate-500">Inventory reference used to link the declaration at London Gateway.</p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Container number
+                  </label>
+                  <input
+                    value={formData.containerNumber}
+                    onChange={(e) => setFormData({ ...formData, containerNumber: e.target.value.toUpperCase() })}
+                    placeholder="TDRY1234567"
+                    className={`${selectFieldClassName} font-mono`}
+                  />
+                  <p className="text-[10px] text-slate-500">Shown for operator verification against the CNS inventory record.</p>
+                </div>
+              </div>
+            )}
 
             {/* Presentation Office — DE 5/26. Conditional per Appendix 21A. */}
             <div className="space-y-2">

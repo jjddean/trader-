@@ -1722,6 +1722,10 @@ export const updateDeclarationDetails = mutation({
     transactionNatureCode: v.optional(v.string()),
     defermentAccountNumber: v.optional(v.string()),
     paymentMethodCode: v.optional(v.string()),
+    // DE 7/10 container id, and the CNS inventory reference (UCN) for
+    // inventory-linked locations.
+    containerNumber: v.optional(v.string()),
+    cnsUcn: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -1777,6 +1781,8 @@ export const updateDeclarationDetails = mutation({
       ...(args.paymentMethodCode !== undefined
         ? { paymentMethodCode: mop || undefined }
         : {}),
+      ...(args.containerNumber !== undefined ? { containerNumber: args.containerNumber.trim() || undefined } : {}),
+      ...(args.cnsUcn !== undefined ? { cnsUcn: args.cnsUcn.trim().toUpperCase() || undefined } : {}),
       lastUpdated: Date.now(),
     });
     await upsertDeclarationPreviewByDeclaration(ctx, args.id);

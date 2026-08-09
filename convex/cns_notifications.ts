@@ -23,6 +23,15 @@ import {
   parseCnsBatch,
 } from "./lib/cns_envelope";
 import { analyseInventoryRejection } from "./lib/cns_inventory_reject";
+import { parseHmrcNotification } from "./lib/hmrc_notification_parser";
+import {
+  isAmendmentAccepted,
+  isAmendmentAcknowledged,
+  isAmendmentRejected,
+  isInvalidationAccepted,
+  isPostCancelClearance,
+} from "./lib/notification_dms_context";
+import { statusAfterNotification } from "./lib/notification_status";
 
 /**
  * CNS notification ingestion.
@@ -351,13 +360,66 @@ export const processNotification = internalMutation({
       });
     }
 
-    // Everything else is a genuine DMS/API notification. Hand the decoded body
-    // to the existing HMRC notification pipeline so status mapping, timeline
-    // ordering and dedupe stay single-sourced.
-    await ctx.db.patch(declarationId, {
-      cnsLastNotificationAt: now,
-      lastUpdated: now,
-    });
+    // API notifications are CSP transport responses; DMS notifications are the
+    // legal declaration outcome and must enter the normal declaration timeline.
+    if (type === "DMS") {
+      const parsed = parseHmrcNotification(decoded);
+      const existing = await ctx.db
+        .query("notifications")
+        .withIndex("by_hmrcNotificationId", (q: any) => q.eq("hmrcNotificationId", row.notificationId))
+        .first();
+      if (!existing) {
+        const declaration = await ctx.db.get(declarationId);
+        if (!declaration) throw new Error("Correlated declaration was deleted");
+        const notificationId = await ctx.db.insert("notifications", {
+          mrn: parsed.mrn,
+          conversationId: row.conversationId || "UNKNOWN",
+          environment: declaration.environment ?? "sandbox",
+          idempotencyKey: `cns:${row.topic}:${row.notificationId}`,
+          hmrcNotificationId: row.notificationId,
+          source: "cns",
+          timestamp: parsed.issueDateTime || row.queuedDateTime || new Date(now).toISOString(),
+          issueDateTime: parsed.issueDateTime,
+          notificationType: parsed.notificationType,
+          errorCodes: parsed.errorCodes,
+          fieldErrors: parsed.fieldErrors,
+          rawPayload: decoded,
+          processed: false,
+          userId: declaration.userId,
+          declarationId,
+          orgId: declaration.orgId,
+        });
+
+        const context = {
+          notificationType: parsed.notificationType,
+          rawPayload: decoded,
+          fieldErrors: parsed.fieldErrors,
+          errorCodes: parsed.errorCodes,
+        };
+        const newStatus = statusAfterNotification({
+          currentStatus: declaration.status,
+          notificationType: parsed.notificationType,
+          hasResolvedMrn: parsed.mrn !== "UNKNOWN" || Boolean(declaration.mrn),
+          isAmendmentRejected: isAmendmentRejected(context),
+          isAmendmentAccepted: isAmendmentAccepted(context),
+          isAmendmentAcknowledged: isAmendmentAcknowledged(context),
+          isInvalidationAccepted: isInvalidationAccepted(context),
+          isPostCancelClearance: isPostCancelClearance(context),
+        });
+        await ctx.db.patch(declarationId, {
+          status: newStatus,
+          ...(parsed.mrn !== "UNKNOWN" ? { mrn: parsed.mrn } : {}),
+          cnsLastNotificationAt: now,
+          lastUpdated: now,
+        });
+        await ctx.db.patch(notificationId, { processed: true });
+      }
+    } else {
+      await ctx.db.patch(declarationId, {
+        cnsLastNotificationAt: now,
+        lastUpdated: now,
+      });
+    }
 
     return await finish(type === "API" ? "api_response" : "dms", {
       declarationId,
@@ -604,11 +666,15 @@ export const processPending = internalAction({
     let processed = 0;
     let failed = 0;
     for (const row of rows) {
-      const result = await ctx.runMutation(internal.cns_notifications.processNotification, {
-        rowId: row._id,
-      });
-      if (result.processed) processed += 1;
-      else if (result.outcome !== "already_processed") failed += 1;
+      try {
+        const result = await ctx.runMutation(internal.cns_notifications.processNotification, {
+          rowId: row._id,
+        });
+        if (result.processed) processed += 1;
+        else if (result.outcome !== "already_processed") failed += 1;
+      } catch {
+        failed += 1;
+      }
     }
     return { processed, failed };
   },

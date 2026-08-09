@@ -1061,6 +1061,8 @@ export default defineSchema({
     /** SHA-256 of the request XML. Never the Authorization value. */
     requestHash: v.optional(v.string()),
     endpoint: v.optional(v.string()),
+    startedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
     /**
      * "certain" once a definitive response arrived; "unknown" after a timeout or
      * 5xx where CNS may still have forwarded the declaration. Drives whether a

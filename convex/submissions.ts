@@ -77,6 +77,83 @@ export const recordSubmission = mutation({
   },
 });
 
+/** Persist a CNS attempt before the outbound request is made. */
+export const beginCnsAttempt = mutation({
+  args: {
+    declarationId: v.id("declarations"),
+    environment: v.optional(v.union(v.literal("sandbox"), v.literal("production"))),
+    operation: v.string(),
+    attemptKey: v.string(),
+    requestHash: v.string(),
+    endpoint: v.string(),
+    lrn: v.optional(v.string()),
+    eori: v.optional(v.string()),
+    priorMrn: v.optional(v.string()),
+    requestXml: v.string(),
+    declarationSnapshot: v.optional(v.any()),
+    itemsSnapshot: v.optional(v.any()),
+  },
+  returns: v.id("submissions"),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    const decl = await ctx.db.get(args.declarationId);
+    if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
+      throw new Error("Unauthorized");
+    }
+    const existing = await ctx.db
+      .query("submissions")
+      .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId))
+      .filter((q) => q.eq(q.field("attemptKey"), args.attemptKey))
+      .first();
+    if (existing) return existing._id;
+    const startedAt = Date.now();
+    return await ctx.db.insert("submissions", {
+      ...args,
+      userId: identity.subject,
+      transport: "cns_inventory",
+      outcome: "pending",
+      outcomeCertainty: "unknown",
+      startedAt,
+      createdAt: startedAt,
+    });
+  },
+});
+
+/** Complete only the transport-result fields of a previously persisted CNS attempt. */
+export const completeCnsAttempt = mutation({
+  args: {
+    submissionId: v.id("submissions"),
+    outcome: v.string(),
+    hmrcStatus: v.optional(v.number()),
+    cspId: v.optional(v.string()),
+    outcomeCertainty: v.union(v.literal("certain"), v.literal("unknown")),
+    cnsErrorCode: v.optional(v.string()),
+    cnsErrorMessage: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    const row = await ctx.db.get(args.submissionId);
+    if (!row || row.transport !== "cns_inventory") throw new Error("CNS attempt not found");
+    const decl = await ctx.db.get(row.declarationId);
+    if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
+      throw new Error("Unauthorized");
+    }
+    await ctx.db.patch(row._id, {
+      outcome: args.outcome,
+      hmrcStatus: args.hmrcStatus,
+      cspId: args.cspId,
+      outcomeCertainty: args.outcomeCertainty,
+      cnsErrorCode: args.cnsErrorCode,
+      cnsErrorMessage: args.cnsErrorMessage,
+      completedAt: Date.now(),
+    });
+    return null;
+  },
+});
+
 /** Distinct HMRC conversation IDs for pull (submit + amend + cancel on this declaration). */
 export const getDistinctConversationIds = query({
   args: { declarationId: v.id("declarations") },
