@@ -2198,6 +2198,16 @@ export const rebuildMyReadModels = mutation({
   },
 });
 
+/** Refresh one cached declarations-list row after an external notification. */
+export const refreshDeclarationPreviewInternal = internalMutation({
+  args: { declarationId: v.id("declarations") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await upsertDeclarationPreviewByDeclaration(ctx, args.declarationId);
+    return null;
+  },
+});
+
 // Debug-only: rebuild declaration previews + dashboard summary for a known user
 // without requiring an interactive Clerk session in the terminal.
 export const rebuildReadModelsForDebug = internalMutation({

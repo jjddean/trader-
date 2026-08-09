@@ -438,6 +438,11 @@ export const processNotification = internalMutation({
           processed: true,
         });
       }
+      // The declarations table uses a cached preview. Refresh it after this
+      // transaction so the list reflects the DMS status shown on the detail page.
+      await ctx.scheduler.runAfter(0, internal.declarations.refreshDeclarationPreviewInternal, {
+        declarationId,
+      });
     } else {
       await ctx.db.patch(declarationId, {
         cnsLastNotificationAt: now,
