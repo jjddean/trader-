@@ -84,7 +84,15 @@ describe("analyseInventoryRejection — pre-check failure", () => {
   });
 
   it("recovers the LRN, which is the only permanent correlation key here", () => {
-    assert.equal(result.functionalReferenceId, "123CBA");
+    assert.equal(result.functionalReferenceId, "ABC123");
+  });
+
+  it("prefers the declaration LRN over the response reference UUID", () => {
+    const result = analyseInventoryRejection(
+      PRECHECK_FAILURE.replace("123CBA", "462c22fa8751436487b3e506a402dca4"),
+      PRECHECK_HEADERS,
+    );
+    assert.equal(result.functionalReferenceId, "ABC123");
   });
 });
 

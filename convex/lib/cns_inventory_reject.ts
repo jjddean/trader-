@@ -78,6 +78,18 @@ function declarationMrn(payload: string): string {
   return /^[0-9]{2}[A-Za-z]{2}[A-Za-z0-9]{14}$/.test(id) ? id : "";
 }
 
+/** The response may carry its own UUID before the declaration's actual LRN. */
+function declarationFunctionalReferenceId(payload: string): string {
+  const declarationBlock = payload.match(
+    /<(?:[^>]*:)?Declaration\b[^>]*>([\s\S]*?)<\/(?:[^>]*:)?Declaration>/i,
+  )?.[1];
+  if (declarationBlock) {
+    const lrn = tagText(declarationBlock, "FunctionalReferenceID");
+    if (lrn) return lrn;
+  }
+  return tagText(payload, "FunctionalReferenceID");
+}
+
 /**
  * Analyse a decoded DMS notification for inventory pre-check characteristics.
  *
@@ -117,7 +129,7 @@ export function analyseInventoryRejection(
     ircCode: tagText(aiBlock, "StatementCode"),
     ircDescription: tagText(aiBlock, "StatementDescription"),
     cspId,
-    functionalReferenceId: tagText(payload, "FunctionalReferenceID"),
+    functionalReferenceId: declarationFunctionalReferenceId(payload),
     mrnBlank: mrn === "",
   };
 }
