@@ -2,9 +2,12 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { renderH1Xml, validateXmlPreflight } from "../../src/lib/h1-xml-renderer";
-import { mapToCDS_H1 } from "../../src/lib/wco-mapper";
+import { mapDeclarationType, mapToCDS_H1 } from "../../src/lib/wco-mapper";
 
 describe("H1 mapper and XML renderer", () => {
+  it("maps DE 1/2 D to a pre-lodged IMD declaration", () => {
+    assert.equal(mapDeclarationType("D", "Route 1"), "IMD");
+  });
   const declaration = {
     _id: "kn7baselineh1sandbox",
     eori: "GB531765313922",

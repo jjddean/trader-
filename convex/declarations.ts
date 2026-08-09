@@ -1699,6 +1699,7 @@ export const updateDeclarationDetails = mutation({
     id: v.id("declarations"),
     eori: v.string(),
     declarationType: v.string(),
+    additionalDeclarationType: v.optional(v.string()),
     route: v.string(),
     dispatchCountry: v.optional(v.string()),
     destinationCountry: v.optional(v.string()),
@@ -1754,6 +1755,9 @@ export const updateDeclarationDetails = mutation({
     await ctx.db.patch(args.id, {
       eori: args.eori,
       declarationType: args.declarationType,
+      ...(args.additionalDeclarationType !== undefined
+        ? { additionalDeclarationType: args.additionalDeclarationType.trim().toUpperCase() }
+        : {}),
       route: args.route,
       ...(args.dispatchCountry !== undefined ? { dispatchCountry: args.dispatchCountry } : {}),
       ...(args.destinationCountry !== undefined ? { destinationCountry: args.destinationCountry } : {}),

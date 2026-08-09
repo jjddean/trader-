@@ -220,6 +220,7 @@ export default defineSchema({
     lastUpdated: v.optional(v.any()),
     conversationId: v.optional(v.any()),
     declarationType: v.optional(v.any()),
+    additionalDeclarationType: v.optional(v.string()),
     route: v.optional(v.any()),
     commodityCode: v.optional(v.any()),
     description: v.optional(v.any()),
@@ -325,6 +326,9 @@ export default defineSchema({
     cnsTransportState: v.optional(v.string()),
     /** Inventory state as observed: registered / arrived / rejected / linked. */
     cnsInventoryState: v.optional(v.string()),
+    cnsInventoryErrorCode: v.optional(v.string()),
+    cnsInventoryIrcCode: v.optional(v.string()),
+    cnsInventoryErrorMessage: v.optional(v.string()),
     cnsLastNotificationAt: v.optional(v.number()),
   })
     .index("by_user", ["userId"])

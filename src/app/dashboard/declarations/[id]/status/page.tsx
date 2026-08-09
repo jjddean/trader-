@@ -686,6 +686,18 @@ export default function StatusTimelinePage() {
               {latestCnsSubmission.cnsErrorMessage ? ` — ${latestCnsSubmission.cnsErrorMessage}` : ""}
             </div>
           )}
+          {(declaration.cnsInventoryErrorCode || declaration.cnsInventoryErrorMessage) && (
+            <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+              <div className="font-semibold">
+                Inventory pre-check failed{declaration.cnsInventoryErrorCode ? ` — ${declaration.cnsInventoryErrorCode}` : ""}
+              </div>
+              <div className="mt-1">
+                {declaration.cnsInventoryIrcCode ? `IRC ${declaration.cnsInventoryIrcCode}: ` : ""}
+                {declaration.cnsInventoryErrorMessage || "CNS rejected the inventory link."}
+              </div>
+              <div className="mt-1 text-amber-700">The declaration did not reach CDS.</div>
+            </div>
+          )}
         </div>
       )}
 

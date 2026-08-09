@@ -98,6 +98,7 @@ export default function CoreSchemaPage() {
   const [formData, setFormData] = useState({
     eori: "",
     declarationType: "H1",
+    additionalDeclarationType: "A",
     route: "Route 1",
     dispatchCountry: "",
     transportMode: "",
@@ -132,6 +133,7 @@ export default function CoreSchemaPage() {
     setFormData({
       eori: (d.eori as string) || "",
       declarationType: "H1",
+      additionalDeclarationType: (d.additionalDeclarationType as string) || "A",
       route: (d.route as string) || "Route 1",
       dispatchCountry: (d.dispatchCountry as string) || "",
       transportMode: normalizeTransportMode(d.transportMode),
@@ -207,6 +209,7 @@ export default function CoreSchemaPage() {
         id,
         eori: formData.eori.trim(),
         declarationType: formData.declarationType,
+        additionalDeclarationType: formData.additionalDeclarationType,
         route: formData.route,
         dispatchCountry: formData.dispatchCountry,
         transportMode: normalizeTransportMode(formData.transportMode),
@@ -363,6 +366,24 @@ export default function CoreSchemaPage() {
                 </SelectTrigger>
                 <SelectContent position="popper">
                   <SelectItem value="H1">H1 (Release for Free Circulation)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Routing */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
+                Arrival status (DE 1/2)
+                <span className="text-red-500">*</span>
+              </label>
+              <Select
+                value={formData.additionalDeclarationType}
+                onValueChange={(v) => setFormData({ ...formData, additionalDeclarationType: v })}
+              >
+                <SelectTrigger className={selectFieldClassName}><SelectValue /></SelectTrigger>
+                <SelectContent position="popper">
+                  <SelectItem value="A">Arrived declaration</SelectItem>
+                  <SelectItem value="D">Pre-lodged — goods not yet arrived</SelectItem>
                 </SelectContent>
               </Select>
             </div>

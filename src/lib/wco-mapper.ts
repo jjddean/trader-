@@ -18,7 +18,7 @@ import {
  * Export types: EXA, EXB, etc.
  * Defaults to IMA (standard frontier import) if unspecified.
  */
-function mapDeclarationType(type?: string, route?: string): string {
+export function mapDeclarationType(type?: string, route?: string): string {
   const prefix = route === "export" ? "EX" : "IM";
   const validTypes = ["A", "B", "C", "D", "E", "F", "J", "K", "Y", "Z"];
   const suffix = validTypes.includes((type || "").toUpperCase()) 
@@ -533,7 +533,10 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
   return {
     Declaration: {
       FunctionCode: "9",
-      TypeCode: mapDeclarationType(declaration.declarationType, declaration.route),
+      TypeCode: mapDeclarationType(
+        declaration.additionalDeclarationType || declaration.declarationType,
+        declaration.route,
+      ),
       FunctionalReferenceID: declaration.lrn || `FC-${Date.now().toString(36).toUpperCase()}`,
       GoodsItemQuantity: items.length,
       DeclarationOfficeID: declaration.presentationOffice || "",

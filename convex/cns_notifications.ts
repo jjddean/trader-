@@ -351,6 +351,9 @@ export const processNotification = internalMutation({
       await ctx.db.patch(declarationId, {
         cnsInventoryState: "inventory_rejected",
         cnsTransportState: "inventory_rejected",
+        cnsInventoryErrorCode: inventory.validationCode || undefined,
+        cnsInventoryIrcCode: inventory.ircCode || undefined,
+        cnsInventoryErrorMessage: inventory.ircDescription || undefined,
         cnsLastNotificationAt: now,
         lastUpdated: now,
       });
@@ -425,6 +428,18 @@ export const processNotification = internalMutation({
       declarationId,
       functionalReferenceId: inventory.functionalReferenceId || undefined,
     });
+  },
+});
+
+/** Operations replay: raw envelopes are retained so parser improvements can be reapplied safely. */
+export const resetNotificationForReplay = internalMutation({
+  args: { rowId: v.id("cns_notifications") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const row = await ctx.db.get(args.rowId);
+    if (!row) throw new Error("CNS notification not found");
+    await ctx.db.patch(row._id, { processedAt: undefined, parserError: undefined });
+    return null;
   },
 });
 
