@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
@@ -94,8 +94,6 @@ export default function CoreSchemaPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  // Hydrate once per declaration id — getLane re-reuns on status/badge updates.
-  const hydratedForIdRef = useRef<string | null>(null);
   const [formData, setFormData] = useState({
     eori: "",
     declarationType: "H1",
@@ -125,13 +123,7 @@ export default function CoreSchemaPage() {
   });
 
   React.useEffect(() => {
-    hydratedForIdRef.current = null;
-  }, [id]);
-
-  React.useEffect(() => {
     if (!declaration || !id) return;
-    if (hydratedForIdRef.current === id) return;
-    hydratedForIdRef.current = id;
     const d = declaration as Record<string, unknown>;
     setFormData({
       eori: (d.eori as string) || "",
