@@ -90,6 +90,9 @@ export default function StatusTimelinePage() {
   const [hmrcMessage, setHmrcMessage] = useState<string | null>(null);
   const [hmrcMessageOk, setHmrcMessageOk] = useState(false);
 
+  const latestCnsSubmission = submissions?.find((sub) => sub.transport === "cns_inventory");
+  const isCnsDeclaration = declaration?.submissionTransport === "cns_inventory" || Boolean(latestCnsSubmission);
+
   const hmrcFetchInit = (): RequestInit => ({
     headers: generateClientFraudHeaders(userId || undefined),
   });
@@ -658,6 +661,34 @@ export default function StatusTimelinePage() {
         )}
       </div>
 
+      {isSubmitted && isCnsDeclaration && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50/40 p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">CNS inventory transport</h3>
+              <p className="mt-1 text-xs text-slate-600">
+                {declaration.cnsTransportState?.replaceAll("_", " ") || "Awaiting transport update"}
+              </p>
+            </div>
+            <span className="rounded-md border border-blue-200 bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-blue-700">
+              CNS
+            </span>
+          </div>
+          <dl className="mt-4 grid gap-3 text-xs sm:grid-cols-2 lg:grid-cols-4">
+            <div><dt className="text-slate-500">UCN</dt><dd className="mt-1 font-mono text-slate-900">{declaration.cnsUcn || "—"}</dd></div>
+            <div><dt className="text-slate-500">X-CSP-ID</dt><dd className="mt-1 break-all font-mono text-slate-900">{declaration.cnsCspId || latestCnsSubmission?.cspId || "—"}</dd></div>
+            <div><dt className="text-slate-500">Inventory state</dt><dd className="mt-1 text-slate-900">{declaration.cnsInventoryState?.replaceAll("_", " ") || "Pending"}</dd></div>
+            <div><dt className="text-slate-500">Outcome certainty</dt><dd className="mt-1 text-slate-900">{latestCnsSubmission?.outcomeCertainty || "Pending"}</dd></div>
+          </dl>
+          {(latestCnsSubmission?.cnsErrorCode || latestCnsSubmission?.cnsErrorMessage) && (
+            <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+              <span className="font-semibold">{latestCnsSubmission.cnsErrorCode || "CNS error"}</span>
+              {latestCnsSubmission.cnsErrorMessage ? ` — ${latestCnsSubmission.cnsErrorMessage}` : ""}
+            </div>
+          )}
+        </div>
+      )}
+
       {isSubmitted && (
         <div className="rounded-xl border border-slate-200 bg-white p-6">
           <button
@@ -680,7 +711,7 @@ export default function StatusTimelinePage() {
             <div className="mt-6 space-y-8 border-t border-slate-100 pt-6">
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
-                  HMRC requests sent ({submissions?.length ?? 0})
+                  Submission requests sent ({submissions?.length ?? 0})
                 </h4>
                 {!submissions || submissions.length === 0 ? (
                   <p className="text-xs text-slate-500">No submission evidence recorded yet.</p>
@@ -695,12 +726,20 @@ export default function StatusTimelinePage() {
                       hmrcStatus?: number;
                       createdAt?: number;
                       requestXml?: string;
+                      transport?: "hmrc_direct" | "cns_inventory";
+                      cspId?: string;
+                      outcomeCertainty?: "certain" | "unknown";
+                      cnsErrorCode?: string;
+                      cnsErrorMessage?: string;
                     }) => (
                       <div key={sub._id} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
                         <div className="flex flex-wrap items-center gap-2 text-xs">
                           <span className="rounded bg-white px-2 py-0.5 font-medium text-slate-800 border border-slate-200">
                             {sub.operation || "submit"}
                           </span>
+                          {sub.transport === "cns_inventory" && (
+                            <span className="rounded bg-blue-100 px-2 py-0.5 font-medium text-blue-800">CNS</span>
+                          )}
                           <span
                             className={`rounded px-2 py-0.5 font-medium ${
                               sub.outcome === "accepted"
@@ -723,6 +762,7 @@ export default function StatusTimelinePage() {
                               {sub.conversationId}
                             </span>
                           )}
+                          {sub.cspId && <span className="font-mono text-slate-500">CSP {sub.cspId}</span>}
                           <span className="text-slate-400 ml-auto">
                             {sub.createdAt
                               ? new Date(sub.createdAt).toLocaleString("en-GB")
