@@ -367,13 +367,23 @@ export const processNotification = internalMutation({
     // legal declaration outcome and must enter the normal declaration timeline.
     if (type === "DMS") {
       const parsed = parseHmrcNotification(decoded);
+      const declaration = await ctx.db.get(declarationId);
+      if (!declaration) throw new Error("Correlated declaration was deleted");
+
+      // Any DMS response proves the CNS inventory pre-check completed and the
+      // declaration reached CDS. Its CDS outcome is tracked separately below.
+      await ctx.db.patch(declarationId, {
+        cnsInventoryState: "passed",
+        cnsTransportState: "cds_response_received",
+        cnsLastNotificationAt: now,
+        lastUpdated: now,
+      });
+
       const existing = await ctx.db
         .query("notifications")
         .withIndex("by_hmrcNotificationId", (q: any) => q.eq("hmrcNotificationId", row.notificationId))
         .first();
       if (!existing) {
-        const declaration = await ctx.db.get(declarationId);
-        if (!declaration) throw new Error("Correlated declaration was deleted");
         const notificationId = await ctx.db.insert("notifications", {
           mrn: parsed.mrn,
           conversationId: row.conversationId || "UNKNOWN",
