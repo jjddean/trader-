@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
@@ -94,6 +94,7 @@ export default function CoreSchemaPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const hydratedVersionRef = useRef<string | null>(null);
   const [formData, setFormData] = useState({
     eori: "",
     declarationType: "H1",
@@ -124,6 +125,9 @@ export default function CoreSchemaPage() {
 
   React.useEffect(() => {
     if (!declaration || !id) return;
+    const version = `${id}:${String(declaration.lastUpdated ?? declaration._creationTime ?? "")}`;
+    if (hydratedVersionRef.current === version) return;
+    hydratedVersionRef.current = version;
     const d = declaration as Record<string, unknown>;
     setFormData({
       eori: (d.eori as string) || "",
