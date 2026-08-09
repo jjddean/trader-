@@ -225,7 +225,7 @@ export default function CoreSchemaPage() {
           formData.goodsLocationKind ||
           inferGoodsLocationKind({ locationId: formData.locationId }) ||
           undefined,
-        locationId: formData.locationId.trim(),
+        locationId: formData.locationId.trim() || String(declaration?.locationId ?? "").trim(),
         presentationOffice: formData.presentationOffice.trim(),
         exporterName: formData.exporterName.trim(),
         exporterCity: formData.exporterCity.trim(),
@@ -272,7 +272,9 @@ export default function CoreSchemaPage() {
     );
   }
 
-  const locationIdUpper = formData.locationId.trim().toUpperCase();
+  const locationIdUpper = (
+    formData.locationId.trim() || String(declaration.locationId ?? "").trim()
+  ).toUpperCase();
   const locationIdIsKnown = Boolean(locationIdUpper && KNOWN_APPENDIX_16C_CODES[locationIdUpper]);
 
   return (
@@ -540,7 +542,7 @@ export default function CoreSchemaPage() {
                     CNS UCN <span className="text-red-500">*</span>
                   </label>
                   <input
-                    value={formData.cnsUcn}
+                    value={formData.cnsUcn || String(declaration.cnsUcn ?? "")}
                     onChange={(e) => setFormData({ ...formData, cnsUcn: e.target.value.toUpperCase() })}
                     placeholder="LGP100DPS00100"
                     className={`${selectFieldClassName} font-mono`}
@@ -552,7 +554,7 @@ export default function CoreSchemaPage() {
                     Container number
                   </label>
                   <input
-                    value={formData.containerNumber}
+                    value={formData.containerNumber || String(declaration.containerNumber ?? "")}
                     onChange={(e) => setFormData({ ...formData, containerNumber: e.target.value.toUpperCase() })}
                     placeholder="TDRY1234567"
                     className={`${selectFieldClassName} font-mono`}
