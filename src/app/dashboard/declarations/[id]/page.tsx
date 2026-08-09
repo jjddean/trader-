@@ -243,7 +243,6 @@ export default function CoreSchemaPage() {
         containerNumber: formData.containerNumber.trim().toUpperCase(),
         cnsUcn: formData.cnsUcn.trim().toUpperCase(),
       });
-      hydratedForIdRef.current = null;
       if (validationMessages.length > 0) {
         setSaveError(`Saved draft. Still blocking: ${validationMessages[0]}`);
       } else {
