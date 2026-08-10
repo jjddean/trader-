@@ -15,6 +15,7 @@ import {
   Link2,
   Unlink,
   MessageSquare,
+  Paperclip,
 } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -50,6 +51,7 @@ import {
 } from "@/lib/enterprise-select-styles";
 import { countries } from "@/lib/data/countries";
 import { cn } from "@/lib/utils";
+import { buildMessagePdf, downloadBlob, messagePdfFileName } from "@/lib/portal/message-pdf";
 
 interface ClientForm {
   name: string;
@@ -168,11 +170,26 @@ function ClientPortalAccessCard({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   const hasPortalAccess = Boolean(client.portalEmail);
   const isArchived = client.status === "archived";
+  const hasSignedIn = Boolean(client.portalClerkId);
+
+  const friendlyPortalError = (message: string) => {
+    if (message.includes("belongs to a FreightCode user account")) {
+      return "This email is already associated with a FreightCode account. Use a different portal email.";
+    }
+    if (message.includes("already used for another client's portal access")) {
+      return "This email is already associated with another client portal. Use a different portal email.";
+    }
+    if (message.includes("Request ID") || message.includes("Convex") || message.includes("clients.ts")) {
+      return "Portal access could not be updated. Please try again.";
+    }
+    return message;
+  };
 
   const handleEnable = async () => {
     setIsSaving(true);
@@ -193,9 +210,14 @@ function ClientPortalAccessCard({
       if (!res.ok) {
         throw new Error(body.error || "Failed to enable portal access.");
       }
-      setSuccess(`Portal access enabled. Invite sent to ${body.portalEmail}.`);
+      setSuccess(hasPortalAccess ? "Portal email updated." : `Invite sent to ${body.portalEmail}.`);
+      setIsEditingEmail(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to enable portal access.");
+      setError(
+        friendlyPortalError(
+          err instanceof Error ? err.message : "Portal access could not be updated. Please try again.",
+        ),
+      );
     } finally {
       setIsSaving(false);
     }
@@ -216,18 +238,15 @@ function ClientPortalAccessCard({
   };
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
       <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
         <Link2 className="h-4 w-4 text-slate-400" />
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-medium text-black">Client portal access</h3>
-          <p className="text-[11px] text-slate-500">
-            Read-only login so this trader can view declarations filed on their behalf
-          </p>
         </div>
         {hasPortalAccess ? (
           <span className="rounded bg-green-100 px-2 py-0.5 text-[0.625rem] font-medium text-green-700">
-            Enabled
+            Active
           </span>
         ) : (
           <span className="rounded bg-slate-100 px-2 py-0.5 text-[0.625rem] font-medium text-slate-600">
@@ -236,54 +255,46 @@ function ClientPortalAccessCard({
         )}
       </div>
       <div className="space-y-4 p-6">
-        <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
-                Portal email
-              </label>
-              <p className="text-xs text-black">{client.portalEmail || "—"}</p>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase">
-                Clerk binding
-              </label>
-              <p className="text-xs text-slate-700">
-                {client.portalClerkId ? "Signed in at least once" : "Not linked yet"}
-              </p>
-            </div>
+        <dl className="grid gap-x-8 gap-y-3 text-xs sm:grid-cols-3">
+          <div>
+            <dt className="text-slate-500">Status</dt>
+            <dd className="mt-1 font-medium text-slate-900">{hasPortalAccess ? "Active" : "Not enabled"}</dd>
           </div>
-        </div>
+          <div>
+            <dt className="text-slate-500">Portal email</dt>
+            <dd className="mt-1 font-medium text-slate-900">{client.portalEmail || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-slate-500">Last access</dt>
+            <dd className="mt-1 font-medium text-slate-900">
+              {hasSignedIn ? "Signed in" : hasPortalAccess ? "Invitation pending" : "—"}
+            </dd>
+          </div>
+        </dl>
 
-        <div>
-          <label htmlFor="portal-email" className={FORM_LABEL}>
-            Invite email
-          </label>
-          <input
-            id="portal-email"
-            type="email"
-            value={portalEmail}
-            onChange={(e) => setPortalEmail(e.target.value)}
-            disabled={isArchived}
-            placeholder="client@company.com"
-            className={FORM_INPUT}
-          />
-          <p className="mt-1.5 text-[11px] text-slate-500">
-            Must match the email they use to sign in with Clerk. Changing the email clears the previous login link.
-          </p>
-        </div>
-
-        {isArchived && (
-          <div className="rounded-md border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-            Restore this client before enabling portal access.
+        {(!hasPortalAccess || isEditingEmail) && (
+          <div>
+            <label htmlFor="portal-email" className={FORM_LABEL}>Portal email</label>
+            <input
+              id="portal-email"
+              type="email"
+              value={portalEmail}
+              onChange={(e) => setPortalEmail(e.target.value)}
+              disabled={isArchived}
+              placeholder="client@company.com"
+              className={FORM_INPUT}
+            />
           </div>
         )}
 
+        {isArchived && (
+          <p className="text-xs text-amber-800">
+            Restore this client before enabling portal access.
+          </p>
+        )}
+
         {!isArchived && linkedDeclCount === 0 && (
-          <div className="rounded-md border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-            No declarations are linked to this client yet. The portal will be empty until you attach
-            declarations via the declaration client picker.
-          </div>
+          <p className="text-xs text-slate-500">No declarations are currently linked to this client.</p>
         )}
 
         {error && (
@@ -296,15 +307,54 @@ function ClientPortalAccessCard({
         )}
 
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => void handleEnable()}
-            disabled={isArchived || isSaving || portalEmail.trim().length < 3}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-normal text-white transition-colors hover:bg-slate-800 disabled:opacity-60"
-          >
-            {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />}
-            {hasPortalAccess ? "Update & resend invite" : "Enable & send invite"}
-          </button>
+          {!hasPortalAccess || isEditingEmail ? (
+            <>
+              <button
+                type="button"
+                onClick={() => void handleEnable()}
+                disabled={isArchived || isSaving || portalEmail.trim().length < 3}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-normal text-white transition-colors hover:bg-slate-800 disabled:opacity-60"
+              >
+                {isSaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {hasPortalAccess ? "Save email" : "Enable & send invite"}
+              </button>
+              {hasPortalAccess && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPortalEmail(client.portalEmail ?? "");
+                    setIsEditingEmail(false);
+                    setError(null);
+                  }}
+                  className="inline-flex h-8 items-center rounded-md px-3 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setIsEditingEmail(true)}
+                disabled={isArchived}
+                className="inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              >
+                Change email
+              </button>
+              {!hasSignedIn && (
+                <button
+                  type="button"
+                  onClick={() => void handleEnable()}
+                  disabled={isArchived || isSaving}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-md bg-black px-3 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+                >
+                  {isSaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  Resend invite
+                </button>
+              )}
+            </>
+          )}
           {hasPortalAccess && (
             <button
               type="button"
@@ -313,12 +363,12 @@ function ClientPortalAccessCard({
               className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
             >
               {isRevoking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Unlink className="h-3.5 w-3.5" />}
-              Revoke
+              Revoke access
             </button>
           )}
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -378,9 +428,51 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
 
   const messages = useQuery(api.clients.listPortalMessages, messageArgs);
   const sendBrokerMessage = useMutation(api.clients.sendBrokerMessage);
+  const markPortalMessagesRead = useMutation(api.clients.markPortalMessagesRead);
+  const generateDocumentUploadUrl = useMutation(api.documents.generateUploadUrl);
+  const saveMessageDocument = useMutation(api.clients.savePortalMessageDocument);
   const [body, setBody] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [actionStatus, setActionStatus] = useState<string | null>(null);
+  const hasUnreadClientMessages = Boolean(messages?.some((message) => message.senderRole === "client" && !message.readAt));
+
+  useEffect(() => {
+    if (!authReady || !activeThread || !hasUnreadClientMessages) return;
+    const scope = activeThread.kind === "general"
+      ? { clientId }
+      : activeThread.kind === "declaration"
+        ? { clientId, declarationId: activeThread.id }
+        : { clientId, assessmentId: activeThread.id };
+    void markPortalMessagesRead(scope).catch(() => {
+      // The unread marker remains visible and can be retried on the next query update.
+    });
+  }, [activeThread, authReady, clientId, hasUnreadClientMessages, markPortalMessagesRead]);
+
+  const messageContext = activeThread?.kind === "declaration"
+    ? formatPortalFilingLabel((declarations ?? []).find((item) => item._id === activeThread.id) ?? { _id: activeThread.id })
+    : activeThread?.kind === "assessment"
+      ? formatPortalCaseLabel((assessments ?? []).find((item) => item._id === activeThread.id) ?? { _id: activeThread.id })
+      : "General enquiry";
+
+  const messagePdf = (message: { senderRole: "broker" | "client"; createdAt: number; body: string }) =>
+    buildMessagePdf({
+      title: "Portal message",
+      context: messageContext,
+      entries: [{ sender: message.senderRole === "broker" ? "Broker" : "Client", createdAt: message.createdAt, body: message.body }],
+    });
+
+  const handleSaveMessage = async (message: { _id: string; senderRole: "broker" | "client"; createdAt: number; body: string }) => {
+    setActionStatus(null);
+    const blob = messagePdf(message);
+    const fileName = messagePdfFileName(message.createdAt, "portal-message");
+    const uploadUrl = await generateDocumentUploadUrl({});
+    const response = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": "application/pdf" }, body: blob });
+    if (!response.ok) throw new Error("Could not upload the message PDF.");
+    const { storageId } = (await response.json()) as { storageId: Id<"_storage"> };
+    const result = await saveMessageDocument({ messageId: message._id as Id<"portal_messages">, storageId, fileName });
+    setActionStatus(result.alreadySaved ? "Already saved in Documents." : "Saved to Documents.");
+  };
 
   const handleSend = async () => {
     const trimmed = body.trim();
@@ -416,12 +508,31 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
       <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
         <MessageSquare className="h-4 w-4 text-slate-400" />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h3 className="text-sm font-medium text-black">Portal messages</h3>
           <p className="text-[11px] text-slate-500">
             Message the client generally or about specific customs activity
           </p>
         </div>
+        <button
+          type="button"
+          disabled={!messages?.length}
+          onClick={() => {
+            if (!messages?.length) return;
+            downloadBlob(buildMessagePdf({
+              title: "Portal conversation",
+              context: messageContext,
+              entries: [...messages].reverse().map((message) => ({
+                sender: message.senderRole === "broker" ? "Broker" : "Client",
+                createdAt: message.createdAt,
+                body: message.body,
+              })),
+            }), `portal-conversation-${new Date().toISOString().slice(0, 10)}.pdf`);
+          }}
+          className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 px-2.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+        >
+          Download conversation
+        </button>
       </div>
       <div className="space-y-4 p-6">
         <div>
@@ -481,6 +592,8 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
           isIdle={false}
           idleLabel=""
           emptyLabel={activeThread?.kind === "general" ? "No general messages yet." : "No messages yet on this one."}
+          onDownloadMessage={(message) => downloadBlob(messagePdf(message), messagePdfFileName(message.createdAt, "portal-message"))}
+          onSaveMessage={handleSaveMessage}
         />
 
         <div>
@@ -510,6 +623,7 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
         {error && (
           <div className="rounded-md border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-800">{error}</div>
         )}
+        {actionStatus && <p className="text-xs text-emerald-700">{actionStatus}</p>}
 
         <button
           type="button"
@@ -521,7 +635,138 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
           Send message
         </button>
       </div>
+
     </div>
+  );
+}
+
+function ClientPortalDocumentsCard({ clientId }: { clientId: Id<"clients"> }) {
+  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
+  const authReady = Boolean(isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated);
+  const documents = useQuery(
+    api.clients.listUnlinkedDocuments,
+    authReady ? { clientId } : "skip",
+  );
+  const declarations = useQuery(
+    api.clients.listLinkedDeclarations,
+    authReady ? { clientId } : "skip",
+  );
+  const attachDocument = useMutation(api.clients.attachUnlinkedDocument);
+  const [targets, setTargets] = useState<Record<string, string>>({});
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleAttach = async (documentId: Id<"documents">) => {
+    const declarationId = targets[String(documentId)];
+    if (!declarationId) return;
+    setBusyId(String(documentId));
+    setError(null);
+    try {
+      await attachDocument({
+        clientId,
+        documentId,
+        declarationId: declarationId as Id<"declarations">,
+      });
+      setTargets((current) => {
+        const next = { ...current };
+        delete next[String(documentId)];
+        return next;
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not attach document.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-5">
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+          <Paperclip className="h-4 w-4 text-slate-600" />
+        </div>
+        <div>
+          <h2 className="text-sm font-semibold text-black">Portal documents</h2>
+          <p className="mt-1 text-xs leading-relaxed text-slate-500">
+            Files uploaded by this client that are waiting to be attached to a filing.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {documents === undefined ? (
+          <div className="flex items-center gap-2 py-3 text-xs text-slate-500">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading documents…
+          </div>
+        ) : documents.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-slate-200 px-4 py-5 text-center text-xs text-slate-500">
+            No documents are waiting for a filing.
+          </p>
+        ) : (
+          documents.map((document) => {
+            const documentId = String(document._id);
+            const selectedTarget = targets[documentId] ?? "";
+            return (
+              <div key={document._id} className="rounded-lg border border-slate-200 p-4">
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-medium text-slate-900">{document.fileName}</p>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    {document.fileType || "Document"}
+                    {document.uploadDate
+                      ? ` · ${new Date(document.uploadDate).toLocaleDateString("en-GB")}`
+                      : ""}
+                  </p>
+                </div>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <Select
+                    value={selectedTarget}
+                    onValueChange={(value) =>
+                      setTargets((current) => ({ ...current, [documentId]: value }))
+                    }
+                  >
+                    <SelectTrigger className={cn(ENTERPRISE_SELECT_TRIGGER, "flex-1")}>
+                      <SelectValue placeholder="Choose filing" />
+                    </SelectTrigger>
+                    <SelectContent className={ENTERPRISE_SELECT_CONTENT}>
+                      {(declarations ?? []).map((declaration) => (
+                        <SelectItem
+                          key={declaration._id}
+                          value={declaration._id}
+                          className={ENTERPRISE_SELECT_ITEM}
+                        >
+                          {formatPortalFilingLabel(declaration)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <button
+                    type="button"
+                    onClick={() => void handleAttach(document._id)}
+                    disabled={!selectedTarget || busyId === documentId}
+                    className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-black px-3 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+                  >
+                    {busyId === documentId && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    Attach
+                  </button>
+                </div>
+                {declarations?.length === 0 && (
+                  <p className="mt-2 text-[11px] text-amber-700">
+                    Link or create a filing for this client before attaching the document.
+                  </p>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {error && (
+        <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          {error}
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -820,6 +1065,7 @@ function ClientWorkspaceLoaded({
         </section>
 
         <ClientPortalAccessCard key={client._id} clientId={clientId} client={client} />
+        <ClientPortalDocumentsCard clientId={clientId} />
         <ClientPortalMessagesCard clientId={clientId} />
       </div>
     </div>
