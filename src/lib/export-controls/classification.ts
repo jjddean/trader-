@@ -1,8 +1,8 @@
-import Groq from "groq-sdk";
 import type { ExportProduct } from "./extraction";
 import type { RetrievalHit } from "./retrieval";
 import type { PredicateHit } from "./predicates/types";
 import { computeClassificationConfidence } from "./confidence";
+import { createChatCompletion } from "@/lib/llm-chat";
 
 export const EXPORT_CLASSIFICATION_PROMPT_VERSION = "export-classify-v1";
 
@@ -93,57 +93,11 @@ async function completeClassificationJson(messages: Array<{ role: "system" | "us
   content: string;
   modelVersion: string;
 }> {
-  const openaiKey = process.env.OPENAI_API_KEY?.trim();
-  const preferOpenAI =
-    process.env.EXPORT_CLASSIFY_PROVIDER === "openai" ||
-    (process.env.EXPORT_CLASSIFY_PROVIDER !== "groq" && Boolean(openaiKey));
-
-  if (preferOpenAI && openaiKey) {
-    const model = process.env.OPENAI_CLASSIFY_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini";
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${openaiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        temperature: 0.1,
-        response_format: { type: "json_object" },
-        messages,
-      }),
-    });
-
-    if (!response.ok) {
-      const detail = await response.text().catch(() => "");
-      throw new Error(`OpenAI classify failed (${response.status}): ${detail.slice(0, 300)}`);
-    }
-
-    const payload = (await response.json()) as {
-      choices?: Array<{ message?: { content?: string | null } }>;
-    };
-    return {
-      content: payload.choices?.[0]?.message?.content || "{}",
-      modelVersion: `openai:${model}`,
-    };
-  }
-
-  const groqApiKey = process.env.GROQ_API_KEY;
-  if (!groqApiKey) throw new Error("Groq API Key not configured");
-
-  const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
-  const groq = new Groq({ apiKey: groqApiKey });
-  const completion = await groq.chat.completions.create({
+  return createChatCompletion({
     messages,
-    model,
     temperature: 0.1,
-    response_format: { type: "json_object" },
+    json: true,
   });
-
-  return {
-    content: completion.choices[0]?.message?.content || "{}",
-    modelVersion: `groq:${model}`,
-  };
 }
 
 export async function classifyProductAgainstControlList(input: {

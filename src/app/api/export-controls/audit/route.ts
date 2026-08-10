@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     const sanitized = sanitizeDocumentText(rawText);
 
     let extracted;
-    if (runExtraction && process.env.GROQ_API_KEY) {
+    if (runExtraction && (process.env.OPENAI_API_KEY || process.env.GROQ_API_KEY)) {
       try {
         extracted = await extractExportFactsFromText(sanitized);
       } catch (err) {

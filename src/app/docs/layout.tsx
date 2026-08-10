@@ -5,7 +5,7 @@ const docsNav = [
   {
     group: "Getting Started",
     pages: [
-      { title: "Introduction", href: "/docs/introduction" },
+      { title: "Introduction", href: "/docs" },
       { title: "Quickstart", href: "/docs/quickstart" },
     ],
   },

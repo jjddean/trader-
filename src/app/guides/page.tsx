@@ -60,7 +60,7 @@ export default function GuidesIndex() {
             </p>
             
             {/* Search link request fulfilled inline */}
-            <Link href="/tools/hscode-lookup" className="mt-8 flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-6 py-3 rounded-full text-sm font-medium transition-colors">
+            <Link href="/hs-code-lookup" className="mt-8 flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-6 py-3 rounded-full text-sm font-medium transition-colors">
               <Search className="h-4 w-4 text-blue-400" />
               <span>Search the UK Tariff (HS Code Lookup) →</span>
             </Link>

@@ -1,51 +1,53 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import {
-  Shield,
-  ArrowRight,
-  Info,
-  Search,
-  FileText,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { useAction } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import {
-  fetchTradeData,
-  calculateUKImportCosts,
-} from "@/lib/trade-data";
+import React, { useState } from 'react';
+import { ArrowRight, Info, Loader2, Search } from 'lucide-react';
+import { useAction } from 'convex/react';
+import { api } from '../../convex/_generated/api';
+import { fetchTradeData, calculateUKImportCosts } from '@/lib/trade-data';
+import { cn } from '@/lib/utils';
+
+const fieldClass =
+  'h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors focus:border-slate-400';
+
+const labelClass = 'mb-1.5 block text-xs font-medium text-slate-600';
 
 export const FullModeSimulator = () => {
-  const [step, setStep] = useState<"audit" | "results">("audit");
+  const [step, setStep] = useState<'audit' | 'results'>('audit');
   const [data, setData] = useState({
-    hs: "",
-    value: "",
-    origin: "CN",
-    freight: "",
-    insurance: "",
-    incoterm: "fob",
+    hs: '',
+    value: '',
+    origin: 'CN',
+    freight: '',
+    insurance: '',
   });
-  const [hsInfo, setHsInfo] = useState<{ code: string; desc: string } | null>(
-    null,
-  );
-  const [results, setResults] = useState<any>(null);
+  const [hsInfo, setHsInfo] = useState<{ code: string; desc: string } | null>(null);
+  const [results, setResults] = useState<
+    (ReturnType<typeof calculateUKImportCosts> & { hsDesc: string }) | null
+  >(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSearchingHs, setIsSearchingHs] = useState(false);
 
   const searchHMRC = useAction(api.hmrc_actions.searchHSCode);
 
   const handleHsSearch = async (val: string) => {
     setData({ ...data, hs: val });
     if (val.length >= 4) {
-      const results = await searchHMRC({ query: val });
-      if (results && results.length > 0) {
-        setHsInfo({ 
-          code: results[0].code, 
-          desc: results[0].description 
-        });
+      setIsSearchingHs(true);
+      try {
+        const found = await searchHMRC({ query: val });
+        if (found && found.length > 0) {
+          setHsInfo({
+            code: found[0].code,
+            desc: found[0].description,
+          });
+        } else {
+          setHsInfo(null);
+        }
+      } catch {
+        setHsInfo(null);
+      } finally {
+        setIsSearchingHs(false);
       }
     } else {
       setHsInfo(null);
@@ -54,269 +56,195 @@ export const FullModeSimulator = () => {
 
   const handleAudit = async () => {
     setIsLoading(true);
-    // Simulate "Forensic Audit" delay
-    await new Promise((r) => setTimeout(r, 1500));
+    try {
+      const tradeData = await fetchTradeData();
+      const baseRate = tradeData.hs_overrides[data.hs.substring(0, 4)] ?? 0.025;
 
-    const tradeData = await fetchTradeData();
-    const baseRate = tradeData.hs_overrides[data.hs.substring(0, 4)] ?? 0.025;
+      const costs = calculateUKImportCosts({
+        goodsValue: parseFloat(data.value) || 0,
+        freight: parseFloat(data.freight) || 0,
+        insurance: parseFloat(data.insurance) || 0,
+        dutyRate: baseRate,
+        isVatRegistered: true,
+        hasPreference: false,
+      });
 
-    const costs = calculateUKImportCosts({
-      goodsValue: parseFloat(data.value) || 0,
-      freight: parseFloat(data.freight) || 0,
-      insurance: parseFloat(data.insurance) || 0,
-      dutyRate: baseRate,
-      isVatRegistered: true,
-      hasPreference: false,
-    });
-
-    setResults({
-      ...costs,
-      hsDesc: hsInfo?.desc || "General Merchandise",
-    });
-    setIsLoading(false);
-    setStep("results");
+      setResults({
+        ...costs,
+        hsDesc: hsInfo?.desc || 'General merchandise',
+      });
+      setStep('results');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <Card className="max-w-2xl mx-auto bg-white border-slate-200 shadow-xl shadow-slate-200/50 rounded-md overflow-hidden">
-      <CardHeader className="bg-slate-50/50 text-slate-900 py-8 px-10 relative border-b border-slate-100">
-        <div className="flex items-center gap-5">
-          <div className="w-12 h-12 bg-blue-50 rounded-md flex items-center justify-center border border-blue-100 relative">
-            <Shield className="h-6 w-6 text-blue-600" />
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-600 rounded-full animate-pulse" />
-          </div>
-          <div>
-            <CardTitle className="text-2xl font-bold tracking-tight text-slate-900 mb-1">
-              UK Duty & VAT Simulator
-            </CardTitle>
-            <p className="text-slate-500 text-sm font-medium">
-              Professional Customs Value & Tax Audit
-            </p>
-          </div>
+    <div className="space-y-6">
+      <div className="flex gap-2.5 rounded-lg border border-blue-100 bg-blue-50/80 px-4 py-3 text-blue-950">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+        <div className="space-y-1 text-xs leading-relaxed">
+          <p className="font-medium">HS-based estimate</p>
+          <p className="text-blue-900/85">
+            Enter a commodity code to model duty and VAT. Results are indicative — final liability
+            depends on the formal HMRC declaration.
+          </p>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="p-10 bg-white">
-        {step === "audit" && (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
-                    Commodity HS Code
-                  </Label>
-                  <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                    <Input
-                      placeholder="e.g. 6403 91"
-                      className="bg-white border-slate-200 text-slate-900 h-14 pl-12 rounded-md focus:ring-blue-500 font-mono tracking-wider"
-                      value={data.hs}
-                      onChange={(e) => handleHsSearch(e.target.value)}
-                    />
-                  </div>
-                  {hsInfo && (
-                    <p className="text-[11px] text-blue-600/80 font-medium ml-1 animate-in fade-in slide-in-from-left-2">
-                      Found: {hsInfo.desc.substring(0, 60)}...
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
-                    Origin Territory
-                  </Label>
-                  <Input
-                    placeholder="CHINA (CN)"
-                    className="bg-white border-slate-200 text-slate-900 h-14 rounded-md focus:ring-blue-500"
-                    value={data.origin}
-                    onChange={(e) =>
-                      setData({ ...data, origin: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
-                    FOB / EXW Value (GBP)
-                  </Label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">
-                      £
-                    </span>
-                    <Input
-                      type="number"
-                      placeholder="0.00"
-                      className="bg-white border-slate-200 text-slate-900 h-14 pl-10 rounded-md font-bold text-lg focus:ring-blue-500"
-                      value={data.value}
-                      onChange={(e) =>
-                        setData({ ...data, value: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
-                      Freight
-                    </Label>
-                    <Input
-                      type="number"
-                      placeholder="£"
-                      className="bg-white border-slate-200 text-slate-900 h-14 rounded-xl focus:ring-blue-500"
-                      value={data.freight}
-                      onChange={(e) =>
-                        setData({ ...data, freight: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">
-                      Insurance
-                    </Label>
-                    <Input
-                      type="number"
-                      placeholder="£"
-                      className="bg-white border-slate-200 text-slate-900 h-14 rounded-xl focus:ring-blue-500"
-                      value={data.insurance}
-                      onChange={(e) =>
-                        setData({ ...data, insurance: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 bg-blue-50/50 border border-blue-100 shadow-inner rounded-md flex gap-4 items-center">
-              <Info className="h-5 w-5 text-blue-600 flex-shrink-0" />
-              <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
-                The Simulator verifies customs valuation methods according to UK
-                General Interpretation Rules (GIR). Advanced audit includes
-                trade remedies and preferential tariff eligibility checks.
-              </p>
-            </div>
-
-            <Button
-              onClick={handleAudit}
-              disabled={!data.hs || !data.value || isLoading}
-              className="w-full h-16 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-md shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
-            >
-              {isLoading ? (
-                <span className="flex items-center gap-3">
-                  <div className="w-5 h-5 border-2 border-slate-200 border-t-white rounded-full animate-spin" />
-                  Verifying HTS & Origin Data...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  Execute Customs Audit
-                  <ArrowRight className="h-5 w-5" />
-                </span>
+      {step === 'audit' && (
+        <div className="space-y-4">
+          <div>
+            <label className={labelClass}>Commodity HS code</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by HS code, e.g. 6403"
+                className={cn(fieldClass, 'pl-9 pr-10 font-mono tracking-wide')}
+                value={data.hs}
+                onChange={(e) => void handleHsSearch(e.target.value)}
+              />
+              {isSearchingHs && (
+                <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-slate-400" />
               )}
-            </Button>
+            </div>
+            {hsInfo && (
+              <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+                <span className="font-bold text-blue-700">{hsInfo.code}</span>
+                {' — '}
+                {hsInfo.desc}
+              </p>
+            )}
           </div>
-        )}
 
-        {step === "results" && results && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="flex-1 space-y-4">
-                <div className="p-6 bg-slate-50 border border-slate-100 rounded-md space-y-4">
-                  <h4 className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">
-                    Audit Summary
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-slate-500">HS Code</span>
-                      <span className="text-slate-900 font-mono">
-                        {data.hs}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-slate-500">Duty Rate</span>
-                      <span className="text-slate-900 font-bold">
-                        {(results.dutyRate * 100).toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-slate-500">VAT Factor</span>
-                      <span className="text-slate-900">20% Standard</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex-1 p-6 bg-emerald-50 border border-emerald-100 rounded-md text-center flex flex-col justify-center">
-                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-2">
-                  Total Estimated Tax Liability
-                </p>
-                <p className="text-5xl font-bold text-slate-900 tracking-tighter">
-                  £{results.totalTaxes.toLocaleString()}
-                </p>
-                <p className="text-[11px] text-slate-500 mt-2 font-medium">
-                  Ready for C88 Submission
-                </p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className={labelClass}>Origin territory</label>
+              <input
+                type="text"
+                placeholder="e.g. CN"
+                className={fieldClass}
+                value={data.origin}
+                onChange={(e) => setData({ ...data, origin: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Goods value (GBP)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+                  £
+                </span>
+                <input
+                  type="number"
+                  placeholder="0.00"
+                  className={cn(fieldClass, 'pl-7')}
+                  value={data.value}
+                  onChange={(e) => setData({ ...data, value: e.target.value })}
+                />
               </div>
             </div>
+          </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between ml-1">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                  Calculation Breakdown
-                </p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[
-                  {
-                    label: "Customs Value",
-                    value: `£${results.customsValue.toLocaleString()}`,
-                  },
-                  {
-                    label: "Import Duty",
-                    value: `£${results.dutyAmount.toLocaleString()}`,
-                  },
-                  {
-                    label: "Import VAT",
-                    value: `£${results.vatAmount.toLocaleString()}`,
-                  },
-                ].map((item, i) => (
-                  <div
-                    key={i}
-                    className="p-4 bg-white border border-slate-200 rounded-xl"
-                  >
-                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-tight mb-1">
-                      {item.label}
-                    </p>
-                    <p className="text-lg font-bold text-slate-900">
-                      {item.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className={labelClass}>Freight</label>
+              <input
+                type="number"
+                placeholder="0.00"
+                className={fieldClass}
+                value={data.freight}
+                onChange={(e) => setData({ ...data, freight: e.target.value })}
+              />
             </div>
+            <div>
+              <label className={labelClass}>Insurance</label>
+              <input
+                type="number"
+                placeholder="0.00"
+                className={fieldClass}
+                value={data.insurance}
+                onChange={(e) => setData({ ...data, insurance: e.target.value })}
+              />
+            </div>
+          </div>
 
-            <div className="flex flex-col gap-4">
-              <Button className="w-full h-14 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm">
-                <FileText className="h-4 w-4 text-slate-500" />
-                Generate UK Import Profile
-              </Button>
-              <Button className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-500/20 flex items-center justify-center gap-2">
-                Upload Documents to HMRC
+          <button
+            type="button"
+            onClick={() => void handleAudit()}
+            disabled={!data.hs || !data.value || isLoading}
+            className="flex h-9 w-full items-center justify-center gap-2 rounded-md bg-slate-900 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-50"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Calculating…
+              </>
+            ) : (
+              <>
+                Calculate duty &amp; VAT
                 <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
-            <button
-              onClick={() => setStep("audit")}
-              className="w-full text-xs text-slate-500 hover:text-slate-700 font-medium py-1 transition-colors"
-            >
-              ← Run Another Audit
-            </button>
+      {step === 'results' && results && (
+        <div className="space-y-4">
+          <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+            <div className="border-b border-slate-100 px-4 py-3">
+              <p className="text-sm font-bold tracking-tight text-blue-700">{data.hs}</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-600">{results.hsDesc}</p>
+            </div>
+            <div className="divide-y divide-slate-100">
+              <div className="flex items-center justify-between px-4 py-3">
+                <span className="text-xs text-slate-500">Duty rate</span>
+                <span className="text-sm font-bold text-slate-900">
+                  {(results.dutyRate * 100).toFixed(1)}%
+                </span>
+              </div>
+              <div className="flex items-center justify-between px-4 py-3">
+                <span className="text-xs text-slate-500">Customs value</span>
+                <span className="text-sm font-semibold text-slate-900">
+                  £{results.customsValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                </span>
+              </div>
+              <div className="flex items-center justify-between px-4 py-3">
+                <span className="text-xs text-slate-500">Import duty</span>
+                <span className="text-sm font-semibold text-slate-900">
+                  £{results.dutyAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                </span>
+              </div>
+              <div className="flex items-center justify-between px-4 py-3">
+                <span className="text-xs text-slate-500">Import VAT</span>
+                <span className="text-sm font-semibold text-slate-900">
+                  £{results.vatAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                </span>
+              </div>
+              <div className="flex items-center justify-between bg-slate-50 px-4 py-3">
+                <span className="text-xs font-semibold text-slate-700">Total taxes (indicative)</span>
+                <span className="text-base font-bold text-slate-900">
+                  £{results.totalTaxes.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          <button
+            type="button"
+            onClick={() => setStep('audit')}
+            className="text-[10px] font-bold uppercase tracking-tight text-blue-600 hover:text-blue-700"
+          >
+            ← Run another estimate
+          </button>
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-[10px] text-slate-400">
+        <span>Indicative — HMRC confirmed amounts override on acceptance</span>
+        <span>Source: HMRC Trade Tariff</span>
+      </div>
+    </div>
   );
 };

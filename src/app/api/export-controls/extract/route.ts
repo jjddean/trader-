@@ -45,7 +45,10 @@ export async function POST(request: Request) {
     } catch (parseError: unknown) {
       const message = parseError instanceof Error ? parseError.message : "parse failed";
       return NextResponse.json(
-        { error: "Failed to parse document via Textract.", details: message },
+        {
+          error: "Failed to parse document via Textract. Use a clear PNG/JPEG or a single-page PDF.",
+          details: message,
+        },
         { status: 400 },
       );
     }

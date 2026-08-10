@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import Groq from "groq-sdk";
 import { TextractClient, DetectDocumentTextCommand } from "@aws-sdk/client-textract";
 import { AI_MAX_UPLOAD_BYTES, aiExtractLimiter } from "@/lib/api-rate-limiter";
+import { assertLlmConfigured, createChatCompletion } from "@/lib/llm-chat";
 
 async function extractTextWithTextract(buffer: Buffer): Promise<string> {
   const client = new TextractClient({
@@ -43,9 +43,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "File too large" }, { status: 413 });
     }
 
-    const groqApiKey = process.env.GROQ_API_KEY;
-    if (!groqApiKey) {
-      return NextResponse.json({ error: "Groq API Key not configured" }, { status: 500 });
+    try {
+      assertLlmConfigured();
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "LLM not configured" },
+        { status: 500 },
+      );
     }
 
     const arrayBuffer = await file.arrayBuffer();
@@ -68,13 +72,15 @@ export async function POST(request: Request) {
     }
 
     if (!rawText || rawText.trim() === "") {
-      return NextResponse.json({ error: "No readable text found in the document via Textract" }, { status: 400 });
+      return NextResponse.json(
+        { error: "No readable text found in the document via Textract" },
+        { status: 400 },
+      );
     }
 
-    const groq = new Groq({ apiKey: groqApiKey });
-    const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
-
-    const completion = await groq.chat.completions.create({
+    const { content: responseContent } = await createChatCompletion({
+      json: true,
+      temperature: 0.1,
       messages: [
         {
           role: "system",
@@ -104,16 +110,11 @@ export async function POST(request: Request) {
           content: `Here is the raw invoice text:\n\n${rawText}`,
         },
       ],
-      model: model,
-      temperature: 0.1,
-      response_format: { type: "json_object" },
     });
-
-    const responseContent = completion.choices[0]?.message?.content || "{}";
 
     let parsedResponse;
     try {
-      parsedResponse = JSON.parse(responseContent);
+      parsedResponse = JSON.parse(responseContent || "{}");
     } catch {
       return NextResponse.json({ error: "Failed to parse AI extraction response" }, { status: 500 });
     }

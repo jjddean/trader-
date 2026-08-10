@@ -136,7 +136,12 @@ export function DocumentAuditPanel({
       });
 
       if (!extractRes.ok) {
-        throw new Error("AWS Textract failed to extract text from this document. Please check the file validity.");
+        const err = await extractRes.json().catch(() => ({} as { error?: string; details?: string }));
+        const detail =
+          typeof err.error === "string" && err.error.trim()
+            ? err.error.trim()
+            : "Document extraction failed. Please check the file and try again.";
+        throw new Error(detail);
       }
 
       const { rawText: extractedText } = await extractRes.json();
