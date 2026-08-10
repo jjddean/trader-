@@ -192,8 +192,12 @@ export const completeManagedService = mutation({
     const city = trimRequired(args.city ?? "", "City");
     const contactName = trimRequired(args.contactName, "Full name");
     const contactEmail = trimRequired(args.contactEmail, "Email").toLowerCase();
-
-    const portalEmail = contactEmail;
+    const portalEmail = String(identity.email ?? dbUser.email ?? "")
+      .trim()
+      .toLowerCase();
+    if (!portalEmail) {
+      throw new Error("Your signed-in account must have a verified email address");
+    }
 
     const byClerk = await ctx.db
       .query("clients")
@@ -213,30 +217,17 @@ export const completeManagedService = mutation({
 
     if (
       byEmail &&
-      byEmail.portalClerkId &&
-      byEmail.portalClerkId !== identity.subject
-    ) {
-      throw new Error(
-        "This email is already used for portal access. Use a different contact email, or revoke portal on that client first.",
-      );
-    }
-
-    if (
-      byEmail &&
       byEmail.orgId &&
       byEmail.orgId !== managedOrgId &&
       (!byClerk || byClerk._id !== byEmail._id)
     ) {
       throw new Error(
-        "This email belongs to another organisation’s client. Use a different contact email.",
+        "Your signed-in email is already linked to another organisation’s client portal. Revoke that access before starting Managed Service.",
       );
     }
 
     const existingClient =
-      byClerk ??
-      (byEmail && (!byEmail.portalClerkId || byEmail.portalClerkId === identity.subject)
-        ? byEmail
-        : null);
+      byClerk ?? (byEmail?.orgId === managedOrgId ? byEmail : null);
 
     const now = Date.now();
     const tradingName = trimOptional(args.tradingName);

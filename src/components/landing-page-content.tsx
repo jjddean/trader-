@@ -366,28 +366,29 @@ export function LandingPageContent() {
               <p className="mb-3 text-[12px] font-semibold uppercase tracking-[0.12em] text-blue-300">
                 Professional services
               </p>
-              <h3 className="mb-3 text-[20px] font-semibold">Consultancy</h3>
+              <h3 className="mb-3 text-[20px] font-semibold">Integrated Consultancy</h3>
               <p className="mb-4 max-w-3xl text-[16px] font-medium leading-relaxed text-white">
-                Get specialist export-control decisions without losing control of the process. freightcode keeps
-                the case, evidence and communication together while an experienced consultant reviews the risks and
-                guides it towards a defensible outcome.
+                Specialist export-control review directly from your freightcode assessment.
               </p>
               <p className="mb-4 max-w-3xl text-[14px] leading-relaxed text-slate-300">
-                Independent consultants review classifications, assess licensing needs and provide a documented
-                compliance opinion. Where required, they can support the licensing process from preparing the pack
-                through to managing the application on the official GOV.UK service.
+                Your case, supporting evidence and review questions are transferred securely to our independent
+                consultancy partner. Track every information request, review update and final decision in one place, with
+                supporting evidence kept securely against the case instead of relying on email.
               </p>
               <p className="mb-6 max-w-3xl text-[14px] leading-relaxed text-slate-300">
-                Get additional assurance on complex or high-risk exports, reduce the risk of classification and
-                licensing errors, and retain a documented record for governance and regulatory enquiries. Work
-                starts from a secure review link to the draft pack on your assessment.
+                The consultant can review classification, sanctions and licensing requirements, request further
+                evidence and record a documented opinion. Where required, they can apply on your behalf and manage the
+                licensing process through to a decision. Application and licence references remain connected to the
+                assessment and, where relevant, the resulting CDS declaration.
               </p>
               <ul className="mb-7 grid gap-x-8 gap-y-3 text-[14px] text-slate-200 sm:grid-cols-2">
                 {[
-                  "Classification and control-list reviews",
-                  "Licence strategy and application support",
-                  "Sanctions and brokering guidance",
-                  "Mock audits and team training",
+                  "Classification and control-list review",
+                  "Licensing assessment and application support",
+                  "Secure evidence and information requests",
+                  "Review status and documented outcome",
+                  "Licence references linked to the customs record",
+                  "Complete review and audit history",
                 ].map((service) => (
                   <li key={service} className="flex items-start gap-3">
                     <span className="mt-0.5 text-blue-400" aria-hidden>

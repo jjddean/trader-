@@ -83,6 +83,9 @@
 |------|--------|--------|
 | `lane.md` | draft | repo lane data |
 | `appendix-21a-h1-obligations.md` | verbatim | Appendix 21A |
+| `appendix-21f-i1-obligations.md` | implementation mirror | Appendix 21F I1 C&F |
+| `appendix-22a-b1-obligations.md` | implementation mirror | Appendix 22A B1 |
+| `appendix-22d-c1-obligations.md` | implementation mirror | Appendix 22D C1 C&F |
 | `declaration-categories-index.md` | verbatim excerpts | CDSSG04130/06030 + import/export general notes |
 | `de-1-10-procedures.md` | placeholder | Appendix 1 — to fetch |
 | `de-2-3-documents.md` | partial | Appendix 5A landing — rows pending |
