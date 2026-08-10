@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/purity */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useState } from 'react';
@@ -22,7 +22,7 @@ const GENERATED_DATA = [
     { segment: 'Dest.', score: 25, label: 'Port Discharge' },
 ];
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
         const dataPoint = payload[0].payload;
         return (
@@ -85,6 +85,9 @@ export const RouteRiskChart: React.FC<RouteRiskChartProps> = ({ route, riskLevel
                         <Info className="h-3 w-3" />
                         <span>Risk Score (0–100): Composite of geopolitical, sanctions, & weather factors</span>
                     </div>
+                    <p className="mt-1 text-[10px] font-medium text-slate-500">
+                        {route} · {riskLevel} risk
+                    </p>
                 </div>
 
                 {/* Enterprise Toggle - Visual Only */}

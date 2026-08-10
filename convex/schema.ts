@@ -93,7 +93,6 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_clerk", ["clerkId"]),
 
-
   /** Per Clerk org: practice (sandbox/TDR) vs live (production CDS). */
   org_hmrc_settings: defineTable({
     orgId: v.string(),

@@ -85,7 +85,7 @@ export function PortalMessageThread({
   return (
     <div
       ref={paneRef}
-      className="h-40 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 px-3 py-3"
+      className="h-56 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 px-3 py-3"
     >
       {isIdle ? (
         <p className="text-xs text-slate-500">{idleLabel}</p>
