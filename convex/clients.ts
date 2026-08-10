@@ -20,6 +20,11 @@ function normalizeUpper(value: string | null | undefined) {
   return normalizeString(value)?.toUpperCase();
 }
 
+function documentCode(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  return value.toUpperCase().match(/(?:^|[^A-Z0-9])([A-Z]\d{3}|\d{4})(?:[^A-Z0-9]|$)/)?.[1] ?? null;
+}
+
 async function canAccessClient(ctx: Ctx, userId: string, client: Doc<"clients"> | null) {
   if (!client) return false;
   if (String(client.userId ?? "") === userId) return true;
@@ -451,6 +456,106 @@ export const listLinkedDeclarations = query({
   },
 });
 
+/** Portal uploads awaiting a filing assignment for one broker client. */
+export const listUnlinkedDocuments = query({
+  args: { clientId: v.id("clients") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const client = await ctx.db.get(args.clientId);
+    if (!(await canAccessClient(ctx, identity.subject, client))) return [];
+
+    const rows = await ctx.db
+      .query("documents")
+      .withIndex("by_client", (q) => q.eq("clientId", args.clientId))
+      .order("desc")
+      .take(200);
+
+    return rows
+      .filter((row) => row.clientId === args.clientId && !row.declarationId)
+      .map((row) => ({
+        _id: row._id,
+        fileName: row.fileName != null ? String(row.fileName) : "Document",
+        fileType: row.fileType != null ? String(row.fileType) : null,
+        uploadDate: row.uploadDate != null ? String(row.uploadDate) : null,
+        hasFile: Boolean(row.fileId),
+      }));
+  },
+});
+
+/** Assign an unlinked portal upload to a filing owned by the same client. */
+export const attachUnlinkedDocument = mutation({
+  args: {
+    clientId: v.id("clients"),
+    documentId: v.id("documents"),
+    declarationId: v.id("declarations"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const [client, document, declaration] = await Promise.all([
+      ctx.db.get(args.clientId),
+      ctx.db.get(args.documentId),
+      ctx.db.get(args.declarationId),
+    ]);
+    if (!(await canAccessClient(ctx, identity.subject, client))) {
+      throw new Error("Unauthorized");
+    }
+    if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
+      throw new Error("Declaration not found");
+    }
+    if (declaration.clientId !== args.clientId) {
+      throw new Error("The filing does not belong to this client");
+    }
+    if (!document || document.clientId !== args.clientId) {
+      throw new Error("Document not found");
+    }
+    if (document.declarationId) {
+      throw new Error("Document is already attached to a filing");
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(args.documentId, {
+      declarationId: args.declarationId,
+      mrn: declaration.mrn != null ? String(declaration.mrn) : undefined,
+      status: "pending_review",
+      linkedBy: identity.subject,
+      linkedAt: now,
+    });
+    const code = documentCode(document.fileName) ?? documentCode(document.fileType);
+    if (code) {
+      const requirement = await ctx.db
+        .query("document_requirements")
+        .withIndex("by_declaration_code", (q) =>
+          q.eq("declarationId", args.declarationId).eq("code", code),
+        )
+        .first();
+      if (requirement) {
+        await ctx.db.patch(requirement._id, {
+          status: "uploaded",
+          linkedDocumentId: args.documentId,
+          updatedAt: now,
+        });
+      }
+    }
+    await ctx.db.insert("auditLogs", {
+      userId: identity.subject,
+      action: "portal_document_attached",
+      details: {
+        clientId: args.clientId,
+        documentId: args.documentId,
+        declarationId: args.declarationId,
+      },
+      timestamp: now,
+      archived: false,
+    });
+
+    return { ok: true as const };
+  },
+});
+
 /** Export assessments linked to this client — for case-scoped portal messaging. */
 export const listLinkedAssessments = query({
   args: { clientId: v.id("clients") },
@@ -494,19 +599,33 @@ export const listPortalMessages = query({
 
     if (args.declarationId && args.assessmentId) return [];
 
-    const rows = await ctx.db
-      .query("portal_messages")
-      .withIndex("by_client", (q) => q.eq("clientId", args.clientId))
-      .order("desc")
-      .take(Math.min(args.limit ?? 100, 200));
+    const limit = Math.min(args.limit ?? 100, 200);
+    const rows = args.declarationId
+      ? await ctx.db
+          .query("portal_messages")
+          .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId))
+          .order("desc")
+          .take(limit)
+      : args.assessmentId
+        ? await ctx.db
+            .query("portal_messages")
+            .withIndex("by_assessment", (q) => q.eq("assessmentId", args.assessmentId))
+            .order("desc")
+            .take(limit)
+        : await ctx.db
+            .query("portal_messages")
+            .withIndex("by_client", (q) => q.eq("clientId", args.clientId))
+            .filter((q) =>
+              q.and(
+                q.eq(q.field("declarationId"), undefined),
+                q.eq(q.field("assessmentId"), undefined),
+              ),
+            )
+            .order("desc")
+            .take(limit);
 
     return rows
-      .filter((row) => {
-        if (row.clientId !== args.clientId) return false;
-        if (args.declarationId) return row.declarationId === args.declarationId;
-        if (args.assessmentId) return row.assessmentId === args.assessmentId;
-        return !row.declarationId && !row.assessmentId;
-      })
+      .filter((row) => row.clientId === args.clientId)
       .map((row) => ({
         _id: row._id,
         declarationId: row.declarationId ?? null,
@@ -516,6 +635,95 @@ export const listPortalMessages = query({
         createdAt: row.createdAt,
         readAt: row.readAt ?? null,
       }));
+  },
+});
+
+/** Mark client replies in the open broker thread as read. */
+export const markPortalMessagesRead = mutation({
+  args: {
+    clientId: v.id("clients"),
+    declarationId: v.optional(v.id("declarations")),
+    assessmentId: v.optional(v.id("export_assessments")),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    const client = await ctx.db.get(args.clientId);
+    if (!(await canAccessClient(ctx, identity.subject, client))) throw new Error("Unauthorized");
+    if (args.declarationId && args.assessmentId) throw new Error("Choose one thread");
+
+    const rows = args.declarationId
+      ? await ctx.db
+          .query("portal_messages")
+          .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId))
+          .filter((q) => q.and(q.eq(q.field("senderRole"), "client"), q.eq(q.field("readAt"), undefined)))
+          .collect()
+      : args.assessmentId
+        ? await ctx.db
+            .query("portal_messages")
+            .withIndex("by_assessment", (q) => q.eq("assessmentId", args.assessmentId))
+            .filter((q) => q.and(q.eq(q.field("senderRole"), "client"), q.eq(q.field("readAt"), undefined)))
+            .collect()
+        : await ctx.db
+            .query("portal_messages")
+            .withIndex("by_client_sender_read", (q) =>
+              q.eq("clientId", args.clientId).eq("senderRole", "client").eq("readAt", undefined),
+            )
+            .filter((q) =>
+              q.and(q.eq(q.field("declarationId"), undefined), q.eq(q.field("assessmentId"), undefined)),
+            )
+            .collect();
+    const now = Date.now();
+    const unread = rows.filter((row) => row.clientId === args.clientId);
+    await Promise.all(unread.map((row) => ctx.db.patch(row._id, { readAt: now })));
+    return { marked: unread.length };
+  },
+});
+
+export const savePortalMessageDocument = mutation({
+  args: {
+    messageId: v.id("portal_messages"),
+    storageId: v.id("_storage"),
+    fileName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+    const message = await ctx.db.get(args.messageId);
+    if (!message) throw new Error("Message not found");
+    const client = await ctx.db.get(message.clientId);
+    if (!(await canAccessClient(ctx, identity.subject, client)) || !client) {
+      throw new Error("Unauthorized");
+    }
+    const existing = await ctx.db
+      .query("documents")
+      .withIndex("by_source_message", (q) => q.eq("sourceMessageId", args.messageId))
+      .first();
+    if (existing) return { documentId: existing._id, alreadySaved: true as const };
+    const now = Date.now();
+    const declaration = message.declarationId ? await ctx.db.get(message.declarationId) : null;
+    const documentId = await ctx.db.insert("documents", {
+      fileId: args.storageId,
+      fileName: args.fileName.trim() || "portal-message.pdf",
+      fileType: "correspondence",
+      status: message.declarationId ? "pending_review" : "unlinked",
+      auditStatus: "pending",
+      uploadDate: new Date(now).toISOString(),
+      userId: identity.subject,
+      orgId: message.orgId ?? client.orgId,
+      clientId: message.clientId,
+      declarationId: message.declarationId,
+      mrn: declaration?.mrn != null ? String(declaration.mrn) : undefined,
+      sourceMessageId: args.messageId,
+    });
+    await ctx.db.insert("auditLogs", {
+      userId: identity.subject,
+      action: "portal_message_saved_to_documents",
+      details: { messageId: args.messageId, documentId, clientId: message.clientId },
+      timestamp: now,
+      archived: false,
+    });
+    return { documentId, alreadySaved: false as const };
   },
 });
 

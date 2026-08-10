@@ -4,12 +4,32 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { useConvexAuth, useQuery } from "convex/react";
-import { ArrowLeft, ExternalLink, FileText, MessageSquare, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ExternalLink, MessageSquare, ShieldCheck } from "lucide-react";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 
 const FIELD_LABEL =
   "mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase";
+
+const EUSU_STATE_LABEL = {
+  sent: "Sent to end user",
+  opened: "Opened by end user",
+  completed: "Completed",
+  expired: "Expired",
+  revoked: "Withdrawn",
+} as const;
+
+function formatDate(ts: number) {
+  try {
+    return new Date(ts).toLocaleDateString(undefined, {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return "—";
+  }
+}
 
 export default function PortalComplianceDetailPage() {
   const params = useParams();
@@ -84,10 +104,25 @@ export default function PortalComplianceDetailPage() {
             <p className="font-mono text-xs text-black">{assessment.licenceRef || "—"}</p>
           </div>
           <div>
-            <label className={FIELD_LABEL}>EUSU</label>
-            <p className="text-xs text-black">
-              {assessment.eusuCompleted ? "Submitted" : assessment.eusuPath ? "Pending" : "—"}
-            </p>
+            <label className={FIELD_LABEL}>End-user undertaking</label>
+            {assessment.eusu ? (
+              <>
+                <p className="text-xs text-black">{EUSU_STATE_LABEL[assessment.eusu.state]}</p>
+                <p className="mt-0.5 text-[10px] text-slate-400">
+                  Sent to {assessment.eusu.recipientEmail} on{" "}
+                  {formatDate(assessment.eusu.sentAt)}
+                  {assessment.eusu.state === "completed" && assessment.eusu.completedAt
+                    ? ` · completed ${formatDate(assessment.eusu.completedAt)}`
+                    : assessment.eusu.state === "sent" || assessment.eusu.state === "opened"
+                      ? ` · expires ${formatDate(assessment.eusu.expiresAt)}`
+                      : ""}
+                </p>
+              </>
+            ) : (
+              <p className="text-xs text-black">
+                {assessment.eusuCompleted ? "Submitted" : "Not requested"}
+              </p>
+            )}
           </div>
           <div className="sm:col-span-2">
             <label className={FIELD_LABEL}>Screening</label>
@@ -95,17 +130,6 @@ export default function PortalComplianceDetailPage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2 border-t border-slate-100 px-6 py-4">
-          {assessment.eusuPath ? (
-            <a
-              href={assessment.eusuPath}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50"
-            >
-              <FileText className="h-3.5 w-3.5" />
-              Complete EUSU
-            </a>
-          ) : null}
           {assessment.govUkApplyUrl ? (
             <a
               href={assessment.govUkApplyUrl}
@@ -124,9 +148,15 @@ export default function PortalComplianceDetailPage() {
             <MessageSquare className="h-3.5 w-3.5" />
             Message broker
           </Link>
-          {!assessment.eusuPath && !assessment.govUkApplyUrl ? (
+          {!assessment.govUkApplyUrl ? (
             <p className="w-full text-[11px] text-slate-500">
               {assessment.govUkHeadline || "No government actions available on this case yet."}
+            </p>
+          ) : null}
+          {assessment.eusu && assessment.eusu.state !== "completed" ? (
+            <p className="w-full text-[11px] text-slate-500">
+              The end-user undertaking is completed by your end user directly. Ask your broker to
+              resend it if it has expired or gone unanswered.
             </p>
           ) : null}
         </div>
