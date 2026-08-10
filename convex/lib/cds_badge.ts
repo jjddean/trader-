@@ -61,6 +61,7 @@ export function resolveDeclarationCdsBadge(
   if (status === "Amended") return { label: "Amended (DMSRES)", tone: "info" };
   if (status === "Accepted") return { label: "Accepted (DMSACC)", tone: "success" };
   if (status === "Rejected") return { label: "Rejected (DMSREJ)", tone: "danger" };
+  if (status === "Inventory Rejected") return { label: status, tone: "danger" };
   if (status === "Invalid") return { label: "Invalid (DMSINV)", tone: "danger" };
   if (status === "Action Required") return { label: status, tone: "danger" };
   if (status === "Draft") return { label: status, tone: "warning" };

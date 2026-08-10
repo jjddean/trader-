@@ -1699,6 +1699,7 @@ export const updateDeclarationDetails = mutation({
     id: v.id("declarations"),
     eori: v.string(),
     declarationType: v.string(),
+    additionalDeclarationType: v.optional(v.string()),
     route: v.string(),
     dispatchCountry: v.optional(v.string()),
     destinationCountry: v.optional(v.string()),
@@ -1722,6 +1723,10 @@ export const updateDeclarationDetails = mutation({
     transactionNatureCode: v.optional(v.string()),
     defermentAccountNumber: v.optional(v.string()),
     paymentMethodCode: v.optional(v.string()),
+    // DE 7/10 container id, and the CNS inventory reference (UCN) for
+    // inventory-linked locations.
+    containerNumber: v.optional(v.string()),
+    cnsUcn: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -1750,6 +1755,9 @@ export const updateDeclarationDetails = mutation({
     await ctx.db.patch(args.id, {
       eori: args.eori,
       declarationType: args.declarationType,
+      ...(args.additionalDeclarationType !== undefined
+        ? { additionalDeclarationType: args.additionalDeclarationType.trim().toUpperCase() }
+        : {}),
       route: args.route,
       ...(args.dispatchCountry !== undefined ? { dispatchCountry: args.dispatchCountry } : {}),
       ...(args.destinationCountry !== undefined ? { destinationCountry: args.destinationCountry } : {}),
@@ -1777,6 +1785,8 @@ export const updateDeclarationDetails = mutation({
       ...(args.paymentMethodCode !== undefined
         ? { paymentMethodCode: mop || undefined }
         : {}),
+      ...(args.containerNumber !== undefined ? { containerNumber: args.containerNumber.trim() || undefined } : {}),
+      ...(args.cnsUcn !== undefined ? { cnsUcn: args.cnsUcn.trim().toUpperCase() || undefined } : {}),
       lastUpdated: Date.now(),
     });
     await upsertDeclarationPreviewByDeclaration(ctx, args.id);
@@ -2185,6 +2195,16 @@ export const rebuildMyReadModels = mutation({
       declarationCount: declarations.length,
       rebuiltAt: Date.now(),
     };
+  },
+});
+
+/** Refresh one cached declarations-list row after an external notification. */
+export const refreshDeclarationPreviewInternal = internalMutation({
+  args: { declarationId: v.id("declarations") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await upsertDeclarationPreviewByDeclaration(ctx, args.declarationId);
+    return null;
   },
 });
 

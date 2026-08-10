@@ -66,6 +66,29 @@ describe("HMRC DMS notification parser", () => {
     assert.equal(parsed.fieldErrors[0]?.reason, "Value per kilo appears too low for this commodity");
   });
 
+  it("pairs namespaced smartErrorMsg descriptions with CDS13000 errors", () => {
+    const parsed = parseHmrcNotification(`
+      <_2_1:Response xmlns:_2_1="urn:wco:datamodel:WCO:RES-DMS:2">
+        <_2_1:FunctionCode>02</_2_1:FunctionCode>
+        <_2_1:AdditionalInformation>
+          <_2_1:StatementCode>smartErrorMsg</_2_1:StatementCode>
+          <_2_1:StatementDescription>Value of 1 item appears too high for this commodity</_2_1:StatementDescription>
+        </_2_1:AdditionalInformation>
+        <_2_1:AdditionalInformation>
+          <_2_1:StatementCode>smartErrorMsg</_2_1:StatementCode>
+          <_2_1:StatementDescription>Weight appears too high per item</_2_1:StatementDescription>
+        </_2_1:AdditionalInformation>
+        <_2_1:Error><_2_1:ValidationCode>CDS13000</_2_1:ValidationCode></_2_1:Error>
+        <_2_1:Error><_2_1:ValidationCode>CDS13000</_2_1:ValidationCode></_2_1:Error>
+      </_2_1:Response>
+    `);
+
+    assert.deepEqual(parsed.fieldErrors.map((error) => error.reason), [
+      "Value of 1 item appears too high for this commodity",
+      "Weight appears too high per item",
+    ]);
+  });
+
   it("maps FunctionCode 11 to DMSCLE", () => {
     const parsed = parseHmrcNotification(`
       <Response>

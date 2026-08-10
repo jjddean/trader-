@@ -9,6 +9,13 @@ import { resolveOrgHmrcRoutingForDeclaration } from "../../../../lib/hmrc-org-ro
 import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
 import { logHmrcAudit } from "../../../../lib/audit-log";
 import { buildInvalidationXml } from "../../../../lib/hmrc-invalidation-xml";
+import {
+  collectGovHeaders,
+  FollowUpLrnUnavailableError,
+  resolveFollowUpContext,
+  resolveFollowUpLrn,
+} from "../../../../lib/cns/follow-up";
+import { sendCnsDeclaration } from "../../../../lib/cns/declarations";
 
 /**
  * POST /api/hmrc/cancel
@@ -59,9 +66,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Failed to verify declaration environment" }, { status: 403 });
     }
 
-    const tokenResult = await resolveHmrcAccessToken(convex, userId, hmrcContext);
-    if ("error" in tokenResult) {
-      return tokenResult.error;
+    // Follow-up operations stay on the route the declaration was created on.
+    const followUp = await resolveFollowUpContext(convex, declarationId as Id<"declarations">);
+
+    // CNS authenticates with Basic credentials — no HMRC OAuth token needed.
+    let hmrcToken = "";
+    if (followUp.transport === "hmrc_direct") {
+      const tokenResult = await resolveHmrcAccessToken(convex, userId, hmrcContext);
+      if ("error" in tokenResult) {
+        return tokenResult.error;
+      }
+      hmrcToken = tokenResult.token;
     }
 
     const eori = String(lane.eori || "").trim();
@@ -74,8 +89,20 @@ export async function POST(request: Request) {
 
     // DE 2/5 FunctionalReferenceID: an..35 — keep cancel LRN within limit.
     const rawId = String(declarationId);
-    const cancelLrn =
+    const mintedCancelLrn =
       `CX-${rawId}`.length <= 35 ? `CX-${rawId}` : `CX-${rawId.slice(-32)}`;
+
+    // CNS requires the ORIGINAL create LRN here; the direct HMRC path keeps its
+    // existing minted CX- reference and correlates via X-Conversation-ID.
+    let cancelLrn: string;
+    try {
+      cancelLrn = resolveFollowUpLrn(followUp, mintedCancelLrn, "cancel");
+    } catch (lrnErr: unknown) {
+      if (lrnErr instanceof FollowUpLrnUnavailableError) {
+        return NextResponse.json({ error: lrnErr.message, code: "CNS_LRN_UNAVAILABLE" }, { status: 409 });
+      }
+      throw lrnErr;
+    }
     const trimmedReason = typeof reason === "string" ? reason.trim() : "";
     const xmlPayload = buildInvalidationXml({
       cancelLrn,
@@ -83,19 +110,6 @@ export async function POST(request: Request) {
       eori,
       reason: trimmedReason.length > 0 ? trimmedReason : undefined,
     });
-
-    const hmrcResponse = await fetchHmrc(
-      declarationsEndpointUrl(hmrcContext.apiBaseUrl, "cancel"),
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/xml; charset=UTF-8" },
-        body: xmlPayload,
-      },
-      request,
-      tokenResult.token,
-      eori,
-      hmrcContext,
-    );
 
     const recordCancelEvidence = async (
       outcome: "accepted" | "rejected" | "error",
@@ -121,6 +135,90 @@ export async function POST(request: Request) {
         console.warn("[CANCEL] Failed to record submission evidence (non-critical):", m);
       }
     };
+
+    // CNS route — cancellation through the CSP gateway.
+    if (followUp.transport === "cns_inventory") {
+      const cnsResult = await sendCnsDeclaration(followUp.config, {
+        operation: "cancel",
+        xmlPayload,
+        forwardedGovHeaders: collectGovHeaders(request),
+      });
+
+      if (cnsResult.status === "failed") {
+        const { error: cnsError } = cnsResult;
+        const outcomeUnknown = cnsError.disposition === "outcome_unknown";
+        await recordCancelEvidence(outcomeUnknown ? "error" : "rejected", cnsError.httpStatus, null);
+        await logHmrcAudit(convex, userId, "declaration_cancel_failed", {
+          declarationId,
+          mrn,
+          transport: "cns_inventory",
+          reason: outcomeUnknown ? "cns_outcome_unknown" : "cns_rejected",
+          cnsCode: cnsError.code,
+          cnsStatus: cnsError.httpStatus,
+          details: cnsError.message.slice(0, 2000),
+        });
+        return NextResponse.json(
+          {
+            error: outcomeUnknown
+              ? "CNS did not return a definitive response to the cancellation. Check notifications before retrying."
+              : "CNS rejected the cancellation",
+            code: cnsError.code,
+            message: cnsError.message,
+            details: cnsError.details,
+            outcomeUnknown,
+          },
+          { status: outcomeUnknown ? 504 : cnsError.httpStatus || 502 },
+        );
+      }
+
+      await convex.mutation(api.declarations.updateDeclarationStatus, {
+        id: declarationId,
+        status: "Cancellation Requested",
+      });
+      await recordCancelEvidence("accepted", cnsResult.httpStatus, null);
+
+      try {
+        await convex.mutation(api.cns.recordTransportOutcome, {
+          declarationId,
+          transportState: "cns_cancel_pending",
+          ...(cnsResult.cspId ? { cspId: cnsResult.cspId } : {}),
+        });
+      } catch (stateErr: unknown) {
+        console.warn("[CANCEL/CNS] Failed to persist transport state (non-critical):", stateErr);
+      }
+
+      await logHmrcAudit(convex, userId, "declaration_cancel_requested", {
+        declarationId,
+        mrn,
+        transport: "cns_inventory",
+        cspId: cnsResult.cspId,
+        cancelLrn,
+        hmrcStatus: cnsResult.httpStatus,
+      });
+
+      return NextResponse.json({
+        success: true,
+        transport: "cns_inventory",
+        status: "Cancellation Requested",
+        cspId: cnsResult.cspId,
+        cancelLrn,
+        hmrcStatus: cnsResult.httpStatus,
+        requestXml: xmlPayload,
+      });
+    }
+
+    const hmrcResponse = await fetchHmrc(
+      declarationsEndpointUrl(hmrcContext.apiBaseUrl, "cancel"),
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/xml; charset=UTF-8" },
+        body: xmlPayload,
+      },
+      request,
+      hmrcToken,
+      eori,
+      hmrcContext,
+    );
 
     if (hmrcResponse.status === 429) {
       await recordCancelEvidence("error", 429, null);

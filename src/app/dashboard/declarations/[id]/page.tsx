@@ -10,8 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save, Loader2, Info } from "lucide-react";
 import { countries } from "@/lib/data/countries";
 import {
-  GOODS_LOCATION_KIND_OPTIONS,
   inferGoodsLocationKind,
+  KNOWN_APPENDIX_16C_CODES,
   type GoodsLocationKind,
 } from "@/lib/goods-location";
 import { DeclarationModePromote } from "@/components/declaration-mode-promote";
@@ -67,6 +67,13 @@ function normalizeTransportMode(value: unknown): string {
 const selectFieldClassName =
   "w-full rounded-md border border-slate-200 bg-white p-2.5 text-sm outline-none transition-colors focus:border-blue-500";
 
+// DE 5/23 — the Appendix 16C maritime list, sorted by port name for the picker.
+// Selecting an entry is what sets goodsLocationKind, so the two fields can no
+// longer drift apart (the old free-text code + separate method dropdown could).
+const PORT_LOCATION_OPTIONS = Object.entries(KNOWN_APPENDIX_16C_CODES)
+  .map(([code, name]) => ({ code, name }))
+  .sort((a, b) => a.name.localeCompare(b.name));
+
 export default function CoreSchemaPage() {
   const { isLoaded, isSignedIn } = useAuth();
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
@@ -87,11 +94,11 @@ export default function CoreSchemaPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  // Hydrate once per declaration id — getLane re-reuns on status/badge updates.
-  const hydratedForIdRef = useRef<string | null>(null);
+  const hydratedVersionRef = useRef<string | null>(null);
   const [formData, setFormData] = useState({
     eori: "",
     declarationType: "H1",
+    additionalDeclarationType: "A",
     route: "Route 1",
     dispatchCountry: "",
     transportMode: "",
@@ -113,20 +120,20 @@ export default function CoreSchemaPage() {
     transactionNatureCode: "",
     paymentMethodCode: "",
     defermentAccountNumber: "",
+    containerNumber: "",
+    cnsUcn: "",
   });
 
   React.useEffect(() => {
-    hydratedForIdRef.current = null;
-  }, [id]);
-
-  React.useEffect(() => {
     if (!declaration || !id) return;
-    if (hydratedForIdRef.current === id) return;
-    hydratedForIdRef.current = id;
+    const version = `${id}:${String(declaration.lastUpdated ?? declaration._creationTime ?? "")}`;
+    if (hydratedVersionRef.current === version) return;
+    hydratedVersionRef.current = version;
     const d = declaration as Record<string, unknown>;
     setFormData({
       eori: (d.eori as string) || "",
       declarationType: "H1",
+      additionalDeclarationType: (d.additionalDeclarationType as string) || "A",
       route: (d.route as string) || "Route 1",
       dispatchCountry: (d.dispatchCountry as string) || "",
       transportMode: normalizeTransportMode(d.transportMode),
@@ -152,6 +159,8 @@ export default function CoreSchemaPage() {
       transactionNatureCode: (d.transactionNatureCode as string) || "",
       paymentMethodCode: (d.paymentMethodCode as string) || "",
       defermentAccountNumber: (d.defermentAccountNumber as string) || "",
+      containerNumber: (d.containerNumber as string) || "",
+      cnsUcn: (d.cnsUcn as string) || "",
     });
   }, [declaration, id]);
 
@@ -167,6 +176,9 @@ export default function CoreSchemaPage() {
       }
       if (!formData.transportMode.trim()) {
         validationMessages.push("Transport Mode (DE 7/4) is required.");
+      }
+      if (formData.locationId.trim().toUpperCase() === "GBAULGPLGPLGP1" && !formData.cnsUcn.trim()) {
+        validationMessages.push("CNS UCN is required for London Gateway inventory-linked declarations.");
       }
       const dispatch = formData.dispatchCountry.trim().toUpperCase();
       if (dispatch && dispatch !== "GB" && dispatch !== "XI") {
@@ -197,6 +209,7 @@ export default function CoreSchemaPage() {
         id,
         eori: formData.eori.trim(),
         declarationType: formData.declarationType,
+        additionalDeclarationType: formData.additionalDeclarationType,
         route: formData.route,
         dispatchCountry: formData.dispatchCountry,
         transportMode: normalizeTransportMode(formData.transportMode),
@@ -208,8 +221,14 @@ export default function CoreSchemaPage() {
         invoiceTotal: invoiceTotalParsed === null || Number.isFinite(invoiceTotalParsed) ? invoiceTotalParsed : null,
         incoterms: formData.incoterms.trim().toUpperCase(),
         incotermLocation: formData.incotermLocation.trim(),
-        goodsLocationKind: formData.goodsLocationKind || undefined,
-        locationId: formData.locationId.trim(),
+        // Fall back to inferring from the code itself. Sending undefined makes
+        // the mutation skip the field entirely, so an unset kind could never be
+        // persisted even when the code alone identified the location.
+        goodsLocationKind:
+          formData.goodsLocationKind ||
+          inferGoodsLocationKind({ locationId: formData.locationId }) ||
+          undefined,
+        locationId: formData.locationId.trim() || String(declaration?.locationId ?? "").trim(),
         presentationOffice: formData.presentationOffice.trim(),
         exporterName: formData.exporterName.trim(),
         exporterCity: formData.exporterCity.trim(),
@@ -220,8 +239,9 @@ export default function CoreSchemaPage() {
         defermentAccountNumber: requiresDefermentAccount(formData.paymentMethodCode)
           ? formData.defermentAccountNumber.replace(/\D/g, "")
           : undefined,
+        containerNumber: formData.containerNumber.trim().toUpperCase(),
+        cnsUcn: formData.cnsUcn.trim().toUpperCase(),
       });
-      hydratedForIdRef.current = null;
       if (validationMessages.length > 0) {
         setSaveError(`Saved draft. Still blocking: ${validationMessages[0]}`);
       } else {
@@ -254,6 +274,11 @@ export default function CoreSchemaPage() {
       </div>
     );
   }
+
+  const locationIdUpper = (
+    formData.locationId.trim() || String(declaration.locationId ?? "").trim()
+  ).toUpperCase();
+  const locationIdIsKnown = Boolean(locationIdUpper && KNOWN_APPENDIX_16C_CODES[locationIdUpper]);
 
   return (
     <form onSubmit={handleSave} className="space-y-6">
@@ -341,6 +366,24 @@ export default function CoreSchemaPage() {
                 </SelectTrigger>
                 <SelectContent position="popper">
                   <SelectItem value="H1">H1 (Release for Free Circulation)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Routing */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
+                Arrival status (DE 1/2)
+                <span className="text-red-500">*</span>
+              </label>
+              <Select
+                value={formData.additionalDeclarationType}
+                onValueChange={(v) => setFormData({ ...formData, additionalDeclarationType: v })}
+              >
+                <SelectTrigger className={selectFieldClassName}><SelectValue /></SelectTrigger>
+                <SelectContent position="popper">
+                  <SelectItem value="A">Arrived declaration</SelectItem>
+                  <SelectItem value="D">Pre-lodged — goods not yet arrived</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -457,53 +500,90 @@ export default function CoreSchemaPage() {
               </Select>
             </div>
 
-            {/* DE 5/23 — PORT = Name+ID only; ADDRESS = separate mode (not mixed). */}
-            <div className="space-y-2">
+            {/* DE 5/23 — one picker sets both the code and the kind, so the
+                method can't be left unset while a code is present. Port mode
+                splits the Appendix 16C code into XML: chars 1–2 →
+                Address.CountryCode, char 3 → TypeCode, char 4 →
+                Address.TypeCode, remainder → Name (see
+                docs/hmrc/ACTIVE/tdr/mapping/de-5-23-goods-location.md). */}
+            <div className="space-y-2 md:col-span-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
-                Goods location method (DE 5/23)
+                Location of goods (DE 5/23)
                 <span className="text-red-500">*</span>
               </label>
-              <Select value={formData.goodsLocationKind} onValueChange={(v) => setFormData({ ...formData, goodsLocationKind: v as GoodsLocationKind | "" })}>
-                <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
-                  <SelectValue placeholder="Select how the location is identified" />
+              <Select
+                value={locationIdIsKnown ? locationIdUpper : ""}
+                onValueChange={(code) =>
+                  setFormData({ ...formData, locationId: code, goodsLocationKind: "port" })
+                }
+              >
+                <SelectTrigger className={selectFieldClassName}>
+                  <SelectValue placeholder="Select maritime port or wharf (Appendix 16C)" />
                 </SelectTrigger>
-                <SelectContent position="popper">
-                  {GOODS_LOCATION_KIND_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                <SelectContent position="popper" className="max-h-[300px]">
+                  {PORT_LOCATION_OPTIONS.map(({ code, name }) => (
+                    <SelectItem key={code} value={code} className="text-xs">
+                      {name} — {code}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {formData.goodsLocationKind === "port" && (
-                <p className="text-[10px] text-slate-500">
-                  Port mode splits the Appendix 16C code into XML: chars 1–2 → Address.CountryCode, char 3 → TypeCode, char 4 → Address.TypeCode, remainder → Name (see docs/hmrc/ACTIVE/tdr/mapping/de-5-23-goods-location.md).
-                </p>
+              {locationIdUpper && !locationIdIsKnown && (
+                <div className="space-y-1.5 rounded-md border border-amber-200 bg-amber-50/80 p-3">
+                  <p className="text-[11px] text-amber-900">
+                    This declaration has code <code className="font-mono">{formData.locationId.trim()}</code>, which
+                    is not in Appendix 16C. Pick a port above or replace it below, then save.
+                  </p>
+                  <input
+                    type="text"
+                    value={formData.locationId}
+                    onChange={(e) => {
+                      const next = e.target.value.toUpperCase();
+                      setFormData({
+                        ...formData,
+                        locationId: next,
+                        goodsLocationKind:
+                          inferGoodsLocationKind({ locationId: next, goodsLocationKind: "port" }) || "",
+                      });
+                    }}
+                    className="w-full rounded-md border border-amber-200 bg-white p-2 text-sm font-mono outline-none focus:border-blue-500"
+                  />
+                </div>
               )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
-                Goods location code (DE 5/23)
-                <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.locationId}
-                onChange={(e) => setFormData({ ...formData, locationId: e.target.value })}
-                placeholder={
-                  formData.goodsLocationKind === "port"
-                    ? "e.g. GBAUFXTFXTFXT (Felixstowe)"
-                    : "Appendix 16 code"
-                }
-                disabled={!formData.goodsLocationKind}
-                className="w-full rounded-md border border-slate-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50 disabled:bg-slate-50"
-              />
               <p className="text-[10px] text-slate-400 flex items-center gap-1">
                 <Info className="h-3 w-3" />
-                {formData.goodsLocationKind === "port"
-                  ? `Appendix 16C code (e.g. GBAUFXTFXTFXT for Felixstowe). Source: docs/hmrc/specs/cds-api/mirrors/appendix-16c-maritime.psv.`
-                  : "Select Port or Address first."}
+                Official HMRC maritime location codes — not a fixed default port.
               </p>
             </div>
+
+            {locationIdUpper === "GBAULGPLGPLGP1" && (
+              <div className="md:col-span-2 grid gap-4 rounded-md border border-blue-200 bg-blue-50/50 p-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    CNS UCN <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    value={formData.cnsUcn || String(declaration.cnsUcn ?? "")}
+                    onChange={(e) => setFormData({ ...formData, cnsUcn: e.target.value.toUpperCase() })}
+                    placeholder="LGP100DPS00100"
+                    className={`${selectFieldClassName} font-mono`}
+                  />
+                  <p className="text-[10px] text-slate-500">Inventory reference used to link the declaration at London Gateway.</p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Container number
+                  </label>
+                  <input
+                    value={formData.containerNumber || String(declaration.containerNumber ?? "")}
+                    onChange={(e) => setFormData({ ...formData, containerNumber: e.target.value.toUpperCase() })}
+                    placeholder="TDRY1234567"
+                    className={`${selectFieldClassName} font-mono`}
+                  />
+                  <p className="text-[10px] text-slate-500">Shown for operator verification against the CNS inventory record.</p>
+                </div>
+              </div>
+            )}
 
             {/* Presentation Office — DE 5/26. Conditional per Appendix 21A. */}
             <div className="space-y-2">
