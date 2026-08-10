@@ -47,6 +47,7 @@ export function declarationHumanSubtitle(
     tone === "danger" ||
     badgeLabel.startsWith("Invalid") ||
     badgeLabel.startsWith("Rejected") ||
+    status === "Inventory Rejected" ||
     status === "Rejected" ||
     status === "Action Required" ||
     (status === "Invalid" && tone !== "success")

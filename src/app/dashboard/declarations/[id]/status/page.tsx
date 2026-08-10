@@ -323,6 +323,14 @@ export default function StatusTimelinePage() {
   const submittedAt =
     (typeof declaration.created === "number" ? declaration.created : undefined)
     ?? declaration._creationTime;
+  const cnsSubmissionTimelineText =
+    declaration.cnsTransportState === "cds_response_received"
+      ? "CDS response received through CNS."
+      : declaration.cnsInventoryState === "inventory_rejected"
+        ? "CNS inventory pre-check rejected the declaration. It was not forwarded to CDS."
+        : declaration.cnsInventoryState === "passed"
+          ? "CNS inventory pre-check passed. Declaration forwarded to CDS."
+          : "Received by CNS; inventory validation pending.";
 
   const cdsBadge = resolveDeclarationCdsBadge(
     declaration.status,
@@ -597,7 +605,11 @@ export default function StatusTimelinePage() {
                       {formatTimestamp(submittedAt)}
                     </p>
                     <p className="text-sm font-medium text-slate-900">Declaration Submitted</p>
-                    <p className="text-xs text-slate-600">Payload successfully validated and stored by HMRC Hub.</p>
+                    <p className="text-xs text-slate-600">
+                      {isCnsDeclaration
+                        ? cnsSubmissionTimelineText
+                        : "Payload successfully validated and stored by HMRC Hub."}
+                    </p>
                   </div>
                 </div>
 

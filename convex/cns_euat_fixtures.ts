@@ -49,6 +49,39 @@ export const getDeclarationForDryRun = internalQuery({
   },
 });
 
+/** Reuse the source declaration's uploaded EUAT evidence on a fresh fixture clone. */
+export const copyDocumentsForCnsFixture = internalMutation({
+  args: {
+    sourceDeclarationId: v.id("declarations"),
+    targetDeclarationId: v.id("declarations"),
+  },
+  returns: v.object({ documentCount: v.number() }),
+  handler: async (ctx, args) => {
+    const target = await ctx.db.get(args.targetDeclarationId);
+    if (!target) throw new Error("Target declaration not found.");
+
+    const sourceDocuments = await ctx.db
+      .query("documents")
+      .withIndex("by_declaration", (q) => q.eq("declarationId", args.sourceDeclarationId))
+      .take(100);
+
+    for (const document of sourceDocuments) {
+      const { _id: _documentId, _creationTime: _documentCreated, ...carried } = document;
+      void _documentId;
+      void _documentCreated;
+      await ctx.db.insert("documents", {
+        ...carried,
+        declarationId: args.targetDeclarationId,
+        mrn: undefined,
+        hmrcUploadReference: undefined,
+        hmrcConversationId: undefined,
+      });
+    }
+
+    return { documentCount: sourceDocuments.length };
+  },
+});
+
 /**
  * Clone an existing declaration and its goods items, applying CNS overrides.
  *
@@ -64,6 +97,7 @@ export const cloneDeclarationForCns = internalMutation({
     goodsLocationCode: v.string(),
     packageCount: v.number(),
     grossWeightKg: v.number(),
+    additionalDeclarationType: v.string(),
   },
   returns: v.object({
     declarationId: v.id("declarations"),
@@ -86,8 +120,25 @@ export const cloneDeclarationForCns = internalMutation({
       cnsCspId: _cspId,
       cnsTransportState: _transportState,
       cnsInventoryState: _inventoryState,
+      cnsInventoryErrorCode: _inventoryErrorCode,
+      cnsInventoryIrcCode: _inventoryIrcCode,
+      cnsInventoryErrorMessage: _inventoryErrorMessage,
+      cnsLastNotificationAt: _lastNotificationAt,
       ...carried
     } = source;
+    void _sourceId;
+    void _sourceCreated;
+    void _mrn;
+    void _conversationId;
+    void _status;
+    void _transport;
+    void _cspId;
+    void _transportState;
+    void _inventoryState;
+    void _inventoryErrorCode;
+    void _inventoryIrcCode;
+    void _inventoryErrorMessage;
+    void _lastNotificationAt;
 
     const now = Date.now();
     const declarationId = await ctx.db.insert("declarations", {
@@ -100,6 +151,7 @@ export const cloneDeclarationForCns = internalMutation({
       goodsLocationKind: "port",
       containerNumber: args.containerNumber,
       cnsUcn: args.cnsUcn,
+      additionalDeclarationType: args.additionalDeclarationType.trim().toUpperCase(),
     });
 
     const sourceItems = await ctx.db
@@ -110,6 +162,8 @@ export const cloneDeclarationForCns = internalMutation({
     let itemCount = 0;
     for (const item of sourceItems) {
       const { _id: _itemId, _creationTime: _itemCreated, ...itemCarried } = item;
+      void _itemId;
+      void _itemCreated;
       await ctx.db.insert("goods_items", {
         ...itemCarried,
         declarationId,

@@ -137,7 +137,7 @@ function DeclarationsPageContent() {
 
     if (statusFilter !== "all") {
       if (statusFilter === "needs-action") {
-        if (!["Rejected", "Invalid", "Action Required"].includes(status)) return false;
+        if (!["Inventory Rejected", "Rejected", "Invalid", "Action Required"].includes(status)) return false;
       } else if (statusFilter === "Cancelled") {
         if (!badgeLabel.startsWith("Cancelled")) return false;
       } else if (status !== statusFilter) {

@@ -349,6 +349,7 @@ export const processNotification = internalMutation({
       // The declaration never reached CDS. This is NOT an HMRC rejection and
       // must never be shown as one — the remediation is the inventory record.
       await ctx.db.patch(declarationId, {
+        status: "Inventory Rejected",
         cnsInventoryState: "inventory_rejected",
         cnsTransportState: "inventory_rejected",
         cnsInventoryErrorCode: inventory.validationCode || undefined,
@@ -356,6 +357,9 @@ export const processNotification = internalMutation({
         cnsInventoryErrorMessage: inventory.ircDescription || undefined,
         cnsLastNotificationAt: now,
         lastUpdated: now,
+      });
+      await ctx.scheduler.runAfter(0, internal.declarations.refreshDeclarationPreviewInternal, {
+        declarationId,
       });
       return await finish("inventory_rejected", {
         declarationId,
