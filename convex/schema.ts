@@ -332,6 +332,7 @@ export default defineSchema({
     readAt: v.optional(v.number()),
   })
     .index("by_client", ["clientId"])
+    .index("by_client_sender_read", ["clientId", "senderRole", "readAt"])
     .index("by_declaration", ["declarationId"])
     .index("by_assessment", ["assessmentId"]),
 
@@ -363,6 +364,8 @@ export default defineSchema({
   documents: defineTable({
     userId: v.optional(v.any()),
     orgId: v.optional(v.string()),
+    /** Portal client that supplied the document, including before it is linked to a filing. */
+    clientId: v.optional(v.id("clients")),
     workspaceId: v.optional(v.any()),
     fileId: v.optional(v.any()),
     fileName: v.optional(v.any()),
@@ -372,6 +375,9 @@ export default defineSchema({
     uploadDate: v.optional(v.any()),
     mrn: v.optional(v.any()),
     declarationId: v.optional(v.any()),
+    linkedBy: v.optional(v.string()),
+    linkedAt: v.optional(v.number()),
+    sourceMessageId: v.optional(v.id("portal_messages")),
     auditStatus: v.optional(v.any()),
     auditResult: v.optional(v.any()),
     ocrText: v.optional(v.string()),
@@ -380,6 +386,8 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_org", ["orgId"])
+    .index("by_client", ["clientId"])
+    .index("by_source_message", ["sourceMessageId"])
     .index("by_mrn", ["mrn"])
     .index("by_declaration", ["declarationId"]),
 
