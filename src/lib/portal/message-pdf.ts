@@ -1,84 +1,57 @@
+import * as pdfMake from "pdfmake/build/pdfmake";
+import pdfFonts from "pdfmake/build/vfs_fonts";
+import type { Content, TDocumentDefinitions } from "pdfmake/interfaces";
+
 type MessagePdfEntry = {
   sender: string;
   createdAt: number;
   body: string;
 };
 
-function ascii(value: string) {
-  return value
-    .replace(/[–—]/g, "-")
-    .replace(/[‘’]/g, "'")
-    .replace(/[“”]/g, '"')
-    .replace(/[^\x20-\x7E]/g, "?");
+let fontsReady = false;
+
+function ensureFonts() {
+  if (fontsReady) return;
+  pdfMake.addVirtualFileSystem(pdfFonts);
+  fontsReady = true;
 }
 
-function wrap(value: string, width = 92): string[] {
-  const output: string[] = [];
-  for (const paragraph of value.replace(/\r\n/g, "\n").split("\n")) {
-    if (!paragraph) {
-      output.push("");
-      continue;
-    }
-    let remaining = paragraph;
-    while (remaining.length > width) {
-      let split = remaining.lastIndexOf(" ", width);
-      if (split < width / 2) split = width;
-      output.push(remaining.slice(0, split));
-      remaining = remaining.slice(split).trimStart();
-    }
-    output.push(remaining);
-  }
-  return output;
-}
-
-function escapePdf(value: string) {
-  return ascii(value).replace(/([\\()])/g, "\\$1");
-}
-
-export function buildMessagePdf(args: {
+export async function buildMessagePdf(args: {
   title: string;
   context?: string;
   entries: MessagePdfEntry[];
-}): Blob {
-  const lines = [args.title, args.context || "General enquiry", "", ...args.entries.flatMap((entry) => [
-    `${entry.sender} - ${new Date(entry.createdAt).toLocaleString("en-GB")}`,
-    ...wrap(entry.body),
-    "",
-  ])];
-  const pages: string[][] = [];
-  for (let index = 0; index < lines.length; index += 48) pages.push(lines.slice(index, index + 48));
+}): Promise<Blob> {
+  ensureFonts();
+  const content: Content[] = [
+    { text: args.title, style: "title" },
+    { text: args.context || "General enquiry", style: "context" },
+  ];
 
-  const objects: string[] = [];
-  const pageIds: number[] = [];
-  const contentIds: number[] = [];
-  objects.push("<< /Type /Catalog /Pages 2 0 R >>");
-  objects.push("");
-  objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
-  for (let index = 0; index < pages.length; index += 1) {
-    pageIds.push(objects.length + 1);
-    objects.push("");
-    contentIds.push(objects.length + 1);
-    const commands = pages[index]!.map((line, lineIndex) =>
-      `BT /F1 ${lineIndex === 0 && index === 0 ? 14 : 10} Tf 50 ${790 - lineIndex * 15} Td (${escapePdf(line)}) Tj ET`,
-    ).join("\n");
-    objects.push(`<< /Length ${commands.length} >>\nstream\n${commands}\nendstream`);
+  for (const entry of args.entries) {
+    content.push(
+      {
+        text: `${entry.sender} - ${new Date(entry.createdAt).toLocaleString("en-GB")}`,
+        style: "sender",
+        margin: [0, 12, 0, 4],
+      },
+      { text: entry.body, style: "message" },
+    );
   }
-  objects[1] = `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pageIds.length} >>`;
-  pageIds.forEach((pageId, index) => {
-    objects[pageId - 1] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents ${contentIds[index]} 0 R >>`;
-  });
 
-  let pdf = "%PDF-1.4\n";
-  const offsets = [0];
-  objects.forEach((object, index) => {
-    offsets.push(pdf.length);
-    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
-  });
-  const xref = pdf.length;
-  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
-  pdf += offsets.slice(1).map((offset) => `${String(offset).padStart(10, "0")} 00000 n \n`).join("");
-  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
-  return new Blob([pdf], { type: "application/pdf" });
+  const definition: TDocumentDefinitions = {
+    content,
+    defaultStyle: { font: "Roboto", fontSize: 10, lineHeight: 1.25 },
+    styles: {
+      title: { fontSize: 16, bold: true, margin: [0, 0, 0, 4] },
+      context: { fontSize: 10, color: "#64748b", margin: [0, 0, 0, 8] },
+      sender: { fontSize: 9, bold: true, color: "#475569" },
+      message: { fontSize: 10, color: "#0f172a" },
+    },
+    pageMargins: [50, 45, 50, 45],
+    info: { title: args.title, subject: args.context || "General enquiry" },
+  };
+
+  return pdfMake.createPdf(definition).getBlob();
 }
 
 export function downloadBlob(blob: Blob, fileName: string) {
@@ -87,7 +60,7 @@ export function downloadBlob(blob: Blob, fileName: string) {
   anchor.href = url;
   anchor.download = fileName;
   anchor.click();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 export function messagePdfFileName(createdAt: number, prefix = "message") {

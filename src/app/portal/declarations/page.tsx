@@ -93,6 +93,15 @@ export default function PortalDeclarationsPage() {
                     <tr
                       key={decl._id}
                       onClick={() => router.push(`/portal/declarations/${decl._id}`)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          router.push(`/portal/declarations/${decl._id}`);
+                        }
+                      }}
+                      tabIndex={0}
+                      role="link"
+                      aria-label={`Open declaration ${decl.mrn || "Pending CDS"}`}
                       className={cn("group cursor-pointer transition-colors", rowTintClass(tone))}
                     >
                       <td className="px-6 py-4">

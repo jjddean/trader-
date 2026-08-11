@@ -139,7 +139,7 @@ export default function PortalMessagesClient({
 
   const handleSaveMessage = async (message: { _id: string; senderRole: "broker" | "client"; createdAt: number; body: string }) => {
     setActionStatus(null);
-    const blob = messagePdf(message);
+    const blob = await messagePdf(message);
     const fileName = messagePdfFileName(message.createdAt, "portal-message");
     const declarationId = thread?.kind === "declaration" ? thread.id : undefined;
     const uploadUrl = await generateUploadUrl(declarationId ? { declarationId } : {});
@@ -192,9 +192,9 @@ export default function PortalMessagesClient({
         <button
           type="button"
           disabled={!messages?.length}
-          onClick={() => {
+          onClick={async () => {
             if (!messages?.length) return;
-            downloadBlob(buildMessagePdf({
+            downloadBlob(await buildMessagePdf({
               title: "Portal conversation",
               context: messageContext,
               entries: [...messages].reverse().map((message) => ({
@@ -268,7 +268,7 @@ export default function PortalMessagesClient({
           isIdle={false}
           idleLabel=""
           emptyLabel={thread?.kind === "general" ? "No general messages yet." : "No messages yet on this one."}
-          onDownloadMessage={(message) => downloadBlob(messagePdf(message), messagePdfFileName(message.createdAt, "portal-message"))}
+          onDownloadMessage={(message) => void messagePdf(message).then((blob) => downloadBlob(blob, messagePdfFileName(message.createdAt, "portal-message")))}
           onSaveMessage={handleSaveMessage}
         />
 

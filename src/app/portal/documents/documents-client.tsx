@@ -185,39 +185,41 @@ export default function PortalDocumentsClient({
         </div>
         <div className="space-y-3 p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-            <div className="min-w-[200px] flex-1">
-              <label className={FIELD_LABEL} htmlFor="portal-docs-declaration">
-                Filing
-              </label>
-              {targetRequirement ? (
+            {targetRequirement || (declarations ?? []).length > 0 ? (
+              <div className="min-w-[200px] flex-1">
+                <label className={FIELD_LABEL} htmlFor="portal-docs-declaration">
+                  Filing
+                </label>
+                {targetRequirement ? (
                 <p className="flex h-9 items-center rounded-md border border-slate-200 bg-slate-50 px-3 font-mono text-xs text-slate-700">
                   {targetRequirement.mrn || "Pending CDS"}
                 </p>
-              ) : (
-                <Select
-                  value={declarationId || "unlinked"}
-                  onValueChange={(value) => setDeclarationId(value)}
-                >
-                  <SelectTrigger id="portal-docs-declaration" className={ENTERPRISE_SELECT_TRIGGER}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent
-                    position="popper"
-                    sideOffset={4}
-                    className={ENTERPRISE_SELECT_CONTENT}
+                ) : (
+                  <Select
+                    value={declarationId || "unlinked"}
+                    onValueChange={(value) => setDeclarationId(value)}
                   >
-                    <SelectItem value="unlinked" className={ENTERPRISE_SELECT_ITEM}>
-                      Upload without a filing
-                    </SelectItem>
-                    {(declarations ?? []).map((d) => (
-                      <SelectItem key={d._id} value={d._id} className={ENTERPRISE_SELECT_ITEM}>
-                        {formatPortalFilingLabel(d)}
+                    <SelectTrigger id="portal-docs-declaration" className={ENTERPRISE_SELECT_TRIGGER}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent
+                      position="popper"
+                      sideOffset={4}
+                      className={ENTERPRISE_SELECT_CONTENT}
+                    >
+                      <SelectItem value="unlinked" className={ENTERPRISE_SELECT_ITEM}>
+                        Send to broker
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
+                      {(declarations ?? []).map((d) => (
+                        <SelectItem key={d._id} value={d._id} className={ENTERPRISE_SELECT_ITEM}>
+                          {formatPortalFilingLabel(d)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            ) : null}
             <div className="min-w-[180px]">
               <label className={FIELD_LABEL} htmlFor="portal-docs-type">
                 Type

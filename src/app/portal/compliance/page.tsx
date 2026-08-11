@@ -71,6 +71,15 @@ export default function PortalCompliancePage() {
                   <tr
                     key={row._id}
                     onClick={() => router.push(`/portal/compliance/${row._id}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        router.push(`/portal/compliance/${row._id}`);
+                      }
+                    }}
+                    tabIndex={0}
+                    role="link"
+                    aria-label={`Open compliance case ${row.reference}`}
                     className="group cursor-pointer hover:bg-slate-50"
                   >
                     <td className="px-6 py-4 font-mono text-xs font-semibold text-slate-900">

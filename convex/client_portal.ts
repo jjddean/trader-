@@ -3,7 +3,6 @@ import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { collectDeclarationNotifications } from "./lib/collect_declaration_notifications";
-import { FINANCIAL_LABELS as FL } from "./lib/financial_labels";
 import { orgIdFromDeclaration } from "./lib/org_access";
 import {
   hmrcStatusForDeclaration,
@@ -208,18 +207,19 @@ export const listMyDeclarations = query({
       .order("desc")
       .take(200);
 
-    const summaries = [];
-    for (const decl of declarations) {
-      if (decl.clientId !== client._id) continue;
-      const notifications = await collectDeclarationNotifications(ctx.db, {
-        declarationId: decl._id,
-        conversationId: decl.conversationId != null ? String(decl.conversationId) : null,
-        mrn: decl.mrn != null ? String(decl.mrn) : null,
-      });
-      const { status } = hmrcStatusForDeclaration(decl, notifications);
-      summaries.push(portalDeclarationSummary(decl, status));
-    }
-    return summaries;
+    return await Promise.all(
+      declarations
+        .filter((decl) => decl.clientId === client._id)
+        .map(async (decl) => {
+          const notifications = await collectDeclarationNotifications(ctx.db, {
+            declarationId: decl._id,
+            conversationId: decl.conversationId != null ? String(decl.conversationId) : null,
+            mrn: decl.mrn != null ? String(decl.mrn) : null,
+          });
+          const { status } = hmrcStatusForDeclaration(decl, notifications);
+          return portalDeclarationSummary(decl, status);
+        }),
+    );
   },
 });
 
@@ -245,16 +245,27 @@ export const getMyDashboard = query({
 
     const attention: AttentionItem[] = [];
     const recent = [];
+    const enrichedDeclarations = await Promise.all(
+      declarations
+        .filter((decl) => decl.clientId === client._id)
+        .map(async (decl) => {
+          const [notifications, requirements] = await Promise.all([
+            collectDeclarationNotifications(ctx.db, {
+              declarationId: decl._id,
+              conversationId: decl.conversationId != null ? String(decl.conversationId) : null,
+              mrn: decl.mrn != null ? String(decl.mrn) : null,
+            }),
+            ctx.db
+              .query("document_requirements")
+              .withIndex("by_declaration", (q) => q.eq("declarationId", decl._id))
+              .take(30),
+          ]);
+          const { status } = hmrcStatusForDeclaration(decl, notifications);
+          return { decl, status, requirements, summary: portalDeclarationSummary(decl, status) };
+        }),
+    );
 
-    for (const decl of declarations) {
-      if (decl.clientId !== client._id) continue;
-      const notifications = await collectDeclarationNotifications(ctx.db, {
-        declarationId: decl._id,
-        conversationId: decl.conversationId != null ? String(decl.conversationId) : null,
-        mrn: decl.mrn != null ? String(decl.mrn) : null,
-      });
-      const { status } = hmrcStatusForDeclaration(decl, notifications);
-      const summary = portalDeclarationSummary(decl, status);
+    for (const { decl, status, requirements, summary } of enrichedDeclarations) {
       if (recent.length < 5) recent.push(summary);
 
       const label = summary.mrn || "Declaration";
@@ -269,10 +280,6 @@ export const getMyDashboard = query({
         });
       }
 
-      const requirements = await ctx.db
-        .query("document_requirements")
-        .withIndex("by_declaration", (q) => q.eq("declarationId", decl._id))
-        .take(30);
       for (const req of requirements) {
         if (String(req.status) !== "missing") continue;
         attention.push({
@@ -676,70 +683,6 @@ export const getMyComplianceAssessment = query({
       govUkHeadline: routing.headline,
       submissionRoute: assessment.submissionRoute ?? routing.route,
       eusuCompleted: Boolean(assessment.endUserStatement),
-    };
-  },
-});
-
-export const getMyDeclarationDocuments = query({
-  args: { declarationId: v.id("declarations") },
-  handler: async (ctx, args) => {
-    const client = await resolvePortalClient(ctx);
-    if (!client) return [];
-
-    const declaration = await requireOwnedDeclaration(ctx, client, args.declarationId);
-    if (!declaration) return [];
-
-    const docs = await ctx.db
-      .query("documents")
-      .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId))
-      .take(200);
-
-    return docs
-      .filter((doc) => isPortalVisibleDocument(doc, client.portalClerkId, client._id))
-      .map((doc) => ({
-        _id: doc._id,
-        fileName: doc.fileName != null ? String(doc.fileName) : "Document",
-        fileType: doc.fileType != null ? String(doc.fileType) : null,
-        fileSize: doc.fileSize ?? null,
-        uploadDate: doc.uploadDate ?? null,
-        status: doc.status != null ? String(doc.status) : null,
-        hasFile: Boolean(doc.fileId),
-      }));
-  },
-});
-
-export const getMyDeclarationFinancials = query({
-  args: { declarationId: v.id("declarations") },
-  handler: async (ctx, args) => {
-    const client = await resolvePortalClient(ctx);
-    if (!client) return null;
-
-    const declaration = await requireOwnedDeclaration(ctx, client, args.declarationId);
-    if (!declaration) return null;
-
-    // Rebuild under the filing broker's userId (declaration owner), not the portal client.
-    const buildAsUserId = String(declaration.userId ?? "");
-    const payload = await loadDeclarationFinancialEstimate(
-      ctx,
-      declaration,
-      args.declarationId,
-      buildAsUserId,
-    );
-    if (!payload) return null;
-
-    const isConfirmed = payload.financialSource === "hmrc_confirmed";
-    // Strict DTO — no deferment account, payment method, or raw estimate internals.
-    return {
-      declarationId: payload.declarationId,
-      dutyAmount: payload.dutyAmount,
-      vatAmount: payload.vatAmount,
-      customsValue: payload.customsValue,
-      financialSource: payload.financialSource,
-      estimateIncomplete: payload.estimateIncomplete ?? false,
-      provenanceLabel: isConfirmed ? FL.confirmedProvenance : FL.estimatedProvenance,
-      badgeLabel: isConfirmed ? FL.confirmedProvenance : FL.estimateOnlyBadge,
-      isHmrcConfirmed: isConfirmed,
-      updatedAt: payload.updatedAt ?? null,
     };
   },
 });

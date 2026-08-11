@@ -464,7 +464,7 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
 
   const handleSaveMessage = async (message: { _id: string; senderRole: "broker" | "client"; createdAt: number; body: string }) => {
     setActionStatus(null);
-    const blob = messagePdf(message);
+    const blob = await messagePdf(message);
     const fileName = messagePdfFileName(message.createdAt, "portal-message");
     const uploadUrl = await generateDocumentUploadUrl({});
     const response = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": "application/pdf" }, body: blob });
@@ -517,9 +517,9 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
         <button
           type="button"
           disabled={!messages?.length}
-          onClick={() => {
+          onClick={async () => {
             if (!messages?.length) return;
-            downloadBlob(buildMessagePdf({
+            downloadBlob(await buildMessagePdf({
               title: "Portal conversation",
               context: messageContext,
               entries: [...messages].reverse().map((message) => ({
@@ -592,7 +592,7 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
           isIdle={false}
           idleLabel=""
           emptyLabel={activeThread?.kind === "general" ? "No general messages yet." : "No messages yet on this one."}
-          onDownloadMessage={(message) => downloadBlob(messagePdf(message), messagePdfFileName(message.createdAt, "portal-message"))}
+          onDownloadMessage={(message) => void messagePdf(message).then((blob) => downloadBlob(blob, messagePdfFileName(message.createdAt, "portal-message")))}
           onSaveMessage={handleSaveMessage}
         />
 
@@ -695,6 +695,11 @@ function ClientPortalDocumentsCard({ clientId }: { clientId: Id<"clients"> }) {
       </div>
 
       <div className="mt-4 space-y-3">
+        {declarations?.length === 0 && documents && documents.length > 0 ? (
+          <p className="text-xs text-slate-500">
+            These documents have been received and are waiting for a filing.
+          </p>
+        ) : null}
         {documents === undefined ? (
           <div className="flex items-center gap-2 py-3 text-xs text-slate-500">
             <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading documents…
@@ -713,48 +718,34 @@ function ClientPortalDocumentsCard({ clientId }: { clientId: Id<"clients"> }) {
                   <p className="truncate text-xs font-medium text-slate-900">{document.fileName}</p>
                   <p className="mt-1 text-[11px] text-slate-500">
                     {document.fileType || "Document"}
-                    {document.uploadDate
-                      ? ` · ${new Date(document.uploadDate).toLocaleDateString("en-GB")}`
-                      : ""}
+                    {document.uploadDate ? ` · ${new Date(document.uploadDate).toLocaleDateString("en-GB")}` : ""}
                   </p>
                 </div>
-                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                  <Select
-                    value={selectedTarget}
-                    onValueChange={(value) =>
-                      setTargets((current) => ({ ...current, [documentId]: value }))
-                    }
-                  >
-                    <SelectTrigger className={cn(ENTERPRISE_SELECT_TRIGGER, "flex-1")}>
-                      <SelectValue placeholder="Choose filing" />
-                    </SelectTrigger>
-                    <SelectContent className={ENTERPRISE_SELECT_CONTENT}>
-                      {(declarations ?? []).map((declaration) => (
-                        <SelectItem
-                          key={declaration._id}
-                          value={declaration._id}
-                          className={ENTERPRISE_SELECT_ITEM}
-                        >
-                          {formatPortalFilingLabel(declaration)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <button
-                    type="button"
-                    onClick={() => void handleAttach(document._id)}
-                    disabled={!selectedTarget || busyId === documentId}
-                    className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-black px-3 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
-                  >
-                    {busyId === documentId && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                    Attach
-                  </button>
-                </div>
-                {declarations?.length === 0 && (
-                  <p className="mt-2 text-[11px] text-amber-700">
-                    Link or create a filing for this client before attaching the document.
-                  </p>
-                )}
+                {(declarations ?? []).length > 0 ? (
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <Select value={selectedTarget} onValueChange={(value) => setTargets((current) => ({ ...current, [documentId]: value }))}>
+                      <SelectTrigger className={cn(ENTERPRISE_SELECT_TRIGGER, "flex-1")}>
+                        <SelectValue placeholder="Choose filing" />
+                      </SelectTrigger>
+                      <SelectContent className={ENTERPRISE_SELECT_CONTENT}>
+                        {(declarations ?? []).map((declaration) => (
+                          <SelectItem key={declaration._id} value={declaration._id} className={ENTERPRISE_SELECT_ITEM}>
+                            {formatPortalFilingLabel(declaration)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <button
+                      type="button"
+                      onClick={() => void handleAttach(document._id)}
+                      disabled={!selectedTarget || busyId === documentId}
+                      className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-black px-3 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+                    >
+                      {busyId === documentId && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                      Attach
+                    </button>
+                  </div>
+                ) : null}
               </div>
             );
           })
