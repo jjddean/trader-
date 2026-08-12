@@ -24,8 +24,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
-import { UnifiedComplianceTool } from "./components/UnifiedComplianceTool";
-import { LandedCostCalculator } from "./components/LandedCostCalculator";
 import { DocumentsTable } from "./components/DocumentsTable";
 import { UploadModal } from "./components/UploadModal";
 import { 
@@ -62,10 +60,10 @@ export function DocumentsPageClient({
   const canQuery =
     isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && Boolean(userId);
 
-  const [activeTool, setActiveTool] = useState<string | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(initialOpenUpload);
   const [isPasteOpen, setIsPasteOpen] = useState(false);
   const [declarationFilter, setDeclarationFilter] = useState("all");
+  const [showClientUploads, setShowClientUploads] = useState(false);
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [pasteText, setPasteText] = useState("");
@@ -88,6 +86,7 @@ export function DocumentsPageClient({
   const requirements = useQuery(api.documents.getDocumentRequirements, requirementsArgs);
   const getDocumentDownloadUrl = useMutation(api.documents.getDocumentDownloadUrl);
   const deleteDocument = useMutation(api.documents.deleteDocument);
+  const linkDocumentToDeclaration = useMutation(api.documents.linkDocumentToDeclaration);
   const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
   const allDeclarations = useQuery(
     api.declarations.getDeclarationPreviews,
@@ -130,12 +129,12 @@ export function DocumentsPageClient({
   const failedRequirementHydrationRef = useRef<Set<string>>(new Set());
   const appliedQueryDeclarationRef = useRef(false);
 
-  const handleActiveToolChange = useCallback((tool: string | null) => {
-    setActiveTool(tool);
-  }, []);
-
   const handleDeclarationFilterChange = useCallback((val: string) => {
     setDeclarationFilter(val);
+  }, []);
+
+  const handleShowClientUploadsChange = useCallback((show: boolean) => {
+    setShowClientUploads(show);
   }, []);
 
   const handleTypeFilterChange = useCallback((val: string) => {
@@ -275,6 +274,8 @@ export function DocumentsPageClient({
   const liveDocuments = useMemo(() => {
     return (resolvedDbDocuments || []).map((doc: any) => {
       const docTypeCode = inferDocTypeCode(doc.fileType || doc.fileName || "");
+      const isClientUpload = Boolean(doc.clientId);
+      const isNewClientUpload = isClientUpload && !doc.declarationId;
       const normalizedStatus = normalizeDocStatus(doc.status || doc.auditStatus);
       const validation = validateDocumentForCode({
         code: docTypeCode,
@@ -286,16 +287,18 @@ export function DocumentsPageClient({
         id: doc._id,
         declarationId: doc.declarationId ? String(doc.declarationId) : "",
         name: doc.fileName || "Unknown document",
-        method: "Database",
+        method: isClientUpload ? "Client portal" : "Database",
         date: new Date(doc.uploadDate || doc._creationTime).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }),
         type: docTypeCode,
         typeName: docTypeName(docTypeCode),
-        mrn: doc.mrn || "Unlinked",
-        status: finalStatus,
+        mrn: doc.mrn || (doc.declarationId ? "Draft (Pending)" : "Unlinked"),
+        status: isNewClientUpload ? "review" : finalStatus,
         de23: docTypeCode,
         ocrText: doc.ocrText || "",
         flag:
-          !validation.valid
+          isNewClientUpload
+            ? "New client upload — needs review"
+            : !validation.valid
             ? validation.message || "Validation required"
             : normalizedStatus === "review"
               ? "Validation required"
@@ -303,6 +306,7 @@ export function DocumentsPageClient({
                 ? "Required for declaration submission"
                 : "",
         isVirtual: false,
+        isClientUpload,
       };
     });
   }, [resolvedDbDocuments]);
@@ -367,14 +371,6 @@ export function DocumentsPageClient({
     return { total, verified, review, missing, declCount };
   }, [mergedDocuments]);
 
-  const filteredDocuments = useMemo(() => {
-    return mergedDocuments.filter((doc) => {
-      const declarationMatches = declarationFilter === "all" || doc.declarationId === declarationFilter;
-      const typeMatches = typeFilter === "all" || doc.typeName === typeFilter;
-      return declarationMatches && typeMatches;
-    });
-  }, [mergedDocuments, declarationFilter, typeFilter]);
-
   const allDeclarationOptions = useMemo(() => {
     return declarations.map((decl: any) => ({
       id: String(decl.declarationId),
@@ -434,6 +430,45 @@ export function DocumentsPageClient({
     if (declarationFilter === "all") return null;
     return declarationById.get(String(declarationFilter)) || null;
   }, [declarationFilter, declarationById]);
+
+  const selectedDeclarationLabel = selectedDeclaration
+    ? selectedDeclaration.mrn || "Draft (Pending)"
+    : "";
+
+  // Only a real stored document can be linked, and only to a declaration the
+  // toolbar has actually narrowed to — a different one from its current link.
+  const canLinkSelectedDocument = Boolean(
+    selectedDocument &&
+      !selectedDocument.isVirtual &&
+      selectedDeclaration?.declarationId &&
+      String(selectedDocument.declarationId || "") !== String(selectedDeclaration.declarationId),
+  );
+
+  const handleLinkToSelectedDeclaration = useCallback(async () => {
+    if (!selectedDocument?.id || selectedDocument.isVirtual) return;
+    if (!selectedDeclaration?.declarationId) return;
+
+    try {
+      setIsDocActionLoading(true);
+      await linkDocumentToDeclaration({
+        documentId: selectedDocument.id,
+        declarationId: selectedDeclaration.declarationId as Id<"declarations">,
+      });
+      setSelectedDocument((prev: any) =>
+        prev
+          ? {
+              ...prev,
+              declarationId: String(selectedDeclaration.declarationId),
+              mrn: selectedDeclaration.mrn || "Draft (Pending)",
+            }
+          : prev,
+      );
+    } catch (error: any) {
+      alert(error?.message || "Failed to link document to declaration.");
+    } finally {
+      setIsDocActionLoading(false);
+    }
+  }, [selectedDocument, selectedDeclaration, linkDocumentToDeclaration]);
 
   useEffect(() => {
     if (declarationFilter === "all") return;
@@ -621,8 +656,9 @@ export function DocumentsPageClient({
         typeFilter={typeFilter}
         onTypeFilterChange={handleTypeFilterChange}
         allDeclarationOptions={allDeclarationOptions}
+        showClientUploads={showClientUploads}
+        onShowClientUploadsChange={handleShowClientUploadsChange}
         onSelectDocument={handleSelectDocument}
-        onActiveToolChange={handleActiveToolChange}
         onGenerateTemplates={handleGenerateTemplates}
         isGeneratingTemplates={isGeneratingTemplates}
         canGenerateTemplates={allDeclarationOptions.length > 0}
@@ -716,6 +752,24 @@ export function DocumentsPageClient({
                     <div>
                       <p className="text-[0.625rem] font-semibold text-slate-500 uppercase tracking-wider">Linked MRN</p>
                       <p className="mt-1.5 text-[0.8125rem] font-medium text-slate-950 font-mono">{selectedDocument.mrn}</p>
+                      {!selectedDocument.isVirtual && canLinkSelectedDocument && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2 h-7 bg-white text-[0.6875rem]"
+                          onClick={handleLinkToSelectedDeclaration}
+                          disabled={isDocActionLoading}
+                        >
+                          Link to {selectedDeclarationLabel}
+                        </Button>
+                      )}
+                      {!selectedDocument.isVirtual &&
+                        !selectedDocument.declarationId &&
+                        !selectedDeclaration && (
+                          <p className="mt-2 text-[0.625rem] text-slate-400">
+                            Choose a declaration / MRN in the toolbar to link this document.
+                          </p>
+                        )}
                     </div>
                     <div>
                       <p className="text-[0.625rem] font-semibold text-slate-500 uppercase tracking-wider">DE 2/3 Reference</p>
@@ -893,17 +947,6 @@ export function DocumentsPageClient({
         userId={userId}
       />
 
-      <UnifiedComplianceTool 
-        isOpen={activeTool === 'preference'} 
-        onOpenChange={(open) => !open && handleActiveToolChange(null)}
-        declarationId={declarationFilter !== "all" ? declarationFilter : null}
-      />
-
-      <LandedCostCalculator 
-        isOpen={activeTool === 'landed'} 
-        onOpenChange={(open) => !open && handleActiveToolChange(null)} 
-      />
-
       <Dialog open={isPasteOpen} onOpenChange={setIsPasteOpen}>
         <DialogContent className="sm:max-w-[640px]">
           <DialogHeader>
@@ -975,7 +1018,14 @@ export function DocumentsPageClient({
               <SelectTrigger className="h-9 w-full bg-slate-50 border-slate-200 text-xs text-slate-700">
                 <SelectValue placeholder="Select declaration" />
               </SelectTrigger>
-              <SelectContent position="popper" className="max-h-[300px] z-[110]">
+              <SelectContent
+                position="popper"
+                side="bottom"
+                align="start"
+                sideOffset={4}
+                avoidCollisions={false}
+                className="z-[110] !max-h-[220px]"
+              >
                 {allDeclarationOptions.map((decl) => (
                   <SelectItem key={decl.id} value={decl.id} className="font-mono text-xs">
                     {decl.mrn}

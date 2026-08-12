@@ -378,6 +378,103 @@ export const replaceDocument = mutation({
   },
 });
 
+/**
+ * Attach an already-uploaded document to a declaration.
+ *
+ * Linking normally happens at upload time (portal `saveMyDocument`, broker
+ * `saveDocument`). This covers the case it cannot reach: a client sends a file
+ * through the portal before the filing exists, so the row arrives with a
+ * clientId and no declaration. The stored file is untouched — only the link,
+ * the mirrored MRN and the affected requirement rows move.
+ */
+export const linkDocumentToDeclaration = mutation({
+  args: {
+    documentId: v.id("documents"),
+    declarationId: v.id("declarations"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      await logDocActionError(ctx, {
+        action: "linkDocumentToDeclaration",
+        code: "UNAUTHENTICATED",
+        message: "Unauthenticated session attempted to link document.",
+        documentId: String(args.documentId),
+        declarationId: String(args.declarationId),
+        status: 401,
+      });
+      throw new Error("Unauthenticated");
+    }
+
+    const document = await ctx.db.get(args.documentId);
+    if (!document || !(await canAccessDocument(ctx, identity.subject, document))) {
+      await logDocActionError(ctx, {
+        userId: identity.subject,
+        action: "linkDocumentToDeclaration",
+        code: "UNAUTHORIZED",
+        message: "Unauthorized document link request.",
+        documentId: String(args.documentId),
+        declarationId: String(args.declarationId),
+        status: 403,
+      });
+      throw new Error("Unauthorized");
+    }
+
+    const declaration = await ctx.db.get(args.declarationId);
+    if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
+      await logDocActionError(ctx, {
+        userId: identity.subject,
+        action: "linkDocumentToDeclaration",
+        code: "UNAUTHORIZED_DECLARATION",
+        message: "Unauthorized declaration target for document link.",
+        documentId: String(args.documentId),
+        declarationId: String(args.declarationId),
+        status: 403,
+      });
+      throw new Error("Unauthorized");
+    }
+
+    const previousDeclarationId = document.declarationId;
+    if (previousDeclarationId && String(previousDeclarationId) === String(args.declarationId)) {
+      return { success: true, declarationId: String(args.declarationId) };
+    }
+
+    await ctx.db.patch(args.documentId, {
+      declarationId: args.declarationId,
+      mrn: declaration.mrn,
+    });
+
+    const code = extractDocumentCode(document.fileName) || extractDocumentCode(document.fileType);
+    if (code) {
+      await updateRequirementStatusForDeclaration(
+        ctx,
+        args.declarationId,
+        code,
+        "uploaded",
+        args.documentId,
+      );
+
+      // Re-linking leaves the old declaration short of evidence unless another
+      // document still covers the code — same reasoning as deleteDocument.
+      if (previousDeclarationId) {
+        const remainingDocs = await ctx.db
+          .query("documents")
+          .withIndex("by_declaration", (q: any) => q.eq("declarationId", previousDeclarationId))
+          .take(50);
+        const hasSameCode = remainingDocs.some(
+          (doc: any) =>
+            (extractDocumentCode(doc.fileName) || extractDocumentCode(doc.fileType)) === code,
+        );
+        if (!hasSameCode) {
+          await updateRequirementStatusForDeclaration(ctx, previousDeclarationId, code, "missing");
+        }
+      }
+    }
+
+    return { success: true, declarationId: String(args.declarationId) };
+  },
+});
+
 export const upsertRequirementsForDeclaration = mutation({
   args: {
     declarationId: v.id("declarations"),
