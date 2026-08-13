@@ -67,13 +67,13 @@ export default function PortalChargesPage() {
               ) : (
                 rows.map((row) => (
                   <tr key={row.declarationId} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 font-mono text-xs font-semibold text-slate-900">
+                    <td className="px-6 py-4 text-xs font-semibold text-slate-900">
                       {row.mrn || "Pending CDS"}
                     </td>
-                    <td className="px-6 py-4 font-mono text-xs text-slate-700">
+                    <td className="px-6 py-4 text-xs tabular-nums text-slate-700">
                       {row.dutyAmount != null ? formatMoney(row.dutyAmount) : "—"}
                     </td>
-                    <td className="px-6 py-4 font-mono text-xs text-slate-700">
+                    <td className="px-6 py-4 text-xs tabular-nums text-slate-700">
                       {row.vatAmount != null ? formatMoney(row.vatAmount) : "—"}
                     </td>
                     <td className="px-6 py-4">

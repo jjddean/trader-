@@ -439,10 +439,46 @@ export const linkDocumentToDeclaration = mutation({
       return { success: true, declarationId: String(args.declarationId) };
     }
 
+    const now = Date.now();
+    const isClientUpload = Boolean(document.clientId);
+
+    // A portal upload arriving on an unclaimed draft also settles who the
+    // filing belongs to — matches clients.attachUnlinkedDocument.
+    if (isClientUpload && !declaration.clientId) {
+      await ctx.db.patch(args.declarationId, {
+        clientId: document.clientId,
+        lastUpdated: now,
+      });
+    }
+
     await ctx.db.patch(args.documentId, {
       declarationId: args.declarationId,
       mrn: declaration.mrn,
+      // Only a client upload enters the broker's review queue; a document the
+      // broker filed themselves keeps whatever status it had earned.
+      ...(isClientUpload ? { status: "pending_review" } : {}),
+      linkedBy: identity.subject,
+      linkedAt: now,
     });
+
+    try {
+      await ctx.db.insert("auditLogs", {
+        userId: identity.subject,
+        action: isClientUpload ? "portal_document_attached" : "document_linked",
+        details: {
+          clientId: document.clientId ? String(document.clientId) : undefined,
+          documentId: String(args.documentId),
+          declarationId: String(args.declarationId),
+          previousDeclarationId: previousDeclarationId
+            ? String(previousDeclarationId)
+            : undefined,
+        },
+        timestamp: now,
+        archived: false,
+      });
+    } catch {
+      // Never block the link on a telemetry write failure.
+    }
 
     const code = extractDocumentCode(document.fileName) || extractDocumentCode(document.fileType);
     if (code) {

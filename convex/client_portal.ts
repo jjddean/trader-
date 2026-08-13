@@ -21,6 +21,17 @@ const PORTAL_UPLOAD_CATEGORIES = new Set([
   "certificates",
   "portal_upload",
   "correspondence",
+  "n935",
+  "n271",
+  "n864",
+  "n865",
+  "n703",
+  "c400",
+  "u166",
+  "u101",
+  "u164",
+  "9100",
+  "zzz",
 ]);
 
 function isPortalVisibleDocument(
@@ -1034,7 +1045,7 @@ export const saveMyDocument = mutation({
       .trim()
       .toLowerCase();
     if (category && !PORTAL_UPLOAD_CATEGORIES.has(category)) {
-      throw new Error("Only invoices, packing lists, and certificates can be uploaded");
+      throw new Error("Unsupported document type");
     }
 
     const fileName = args.fileName.trim();

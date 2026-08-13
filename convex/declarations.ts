@@ -2150,14 +2150,12 @@ export const getDeclarationPreviews = query({
     if (!identity) return [];
 
     const previews = await listDeclarationPreviewsForTenant(ctx, identity.subject, 200);
-
-    if (previews.length > 0) {
-      return previews;
-    }
-
     const declarations = await listDeclarationsForTenant(ctx, identity.subject, 200);
-
-    return declarations
+    const previewDeclarationIds = new Set(
+      previews.map((preview) => String(preview.declarationId)),
+    );
+    const missingPreviews = declarations
+      .filter((declaration) => !previewDeclarationIds.has(String(declaration._id)))
       .map((declaration) => ({
         declarationId: declaration._id,
         userId: String(declaration.userId ?? identity.subject),
@@ -2174,7 +2172,9 @@ export const getDeclarationPreviews = query({
         lastUpdated: Number(
           declaration.lastUpdated || declaration.created || declaration._creationTime || 0,
         ),
-      }))
+      }));
+
+    return [...previews, ...missingPreviews]
       .sort((a, b) => b.lastUpdated - a.lastUpdated);
   },
 });

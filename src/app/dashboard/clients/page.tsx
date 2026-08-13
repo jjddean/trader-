@@ -15,7 +15,6 @@ import {
   Link2,
   Unlink,
   MessageSquare,
-  Paperclip,
 } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -640,127 +639,6 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
   );
 }
 
-function ClientPortalDocumentsCard({ clientId }: { clientId: Id<"clients"> }) {
-  const { isLoaded, isSignedIn } = useAuth();
-  const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
-  const authReady = Boolean(isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated);
-  const documents = useQuery(
-    api.clients.listUnlinkedDocuments,
-    authReady ? { clientId } : "skip",
-  );
-  const declarations = useQuery(
-    api.clients.listLinkedDeclarations,
-    authReady ? { clientId } : "skip",
-  );
-  const attachDocument = useMutation(api.clients.attachUnlinkedDocument);
-  const [targets, setTargets] = useState<Record<string, string>>({});
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleAttach = async (documentId: Id<"documents">) => {
-    const declarationId = targets[String(documentId)];
-    if (!declarationId) return;
-    setBusyId(String(documentId));
-    setError(null);
-    try {
-      await attachDocument({
-        clientId,
-        documentId,
-        declarationId: declarationId as Id<"declarations">,
-      });
-      setTargets((current) => {
-        const next = { ...current };
-        delete next[String(documentId)];
-        return next;
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not attach document.");
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5">
-      <div className="flex items-start gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">
-          <Paperclip className="h-4 w-4 text-slate-600" />
-        </div>
-        <div>
-          <h2 className="text-sm font-semibold text-black">Portal documents</h2>
-          <p className="mt-1 text-xs leading-relaxed text-slate-500">
-            Files uploaded by this client that are waiting to be attached to a filing.
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-4 space-y-3">
-        {declarations?.length === 0 && documents && documents.length > 0 ? (
-          <p className="text-xs text-slate-500">
-            These documents have been received and are waiting for a filing.
-          </p>
-        ) : null}
-        {documents === undefined ? (
-          <div className="flex items-center gap-2 py-3 text-xs text-slate-500">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading documents…
-          </div>
-        ) : documents.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-slate-200 px-4 py-5 text-center text-xs text-slate-500">
-            No documents are waiting for a filing.
-          </p>
-        ) : (
-          documents.map((document) => {
-            const documentId = String(document._id);
-            const selectedTarget = targets[documentId] ?? "";
-            return (
-              <div key={document._id} className="rounded-lg border border-slate-200 p-4">
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-medium text-slate-900">{document.fileName}</p>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    {document.fileType || "Document"}
-                    {document.uploadDate ? ` · ${new Date(document.uploadDate).toLocaleDateString("en-GB")}` : ""}
-                  </p>
-                </div>
-                {(declarations ?? []).length > 0 ? (
-                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                    <Select value={selectedTarget} onValueChange={(value) => setTargets((current) => ({ ...current, [documentId]: value }))}>
-                      <SelectTrigger className={cn(ENTERPRISE_SELECT_TRIGGER, "flex-1")}>
-                        <SelectValue placeholder="Choose filing" />
-                      </SelectTrigger>
-                      <SelectContent className={ENTERPRISE_SELECT_CONTENT}>
-                        {(declarations ?? []).map((declaration) => (
-                          <SelectItem key={declaration._id} value={declaration._id} className={ENTERPRISE_SELECT_ITEM}>
-                            {formatPortalFilingLabel(declaration)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <button
-                      type="button"
-                      onClick={() => void handleAttach(document._id)}
-                      disabled={!selectedTarget || busyId === documentId}
-                      className="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-black px-3 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
-                    >
-                      {busyId === documentId && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                      Attach
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {error && (
-        <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-          {error}
-        </p>
-      )}
-    </section>
-  );
-}
-
 function ClientWorkspaceBody({
   clientId,
   client,
@@ -1056,7 +934,6 @@ function ClientWorkspaceLoaded({
         </section>
 
         <ClientPortalAccessCard key={client._id} clientId={clientId} client={client} />
-        <ClientPortalDocumentsCard clientId={clientId} />
         <ClientPortalMessagesCard clientId={clientId} />
       </div>
     </div>

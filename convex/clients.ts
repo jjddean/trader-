@@ -6,6 +6,7 @@ import {
   canAccessDeclaration,
   getActiveOrgId,
   isPersonalScopedRecord,
+  listDeclarationsForTenant,
   resolveOrgIdForNewRecord,
 } from "./lib/org_access";
 
@@ -484,7 +485,29 @@ export const listUnlinkedDocuments = query({
   },
 });
 
-/** Assign an unlinked portal upload to a filing owned by the same client. */
+/** Drafts that can receive a waiting portal document for this client. */
+export const listAttachableDeclarations = query({
+  args: { clientId: v.id("clients") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const client = await ctx.db.get(args.clientId);
+    if (!(await canAccessClient(ctx, identity.subject, client))) return [];
+
+    const rows = await listDeclarationsForTenant(ctx, identity.subject, 200);
+    return rows
+      .filter((row) => !row.clientId || row.clientId === args.clientId)
+      .map((row) => ({
+        _id: row._id,
+        mrn: row.mrn != null ? String(row.mrn) : null,
+        declarationType: row.declarationType != null ? String(row.declarationType) : null,
+        lastUpdated: row.lastUpdated ?? row._creationTime,
+      }));
+  },
+});
+
+/** Assign an unlinked portal upload to this client's filing. */
 export const attachUnlinkedDocument = mutation({
   args: {
     clientId: v.id("clients"),
@@ -506,7 +529,7 @@ export const attachUnlinkedDocument = mutation({
     if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
       throw new Error("Declaration not found");
     }
-    if (declaration.clientId !== args.clientId) {
+    if (declaration.clientId && declaration.clientId !== args.clientId) {
       throw new Error("The filing does not belong to this client");
     }
     if (!document || document.clientId !== args.clientId) {
@@ -517,6 +540,12 @@ export const attachUnlinkedDocument = mutation({
     }
 
     const now = Date.now();
+    if (!declaration.clientId) {
+      await ctx.db.patch(args.declarationId, {
+        clientId: args.clientId,
+        lastUpdated: now,
+      });
+    }
     await ctx.db.patch(args.documentId, {
       declarationId: args.declarationId,
       mrn: declaration.mrn != null ? String(declaration.mrn) : undefined,

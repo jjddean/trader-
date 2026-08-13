@@ -50,6 +50,7 @@ const DOCUMENT_TYPE_NAME_MAP: Record<string, string> = Object.fromEntries(
 
 export function inferDocTypeCode(fileName: string): string {
   const upperName = fileName.toUpperCase();
+  if (DOCUMENT_TYPE_NAME_MAP[upperName]) return upperName;
   if (upperName.includes("EUR1") || upperName.includes("EUR.1")) return "U164";
   if (upperName.includes("REX") || upperName.includes("STATEMENT ON ORIGIN")) return "U166";
   if (upperName.includes("RULES OF ORIGIN") || upperName.includes("ORIGIN STATEMENT")) return "9100";
