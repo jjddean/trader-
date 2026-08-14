@@ -29,8 +29,8 @@ export interface CnsSubmitInput {
   /** Canonical CDS XML from the existing builder. Never rebuilt here. */
   xmlPayload: string;
   /**
-   * The UCN for this declaration. Required for create; carried on amend so the
-   * inventory assertions still apply to a nil/blank retrigger.
+   * The UCN for this declaration. Required for create and retained as routing
+   * context for follow-up operations.
    */
   ucn?: string;
   /** Gov-* headers forwarded unaltered from the browser request. */
@@ -87,9 +87,11 @@ export function assertInventoryPreconditions(
 ): void {
   assertNoGoodsPresentation(input.xmlPayload);
 
-  // A cancellation carries no goods shipment, so the inventory reference is not
-  // expected on it. Create and amend both must carry it.
-  if (input.operation !== "cancel") {
+  // Only the original declaration carries the complete GoodsShipment,
+  // GoodsLocation and MCR inventory reference. Amendment and cancellation
+  // messages use their own WCO schemas and must not be rejected for omitting
+  // fields that belong exclusively to the create payload.
+  if (input.operation === "create") {
     assertInventoryFieldsPresent(input.xmlPayload, input.ucn, config.goodsLocationCode);
   }
 }
