@@ -9,45 +9,29 @@ import {
   loadDeclarationFinancialEstimate,
 } from "./declarations";
 import { resolveSubmissionRoute } from "./lib/export_routing";
+import {
+  canPortalClientSeeDocument,
+  clientDeclarationAttachmentConflict,
+  isAllowedPortalUploadCategory,
+} from "./lib/portal_document_policy";
 
 type Ctx = QueryCtx | MutationCtx;
-
-const PORTAL_UPLOAD_CATEGORIES = new Set([
-  "invoice",
-  "packing_list",
-  "certificate",
-  "invoices",
-  "packing lists",
-  "certificates",
-  "portal_upload",
-  "correspondence",
-  "n935",
-  "n271",
-  "n864",
-  "n865",
-  "n703",
-  "c400",
-  "u166",
-  "u101",
-  "u164",
-  "9100",
-  "zzz",
-]);
 
 function isPortalVisibleDocument(
   doc: Doc<"documents">,
   portalClerkId: string | undefined,
   clientId?: Id<"clients">,
+  clientOrgId?: string,
 ): boolean {
-  // Client-scoped uploads remain visible before a declaration exists and before
-  // the email-based portal account has completed its Clerk ID binding.
-  if (clientId && doc.clientId === clientId) return true;
-  // Client's own uploads are always visible.
-  if (portalClerkId && String(doc.userId ?? "") === portalClerkId) return true;
-  const fileType = String(doc.fileType ?? "")
-    .trim()
-    .toLowerCase();
-  return Boolean(fileType && PORTAL_UPLOAD_CATEGORIES.has(fileType));
+  return canPortalClientSeeDocument({
+    clientId,
+    clientOrgId,
+    portalClerkId,
+    documentClientId: doc.clientId,
+    documentOrgId: doc.orgId,
+    documentUserId: doc.userId,
+    fileType: doc.fileType,
+  });
 }
 
 function normalizeEmail(value: string | null | undefined): string | undefined {
@@ -112,9 +96,23 @@ async function requireOwnedDeclaration(
   declarationId: Id<"declarations">,
 ): Promise<Doc<"declarations"> | null> {
   const declaration = await ctx.db.get(declarationId);
-  if (!declaration) return null;
-  if (declaration.clientId !== portalClient._id) return null;
-  return declaration;
+  return declaration && portalClientOwnsDeclaration(portalClient, declaration)
+    ? declaration
+    : null;
+}
+
+function portalClientOwnsDeclaration(
+  client: Doc<"clients">,
+  declaration: Doc<"declarations">,
+): boolean {
+  return (
+    clientDeclarationAttachmentConflict({
+      clientId: client._id,
+      clientOrgId: client.orgId,
+      declarationClientId: declaration.clientId,
+      declarationOrgId: declaration.orgId,
+    }) === null
+  );
 }
 
 async function requireOwnedAssessment(
@@ -220,7 +218,7 @@ export const listMyDeclarations = query({
 
     return await Promise.all(
       declarations
-        .filter((decl) => decl.clientId === client._id)
+        .filter((decl) => portalClientOwnsDeclaration(client, decl))
         .map(async (decl) => {
           const notifications = await collectDeclarationNotifications(ctx.db, {
             declarationId: decl._id,
@@ -241,11 +239,13 @@ export const getMyDashboard = query({
     const client = await resolvePortalClient(ctx);
     if (!client) return null;
 
-    const declarations = await ctx.db
-      .query("declarations")
-      .withIndex("by_client", (q) => q.eq("clientId", client._id))
-      .order("desc")
-      .take(50);
+    const declarations = (
+      await ctx.db
+        .query("declarations")
+        .withIndex("by_client", (q) => q.eq("clientId", client._id))
+        .order("desc")
+        .take(50)
+    ).filter((declaration) => portalClientOwnsDeclaration(client, declaration));
 
     type AttentionItem = {
       kind: "declaration_action" | "missing_document" | "unread_message";
@@ -257,23 +257,21 @@ export const getMyDashboard = query({
     const attention: AttentionItem[] = [];
     const recent = [];
     const enrichedDeclarations = await Promise.all(
-      declarations
-        .filter((decl) => decl.clientId === client._id)
-        .map(async (decl) => {
-          const [notifications, requirements] = await Promise.all([
-            collectDeclarationNotifications(ctx.db, {
-              declarationId: decl._id,
-              conversationId: decl.conversationId != null ? String(decl.conversationId) : null,
-              mrn: decl.mrn != null ? String(decl.mrn) : null,
-            }),
-            ctx.db
-              .query("document_requirements")
-              .withIndex("by_declaration", (q) => q.eq("declarationId", decl._id))
-              .take(30),
-          ]);
-          const { status } = hmrcStatusForDeclaration(decl, notifications);
-          return { decl, status, requirements, summary: portalDeclarationSummary(decl, status) };
-        }),
+      declarations.map(async (decl) => {
+        const [notifications, requirements] = await Promise.all([
+          collectDeclarationNotifications(ctx.db, {
+            declarationId: decl._id,
+            conversationId: decl.conversationId != null ? String(decl.conversationId) : null,
+            mrn: decl.mrn != null ? String(decl.mrn) : null,
+          }),
+          ctx.db
+            .query("document_requirements")
+            .withIndex("by_declaration", (q) => q.eq("declarationId", decl._id))
+            .take(30),
+        ]);
+        const { status } = hmrcStatusForDeclaration(decl, notifications);
+        return { decl, status, requirements, summary: portalDeclarationSummary(decl, status) };
+      }),
     );
 
     for (const { decl, status, requirements, summary } of enrichedDeclarations) {
@@ -385,11 +383,13 @@ export const listMyDocuments = query({
     const client = await resolvePortalClient(ctx);
     if (!client) return [];
 
-    const declarations = await ctx.db
-      .query("declarations")
-      .withIndex("by_client", (q) => q.eq("clientId", client._id))
-      .order("desc")
-      .take(50);
+    const declarations = (
+      await ctx.db
+        .query("declarations")
+        .withIndex("by_client", (q) => q.eq("clientId", client._id))
+        .order("desc")
+        .take(50)
+    ).filter((declaration) => portalClientOwnsDeclaration(client, declaration));
 
     const clientDocuments = await ctx.db
       .query("documents")
@@ -409,7 +409,7 @@ export const listMyDocuments = query({
     const seen = new Set<string>();
 
     for (const doc of clientDocuments) {
-      if (!isPortalVisibleDocument(doc, client.portalClerkId, client._id)) continue;
+      if (!isPortalVisibleDocument(doc, client.portalClerkId, client._id, client.orgId)) continue;
       seen.add(doc._id);
       const declaration = doc.declarationId
         ? declarations.find((item) => String(item._id) === String(doc.declarationId))
@@ -427,14 +427,13 @@ export const listMyDocuments = query({
     }
 
     for (const decl of declarations) {
-      if (decl.clientId !== client._id) continue;
       const docs = await ctx.db
         .query("documents")
         .withIndex("by_declaration", (q) => q.eq("declarationId", decl._id))
         .take(40);
       for (const doc of docs) {
         if (seen.has(doc._id)) continue;
-        if (!isPortalVisibleDocument(doc, client.portalClerkId, client._id)) continue;
+        if (!isPortalVisibleDocument(doc, client.portalClerkId, client._id, client.orgId)) continue;
         seen.add(doc._id);
         const fileId = doc.fileId != null ? String(doc.fileId).trim() : "";
         out.push({
@@ -477,7 +476,7 @@ export const listMyDocumentRequirements = query({
     }> = [];
 
     for (const decl of declarations) {
-      if (decl.clientId !== client._id) continue;
+      if (!portalClientOwnsDeclaration(client, decl)) continue;
       const requirements = await ctx.db
         .query("document_requirements")
         .withIndex("by_declaration", (q) => q.eq("declarationId", decl._id))
@@ -500,6 +499,33 @@ export const listMyDocumentRequirements = query({
   },
 });
 
+/** One outstanding broker request addressed by its deep-link ID. */
+export const getMyDocumentRequirement = query({
+  args: { requirementId: v.string() },
+  handler: async (ctx, args) => {
+    const client = await resolvePortalClient(ctx);
+    if (!client) return null;
+
+    const requirementId = ctx.db.normalizeId("document_requirements", args.requirementId);
+    if (!requirementId) return null;
+    const requirement = await ctx.db.get(requirementId);
+    if (!requirement || String(requirement.status) !== "missing") return null;
+
+    const declaration = await requireOwnedDeclaration(ctx, client, requirement.declarationId);
+    if (!declaration) return null;
+
+    return {
+      _id: requirement._id,
+      declarationId: declaration._id,
+      mrn: declaration.mrn ? String(declaration.mrn) : null,
+      code: requirement.code,
+      name: requirement.name,
+      requirementLevel: requirement.requirementLevel ?? null,
+      hmrcGuidance: requirement.hmrcGuidance ?? null,
+    };
+  },
+});
+
 /** Duty/VAT rows for portal Charges page (estimate vs HMRC confirmed). */
 export const listMyCharges = query({
   args: {},
@@ -515,7 +541,7 @@ export const listMyCharges = query({
 
     const rows = [];
     for (const decl of declarations) {
-      if (decl.clientId !== client._id) continue;
+      if (!portalClientOwnsDeclaration(client, decl)) continue;
       const buildAsUserId = String(decl.userId ?? "");
       const payload = await loadDeclarationFinancialEstimate(
         ctx,
@@ -548,7 +574,7 @@ async function portalCanSeeAssessment(
   if (assessment.clientId === client._id) return true;
   if (!assessment.declarationId) return false;
   const declaration = await ctx.db.get(assessment.declarationId);
-  return Boolean(declaration && declaration.clientId === client._id);
+  return Boolean(declaration && portalClientOwnsDeclaration(client, declaration));
 }
 
 /** Portal export-controls list. */
@@ -574,7 +600,7 @@ export const listMyComplianceAssessments = query({
       .order("desc")
       .take(40);
     for (const decl of declarations) {
-      if (decl.clientId !== client._id) continue;
+      if (!portalClientOwnsDeclaration(client, decl)) continue;
       const linked = await ctx.db
         .query("export_assessments")
         .withIndex("by_declaration", (q) => q.eq("declarationId", decl._id))
@@ -976,7 +1002,7 @@ export const getMyDocumentDownloadUrl = mutation({
     }
     if (!isClientUpload && !isOwnedDeclarationDocument) throw new Error("Unauthorized");
 
-    if (!isPortalVisibleDocument(document, client.portalClerkId, client._id)) {
+    if (!isPortalVisibleDocument(document, client.portalClerkId, client._id, client.orgId)) {
       throw new Error("Unauthorized");
     }
 
@@ -1020,9 +1046,19 @@ export const saveMyDocument = mutation({
     // A requirement fixes the declaration it belongs to — the caller cannot
     // point a requirement at someone else's filing.
     let requirement: Doc<"document_requirements"> | null = null;
+    let requirementDeclaration: Doc<"declarations"> | null = null;
     if (args.requirementId) {
       requirement = await ctx.db.get(args.requirementId);
       if (!requirement) throw new Error("Document request not found");
+      requirementDeclaration = await requireOwnedDeclaration(
+        ctx,
+        client,
+        requirement.declarationId,
+      );
+      if (!requirementDeclaration) throw new Error("Document request not found");
+      if (String(requirement.status) !== "missing") {
+        throw new Error("Document request is no longer outstanding");
+      }
       if (
         args.declarationId &&
         String(args.declarationId) !== String(requirement.declarationId)
@@ -1032,9 +1068,11 @@ export const saveMyDocument = mutation({
     }
 
     const targetDeclarationId = requirement?.declarationId ?? args.declarationId;
-    const declaration = targetDeclarationId
-      ? await requireOwnedDeclaration(ctx, client, targetDeclarationId)
-      : null;
+    const declaration =
+      requirementDeclaration ??
+      (targetDeclarationId
+        ? await requireOwnedDeclaration(ctx, client, targetDeclarationId)
+        : null);
     if (targetDeclarationId && !declaration) throw new Error("Unauthorized");
     if (args.sourceMessageId) {
       const message = await ctx.db.get(args.sourceMessageId);
@@ -1044,7 +1082,7 @@ export const saveMyDocument = mutation({
     const category = String(args.category ?? args.fileType ?? "")
       .trim()
       .toLowerCase();
-    if (category && !PORTAL_UPLOAD_CATEGORIES.has(category)) {
+    if (!isAllowedPortalUploadCategory(category)) {
       throw new Error("Unsupported document type");
     }
 
@@ -1072,7 +1110,7 @@ export const saveMyDocument = mutation({
       mrn: declaration?.mrn != null ? String(declaration.mrn) : undefined,
       status: targetDeclarationId ? "pending_review" : "unlinked",
       auditStatus: "pending",
-      fileType: args.fileType ?? args.category ?? "portal_upload",
+      fileType: requirement?.code ?? args.fileType ?? args.category ?? "portal_upload",
       uploadDate: new Date().toISOString(),
       ...(args.sourceMessageId ? { sourceMessageId: args.sourceMessageId } : {}),
     });

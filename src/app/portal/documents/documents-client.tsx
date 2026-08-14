@@ -2,7 +2,7 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
-import { Download, FolderOpen, Loader2, Upload } from "lucide-react";
+import { AlertTriangle, Download, FolderOpen, Loader2, Upload } from "lucide-react";
 import { useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -29,21 +29,30 @@ const FIELD_LABEL =
   "mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase";
 
 function uploadCategoryForDocumentType(documentType: string) {
-  if (documentType === "N935") return "invoice";
-  if (documentType === "N271") return "packing_list";
-  if (["N864", "N865", "U166", "U101", "U164", "9100"].includes(documentType)) {
+  const normalized = documentType.trim().toUpperCase();
+  if (normalized === "N935") return "invoice";
+  if (normalized === "N271") return "packing_list";
+  if (["N864", "N865", "U166", "U101", "U164", "9100"].includes(normalized)) {
     return "certificate";
   }
   return "portal_upload";
 }
 
 /** Documents library — list, download, upload here. No bounce to declaration detail. */
-export default function PortalDocumentsClient() {
+export default function PortalDocumentsClient({
+  initialRequirementId,
+}: {
+  initialRequirementId?: string;
+}) {
   const { isLoaded, isSignedIn } = useAuth();
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const authReady = Boolean(isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated);
 
   const documents = useQuery(api.client_portal.listMyDocuments, authReady ? {} : "skip");
+  const requestedRequirement = useQuery(
+    api.client_portal.getMyDocumentRequirement,
+    authReady && initialRequirementId ? { requirementId: initialRequirementId } : "skip",
+  );
   const getDownloadUrl = useMutation(api.client_portal.getMyDocumentDownloadUrl);
   const generateUploadUrl = useMutation(api.client_portal.generateMyUploadUrl);
   const saveDocument = useMutation(api.client_portal.saveMyDocument);
@@ -54,6 +63,23 @@ export default function PortalDocumentsClient() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadNotice, setUploadNotice] = useState<string | null>(null);
+  const [completedRequirementId, setCompletedRequirementId] = useState<string | null>(null);
+
+  const targetRequirement =
+    completedRequirementId !== initialRequirementId && initialRequirementId
+      ? (requestedRequirement ?? undefined)
+      : undefined;
+  const requirementIsLoading = Boolean(initialRequirementId && requestedRequirement === undefined);
+  const requirementWasCompleted = Boolean(
+    initialRequirementId && completedRequirementId === initialRequirementId,
+  );
+  const requirementIsUnavailable = Boolean(
+    initialRequirementId &&
+      requestedRequirement !== undefined &&
+      !targetRequirement &&
+      !requirementWasCompleted,
+  );
+  const activeDocumentType = String(targetRequirement?.code ?? documentType).toUpperCase();
 
   const handleDownload = async (documentId: Id<"documents">) => {
     setDownloadBusyId(documentId);
@@ -78,7 +104,9 @@ export default function PortalDocumentsClient() {
     setUploadError(null);
     setUploadNotice(null);
     try {
-      const postUrl = await generateUploadUrl({});
+      const postUrl = await generateUploadUrl(
+        targetRequirement ? { declarationId: targetRequirement.declarationId } : {},
+      );
       const uploadResult = await fetch(postUrl, {
         method: "POST",
         headers: { "Content-Type": file.type || "application/octet-stream" },
@@ -88,11 +116,24 @@ export default function PortalDocumentsClient() {
       const { storageId } = (await uploadResult.json()) as { storageId: Id<"_storage"> };
       await saveDocument({
         storageId,
+        ...(targetRequirement
+          ? {
+              declarationId: targetRequirement.declarationId,
+              requirementId: targetRequirement._id,
+            }
+          : {}),
         fileName: file.name,
-        category: uploadCategoryForDocumentType(documentType),
-        fileType: documentType,
+        category: uploadCategoryForDocumentType(activeDocumentType),
+        fileType: activeDocumentType,
       });
-      setUploadNotice(`${file.name} sent to your broker for review.`);
+      if (targetRequirement) {
+        setCompletedRequirementId(String(targetRequirement._id));
+        setUploadNotice(
+          `${targetRequirement.name || targetRequirement.code} sent to your broker for review.`,
+        );
+      } else {
+        setUploadNotice(`${file.name} sent to your broker for review.`);
+      }
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -107,11 +148,47 @@ export default function PortalDocumentsClient() {
         <p className="mt-1 text-sm text-slate-500">Your files. Download or upload here.</p>
       </div>
 
+      {targetRequirement ? (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
+          <AlertTriangle
+            className="mt-0.5 h-4 w-4 shrink-0 text-amber-700"
+            strokeWidth={2.25}
+          />
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-amber-950">
+              Your broker needs {targetRequirement.name || targetRequirement.code}
+            </p>
+            <p className="mt-0.5 text-xs text-amber-900">
+              For {targetRequirement.mrn || "a filing awaiting its MRN"}
+              {targetRequirement.requirementLevel === "blocking"
+                ? " · required before this filing can proceed"
+                : ""}
+            </p>
+            {targetRequirement.hmrcGuidance ? (
+              <p className="mt-1.5 text-[11px] leading-relaxed text-amber-900">
+                {targetRequirement.hmrcGuidance}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      ) : requirementWasCompleted ? (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-900">
+          The requested document has been sent to your broker for review.
+        </div>
+      ) : requirementIsUnavailable ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+          This document request is no longer outstanding. You can still send an unlinked document
+          to your broker below.
+        </div>
+      ) : null}
+
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="border-b border-slate-100 px-6 py-4">
           <h2 className="text-sm font-medium text-black">Upload</h2>
           <p className="text-[11px] text-slate-500">
-            Send a document to your broker.
+            {targetRequirement
+              ? "This upload will answer the broker request above."
+              : "Send a document to your broker."}
           </p>
         </div>
         <div className="space-y-3 p-6">
@@ -120,37 +197,43 @@ export default function PortalDocumentsClient() {
               <label className={FIELD_LABEL} htmlFor="portal-docs-type">
                 Type
               </label>
-              <Select
-                value={documentType}
-                onValueChange={setDocumentType}
-              >
-                <SelectTrigger id="portal-docs-type" className={ENTERPRISE_SELECT_TRIGGER}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent
-                  position="popper"
-                  side="bottom"
-                  align="start"
-                  sideOffset={4}
-                  collisionPadding={12}
-                  className={`${ENTERPRISE_SELECT_CONTENT} !max-h-[240px]`}
+              {targetRequirement ? (
+                <p
+                  id="portal-docs-type"
+                  className="flex h-9 items-center rounded-md border border-slate-200 bg-slate-50 px-3 text-xs text-slate-700"
                 >
-                  {DOCUMENT_TYPES.map((type) => (
-                    <SelectItem
-                      key={type.code}
-                      value={type.code}
-                      className={ENTERPRISE_SELECT_ITEM}
-                    >
-                      {type.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  {targetRequirement.name || docTypeName(activeDocumentType)} ({activeDocumentType})
+                </p>
+              ) : (
+                <Select value={documentType} onValueChange={setDocumentType}>
+                  <SelectTrigger id="portal-docs-type" className={ENTERPRISE_SELECT_TRIGGER}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent
+                    position="popper"
+                    side="bottom"
+                    align="start"
+                    sideOffset={4}
+                    collisionPadding={12}
+                    className={`${ENTERPRISE_SELECT_CONTENT} !max-h-[240px]`}
+                  >
+                    {DOCUMENT_TYPES.map((type) => (
+                      <SelectItem
+                        key={type.code}
+                        value={type.code}
+                        className={ENTERPRISE_SELECT_ITEM}
+                      >
+                        {type.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <label
               className={cn(
                 "inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-md bg-black px-4 text-xs font-medium text-white hover:bg-slate-800",
-                uploading && "pointer-events-none opacity-60",
+                (uploading || requirementIsLoading) && "pointer-events-none opacity-60",
               )}
             >
               {uploading ? (
@@ -162,7 +245,7 @@ export default function PortalDocumentsClient() {
               <input
                 type="file"
                 className="hidden"
-                disabled={uploading}
+                disabled={uploading || requirementIsLoading}
                 onChange={(e) => {
                   const file = e.target.files?.[0] ?? null;
                   e.target.value = "";

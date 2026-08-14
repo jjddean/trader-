@@ -9,6 +9,10 @@ import {
   listDeclarationsForTenant,
   resolveOrgIdForNewRecord,
 } from "./lib/org_access";
+import {
+  clientDeclarationAttachmentConflict,
+  clientDocumentAttachmentConflict,
+} from "./lib/portal_document_policy";
 
 type Ctx = QueryCtx | MutationCtx;
 
@@ -199,6 +203,16 @@ export const setClient = mutation({
       const client = await ctx.db.get(candidate);
       if (!(await canAccessClient(ctx, identity.subject, client))) {
         throw new Error("Client not found");
+      }
+      if (
+        clientDeclarationAttachmentConflict({
+          clientId: client?._id,
+          clientOrgId: client?.orgId,
+          declarationClientId: undefined,
+          declarationOrgId: declaration.orgId,
+        }) !== null
+      ) {
+        throw new Error("The client and filing must belong to the same organisation");
       }
       clientId = candidate;
     }
@@ -497,7 +511,15 @@ export const listAttachableDeclarations = query({
 
     const rows = await listDeclarationsForTenant(ctx, identity.subject, 200);
     return rows
-      .filter((row) => !row.clientId || row.clientId === args.clientId)
+      .filter(
+        (row) =>
+          clientDeclarationAttachmentConflict({
+            clientId: client?._id,
+            clientOrgId: client?.orgId,
+            declarationClientId: row.clientId,
+            declarationOrgId: row.orgId,
+          }) === null,
+      )
       .map((row) => ({
         _id: row._id,
         mrn: row.mrn != null ? String(row.mrn) : null,
@@ -529,11 +551,28 @@ export const attachUnlinkedDocument = mutation({
     if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
       throw new Error("Declaration not found");
     }
-    if (declaration.clientId && declaration.clientId !== args.clientId) {
+    if (!document) {
+      throw new Error("Document not found");
+    }
+    const attachmentConflict = clientDocumentAttachmentConflict({
+      clientId: client?._id,
+      clientOrgId: client?.orgId,
+      documentClientId: document.clientId,
+      documentOrgId: document.orgId,
+      declarationClientId: declaration.clientId,
+      declarationOrgId: declaration.orgId,
+    });
+    if (attachmentConflict === "document_client_mismatch") {
+      throw new Error("Document not found");
+    }
+    if (attachmentConflict === "declaration_client_mismatch") {
       throw new Error("The filing does not belong to this client");
     }
-    if (!document || document.clientId !== args.clientId) {
-      throw new Error("Document not found");
+    if (
+      attachmentConflict === "tenant_mismatch" ||
+      attachmentConflict === "document_tenant_mismatch"
+    ) {
+      throw new Error("The document, client, and filing must belong to the same organisation");
     }
     if (document.declarationId) {
       throw new Error("Document is already attached to a filing");

@@ -9,6 +9,7 @@ import {
   listDeclarationsForTenant,
   orgIdFromDeclaration,
 } from "./lib/org_access";
+import { clientDocumentAttachmentConflict } from "./lib/portal_document_policy";
 
 const DOC_CODE_REGEX = /(?:^|[^A-Z0-9])([A-Z]\d{3}|\d{4})(?:[^A-Z0-9]|$)/;
 
@@ -434,13 +435,40 @@ export const linkDocumentToDeclaration = mutation({
       throw new Error("Unauthorized");
     }
 
+    const isClientUpload = Boolean(document.clientId);
+    if (document.clientId) {
+      const client = await ctx.db.get(document.clientId);
+      if (!client) throw new Error("Document client not found");
+
+      const attachmentConflict = clientDocumentAttachmentConflict({
+        clientId: client._id,
+        clientOrgId: client.orgId,
+        documentClientId: document.clientId,
+        documentOrgId: document.orgId,
+        declarationClientId: declaration.clientId,
+        declarationOrgId: declaration.orgId,
+      });
+      if (attachmentConflict === "declaration_client_mismatch") {
+        throw new Error("The filing belongs to a different client");
+      }
+      if (
+        attachmentConflict === "tenant_mismatch" ||
+        attachmentConflict === "document_tenant_mismatch"
+      ) {
+        throw new Error("The document client and filing must belong to the same organisation");
+      }
+      if (attachmentConflict) throw new Error("Document client mismatch");
+    }
+
     const previousDeclarationId = document.declarationId;
     if (previousDeclarationId && String(previousDeclarationId) === String(args.declarationId)) {
       return { success: true, declarationId: String(args.declarationId) };
     }
+    if (isClientUpload && previousDeclarationId) {
+      throw new Error("Client upload is already attached to a filing");
+    }
 
     const now = Date.now();
-    const isClientUpload = Boolean(document.clientId);
 
     // A portal upload arriving on an unclaimed draft also settles who the
     // filing belongs to — matches clients.attachUnlinkedDocument.

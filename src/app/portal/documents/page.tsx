@@ -1,5 +1,10 @@
 import PortalDocumentsClient from "./documents-client";
 
-export default function PortalDocumentsPage() {
-  return <PortalDocumentsClient />;
+export default async function PortalDocumentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ requirementId?: string }>;
+}) {
+  const params = await searchParams;
+  return <PortalDocumentsClient initialRequirementId={params.requirementId} />;
 }

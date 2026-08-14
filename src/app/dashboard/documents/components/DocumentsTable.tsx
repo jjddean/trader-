@@ -38,6 +38,8 @@ interface DocumentTableRow {
   requirementLevel?: string;
   isVirtual: boolean;
   isClientUpload?: boolean;
+  clientId?: string;
+  clientName?: string;
   ocrText?: string;
 }
 
@@ -217,7 +219,11 @@ export const DocumentsTable = React.memo(function DocumentsTable({
                           {doc.name}
                         </span>
                         <span className={cn("text-[0.625rem] mt-0.5", isWarning ? "text-amber-700 font-medium" : isMissing ? "text-red-700 font-medium" : "text-slate-500")}>
-                          {isMissing || isWarning ? doc.flag : `${doc.method} • ${doc.date}`}
+                          {doc.isClientUpload
+                            ? `${doc.flag || "Client upload"}${doc.clientName ? ` · ${doc.clientName}` : ""}`
+                            : isMissing || isWarning
+                              ? doc.flag
+                              : `${doc.method} • ${doc.date}`}
                         </span>
                       </div>
                     </td>
