@@ -40,3 +40,23 @@ export async function createFreshTestUser(email: string): Promise<{ userId: stri
   });
   return { userId: user.id };
 }
+
+/**
+ * A broker needs an active Clerk organisation: `after-auth` routes on `orgId`,
+ * and every tenant-scoped Convex query reads `org_id` from the JWT. Without one
+ * the user lands on onboarding and the whole dashboard is unreachable.
+ *
+ * Deleting the user cascades to organisations they solely own, so `deleteTestUsers`
+ * remains the only cleanup needed.
+ */
+export async function createBrokerWithOrg(
+  email: string,
+  orgName = "E2E Broker Org",
+): Promise<{ userId: string; orgId: string }> {
+  const { userId } = await createFreshTestUser(email);
+  const organization = await backend.organizations.createOrganization({
+    name: orgName,
+    createdBy: userId,
+  });
+  return { userId, orgId: organization.id };
+}

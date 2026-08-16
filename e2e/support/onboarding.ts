@@ -13,6 +13,21 @@ export async function signIn(page: Page, email: string): Promise<void> {
   await clerk.signIn({ page, emailAddress: email });
 }
 
+/**
+ * Make an organisation the session's active one. Clerk only puts `org_id` in the
+ * JWT for the active organisation, and @clerk/testing has no helper for it, so
+ * this drives `Clerk.setActive` directly.
+ */
+export async function activateOrganization(page: Page, orgId: string): Promise<void> {
+  await page.evaluate(async (organization) => {
+    const clerk = (window as unknown as { Clerk?: { setActive?: (o: unknown) => Promise<void> } })
+      .Clerk;
+    await clerk?.setActive?.({ organization });
+  }, orgId);
+  // The Convex client re-authenticates on the new token before queries resolve.
+  await page.waitForTimeout(1_500);
+}
+
 export interface CompanyFormValues {
   companyName: string;
   contactEmail: string;

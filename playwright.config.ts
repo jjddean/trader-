@@ -15,6 +15,10 @@ export default defineConfig({
     timeout: 10_000,
   },
   fullyParallel: false,
+  // One worker: the authenticated journeys share a single Clerk development
+  // instance and one Convex deployment, so concurrent files contend over the
+  // same sessions and rows. Different specs failed on each parallel run.
+  workers: 1,
   retries: process.env.CI ? 1 : 0,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
@@ -28,10 +32,14 @@ export default defineConfig({
   ...(isLocalServer
     ? {
         webServer: {
-          command: "npm run dev",
+          // Production build, not `next dev`. The dev server compiles routes on
+          // demand, so the first visit to each page can exceed the test timeout —
+          // that produced a different set of failures on every run. `next start`
+          // serves everything pre-compiled.
+          command: "npm run build && npm run start",
           url: baseURL,
           reuseExistingServer: true,
-          timeout: 180_000,
+          timeout: 300_000,
         },
       }
     : {}),
