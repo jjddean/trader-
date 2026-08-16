@@ -66,7 +66,10 @@ export function PricingPlans() {
             </ul>
             <Button
               type="button"
-              className={cn("h-9 w-full text-xs", plan.highlighted ? "bg-black hover:bg-slate-800" : "")}
+              className={cn(
+                "h-9 w-full text-xs",
+                plan.highlighted && "bg-black text-white hover:bg-slate-800 hover:text-white",
+              )}
               variant={plan.highlighted ? "default" : "outline"}
               disabled={loadingSlug !== null}
               onClick={() => handleCheckout(plan.slug)}
