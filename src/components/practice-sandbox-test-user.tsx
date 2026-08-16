@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ApiError, userMessageFromError } from "@/lib/convex-errors";
 
 const HMRC_TEST_USER_SIGN_IN_COPY =
   "Sign in with these credentials on the HMRC screen when you click Connect HMRC — not your live Government Gateway. Use your real EORI on declaration forms.";
@@ -86,13 +87,13 @@ export function PracticeSandboxTestUser({
         password?: string;
       };
       if (!res.ok) {
-        throw new Error(data.error || "Could not provision HMRC test user");
+        throw new ApiError(data.error || "Could not provision HMRC test user");
       }
       if (data.userId && data.password) {
         setLocalCreds({ userId: data.userId, password: data.password });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Provision failed");
+      setError(userMessageFromError(err, "Provision failed"));
     } finally {
       setLoading(false);
     }

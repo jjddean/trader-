@@ -11,6 +11,7 @@ import {
 } from "@/lib/export-controls/draft-pack";
 import { resolveSubmissionRoute } from "@/lib/export-controls/routing";
 import { sanctionsOneLiner } from "@/lib/export-controls/sanctions-summary";
+import { ApiError, userMessageFromError } from "@/lib/convex-errors";
 
 function roleGuidance() {
   return "Export licence application draft pack for your review.";
@@ -122,7 +123,7 @@ export function ConsultantReviewPage({ token }: { token: string }) {
       });
       setDone(true);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to save review");
+      setError(userMessageFromError(err, "Failed to save review"));
     } finally {
       setSubmitting(false);
     }
@@ -144,13 +145,13 @@ export function ConsultantReviewPage({ token }: { token: string }) {
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to send");
+      if (!res.ok) throw new ApiError(json.error || "Failed to send");
       setEndUserLink(json.formUrl as string);
       if (!json.emailSent && json.emailNote) {
         setEndUserSendNote(`Email not sent (${json.emailNote}). Copy the link below.`);
       }
     } catch (err: unknown) {
-      setEndUserSendNote(err instanceof Error ? err.message : "Failed to send");
+      setEndUserSendNote(userMessageFromError(err, "Failed to send"));
     } finally {
       setSendingEndUser(false);
     }

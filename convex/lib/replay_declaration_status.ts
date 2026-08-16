@@ -2,6 +2,7 @@ import {
   isAmendmentAccepted,
   isAmendmentAcknowledged,
   isAmendmentRejected,
+  isCancellationRejected,
   isInvalidationAccepted,
   isPostCancelClearance,
 } from "./notification_dms_context";
@@ -16,6 +17,8 @@ export interface NotificationRowForReplay {
   timestamp?: string | number;
   /** HMRC IssueDateTime (ISO) — authoritative order when present. */
   issueDateTime?: string | null;
+  /** submit | amend | cancel — which request this notification answers. */
+  originatingOperation?: string | null;
 }
 
 /** HMRC IssueDateTime is authoritative; fall back to local receipt timestamp. */
@@ -45,6 +48,7 @@ export function replayDeclarationStatus(
       rawPayload: n.rawPayload,
       fieldErrors: n.fieldErrors,
       errorCodes: n.errorCodes,
+      originatingOperation: n.originatingOperation,
     };
     const hasResolvedMrn = currentMrn.length > 0;
     status = statusAfterNotification({
@@ -54,6 +58,7 @@ export function replayDeclarationStatus(
       isAmendmentRejected: isAmendmentRejected(ctx),
       isAmendmentAccepted: isAmendmentAccepted(ctx),
       isAmendmentAcknowledged: isAmendmentAcknowledged(ctx),
+      isCancellationRejected: isCancellationRejected(ctx),
       isInvalidationAccepted: isInvalidationAccepted(ctx),
       isPostCancelClearance: isPostCancelClearance(ctx),
     });

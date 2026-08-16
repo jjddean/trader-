@@ -14,6 +14,7 @@ import {
   type EusuItemLine,
   type EusuRoles,
 } from "@/lib/export-controls/end-user-statement";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 const inputCls = "mt-1 h-9 w-full rounded-md border border-slate-200 px-3 text-xs";
 const textareaCls = "mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-xs";
@@ -290,7 +291,7 @@ export function EndUserStatementPage({ token }: { token: string }) {
         body: JSON.stringify({ token }),
       }).catch(() => undefined);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to submit");
+      setError(userMessageFromError(err, "Failed to submit"));
     } finally {
       setSubmitting(false);
     }

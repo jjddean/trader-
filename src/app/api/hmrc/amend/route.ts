@@ -21,6 +21,8 @@ import {
   resolveFollowUpLrn,
 } from "../../../../lib/cns/follow-up";
 import { sendCnsDeclaration } from "../../../../lib/cns/declarations";
+import { userMessageFromError } from "@/lib/convex-errors";
+import { correlationIdFrom, logOperationFailure, withCorrelation } from "@/lib/correlation";
 
 /**
  * Curated header-level (DE) fields permitted for amendment. The pointer chain is
@@ -39,6 +41,7 @@ const HEADER_AMENDMENT_FIELDS: Record<string, { de: string; label: string }> = {
  * HMRC: POST /customs/declarations/amend — TT_IM002b, FunctionCode 13, TypeCode COR.
  */
 export async function POST(request: Request) {
+  const correlationId = correlationIdFrom(request);
   try {
     const clerkAuth = await auth();
     const session = await getAuthenticatedConvex(clerkAuth);
@@ -244,6 +247,7 @@ export async function POST(request: Request) {
       outcome: "accepted" | "rejected" | "error",
       hmrcStatus: number,
       convId: string | null,
+      cspId?: string | null,
     ) => {
       try {
         await convex.mutation(api.submissions.recordSubmission, {
@@ -252,6 +256,7 @@ export async function POST(request: Request) {
           operation: "amend",
           outcome,
           conversationId: convId || undefined,
+          cspId: cspId || undefined,
           lrn: amendLrn,
           eori,
           priorMrn: String(mrn).trim() || undefined,
@@ -262,6 +267,34 @@ export async function POST(request: Request) {
       } catch (evErr: unknown) {
         const m = evErr instanceof Error ? evErr.message : String(evErr);
         console.warn("[AMEND] Failed to record submission evidence (non-critical):", m);
+      }
+    };
+
+    let followUpClaim: { prevStatus: string };
+    try {
+      followUpClaim = await convex.mutation(api.declarations.beginFollowUp, {
+        id: declarationId as Id<"declarations">,
+        operation: "amend",
+      });
+    } catch (claimErr: unknown) {
+      const m = claimErr instanceof Error ? claimErr.message : String(claimErr);
+      if (m.includes("SUBMIT_BLOCKED")) {
+        return NextResponse.json(
+          { error: m.replace(/^[\s\S]*SUBMIT_BLOCKED:\s*/, "").trim().split("\n")[0] },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json({ error: "Could not claim the declaration for amendment." }, { status: 500 });
+    }
+
+    const revertFollowUp = async () => {
+      try {
+        await convex.mutation(api.declarations.updateDeclarationStatus, {
+          id: declarationId as Id<"declarations">,
+          status: followUpClaim.prevStatus,
+        });
+      } catch (revertErr: unknown) {
+        console.warn("[AMEND] Failed to revert claim after failure (non-critical):", revertErr);
       }
     };
 
@@ -277,8 +310,13 @@ export async function POST(request: Request) {
       if (cnsResult.status === "failed") {
         const { error: cnsError } = cnsResult;
         const outcomeUnknown = cnsError.disposition === "outcome_unknown";
+        // Only release the claim when CNS definitively refused. On an unknown
+        // outcome the amendment may have landed, so the declaration stays in
+        // "Amendment Processing" rather than becoming re-sendable.
+        if (!outcomeUnknown) await revertFollowUp();
         await recordAmendEvidence(outcomeUnknown ? "error" : "rejected", cnsError.httpStatus, null);
         await logHmrcAudit(convex, userId, "declaration_amend_failed", {
+          correlationId,
           declarationId,
           mrn: String(mrn).trim(),
           changeKind: kind,
@@ -306,7 +344,7 @@ export async function POST(request: Request) {
         id: declarationId,
         status: "Amendment Processing",
       });
-      await recordAmendEvidence("accepted", cnsResult.httpStatus, null);
+      await recordAmendEvidence("accepted", cnsResult.httpStatus, null, cnsResult.cspId);
 
       try {
         await convex.mutation(api.cns.recordTransportOutcome, {
@@ -319,6 +357,7 @@ export async function POST(request: Request) {
       }
 
       await logHmrcAudit(convex, userId, "declaration_amended", {
+        correlationId,
         declarationId,
         mrn: String(mrn).trim(),
         changeKind: kind,
@@ -357,12 +396,14 @@ export async function POST(request: Request) {
     if (hmrcResponse.status === 429) {
       await recordAmendEvidence("error", 429, null);
       await logHmrcAudit(convex, userId, "declaration_amend_failed", {
+        correlationId,
         declarationId,
         mrn: String(mrn).trim(),
         changeKind: kind,
         reason: "rate_limited",
         hmrcStatus: 429,
       });
+      await revertFollowUp();
       return NextResponse.json({ error: "HMRC rate limit reached" }, { status: 429 });
     }
 
@@ -371,6 +412,7 @@ export async function POST(request: Request) {
       console.error("HMRC Amendment Error:", hmrcResponse.status, errorText);
       await recordAmendEvidence("rejected", hmrcResponse.status, hmrcResponse.headers.get("X-Conversation-ID"));
       await logHmrcAudit(convex, userId, "declaration_amend_failed", {
+        correlationId,
         declarationId,
         mrn: String(mrn).trim(),
         changeKind: kind,
@@ -379,6 +421,7 @@ export async function POST(request: Request) {
         conversationId: hmrcResponse.headers.get("X-Conversation-ID") || null,
         details: errorText.slice(0, 2000),
       });
+      await revertFollowUp();
       return NextResponse.json(
         { error: "HMRC rejected amendment", details: errorText },
         { status: hmrcResponse.status },
@@ -386,11 +429,32 @@ export async function POST(request: Request) {
     }
 
     const conversationId = hmrcResponse.headers.get("X-Conversation-ID");
-    await convex.mutation(api.declarations.updateDeclarationStatus, {
-      id: declarationId,
-      status: "Amendment Processing",
-      conversationId: conversationId || undefined,
-    });
+    if (!conversationId) {
+      console.error("[AMEND] HMRC accepted but returned no X-Conversation-ID", {
+        declarationId,
+        hmrcStatus: hmrcResponse.status,
+      });
+    }
+
+    // HMRC has accepted. A Convex failure from here — an expired token during a
+    // slow HMRC call is the likely cause — must not surface as a 500, or the
+    // caller believes the request failed. The claim already blocks a duplicate;
+    // this stops us reporting failure on success.
+    let statusPersisted = true;
+    try {
+      await convex.mutation(api.declarations.updateDeclarationStatus, {
+        id: declarationId,
+        status: "Amendment Processing",
+        conversationId: conversationId || undefined,
+      });
+    } catch (statusErr: unknown) {
+      statusPersisted = false;
+      logOperationFailure(
+        { correlationId, operation: "declaration_amend", declarationId: String(declarationId) },
+        statusErr,
+        { note: "HMRC accepted but status persist failed" },
+      );
+    }
 
     await recordAmendEvidence("accepted", hmrcResponse.status, conversationId);
 
@@ -408,6 +472,7 @@ export async function POST(request: Request) {
     }
 
     await logHmrcAudit(convex, userId, "declaration_amended", {
+      correlationId,
       declarationId,
       mrn: String(mrn).trim(),
       changeKind: kind,
@@ -421,6 +486,8 @@ export async function POST(request: Request) {
       {
         success: true,
         status: "Amendment Processing",
+        statusPersisted,
+        correlationId,
         conversationId,
         amendLrn,
         hmrcStatus: hmrcResponse.status,
@@ -429,7 +496,11 @@ export async function POST(request: Request) {
     );
   } catch (error: unknown) {
     console.error("Amendment crash:", error);
-    const message = error instanceof Error ? error.message : "Internal Server Error";
-    return NextResponse.json({ error: "Internal Server Error", message }, { status: 500 });
+    logOperationFailure({ correlationId, operation: "declaration_amend" }, error);
+    const message = userMessageFromError(error, "Internal Server Error");
+    return withCorrelation(
+      NextResponse.json({ error: "Internal Server Error", message, correlationId }, { status: 500 }),
+      correlationId,
+    );
   }
 }

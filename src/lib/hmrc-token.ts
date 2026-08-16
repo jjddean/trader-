@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api";
 import type { ResolvedHmrcContext } from "./hmrc-context";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 export async function resolveHmrcAccessToken(
   convex: ConvexHttpClient,
@@ -23,7 +24,7 @@ export async function resolveHmrcAccessToken(
     }
     return { token: result.token };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Failed to resolve HMRC token";
+    const message = userMessageFromError(err, "Failed to resolve HMRC token");
     if (message.includes("Forbidden") || message.includes("Unauthenticated")) {
       return {
         error: NextResponse.json({ error: message }, { status: 403 }),

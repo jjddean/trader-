@@ -6,6 +6,7 @@ import {
   listDocumentsForTenant,
   listNotificationsForTenant,
 } from "./lib/org_access";
+import { unauthenticatedError } from "./lib/user_errors";
 
 const MAX_DECLARATIONS = 500;
 const MAX_NOTIFICATIONS = 500;
@@ -24,7 +25,7 @@ export const exportMyData = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const userId = identity.subject;
     const tenant = await getTenantContext(ctx, userId);

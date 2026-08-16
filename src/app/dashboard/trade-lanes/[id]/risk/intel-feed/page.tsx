@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../../../../../../../convex/_generated/api";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 interface WeatherReading {
   location: string;
@@ -69,7 +70,7 @@ export default function IntelFeedPage() {
         }
       })
       .catch((reason: unknown) => {
-        if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : "Live intelligence is unavailable");
+        if (!controller.signal.aborted) setError(userMessageFromError(reason, "Live intelligence is unavailable"));
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);

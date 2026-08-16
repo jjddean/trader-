@@ -12,6 +12,7 @@ import { planBadgeClass } from "@/lib/stripe-plans";
 import { isSyntheticStripeCustomerId } from "@/lib/stripe-customer";
 import { PracticeSandboxTestUser } from "@/components/practice-sandbox-test-user";
 import { compactProfileModalAppearance } from "@/lib/clerk-compact";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 export default function SettingsPage() {
   return (
@@ -135,7 +136,7 @@ function SettingsPageContent() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (error) {
-      setExportError(error instanceof Error ? error.message : "Export failed");
+      setExportError(userMessageFromError(error, "Export failed"));
     } finally {
       setExportLoading(false);
     }
@@ -263,7 +264,7 @@ function SettingsPageContent() {
                         `Migrated ${result.declarations} declarations, ${result.documents} documents, ${result.notifications} notifications.`,
                       );
                     } catch (error) {
-                      setMigrationMessage(error instanceof Error ? error.message : "Migration failed");
+                      setMigrationMessage(userMessageFromError(error, "Migration failed"));
                     } finally {
                       setMigrationLoading(false);
                     }
@@ -508,7 +509,7 @@ function SettingsPageContent() {
                       try {
                         await setMyOrgHmrcMode({ orgId, hmrcMode: next });
                       } catch (error) {
-                        setHmrcModeError(error instanceof Error ? error.message : "Could not change CDS environment.");
+                        setHmrcModeError(userMessageFromError(error, "Could not change CDS environment."));
                       } finally {
                         setHmrcModeSaving(false);
                       }

@@ -7,6 +7,7 @@ import { hmrcOAuthBaseUrl, hmrcOAuthCredentials } from "../../../../lib/hmrc-oau
 import { hmrcOAuthStateNonce, hmrcPkceCookieName, HMRC_OAUTH_STATE_COOKIE } from "../../../../lib/hmrc-pkce";
 import { getAuthenticatedConvex } from "../../../../lib/hmrc-route-session";
 import { resolveOrgHmrcRoutingForOrg } from "../../../../lib/hmrc-org-routing";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -154,7 +155,7 @@ export async function GET(request: Request) {
     return success;
 
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "unknown";
+    const message = userMessageFromError(err, "unknown");
     console.error("Exception in HMRC callback:", err);
     return NextResponse.redirect(new URL(`/dashboard?error=internal_error&msg=${encodeURIComponent(message)}`, request.url));
   }

@@ -18,6 +18,7 @@
     "test:file-upload-s3": "node test-evidence/file-upload-s3-e2e.js",
     "test:e2e": "playwright test",
     "test:e2e:list": "playwright test --list",
+    "test:e2e:auth": "playwright test e2e/auth --project=chromium",
     "test:portal": "node --test --import tsx tests/portal-document-policy.test.ts && vitest run --config vitest.portal.config.mts",
     "lora:bootstrap": "python scripts/lora/bootstrap.py",
     "lora:check": "python scripts/lora/check_hf_token.py",
@@ -95,6 +96,7 @@
     "sharp": "^0.35.3"
   },
   "devDependencies": {
+    "@clerk/testing": "^2.2.24",
     "@edge-runtime/vm": "^5.0.0",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
@@ -102,6 +104,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "convex-test": "^0.0.55",
+    "dotenv": "^17.4.2",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.2.9",
     "eslint-plugin-simple-import-sort": "^12.1.1",

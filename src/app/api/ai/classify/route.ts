@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { AI_MAX_CLASSIFY_CHARS, aiClassifyLimiter } from "@/lib/api-rate-limiter";
 import { assertLlmConfigured, createChatCompletion } from "@/lib/llm-chat";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 export async function POST(request: Request) {
   try {
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
       assertLlmConfigured();
     } catch (err) {
       return NextResponse.json(
-        { error: err instanceof Error ? err.message : "LLM not configured" },
+        { error: userMessageFromError(err, "LLM not configured") },
         { status: 500 },
       );
     }

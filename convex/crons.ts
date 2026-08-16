@@ -35,4 +35,14 @@ crons.daily(
   { batchSize: 15 },
 );
 
+// Delete stored files no documents row references. Catches uploads lost to a
+// browser refresh between the storage POST and the row insert, which the
+// client-side discard cannot reach. 24h grace so in-flight uploads are safe.
+crons.daily(
+  "sweep-orphaned-files",
+  { hourUTC: 3, minuteUTC: 15 },
+  internal.documents.sweepOrphanedFiles,
+  {},
+);
+
 export default crons;

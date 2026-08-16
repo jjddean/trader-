@@ -29,7 +29,7 @@ function readOrgId(identity: Record<string, unknown>): string {
 
 export const createCheckoutSession = action({
   args: {
-    plan: v.union(v.literal("starter"), v.literal("pro"), v.literal("payg")),
+    plan: v.union(v.literal("starter"), v.literal("business")),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();

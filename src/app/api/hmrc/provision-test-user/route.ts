@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createHmrcOrganisationTestUser } from "../../../../lib/hmrc-create-test-user";
 import { getAuthenticatedConvex } from "../../../../lib/hmrc-route-session";
 import { resolveOrgHmrcRoutingForOrg } from "../../../../lib/hmrc-org-routing";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 /** Provision (or return existing) HMRC sandbox Test User for the active practice org. */
 export async function POST() {
@@ -55,7 +56,7 @@ export async function POST() {
       password: testUser.password,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to provision HMRC test user";
+    const message = userMessageFromError(err, "Failed to provision HMRC test user");
     console.error("[HMRC PROVISION TEST USER]", message);
     return NextResponse.json({ error: message }, { status: 502 });
   }

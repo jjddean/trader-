@@ -17,6 +17,8 @@ import { CnsRoutingError, selectDeclarationTransport } from "../../../../lib/cns
 import { sendCnsDeclaration } from "../../../../lib/cns/declarations";
 import { INVENTORY_REFERENCE_TYPE_CODE } from "../../../../lib/cns/inventory-xml";
 import { evaluateRules, activeEffects, summarizeFailures, type RuleDefinition, type ScenarioInput } from "../../../../../convex/lib/rule_engine";
+import { userMessageFromError } from "@/lib/convex-errors";
+import { correlationIdFrom, logOperationFailure, withCorrelation } from "@/lib/correlation";
 
 type SubmitItemInput = {
   commodityCode?: string;
@@ -128,6 +130,7 @@ function validateDeclaration(lane: SubmitDeclarationInput, items: SubmitItemInpu
 }
 
 export async function POST(request: Request) {
+  const correlationId = correlationIdFrom(request);
   try {
     const clerkAuth = await auth();
     const { userId } = clerkAuth;
@@ -379,7 +382,7 @@ export async function POST(request: Request) {
         ...(transport === "cns_inventory" ? { cnsUcn: routingContext.cnsUcn } : {}),
       });
     } catch (mappingError: unknown) {
-      const message = mappingError instanceof Error ? mappingError.message : "Unknown mapping error";
+      const message = userMessageFromError(mappingError, "Unknown mapping error");
       return NextResponse.json(
         {
           error: "Failed to map declaration to CDS payload",
@@ -663,6 +666,7 @@ export async function POST(request: Request) {
           console.warn("[SUBMIT/CNS] Failed to persist transport state (non-critical):", stateErr);
         }
         await logHmrcAudit(convex, userId, "declaration_submit_failed", {
+          correlationId,
           declarationId,
           reason: outcomeUnknown ? "cns_outcome_unknown" : "cns_rejected",
           transport: "cns_inventory",
@@ -717,6 +721,7 @@ export async function POST(request: Request) {
       }
 
       await logHmrcAudit(convex, userId, "declaration_submitted", {
+        correlationId,
         declarationId,
         transport: "cns_inventory",
         cspId: cnsResult.cspId,
@@ -766,6 +771,7 @@ export async function POST(request: Request) {
       await revertClaim();
       await recordSubmissionEvidence("error", 429, null);
       await logHmrcAudit(convex, userId, "declaration_submit_failed", {
+        correlationId,
         declarationId,
         reason: "rate_limited",
         hmrcStatus: 429,
@@ -780,6 +786,7 @@ export async function POST(request: Request) {
       await revertClaim();
       await recordSubmissionEvidence("rejected", hmrcResponse.status, hmrcResponse.headers.get("X-Conversation-ID"));
       await logHmrcAudit(convex, userId, "declaration_submit_failed", {
+        correlationId,
         declarationId,
         reason: "hmrc_rejected",
         hmrcStatus: hmrcResponse.status,
@@ -811,17 +818,24 @@ export async function POST(request: Request) {
     const conversationId = hmrcResponse.headers.get("X-Conversation-ID");
     const responseText = await hmrcResponse.text();
     if (!conversationId) {
+      // HMRC returned a success status, so the declaration may well have been
+      // accepted — only the correlation header is missing. Reverting the claim
+      // here would re-open the declaration for submission and risk a duplicate
+      // live entry at CDS. Stay in "Processing" and let the stuck-declaration
+      // recovery job reconcile it, matching the CNS unknown-outcome rule above.
       console.error("HMRC accepted response missing X-Conversation-ID", { status: hmrcResponse.status, responseText });
-      await revertClaim();
       await recordSubmissionEvidence("error", hmrcResponse.status, null);
-      await logHmrcAudit(convex, userId, "declaration_submit_failed", {
+      await logHmrcAudit(convex, userId, "declaration_submit_ambiguous", {
+        correlationId,
         declarationId,
         reason: "missing_conversation_id",
         hmrcStatus: hmrcResponse.status,
         environment: hmrcContext.environment,
+        claimRetained: true,
       });
       return NextResponse.json({
-        error: "HMRC accepted response missing X-Conversation-ID",
+        error:
+          "HMRC accepted the submission but did not return a Conversation ID. The declaration is left in Processing — check its status before resubmitting, or it may be filed twice.",
         hmrcStatus: hmrcResponse.status,
         details: responseText,
         requestEvidence: {
@@ -874,6 +888,7 @@ export async function POST(request: Request) {
 
     // Audit Log Entry (logHmrcAudit is internally non-fatal)
     await logHmrcAudit(convex, userId, "declaration_submitted", {
+      correlationId,
       declarationId,
       environment: hmrcContext.environment,
       conversationId,
@@ -903,12 +918,14 @@ export async function POST(request: Request) {
 
   } catch (error: unknown) {
     console.error("Submission crash:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    logOperationFailure({ correlationId, operation: "declaration_submit" }, error);
+    const errorMessage = userMessageFromError(error, "Unknown error");
     const errorStack = error instanceof Error && typeof error.stack === "string" ? error.stack : undefined;
-    return NextResponse.json({
+    return withCorrelation(NextResponse.json({
       error: "Internal Server Error",
+      correlationId,
       message: errorMessage,
       stack: process.env.NODE_ENV === "development" ? errorStack : undefined,
-    }, { status: 500 });
+    }, { status: 500 }), correlationId);
   }
 }

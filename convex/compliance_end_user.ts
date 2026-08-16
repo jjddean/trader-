@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { assertAssessmentAccess, canAccessAssessment } from "./lib/org_access";
+import { unauthenticatedError, userError } from "./lib/user_errors";
 
 const TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
@@ -41,7 +42,7 @@ async function insertEndUserToken(
   },
 ) {
   const email = args.recipientEmail.trim();
-  if (!email) throw new Error("Recipient email required");
+  if (!email) throw userError("recipient_email_required", "Recipient email required");
 
   const now = Date.now();
   const token = generateToken();
@@ -82,7 +83,7 @@ export const createEndUserDispatch = mutation({
   },
   handler: async (ctx, args) => {
     const review = await getValidReviewToken(ctx, args.reviewToken);
-    if (!review) throw new Error("Review link expired or invalid");
+    if (!review) throw userError("review_link_expired_or_invalid", "Review link expired or invalid");
 
     return insertEndUserToken(ctx, {
       assessmentId: review.assessmentId,
@@ -105,10 +106,10 @@ export const createEndUserDispatchFromAssessment = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const assessment = await ctx.db.get(args.assessmentId);
-    if (!assessment) throw new Error("Assessment not found");
+    if (!assessment) throw userError("assessment_not_found", "Assessment not found");
     await assertAssessmentAccess(ctx, identity.subject, assessment);
 
     return insertEndUserToken(ctx, {
@@ -244,17 +245,17 @@ export const submitEndUserStatement = mutation({
   },
   handler: async (ctx, args) => {
     const row = await getValidEndUserToken(ctx, args.token);
-    if (!row) throw new Error("Link expired or invalid");
-    if (row.completedAt) throw new Error("This form was already submitted");
+    if (!row) throw userError("link_expired_or_invalid", "Link expired or invalid");
+    if (row.completedAt) throw userError("this_form_was_already_submitted", "This form was already submitted");
 
     const endUserName = args.endUserName.trim();
     const intendedUse = args.intendedUse.trim();
     const signedBy = args.signedBy.trim();
     if (!endUserName || !intendedUse || !signedBy) {
-      throw new Error("End user name, intended use, and signature are required");
+      throw userError("end_user_name_intended_use_and", "End user name, intended use, and signature are required");
     }
     if (!args.noProhibitedEndUse || !args.noDiversion) {
-      throw new Error("Both undertakings must be confirmed");
+      throw userError("both_undertakings_must_be_confirmed", "Both undertakings must be confirmed");
     }
 
     const now = Date.now();

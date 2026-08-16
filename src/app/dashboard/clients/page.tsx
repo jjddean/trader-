@@ -51,6 +51,7 @@ import {
 import { countries } from "@/lib/data/countries";
 import { cn } from "@/lib/utils";
 import { buildMessagePdf, downloadBlob, messagePdfFileName } from "@/lib/portal/message-pdf";
+import { ApiError, userMessageFromError } from "@/lib/convex-errors";
 
 interface ClientForm {
   name: string;
@@ -207,14 +208,14 @@ function ClientPortalAccessCard({
         emailNote?: string;
       };
       if (!res.ok) {
-        throw new Error(body.error || "Failed to enable portal access.");
+        throw new ApiError(body.error || "Failed to enable portal access.");
       }
       setSuccess(hasPortalAccess ? "Portal email updated." : `Invite sent to ${body.portalEmail}.`);
       setIsEditingEmail(false);
     } catch (err) {
       setError(
         friendlyPortalError(
-          err instanceof Error ? err.message : "Portal access could not be updated. Please try again.",
+          userMessageFromError(err, "Portal access could not be updated. Please try again."),
         ),
       );
     } finally {
@@ -230,7 +231,7 @@ function ClientPortalAccessCard({
       await revokePortalAccess({ clientId });
       setSuccess("Portal access revoked.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to revoke portal access.");
+      setError(userMessageFromError(err, "Failed to revoke portal access."));
     } finally {
       setIsRevoking(false);
     }
@@ -429,6 +430,7 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
   const sendBrokerMessage = useMutation(api.clients.sendBrokerMessage);
   const markPortalMessagesRead = useMutation(api.clients.markPortalMessagesRead);
   const generateDocumentUploadUrl = useMutation(api.documents.generateUploadUrl);
+  const discardOrphanedUpload = useMutation(api.documents.discardOrphanedUpload);
   const saveMessageDocument = useMutation(api.clients.savePortalMessageDocument);
   const [body, setBody] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -469,8 +471,18 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
     const response = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": "application/pdf" }, body: blob });
     if (!response.ok) throw new Error("Could not upload the message PDF.");
     const { storageId } = (await response.json()) as { storageId: Id<"_storage"> };
-    const result = await saveMessageDocument({ messageId: message._id as Id<"portal_messages">, storageId, fileName });
-    setActionStatus(result.alreadySaved ? "Already saved in Documents." : "Saved to Documents.");
+    try {
+      const result = await saveMessageDocument({ messageId: message._id as Id<"portal_messages">, storageId, fileName });
+      setActionStatus(result.alreadySaved ? "Already saved in Documents." : "Saved to Documents.");
+    } catch (err) {
+      // The PDF is already in storage; drop it rather than leave it unreferenced.
+      try {
+        await discardOrphanedUpload({ storageId });
+      } catch (discardErr) {
+        console.error("[clients] failed to discard orphaned upload", discardErr);
+      }
+      throw err;
+    }
   };
 
   const handleSend = async () => {
@@ -496,7 +508,7 @@ function ClientPortalMessagesCard({ clientId }: { clientId: Id<"clients"> }) {
       }
       setBody("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send message.");
+      setError(userMessageFromError(err, "Failed to send message."));
     } finally {
       setIsSending(false);
     }
@@ -720,7 +732,7 @@ function ClientWorkspaceLoaded({
         notes: form.notes,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save client.");
+      setError(userMessageFromError(err, "Failed to save client."));
     } finally {
       setIsSaving(false);
     }
@@ -1018,7 +1030,7 @@ export default function ClientsPage() {
       setShowModal(false);
       openClient(result.clientId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save client.");
+      setError(userMessageFromError(err, "Failed to save client."));
     } finally {
       setIsSaving(false);
     }

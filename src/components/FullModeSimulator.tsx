@@ -2,10 +2,9 @@
 
 import React, { useState } from 'react';
 import { ArrowRight, Info, Loader2, Search } from 'lucide-react';
-import { useAction } from 'convex/react';
-import { api } from '../../convex/_generated/api';
 import { fetchTradeData, calculateUKImportCosts } from '@/lib/trade-data';
 import { cn } from '@/lib/utils';
+import { searchTariff } from "@/lib/tariff-search-client";
 
 const fieldClass =
   'h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors focus:border-slate-400';
@@ -28,14 +27,12 @@ export const FullModeSimulator = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSearchingHs, setIsSearchingHs] = useState(false);
 
-  const searchHMRC = useAction(api.hmrc_actions.searchHSCode);
-
   const handleHsSearch = async (val: string) => {
     setData({ ...data, hs: val });
     if (val.length >= 4) {
       setIsSearchingHs(true);
       try {
-        const found = await searchHMRC({ query: val });
+        const found = await searchTariff(val);
         if (found && found.length > 0) {
           setHsInfo({
             code: found[0].code,

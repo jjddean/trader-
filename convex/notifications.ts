@@ -5,14 +5,38 @@ import {
   isAmendmentAccepted,
   isAmendmentAcknowledged,
   isAmendmentRejected,
+  isCancellationRejected,
   isInvalidationAccepted,
   isPostCancelClearance,
 } from "./lib/notification_dms_context";
 import { statusAfterNotification } from "./lib/notification_status";
+import type { MutationCtx } from "./_generated/server";
 import { collectDeclarationNotifications } from "./lib/collect_declaration_notifications";
+import { assertIngestSecret } from "./lib/secret_compare";
 import { canAccessDeclaration, listNotificationsForTenant, orgIdFromDeclaration } from "./lib/org_access";
 
 const hmrcEnvironment = v.union(v.literal("sandbox"), v.literal("production"));
+
+/** Same lookup order saveWebhook uses below: conversationId, then MRN. */
+async function resolveDeclarationForNotification(
+  ctx: { db: MutationCtx["db"] },
+  args: { conversationId?: string; mrn?: string },
+) {
+  if (args.conversationId && args.conversationId !== "UNKNOWN") {
+    const byConversation = await ctx.db
+      .query("declarations")
+      .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
+      .first();
+    if (byConversation) return byConversation;
+  }
+  if (args.mrn && args.mrn !== "UNKNOWN") {
+    return await ctx.db
+      .query("declarations")
+      .withIndex("by_mrn", (q) => q.eq("mrn", args.mrn))
+      .first();
+  }
+  return null;
+}
 
 export const saveWebhook = mutation({
   args: {
@@ -35,10 +59,7 @@ export const saveWebhook = mutation({
     issueDateTime: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const expected = process.env.NOTIFICATION_INGEST_SECRET?.trim();
-    if (!expected || args.ingestSecret !== expected) {
-      throw new Error("Unauthorized");
-    }
+    assertIngestSecret(args.ingestSecret);
 
     // Dedupe by HMRC notificationId first — stable across push/pull channels.
     if (args.hmrcNotificationId) {
@@ -90,9 +111,34 @@ export const saveWebhook = mutation({
       }
     }
 
+    // HMRC issues a distinct conversationId per request, so the submissions row
+    // sharing it names the operation this notification answers.
+    const originatingSubmission =
+      args.conversationId && args.conversationId !== "UNKNOWN"
+        ? await ctx.db
+            .query("submissions")
+            .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
+            .first()
+        : null;
+    // CNS follow-ups record no conversationId (the CSP returns only X-CSP-ID), so
+    // the join above is impossible for exactly the declarations that need it.
+    // Fall back to the declaration's own state: beginFollowUp sets
+    // "Cancellation Requested" atomically before dispatch and releases it only on
+    // a definite outcome, so nothing else can put a declaration in that state.
+    // INFERENCE about our own state machine — not a documented HMRC rule.
+    // See docs/hmrc/ACTIVE/tdr/errors-handled.md, 2026-08-15.
+    let originatingOperation = originatingSubmission?.operation;
+    if (!originatingOperation) {
+      const pending = await resolveDeclarationForNotification(ctx, args);
+      if (String(pending?.status ?? "") === "Cancellation Requested") {
+        originatingOperation = "cancel";
+      }
+    }
+
     const notificationId = await ctx.db.insert("notifications", {
       mrn: args.mrn,
       conversationId: args.conversationId,
+      ...(originatingOperation ? { originatingOperation } : {}),
       environment: args.environment ?? "sandbox",
       idempotencyKey: args.idempotencyKey,
       hmrcNotificationId: args.hmrcNotificationId,
@@ -165,10 +211,16 @@ export const saveWebhook = mutation({
         rawPayload: args.rawPayload,
         fieldErrors: args.fieldErrors,
         errorCodes: args.errorCodes,
+        originatingOperation,
       });
       const postCancelCle = isPostCancelClearance({
         notificationType: args.notificationType,
         rawPayload: args.rawPayload,
+      });
+      const cancelRejected = isCancellationRejected({
+        notificationType: args.notificationType,
+        rawPayload: args.rawPayload,
+        originatingOperation,
       });
       if (!mrnMismatch) {
         const newStatus = statusAfterNotification({
@@ -178,6 +230,7 @@ export const saveWebhook = mutation({
           isAmendmentRejected: amendRejected,
           isAmendmentAccepted: amendAccepted,
           isAmendmentAcknowledged: amendAcknowledged,
+          isCancellationRejected: cancelRejected,
           isInvalidationAccepted: invAccepted,
           isPostCancelClearance: postCancelCle,
         });

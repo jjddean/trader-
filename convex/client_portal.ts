@@ -9,11 +9,13 @@ import {
   loadDeclarationFinancialEstimate,
 } from "./declarations";
 import { resolveSubmissionRoute } from "./lib/export_routing";
+import { resolveSignedInEmail } from "./lib/signed_in_email";
 import {
   canPortalClientSeeDocument,
   clientDeclarationAttachmentConflict,
   isAllowedPortalUploadCategory,
 } from "./lib/portal_document_policy";
+import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 
 type Ctx = QueryCtx | MutationCtx;
 
@@ -34,28 +36,6 @@ function isPortalVisibleDocument(
   });
 }
 
-function normalizeEmail(value: string | null | undefined): string | undefined {
-  const trimmed = String(value ?? "")
-    .trim()
-    .toLowerCase();
-  return trimmed || undefined;
-}
-
-/** JWT email first; fall back to users row (UserSync) — Clerk session tokens often omit email. */
-async function resolveSignedInEmail(
-  ctx: Ctx,
-  identity: { subject: string; email?: string | null },
-): Promise<string | undefined> {
-  const fromJwt = normalizeEmail(typeof identity.email === "string" ? identity.email : undefined);
-  if (fromJwt) return fromJwt;
-
-  const dbUser = await ctx.db
-    .query("users")
-    .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
-    .unique();
-  return normalizeEmail(typeof dbUser?.email === "string" ? dbUser.email : undefined);
-}
-
 /**
  * Resolve the portal client for the signed-in Clerk user.
  * Auth is by clients.portalClerkId / portalEmail — never by broker org.
@@ -73,12 +53,12 @@ export async function resolvePortalClient(ctx: Ctx): Promise<Doc<"clients"> | nu
     return byClerk;
   }
 
-  const email = await resolveSignedInEmail(ctx, identity);
-  if (!email) return null;
+  const signedIn = await resolveSignedInEmail(ctx, identity);
+  if (!signedIn || signedIn.verified === false) return null;
 
   const byEmail = await ctx.db
     .query("clients")
-    .withIndex("by_portal_email", (q) => q.eq("portalEmail", email))
+    .withIndex("by_portal_email", (q) => q.eq("portalEmail", signedIn.email))
     .first();
   if (!byEmail || byEmail.status !== "active" || !byEmail.portalEmail) return null;
 
@@ -146,10 +126,14 @@ export const ensurePortalClerkBinding = mutation({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
-    const email = await resolveSignedInEmail(ctx, identity);
-    if (!email) return { ok: false as const, reason: "no_email" };
+    const signedIn = await resolveSignedInEmail(ctx, identity);
+    if (!signedIn) return { ok: false as const, reason: "no_email" };
+    // Binding a portal to an unverified address would hand it to whoever claimed it.
+    if (signedIn.verified === false) {
+      return { ok: false as const, reason: "email_not_verified" };
+    }
 
     const existing = await ctx.db
       .query("clients")
@@ -161,7 +145,7 @@ export const ensurePortalClerkBinding = mutation({
 
     const byEmail = await ctx.db
       .query("clients")
-      .withIndex("by_portal_email", (q) => q.eq("portalEmail", email))
+      .withIndex("by_portal_email", (q) => q.eq("portalEmail", signedIn.email))
       .first();
     if (!byEmail || byEmail.status !== "active" || !byEmail.portalEmail) {
       return { ok: false as const, reason: "no_portal_access" };
@@ -874,30 +858,30 @@ export const sendMyMessage = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const client = await resolvePortalClient(ctx);
-    if (!client) throw new Error("No portal access");
+    if (!client) throw userError("no_portal_access", "No portal access");
 
     const body = args.body.trim();
-    if (body.length < 1) throw new Error("Message is empty");
-    if (body.length > 4000) throw new Error("Message is too long");
+    if (body.length < 1) throw userError("message_is_empty", "Message is empty");
+    if (body.length > 4000) throw userError("message_is_too_long", "Message is too long");
 
     const hasDeclaration = Boolean(args.declarationId);
     const hasAssessment = Boolean(args.assessmentId);
     if (hasDeclaration && hasAssessment) {
-      throw new Error("Choose either a declaration or an export case");
+      throw userError("choose_either_a_declaration_or_an", "Choose either a declaration or an export case");
     }
 
     let orgId = client.orgId;
     if (args.declarationId) {
       const declaration = await requireOwnedDeclaration(ctx, client, args.declarationId);
-      if (!declaration) throw new Error("Declaration not found");
+      if (!declaration) throw userError("declaration_not_found", "Declaration not found");
       orgId = orgIdFromDeclaration(declaration) ?? orgId;
     }
     if (args.assessmentId) {
       const assessment = await requireOwnedAssessment(ctx, client, args.assessmentId);
-      if (!assessment) throw new Error("Export case not found");
+      if (!assessment) throw userError("export_case_not_found", "Export case not found");
       orgId = assessment.orgId ?? orgId;
     }
 
@@ -928,21 +912,21 @@ export const markMyMessagesRead = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const client = await resolvePortalClient(ctx);
-    if (!client) throw new Error("No portal access");
+    if (!client) throw userError("no_portal_access", "No portal access");
 
     if (args.declarationId && args.assessmentId) {
-      throw new Error("Choose either a declaration or an export case");
+      throw userError("choose_either_a_declaration_or_an", "Choose either a declaration or an export case");
     }
     if (args.declarationId) {
       const declaration = await requireOwnedDeclaration(ctx, client, args.declarationId);
-      if (!declaration) throw new Error("Declaration not found");
+      if (!declaration) throw userError("declaration_not_found", "Declaration not found");
     }
     if (args.assessmentId) {
       const assessment = await requireOwnedAssessment(ctx, client, args.assessmentId);
-      if (!assessment) throw new Error("Export case not found");
+      if (!assessment) throw userError("export_case_not_found", "Export case not found");
     }
 
     const rows = args.declarationId
@@ -982,13 +966,13 @@ export const getMyDocumentDownloadUrl = mutation({
   args: { documentId: v.id("documents") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const client = await resolvePortalClient(ctx);
-    if (!client) throw new Error("No portal access");
+    if (!client) throw userError("no_portal_access", "No portal access");
 
     const document = await ctx.db.get(args.documentId);
-    if (!document) throw new Error("Document not found");
+    if (!document) throw userError("document_not_found", "Document not found");
 
     const isClientUpload = document.clientId === client._id;
     let isOwnedDeclarationDocument = false;
@@ -1000,13 +984,13 @@ export const getMyDocumentDownloadUrl = mutation({
         );
       }
     }
-    if (!isClientUpload && !isOwnedDeclarationDocument) throw new Error("Unauthorized");
+    if (!isClientUpload && !isOwnedDeclarationDocument) throw forbiddenError();
 
     if (!isPortalVisibleDocument(document, client.portalClerkId, client._id, client.orgId)) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
-    if (!document.fileId) throw new Error("No file is attached to this document");
+    if (!document.fileId) throw userError("no_file_is_attached_to_this", "No file is attached to this document");
     return await ctx.storage.getUrl(document.fileId);
   },
 });
@@ -1015,12 +999,12 @@ export const generateMyUploadUrl = mutation({
   args: { declarationId: v.optional(v.id("declarations")) },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     const client = await resolvePortalClient(ctx);
-    if (!client) throw new Error("No portal access");
+    if (!client) throw userError("no_portal_access", "No portal access");
     if (args.declarationId) {
       const declaration = await requireOwnedDeclaration(ctx, client, args.declarationId);
-      if (!declaration) throw new Error("Unauthorized");
+      if (!declaration) throw forbiddenError();
     }
     return await ctx.storage.generateUploadUrl();
   },
@@ -1038,10 +1022,10 @@ export const saveMyDocument = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const client = await resolvePortalClient(ctx);
-    if (!client) throw new Error("No portal access");
+    if (!client) throw userError("no_portal_access", "No portal access");
 
     // A requirement fixes the declaration it belongs to — the caller cannot
     // point a requirement at someone else's filing.
@@ -1049,21 +1033,21 @@ export const saveMyDocument = mutation({
     let requirementDeclaration: Doc<"declarations"> | null = null;
     if (args.requirementId) {
       requirement = await ctx.db.get(args.requirementId);
-      if (!requirement) throw new Error("Document request not found");
+      if (!requirement) throw userError("document_request_not_found", "Document request not found");
       requirementDeclaration = await requireOwnedDeclaration(
         ctx,
         client,
         requirement.declarationId,
       );
-      if (!requirementDeclaration) throw new Error("Document request not found");
+      if (!requirementDeclaration) throw userError("document_request_not_found", "Document request not found");
       if (String(requirement.status) !== "missing") {
-        throw new Error("Document request is no longer outstanding");
+        throw userError("document_request_is_no_longer_outstanding", "Document request is no longer outstanding");
       }
       if (
         args.declarationId &&
         String(args.declarationId) !== String(requirement.declarationId)
       ) {
-        throw new Error("Document request belongs to a different filing");
+        throw userError("document_request_belongs_to_a_different", "Document request belongs to a different filing");
       }
     }
 
@@ -1073,21 +1057,21 @@ export const saveMyDocument = mutation({
       (targetDeclarationId
         ? await requireOwnedDeclaration(ctx, client, targetDeclarationId)
         : null);
-    if (targetDeclarationId && !declaration) throw new Error("Unauthorized");
+    if (targetDeclarationId && !declaration) throw forbiddenError();
     if (args.sourceMessageId) {
       const message = await ctx.db.get(args.sourceMessageId);
-      if (!message || message.clientId !== client._id) throw new Error("Message not found");
+      if (!message || message.clientId !== client._id) throw userError("message_not_found", "Message not found");
     }
 
     const category = String(args.category ?? args.fileType ?? "")
       .trim()
       .toLowerCase();
     if (!isAllowedPortalUploadCategory(category)) {
-      throw new Error("Unsupported document type");
+      throw userError("unsupported_document_type", "Unsupported document type");
     }
 
     const fileName = args.fileName.trim();
-    if (!fileName) throw new Error("File name is required");
+    if (!fileName) throw userError("file_name_is_required", "File name is required");
 
     if (args.sourceMessageId) {
       const existing = await ctx.db

@@ -7,6 +7,7 @@ import { useUser } from "@clerk/nextjs";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 interface ClassificationResponse {
   classification: {
@@ -226,7 +227,7 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
         },
       }));
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Classification failed");
+      setError(userMessageFromError(err, "Classification failed"));
     } finally {
       setLoadingProductId(null);
     }
@@ -282,7 +283,7 @@ export function ExportClassificationPanel({ assessmentId }: ExportClassification
         };
       });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to save review decision");
+      setError(userMessageFromError(err, "Failed to save review decision"));
     } finally {
       setReviewingRunId(null);
     }

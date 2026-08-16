@@ -9,6 +9,7 @@ import { aiClassifyLimiter } from "@/lib/api-rate-limiter";
 import { loadSanctionsSnapshot } from "@/lib/export-controls/sanctions/snapshot";
 import { buildSanctionsIndex, screenParties, type ScreenSubjectInput } from "@/lib/export-controls/sanctions/screen";
 import { sanctionsClearanceScore } from "@/lib/export-controls/sanctions/scoring";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -142,7 +143,7 @@ export async function POST(request: Request) {
     });
   } catch (error: unknown) {
     console.error("Export controls screen error:", error);
-    const message = error instanceof Error ? error.message : "Internal Server Error";
+    const message = userMessageFromError(error, "Internal Server Error");
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

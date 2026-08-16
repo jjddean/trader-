@@ -37,6 +37,12 @@ export default defineSchema({
   users: defineTable({
     clerkId: v.optional(v.any()),
     email: v.optional(v.any()),
+    /**
+     * Lowercased, trimmed `email`. Exists so an address can be looked up by
+     * index: the portal-email guard previously scanned a bounded window of users
+     * and silently stopped matching once the table outgrew it.
+     */
+    emailNormalized: v.optional(v.string()),
     name: v.optional(v.any()),
     orgId: v.optional(v.any()),
     role: v.optional(v.string()),
@@ -47,7 +53,9 @@ export default defineSchema({
     /** broker | managed_service — set when onboarding form is submitted */
     onboardingPath: v.optional(v.union(v.literal("broker"), v.literal("managed_service"))),
     onboardingCompletedAt: v.optional(v.number()),
-  }).index("by_clerk", ["clerkId"]),
+  })
+    .index("by_clerk", ["clerkId"])
+    .index("by_email_normalized", ["emailNormalized"]),
 
   trade_lanes: defineTable({
     userId: v.string(),
@@ -471,7 +479,9 @@ export default defineSchema({
     .index("by_client", ["clientId"])
     .index("by_source_message", ["sourceMessageId"])
     .index("by_mrn", ["mrn"])
-    .index("by_declaration", ["declarationId"]),
+    .index("by_declaration", ["declarationId"])
+    // Lets an orphaned upload be discarded without deleting a file a row claims.
+    .index("by_file", ["fileId"]),
 
   document_requirements: defineTable({
     declarationId: v.id("declarations"),
@@ -518,6 +528,13 @@ export default defineSchema({
     // HMRC IssueDateTime (ISO) — authoritative ordering, independent of receipt time.
     issueDateTime: v.optional(v.string()),
     notificationType: v.optional(v.any()),
+    /**
+     * submit | amend | cancel — which request this notification answers, resolved
+     * from the submissions row sharing its conversationId. HMRC issues a distinct
+     * conversation id per request, so this is the reliable discriminator. Payload
+     * LRN prefixes are not: CNS follow-ups carry the original create LRN.
+     */
+    originatingOperation: v.optional(v.string()),
     errorCodes: v.optional(v.any()),
     fieldErrors: v.optional(v.any()),
     rawPayload: v.optional(v.any()),
