@@ -394,14 +394,24 @@ export const processNotification = internalMutation({
         // the declaration sitting in "Cancellation Requested" — beginFollowUp sets
         // that atomically before dispatch. Same rule as notifications.saveWebhook;
         // without it a CNS cancel outcome is classified as a declaration outcome.
-        const originatingSubmission = row.conversationId
+        // X-CSP-ID is the CNS transport key and is now recorded on submit,
+        // amend and cancel evidence rows, so it resolves the operation directly.
+        const byCspId = row.cspId
           ? await ctx.db
               .query("submissions")
-              .withIndex("by_conversationId", (q: any) => q.eq("conversationId", row.conversationId))
+              .withIndex("by_cspId", (q: any) => q.eq("cspId", row.cspId))
               .first()
           : null;
+        const byConversation =
+          !byCspId && row.conversationId
+            ? await ctx.db
+                .query("submissions")
+                .withIndex("by_conversationId", (q: any) => q.eq("conversationId", row.conversationId))
+                .first()
+            : null;
         const originatingOperation =
-          originatingSubmission?.operation ??
+          byCspId?.operation ??
+          byConversation?.operation ??
           (declaration.status === "Cancellation Requested" ? "cancel" : undefined);
 
         const notificationId = await ctx.db.insert("notifications", {

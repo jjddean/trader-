@@ -41,6 +41,9 @@ export const recordSubmission = mutation({
     operation: v.string(),
     outcome: v.optional(v.string()),
     conversationId: v.optional(v.string()),
+    /** CNS transport correlation. CNS returns no conversationId, so without this
+     *  a follow-up's evidence row cannot be matched to its notification. */
+    cspId: v.optional(v.string()),
     lrn: v.optional(v.string()),
     eori: v.optional(v.string()),
     priorMrn: v.optional(v.string()),
@@ -66,6 +69,7 @@ export const recordSubmission = mutation({
       operation: args.operation,
       outcome: args.outcome,
       conversationId: args.conversationId,
+      cspId: args.cspId,
       lrn: args.lrn,
       eori: args.eori,
       priorMrn: args.priorMrn,

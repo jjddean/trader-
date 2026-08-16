@@ -247,6 +247,7 @@ export async function POST(request: Request) {
       outcome: "accepted" | "rejected" | "error",
       hmrcStatus: number,
       convId: string | null,
+      cspId?: string | null,
     ) => {
       try {
         await convex.mutation(api.submissions.recordSubmission, {
@@ -255,6 +256,7 @@ export async function POST(request: Request) {
           operation: "amend",
           outcome,
           conversationId: convId || undefined,
+          cspId: cspId || undefined,
           lrn: amendLrn,
           eori,
           priorMrn: String(mrn).trim() || undefined,
@@ -342,7 +344,7 @@ export async function POST(request: Request) {
         id: declarationId,
         status: "Amendment Processing",
       });
-      await recordAmendEvidence("accepted", cnsResult.httpStatus, null);
+      await recordAmendEvidence("accepted", cnsResult.httpStatus, null, cnsResult.cspId);
 
       try {
         await convex.mutation(api.cns.recordTransportOutcome, {
