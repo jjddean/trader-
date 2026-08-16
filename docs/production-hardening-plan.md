@@ -1,14 +1,16 @@
 # Production Hardening Plan
 
-Status: **run 1 complete** (2026-08-15) — Managed Service crash fixed and verified
-by authenticated end-to-end journeys. See [Findings log](#findings-log).
-Next: run 2, workflow mapping + full backlog.
+Status: **steps 1–12 complete** (2026-08-16). Readiness board below.
+Eight commits on `fix/production-hardening`, **none deployed** — production still
+runs the pre-fix build, so every GREEN below describes the branch, not the live
+site.
 
 Authenticated e2e: `npm run test:e2e:auth`. Requires a Clerk **development**
 instance (`pk_test_`/`sk_test_`) in `.env.local`; the harness refuses to run
-against a production instance. Test users are `+clerk_test` addresses created
-and deleted through the Clerk Backend API, and run against the **dev** Convex
-deployment.
+against a production instance. Test users are `+clerk_test` addresses created and
+deleted through the Clerk Backend API, run against the **dev** Convex deployment.
+Note: the dev instance now throttles after heavy use, so a full pass can fail on
+`ClerkAPIResponseError: Forbidden` — specs pass in isolation.
 
 Mode: production-hardening. FreightCode is live; estimated 50–60% production-ready.
 Objective: systematically harden the existing product until the core operational
@@ -195,10 +197,38 @@ Maintain a simple status per core area:
 **Do not mark an area GREEN just because its happy path works.** It must also have
 correct permissions, failure handling, recovery and production-safe data behaviour.
 
-### Status board
+### Status board — 2026-08-16
 
-| Area | Status | Notes |
+Rule applied as written: GREEN needs correct permissions, failure handling,
+recovery and production-safe data behaviour — not just a working happy path.
+
+| Area | Status | Basis |
 |------|--------|-------|
+| Authentication | 🟠 AMBER | Privilege escalation via `syncUser` found and fixed, re-tested by attack. Clerk cut over to the production instance. Microsoft SSO still unconfigured. |
+| Organisation isolation | 🟢 GREEN | Attack test: org B holds a real session and a real declaration id from org A and cannot read it via detail, status or list. All 292 endpoints audited. |
+| Portal isolation | 🟢 GREEN | Attack test: client B never sees client A; a signed-in user with no client record sees neither. Portal binding keyed to the Clerk identity, not a form field. |
+| Broker onboarding | 🟢 GREEN | Happy path, resubmit and server-side validation covered by e2e. Errors reach the user readably. |
+| Managed Service onboarding | 🟢 GREEN | The original crash plus four related defects fixed and e2e-verified: re-signup lock-out, email squatting, direct-entry failure, opaque errors. |
+| Client portal | 🟢 GREEN | All seven routes render; upload path covered end to end including the row landing. |
+| Declarations | 🟠 AMBER | Creation and status covered by e2e. Validate and submit are not — exercising them means filing at CDS. |
+| CDS submit / amend / cancel | 🟠 AMBER | Duplicate-filing guards added and unit-tested; ambiguous outcomes retain the claim. Never exercised against HMRC by a test, by design. |
+| CNS | 🟠 AMBER | Cancel classification fixed on both ingest paths; follow-ups now correlate by X-CSP-ID. Cargo release is not visible anywhere in the app. |
+| Documents / uploads | 🟢 GREEN | All five flows discard orphans on failure; daily sweep as backstop, which removed 22 real orphans on dev. |
+| Error surface | 🟢 GREEN | 330 → 47 plain throws; 81 UI sites use the safe renderer; a static test asserts the pattern repo-wide and caught four instances no one had looked at. |
+| Observability | 🟠 AMBER | Correlation IDs through submit/amend/cancel, audit rows stamped with org. No alerting, no dashboards — none of the tools in the plan are installed. |
+| Charges / payments | 🔴 RED | Stripe live keys in place, but `STRIPE_PRO_PRICE_ID` and `STRIPE_PAYG_PRICE_ID` are missing from production. Two of three plans cannot check out. |
+| Messages | 🟠 AMBER | Reachable and isolated; no dedicated journey test. |
+| Export controls | 🟠 AMBER | Endpoints audited and tenancy verified; no journey test. |
+| Data resilience | 🟠 AMBER | Every query bounded, no unindexed scans, schema changes additive. Backup and restore never verified — dashboard only. |
+| Rate limiting | 🟠 AMBER | Public tariff lookup moved behind a limited route. Other Convex functions have none. |
+
+**Nothing is GREEN that depends on undeployed code.** Every 🟢 above is true of
+the branch, not of production. Production still runs the pre-fix build.
+
+**The one 🔴 is not mine to fix:** two Stripe price IDs missing from the
+production deployment after the live-key swap.
+
+------|--------|-------|
 | Authentication / sign-up | ⬜ not assessed | |
 | Organisation creation | ⬜ not assessed | |
 | Broker onboarding | 🟠 AMBER | Happy path + resubmit + server-side validation covered by e2e; org handoff, recovery and permissions not yet exercised |
