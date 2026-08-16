@@ -37,6 +37,12 @@ export default defineSchema({
   users: defineTable({
     clerkId: v.optional(v.any()),
     email: v.optional(v.any()),
+    /**
+     * Lowercased, trimmed `email`. Exists so an address can be looked up by
+     * index: the portal-email guard previously scanned a bounded window of users
+     * and silently stopped matching once the table outgrew it.
+     */
+    emailNormalized: v.optional(v.string()),
     name: v.optional(v.any()),
     orgId: v.optional(v.any()),
     role: v.optional(v.string()),
@@ -47,7 +53,9 @@ export default defineSchema({
     /** broker | managed_service — set when onboarding form is submitted */
     onboardingPath: v.optional(v.union(v.literal("broker"), v.literal("managed_service"))),
     onboardingCompletedAt: v.optional(v.number()),
-  }).index("by_clerk", ["clerkId"]),
+  })
+    .index("by_clerk", ["clerkId"])
+    .index("by_email_normalized", ["emailNormalized"]),
 
   trade_lanes: defineTable({
     userId: v.string(),

@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { getCurrentUserRole, resolveUserRole } from "./lib/user_role";
 import { getActiveOrgId } from "./lib/org_access";
+import { normalizeEmail } from "./lib/signed_in_email";
 import { unauthenticatedError } from "./lib/user_errors";
 
 export const current = query({
@@ -76,12 +77,14 @@ export const syncUser = mutation({
     // The stored email is what resolveSignedInEmail falls back to when binding a
     // portal, so prefer the verified claim over the submitted value.
     const email = identityEmail ?? args.email;
+    const emailNormalized = normalizeEmail(email);
 
     if (existing) {
       const roleUnchanged = role === undefined || existing.role === role;
       const unchanged =
         existing.name === args.name &&
         existing.email === email &&
+        existing.emailNormalized === emailNormalized &&
         existing.orgId === sessionOrgId &&
         roleUnchanged &&
         existing.legacyClaimedForOrgId === undefined;
@@ -90,6 +93,7 @@ export const syncUser = mutation({
         await ctx.db.patch(existing._id, {
           name: args.name,
           email,
+          emailNormalized,
           orgId: sessionOrgId,
           ...(role !== undefined && { role }),
           legacyClaimedForOrgId: undefined,
@@ -102,6 +106,7 @@ export const syncUser = mutation({
       clerkId: identity.subject,
       name: args.name,
       email,
+      emailNormalized,
       orgId: sessionOrgId,
       role,
     });
@@ -121,5 +126,47 @@ export const stripLegacyClaimedForOrgId = internalMutation({
       }
     }
     return { patched, scanned: rows.length };
+  },
+});
+
+/**
+ * Populate `emailNormalized` on rows written before the field existed.
+ *
+ * The portal-email guard in clients.setPortalAccess reads it by index. Rows
+ * without it are invisible to that lookup, so a broker could set a portal email
+ * that belongs to a FreightCode account.
+ */
+export const backfillEmailNormalized = internalMutation({
+  args: { dryRun: v.optional(v.boolean()), limit: v.optional(v.number()) },
+  returns: v.object({
+    dryRun: v.boolean(),
+    scanned: v.number(),
+    patched: v.number(),
+    alreadySet: v.number(),
+    noEmail: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    const dryRun = args.dryRun ?? true;
+    const rows = await ctx.db.query("users").take(args.limit ?? 5000);
+
+    let patched = 0;
+    let alreadySet = 0;
+    let noEmail = 0;
+
+    for (const row of rows) {
+      if (row.emailNormalized) {
+        alreadySet += 1;
+        continue;
+      }
+      const normalized = normalizeEmail(typeof row.email === "string" ? row.email : undefined);
+      if (!normalized) {
+        noEmail += 1;
+        continue;
+      }
+      if (!dryRun) await ctx.db.patch(row._id, { emailNormalized: normalized });
+      patched += 1;
+    }
+
+    return { dryRun, scanned: rows.length, patched, alreadySet, noEmail };
   },
 });

@@ -5,7 +5,7 @@ import {
   managedServiceBindingConflict,
   managedServiceClientToReuse,
 } from "./lib/managed_service_binding";
-import { resolveSignedInEmail } from "./lib/signed_in_email";
+import { normalizeEmail, resolveSignedInEmail } from "./lib/signed_in_email";
 import { unauthenticatedError, userError } from "./lib/user_errors";
 
 function trimRequired(value: string, label: string) {
@@ -81,6 +81,7 @@ async function requireUser(ctx: MutationCtx) {
     const id = await ctx.db.insert("users", {
       clerkId: identity.subject,
       email,
+      emailNormalized: normalizeEmail(email),
       name: typeof identity.name === "string" ? identity.name : undefined,
     });
     dbUser = await ctx.db.get(id);

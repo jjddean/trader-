@@ -316,12 +316,13 @@ export const setPortalAccess = mutation({
     }
 
     // Block emails already registered as FreightCode users (brokers/admins).
-    // users.email is not indexed/normalized — scan a bounded window case-insensitively.
-    const knownUsers = await ctx.db.query("users").take(2000);
-    const emailOwnedByAppUser = knownUsers.some(
-      (row) => normalizePortalEmail(typeof row.email === "string" ? row.email : undefined) === portalEmail,
-    );
-    if (emailOwnedByAppUser) {
+    // Indexed on users.emailNormalized: the previous bounded scan stopped
+    // matching once the table outgrew its window, silently allowing this through.
+    const appUser = await ctx.db
+      .query("users")
+      .withIndex("by_email_normalized", (q) => q.eq("emailNormalized", portalEmail))
+      .first();
+    if (appUser) {
       throw userError(
         "portal_email_is_app_user",
         "That email belongs to a FreightCode user account. Choose a different client portal email.",

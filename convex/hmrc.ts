@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { normalizeEmail } from "./lib/signed_in_email";
 import { mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { canAccessDeclaration } from "./lib/org_access";
@@ -54,6 +55,7 @@ export const saveToken = mutation({
       await ctx.db.insert("users", {
         clerkId: effectiveUserId,
         email,
+        emailNormalized: normalizeEmail(email),
         name,
         role: "user",
       });
