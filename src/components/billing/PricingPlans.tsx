@@ -79,20 +79,33 @@ export function PricingPlans() {
             </Button>
           </div>
         ))}
-      </div>
 
-      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-5 py-4 text-center">
-        <p className="text-sm font-medium text-slate-800">{CUSTOM_PLAN.label}</p>
-        <p className="mt-1 text-xs text-slate-500">{CUSTOM_PLAN.description}</p>
-        <Button variant="link" className="mt-2 h-auto p-0 text-xs" asChild>
-          <Link href={CUSTOM_PLAN.href}>{CUSTOM_PLAN.cta}</Link>
-        </Button>
+        <div className="flex flex-col rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5">
+          <div className="mb-4">
+            <p className="text-sm font-semibold text-slate-900">{CUSTOM_PLAN.label}</p>
+            <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
+              {CUSTOM_PLAN.price}
+            </p>
+            <p className="mt-2 text-xs text-slate-500">{CUSTOM_PLAN.description}</p>
+          </div>
+          <ul className="mb-5 flex-1 space-y-2">
+            {CUSTOM_PLAN.features.map((feature) => (
+              <li key={feature} className="flex items-start gap-2 text-xs text-slate-600">
+                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+                {feature}
+              </li>
+            ))}
+          </ul>
+          <Button variant="outline" className="h-9 w-full text-xs" asChild>
+            <Link href={CUSTOM_PLAN.href}>{CUSTOM_PLAN.cta}</Link>
+          </Button>
+        </div>
       </div>
 
       {error && <p className="text-center text-xs text-red-600">{error}</p>}
       <p className="text-center text-[11px] text-slate-400">
         Prices shown for display. Stripe bills your saved price IDs ({PLAN_LABELS.starter},{" "}
-        {PLAN_LABELS.pro}, {PLAN_LABELS.payg}).
+        {PLAN_LABELS.business}).
       </p>
     </div>
   );
