@@ -25,11 +25,24 @@ export const current = query({
   },
 });
 
+/**
+ * Sync the Clerk profile into the users row.
+ *
+ * `role` and `email` are NOT taken from the caller. Both previously flowed
+ * straight into resolveUserRole, which grants "admin" for a role string of
+ * "admin" or an address in ADMIN_EMAILS — so any signed-in user could call this
+ * with role "admin" and read every tenant's data. Both now come from the Clerk
+ * identity, which the caller cannot forge.
+ *
+ * `role` remains an accepted argument only so existing callers keep compiling;
+ * its value is ignored.
+ */
 export const syncUser = mutation({
   args: {
     name: v.optional(v.string()),
     email: v.string(),
     orgId: v.optional(v.string()),
+    /** @deprecated Ignored. Role is resolved from the Clerk JWT. */
     role: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -41,10 +54,16 @@ export const syncUser = mutation({
       .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
       .unique();
 
+    // Identity only — never args.
+    const claims = identity as unknown as Record<string, unknown>;
+    const jwtRole = typeof claims.role === "string" ? claims.role : undefined;
+    const identityEmail =
+      typeof identity.email === "string" ? identity.email : undefined;
+
     const role = resolveUserRole(
-      args.role,
+      jwtRole,
       typeof existing?.role === "string" ? existing.role : undefined,
-      args.email,
+      identityEmail,
     );
 
     // Prefer Clerk session org from JWT; client sync is fallback for display/history.
@@ -54,11 +73,15 @@ export const syncUser = mutation({
         : "";
     const sessionOrgId = jwtOrg || args.orgId;
 
+    // The stored email is what resolveSignedInEmail falls back to when binding a
+    // portal, so prefer the verified claim over the submitted value.
+    const email = identityEmail ?? args.email;
+
     if (existing) {
       const roleUnchanged = role === undefined || existing.role === role;
       const unchanged =
         existing.name === args.name &&
-        existing.email === args.email &&
+        existing.email === email &&
         existing.orgId === sessionOrgId &&
         roleUnchanged &&
         existing.legacyClaimedForOrgId === undefined;
@@ -66,7 +89,7 @@ export const syncUser = mutation({
       if (!unchanged) {
         await ctx.db.patch(existing._id, {
           name: args.name,
-          email: args.email,
+          email,
           orgId: sessionOrgId,
           ...(role !== undefined && { role }),
           legacyClaimedForOrgId: undefined,
@@ -78,7 +101,7 @@ export const syncUser = mutation({
     return await ctx.db.insert("users", {
       clerkId: identity.subject,
       name: args.name,
-      email: args.email,
+      email,
       orgId: sessionOrgId,
       role,
     });
