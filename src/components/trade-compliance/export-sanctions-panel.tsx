@@ -7,6 +7,7 @@ import { useUser } from "@clerk/nextjs";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 interface ExportSanctionsPanelProps {
   assessmentId: Id<"export_assessments">;
@@ -54,7 +55,7 @@ export function ExportSanctionsPanel({ assessmentId }: ExportSanctionsPanelProps
 
       setResult(await res.json());
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Screening failed");
+      setError(userMessageFromError(err, "Screening failed"));
     } finally {
       setLoading(false);
     }

@@ -471,7 +471,9 @@ export default defineSchema({
     .index("by_client", ["clientId"])
     .index("by_source_message", ["sourceMessageId"])
     .index("by_mrn", ["mrn"])
-    .index("by_declaration", ["declarationId"]),
+    .index("by_declaration", ["declarationId"])
+    // Lets an orphaned upload be discarded without deleting a file a row claims.
+    .index("by_file", ["fileId"]),
 
   document_requirements: defineTable({
     declarationId: v.id("declarations"),
@@ -518,6 +520,13 @@ export default defineSchema({
     // HMRC IssueDateTime (ISO) — authoritative ordering, independent of receipt time.
     issueDateTime: v.optional(v.string()),
     notificationType: v.optional(v.any()),
+    /**
+     * submit | amend | cancel — which request this notification answers, resolved
+     * from the submissions row sharing its conversationId. HMRC issues a distinct
+     * conversation id per request, so this is the reliable discriminator. Payload
+     * LRN prefixes are not: CNS follow-ups carry the original create LRN.
+     */
+    originatingOperation: v.optional(v.string()),
     errorCodes: v.optional(v.any()),
     fieldErrors: v.optional(v.any()),
     rawPayload: v.optional(v.any()),

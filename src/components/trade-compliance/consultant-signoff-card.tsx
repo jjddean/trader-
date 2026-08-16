@@ -5,6 +5,7 @@ import { Loader2, Mail, Send } from "lucide-react";
 import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { ApiError, userMessageFromError } from "@/lib/convex-errors";
 
 const CONSULTANT_BIO = "UK export controls — dual-use classification and licence review.";
 
@@ -83,14 +84,14 @@ export function ConsultantSignoffCard({
       });
 
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.error || "Send failed");
+      if (!res.ok) throw new ApiError(body.error || "Send failed");
 
       setLastUrl(body.reviewUrl ?? null);
       if (!body.emailSent && body.emailNote) {
         setEmailNote(body.emailNote);
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Send failed");
+      setError(userMessageFromError(err, "Send failed"));
     } finally {
       setSending(false);
     }

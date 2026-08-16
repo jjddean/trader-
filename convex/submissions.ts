@@ -3,6 +3,7 @@ import type { Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { internalQuery, mutation, query } from "./_generated/server";
 import { canAccessDeclaration } from "./lib/org_access";
+import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 
 async function distinctConversationIdsForDeclaration(
   db: QueryCtx["db"],
@@ -51,11 +52,11 @@ export const recordSubmission = mutation({
   returns: v.id("submissions"),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const decl = await ctx.db.get(args.declarationId);
     if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     return await ctx.db.insert("submissions", {
@@ -96,10 +97,10 @@ export const beginCnsAttempt = mutation({
   returns: v.id("submissions"),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     const decl = await ctx.db.get(args.declarationId);
     if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
     const existing = await ctx.db
       .query("submissions")
@@ -134,12 +135,12 @@ export const completeCnsAttempt = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     const row = await ctx.db.get(args.submissionId);
-    if (!row || row.transport !== "cns_inventory") throw new Error("CNS attempt not found");
+    if (!row || row.transport !== "cns_inventory") throw userError("cns_attempt_not_found", "CNS attempt not found");
     const decl = await ctx.db.get(row.declarationId);
     if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
     await ctx.db.patch(row._id, {
       outcome: args.outcome,

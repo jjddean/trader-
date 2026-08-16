@@ -11,6 +11,7 @@ import {
   streamChatCompletion,
   type ChatMessage,
 } from "@/lib/llm-chat";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 type AssistantContext = Record<string, unknown>;
 
@@ -119,7 +120,7 @@ export async function POST(request: Request) {
       assertLlmConfigured();
     } catch (err) {
       return NextResponse.json(
-        { error: err instanceof Error ? err.message : "LLM not configured" },
+        { error: userMessageFromError(err, "LLM not configured") },
         { status: 500 },
       );
     }

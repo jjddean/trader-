@@ -75,6 +75,7 @@ export function statusAfterNotification(params: {
   isAmendmentRejected: boolean;
   isAmendmentAccepted: boolean;
   isAmendmentAcknowledged?: boolean;
+  isCancellationRejected?: boolean;
   isInvalidationAccepted: boolean;
   isPostCancelClearance?: boolean;
 }): string {
@@ -86,6 +87,20 @@ export function statusAfterNotification(params: {
 
   if (params.isAmendmentRejected) {
     if (params.currentStatus === "Accepted" || params.currentStatus === "Amendment Processing") {
+      return "Accepted";
+    }
+    return params.currentStatus;
+  }
+
+  /**
+   * A rejected *cancellation* (DMSREJ carrying a CX- LRN, e.g. CDS12015 at
+   * 42A/D014) says the request was refused — the declaration itself is untouched
+   * and HMRC still holds it. Without this it fell through to the generic path and
+   * became "Rejected", which is both wrong and rank 100, so no later notification
+   * could correct it. Mirrors the amendment-rejected branch above.
+   */
+  if (params.isCancellationRejected) {
+    if (params.currentStatus === "Cancellation Requested") {
       return "Accepted";
     }
     return params.currentStatus;

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { cloudagentBaseUrl } from "@/lib/cloudagent-client";
 import { aiGirAuditLimiter } from "@/lib/api-rate-limiter";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 interface GIRResponse {
   correctHsCode?: string;
@@ -151,7 +152,7 @@ export async function POST(request: Request) {
 
   } catch (error: unknown) {
     console.error("GIR Audit Error:", error);
-    const message = error instanceof Error ? error.message : "Unexpected error";
+    const message = userMessageFromError(error, "Unexpected error");
     // Try to extract declared code from request for fallback
     try {
       const body = await request.json().catch(() => ({}));

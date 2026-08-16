@@ -24,6 +24,7 @@ import {
   hsCodeInSection,
   type HsTariffSectionValue,
 } from "@/lib/hs-tariff-sections";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 interface HSCode {
   code: string;
@@ -227,7 +228,7 @@ export function HSCodeLookup({
           router.push(`/dashboard/declarations/${declarationId}/items?hsApplied=1`);
         }
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Could not apply to item");
+        toast.error(userMessageFromError(error, "Could not apply to item"));
       } finally {
         setApplying(false);
       }

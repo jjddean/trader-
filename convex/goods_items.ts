@@ -3,6 +3,7 @@ import { internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { canAccessDeclaration } from "./lib/org_access";
+import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 
 async function refreshReadModels(ctx: any, declarationId: any) {
   await ctx.runMutation(internal.declarations.upsertDeclarationPreview, { declarationId });
@@ -12,7 +13,7 @@ export const getItems = query({
   args: { declarationId: v.id("declarations") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const declaration = await ctx.db.get(args.declarationId);
     if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
@@ -78,11 +79,11 @@ export const addItem = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const declaration = await ctx.db.get(args.declarationId);
     if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const itemId = await ctx.db.insert("goods_items", {
@@ -99,7 +100,7 @@ export const removeItem = mutation({
   args: { id: v.id("goods_items") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const existing = await ctx.db.get(args.id);
     if (!existing) return;
@@ -108,7 +109,7 @@ export const removeItem = mutation({
       ? await ctx.db.get(existing.declarationId as Id<"declarations">)
       : null;
     if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const declarationId = existing.declarationId;
@@ -147,16 +148,16 @@ export const updateItem = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const existing = await ctx.db.get(args.id);
-    if (!existing) throw new Error("Item not found");
+    if (!existing) throw userError("item_not_found", "Item not found");
 
     const declaration = existing.declarationId
       ? await ctx.db.get(existing.declarationId as Id<"declarations">)
       : null;
     if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const { id, ...updates } = args;
@@ -228,11 +229,11 @@ export const addDocsToAllItems = internalMutation({
   },
   handler: async (ctx, args) => {
     const declaration = await ctx.db.get(args.declarationId);
-    if (!declaration) throw new Error("Declaration not found");
+    if (!declaration) throw userError("declaration_not_found", "Declaration not found");
 
     const newDocs = args.docs.map((d) => {
       const code = d.code.trim().toUpperCase();
-      if (code.length < 2) throw new Error(`Doc code too short: '${d.code}'`);
+      if (code.length < 2) throw userError("doc_code_too_short", `Doc code too short: '${d.code}'`);
       const entry: { CategoryCode: string; TypeCode: string; ID: string; StatusCode?: string } = {
         CategoryCode: code.slice(0, 1),
         TypeCode: code.slice(1),
@@ -283,7 +284,7 @@ export const removeDocsFromAllItems = internalMutation({
   },
   handler: async (ctx, args) => {
     const declaration = await ctx.db.get(args.declarationId);
-    if (!declaration) throw new Error("Declaration not found");
+    if (!declaration) throw userError("declaration_not_found", "Declaration not found");
 
     const targets = new Set(args.codes.map((c) => c.trim().toUpperCase()));
 

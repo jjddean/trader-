@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { canAccessDeclaration } from "./lib/org_access";
+import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 
 /**
  * CNS inventory-linked transport — declaration-side state.
@@ -36,11 +37,11 @@ export const getRoutingContext = query({
   }),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const decl = await ctx.db.get(args.declarationId);
     if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     let cnsClearanceEnabled = false;
@@ -83,7 +84,7 @@ export const setOrgCnsClearance = internalMutation({
       .withIndex("by_org", (q) => q.eq("orgId", args.orgId))
       .first();
     if (!settings) {
-      throw new Error(`No org_hmrc_settings row for ${args.orgId}.`);
+      throw userError("no_org_hmrc_settings_row_for", `No org_hmrc_settings row for ${args.orgId}.`);
     }
     await ctx.db.patch(settings._id, {
       cnsClearanceEnabled: args.enabled,
@@ -112,11 +113,11 @@ export const getCreateLrn = query({
   returns: v.union(v.string(), v.null()),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const decl = await ctx.db.get(args.declarationId);
     if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const attempts = await ctx.db
@@ -159,11 +160,11 @@ export const assertAndStampTransport = mutation({
   returns: v.object({ transport: submissionTransport }),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const decl = await ctx.db.get(args.declarationId);
     if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     // Legacy rows carry no transport and are direct-HMRC by definition.
@@ -204,11 +205,11 @@ export const setInventoryReference = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const decl = await ctx.db.get(args.declarationId);
     if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     // The inventory reference is baked into submitted XML; changing it after
@@ -241,11 +242,11 @@ export const recordTransportOutcome = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const decl = await ctx.db.get(args.declarationId);
     if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     await ctx.db.patch(args.declarationId, {

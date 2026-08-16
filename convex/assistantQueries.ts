@@ -9,6 +9,7 @@ import {
   listNotificationsForTenant,
   resolveConversationScopeId,
 } from "./lib/org_access";
+import { forbiddenError, unauthenticatedError } from "./lib/user_errors";
 
 async function findConversationForScope(
   ctx: Parameters<typeof findGeneralConversationForScope>[0],
@@ -54,7 +55,7 @@ export const getAssistantWorkspace = query({
     if (args.declarationId) {
       const access = await canAccessDeclarationById(ctx, identity.subject, args.declarationId);
       if (!access.allowed || !access.declaration) {
-        throw new Error("Unauthorized");
+        throw forbiddenError();
       }
       declaration = access.declaration;
     }
@@ -94,13 +95,13 @@ export const getAssistantContext = query({
   args: { declarationId: v.optional(v.id("declarations")) },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     let declaration = null;
     if (args.declarationId) {
       const access = await canAccessDeclarationById(ctx, identity.subject, args.declarationId);
       if (!access.allowed || !access.declaration) {
-        throw new Error("Unauthorized");
+        throw forbiddenError();
       }
       declaration = access.declaration;
     }

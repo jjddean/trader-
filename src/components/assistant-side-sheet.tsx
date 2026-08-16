@@ -27,6 +27,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ApiError, userMessageFromError } from "@/lib/convex-errors";
 
 const SUGGESTED_QUERIES = [
   { icon: ShieldCheck, text: "Review the latest declaration issues and tell me what blocks submission" },
@@ -114,12 +115,10 @@ export function AssistantSideSheet({ children }: { children: React.ReactNode }) 
         }),
       });
       const result = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(result?.error || `HTTP ${res.status}`);
+      if (!res.ok) throw new ApiError(result?.error || `HTTP ${res.status}`);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "I'm having trouble connecting right now. Please ensure you're authenticated and try again.",
+        userMessageFromError(error, "I'm having trouble connecting right now. Please ensure you're authenticated and try again."),
       );
     } finally {
       setLoading(false);

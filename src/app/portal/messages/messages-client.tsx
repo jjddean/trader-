@@ -23,6 +23,7 @@ import {
   ENTERPRISE_SELECT_TRIGGER,
 } from "@/lib/enterprise-select-styles";
 import { buildMessagePdf, downloadBlob, messagePdfFileName } from "@/lib/portal/message-pdf";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 const FORM_TEXTAREA =
   "mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-xs text-slate-800 outline-none focus:border-slate-400";
@@ -91,6 +92,7 @@ export default function PortalMessagesClient({
   const sendMessage = useMutation(api.client_portal.sendMyMessage);
   const markMessagesRead = useMutation(api.client_portal.markMyMessagesRead);
   const generateUploadUrl = useMutation(api.client_portal.generateMyUploadUrl);
+  const discardOrphanedUpload = useMutation(api.documents.discardOrphanedUpload);
   const saveDocument = useMutation(api.client_portal.saveMyDocument);
 
   const [body, setBody] = useState("");
@@ -146,15 +148,25 @@ export default function PortalMessagesClient({
     const response = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": "application/pdf" }, body: blob });
     if (!response.ok) throw new Error("Could not upload the message PDF.");
     const { storageId } = (await response.json()) as { storageId: Id<"_storage"> };
-    const result = await saveDocument({
-      storageId,
-      ...(declarationId ? { declarationId } : {}),
-      sourceMessageId: message._id as Id<"portal_messages">,
-      fileName,
-      category: "correspondence",
-      fileType: "correspondence",
-    });
-    setActionStatus(result.alreadySaved ? "Already saved in Documents." : "Saved to Documents.");
+    try {
+      const result = await saveDocument({
+        storageId,
+        ...(declarationId ? { declarationId } : {}),
+        sourceMessageId: message._id as Id<"portal_messages">,
+        fileName,
+        category: "correspondence",
+        fileType: "correspondence",
+      });
+      setActionStatus(result.alreadySaved ? "Already saved in Documents." : "Saved to Documents.");
+    } catch (err) {
+      // The PDF is already in storage; drop it rather than leave it unreferenced.
+      try {
+        await discardOrphanedUpload({ storageId });
+      } catch (discardErr) {
+        console.error("[portal-messages] failed to discard orphaned upload", discardErr);
+      }
+      throw err;
+    }
   };
 
   const handleSend = async () => {
@@ -172,7 +184,7 @@ export default function PortalMessagesClient({
       }
       setBody("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send message");
+      setError(userMessageFromError(err, "Failed to send message"));
     } finally {
       setSending(false);
     }

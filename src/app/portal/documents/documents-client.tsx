@@ -24,6 +24,7 @@ import {
   docTypeName,
   inferDocTypeCode,
 } from "@/lib/utils/document-utils";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 const FIELD_LABEL =
   "mb-1.5 block text-[0.625rem] font-semibold tracking-widest text-slate-400 uppercase";
@@ -55,6 +56,7 @@ export default function PortalDocumentsClient({
   );
   const getDownloadUrl = useMutation(api.client_portal.getMyDocumentDownloadUrl);
   const generateUploadUrl = useMutation(api.client_portal.generateMyUploadUrl);
+  const discardOrphanedUpload = useMutation(api.documents.discardOrphanedUpload);
   const saveDocument = useMutation(api.client_portal.saveMyDocument);
 
   const [downloadBusyId, setDownloadBusyId] = useState<string | null>(null);
@@ -92,7 +94,7 @@ export default function PortalDocumentsClient({
       }
       window.open(url, "_blank", "noopener,noreferrer");
     } catch (err) {
-      setDownloadError(err instanceof Error ? err.message : "Download failed");
+      setDownloadError(userMessageFromError(err, "Download failed"));
     } finally {
       setDownloadBusyId(null);
     }
@@ -103,6 +105,9 @@ export default function PortalDocumentsClient({
     setUploading(true);
     setUploadError(null);
     setUploadNotice(null);
+    // Set once the bytes are in storage. If the row never lands, the file is
+    // discarded below rather than left orphaned with no owner or tenancy check.
+    let uploadedStorageId: Id<"_storage"> | null = null;
     try {
       const postUrl = await generateUploadUrl(
         targetRequirement ? { declarationId: targetRequirement.declarationId } : {},
@@ -114,6 +119,7 @@ export default function PortalDocumentsClient({
       });
       if (!uploadResult.ok) throw new Error("Upload failed");
       const { storageId } = (await uploadResult.json()) as { storageId: Id<"_storage"> };
+      uploadedStorageId = storageId;
       await saveDocument({
         storageId,
         ...(targetRequirement
@@ -135,7 +141,14 @@ export default function PortalDocumentsClient({
         setUploadNotice(`${file.name} sent to your broker for review.`);
       }
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : "Upload failed");
+      if (uploadedStorageId) {
+        try {
+          await discardOrphanedUpload({ storageId: uploadedStorageId });
+        } catch (discardErr) {
+          console.error("[portal-upload] failed to discard orphaned upload", discardErr);
+        }
+      }
+      setUploadError(userMessageFromError(err, "Upload failed"));
     } finally {
       setUploading(false);
     }

@@ -3,6 +3,7 @@ import { internalMutation, mutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { getActiveOrgId, isPersonalScopedRecord } from "./lib/org_access";
+import { unauthenticatedError, userError } from "./lib/user_errors";
 
 type MigrationCounts = {
   declarations: number;
@@ -73,7 +74,7 @@ async function migratePersonalDataForUser(
   orgId: string,
 ): Promise<MigrationCounts & { orgId: string; migratedAt: number }> {
   const targetOrgId = orgId.trim();
-  if (!targetOrgId) throw new Error("orgId is required");
+  if (!targetOrgId) throw userError("orgid_is_required", "orgId is required");
 
   const declarations = await ctx.db
     .query("declarations")
@@ -205,11 +206,11 @@ export const migratePersonalToActiveOrg = mutation({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const activeOrgId = await getActiveOrgId(ctx, identity.subject);
     if (!activeOrgId) {
-      throw new Error("Select an organisation in the header before migrating personal data.");
+      throw userError("select_an_organisation_in_the_header", "Select an organisation in the header before migrating personal data.");
     }
 
     const pending = await countPersonalDataForUser(ctx, identity.subject);

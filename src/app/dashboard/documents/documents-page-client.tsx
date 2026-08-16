@@ -39,6 +39,7 @@ import {
   getRememberedDocumentsSnapshot,
   rememberDocumentsSnapshot,
 } from "@/lib/dashboard-documents-cache";
+import { ApiError, userMessageFromError } from "@/lib/convex-errors";
 
 // import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -199,7 +200,7 @@ export function DocumentsPageClient({
       setAuditResult(data);
     } catch (e) {
       console.error("GIR Audit Error:", e);
-      setAuditResult({ error: e instanceof Error ? e.message : "Failed to run GIR audit" });
+      setAuditResult({ error: userMessageFromError(e, "Failed to run GIR audit") });
     } finally {
       setIsAuditing(false);
     }
@@ -262,7 +263,7 @@ export function DocumentsPageClient({
         });
         const payload = await response.json();
         if (!response.ok) {
-          throw new Error(payload?.error || "Failed to replace document.");
+          throw new ApiError(payload?.error || "Failed to replace document.");
         }
 
         setSelectedDocument((prev: any) =>
@@ -435,7 +436,7 @@ export function DocumentsPageClient({
       });
       const payload = await res.json();
       if (!res.ok) {
-        throw new Error(payload?.error || "Manual paste upload failed");
+        throw new ApiError(payload?.error || "Manual paste upload failed");
       }
 
       setIsPasteOpen(false);
@@ -552,7 +553,7 @@ export function DocumentsPageClient({
           : prev,
       );
     } catch (error: unknown) {
-      alert(error instanceof Error ? error.message : "Failed to attach client document to filing.");
+      alert(userMessageFromError(error, "Failed to attach client document to filing."));
     } finally {
       setIsDocActionLoading(false);
     }
@@ -614,7 +615,7 @@ export function DocumentsPageClient({
         });
         if (!res.ok) {
           const payload = await res.json().catch(() => ({}));
-          throw new Error(payload?.error || `Failed generating ${requirement.code}`);
+          throw new ApiError(payload?.error || `Failed generating ${requirement.code}`);
         }
       }
     } catch (error: any) {

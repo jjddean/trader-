@@ -305,6 +305,15 @@ function DeclarationsPageContent() {
                                 {repChip}
                               </span>
                             )}
+                            {(dec as { submissionTransport?: string }).submissionTransport ===
+                              "cns_inventory" && (
+                              <span
+                                title="Filed through the CNS inventory gateway"
+                                className="inline-flex rounded-md bg-sky-100 px-1.5 py-0.5 text-[0.625rem] font-medium text-sky-800"
+                              >
+                                CNS
+                              </span>
+                            )}
                           </div>
                           <span className={cn("mt-0.5 text-[0.625rem] font-medium", mrnSubtitleClass(tone))}>
                             {subtitleLabel}

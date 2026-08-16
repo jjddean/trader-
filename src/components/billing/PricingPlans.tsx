@@ -13,6 +13,7 @@ import {
   STRIPE_PLAN_CARDS,
   type PlanSlug,
 } from "@/lib/stripe-plans";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 export function PricingPlans() {
   const createCheckout = useAction(api.actions.stripe.createCheckoutSession);
@@ -30,7 +31,7 @@ export function PricingPlans() {
       }
       window.location.href = url;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Checkout failed");
+      setError(userMessageFromError(err, "Checkout failed"));
     } finally {
       setLoadingSlug(null);
     }

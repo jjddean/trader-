@@ -2,15 +2,16 @@ import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { evaluateRules, type RuleDefinition, type ScenarioInput } from "./lib/rule_engine";
 import { canAccessDeclaration } from "./lib/org_access";
+import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 
 export const listForDeclaration = query({
   args: { declarationId: v.id("declarations") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     const decl = await ctx.db.get(args.declarationId);
-    if (!decl) throw new Error("Declaration not found");
-    if (!(await canAccessDeclaration(ctx, identity.subject, decl))) throw new Error("Unauthorized");
+    if (!decl) throw userError("declaration_not_found", "Declaration not found");
+    if (!(await canAccessDeclaration(ctx, identity.subject, decl))) throw forbiddenError();
     return await ctx.db
       .query("validation_results")
       .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId))
@@ -22,10 +23,10 @@ export const blockingFailures = query({
   args: { declarationId: v.id("declarations") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     const decl = await ctx.db.get(args.declarationId);
-    if (!decl) throw new Error("Declaration not found");
-    if (!(await canAccessDeclaration(ctx, identity.subject, decl))) throw new Error("Unauthorized");
+    if (!decl) throw userError("declaration_not_found", "Declaration not found");
+    if (!(await canAccessDeclaration(ctx, identity.subject, decl))) throw forbiddenError();
     const all = await ctx.db
       .query("validation_results")
       .withIndex("by_declaration_status", (q) =>
@@ -43,10 +44,10 @@ export const recompute = mutation({
   args: { declarationId: v.id("declarations") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     const decl = await ctx.db.get(args.declarationId);
-    if (!decl) throw new Error("Declaration not found");
-    if (!(await canAccessDeclaration(ctx, identity.subject, decl))) throw new Error("Unauthorized");
+    if (!decl) throw userError("declaration_not_found", "Declaration not found");
+    if (!(await canAccessDeclaration(ctx, identity.subject, decl))) throw forbiddenError();
 
     const items = await ctx.db
       .query("goods_items")
@@ -128,8 +129,8 @@ export const recomputeForDebug = internalMutation({
   args: { declarationId: v.id("declarations"), userId: v.string() },
   handler: async (ctx, args) => {
     const decl = await ctx.db.get(args.declarationId);
-    if (!decl) throw new Error("Declaration not found");
-    if (String(decl.userId ?? "") !== args.userId) throw new Error("Unauthorized");
+    if (!decl) throw userError("declaration_not_found", "Declaration not found");
+    if (String(decl.userId ?? "") !== args.userId) throw forbiddenError();
 
     const items = await ctx.db
       .query("goods_items")

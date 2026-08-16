@@ -29,6 +29,7 @@ import {
   representationSummaryLabel,
 } from "@/lib/representation-display";
 import { cn } from "@/lib/utils";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 type StatusTimelineNotification = {
   _id: string;
@@ -146,7 +147,7 @@ export default function StatusTimelinePage() {
       );
       onSuccess?.(body as Record<string, unknown>);
     } catch (e) {
-      setHmrcMessage(`${label} error: ${e instanceof Error ? e.message : "unknown"}`);
+      setHmrcMessage(`${label} error: ${userMessageFromError(e, "unknown")}`);
       setHmrcMessageOk(false);
     } finally {
       setHmrcBusy(false);

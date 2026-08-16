@@ -6,6 +6,12 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { pullHmrcNotificationsServer, type PullSaveArgs } from "./lib/hmrc_pull_runtime";
 import { resolveAccessTokenForUser } from "./lib/hmrc_token_refresh";
+import {
+  TRADE_TARIFF_BASE,
+  readEntryDescription,
+  readExactEntry,
+  readFuzzyResults,
+} from "./lib/trade_tariff_search";
 import type { ActionCtx } from "./_generated/server";
 
 type HmrcEnvironment = "sandbox" | "production";
@@ -39,34 +45,38 @@ export const searchHSCode = action({
         query: v.string(),
     },
     handler: async (ctx, args) => {
-        try {
-            const url = `https://api.trade-tariff.service.gov.uk/uk/api/v2/search`;
-            
-            const response = await fetch(`${url}?q=${encodeURIComponent(args.query)}`, {
-                headers: {
-                    "Accept": "application/json",
-                    "User-Agent": "FreightCode/1.0",
-                },
-            });
+        const query = args.query.trim();
+        if (!query) return [];
 
+        const headers = { Accept: "application/json", "User-Agent": "FreightCode/1.0" };
+
+        try {
+            const response = await fetch(
+                `${TRADE_TARIFF_BASE}/search?q=${encodeURIComponent(query)}`,
+                { headers },
+            );
             if (!response.ok) {
-                console.error("Failed to fetch HMRC Search:", response.status, response.statusText);
+                console.error("[tariff-search] search failed", response.status, response.statusText);
                 return [];
             }
 
-            const data = await response.json();
+            const payload = await response.json();
 
-            if (data && data.data) {
-                const results = data.data.attributes.results || [];
-                return results.map((r: any) => ({
-                    code: r.goods_nomenclature_item_id,
-                    description: r.description,
-                    matchType: r.match_type
-                }));
+            const entry = readExactEntry(payload);
+            if (entry) {
+                const detail = await fetch(`${TRADE_TARIFF_BASE}/${entry.endpoint}/${entry.id}`, {
+                    headers,
+                });
+                const description = detail.ok ? readEntryDescription(await detail.json()) : "";
+                return [{ code: entry.id, description, matchType: "exact_match" }];
             }
-            return [];
-        } catch (error: any) {
-            console.error("HMRC Search (Public) Error:", error.message);
+
+            return readFuzzyResults(payload);
+        } catch (error: unknown) {
+            console.error(
+                "[tariff-search] request error",
+                error instanceof Error ? error.message : error,
+            );
             return [];
         }
     },

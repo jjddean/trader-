@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { getCurrentUserRole, resolveUserRole } from "./lib/user_role";
 import { getActiveOrgId } from "./lib/org_access";
+import { unauthenticatedError } from "./lib/user_errors";
 
 export const current = query({
   args: {},
@@ -33,7 +34,7 @@ export const syncUser = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const existing = await ctx.db
       .query("users")

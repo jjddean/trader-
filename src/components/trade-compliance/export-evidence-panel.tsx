@@ -8,6 +8,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EVIDENCE_KIND_LABELS, type EvidenceKind } from "@/lib/export-controls/draft-pack";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 interface ExportEvidencePanelProps {
   assessmentId: Id<"export_assessments">;
@@ -64,7 +65,7 @@ export function ExportEvidencePanel({ assessmentId }: ExportEvidencePanelProps) 
       setUrl("");
       setDocumentId("none");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to add evidence");
+      setError(userMessageFromError(err, "Failed to add evidence"));
     } finally {
       setSaving(false);
     }

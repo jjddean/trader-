@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { TextractClient, DetectDocumentTextCommand } from "@aws-sdk/client-textract";
 import { AI_MAX_UPLOAD_BYTES, aiExtractLimiter } from "@/lib/api-rate-limiter";
 import { assertLlmConfigured, createChatCompletion } from "@/lib/llm-chat";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 async function extractTextWithTextract(buffer: Buffer): Promise<string> {
   const client = new TextractClient({
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
       assertLlmConfigured();
     } catch (err) {
       return NextResponse.json(
-        { error: err instanceof Error ? err.message : "LLM not configured" },
+        { error: userMessageFromError(err, "LLM not configured") },
         { status: 500 },
       );
     }
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
     try {
       rawText = await extractTextWithTextract(buffer);
     } catch (parseError: unknown) {
-      const message = parseError instanceof Error ? parseError.message : "parse failed";
+      const message = userMessageFromError(parseError, "parse failed");
       console.error("AWS Textract Error:", parseError);
       return NextResponse.json(
         {
@@ -123,7 +124,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ items: extractedItems, rawText });
   } catch (error: unknown) {
     console.error("AI Extractor Error:", error);
-    const message = error instanceof Error ? error.message : "Internal Server Error";
+    const message = userMessageFromError(error, "Internal Server Error");
     return NextResponse.json({ error: "Internal Server Error", details: message }, { status: 500 });
   }
 }

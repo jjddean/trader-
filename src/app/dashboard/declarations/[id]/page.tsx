@@ -29,6 +29,7 @@ import {
   requiresDefermentAccount,
   validatePaymentFields,
 } from "@/lib/payment-method";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 const TRANSPORT_MODE_OPTIONS = [
   { value: "1", label: "1 — Sea" },
@@ -249,7 +250,7 @@ export default function CoreSchemaPage() {
       }
     } catch (e) {
       console.error("Failed to save core schema", e);
-      setSaveError(e instanceof Error ? e.message : "Failed to save core details");
+      setSaveError(userMessageFromError(e, "Failed to save core details"));
     } finally {
       setSaving(false);
     }

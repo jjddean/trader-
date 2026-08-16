@@ -1,5 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
+import { assertIngestSecret } from "./lib/secret_compare";
+import { requireAdmin } from "./lib/user_role";
 
 const triggerScopeValidator = v.object({
   procedureCodes: v.optional(v.array(v.string())),
@@ -98,8 +100,9 @@ export const upsert = mutation({
     metadata: v.optional(metadataValidator),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    // rule_definitions is global — no orgId. A non-admin write here changes
+    // declaration validation for every tenant.
+    await requireAdmin(ctx);
 
     const existing = await ctx.db
       .query("rule_definitions")
@@ -203,6 +206,7 @@ function extractDocCodes(text: string): string[] {
 // caller pollutes the table, nothing gates a real submission.
 export const proposeCuratedFromRejection = mutation({
   args: {
+    ingestSecret: v.string(),
     mrn: v.optional(v.string()),
     conversationId: v.optional(v.string()),
     fieldErrors: v.array(v.object({
@@ -212,6 +216,8 @@ export const proposeCuratedFromRejection = mutation({
     })),
   },
   handler: async (ctx, args) => {
+    assertIngestSecret(args.ingestSecret);
+
     if (!args.mrn || args.mrn === "UNKNOWN") {
       return { proposed: 0, skipped: "no MRN" as const };
     }
@@ -392,8 +398,7 @@ export const upsertCuratedFromRejection = internalMutation({
 export const setEnabled = mutation({
   args: { ruleId: v.string(), enabled: v.boolean() },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    await requireAdmin(ctx);
     const existing = await ctx.db
       .query("rule_definitions")
       .withIndex("by_ruleId", (q) => q.eq("ruleId", args.ruleId))

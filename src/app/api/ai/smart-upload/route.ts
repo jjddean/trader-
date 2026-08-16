@@ -5,6 +5,7 @@ import { api } from "../../../../../convex/_generated/api";
 import { auth } from "@clerk/nextjs/server";
 import { cloudagentConfigured, postCloudagent } from "@/lib/cloudagent-client";
 import { AI_MAX_UPLOAD_BYTES, aiExtractLimiter } from "@/lib/api-rate-limiter";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -118,7 +119,7 @@ export async function POST(request: Request) {
             .join("\n");
         }
       } catch (parseError: unknown) {
-        const message = parseError instanceof Error ? parseError.message : "unknown";
+        const message = userMessageFromError(parseError, "unknown");
         console.error("AWS Textract Error:", parseError);
         await logSmartUploadError("TEXTRACT_PARSE_FAILED", "AWS Textract parse failed.", { details: message });
         return NextResponse.json({ error: "Failed to parse document using Textract.", details: message }, { status: 400 });
@@ -208,7 +209,7 @@ export async function POST(request: Request) {
       ocrText: rawText,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unhandled error";
+    const message = userMessageFromError(error, "Unhandled error");
     console.error("Smart Upload AI Error:", error);
     try {
       const { userId: fallbackUserId, getToken } = await auth();

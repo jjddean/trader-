@@ -39,6 +39,10 @@ export default function OnboardingWelcomePage() {
             role: user?.publicMetadata?.role as string | undefined,
           });
         }
+      } catch (err) {
+        // Onboarding can still proceed without the sync, but a failure here is
+        // why portalEmail lookups later come back empty — don't lose it.
+        console.error("[onboarding] user sync failed", err);
       } finally {
         setSynced(true);
       }

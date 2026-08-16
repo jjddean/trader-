@@ -71,7 +71,10 @@ export default function AfterAuthPage() {
         }
 
         router.replace("/session-tasks/choose-organization");
-      } catch {
+      } catch (err) {
+        // Routing must still resolve, but the failure has to be visible —
+        // silently landing on /onboarding hid real sync/binding faults.
+        console.error("[after-auth] post sign-in routing failed", err);
         if (orgId || isAdmin) {
           router.replace("/dashboard");
           return;

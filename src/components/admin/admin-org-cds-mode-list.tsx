@@ -10,6 +10,7 @@ import {
   confirmLiveFlip,
   confirmPracticeFlip,
 } from "@/lib/admin-live-flip";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 export function AdminOrgCdsModeList() {
   const convex = useConvex();
@@ -36,7 +37,7 @@ export function AdminOrgCdsModeList() {
       try {
         await setOrgHmrcMode({ orgId, hmrcMode: "practice", orgName: resolvedOrgName });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Could not update CDS mode");
+        setError(userMessageFromError(err, "Could not update CDS mode"));
       } finally {
         setPendingOrgId(null);
       }
@@ -55,7 +56,7 @@ export function AdminOrgCdsModeList() {
 
       await setOrgHmrcMode({ orgId, hmrcMode: "live", orgName: resolvedOrgName });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not update CDS mode");
+      setError(userMessageFromError(err, "Could not update CDS mode"));
     } finally {
       setPendingOrgId(null);
     }

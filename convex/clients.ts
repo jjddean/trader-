@@ -13,6 +13,7 @@ import {
   clientDeclarationAttachmentConflict,
   clientDocumentAttachmentConflict,
 } from "./lib/portal_document_policy";
+import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 
 type Ctx = QueryCtx | MutationCtx;
 
@@ -120,10 +121,10 @@ export const create = mutation({
   args: clientFieldArgs,
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const name = args.name.trim();
-    if (name.length < 2) throw new Error("Client name is required.");
+    if (name.length < 2) throw userError("client_name_is_required", "Client name is required.");
 
     const now = Date.now();
     const orgId = await resolveOrgIdForNewRecord(ctx, identity.subject);
@@ -152,13 +153,13 @@ export const update = mutation({
   args: { clientId: v.id("clients"), ...clientFieldArgs },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const client = await ctx.db.get(args.clientId);
-    if (!(await canAccessClient(ctx, identity.subject, client))) throw new Error("Unauthorized");
+    if (!(await canAccessClient(ctx, identity.subject, client))) throw forbiddenError();
 
     const name = args.name.trim();
-    if (name.length < 2) throw new Error("Client name is required.");
+    if (name.length < 2) throw userError("client_name_is_required", "Client name is required.");
 
     const now = Date.now();
     await ctx.db.patch(args.clientId, { ...buildClientFields(args), updatedAt: now });
@@ -188,21 +189,21 @@ export const setClient = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const declaration = await ctx.db.get(args.declarationId);
     if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const rawClientId = String(args.clientId ?? "").trim();
     let clientId: Id<"clients"> | undefined;
     if (rawClientId) {
       const candidate = ctx.db.normalizeId("clients", rawClientId);
-      if (!candidate) throw new Error("Client not found");
+      if (!candidate) throw userError("client_not_found", "Client not found");
       const client = await ctx.db.get(candidate);
       if (!(await canAccessClient(ctx, identity.subject, client))) {
-        throw new Error("Client not found");
+        throw userError("client_not_found", "Client not found");
       }
       if (
         clientDeclarationAttachmentConflict({
@@ -212,7 +213,7 @@ export const setClient = mutation({
           declarationOrgId: declaration.orgId,
         }) !== null
       ) {
-        throw new Error("The client and filing must belong to the same organisation");
+        throw userError("the_client_and_filing_must_belong", "The client and filing must belong to the same organisation");
       }
       clientId = candidate;
     }
@@ -238,10 +239,10 @@ export const setStatus = mutation({
   args: { clientId: v.id("clients"), status: v.union(v.literal("active"), v.literal("archived")) },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const client = await ctx.db.get(args.clientId);
-    if (!(await canAccessClient(ctx, identity.subject, client))) throw new Error("Unauthorized");
+    if (!(await canAccessClient(ctx, identity.subject, client))) throw forbiddenError();
 
     const now = Date.now();
     await ctx.db.patch(args.clientId, { status: args.status, updatedAt: now });
@@ -278,26 +279,27 @@ export const setPortalAccess = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const client = await ctx.db.get(args.clientId);
     if (!(await canAccessClient(ctx, identity.subject, client)) || !client) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
     if (client.status === "archived") {
-      throw new Error("Restore the client before enabling portal access.");
+      throw userError("restore_the_client_before_enabling_portal", "Restore the client before enabling portal access.");
     }
 
     const portalEmail = normalizePortalEmail(args.portalEmail);
     if (!portalEmail || !EMAIL_RE.test(portalEmail)) {
-      throw new Error("A valid portal email is required.");
+      throw userError("a_valid_portal_email_is_required", "A valid portal email is required.");
     }
 
     const brokerEmail = normalizePortalEmail(
       typeof identity.email === "string" ? identity.email : undefined,
     );
     if (brokerEmail && brokerEmail === portalEmail) {
-      throw new Error(
+      throw userError(
+        "portal_email_is_broker_login",
         "Use the client's email, not your broker login email — that would trap your account on the portal.",
       );
     }
@@ -307,7 +309,8 @@ export const setPortalAccess = mutation({
       .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
       .unique();
     if (normalizePortalEmail(typeof brokerUser?.email === "string" ? brokerUser.email : undefined) === portalEmail) {
-      throw new Error(
+      throw userError(
+        "portal_email_is_broker_login",
         "Use the client's email, not your broker login email — that would trap your account on the portal.",
       );
     }
@@ -319,7 +322,8 @@ export const setPortalAccess = mutation({
       (row) => normalizePortalEmail(typeof row.email === "string" ? row.email : undefined) === portalEmail,
     );
     if (emailOwnedByAppUser) {
-      throw new Error(
+      throw userError(
+        "portal_email_is_app_user",
         "That email belongs to a FreightCode user account. Choose a different client portal email.",
       );
     }
@@ -329,7 +333,7 @@ export const setPortalAccess = mutation({
       .withIndex("by_portal_email", (q) => q.eq("portalEmail", portalEmail))
       .first();
     if (existing && existing._id !== args.clientId) {
-      throw new Error("That email is already used for another client's portal access.");
+      throw userError("portal_email_taken", "That email is already used for another client's portal access.");
     }
 
     const now = Date.now();
@@ -367,11 +371,11 @@ export const recordPortalInviteSent = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const client = await ctx.db.get(args.clientId);
     if (!(await canAccessClient(ctx, identity.subject, client)) || !client) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     await ctx.db.insert("auditLogs", {
@@ -396,11 +400,11 @@ export const revokePortalAccess = mutation({
   args: { clientId: v.id("clients") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const client = await ctx.db.get(args.clientId);
     if (!(await canAccessClient(ctx, identity.subject, client)) || !client) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const previousEmail = client.portalEmail ?? null;
@@ -538,7 +542,7 @@ export const attachUnlinkedDocument = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const [client, document, declaration] = await Promise.all([
       ctx.db.get(args.clientId),
@@ -546,13 +550,13 @@ export const attachUnlinkedDocument = mutation({
       ctx.db.get(args.declarationId),
     ]);
     if (!(await canAccessClient(ctx, identity.subject, client))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
     if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
-      throw new Error("Declaration not found");
+      throw userError("declaration_not_found", "Declaration not found");
     }
     if (!document) {
-      throw new Error("Document not found");
+      throw userError("document_not_found", "Document not found");
     }
     const attachmentConflict = clientDocumentAttachmentConflict({
       clientId: client?._id,
@@ -563,19 +567,19 @@ export const attachUnlinkedDocument = mutation({
       declarationOrgId: declaration.orgId,
     });
     if (attachmentConflict === "document_client_mismatch") {
-      throw new Error("Document not found");
+      throw userError("document_not_found", "Document not found");
     }
     if (attachmentConflict === "declaration_client_mismatch") {
-      throw new Error("The filing does not belong to this client");
+      throw userError("the_filing_does_not_belong_to", "The filing does not belong to this client");
     }
     if (
       attachmentConflict === "tenant_mismatch" ||
       attachmentConflict === "document_tenant_mismatch"
     ) {
-      throw new Error("The document, client, and filing must belong to the same organisation");
+      throw userError("the_document_client_and_filing_must", "The document, client, and filing must belong to the same organisation");
     }
     if (document.declarationId) {
-      throw new Error("Document is already attached to a filing");
+      throw userError("document_is_already_attached_to_a", "Document is already attached to a filing");
     }
 
     const now = Date.now();
@@ -715,10 +719,10 @@ export const markPortalMessagesRead = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     const client = await ctx.db.get(args.clientId);
-    if (!(await canAccessClient(ctx, identity.subject, client))) throw new Error("Unauthorized");
-    if (args.declarationId && args.assessmentId) throw new Error("Choose one thread");
+    if (!(await canAccessClient(ctx, identity.subject, client))) throw forbiddenError();
+    if (args.declarationId && args.assessmentId) throw userError("choose_one_thread", "Choose one thread");
 
     const rows = args.declarationId
       ? await ctx.db
@@ -756,12 +760,12 @@ export const savePortalMessageDocument = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     const message = await ctx.db.get(args.messageId);
-    if (!message) throw new Error("Message not found");
+    if (!message) throw userError("message_not_found", "Message not found");
     const client = await ctx.db.get(message.clientId);
     if (!(await canAccessClient(ctx, identity.subject, client)) || !client) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
     const existing = await ctx.db
       .query("documents")
@@ -804,41 +808,41 @@ export const sendBrokerMessage = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const client = await ctx.db.get(args.clientId);
     if (!(await canAccessClient(ctx, identity.subject, client)) || !client) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const body = args.body.trim();
-    if (body.length < 1) throw new Error("Message is empty");
-    if (body.length > 4000) throw new Error("Message is too long");
+    if (body.length < 1) throw userError("message_is_empty", "Message is empty");
+    if (body.length > 4000) throw userError("message_is_too_long", "Message is too long");
 
     const hasDeclaration = Boolean(args.declarationId);
     const hasAssessment = Boolean(args.assessmentId);
     if (hasDeclaration && hasAssessment) {
-      throw new Error("Choose either a declaration or an export case");
+      throw userError("choose_either_a_declaration_or_an", "Choose either a declaration or an export case");
     }
 
     if (args.declarationId) {
       const declaration = await ctx.db.get(args.declarationId);
       if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
-        throw new Error("Declaration not found");
+        throw userError("declaration_not_found", "Declaration not found");
       }
       if (declaration.clientId !== args.clientId) {
-        throw new Error("Declaration is not linked to this client");
+        throw userError("declaration_is_not_linked_to_this", "Declaration is not linked to this client");
       }
     }
 
     if (args.assessmentId) {
       const assessment = await ctx.db.get(args.assessmentId);
-      if (!assessment) throw new Error("Export case not found");
+      if (!assessment) throw userError("export_case_not_found", "Export case not found");
       if (assessment.clientId !== args.clientId) {
-        throw new Error("Export case is not linked to this client");
+        throw userError("export_case_is_not_linked_to", "Export case is not linked to this client");
       }
       if (assessment.orgId && client.orgId && assessment.orgId !== client.orgId) {
-        throw new Error("Export case is not linked to this client");
+        throw userError("export_case_is_not_linked_to", "Export case is not linked to this client");
       }
     }
 

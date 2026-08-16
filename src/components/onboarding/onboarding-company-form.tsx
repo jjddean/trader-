@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
-import { useMutation } from "convex/react";
+import { useAuth, useUser } from "@clerk/nextjs";
+import { useConvexAuth, useMutation } from "convex/react";
 import { Loader2 } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import { countries } from "@/lib/data/countries";
+import { userMessageFromError } from "@/lib/convex-errors";
 import {
   ONBOARD_INPUT,
   ONBOARD_LABEL,
@@ -60,6 +61,9 @@ export function OnboardingCompanyForm({
   onSuccess,
 }: OnboardingCompanyFormProps) {
   const { user } = useUser();
+  const { orgId } = useAuth();
+  const { isAuthenticated } = useConvexAuth();
+  const syncUser = useMutation(api.users.syncUser);
   const completeBroker = useMutation(api.onboarding.completeBroker);
   const completeManaged = useMutation(api.onboarding.completeManagedService);
 
@@ -84,6 +88,25 @@ export function OnboardingCompanyForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Managed Service binds the portal to the signed-in user's email. Clerk's Convex
+   * JWT carries no email claim, so the server reads it from the users row — which
+   * only exists once syncUser has run. Awaiting it here rather than relying on the
+   * user having passed through /onboarding first means a direct link, a refresh or
+   * a back-button entry to this form still works.
+   */
+  const ensureUserSynced = async () => {
+    if (!isAuthenticated) return;
+    const email = user?.primaryEmailAddress?.emailAddress?.trim();
+    if (!email) return;
+    await syncUser({
+      name: user?.fullName ?? undefined,
+      email,
+      orgId: orgId ?? undefined,
+      role: user?.publicMetadata?.role as string | undefined,
+    });
+  };
+
   const set = <K extends keyof OnboardingFormValues>(key: K, value: OnboardingFormValues[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -97,6 +120,7 @@ export function OnboardingCompanyForm({
     setSaving(true);
     setError(null);
     try {
+      await ensureUserSynced();
       const payload = {
         companyName: form.companyName,
         legalEntityType: form.legalEntityType,
@@ -123,7 +147,8 @@ export function OnboardingCompanyForm({
         onSuccess(res.next);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save. Try again.");
+      console.error(`[onboarding:${path}] submit failed`, err);
+      setError(userMessageFromError(err));
     } finally {
       setSaving(false);
     }

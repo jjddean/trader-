@@ -4,6 +4,7 @@ import { api } from "../../../../../../convex/_generated/api";
 import { parseHmrcNotification } from "../../../../../lib/hmrc-notification-parser";
 import { buildHmrcNotificationIdempotencyKey } from "../../../../../lib/hmrc-notification-idempotency";
 import { secretsEqual } from "../../../../../lib/secrets-equal";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 const isProduction = process.env.NODE_ENV === "production";
@@ -112,7 +113,7 @@ export async function POST(request: Request) {
       try {
         const proposalResult = await convex.mutation(
           api.rule_definitions.proposeCuratedFromRejection,
-          { mrn, conversationId, fieldErrors },
+          { ingestSecret, mrn, conversationId, fieldErrors },
         );
         console.log(`[HMRC-WEBHOOK] Curated rule proposals: ${JSON.stringify(proposalResult)}`);
       } catch (proposeErr) {
@@ -124,7 +125,7 @@ export async function POST(request: Request) {
     return new Response(null, { status: 200 });
   } catch (error: unknown) {
     console.error("[HMRC-WEBHOOK] Crash:", error);
-    const message = error instanceof Error ? error.message : "Internal Server Error";
+    const message = userMessageFromError(error, "Internal Server Error");
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

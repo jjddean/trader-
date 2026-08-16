@@ -3,6 +3,7 @@ import { mutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { assertAssessmentAccess, canAccessAssessment } from "./lib/org_access";
 import { collectEvidenceWithUrls } from "./export_controls";
+import { unauthenticatedError, userError } from "./lib/user_errors";
 
 const CONSULTANT_ROLE = v.union(
   v.literal("adviser"),
@@ -122,10 +123,10 @@ export const createConsultantDispatch = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const assessment = await ctx.db.get(args.assessmentId);
-    if (!assessment) throw new Error("Assessment not found");
+    if (!assessment) throw userError("assessment_not_found", "Assessment not found");
     await assertAssessmentAccess(ctx, identity.subject, assessment);
 
     const orgId = assessment.orgId ?? readOrgId(identity as Record<string, unknown>);
@@ -134,7 +135,7 @@ export const createConsultantDispatch = mutation({
     const consultantRole = args.consultantRole ?? "applies_on_behalf";
 
     if (!consultantEmail) {
-      throw new Error("Consultant email is required");
+      throw userError("consultant_email_is_required", "Consultant email is required");
     }
 
     const now = Date.now();
@@ -231,18 +232,18 @@ export const completeConsultantReview = mutation({
       .unique();
 
     if (!row || row.revoked || row.expiresAt < Date.now()) {
-      throw new Error("Link expired or invalid");
+      throw userError("link_expired_or_invalid", "Link expired or invalid");
     }
     if (row.completedAt) {
-      throw new Error("This review was already completed");
+      throw userError("this_review_was_already_completed", "This review was already completed");
     }
 
     const notes = args.advisoryNotes.trim();
-    if (!notes) throw new Error("Advisory notes are required");
+    if (!notes) throw userError("advisory_notes_are_required", "Advisory notes are required");
 
     const now = Date.now();
     const assessment = await ctx.db.get(row.assessmentId);
-    if (!assessment) throw new Error("Assessment not found");
+    if (!assessment) throw userError("assessment_not_found", "Assessment not found");
 
     await ctx.db.patch(row.expertRequestId, {
       status: args.outcome === "cleared" ? "completed" : "blocked",

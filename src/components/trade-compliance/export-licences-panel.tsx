@@ -12,6 +12,7 @@ import {
   type EusuMatchFinding,
 } from "@/lib/export-controls/eusu-match";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 interface ExportLicencesPanelProps {
   assessmentId: Id<"export_assessments">;
@@ -155,7 +156,7 @@ export function ExportLicencesPanel({ assessmentId }: ExportLicencesPanelProps) 
       setApplicationRef("");
       setLicenceRef("");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to record licence");
+      setError(userMessageFromError(err, "Failed to record licence"));
     } finally {
       setSaving(false);
     }

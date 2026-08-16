@@ -41,6 +41,8 @@ import {
   isStuckHmrcStatus,
   STUCK_HMRC_STATUS_VALUES,
 } from "./lib/stuck_declarations";
+import { followUpClaim } from "./lib/follow_up_claim";
+import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 
 type EstimateMethod = "tariff_measures" | "historical_fallback" | "hmrc_confirmed";
 
@@ -1486,7 +1488,7 @@ export const createDeclaration = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const { initialItem, ...declarationArgs } = args;
     const orgId = await resolveOrgIdForNewRecord(ctx, identity.subject);
@@ -1548,11 +1550,11 @@ export const assertAndStampEnvironment = mutation({
   }),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const decl = await ctx.db.get(args.declarationId);
     if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const stamped = (decl.environment as "sandbox" | "production" | undefined) ?? "sandbox";
@@ -1574,11 +1576,11 @@ export const deleteDeclaration = mutation({
   args: { id: v.id("declarations") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const existing = await ctx.db.get(args.id);
     if (!existing || !(await canAccessDeclaration(ctx, identity.subject, existing))) {
-      throw new Error("Unauthorized: You do not own this declaration.");
+      throw userError("unauthorized_you_do_not_own_this", "Unauthorized: You do not own this declaration.");
     }
 
     // Read preview before deletion to capture delta values
@@ -1631,11 +1633,11 @@ export const beginSubmission = mutation({
   returns: v.object({ prevStatus: v.string(), prevMrn: v.string() }),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const existing = await ctx.db.get(args.id);
     if (!existing || !(await canAccessDeclaration(ctx, identity.subject, existing))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const status = String(existing.status ?? "Draft");
@@ -1664,6 +1666,43 @@ export const beginSubmission = mutation({
   },
 });
 
+/**
+ * Atomically claim a live declaration for amendment or cancellation, the way
+ * beginSubmission does for the initial filing. Without this the routes only set
+ * status after HMRC replied, so a double-click or a retry over a slow response
+ * filed the amendment twice at CDS.
+ */
+export const beginFollowUp = mutation({
+  args: {
+    id: v.id("declarations"),
+    operation: v.union(v.literal("amend"), v.literal("cancel")),
+  },
+  returns: v.object({ prevStatus: v.string() }),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw unauthenticatedError();
+
+    const existing = await ctx.db.get(args.id);
+    if (!existing || !(await canAccessDeclaration(ctx, identity.subject, existing))) {
+      throw forbiddenError();
+    }
+
+    const status = String(existing.status ?? "Draft");
+    const claim = followUpClaim(status, args.operation);
+    if (!claim.ok) {
+      throw new Error(
+        claim.reason === "in_flight"
+          ? `SUBMIT_BLOCKED: declaration is "${status}" — wait for the in-flight request to finish before sending another.`
+          : `SUBMIT_BLOCKED: declaration must be Accepted or Amended (current: ${status || "unknown"}).`,
+      );
+    }
+
+    await ctx.db.patch(args.id, { status: claim.nextStatus, lastUpdated: Date.now() });
+    await upsertDeclarationPreviewByDeclaration(ctx, args.id);
+    return { prevStatus: status };
+  },
+});
+
 export const updateDeclarationStatus = mutation({
   args: {
     id: v.id("declarations"),
@@ -1673,11 +1712,11 @@ export const updateDeclarationStatus = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const existing = await ctx.db.get(args.id);
     if (!existing || !(await canAccessDeclaration(ctx, identity.subject, existing))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const patchObj: any = {
@@ -1730,11 +1769,11 @@ export const updateDeclarationDetails = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const existing = await ctx.db.get(args.id);
     if (!existing || !(await canAccessDeclaration(ctx, identity.subject, existing))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const mop = String(args.paymentMethodCode ?? "").trim().toUpperCase();
@@ -1743,13 +1782,13 @@ export const updateDeclarationDetails = mutation({
     const defermentMops = new Set(["E", "R"]);
 
     if (defermentMops.has(mop) && !dan) {
-      throw new Error("Deferment account number (DE 2/6) is required when method of payment is E or R.");
+      throw userError("deferment_account_number_de_2_6", "Deferment account number (DE 2/6) is required when method of payment is E or R.");
     }
     if (dan && !defermentMops.has(mop)) {
-      throw new Error("Method of payment must be E or R when a deferment account number is provided.");
+      throw userError("method_of_payment_must_be_e", "Method of payment must be E or R when a deferment account number is provided.");
     }
     if (String(args.defermentAccountNumber ?? "").trim() && !dan) {
-      throw new Error("Deferment account number must be exactly 7 digits (DE 2/6).");
+      throw userError("deferment_account_number_must_be_exactly", "Deferment account number must be exactly 7 digits (DE 2/6).");
     }
 
     await ctx.db.patch(args.id, {
@@ -1800,11 +1839,11 @@ export const setDeclarationMode = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const existing = await ctx.db.get(args.id);
     if (!existing || !(await canAccessDeclaration(ctx, identity.subject, existing))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     await ctx.db.patch(args.id, { mode: args.mode, lastUpdated: Date.now() });
@@ -1826,7 +1865,7 @@ export const backfillTransportAndMode = internalMutation({
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db.get(args.id);
-    if (!existing) throw new Error(`Declaration ${args.id} not found`);
+    if (!existing) throw userError("declaration_not_found", `Declaration ${args.id} not found`);
     const patch: Record<string, unknown> = { lastUpdated: Date.now() };
     if (args.transportMode !== undefined) patch.transportMode = args.transportMode;
     if (args.transportId !== undefined) patch.transportId = args.transportId;
@@ -1841,11 +1880,11 @@ export const populateDemoData = mutation({
   args: { id: v.id("declarations") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const existing = await ctx.db.get(args.id);
     if (!existing || !(await canAccessDeclaration(ctx, identity.subject, existing))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     // 1. Update header to satisfy validation
@@ -2174,7 +2213,18 @@ export const getDeclarationPreviews = query({
         ),
       }));
 
+    // Transport lives on the declaration, not the preview read model. Merge it
+    // from the rows already loaded so the list can distinguish CNS from direct
+    // without a schema change or a read-model backfill.
+    const transportById = new Map(
+      declarations.map((d) => [String(d._id), d.submissionTransport ?? undefined]),
+    );
+
     return [...previews, ...missingPreviews]
+      .map((preview) => ({
+        ...preview,
+        submissionTransport: transportById.get(String(preview.declarationId)),
+      }))
       .sort((a, b) => b.lastUpdated - a.lastUpdated);
   },
 });
@@ -2183,7 +2233,7 @@ export const rebuildMyReadModels = mutation({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const declarations = await listDeclarationsForTenant(ctx, identity.subject, 5000);
 
@@ -2233,7 +2283,7 @@ export const getReports = query({
   args: { userId: v.optional(v.string()) },
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const decls = await listDeclarationsForTenant(ctx, identity.subject, 150);
 
@@ -2349,7 +2399,7 @@ export const getFinancialRecords = query({
   args: { userId: v.optional(v.string()) },
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const decls = await listDeclarationsForTenant(ctx, identity.subject, 200);
 
