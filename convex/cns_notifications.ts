@@ -28,6 +28,7 @@ import {
   isAmendmentAccepted,
   isAmendmentAcknowledged,
   isAmendmentRejected,
+  isCancellationRejected,
   isInvalidationAccepted,
   isPostCancelClearance,
 } from "./lib/notification_dms_context";
@@ -388,9 +389,25 @@ export const processNotification = internalMutation({
         .withIndex("by_hmrcNotificationId", (q: any) => q.eq("hmrcNotificationId", row.notificationId))
         .first();
       if (!existing) {
+        // Which request this answers. CNS follow-ups record no conversationId on
+        // their submissions row (the CSP returns only X-CSP-ID), so fall back to
+        // the declaration sitting in "Cancellation Requested" — beginFollowUp sets
+        // that atomically before dispatch. Same rule as notifications.saveWebhook;
+        // without it a CNS cancel outcome is classified as a declaration outcome.
+        const originatingSubmission = row.conversationId
+          ? await ctx.db
+              .query("submissions")
+              .withIndex("by_conversationId", (q: any) => q.eq("conversationId", row.conversationId))
+              .first()
+          : null;
+        const originatingOperation =
+          originatingSubmission?.operation ??
+          (declaration.status === "Cancellation Requested" ? "cancel" : undefined);
+
         const notificationId = await ctx.db.insert("notifications", {
           mrn: parsed.mrn,
           conversationId: row.conversationId || "UNKNOWN",
+          ...(originatingOperation ? { originatingOperation } : {}),
           environment: declaration.environment ?? "sandbox",
           idempotencyKey: `cns:${row.topic}:${row.notificationId}`,
           hmrcNotificationId: row.notificationId,
@@ -412,6 +429,7 @@ export const processNotification = internalMutation({
           rawPayload: decoded,
           fieldErrors: parsed.fieldErrors,
           errorCodes: parsed.errorCodes,
+          originatingOperation,
         };
         const newStatus = statusAfterNotification({
           currentStatus: declaration.status,
@@ -420,6 +438,7 @@ export const processNotification = internalMutation({
           isAmendmentRejected: isAmendmentRejected(context),
           isAmendmentAccepted: isAmendmentAccepted(context),
           isAmendmentAcknowledged: isAmendmentAcknowledged(context),
+          isCancellationRejected: isCancellationRejected(context),
           isInvalidationAccepted: isInvalidationAccepted(context),
           isPostCancelClearance: isPostCancelClearance(context),
         });
