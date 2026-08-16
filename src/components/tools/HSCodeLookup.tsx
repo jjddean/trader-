@@ -14,7 +14,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { useAction, useMutation } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { commodityRequiresSupplementaryUnit } from "@/lib/wco-mapper";
@@ -26,6 +26,7 @@ import {
 } from "@/lib/hs-tariff-sections";
 import { userMessageFromError } from "@/lib/convex-errors";
 
+import { searchTariff } from "@/lib/tariff-search-client";
 interface HSCode {
   code: string;
   description: string;
@@ -207,8 +208,6 @@ export function HSCodeLookup({
   const [showFilters, setShowFilters] = useState(false);
   const [sectionFilter, setSectionFilter] = useState<HsTariffSectionValue>("all");
   const filterRef = useRef<HTMLDivElement>(null);
-
-  const searchHMRC = useAction(api.hmrc_actions.searchHSCode);
   const updateItem = useMutation(api.goods_items.updateItem);
 
   const handleApplyToItem = useCallback(
@@ -288,7 +287,7 @@ export function HSCodeLookup({
     setSearched(true);
 
     try {
-      const officialResults = await searchHMRC({ query: searchTerm });
+      const officialResults = await searchTariff(searchTerm);
       const formatted = (officialResults || []).map(
         (r: { code: string; description: string; matchType?: string }) => ({
           code: r.code,

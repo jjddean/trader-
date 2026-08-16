@@ -6,12 +6,6 @@ import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import { pullHmrcNotificationsServer, type PullSaveArgs } from "./lib/hmrc_pull_runtime";
 import { resolveAccessTokenForUser } from "./lib/hmrc_token_refresh";
-import {
-  TRADE_TARIFF_BASE,
-  readEntryDescription,
-  readExactEntry,
-  readFuzzyResults,
-} from "./lib/trade_tariff_search";
 import type { ActionCtx } from "./_generated/server";
 
 type HmrcEnvironment = "sandbox" | "production";
@@ -40,47 +34,15 @@ function makeSavePulledNotification(ctx: ActionCtx, environment: HmrcEnvironment
     };
 }
 
-export const searchHSCode = action({
-    args: {
-        query: v.string(),
-    },
-    handler: async (ctx, args) => {
-        const query = args.query.trim();
-        if (!query) return [];
+/**
+ * searchHSCode moved to src/app/api/tariff/search/route.ts.
+ *
+ * It was an unauthenticated Convex action, and the Convex websocket carries
+ * no caller address, so it could not be rate limited per caller — only a
+ * global cap, which would let one abuser deny service to everyone. The Next
+ * route limits by IP using the existing ApiRateLimiter.
+ */
 
-        const headers = { Accept: "application/json", "User-Agent": "FreightCode/1.0" };
-
-        try {
-            const response = await fetch(
-                `${TRADE_TARIFF_BASE}/search?q=${encodeURIComponent(query)}`,
-                { headers },
-            );
-            if (!response.ok) {
-                console.error("[tariff-search] search failed", response.status, response.statusText);
-                return [];
-            }
-
-            const payload = await response.json();
-
-            const entry = readExactEntry(payload);
-            if (entry) {
-                const detail = await fetch(`${TRADE_TARIFF_BASE}/${entry.endpoint}/${entry.id}`, {
-                    headers,
-                });
-                const description = detail.ok ? readEntryDescription(await detail.json()) : "";
-                return [{ code: entry.id, description, matchType: "exact_match" }];
-            }
-
-            return readFuzzyResults(payload);
-        } catch (error: unknown) {
-            console.error(
-                "[tariff-search] request error",
-                error instanceof Error ? error.message : error,
-            );
-            return [];
-        }
-    },
-});
 
 /** Scheduled/cron pull — persists notifications via saveWebhook. */
 export const pullNotificationsScheduled = internalAction({
