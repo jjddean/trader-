@@ -33,7 +33,10 @@ function run(cmd, opts = {}) {
 }
 
 function prepare() {
-  run("node generate-training-data.mjs --rows 10000 --out ./lora-dataset");
+  // The v1 synthetic generator (generate-training-data.mjs) was deleted.
+  // Use the v2 reasoning-consistency dataset instead.
+  console.error("v1 dataset generation has been removed. Run: npm run lora:prepare:v2");
+  process.exit(1);
 }
 
 function hasCuda() {

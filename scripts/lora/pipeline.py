@@ -26,8 +26,11 @@ def run(args: list[str]) -> None:
 
 
 def prepare() -> None:
-    subprocess.check_call(["node", "generate-training-data.mjs", "--rows", "10000", "--out", "./lora-dataset"], cwd=ROOT)
-    run([str(SCRIPTS / "convert_dataset.py")])
+    # The v1 synthetic generator (generate-training-data.mjs) was deleted.
+    # Use the v2 reasoning-consistency dataset instead: npm run lora:prepare:v2
+    raise SystemExit(
+        "v1 dataset generation has been removed. Run: npm run lora:prepare:v2"
+    )
 
 
 def train() -> None:
