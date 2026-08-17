@@ -50,21 +50,50 @@ export async function POST(request: Request) {
     }
     const { convex, userId } = session;
 
-    const { declarationId, mrn, changeKind, itemSequence, statementDescription, changeReasonCode, wcoPath, value } =
-      await request.json();
-    if (!declarationId || !mrn) {
-      return NextResponse.json({ error: "Missing declarationId or mrn" }, { status: 400 });
+    const {
+      declarationId,
+      mrn: clientMrn,
+      changeKind,
+      itemSequence,
+      statementDescription,
+      changeReasonCode,
+      wcoPath,
+      value,
+    } = await request.json();
+    if (!declarationId) {
+      return NextResponse.json({ error: "Missing declarationId" }, { status: 400 });
     }
 
     const lane = (await convex.query(api.declarations.getLane, { id: declarationId })) as {
       userId?: string;
       status?: string;
       lrn?: string;
+      mrn?: string;
       invoiceCurrency?: string;
       eori?: string;
     } | null;
     if (!lane) {
       return NextResponse.json({ error: "Declaration not found" }, { status: 404 });
+    }
+
+    // The MRN that goes to HMRC is the stored one, never the request body's.
+    // The access check proves the caller may touch this declarationId; it says
+    // nothing about an MRN they typed, so trusting the body let an amendment or
+    // invalidation be aimed at a different filing while the local audit trail
+    // recorded this declaration.
+    const mrn = String(lane.mrn ?? "").trim();
+    if (!mrn) {
+      return NextResponse.json(
+        { error: "This declaration has no MRN yet. Wait for HMRC to accept it before amending." },
+        { status: 409 },
+      );
+    }
+    // A mismatch means the caller is acting on a stale view of the record.
+    if (clientMrn !== undefined && String(clientMrn).trim() && String(clientMrn).trim() !== mrn) {
+      return NextResponse.json(
+        { error: "This declaration has changed since the page loaded. Reload and try again." },
+        { status: 409 },
+      );
     }
 
     const status = String(lane.status || "");

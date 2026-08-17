@@ -38,6 +38,7 @@ import type * as documents from "../documents.js";
 import type * as export_controls from "../export_controls.js";
 import type * as financial_obligations from "../financial_obligations.js";
 import type * as goods_items from "../goods_items.js";
+import type * as health from "../health.js";
 import type * as hmrc from "../hmrc.js";
 import type * as hmrc_actions from "../hmrc_actions.js";
 import type * as hmrc_internal from "../hmrc_internal.js";
@@ -53,6 +54,7 @@ import type * as lib_cns_notification_client from "../lib/cns_notification_clien
 import type * as lib_collect_declaration_notifications from "../lib/collect_declaration_notifications.js";
 import type * as lib_currency_conversion from "../lib/currency_conversion.js";
 import type * as lib_declaration_completeness from "../lib/declaration_completeness.js";
+import type * as lib_declaration_editing from "../lib/declaration_editing.js";
 import type * as lib_duty_rate_parser from "../lib/duty_rate_parser.js";
 import type * as lib_export_routing from "../lib/export_routing.js";
 import type * as lib_financial_labels from "../lib/financial_labels.js";
@@ -144,6 +146,7 @@ declare const fullApi: ApiFromModules<{
   export_controls: typeof export_controls;
   financial_obligations: typeof financial_obligations;
   goods_items: typeof goods_items;
+  health: typeof health;
   hmrc: typeof hmrc;
   hmrc_actions: typeof hmrc_actions;
   hmrc_internal: typeof hmrc_internal;
@@ -159,6 +162,7 @@ declare const fullApi: ApiFromModules<{
   "lib/collect_declaration_notifications": typeof lib_collect_declaration_notifications;
   "lib/currency_conversion": typeof lib_currency_conversion;
   "lib/declaration_completeness": typeof lib_declaration_completeness;
+  "lib/declaration_editing": typeof lib_declaration_editing;
   "lib/duty_rate_parser": typeof lib_duty_rate_parser;
   "lib/export_routing": typeof lib_export_routing;
   "lib/financial_labels": typeof lib_financial_labels;

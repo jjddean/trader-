@@ -24,17 +24,38 @@ export function isPersonalScopedRecord(orgId: unknown): boolean {
   return normalizeOrgId(orgId) === "";
 }
 
+/**
+ * Whether the caller may reach a record, by tenant scope alone.
+ *
+ * The creator shortcut applies ONLY to personal-scoped records (no orgId).
+ * It used to run first and unconditionally, so `userId === record.userId`
+ * returned true before the org comparison was ever reached: a user who created
+ * a declaration inside Org A kept access after switching their active org to B,
+ * or after leaving Org A entirely. The org boundary is the security scope, so a
+ * record carrying an orgId must be reachable only from that org.
+ */
+export function hasTenantAccess(
+  record: { userId?: unknown; orgId?: unknown },
+  userId: string,
+  activeOrgId: string | null,
+): boolean {
+  const recordOrgId = normalizeOrgId(record.orgId);
+
+  if (isPersonalScopedRecord(recordOrgId)) {
+    return String(record.userId ?? "") === userId;
+  }
+
+  return Boolean(activeOrgId && activeOrgId === recordOrgId);
+}
+
 export async function canAccessDeclaration(
   ctx: Ctx,
   userId: string,
   declaration: { userId?: unknown; orgId?: unknown } | null | undefined,
 ): Promise<boolean> {
   if (!declaration) return false;
-  if (String(declaration.userId ?? "") === userId) return true;
-
   const activeOrgId = await getActiveOrgId(ctx, userId);
-  const declOrgId = normalizeOrgId(declaration.orgId);
-  return Boolean(activeOrgId && declOrgId && activeOrgId === declOrgId);
+  return hasTenantAccess(declaration, userId, activeOrgId);
 }
 
 export async function assertDeclarationAccess(
@@ -181,11 +202,8 @@ export async function canAccessDocument(
   document: { userId?: unknown; orgId?: unknown; declarationId?: unknown } | null | undefined,
 ): Promise<boolean> {
   if (!document) return false;
-  if (String(document.userId ?? "") === userId) return true;
-
   const activeOrgId = await getActiveOrgId(ctx, userId);
-  const docOrgId = normalizeOrgId(document.orgId);
-  if (activeOrgId && docOrgId && activeOrgId === docOrgId) return true;
+  if (hasTenantAccess(document, userId, activeOrgId)) return true;
 
   if (document.declarationId) {
     const declaration = await ctx.db.get(document.declarationId as Id<"declarations">);
@@ -281,11 +299,8 @@ export async function canAccessAssessment(
   assessment: { userId?: unknown; orgId?: unknown } | null | undefined,
 ): Promise<boolean> {
   if (!assessment) return false;
-  if (String(assessment.userId ?? "") === userId) return true;
-
   const activeOrgId = await getActiveOrgId(ctx, userId);
-  const assessmentOrgId = normalizeOrgId(assessment.orgId);
-  return Boolean(activeOrgId && assessmentOrgId && activeOrgId === assessmentOrgId);
+  return hasTenantAccess(assessment, userId, activeOrgId);
 }
 
 export async function assertAssessmentAccess(

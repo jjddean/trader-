@@ -3,6 +3,7 @@ import { internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { canAccessDeclaration } from "./lib/org_access";
+import { editBlockedMessage, isEditableStatus } from "./lib/declaration_editing";
 import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 
 async function refreshReadModels(ctx: any, declarationId: any) {
@@ -85,6 +86,9 @@ export const addItem = mutation({
     if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
       throw forbiddenError();
     }
+    if (!isEditableStatus(declaration.status)) {
+      throw userError("declaration_filed", editBlockedMessage(declaration.status));
+    }
 
     const itemId = await ctx.db.insert("goods_items", {
       ...args,
@@ -110,6 +114,9 @@ export const removeItem = mutation({
       : null;
     if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
       throw forbiddenError();
+    }
+    if (!isEditableStatus(declaration.status)) {
+      throw userError("declaration_filed", editBlockedMessage(declaration.status));
     }
 
     const declarationId = existing.declarationId;
@@ -158,6 +165,9 @@ export const updateItem = mutation({
       : null;
     if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
       throw forbiddenError();
+    }
+    if (!isEditableStatus(declaration.status)) {
+      throw userError("declaration_filed", editBlockedMessage(declaration.status));
     }
 
     const { id, ...updates } = args;
