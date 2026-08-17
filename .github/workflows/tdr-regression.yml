@@ -28,8 +28,26 @@ jobs:
       - name: Security lint (API + Convex auth surfaces)
         run: npm run lint:security
 
+      # Repo-wide `npm run lint` is deliberately NOT a gate. It reports 390
+      # errors, 153 of them in src/convex — 74 unescaped apostrophes in guide
+      # copy, 52 no-explicit-any, 17 set-state-in-effect. None are security
+      # issues, and gating on them would block every PR on marketing punctuation.
+      # lint:security above is the gate; repo-wide lint is a cleanup backlog.
+
+      # Nine root-level test files were covered by no npm script, so CI never
+      # ran them — including the tenant-isolation, filing-lock and
+      # duplicate-filing guards. test:unit closes that.
+      - name: Unit tests (access, filing guards, error surface)
+        run: npm run test:unit
+
       - name: H1 unit tests + golden XML
         run: npm run test:h1
+
+      - name: TRE regressions
+        run: npm run test:tre
+
+      - name: CNS inventory-linked regressions
+        run: npm run test:cns
 
       - name: Portal authorization and document-flow regressions
         run: npm run test:portal
