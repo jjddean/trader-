@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { Loader2, MessageSquare } from "lucide-react";
@@ -22,6 +22,8 @@ import {
   ENTERPRISE_SELECT_ITEM,
   ENTERPRISE_SELECT_TRIGGER,
 } from "@/lib/enterprise-select-styles";
+import { buildMessagePdf, downloadBlob, messagePdfFileName } from "@/lib/portal/message-pdf";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 const FORM_TEXTAREA =
   "mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-xs text-slate-800 outline-none focus:border-slate-400";
@@ -88,10 +90,84 @@ export default function PortalMessagesClient({
 
   const messages = useQuery(api.client_portal.getMyMessages, messageArgs);
   const sendMessage = useMutation(api.client_portal.sendMyMessage);
+  const markMessagesRead = useMutation(api.client_portal.markMyMessagesRead);
+  const generateUploadUrl = useMutation(api.client_portal.generateMyUploadUrl);
+  const discardOrphanedUpload = useMutation(api.documents.discardOrphanedUpload);
+  const saveDocument = useMutation(api.client_portal.saveMyDocument);
 
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [actionStatus, setActionStatus] = useState<string | null>(null);
+
+  // Clear the broker's unread badge once the client is actually looking at the
+  // thread. Guarded so re-renders do not re-fire the mutation.
+  const markedThreadRef = useRef<string | null>(null);
+  const newestUnreadId =
+    messages?.find((message) => message.senderRole === "broker" && message.readAt == null)?._id ??
+    null;
+  const hasUnreadFromBroker = newestUnreadId != null;
+  // Keyed on the newest unread message, not just the thread, so a message that
+  // lands while the client is reading still clears.
+  const markKey = `${activeValue}:${newestUnreadId ?? ""}`;
+  useEffect(() => {
+    if (!authReady || !thread || !hasUnreadFromBroker) return;
+    if (markedThreadRef.current === markKey) return;
+    markedThreadRef.current = markKey;
+    const scope =
+      thread.kind === "declaration"
+        ? { declarationId: thread.id }
+        : thread.kind === "assessment"
+          ? { assessmentId: thread.id }
+          : {};
+    void markMessagesRead(scope).catch(() => {
+      // Retry on the next thread visit — an unread badge is not worth an error toast.
+      markedThreadRef.current = null;
+    });
+  }, [authReady, thread, hasUnreadFromBroker, markKey, markMessagesRead]);
+
+  const messageContext = thread?.kind === "declaration"
+    ? formatPortalFilingLabel((declarations ?? []).find((item) => item._id === thread.id) ?? { _id: thread.id })
+    : thread?.kind === "assessment"
+      ? formatPortalCaseLabel((assessments ?? []).find((item) => item._id === thread.id) ?? { _id: thread.id })
+      : "General enquiry";
+
+  const messagePdf = (message: { senderRole: "broker" | "client"; createdAt: number; body: string }) =>
+    buildMessagePdf({
+      title: "Portal message",
+      context: messageContext,
+      entries: [{ sender: message.senderRole === "broker" ? "Broker" : "Client", createdAt: message.createdAt, body: message.body }],
+    });
+
+  const handleSaveMessage = async (message: { _id: string; senderRole: "broker" | "client"; createdAt: number; body: string }) => {
+    setActionStatus(null);
+    const blob = await messagePdf(message);
+    const fileName = messagePdfFileName(message.createdAt, "portal-message");
+    const declarationId = thread?.kind === "declaration" ? thread.id : undefined;
+    const uploadUrl = await generateUploadUrl(declarationId ? { declarationId } : {});
+    const response = await fetch(uploadUrl, { method: "POST", headers: { "Content-Type": "application/pdf" }, body: blob });
+    if (!response.ok) throw new Error("Could not upload the message PDF.");
+    const { storageId } = (await response.json()) as { storageId: Id<"_storage"> };
+    try {
+      const result = await saveDocument({
+        storageId,
+        ...(declarationId ? { declarationId } : {}),
+        sourceMessageId: message._id as Id<"portal_messages">,
+        fileName,
+        category: "correspondence",
+        fileType: "correspondence",
+      });
+      setActionStatus(result.alreadySaved ? "Already saved in Documents." : "Saved to Documents.");
+    } catch (err) {
+      // The PDF is already in storage; drop it rather than leave it unreferenced.
+      try {
+        await discardOrphanedUpload({ storageId });
+      } catch (discardErr) {
+        console.error("[portal-messages] failed to discard orphaned upload", discardErr);
+      }
+      throw err;
+    }
+  };
 
   const handleSend = async () => {
     const trimmed = body.trim();
@@ -108,7 +184,7 @@ export default function PortalMessagesClient({
       }
       setBody("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send message");
+      setError(userMessageFromError(err, "Failed to send message"));
     } finally {
       setSending(false);
     }
@@ -119,12 +195,31 @@ export default function PortalMessagesClient({
     <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-xl border border-slate-200 bg-white">
       <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-3">
         <MessageSquare className="h-4 w-4 text-slate-400" />
-        <div>
+        <div className="min-w-0 flex-1">
           <h2 className="text-sm font-medium text-black">Messages</h2>
           <p className="text-[11px] text-slate-500">
             Message your customs representative or discuss specific customs activity
           </p>
         </div>
+        <button
+          type="button"
+          disabled={!messages?.length}
+          onClick={async () => {
+            if (!messages?.length) return;
+            downloadBlob(await buildMessagePdf({
+              title: "Portal conversation",
+              context: messageContext,
+              entries: [...messages].reverse().map((message) => ({
+                sender: message.senderRole === "broker" ? "Broker" : "Client",
+                createdAt: message.createdAt,
+                body: message.body,
+              })),
+            }), `portal-conversation-${new Date().toISOString().slice(0, 10)}.pdf`);
+          }}
+          className="inline-flex h-8 items-center rounded-md border border-slate-200 px-2.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+        >
+          Download conversation
+        </button>
       </div>
 
       <div className="space-y-3 p-5">
@@ -185,6 +280,8 @@ export default function PortalMessagesClient({
           isIdle={false}
           idleLabel=""
           emptyLabel={thread?.kind === "general" ? "No general messages yet." : "No messages yet on this one."}
+          onDownloadMessage={(message) => void messagePdf(message).then((blob) => downloadBlob(blob, messagePdfFileName(message.createdAt, "portal-message")))}
+          onSaveMessage={handleSaveMessage}
         />
 
         <div>
@@ -215,6 +312,7 @@ export default function PortalMessagesClient({
             {error}
           </div>
         )}
+        {actionStatus && <p className="text-xs text-emerald-700">{actionStatus}</p>}
         <button
           type="button"
           onClick={() => void handleSend()}
@@ -225,6 +323,7 @@ export default function PortalMessagesClient({
           Send message
         </button>
       </div>
+
     </div>
   );
 }

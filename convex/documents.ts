@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import {
   canAccessDeclaration,
   canAccessDocument,
@@ -9,6 +9,8 @@ import {
   listDeclarationsForTenant,
   orgIdFromDeclaration,
 } from "./lib/org_access";
+import { clientDocumentAttachmentConflict } from "./lib/portal_document_policy";
+import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 
 const DOC_CODE_REGEX = /(?:^|[^A-Z0-9])([A-Z]\d{3}|\d{4})(?:[^A-Z0-9]|$)/;
 
@@ -78,12 +80,12 @@ export const trackUpload = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     
     // Verify ownership of parent declaration
     const declaration = await ctx.db.get(args.declarationId);
     if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     return await ctx.db.insert("documents", {
@@ -106,8 +108,37 @@ export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     return await ctx.storage.generateUploadUrl();
+  },
+});
+
+/**
+ * Delete a just-uploaded file that no row ended up claiming.
+ *
+ * Uploads are two steps — POST to storage, then insert the row. If the insert
+ * fails the bytes stay in storage forever with nothing referencing them: no
+ * owner, no tenancy check, and they still count against storage. Callers invoke
+ * this from their failure path.
+ *
+ * Refuses when a documents row claims the file, so a save that actually landed
+ * can never be deleted by a late or duplicated discard.
+ */
+export const discardOrphanedUpload = mutation({
+  args: { storageId: v.id("_storage") },
+  returns: v.object({ deleted: v.boolean() }),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw unauthenticatedError();
+
+    const claimed = await ctx.db
+      .query("documents")
+      .withIndex("by_file", (q) => q.eq("fileId", args.storageId))
+      .first();
+    if (claimed) return { deleted: false };
+
+    await ctx.storage.delete(args.storageId);
+    return { deleted: true };
   },
 });
 
@@ -132,13 +163,13 @@ export const saveDocument = mutation({
         declarationId: args.declarationId ? String(args.declarationId) : undefined,
         status: 401,
       });
-      throw new Error("Unauthenticated");
+      throw unauthenticatedError();
     }
 
     const declaration = args.declarationId ? await ctx.db.get(args.declarationId) : null;
     if (args.declarationId) {
       if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
-        throw new Error("Unauthorized");
+        throw forbiddenError();
       }
     }
 
@@ -184,11 +215,11 @@ export const recordDocumentAudit = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const document = await ctx.db.get(args.documentId);
     if (!document || !(await canAccessDocument(ctx, identity.subject, document))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     await ctx.db.patch(args.documentId, {
@@ -223,7 +254,7 @@ export const getDocumentDownloadUrl = mutation({
         documentId: String(args.documentId),
         status: 401,
       });
-      throw new Error("Unauthenticated");
+      throw unauthenticatedError();
     }
 
     const document = await ctx.db.get(args.documentId);
@@ -236,7 +267,7 @@ export const getDocumentDownloadUrl = mutation({
         documentId: String(args.documentId),
         status: 403,
       });
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
     if (!document.fileId) {
       await logDocActionError(ctx, {
@@ -248,7 +279,7 @@ export const getDocumentDownloadUrl = mutation({
         declarationId: document.declarationId ? String(document.declarationId) : undefined,
         status: 400,
       });
-      throw new Error("No file is attached to this document");
+      throw userError("no_file_is_attached_to_this", "No file is attached to this document");
     }
 
     return await ctx.storage.getUrl(document.fileId);
@@ -267,7 +298,7 @@ export const deleteDocument = mutation({
         documentId: String(args.documentId),
         status: 401,
       });
-      throw new Error("Unauthenticated");
+      throw unauthenticatedError();
     }
 
     const document = await ctx.db.get(args.documentId);
@@ -280,7 +311,7 @@ export const deleteDocument = mutation({
         documentId: String(args.documentId),
         status: 403,
       });
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     if (document.fileId) {
@@ -330,7 +361,7 @@ export const replaceDocument = mutation({
         declarationId: args.declarationId ? String(args.declarationId) : undefined,
         status: 401,
       });
-      throw new Error("Unauthenticated");
+      throw unauthenticatedError();
     }
 
     const existing = await ctx.db.get(args.documentId);
@@ -344,7 +375,7 @@ export const replaceDocument = mutation({
         declarationId: args.declarationId ? String(args.declarationId) : undefined,
         status: 403,
       });
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     if (existing.fileId) {
@@ -378,6 +409,166 @@ export const replaceDocument = mutation({
   },
 });
 
+/**
+ * Attach an already-uploaded document to a declaration.
+ *
+ * Linking normally happens at upload time (portal `saveMyDocument`, broker
+ * `saveDocument`). This covers the case it cannot reach: a client sends a file
+ * through the portal before the filing exists, so the row arrives with a
+ * clientId and no declaration. The stored file is untouched — only the link,
+ * the mirrored MRN and the affected requirement rows move.
+ */
+export const linkDocumentToDeclaration = mutation({
+  args: {
+    documentId: v.id("documents"),
+    declarationId: v.id("declarations"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      await logDocActionError(ctx, {
+        action: "linkDocumentToDeclaration",
+        code: "UNAUTHENTICATED",
+        message: "Unauthenticated session attempted to link document.",
+        documentId: String(args.documentId),
+        declarationId: String(args.declarationId),
+        status: 401,
+      });
+      throw unauthenticatedError();
+    }
+
+    const document = await ctx.db.get(args.documentId);
+    if (!document || !(await canAccessDocument(ctx, identity.subject, document))) {
+      await logDocActionError(ctx, {
+        userId: identity.subject,
+        action: "linkDocumentToDeclaration",
+        code: "UNAUTHORIZED",
+        message: "Unauthorized document link request.",
+        documentId: String(args.documentId),
+        declarationId: String(args.declarationId),
+        status: 403,
+      });
+      throw forbiddenError();
+    }
+
+    const declaration = await ctx.db.get(args.declarationId);
+    if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
+      await logDocActionError(ctx, {
+        userId: identity.subject,
+        action: "linkDocumentToDeclaration",
+        code: "UNAUTHORIZED_DECLARATION",
+        message: "Unauthorized declaration target for document link.",
+        documentId: String(args.documentId),
+        declarationId: String(args.declarationId),
+        status: 403,
+      });
+      throw forbiddenError();
+    }
+
+    const isClientUpload = Boolean(document.clientId);
+    if (document.clientId) {
+      const client = await ctx.db.get(document.clientId);
+      if (!client) throw userError("document_client_not_found", "Document client not found");
+
+      const attachmentConflict = clientDocumentAttachmentConflict({
+        clientId: client._id,
+        clientOrgId: client.orgId,
+        documentClientId: document.clientId,
+        documentOrgId: document.orgId,
+        declarationClientId: declaration.clientId,
+        declarationOrgId: declaration.orgId,
+      });
+      if (attachmentConflict === "declaration_client_mismatch") {
+        throw userError("the_filing_belongs_to_a_different", "The filing belongs to a different client");
+      }
+      if (
+        attachmentConflict === "tenant_mismatch" ||
+        attachmentConflict === "document_tenant_mismatch"
+      ) {
+        throw userError("the_document_client_and_filing_must", "The document client and filing must belong to the same organisation");
+      }
+      if (attachmentConflict) throw userError("document_client_mismatch", "Document client mismatch");
+    }
+
+    const previousDeclarationId = document.declarationId;
+    if (previousDeclarationId && String(previousDeclarationId) === String(args.declarationId)) {
+      return { success: true, declarationId: String(args.declarationId) };
+    }
+    if (isClientUpload && previousDeclarationId) {
+      throw userError("client_upload_is_already_attached_to", "Client upload is already attached to a filing");
+    }
+
+    const now = Date.now();
+
+    // A portal upload arriving on an unclaimed draft also settles who the
+    // filing belongs to — matches clients.attachUnlinkedDocument.
+    if (isClientUpload && !declaration.clientId) {
+      await ctx.db.patch(args.declarationId, {
+        clientId: document.clientId,
+        lastUpdated: now,
+      });
+    }
+
+    await ctx.db.patch(args.documentId, {
+      declarationId: args.declarationId,
+      mrn: declaration.mrn,
+      // Only a client upload enters the broker's review queue; a document the
+      // broker filed themselves keeps whatever status it had earned.
+      ...(isClientUpload ? { status: "pending_review" } : {}),
+      linkedBy: identity.subject,
+      linkedAt: now,
+    });
+
+    try {
+      await ctx.db.insert("auditLogs", {
+        userId: identity.subject,
+        action: isClientUpload ? "portal_document_attached" : "document_linked",
+        details: {
+          clientId: document.clientId ? String(document.clientId) : undefined,
+          documentId: String(args.documentId),
+          declarationId: String(args.declarationId),
+          previousDeclarationId: previousDeclarationId
+            ? String(previousDeclarationId)
+            : undefined,
+        },
+        timestamp: now,
+        archived: false,
+      });
+    } catch {
+      // Never block the link on a telemetry write failure.
+    }
+
+    const code = extractDocumentCode(document.fileName) || extractDocumentCode(document.fileType);
+    if (code) {
+      await updateRequirementStatusForDeclaration(
+        ctx,
+        args.declarationId,
+        code,
+        "uploaded",
+        args.documentId,
+      );
+
+      // Re-linking leaves the old declaration short of evidence unless another
+      // document still covers the code — same reasoning as deleteDocument.
+      if (previousDeclarationId) {
+        const remainingDocs = await ctx.db
+          .query("documents")
+          .withIndex("by_declaration", (q: any) => q.eq("declarationId", previousDeclarationId))
+          .take(50);
+        const hasSameCode = remainingDocs.some(
+          (doc: any) =>
+            (extractDocumentCode(doc.fileName) || extractDocumentCode(doc.fileType)) === code,
+        );
+        if (!hasSameCode) {
+          await updateRequirementStatusForDeclaration(ctx, previousDeclarationId, code, "missing");
+        }
+      }
+    }
+
+    return { success: true, declarationId: String(args.declarationId) };
+  },
+});
+
 export const upsertRequirementsForDeclaration = mutation({
   args: {
     declarationId: v.id("declarations"),
@@ -395,11 +586,11 @@ export const upsertRequirementsForDeclaration = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const declaration = await ctx.db.get(args.declarationId);
     if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const now = Date.now();
@@ -712,5 +903,67 @@ export const getRequirementTelemetry = query({
       },
       runbook: "docs/operational-readiness-runbook.md",
     };
+  },
+});
+
+/**
+ * Delete stored files that no `documents` row references.
+ *
+ * `discardOrphanedUpload` only covers failures the browser survives. A refresh
+ * or a closed tab between the storage POST and the row insert kills the page
+ * before the discard can run, leaving bytes with no owner, no orgId and no
+ * tenancy check. This is the backstop.
+ *
+ * `documents.fileId` is the only schema field that references a stored file —
+ * verified before writing this. If another table ever stores a storage id, this
+ * sweep must learn about it or it will delete live data.
+ */
+export const sweepOrphanedFiles = internalMutation({
+  args: {
+    olderThanMs: v.optional(v.number()),
+    scanLimit: v.optional(v.number()),
+    deleteLimit: v.optional(v.number()),
+  },
+  returns: v.object({
+    scanned: v.number(),
+    deleted: v.number(),
+    referenced: v.number(),
+    tooRecent: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    // Generous grace period so an upload still mid-flight is never touched.
+    const cutoff = Date.now() - (args.olderThanMs ?? 24 * 60 * 60 * 1000);
+    const deleteLimit = args.deleteLimit ?? 50;
+
+    const files = await ctx.db.system.query("_storage").take(args.scanLimit ?? 500);
+
+    let scanned = 0;
+    let deleted = 0;
+    let referenced = 0;
+    let tooRecent = 0;
+
+    for (const file of files) {
+      scanned += 1;
+      if (file._creationTime > cutoff) {
+        tooRecent += 1;
+        continue;
+      }
+      const claimed = await ctx.db
+        .query("documents")
+        .withIndex("by_file", (q) => q.eq("fileId", file._id))
+        .first();
+      if (claimed) {
+        referenced += 1;
+        continue;
+      }
+      await ctx.storage.delete(file._id);
+      deleted += 1;
+      if (deleted >= deleteLimit) break;
+    }
+
+    if (deleted > 0) {
+      console.warn("[storage-sweep] deleted orphaned files", { deleted, scanned, referenced });
+    }
+    return { scanned, deleted, referenced, tooRecent };
   },
 });

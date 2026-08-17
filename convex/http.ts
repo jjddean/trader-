@@ -1,6 +1,6 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { api, internal } from "./_generated/api";
+import { internal } from "./_generated/api";
 
 const http = httpRouter();
 
@@ -32,11 +32,7 @@ http.route({
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const syncSecret = process.env.SYNC_SECRET!.trim();
-
-    await ctx.runAction(api.actions.hmrc.syncAllUsersHMRC, {
-        secret: syncSecret
-    });
+    await ctx.runAction(internal.actions.hmrc.syncAllUsersHMRC, {});
 
     return new Response(JSON.stringify({ status: "Sync Triggered" }), { 
         status: 200,

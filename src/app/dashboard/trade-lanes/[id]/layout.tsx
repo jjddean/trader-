@@ -1,9 +1,11 @@
 "use client";
 
 import React from "react";
+import { useQuery } from "convex/react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { ArrowLeft, FileText, PoundSterling, Package, Activity } from "lucide-react";
+import { ArrowLeft, FileText, PoundSterling, Package, Activity, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { api } from "../../../../../convex/_generated/api";
 
 export default function TradeLaneWorkspaceLayout({
   children,
@@ -14,6 +16,7 @@ export default function TradeLaneWorkspaceLayout({
   const pathname = usePathname();
   const router = useRouter();
   const laneId = params?.id ?? "";
+  const lane = useQuery(api.trade_lanes.get, { laneId });
 
   const steps = [
     {
@@ -43,6 +46,12 @@ export default function TradeLaneWorkspaceLayout({
       path: `/dashboard/trade-lanes/${laneId}/activity`,
       disabled: true,
     },
+    {
+      id: "risk",
+      name: "Risk Intelligence",
+      icon: ShieldAlert,
+      path: `/dashboard/trade-lanes/${laneId}/risk`,
+    },
   ];
 
   return (
@@ -62,15 +71,16 @@ export default function TradeLaneWorkspaceLayout({
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-lg font-semibold tracking-tight text-slate-900">
-                    Trade Lane
+                    {lane?.code ?? "Trade Lane"}
                   </h1>
                   <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[0.625rem] font-medium text-slate-700">
-                    Draft
+                    {lane?.status ?? "Loading"}
                   </span>
                 </div>
-                <p className="text-xs font-medium text-slate-500">Awaiting setup</p>
                 <p className="text-xs text-slate-500">
-                  Origin: — • Destination: — • Mode: —
+                  {lane
+                    ? `${lane.originName} (${lane.originUNLocode}) → ${lane.destinationName} (${lane.destinationUNLocode}) • ${lane.mode}`
+                    : "Loading lane…"}
                 </p>
               </div>
 
@@ -88,7 +98,7 @@ export default function TradeLaneWorkspaceLayout({
 
           <nav className="flex gap-1 rounded-lg bg-slate-100/80 p-1">
             {steps.map((step) => {
-              const isActive = pathname === step.path;
+              const isActive = pathname === step.path || (step.id === "risk" && pathname.startsWith(`${step.path}/`));
               const Icon = step.icon;
 
               return (

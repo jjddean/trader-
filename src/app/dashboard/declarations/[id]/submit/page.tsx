@@ -16,6 +16,7 @@ import {
   isConvexSessionMissing,
 } from "@/components/declaration-session-states";
 import type { Doc } from "../../../../../../convex/_generated/dataModel";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 type DocumentRequirementRow = Pick<
   Doc<"document_requirements">,
@@ -237,7 +238,7 @@ export default function SubmitPage() {
     try {
       await approveIndirectRepresentation({ declarationId });
     } catch (err: unknown) {
-      setApprovalError(err instanceof Error ? err.message : "Failed to approve indirect representation");
+      setApprovalError(userMessageFromError(err, "Failed to approve indirect representation"));
     } finally {
       setIsApproving(false);
     }
@@ -313,7 +314,7 @@ export default function SubmitPage() {
 
     } catch (err: unknown) {
       console.error("Submission failed:", err);
-      setError(err instanceof Error ? err.message : "Submission failed");
+      setError(userMessageFromError(err, "Submission failed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -374,7 +375,7 @@ export default function SubmitPage() {
       setDryRunResult(data as DryRunPayload);
       setDryRunPassed(data.success === true);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Dry run failed");
+      setError(userMessageFromError(err, "Dry run failed"));
       setDryRunPassed(false);
     } finally {
       setIsDryRunning(false);

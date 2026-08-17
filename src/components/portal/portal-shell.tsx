@@ -105,12 +105,12 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
   }, [authReady, user, syncUser, ensureBinding]);
 
   useEffect(() => {
-    if (profile) setStableProfile(profile);
-  }, [profile]);
-
-  useEffect(() => {
-    if (isLoaded && !isSignedIn) setStableProfile(null);
-  }, [isLoaded, isSignedIn]);
+    if (!profile && !(isLoaded && !isSignedIn)) return;
+    const updateId = window.setTimeout(() => {
+      setStableProfile(profile ?? null);
+    }, 0);
+    return () => window.clearTimeout(updateId);
+  }, [isLoaded, isSignedIn, profile]);
 
   useEffect(() => {
     mainScrollRef.current?.scrollTo(0, 0);

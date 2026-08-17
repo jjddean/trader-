@@ -256,6 +256,22 @@ export function renderH1Xml(payloadInfo: unknown): string {
             ? `<Address>${addrTypeCode ? `<TypeCode>${xmlEscape(addrTypeCode)}</TypeCode>` : ""}${addrCountry ? `<CountryCode>${xmlEscape(addrCountry)}</CountryCode>` : ""}</Address>`
             : "";
           return `<GoodsLocation>${idXml}${nameXml}${typeXml}${addressXml}</GoodsLocation>`;
+        })()}${(() => {
+          // DE 7/10 — TransportEquipment follows GoodsLocation in the WCO
+          // Consignment sequence (only DepartureTransportMeans, GoodsLocation,
+          // LoadingLocation and TransportEquipment may follow ArrivalTransportMeans).
+          const equipment = asArray(consignment.TransportEquipment);
+          return equipment
+            .map((item) => {
+              const id = String(item.ID || "").trim();
+              if (!id) return "";
+              return `
+        <TransportEquipment>
+          <SequenceNumeric>${xmlEscape(String(item.SequenceNumeric || "1"))}</SequenceNumeric>
+          <ID>${xmlEscape(id)}</ID>
+        </TransportEquipment>`;
+            })
+            .join("");
         })()}
       </Consignment>
       <Destination>
@@ -388,9 +404,18 @@ export function renderH1Xml(payloadInfo: unknown): string {
       <Importer>
         <ID>${xmlEscape(read(gs, "Importer").ID)}</ID>
       </Importer>${previousDocumentXml}${sellerXml}
-      <TradeTerms>
-        <ConditionCode>${xmlEscape(read(gs, "TradeTerms").ConditionCode)}</ConditionCode>${String(read(gs, "TradeTerms").LocationID || "").trim() ? `\n        <LocationID>${xmlEscape(read(gs, "TradeTerms").LocationID)}</LocationID>` : ""}
-      </TradeTerms>
+      ${(() => {
+        // Omit TradeTerms entirely rather than emitting an empty ConditionCode.
+        // A blank element is both an XSD violation and, previously, a cryptic
+        // "no_empty_tags" preflight failure that named no field.
+        const terms = read(gs, "TradeTerms");
+        const conditionCode = String(terms.ConditionCode || "").trim();
+        if (!conditionCode) return "";
+        const locationId = String(terms.LocationID || "").trim();
+        return `<TradeTerms>
+        <ConditionCode>${xmlEscape(conditionCode)}</ConditionCode>${locationId ? `\n        <LocationID>${xmlEscape(locationId)}</LocationID>` : ""}
+      </TradeTerms>`;
+      })()}
       <UCR>
         <TraderAssignedReferenceID>${xmlEscape(read(d, "UCR").TraderAssignedReferenceID)}</TraderAssignedReferenceID>
       </UCR>

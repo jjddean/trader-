@@ -3,6 +3,7 @@ import type { Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { internalQuery, mutation, query } from "./_generated/server";
 import { canAccessDeclaration } from "./lib/org_access";
+import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 
 async function distinctConversationIdsForDeclaration(
   db: QueryCtx["db"],
@@ -40,6 +41,9 @@ export const recordSubmission = mutation({
     operation: v.string(),
     outcome: v.optional(v.string()),
     conversationId: v.optional(v.string()),
+    /** CNS transport correlation. CNS returns no conversationId, so without this
+     *  a follow-up's evidence row cannot be matched to its notification. */
+    cspId: v.optional(v.string()),
     lrn: v.optional(v.string()),
     eori: v.optional(v.string()),
     priorMrn: v.optional(v.string()),
@@ -51,11 +55,11 @@ export const recordSubmission = mutation({
   returns: v.id("submissions"),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const decl = await ctx.db.get(args.declarationId);
     if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     return await ctx.db.insert("submissions", {
@@ -65,6 +69,7 @@ export const recordSubmission = mutation({
       operation: args.operation,
       outcome: args.outcome,
       conversationId: args.conversationId,
+      cspId: args.cspId,
       lrn: args.lrn,
       eori: args.eori,
       priorMrn: args.priorMrn,
@@ -74,6 +79,83 @@ export const recordSubmission = mutation({
       itemsSnapshot: args.itemsSnapshot,
       createdAt: Date.now(),
     });
+  },
+});
+
+/** Persist a CNS attempt before the outbound request is made. */
+export const beginCnsAttempt = mutation({
+  args: {
+    declarationId: v.id("declarations"),
+    environment: v.optional(v.union(v.literal("sandbox"), v.literal("production"))),
+    operation: v.string(),
+    attemptKey: v.string(),
+    requestHash: v.string(),
+    endpoint: v.string(),
+    lrn: v.optional(v.string()),
+    eori: v.optional(v.string()),
+    priorMrn: v.optional(v.string()),
+    requestXml: v.string(),
+    declarationSnapshot: v.optional(v.any()),
+    itemsSnapshot: v.optional(v.any()),
+  },
+  returns: v.id("submissions"),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw unauthenticatedError();
+    const decl = await ctx.db.get(args.declarationId);
+    if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
+      throw forbiddenError();
+    }
+    const existing = await ctx.db
+      .query("submissions")
+      .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId))
+      .filter((q) => q.eq(q.field("attemptKey"), args.attemptKey))
+      .first();
+    if (existing) return existing._id;
+    const startedAt = Date.now();
+    return await ctx.db.insert("submissions", {
+      ...args,
+      userId: identity.subject,
+      transport: "cns_inventory",
+      outcome: "pending",
+      outcomeCertainty: "unknown",
+      startedAt,
+      createdAt: startedAt,
+    });
+  },
+});
+
+/** Complete only the transport-result fields of a previously persisted CNS attempt. */
+export const completeCnsAttempt = mutation({
+  args: {
+    submissionId: v.id("submissions"),
+    outcome: v.string(),
+    hmrcStatus: v.optional(v.number()),
+    cspId: v.optional(v.string()),
+    outcomeCertainty: v.union(v.literal("certain"), v.literal("unknown")),
+    cnsErrorCode: v.optional(v.string()),
+    cnsErrorMessage: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw unauthenticatedError();
+    const row = await ctx.db.get(args.submissionId);
+    if (!row || row.transport !== "cns_inventory") throw userError("cns_attempt_not_found", "CNS attempt not found");
+    const decl = await ctx.db.get(row.declarationId);
+    if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
+      throw forbiddenError();
+    }
+    await ctx.db.patch(row._id, {
+      outcome: args.outcome,
+      hmrcStatus: args.hmrcStatus,
+      cspId: args.cspId,
+      outcomeCertainty: args.outcomeCertainty,
+      cnsErrorCode: args.cnsErrorCode,
+      cnsErrorMessage: args.cnsErrorMessage,
+      completedAt: Date.now(),
+    });
+    return null;
   },
 });
 

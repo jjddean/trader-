@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { ChevronDown, FilePlus2, FileText, ListChecks, ShieldCheck } from "lucide-react";
+import { FilePlus2, FileText, Inbox, ListChecks } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -10,16 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu, 
-  DropdownMenuTrigger, 
-  DropdownMenuContent, 
-  DropdownMenuItem 
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { DOCUMENT_TYPES } from "@/lib/utils/document-utils";
 import {
-  ENTERPRISE_DROPDOWN_ITEM,
   ENTERPRISE_SELECT_CONTENT,
   ENTERPRISE_SELECT_ITEM,
 } from "@/lib/enterprise-select-styles";
@@ -44,6 +37,9 @@ interface DocumentTableRow {
   flag?: string;
   requirementLevel?: string;
   isVirtual: boolean;
+  isClientUpload?: boolean;
+  clientId?: string;
+  clientName?: string;
   ocrText?: string;
 }
 
@@ -58,8 +54,9 @@ interface DocumentsTableProps {
   typeFilter: string;
   onTypeFilterChange: (val: string) => void;
   allDeclarationOptions: DeclarationOption[];
+  showClientUploads: boolean;
+  onShowClientUploadsChange: (show: boolean) => void;
   onSelectDocument: (doc: DocumentTableRow) => void;
-  onActiveToolChange: (tool: string) => void;
   onGenerateTemplates: () => void;
   isGeneratingTemplates: boolean;
   canGenerateTemplates: boolean;
@@ -73,8 +70,9 @@ export const DocumentsTable = React.memo(function DocumentsTable({
   typeFilter,
   onTypeFilterChange,
   allDeclarationOptions,
+  showClientUploads,
+  onShowClientUploadsChange,
   onSelectDocument,
-  onActiveToolChange,
   onGenerateTemplates,
   isGeneratingTemplates,
   canGenerateTemplates,
@@ -83,11 +81,15 @@ export const DocumentsTable = React.memo(function DocumentsTable({
 
   const filteredDocuments = useMemo(() => {
     return documents.filter((doc) => {
-      const declarationMatches = declarationFilter === "all" || doc.declarationId === declarationFilter;
+      // Client uploads is an independent view: the declaration selector stays
+      // free for picking the declaration/MRN an upload is being linked to.
+      const declarationMatches = showClientUploads
+        ? Boolean(doc.isClientUpload)
+        : declarationFilter === "all" || doc.declarationId === declarationFilter;
       const typeMatches = typeFilter === "all" || doc.typeName === typeFilter;
       return declarationMatches && typeMatches;
     });
-  }, [documents, declarationFilter, typeFilter]);
+  }, [documents, declarationFilter, typeFilter, showClientUploads]);
 
   return (
     <div className="space-y-4">
@@ -97,7 +99,7 @@ export const DocumentsTable = React.memo(function DocumentsTable({
                 <SelectTrigger className={FILTER_CONTROL_CLASS}>
                   <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
                     <FileText className={FILTER_ICON_CLASS} />
-                    <SelectValue placeholder="All declarations" className="min-w-0 flex-1 truncate text-left" />
+                    <SelectValue placeholder="Declaration / MRN" className="min-w-0 flex-1 truncate text-left" />
                   </span>
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={4} className={ENTERPRISE_SELECT_CONTENT}>
@@ -127,30 +129,23 @@ export const DocumentsTable = React.memo(function DocumentsTable({
                 </SelectContent>
               </Select>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger className={FILTER_CONTROL_CLASS}>
-                  <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
-                    <ShieldCheck className={FILTER_ICON_CLASS} />
-                    <span className="truncate">Compliance Tools</span>
-                  </span>
-                  <ChevronDown className="h-4 w-4 text-slate-400" />
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent className="z-[100] min-w-[16rem] overflow-hidden rounded-lg border border-slate-100 bg-white p-1 shadow-lg" align="end">
-                  <DropdownMenuItem 
-                    onClick={() => onActiveToolChange("preference")}
-                    className={ENTERPRISE_DROPDOWN_ITEM}
-                  >
-                    Preference Checker
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => onActiveToolChange("landed")}
-                    className={ENTERPRISE_DROPDOWN_ITEM}
-                  >
-                    Landed Cost Calculator
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                type="button"
+                variant="ghost"
+                aria-pressed={showClientUploads}
+                onClick={() => onShowClientUploadsChange(!showClientUploads)}
+                className={cn(
+                  FILTER_CONTROL_CLASS,
+                  showClientUploads && "bg-white text-black shadow-sm",
+                )}
+              >
+                <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+                  <Inbox
+                    className={cn(FILTER_ICON_CLASS, showClientUploads && "text-blue-600")}
+                  />
+                  <span className="truncate">Client uploads</span>
+                </span>
+              </Button>
             </div>
 
           <Button
@@ -224,7 +219,11 @@ export const DocumentsTable = React.memo(function DocumentsTable({
                           {doc.name}
                         </span>
                         <span className={cn("text-[0.625rem] mt-0.5", isWarning ? "text-amber-700 font-medium" : isMissing ? "text-red-700 font-medium" : "text-slate-500")}>
-                          {isMissing || isWarning ? doc.flag : `${doc.method} • ${doc.date}`}
+                          {doc.isClientUpload
+                            ? `${doc.flag || "Client upload"}${doc.clientName ? ` · ${doc.clientName}` : ""}`
+                            : isMissing || isWarning
+                              ? doc.flag
+                              : `${doc.method} • ${doc.date}`}
                         </span>
                       </div>
                     </td>
@@ -232,8 +231,12 @@ export const DocumentsTable = React.memo(function DocumentsTable({
                       {doc.typeName} <span className="text-[0.625rem] text-slate-400 ml-1">({doc.type})</span>
                     </td>
                     <td className="px-6 py-4">
-                      {doc.mrn === "Unlinked" || doc.mrn === "Draft (Pending)" ? (
+                      {doc.isClientUpload && !doc.declarationId ? (
+                        <span className="text-[0.6875rem] text-slate-500">Not linked</span>
+                      ) : doc.mrn === "Unlinked" ? (
                         <span className="text-[0.6875rem] text-slate-400">—</span>
+                      ) : doc.mrn === "Draft (Pending)" ? (
+                        <span className="text-[0.6875rem] font-medium text-slate-600">Draft (Pending)</span>
                       ) : (
                         <span className="text-xs font-semibold text-black">{doc.mrn}</span>
                       )}
@@ -246,7 +249,11 @@ export const DocumentsTable = React.memo(function DocumentsTable({
                       )}
                       {doc.status === 'review' && (
                         <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-[0.625rem] font-medium text-amber-700">
-                          {doc.requirementLevel === "advisory" ? "Advisory" : "Review"}
+                          {doc.isClientUpload && !doc.declarationId
+                            ? "New upload"
+                            : doc.requirementLevel === "advisory"
+                              ? "Advisory"
+                              : "Review"}
                         </span>
                       )}
                       {doc.status === 'missing' && (

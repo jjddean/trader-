@@ -11,6 +11,7 @@ import type { TreParsePreview } from "@/lib/tre-csv-types";
 import { TRE_FORMAT_LABELS } from "@/lib/tre-csv-types";
 import { parseTreCsv, TRE_IMPORT_MAX_BYTES } from "@/lib/tre-csv-parser";
 import { cn } from "@/lib/utils";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 interface ImportSuccess {
   lineItemsStored: number;
@@ -91,7 +92,7 @@ export function TreImportUpload({ embedded = false }: { embedded?: boolean }) {
       setPreview(null);
       setFileRef(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Import failed");
+      setError(userMessageFromError(err, "Import failed"));
     } finally {
       setLoading(false);
     }

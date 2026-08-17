@@ -3,58 +3,37 @@ import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { collectDeclarationNotifications } from "./lib/collect_declaration_notifications";
-import { FINANCIAL_LABELS as FL } from "./lib/financial_labels";
 import { orgIdFromDeclaration } from "./lib/org_access";
 import {
   hmrcStatusForDeclaration,
   loadDeclarationFinancialEstimate,
 } from "./declarations";
 import { resolveSubmissionRoute } from "./lib/export_routing";
+import { resolveSignedInEmail } from "./lib/signed_in_email";
+import {
+  canPortalClientSeeDocument,
+  clientDeclarationAttachmentConflict,
+  isAllowedPortalUploadCategory,
+} from "./lib/portal_document_policy";
+import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 
 type Ctx = QueryCtx | MutationCtx;
-
-const PORTAL_UPLOAD_CATEGORIES = new Set([
-  "invoice",
-  "packing_list",
-  "certificate",
-  "invoices",
-  "packing lists",
-  "certificates",
-  "portal_upload",
-]);
 
 function isPortalVisibleDocument(
   doc: Doc<"documents">,
   portalClerkId: string | undefined,
+  clientId?: Id<"clients">,
+  clientOrgId?: string,
 ): boolean {
-  // Client's own uploads are always visible.
-  if (portalClerkId && String(doc.userId ?? "") === portalClerkId) return true;
-  const fileType = String(doc.fileType ?? "")
-    .trim()
-    .toLowerCase();
-  return Boolean(fileType && PORTAL_UPLOAD_CATEGORIES.has(fileType));
-}
-
-function normalizeEmail(value: string | null | undefined): string | undefined {
-  const trimmed = String(value ?? "")
-    .trim()
-    .toLowerCase();
-  return trimmed || undefined;
-}
-
-/** JWT email first; fall back to users row (UserSync) — Clerk session tokens often omit email. */
-async function resolveSignedInEmail(
-  ctx: Ctx,
-  identity: { subject: string; email?: string | null },
-): Promise<string | undefined> {
-  const fromJwt = normalizeEmail(typeof identity.email === "string" ? identity.email : undefined);
-  if (fromJwt) return fromJwt;
-
-  const dbUser = await ctx.db
-    .query("users")
-    .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
-    .unique();
-  return normalizeEmail(typeof dbUser?.email === "string" ? dbUser.email : undefined);
+  return canPortalClientSeeDocument({
+    clientId,
+    clientOrgId,
+    portalClerkId,
+    documentClientId: doc.clientId,
+    documentOrgId: doc.orgId,
+    documentUserId: doc.userId,
+    fileType: doc.fileType,
+  });
 }
 
 /**
@@ -74,12 +53,12 @@ export async function resolvePortalClient(ctx: Ctx): Promise<Doc<"clients"> | nu
     return byClerk;
   }
 
-  const email = await resolveSignedInEmail(ctx, identity);
-  if (!email) return null;
+  const signedIn = await resolveSignedInEmail(ctx, identity);
+  if (!signedIn || signedIn.verified === false) return null;
 
   const byEmail = await ctx.db
     .query("clients")
-    .withIndex("by_portal_email", (q) => q.eq("portalEmail", email))
+    .withIndex("by_portal_email", (q) => q.eq("portalEmail", signedIn.email))
     .first();
   if (!byEmail || byEmail.status !== "active" || !byEmail.portalEmail) return null;
 
@@ -97,9 +76,23 @@ async function requireOwnedDeclaration(
   declarationId: Id<"declarations">,
 ): Promise<Doc<"declarations"> | null> {
   const declaration = await ctx.db.get(declarationId);
-  if (!declaration) return null;
-  if (declaration.clientId !== portalClient._id) return null;
-  return declaration;
+  return declaration && portalClientOwnsDeclaration(portalClient, declaration)
+    ? declaration
+    : null;
+}
+
+function portalClientOwnsDeclaration(
+  client: Doc<"clients">,
+  declaration: Doc<"declarations">,
+): boolean {
+  return (
+    clientDeclarationAttachmentConflict({
+      clientId: client._id,
+      clientOrgId: client.orgId,
+      declarationClientId: declaration.clientId,
+      declarationOrgId: declaration.orgId,
+    }) === null
+  );
 }
 
 async function requireOwnedAssessment(
@@ -133,10 +126,14 @@ export const ensurePortalClerkBinding = mutation({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
-    const email = await resolveSignedInEmail(ctx, identity);
-    if (!email) return { ok: false as const, reason: "no_email" };
+    const signedIn = await resolveSignedInEmail(ctx, identity);
+    if (!signedIn) return { ok: false as const, reason: "no_email" };
+    // Binding a portal to an unverified address would hand it to whoever claimed it.
+    if (signedIn.verified === false) {
+      return { ok: false as const, reason: "email_not_verified" };
+    }
 
     const existing = await ctx.db
       .query("clients")
@@ -148,7 +145,7 @@ export const ensurePortalClerkBinding = mutation({
 
     const byEmail = await ctx.db
       .query("clients")
-      .withIndex("by_portal_email", (q) => q.eq("portalEmail", email))
+      .withIndex("by_portal_email", (q) => q.eq("portalEmail", signedIn.email))
       .first();
     if (!byEmail || byEmail.status !== "active" || !byEmail.portalEmail) {
       return { ok: false as const, reason: "no_portal_access" };
@@ -203,18 +200,19 @@ export const listMyDeclarations = query({
       .order("desc")
       .take(200);
 
-    const summaries = [];
-    for (const decl of declarations) {
-      if (decl.clientId !== client._id) continue;
-      const notifications = await collectDeclarationNotifications(ctx.db, {
-        declarationId: decl._id,
-        conversationId: decl.conversationId != null ? String(decl.conversationId) : null,
-        mrn: decl.mrn != null ? String(decl.mrn) : null,
-      });
-      const { status } = hmrcStatusForDeclaration(decl, notifications);
-      summaries.push(portalDeclarationSummary(decl, status));
-    }
-    return summaries;
+    return await Promise.all(
+      declarations
+        .filter((decl) => portalClientOwnsDeclaration(client, decl))
+        .map(async (decl) => {
+          const notifications = await collectDeclarationNotifications(ctx.db, {
+            declarationId: decl._id,
+            conversationId: decl.conversationId != null ? String(decl.conversationId) : null,
+            mrn: decl.mrn != null ? String(decl.mrn) : null,
+          });
+          const { status } = hmrcStatusForDeclaration(decl, notifications);
+          return portalDeclarationSummary(decl, status);
+        }),
+    );
   },
 });
 
@@ -225,11 +223,13 @@ export const getMyDashboard = query({
     const client = await resolvePortalClient(ctx);
     if (!client) return null;
 
-    const declarations = await ctx.db
-      .query("declarations")
-      .withIndex("by_client", (q) => q.eq("clientId", client._id))
-      .order("desc")
-      .take(50);
+    const declarations = (
+      await ctx.db
+        .query("declarations")
+        .withIndex("by_client", (q) => q.eq("clientId", client._id))
+        .order("desc")
+        .take(50)
+    ).filter((declaration) => portalClientOwnsDeclaration(client, declaration));
 
     type AttentionItem = {
       kind: "declaration_action" | "missing_document" | "unread_message";
@@ -240,16 +240,25 @@ export const getMyDashboard = query({
 
     const attention: AttentionItem[] = [];
     const recent = [];
+    const enrichedDeclarations = await Promise.all(
+      declarations.map(async (decl) => {
+        const [notifications, requirements] = await Promise.all([
+          collectDeclarationNotifications(ctx.db, {
+            declarationId: decl._id,
+            conversationId: decl.conversationId != null ? String(decl.conversationId) : null,
+            mrn: decl.mrn != null ? String(decl.mrn) : null,
+          }),
+          ctx.db
+            .query("document_requirements")
+            .withIndex("by_declaration", (q) => q.eq("declarationId", decl._id))
+            .take(30),
+        ]);
+        const { status } = hmrcStatusForDeclaration(decl, notifications);
+        return { decl, status, requirements, summary: portalDeclarationSummary(decl, status) };
+      }),
+    );
 
-    for (const decl of declarations) {
-      if (decl.clientId !== client._id) continue;
-      const notifications = await collectDeclarationNotifications(ctx.db, {
-        declarationId: decl._id,
-        conversationId: decl.conversationId != null ? String(decl.conversationId) : null,
-        mrn: decl.mrn != null ? String(decl.mrn) : null,
-      });
-      const { status } = hmrcStatusForDeclaration(decl, notifications);
-      const summary = portalDeclarationSummary(decl, status);
+    for (const { decl, status, requirements, summary } of enrichedDeclarations) {
       if (recent.length < 5) recent.push(summary);
 
       const label = summary.mrn || "Declaration";
@@ -264,17 +273,13 @@ export const getMyDashboard = query({
         });
       }
 
-      const requirements = await ctx.db
-        .query("document_requirements")
-        .withIndex("by_declaration", (q) => q.eq("declarationId", decl._id))
-        .take(30);
       for (const req of requirements) {
         if (String(req.status) !== "missing") continue;
         attention.push({
           kind: "missing_document",
           title: `${req.name || req.code} missing`,
           subtitle: label,
-          href: "/portal/documents",
+          href: `/portal/documents?requirementId=${req._id}`,
         });
         if (attention.length >= 20) break;
       }
@@ -283,15 +288,12 @@ export const getMyDashboard = query({
 
     const messages = await ctx.db
       .query("portal_messages")
-      .withIndex("by_client", (q) => q.eq("clientId", client._id))
+      .withIndex("by_client_sender_read", (q) =>
+        q.eq("clientId", client._id).eq("senderRole", "broker").eq("readAt", undefined),
+      )
       .order("desc")
-      .take(50);
-    const unreadFromBroker = messages.filter(
-      (row) =>
-        row.clientId === client._id &&
-        row.senderRole === "broker" &&
-        row.readAt == null,
-    );
+      .take(201);
+    const unreadFromBroker = messages;
     if (unreadFromBroker.length > 0) {
       const first = unreadFromBroker[0]!;
       let messagesHref = "/portal/messages";
@@ -305,7 +307,7 @@ export const getMyDashboard = query({
         title:
           unreadFromBroker.length === 1
             ? "Unread message from your broker"
-            : `${unreadFromBroker.length} unread messages from your broker`,
+            : `${unreadFromBroker.length >= 201 ? "200+" : unreadFromBroker.length} unread messages from your broker`,
         subtitle: first.body.length > 80 ? `${first.body.slice(0, 80)}…` : first.body,
         href: messagesHref,
       });
@@ -365,15 +367,23 @@ export const listMyDocuments = query({
     const client = await resolvePortalClient(ctx);
     if (!client) return [];
 
-    const declarations = await ctx.db
-      .query("declarations")
+    const declarations = (
+      await ctx.db
+        .query("declarations")
+        .withIndex("by_client", (q) => q.eq("clientId", client._id))
+        .order("desc")
+        .take(50)
+    ).filter((declaration) => portalClientOwnsDeclaration(client, declaration));
+
+    const clientDocuments = await ctx.db
+      .query("documents")
       .withIndex("by_client", (q) => q.eq("clientId", client._id))
       .order("desc")
-      .take(50);
+      .take(200);
 
     const out: Array<{
       _id: Id<"documents">;
-      declarationId: Id<"declarations">;
+      declarationId: Id<"declarations"> | null;
       mrn: string | null;
       fileName: string;
       fileType: string | null;
@@ -382,15 +392,32 @@ export const listMyDocuments = query({
     }> = [];
     const seen = new Set<string>();
 
+    for (const doc of clientDocuments) {
+      if (!isPortalVisibleDocument(doc, client.portalClerkId, client._id, client.orgId)) continue;
+      seen.add(doc._id);
+      const declaration = doc.declarationId
+        ? declarations.find((item) => String(item._id) === String(doc.declarationId))
+        : undefined;
+      const fileId = doc.fileId != null ? String(doc.fileId).trim() : "";
+      out.push({
+        _id: doc._id,
+        declarationId: declaration?._id ?? null,
+        mrn: declaration?.mrn ? String(declaration.mrn) : null,
+        fileName: doc.fileName != null ? String(doc.fileName) : "Document",
+        fileType: doc.fileType != null ? String(doc.fileType) : null,
+        uploadDate: doc.uploadDate != null ? String(doc.uploadDate) : null,
+        hasFile: fileId.length > 0,
+      });
+    }
+
     for (const decl of declarations) {
-      if (decl.clientId !== client._id) continue;
       const docs = await ctx.db
         .query("documents")
         .withIndex("by_declaration", (q) => q.eq("declarationId", decl._id))
         .take(40);
       for (const doc of docs) {
         if (seen.has(doc._id)) continue;
-        if (!isPortalVisibleDocument(doc, client.portalClerkId)) continue;
+        if (!isPortalVisibleDocument(doc, client.portalClerkId, client._id, client.orgId)) continue;
         seen.add(doc._id);
         const fileId = doc.fileId != null ? String(doc.fileId).trim() : "";
         out.push({
@@ -409,6 +436,80 @@ export const listMyDocuments = query({
   },
 });
 
+/** Outstanding document requests the client can satisfy from the portal. */
+export const listMyDocumentRequirements = query({
+  args: {},
+  handler: async (ctx) => {
+    const client = await resolvePortalClient(ctx);
+    if (!client) return [];
+
+    const declarations = await ctx.db
+      .query("declarations")
+      .withIndex("by_client", (q) => q.eq("clientId", client._id))
+      .order("desc")
+      .take(50);
+
+    const out: Array<{
+      _id: Id<"document_requirements">;
+      declarationId: Id<"declarations">;
+      mrn: string | null;
+      code: string;
+      name: string;
+      requirementLevel: string | null;
+      hmrcGuidance: string | null;
+    }> = [];
+
+    for (const decl of declarations) {
+      if (!portalClientOwnsDeclaration(client, decl)) continue;
+      const requirements = await ctx.db
+        .query("document_requirements")
+        .withIndex("by_declaration", (q) => q.eq("declarationId", decl._id))
+        .take(30);
+      for (const req of requirements) {
+        if (String(req.status) !== "missing") continue;
+        out.push({
+          _id: req._id,
+          declarationId: decl._id,
+          mrn: decl.mrn ? String(decl.mrn) : null,
+          code: req.code,
+          name: req.name,
+          requirementLevel: req.requirementLevel ?? null,
+          hmrcGuidance: req.hmrcGuidance ?? null,
+        });
+        if (out.length >= 50) return out;
+      }
+    }
+    return out;
+  },
+});
+
+/** One outstanding broker request addressed by its deep-link ID. */
+export const getMyDocumentRequirement = query({
+  args: { requirementId: v.string() },
+  handler: async (ctx, args) => {
+    const client = await resolvePortalClient(ctx);
+    if (!client) return null;
+
+    const requirementId = ctx.db.normalizeId("document_requirements", args.requirementId);
+    if (!requirementId) return null;
+    const requirement = await ctx.db.get(requirementId);
+    if (!requirement || String(requirement.status) !== "missing") return null;
+
+    const declaration = await requireOwnedDeclaration(ctx, client, requirement.declarationId);
+    if (!declaration) return null;
+
+    return {
+      _id: requirement._id,
+      declarationId: declaration._id,
+      mrn: declaration.mrn ? String(declaration.mrn) : null,
+      code: requirement.code,
+      name: requirement.name,
+      requirementLevel: requirement.requirementLevel ?? null,
+      hmrcGuidance: requirement.hmrcGuidance ?? null,
+    };
+  },
+});
+
 /** Duty/VAT rows for portal Charges page (estimate vs HMRC confirmed). */
 export const listMyCharges = query({
   args: {},
@@ -424,7 +525,7 @@ export const listMyCharges = query({
 
     const rows = [];
     for (const decl of declarations) {
-      if (decl.clientId !== client._id) continue;
+      if (!portalClientOwnsDeclaration(client, decl)) continue;
       const buildAsUserId = String(decl.userId ?? "");
       const payload = await loadDeclarationFinancialEstimate(
         ctx,
@@ -457,7 +558,7 @@ async function portalCanSeeAssessment(
   if (assessment.clientId === client._id) return true;
   if (!assessment.declarationId) return false;
   const declaration = await ctx.db.get(assessment.declarationId);
-  return Boolean(declaration && declaration.clientId === client._id);
+  return Boolean(declaration && portalClientOwnsDeclaration(client, declaration));
 }
 
 /** Portal export-controls list. */
@@ -483,7 +584,7 @@ export const listMyComplianceAssessments = query({
       .order("desc")
       .take(40);
     for (const decl of declarations) {
-      if (decl.clientId !== client._id) continue;
+      if (!portalClientOwnsDeclaration(client, decl)) continue;
       const linked = await ctx.db
         .query("export_assessments")
         .withIndex("by_declaration", (q) => q.eq("declarationId", decl._id))
@@ -560,10 +661,27 @@ export const getMyComplianceAssessment = query({
       .withIndex("by_assessment", (q) => q.eq("assessmentId", args.assessmentId))
       .take(20);
     const now = Date.now();
-    const openEusu = tokens.find(
-      (t) => !t.revoked && t.completedAt == null && t.expiresAt > now,
-    );
-    const eusuPath = openEusu ? `/r/end-user/${openEusu.token}` : null;
+    // Status only. The token is the end user's attestation credential — the
+    // exporter must never be able to open (or complete) their own EUSU.
+    const latestEusuToken = [...tokens].sort((a, b) => b.createdAt - a.createdAt)[0];
+    const eusu = latestEusuToken
+      ? {
+          state: latestEusuToken.completedAt
+            ? ("completed" as const)
+            : latestEusuToken.revoked
+              ? ("revoked" as const)
+              : latestEusuToken.expiresAt <= now
+                ? ("expired" as const)
+                : latestEusuToken.openedAt
+                  ? ("opened" as const)
+                  : ("sent" as const),
+          recipientEmail: latestEusuToken.recipientEmail,
+          sentAt: latestEusuToken.createdAt,
+          openedAt: latestEusuToken.openedAt ?? null,
+          completedAt: latestEusuToken.completedAt ?? null,
+          expiresAt: latestEusuToken.expiresAt,
+        }
+      : null;
 
     const routing = resolveSubmissionRoute({
       originJurisdiction: assessment.originJurisdiction,
@@ -581,75 +699,11 @@ export const getMyComplianceAssessment = query({
       controlEntry,
       screeningSummary,
       licenceRef,
-      eusuPath,
+      eusu,
       govUkApplyUrl,
       govUkHeadline: routing.headline,
       submissionRoute: assessment.submissionRoute ?? routing.route,
       eusuCompleted: Boolean(assessment.endUserStatement),
-    };
-  },
-});
-
-export const getMyDeclarationDocuments = query({
-  args: { declarationId: v.id("declarations") },
-  handler: async (ctx, args) => {
-    const client = await resolvePortalClient(ctx);
-    if (!client) return [];
-
-    const declaration = await requireOwnedDeclaration(ctx, client, args.declarationId);
-    if (!declaration) return [];
-
-    const docs = await ctx.db
-      .query("documents")
-      .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId))
-      .take(200);
-
-    return docs
-      .filter((doc) => isPortalVisibleDocument(doc, client.portalClerkId))
-      .map((doc) => ({
-        _id: doc._id,
-        fileName: doc.fileName != null ? String(doc.fileName) : "Document",
-        fileType: doc.fileType != null ? String(doc.fileType) : null,
-        fileSize: doc.fileSize ?? null,
-        uploadDate: doc.uploadDate ?? null,
-        status: doc.status != null ? String(doc.status) : null,
-        hasFile: Boolean(doc.fileId),
-      }));
-  },
-});
-
-export const getMyDeclarationFinancials = query({
-  args: { declarationId: v.id("declarations") },
-  handler: async (ctx, args) => {
-    const client = await resolvePortalClient(ctx);
-    if (!client) return null;
-
-    const declaration = await requireOwnedDeclaration(ctx, client, args.declarationId);
-    if (!declaration) return null;
-
-    // Rebuild under the filing broker's userId (declaration owner), not the portal client.
-    const buildAsUserId = String(declaration.userId ?? "");
-    const payload = await loadDeclarationFinancialEstimate(
-      ctx,
-      declaration,
-      args.declarationId,
-      buildAsUserId,
-    );
-    if (!payload) return null;
-
-    const isConfirmed = payload.financialSource === "hmrc_confirmed";
-    // Strict DTO — no deferment account, payment method, or raw estimate internals.
-    return {
-      declarationId: payload.declarationId,
-      dutyAmount: payload.dutyAmount,
-      vatAmount: payload.vatAmount,
-      customsValue: payload.customsValue,
-      financialSource: payload.financialSource,
-      estimateIncomplete: payload.estimateIncomplete ?? false,
-      provenanceLabel: isConfirmed ? FL.confirmedProvenance : FL.estimatedProvenance,
-      badgeLabel: isConfirmed ? FL.confirmedProvenance : FL.estimateOnlyBadge,
-      isHmrcConfirmed: isConfirmed,
-      updatedAt: payload.updatedAt ?? null,
     };
   },
 });
@@ -715,6 +769,51 @@ export const getMyDeclarationStatusTimeline = query({
   },
 });
 
+/**
+ * Load one thread using its own index so the limit applies within the thread,
+ * not across the client's whole mailbox.
+ */
+async function loadThreadMessages(
+  ctx: Ctx,
+  client: Doc<"clients">,
+  scope: { declarationId?: Id<"declarations">; assessmentId?: Id<"export_assessments"> },
+  limit: number,
+): Promise<Doc<"portal_messages">[]> {
+  if (scope.declarationId) {
+    const declarationId = scope.declarationId;
+    const rows = await ctx.db
+      .query("portal_messages")
+      .withIndex("by_declaration", (q) => q.eq("declarationId", declarationId))
+      .order("desc")
+      .take(limit);
+    return rows.filter((row) => row.clientId === client._id);
+  }
+
+  if (scope.assessmentId) {
+    const assessmentId = scope.assessmentId;
+    const rows = await ctx.db
+      .query("portal_messages")
+      .withIndex("by_assessment", (q) => q.eq("assessmentId", assessmentId))
+      .order("desc")
+      .take(limit);
+    return rows.filter((row) => row.clientId === client._id);
+  }
+
+  // General thread: filter unscoped rows in the DB so the limit is not spent on
+  // declaration/assessment messages the caller did not ask for.
+  return await ctx.db
+    .query("portal_messages")
+    .withIndex("by_client", (q) => q.eq("clientId", client._id))
+    .filter((q) =>
+      q.and(
+        q.eq(q.field("declarationId"), undefined),
+        q.eq(q.field("assessmentId"), undefined),
+      ),
+    )
+    .order("desc")
+    .take(limit);
+}
+
 export const getMyMessages = query({
   args: {
     declarationId: v.optional(v.id("declarations")),
@@ -736,19 +835,9 @@ export const getMyMessages = query({
       if (!assessment) return [];
     }
 
-    const rows = await ctx.db
-      .query("portal_messages")
-      .withIndex("by_client", (q) => q.eq("clientId", client._id))
-      .order("desc")
-      .take(Math.min(args.limit ?? 100, 200));
+    const rows = await loadThreadMessages(ctx, client, args, Math.min(args.limit ?? 100, 200));
 
     return rows
-      .filter((row) => {
-        if (row.clientId !== client._id) return false;
-        if (args.declarationId) return row.declarationId === args.declarationId;
-        if (args.assessmentId) return row.assessmentId === args.assessmentId;
-        return !row.declarationId && !row.assessmentId;
-      })
       .map((row) => ({
         _id: row._id,
         declarationId: row.declarationId ?? null,
@@ -769,30 +858,30 @@ export const sendMyMessage = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const client = await resolvePortalClient(ctx);
-    if (!client) throw new Error("No portal access");
+    if (!client) throw userError("no_portal_access", "No portal access");
 
     const body = args.body.trim();
-    if (body.length < 1) throw new Error("Message is empty");
-    if (body.length > 4000) throw new Error("Message is too long");
+    if (body.length < 1) throw userError("message_is_empty", "Message is empty");
+    if (body.length > 4000) throw userError("message_is_too_long", "Message is too long");
 
     const hasDeclaration = Boolean(args.declarationId);
     const hasAssessment = Boolean(args.assessmentId);
     if (hasDeclaration && hasAssessment) {
-      throw new Error("Choose either a declaration or an export case");
+      throw userError("choose_either_a_declaration_or_an", "Choose either a declaration or an export case");
     }
 
     let orgId = client.orgId;
     if (args.declarationId) {
       const declaration = await requireOwnedDeclaration(ctx, client, args.declarationId);
-      if (!declaration) throw new Error("Declaration not found");
+      if (!declaration) throw userError("declaration_not_found", "Declaration not found");
       orgId = orgIdFromDeclaration(declaration) ?? orgId;
     }
     if (args.assessmentId) {
       const assessment = await requireOwnedAssessment(ctx, client, args.assessmentId);
-      if (!assessment) throw new Error("Export case not found");
+      if (!assessment) throw userError("export_case_not_found", "Export case not found");
       orgId = assessment.orgId ?? orgId;
     }
 
@@ -812,42 +901,111 @@ export const sendMyMessage = mutation({
   },
 });
 
+/**
+ * Mark broker->client messages in one thread as read. Client messages are left
+ * alone — readAt on those belongs to the broker side.
+ */
+export const markMyMessagesRead = mutation({
+  args: {
+    declarationId: v.optional(v.id("declarations")),
+    assessmentId: v.optional(v.id("export_assessments")),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw unauthenticatedError();
+
+    const client = await resolvePortalClient(ctx);
+    if (!client) throw userError("no_portal_access", "No portal access");
+
+    if (args.declarationId && args.assessmentId) {
+      throw userError("choose_either_a_declaration_or_an", "Choose either a declaration or an export case");
+    }
+    if (args.declarationId) {
+      const declaration = await requireOwnedDeclaration(ctx, client, args.declarationId);
+      if (!declaration) throw userError("declaration_not_found", "Declaration not found");
+    }
+    if (args.assessmentId) {
+      const assessment = await requireOwnedAssessment(ctx, client, args.assessmentId);
+      if (!assessment) throw userError("export_case_not_found", "Export case not found");
+    }
+
+    const rows = args.declarationId
+      ? await ctx.db
+          .query("portal_messages")
+          .withIndex("by_declaration", (q) => q.eq("declarationId", args.declarationId))
+          .filter((q) => q.and(q.eq(q.field("senderRole"), "broker"), q.eq(q.field("readAt"), undefined)))
+          .collect()
+      : args.assessmentId
+        ? await ctx.db
+            .query("portal_messages")
+            .withIndex("by_assessment", (q) => q.eq("assessmentId", args.assessmentId))
+            .filter((q) => q.and(q.eq(q.field("senderRole"), "broker"), q.eq(q.field("readAt"), undefined)))
+            .collect()
+        : await ctx.db
+            .query("portal_messages")
+            .withIndex("by_client_sender_read", (q) =>
+              q.eq("clientId", client._id).eq("senderRole", "broker").eq("readAt", undefined),
+            )
+            .filter((q) =>
+              q.and(q.eq(q.field("declarationId"), undefined), q.eq(q.field("assessmentId"), undefined)),
+            )
+            .collect();
+    const now = Date.now();
+    let marked = 0;
+    for (const row of rows) {
+      if (row.clientId !== client._id || row.senderRole !== "broker" || row.readAt != null) continue;
+      await ctx.db.patch(row._id, { readAt: now });
+      marked += 1;
+    }
+
+    return { marked };
+  },
+});
+
 export const getMyDocumentDownloadUrl = mutation({
   args: { documentId: v.id("documents") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const client = await resolvePortalClient(ctx);
-    if (!client) throw new Error("No portal access");
+    if (!client) throw userError("no_portal_access", "No portal access");
 
     const document = await ctx.db.get(args.documentId);
-    if (!document?.declarationId) throw new Error("Document not found");
+    if (!document) throw userError("document_not_found", "Document not found");
 
-    const declarationId = ctx.db.normalizeId("declarations", String(document.declarationId));
-    if (!declarationId) throw new Error("Document not found");
+    const isClientUpload = document.clientId === client._id;
+    let isOwnedDeclarationDocument = false;
+    if (document.declarationId) {
+      const declarationId = ctx.db.normalizeId("declarations", String(document.declarationId));
+      if (declarationId) {
+        isOwnedDeclarationDocument = Boolean(
+          await requireOwnedDeclaration(ctx, client, declarationId),
+        );
+      }
+    }
+    if (!isClientUpload && !isOwnedDeclarationDocument) throw forbiddenError();
 
-    const declaration = await requireOwnedDeclaration(ctx, client, declarationId);
-    if (!declaration) throw new Error("Unauthorized");
-
-    if (!isPortalVisibleDocument(document, client.portalClerkId)) {
-      throw new Error("Unauthorized");
+    if (!isPortalVisibleDocument(document, client.portalClerkId, client._id, client.orgId)) {
+      throw forbiddenError();
     }
 
-    if (!document.fileId) throw new Error("No file is attached to this document");
+    if (!document.fileId) throw userError("no_file_is_attached_to_this", "No file is attached to this document");
     return await ctx.storage.getUrl(document.fileId);
   },
 });
 
 export const generateMyUploadUrl = mutation({
-  args: { declarationId: v.id("declarations") },
+  args: { declarationId: v.optional(v.id("declarations")) },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     const client = await resolvePortalClient(ctx);
-    if (!client) throw new Error("No portal access");
-    const declaration = await requireOwnedDeclaration(ctx, client, args.declarationId);
-    if (!declaration) throw new Error("Unauthorized");
+    if (!client) throw userError("no_portal_access", "No portal access");
+    if (args.declarationId) {
+      const declaration = await requireOwnedDeclaration(ctx, client, args.declarationId);
+      if (!declaration) throw forbiddenError();
+    }
     return await ctx.storage.generateUploadUrl();
   },
 });
@@ -855,51 +1013,110 @@ export const generateMyUploadUrl = mutation({
 export const saveMyDocument = mutation({
   args: {
     storageId: v.id("_storage"),
-    declarationId: v.id("declarations"),
+    declarationId: v.optional(v.id("declarations")),
     fileName: v.string(),
     fileType: v.optional(v.string()),
     category: v.optional(v.string()),
+    sourceMessageId: v.optional(v.id("portal_messages")),
+    requirementId: v.optional(v.id("document_requirements")),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const client = await resolvePortalClient(ctx);
-    if (!client) throw new Error("No portal access");
+    if (!client) throw userError("no_portal_access", "No portal access");
 
-    const declaration = await requireOwnedDeclaration(ctx, client, args.declarationId);
-    if (!declaration) throw new Error("Unauthorized");
+    // A requirement fixes the declaration it belongs to — the caller cannot
+    // point a requirement at someone else's filing.
+    let requirement: Doc<"document_requirements"> | null = null;
+    let requirementDeclaration: Doc<"declarations"> | null = null;
+    if (args.requirementId) {
+      requirement = await ctx.db.get(args.requirementId);
+      if (!requirement) throw userError("document_request_not_found", "Document request not found");
+      requirementDeclaration = await requireOwnedDeclaration(
+        ctx,
+        client,
+        requirement.declarationId,
+      );
+      if (!requirementDeclaration) throw userError("document_request_not_found", "Document request not found");
+      if (String(requirement.status) !== "missing") {
+        throw userError("document_request_is_no_longer_outstanding", "Document request is no longer outstanding");
+      }
+      if (
+        args.declarationId &&
+        String(args.declarationId) !== String(requirement.declarationId)
+      ) {
+        throw userError("document_request_belongs_to_a_different", "Document request belongs to a different filing");
+      }
+    }
+
+    const targetDeclarationId = requirement?.declarationId ?? args.declarationId;
+    const declaration =
+      requirementDeclaration ??
+      (targetDeclarationId
+        ? await requireOwnedDeclaration(ctx, client, targetDeclarationId)
+        : null);
+    if (targetDeclarationId && !declaration) throw forbiddenError();
+    if (args.sourceMessageId) {
+      const message = await ctx.db.get(args.sourceMessageId);
+      if (!message || message.clientId !== client._id) throw userError("message_not_found", "Message not found");
+    }
 
     const category = String(args.category ?? args.fileType ?? "")
       .trim()
       .toLowerCase();
-    if (category && !PORTAL_UPLOAD_CATEGORIES.has(category)) {
-      throw new Error("Only invoices, packing lists, and certificates can be uploaded");
+    if (!isAllowedPortalUploadCategory(category)) {
+      throw userError("unsupported_document_type", "Unsupported document type");
     }
 
     const fileName = args.fileName.trim();
-    if (!fileName) throw new Error("File name is required");
+    if (!fileName) throw userError("file_name_is_required", "File name is required");
 
-    const orgId = orgIdFromDeclaration(declaration) ?? client.orgId;
+    if (args.sourceMessageId) {
+      const existing = await ctx.db
+        .query("documents")
+        .withIndex("by_source_message", (q) => q.eq("sourceMessageId", args.sourceMessageId))
+        .first();
+      if (existing?.clientId === client._id) {
+        return { documentId: existing._id, alreadySaved: true as const };
+      }
+    }
+
+    const orgId = (declaration ? orgIdFromDeclaration(declaration) : undefined) ?? client.orgId;
     const documentId = await ctx.db.insert("documents", {
       fileId: args.storageId,
       userId: identity.subject,
       ...(orgId ? { orgId } : {}),
+      clientId: client._id,
       fileName,
-      declarationId: args.declarationId,
-      mrn: declaration.mrn != null ? String(declaration.mrn) : undefined,
-      status: "pending_review",
+      ...(targetDeclarationId ? { declarationId: targetDeclarationId } : {}),
+      mrn: declaration?.mrn != null ? String(declaration.mrn) : undefined,
+      status: targetDeclarationId ? "pending_review" : "unlinked",
       auditStatus: "pending",
-      fileType: args.fileType ?? args.category ?? "portal_upload",
+      fileType: requirement?.code ?? args.fileType ?? args.category ?? "portal_upload",
       uploadDate: new Date().toISOString(),
+      ...(args.sourceMessageId ? { sourceMessageId: args.sourceMessageId } : {}),
     });
+
+    // Close the request the client was answering. Still "pending_review" for the
+    // broker — uploaded means supplied, not accepted.
+    if (requirement && String(requirement.status) === "missing") {
+      await ctx.db.patch(requirement._id, {
+        status: "uploaded",
+        linkedDocumentId: documentId,
+        updatedAt: Date.now(),
+      });
+    }
 
     await ctx.db.insert("auditLogs", {
       userId: identity.subject,
       action: "portal_document_uploaded",
       details: {
         documentId,
-        declarationId: args.declarationId,
+        declarationId: targetDeclarationId ?? null,
+        requirementId: args.requirementId ?? null,
+        requirementCode: requirement?.code ?? null,
         clientId: client._id,
         fileName,
       },
@@ -907,6 +1124,6 @@ export const saveMyDocument = mutation({
       archived: false,
     });
 
-    return { documentId };
+    return { documentId, alreadySaved: false as const };
   },
 });

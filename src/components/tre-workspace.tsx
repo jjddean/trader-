@@ -15,14 +15,23 @@ import { TreImportUpload } from "@/components/tre-import-upload";
 import { TreOpportunities } from "@/components/tre-opportunities";
 import { TreAuditFindings } from "@/components/tre-audit-findings";
 import { TreHsSuggest } from "@/components/tre-hs-suggest";
+import { UnifiedComplianceTool } from "@/app/dashboard/documents/components/UnifiedComplianceTool";
+import { LandedCostCalculator } from "@/app/dashboard/documents/components/LandedCostCalculator";
 
 type TreTab = "overview" | "duty" | "compliance" | "imports";
+type TreTool = "preference" | "landed";
 
 const tabs: Array<{ id: TreTab; label: string }> = [
   { id: "overview", label: "Overview" },
   { id: "duty", label: "Duty review" },
   { id: "compliance", label: "Compliance" },
   { id: "imports", label: "Imports" },
+];
+
+// Tools open as modals over the current tab rather than swapping the panel.
+const toolTabs: Array<{ id: TreTool; label: string }> = [
+  { id: "preference", label: "Preference checker" },
+  { id: "landed", label: "Landed cost" },
 ];
 
 function formatGbp(amount: number): string {
@@ -32,11 +41,13 @@ function formatGbp(amount: number): string {
 function WorkspaceTabs({
   value,
   onChange,
+  onOpenTool,
   dutyCount,
   complianceCount,
 }: {
   value: TreTab;
   onChange: (tab: TreTab) => void;
+  onOpenTool: (tool: TreTool) => void;
   dutyCount: number;
   complianceCount: number;
 }) {
@@ -65,6 +76,17 @@ function WorkspaceTabs({
               {badges[tab.id]}
             </span>
           )}
+        </button>
+      ))}
+
+      {toolTabs.map((tool) => (
+        <button
+          key={tool.id}
+          type="button"
+          onClick={() => onOpenTool(tool.id)}
+          className="flex items-center gap-2 border-b-2 border-transparent px-1 pb-3 text-xs font-medium text-slate-500 transition-colors hover:text-black"
+        >
+          {tool.label}
         </button>
       ))}
     </div>
@@ -211,6 +233,7 @@ function OverviewPanel({
 
 export function TreWorkspace() {
   const [tab, setTab] = useState<TreTab>("overview");
+  const [activeTool, setActiveTool] = useState<TreTool | null>(null);
   const opportunities = useQuery(api.tre_analytics.listOpportunities);
   const audit = useQuery(api.tre_audit.listAuditFindings);
 
@@ -219,6 +242,7 @@ export function TreWorkspace() {
       <WorkspaceTabs
         value={tab}
         onChange={setTab}
+        onOpenTool={setActiveTool}
         dutyCount={opportunities?.opportunityCount ?? 0}
         complianceCount={audit?.findingCount ?? 0}
       />
@@ -229,6 +253,17 @@ export function TreWorkspace() {
         {tab === "compliance" && <TreAuditFindings embedded />}
         {tab === "imports" && <TreImportUpload embedded />}
       </div>
+
+      <UnifiedComplianceTool
+        isOpen={activeTool === "preference"}
+        onOpenChange={(open) => !open && setActiveTool(null)}
+        declarationId={null}
+      />
+
+      <LandedCostCalculator
+        isOpen={activeTool === "landed"}
+        onOpenChange={(open) => !open && setActiveTool(null)}
+      />
     </div>
   );
 }

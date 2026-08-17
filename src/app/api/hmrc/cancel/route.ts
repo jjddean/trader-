@@ -9,6 +9,15 @@ import { resolveOrgHmrcRoutingForDeclaration } from "../../../../lib/hmrc-org-ro
 import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
 import { logHmrcAudit } from "../../../../lib/audit-log";
 import { buildInvalidationXml } from "../../../../lib/hmrc-invalidation-xml";
+import {
+  collectGovHeaders,
+  FollowUpLrnUnavailableError,
+  resolveFollowUpContext,
+  resolveFollowUpLrn,
+} from "../../../../lib/cns/follow-up";
+import { sendCnsDeclaration } from "../../../../lib/cns/declarations";
+import { userMessageFromError } from "@/lib/convex-errors";
+import { correlationIdFrom, logOperationFailure, withCorrelation } from "@/lib/correlation";
 
 /**
  * POST /api/hmrc/cancel
@@ -16,6 +25,7 @@ import { buildInvalidationXml } from "../../../../lib/hmrc-invalidation-xml";
  * HMRC: POST /customs/declarations/cancellation-requests — FunctionCode 13, TypeCode INV.
  */
 export async function POST(request: Request) {
+  const correlationId = correlationIdFrom(request);
   try {
     const clerkAuth = await auth();
     const session = await getAuthenticatedConvex(clerkAuth);
@@ -59,9 +69,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Failed to verify declaration environment" }, { status: 403 });
     }
 
-    const tokenResult = await resolveHmrcAccessToken(convex, userId, hmrcContext);
-    if ("error" in tokenResult) {
-      return tokenResult.error;
+    // Follow-up operations stay on the route the declaration was created on.
+    const followUp = await resolveFollowUpContext(convex, declarationId as Id<"declarations">);
+
+    // CNS authenticates with Basic credentials — no HMRC OAuth token needed.
+    let hmrcToken = "";
+    if (followUp.transport === "hmrc_direct") {
+      const tokenResult = await resolveHmrcAccessToken(convex, userId, hmrcContext);
+      if ("error" in tokenResult) {
+        return tokenResult.error;
+      }
+      hmrcToken = tokenResult.token;
     }
 
     const eori = String(lane.eori || "").trim();
@@ -74,8 +92,20 @@ export async function POST(request: Request) {
 
     // DE 2/5 FunctionalReferenceID: an..35 — keep cancel LRN within limit.
     const rawId = String(declarationId);
-    const cancelLrn =
+    const mintedCancelLrn =
       `CX-${rawId}`.length <= 35 ? `CX-${rawId}` : `CX-${rawId.slice(-32)}`;
+
+    // CNS requires the ORIGINAL create LRN here; the direct HMRC path keeps its
+    // existing minted CX- reference and correlates via X-Conversation-ID.
+    let cancelLrn: string;
+    try {
+      cancelLrn = resolveFollowUpLrn(followUp, mintedCancelLrn, "cancel");
+    } catch (lrnErr: unknown) {
+      if (lrnErr instanceof FollowUpLrnUnavailableError) {
+        return NextResponse.json({ error: lrnErr.message, code: "CNS_LRN_UNAVAILABLE" }, { status: 409 });
+      }
+      throw lrnErr;
+    }
     const trimmedReason = typeof reason === "string" ? reason.trim() : "";
     const xmlPayload = buildInvalidationXml({
       cancelLrn,
@@ -84,23 +114,11 @@ export async function POST(request: Request) {
       reason: trimmedReason.length > 0 ? trimmedReason : undefined,
     });
 
-    const hmrcResponse = await fetchHmrc(
-      declarationsEndpointUrl(hmrcContext.apiBaseUrl, "cancel"),
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/xml; charset=UTF-8" },
-        body: xmlPayload,
-      },
-      request,
-      tokenResult.token,
-      eori,
-      hmrcContext,
-    );
-
     const recordCancelEvidence = async (
       outcome: "accepted" | "rejected" | "error",
       hmrcStatus: number,
       convId: string | null,
+      cspId?: string | null,
     ) => {
       try {
         await convex.mutation(api.submissions.recordSubmission, {
@@ -109,6 +127,7 @@ export async function POST(request: Request) {
           operation: "cancel",
           outcome,
           conversationId: convId || undefined,
+          cspId: cspId || undefined,
           lrn: cancelLrn,
           eori,
           priorMrn: String(mrn).trim() || undefined,
@@ -122,9 +141,127 @@ export async function POST(request: Request) {
       }
     };
 
+    let followUpClaim: { prevStatus: string };
+    try {
+      followUpClaim = await convex.mutation(api.declarations.beginFollowUp, {
+        id: declarationId as Id<"declarations">,
+        operation: "cancel",
+      });
+    } catch (claimErr: unknown) {
+      const m = claimErr instanceof Error ? claimErr.message : String(claimErr);
+      if (m.includes("SUBMIT_BLOCKED")) {
+        return NextResponse.json(
+          { error: m.replace(/^[\s\S]*SUBMIT_BLOCKED:\s*/, "").trim().split("\n")[0] },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json({ error: "Could not claim the declaration for cancellation." }, { status: 500 });
+    }
+
+    const revertFollowUp = async () => {
+      try {
+        await convex.mutation(api.declarations.updateDeclarationStatus, {
+          id: declarationId as Id<"declarations">,
+          status: followUpClaim.prevStatus,
+        });
+      } catch (revertErr: unknown) {
+        console.warn("[CANCEL] Failed to revert claim after failure (non-critical):", revertErr);
+      }
+    };
+
+    // CNS route — cancellation through the CSP gateway.
+    if (followUp.transport === "cns_inventory") {
+      const cnsResult = await sendCnsDeclaration(followUp.config, {
+        operation: "cancel",
+        xmlPayload,
+        forwardedGovHeaders: collectGovHeaders(request),
+      });
+
+      if (cnsResult.status === "failed") {
+        const { error: cnsError } = cnsResult;
+        const outcomeUnknown = cnsError.disposition === "outcome_unknown";
+        // Unknown outcome: the cancellation may have landed, so keep the claim.
+        if (!outcomeUnknown) await revertFollowUp();
+        await recordCancelEvidence(outcomeUnknown ? "error" : "rejected", cnsError.httpStatus, null);
+        await logHmrcAudit(convex, userId, "declaration_cancel_failed", {
+          correlationId,
+          declarationId,
+          mrn,
+          transport: "cns_inventory",
+          reason: outcomeUnknown ? "cns_outcome_unknown" : "cns_rejected",
+          cnsCode: cnsError.code,
+          cnsStatus: cnsError.httpStatus,
+          details: cnsError.message.slice(0, 2000),
+        });
+        return NextResponse.json(
+          {
+            error: outcomeUnknown
+              ? "CNS did not return a definitive response to the cancellation. Check notifications before retrying."
+              : "CNS rejected the cancellation",
+            code: cnsError.code,
+            message: cnsError.message,
+            details: cnsError.details,
+            outcomeUnknown,
+          },
+          { status: outcomeUnknown ? 504 : cnsError.httpStatus || 502 },
+        );
+      }
+
+      await convex.mutation(api.declarations.updateDeclarationStatus, {
+        id: declarationId,
+        status: "Cancellation Requested",
+      });
+      await recordCancelEvidence("accepted", cnsResult.httpStatus, null, cnsResult.cspId);
+
+      try {
+        await convex.mutation(api.cns.recordTransportOutcome, {
+          declarationId,
+          transportState: "cns_cancel_pending",
+          ...(cnsResult.cspId ? { cspId: cnsResult.cspId } : {}),
+        });
+      } catch (stateErr: unknown) {
+        console.warn("[CANCEL/CNS] Failed to persist transport state (non-critical):", stateErr);
+      }
+
+      await logHmrcAudit(convex, userId, "declaration_cancel_requested", {
+        correlationId,
+        declarationId,
+        mrn,
+        transport: "cns_inventory",
+        cspId: cnsResult.cspId,
+        cancelLrn,
+        hmrcStatus: cnsResult.httpStatus,
+      });
+
+      return NextResponse.json({
+        success: true,
+        transport: "cns_inventory",
+        status: "Cancellation Requested",
+        cspId: cnsResult.cspId,
+        cancelLrn,
+        hmrcStatus: cnsResult.httpStatus,
+        requestXml: xmlPayload,
+      });
+    }
+
+    const hmrcResponse = await fetchHmrc(
+      declarationsEndpointUrl(hmrcContext.apiBaseUrl, "cancel"),
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/xml; charset=UTF-8" },
+        body: xmlPayload,
+      },
+      request,
+      hmrcToken,
+      eori,
+      hmrcContext,
+    );
+
     if (hmrcResponse.status === 429) {
+      await revertFollowUp();
       await recordCancelEvidence("error", 429, null);
       await logHmrcAudit(convex, userId, "declaration_cancel_failed", {
+        correlationId,
         declarationId,
         mrn,
         reason: "rate_limited",
@@ -136,8 +273,10 @@ export async function POST(request: Request) {
     if (!hmrcResponse.ok) {
       const errorText = await hmrcResponse.text();
       console.error("HMRC Cancellation Error:", hmrcResponse.status, errorText);
+      await revertFollowUp();
       await recordCancelEvidence("rejected", hmrcResponse.status, hmrcResponse.headers.get("X-Conversation-ID"));
       await logHmrcAudit(convex, userId, "declaration_cancel_failed", {
+        correlationId,
         declarationId,
         mrn,
         reason: "hmrc_rejected",
@@ -152,11 +291,32 @@ export async function POST(request: Request) {
     }
 
     const conversationId = hmrcResponse.headers.get("X-Conversation-ID");
-    await convex.mutation(api.declarations.updateDeclarationStatus, {
-      id: declarationId,
-      status: "Cancellation Requested",
-      conversationId: conversationId || undefined,
-    });
+    if (!conversationId) {
+      console.error("[CANCEL] HMRC accepted but returned no X-Conversation-ID", {
+        declarationId,
+        hmrcStatus: hmrcResponse.status,
+      });
+    }
+
+    // HMRC has accepted. A Convex failure from here — an expired token during a
+    // slow HMRC call is the likely cause — must not surface as a 500, or the
+    // caller believes the request failed. The claim already blocks a duplicate;
+    // this stops us reporting failure on success.
+    let statusPersisted = true;
+    try {
+      await convex.mutation(api.declarations.updateDeclarationStatus, {
+        id: declarationId,
+        status: "Cancellation Requested",
+        conversationId: conversationId || undefined,
+      });
+    } catch (statusErr: unknown) {
+      statusPersisted = false;
+      logOperationFailure(
+        { correlationId, operation: "declaration_cancel", declarationId: String(declarationId) },
+        statusErr,
+        { note: "HMRC accepted but status persist failed" },
+      );
+    }
 
     await recordCancelEvidence("accepted", hmrcResponse.status, conversationId);
 
@@ -174,6 +334,7 @@ export async function POST(request: Request) {
     }
 
     await logHmrcAudit(convex, userId, "declaration_cancel_requested", {
+      correlationId,
       declarationId,
       mrn,
       conversationId,
@@ -184,13 +345,19 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       status: "Cancellation Requested",
+      statusPersisted,
+      correlationId,
       conversationId,
       cancelLrn,
       requestXml: xmlPayload,
     });
   } catch (error: unknown) {
     console.error("Cancellation crash:", error);
-    const message = error instanceof Error ? error.message : "Internal Server Error";
-    return NextResponse.json({ error: "Internal Server Error", message }, { status: 500 });
+    logOperationFailure({ correlationId, operation: "declaration_cancel" }, error);
+    const message = userMessageFromError(error, "Internal Server Error");
+    return withCorrelation(
+      NextResponse.json({ error: "Internal Server Error", message, correlationId }, { status: 500 }),
+      correlationId,
+    );
   }
 }

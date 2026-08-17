@@ -1,7 +1,9 @@
 import { v } from "convex/values";
+import { normalizeEmail } from "./lib/signed_in_email";
 import { mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { canAccessDeclaration } from "./lib/org_access";
+import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 const hmrcEnvironment = v.union(v.literal("sandbox"), v.literal("production"));
 type HmrcEnvironment = "sandbox" | "production";
 
@@ -21,10 +23,10 @@ export const saveToken = mutation({
     // tokens under any userId).
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("Unauthenticated: HMRC token writes require an authenticated session");
+      throw userError("unauthenticated_hmrc_token_writes_require_an", "Unauthenticated: HMRC token writes require an authenticated session");
     }
     if (args.userId && args.userId !== identity.subject) {
-      throw new Error("Forbidden: cannot write HMRC tokens for another user");
+      throw userError("forbidden_cannot_write_hmrc_tokens_for", "Forbidden: cannot write HMRC tokens for another user");
     }
     const effectiveUserId = identity.subject;
     const email =
@@ -53,6 +55,7 @@ export const saveToken = mutation({
       await ctx.db.insert("users", {
         clerkId: effectiveUserId,
         email,
+        emailNormalized: normalizeEmail(email),
         name,
         role: "user",
       });
@@ -107,7 +110,7 @@ export const disconnectToken = mutation({
   args: { environment: v.optional(hmrcEnvironment) },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const environment: HmrcEnvironment = args.environment ?? "sandbox";
     const existing = await ctx.db
@@ -188,11 +191,11 @@ export const scheduleNotificationPulls = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const decl = await ctx.db.get(args.declarationId);
     if (!decl || !(await canAccessDeclaration(ctx, identity.subject, decl))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const environment = args.environment ?? "sandbox";
@@ -220,7 +223,7 @@ export const storeOAuthPkce = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("Unauthenticated");
+      throw unauthenticatedError();
     }
 
     const existing = await ctx.db
@@ -247,7 +250,7 @@ export const consumeOAuthPkce = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("Unauthenticated");
+      throw unauthenticatedError();
     }
 
     const row = await ctx.db

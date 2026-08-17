@@ -10,6 +10,7 @@ import {
   Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ApiError, userMessageFromError } from "@/lib/convex-errors";
 
 type EntryType = "military" | "dual_use" | "firearms" | "radioactive";
 
@@ -121,7 +122,7 @@ export function ControlListBrowser() {
         const res = await fetch(`/api/export-controls/control-list?${params}`);
         const json = (await res.json()) as BrowseResponse & { error?: string };
         if (!res.ok)
-          throw new Error(json.error || "Failed to load control list");
+          throw new ApiError(json.error || "Failed to load control list");
         setData((previous) =>
           append && previous
             ? { ...json, entries: [...previous.entries, ...json.entries] }
@@ -129,7 +130,7 @@ export function ControlListBrowser() {
         );
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Failed to load control list",
+          userMessageFromError(err, "Failed to load control list"),
         );
         if (!append) setData(null);
       } finally {
@@ -160,13 +161,13 @@ export function ControlListBrowser() {
           entry?: EntryDetail;
           error?: string;
         };
-        if (!res.ok) throw new Error(json.error || "Entry not found");
+        if (!res.ok) throw new ApiError(json.error || "Entry not found");
         if (!cancelled) setDetail(json.entry ?? null);
       })
       .catch((err) => {
         if (!cancelled) {
           setDetail(null);
-          setError(err instanceof Error ? err.message : "Failed to load entry");
+          setError(userMessageFromError(err, "Failed to load entry"));
         }
       })
       .finally(() => {

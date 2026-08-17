@@ -137,7 +137,7 @@ function DeclarationsPageContent() {
 
     if (statusFilter !== "all") {
       if (statusFilter === "needs-action") {
-        if (!["Rejected", "Invalid", "Action Required"].includes(status)) return false;
+        if (!["Inventory Rejected", "Rejected", "Invalid", "Action Required"].includes(status)) return false;
       } else if (statusFilter === "Cancelled") {
         if (!badgeLabel.startsWith("Cancelled")) return false;
       } else if (status !== statusFilter) {
@@ -303,6 +303,15 @@ function DeclarationsPageContent() {
                             {repChip && (
                               <span className="inline-flex rounded-md bg-violet-100 px-1.5 py-0.5 text-[0.625rem] font-medium text-violet-800">
                                 {repChip}
+                              </span>
+                            )}
+                            {(dec as { submissionTransport?: string }).submissionTransport ===
+                              "cns_inventory" && (
+                              <span
+                                title="Filed through the CNS inventory gateway"
+                                className="inline-flex rounded-md bg-sky-100 px-1.5 py-0.5 text-[0.625rem] font-medium text-sky-800"
+                              >
+                                CNS
                               </span>
                             )}
                           </div>

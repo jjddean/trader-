@@ -13,21 +13,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
     url: `${baseUrl}/guides${slug}`,
     lastModified: new Date(),
     changeFrequency: 'monthly' as const,
-    priority: 0.8,
+    priority: 0.6,
   }));
 
   const corePages = [
     '',
     '/solutions',
-    '/resources',
+    '/solutions/export-controls',
+    '/solutions/financial-control',
+    '/docs',
     '/about',
     '/contact',
     '/tools',
-    '/tools/hscode-lookup',
+    '/hs-code-lookup',
   ].map((slug) => ({
     url: `${baseUrl}${slug}`,
     lastModified: new Date(),
-    changeFrequency: slug === '' ? 'weekly' as const : 'monthly' as const,
+    changeFrequency: slug === '' ? ('weekly' as const) : ('monthly' as const),
     priority: slug === '' ? 1 : 0.9,
   }));
 

@@ -1,7 +1,7 @@
 "use node";
 
 import { v } from "convex/values";
-import { action } from "../_generated/server";
+import { action, internalAction } from "../_generated/server";
 
 /**
  * Deprecated: HMRC OAuth must start at the Next.js route so it can bind Clerk,
@@ -25,10 +25,10 @@ export const handleHmrcCallback = action({
   },
 });
 
-export const syncAllUsersHMRC = action({
-  args: { secret: v.string() },
+/** Internal-only: the public form accepted a `secret` argument it never checked. */
+export const syncAllUsersHMRC = internalAction({
+  args: {},
   handler: async () => {
-    // Placeholder for global sync
     console.log("Global sync triggered");
     return { success: true };
   },

@@ -16,6 +16,7 @@ import { Info, Loader2, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CompactCheckbox } from "@/components/ui/compact-checkbox";
 import { countries } from "@/lib/data/countries";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 const selectTriggerClassName =
   "w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500";
@@ -82,7 +83,7 @@ export function DeclarationClientPicker({
         clientId: value === "__none__" ? null : value,
       });
     } catch (err) {
-      setClientError(err instanceof Error ? err.message : "Failed to link client");
+      setClientError(userMessageFromError(err, "Failed to link client"));
     } finally {
       setClientBusy(false);
     }
@@ -198,7 +199,7 @@ export function DeclarationRepresentationFields({
       setRepSuccess(true);
       setRepHydrated(false);
     } catch (err) {
-      setRepError(err instanceof Error ? err.message : "Failed to save representation");
+      setRepError(userMessageFromError(err, "Failed to save representation"));
     } finally {
       setRepSaving(false);
     }

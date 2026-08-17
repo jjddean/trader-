@@ -3,6 +3,7 @@ import { mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getActiveOrgId, listDeclarationsForTenant } from "./lib/org_access";
 import { buildTenantDeclarationMrnLinks } from "./lib/tre_links";
+import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 
 const treRowValidator = v.object({
   reportKind: v.string(),
@@ -40,7 +41,7 @@ export const listImports = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const orgId = await getActiveOrgId(ctx, identity.subject);
     if (orgId) {
@@ -63,16 +64,16 @@ export const listImportRows = query({
   args: { importId: v.id("tre_imports") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const record = await ctx.db.get(args.importId);
-    if (!record) throw new Error("Import not found");
+    if (!record) throw userError("import_not_found", "Import not found");
 
     const orgId = await getActiveOrgId(ctx, identity.subject);
     if (orgId) {
-      if (record.orgId !== orgId) throw new Error("Unauthorized");
+      if (record.orgId !== orgId) throw forbiddenError();
     } else if (record.userId !== identity.subject) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const rows = await ctx.db
@@ -116,19 +117,19 @@ export const commitImport = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const orgId = await getActiveOrgId(ctx, identity.subject);
     if (!orgId) {
-      throw new Error("Select an organisation workspace before importing TRE data.");
+      throw userError("select_an_organisation_workspace_before_importing", "Select an organisation workspace before importing TRE data.");
     }
 
     if (args.rows.length > TRE_MAX_ROWS) {
-      throw new Error(`Maximum ${TRE_MAX_ROWS} rows per import.`);
+      throw userError("maximum_rows_per_import", `Maximum ${TRE_MAX_ROWS} rows per import.`);
     }
 
     if (args.rows.length === 0) {
-      throw new Error("No importable rows found in CSV.");
+      throw userError("no_importable_rows_found_in_csv", "No importable rows found in CSV.");
     }
 
     const importId = await ctx.db.insert("tre_imports", {

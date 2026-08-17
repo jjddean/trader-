@@ -27,6 +27,7 @@ import { docTypeName } from "@/lib/utils/document-utils";
 import { getPreferenceDecision } from "@/lib/preference-engine";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 interface UnifiedComplianceToolProps {
   isOpen: boolean;
@@ -193,7 +194,7 @@ export function UnifiedComplianceTool({ isOpen, onOpenChange, declarationId }: U
         estimateLabel: result.estimateLabel,
       });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      setError(userMessageFromError(err, "An unexpected error occurred"));
     } finally {
       setLoading(false);
     }

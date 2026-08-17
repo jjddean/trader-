@@ -4,6 +4,7 @@ import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { canAccessDeclaration, orgIdFromDeclaration } from "./lib/org_access";
+import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 
 type Ctx = QueryCtx | MutationCtx;
 
@@ -240,11 +241,11 @@ export const setRepresentationDetails = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const declaration = await ctx.db.get(args.declarationId);
     if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const now = Date.now();
@@ -305,15 +306,15 @@ export const approveIndirectRepresentation = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const declaration = await ctx.db.get(args.declarationId);
     if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     if (representationType(declaration) !== "indirect") {
-      throw new Error("Only indirect representation declarations require this approval.");
+      throw userError("only_indirect_representation_declarations_require_this", "Only indirect representation declarations require this approval.");
     }
 
     const now = Date.now();
@@ -367,14 +368,14 @@ export const revokeApproval = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const approval = await ctx.db.get(args.approvalId);
-    if (!approval) throw new Error("Approval not found");
+    if (!approval) throw userError("approval_not_found", "Approval not found");
 
     const declaration = await ctx.db.get(approval.declarationId);
     if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const reason = normalizeOptionalString(args.reason) ?? "Revoked";

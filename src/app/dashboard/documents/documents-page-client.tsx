@@ -24,8 +24,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
-import { UnifiedComplianceTool } from "./components/UnifiedComplianceTool";
-import { LandedCostCalculator } from "./components/LandedCostCalculator";
 import { DocumentsTable } from "./components/DocumentsTable";
 import { UploadModal } from "./components/UploadModal";
 import { 
@@ -41,6 +39,7 @@ import {
   getRememberedDocumentsSnapshot,
   rememberDocumentsSnapshot,
 } from "@/lib/dashboard-documents-cache";
+import { ApiError, userMessageFromError } from "@/lib/convex-errors";
 
 // import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -62,12 +61,13 @@ export function DocumentsPageClient({
   const canQuery =
     isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && Boolean(userId);
 
-  const [activeTool, setActiveTool] = useState<string | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(initialOpenUpload);
   const [isPasteOpen, setIsPasteOpen] = useState(false);
   const [declarationFilter, setDeclarationFilter] = useState("all");
+  const [showClientUploads, setShowClientUploads] = useState(false);
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  const [attachDeclarationId, setAttachDeclarationId] = useState("none");
   const [pasteText, setPasteText] = useState("");
   const [pasteType, setPasteType] = useState("");
   const [pasteDeclarationId, setPasteDeclarationId] = useState("none");
@@ -88,10 +88,21 @@ export function DocumentsPageClient({
   const requirements = useQuery(api.documents.getDocumentRequirements, requirementsArgs);
   const getDocumentDownloadUrl = useMutation(api.documents.getDocumentDownloadUrl);
   const deleteDocument = useMutation(api.documents.deleteDocument);
+  const linkDocumentToDeclaration = useMutation(api.documents.linkDocumentToDeclaration);
+  const attachUnlinkedDocument = useMutation(api.clients.attachUnlinkedDocument);
   const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
   const allDeclarations = useQuery(
     api.declarations.getDeclarationPreviews,
     canQuery ? {} : "skip",
+  );
+  const clients = useQuery(api.clients.list, canQuery ? { includeArchived: false } : "skip");
+  const selectedClientId =
+    selectedDocument?.isClientUpload && selectedDocument.clientId
+      ? (selectedDocument.clientId as Id<"clients">)
+      : null;
+  const attachableDeclarations = useQuery(
+    api.clients.listAttachableDeclarations,
+    canQuery && selectedClientId ? { clientId: selectedClientId } : "skip",
   );
 
   const remembered =
@@ -130,12 +141,12 @@ export function DocumentsPageClient({
   const failedRequirementHydrationRef = useRef<Set<string>>(new Set());
   const appliedQueryDeclarationRef = useRef(false);
 
-  const handleActiveToolChange = useCallback((tool: string | null) => {
-    setActiveTool(tool);
-  }, []);
-
   const handleDeclarationFilterChange = useCallback((val: string) => {
     setDeclarationFilter(val);
+  }, []);
+
+  const handleShowClientUploadsChange = useCallback((show: boolean) => {
+    setShowClientUploads(show);
   }, []);
 
   const handleTypeFilterChange = useCallback((val: string) => {
@@ -144,6 +155,7 @@ export function DocumentsPageClient({
 
   const handleSelectDocument = useCallback((doc: any) => {
     setSelectedDocument(doc);
+    setAttachDeclarationId("none");
   }, []);
 
   const handleUploadOpenChange = useCallback((open: boolean) => {
@@ -188,7 +200,7 @@ export function DocumentsPageClient({
       setAuditResult(data);
     } catch (e) {
       console.error("GIR Audit Error:", e);
-      setAuditResult({ error: e instanceof Error ? e.message : "Failed to run GIR audit" });
+      setAuditResult({ error: userMessageFromError(e, "Failed to run GIR audit") });
     } finally {
       setIsAuditing(false);
     }
@@ -251,7 +263,7 @@ export function DocumentsPageClient({
         });
         const payload = await response.json();
         if (!response.ok) {
-          throw new Error(payload?.error || "Failed to replace document.");
+          throw new ApiError(payload?.error || "Failed to replace document.");
         }
 
         setSelectedDocument((prev: any) =>
@@ -272,9 +284,20 @@ export function DocumentsPageClient({
     [selectedDocument, userId],
   );
 
+  const clientNameById = useMemo(() => {
+    const names = new Map<string, string>();
+    for (const client of clients ?? []) {
+      names.set(String(client._id), String(client.name || "Unnamed client"));
+    }
+    return names;
+  }, [clients]);
+
   const liveDocuments = useMemo(() => {
     return (resolvedDbDocuments || []).map((doc: any) => {
       const docTypeCode = inferDocTypeCode(doc.fileType || doc.fileName || "");
+      const isClientUpload = Boolean(doc.clientId);
+      const isNewClientUpload = isClientUpload && !doc.declarationId;
+      const clientId = doc.clientId ? String(doc.clientId) : "";
       const normalizedStatus = normalizeDocStatus(doc.status || doc.auditStatus);
       const validation = validateDocumentForCode({
         code: docTypeCode,
@@ -286,16 +309,18 @@ export function DocumentsPageClient({
         id: doc._id,
         declarationId: doc.declarationId ? String(doc.declarationId) : "",
         name: doc.fileName || "Unknown document",
-        method: "Database",
+        method: isClientUpload ? "Client portal" : "Database",
         date: new Date(doc.uploadDate || doc._creationTime).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }),
         type: docTypeCode,
         typeName: docTypeName(docTypeCode),
-        mrn: doc.mrn || "Unlinked",
-        status: finalStatus,
+        mrn: doc.mrn || (doc.declarationId ? "Draft (Pending)" : "Unlinked"),
+        status: isNewClientUpload ? "review" : finalStatus,
         de23: docTypeCode,
         ocrText: doc.ocrText || "",
         flag:
-          !validation.valid
+          isNewClientUpload
+            ? "New client upload — needs review"
+            : !validation.valid
             ? validation.message || "Validation required"
             : normalizedStatus === "review"
               ? "Validation required"
@@ -303,9 +328,12 @@ export function DocumentsPageClient({
                 ? "Required for declaration submission"
                 : "",
         isVirtual: false,
+        isClientUpload,
+        clientId,
+        clientName: clientId ? clientNameById.get(clientId) || "Unknown client" : "",
       };
     });
-  }, [resolvedDbDocuments]);
+  }, [resolvedDbDocuments, clientNameById]);
 
   const declarationById = useMemo(() => {
     const map = new Map<string, any>();
@@ -367,14 +395,6 @@ export function DocumentsPageClient({
     return { total, verified, review, missing, declCount };
   }, [mergedDocuments]);
 
-  const filteredDocuments = useMemo(() => {
-    return mergedDocuments.filter((doc) => {
-      const declarationMatches = declarationFilter === "all" || doc.declarationId === declarationFilter;
-      const typeMatches = typeFilter === "all" || doc.typeName === typeFilter;
-      return declarationMatches && typeMatches;
-    });
-  }, [mergedDocuments, declarationFilter, typeFilter]);
-
   const allDeclarationOptions = useMemo(() => {
     return declarations.map((decl: any) => ({
       id: String(decl.declarationId),
@@ -416,7 +436,7 @@ export function DocumentsPageClient({
       });
       const payload = await res.json();
       if (!res.ok) {
-        throw new Error(payload?.error || "Manual paste upload failed");
+        throw new ApiError(payload?.error || "Manual paste upload failed");
       }
 
       setIsPasteOpen(false);
@@ -434,6 +454,110 @@ export function DocumentsPageClient({
     if (declarationFilter === "all") return null;
     return declarationById.get(String(declarationFilter)) || null;
   }, [declarationFilter, declarationById]);
+
+  const selectedDeclarationLabel = selectedDeclaration
+    ? selectedDeclaration.mrn || "Draft (Pending)"
+    : "";
+
+  const attachableDeclarationOptions = useMemo(
+    () =>
+      (attachableDeclarations ?? []).map((declaration) => ({
+        id: String(declaration._id),
+        mrn: declaration.mrn || "Draft (Pending)",
+        declarationType: declaration.declarationType || "",
+      })),
+    [attachableDeclarations],
+  );
+
+  const effectiveAttachDeclarationId =
+    attachDeclarationId !== "none"
+      ? attachDeclarationId
+      : attachableDeclarationOptions.some((option) => option.id === declarationFilter)
+        ? declarationFilter
+        : "none";
+
+  const clientAttachTarget = selectedClientId
+    ? attachableDeclarationOptions.find((option) => option.id === effectiveAttachDeclarationId) ??
+      null
+    : null;
+
+  // Only a real stored document can be linked, and only to a declaration the
+  // toolbar has actually narrowed to — a different one from its current link.
+  const canLinkSelectedDocument = Boolean(
+    selectedDocument &&
+      !selectedDocument.isVirtual &&
+      !selectedDocument.isClientUpload &&
+      selectedDeclaration?.declarationId &&
+      String(selectedDocument.declarationId || "") !== String(selectedDeclaration.declarationId),
+  );
+  const canAttachClientDocument = Boolean(
+    selectedDocument?.isClientUpload &&
+      !selectedDocument.isVirtual &&
+      !selectedDocument.declarationId &&
+      selectedClientId &&
+      clientAttachTarget,
+  );
+
+  const handleLinkToSelectedDeclaration = useCallback(async () => {
+    if (!selectedDocument?.id || selectedDocument.isVirtual) return;
+    const targetDeclarationId = selectedDeclaration?.declarationId;
+    if (!targetDeclarationId) return;
+
+    try {
+      setIsDocActionLoading(true);
+      await linkDocumentToDeclaration({
+        documentId: selectedDocument.id,
+        declarationId: targetDeclarationId as Id<"declarations">,
+      });
+      setSelectedDocument((prev: Record<string, unknown> | null) =>
+        prev
+          ? {
+              ...prev,
+              declarationId: String(targetDeclarationId),
+              mrn: selectedDeclaration?.mrn || "Draft (Pending)",
+            }
+          : prev,
+      );
+    } catch (error: any) {
+      alert(error?.message || "Failed to link document to declaration.");
+    } finally {
+      setIsDocActionLoading(false);
+    }
+  }, [selectedDocument, selectedDeclaration, linkDocumentToDeclaration]);
+
+  const handleAttachClientDocument = useCallback(async () => {
+    if (
+      !selectedDocument?.id ||
+      selectedDocument.isVirtual ||
+      selectedDocument.declarationId ||
+      !selectedClientId ||
+      !clientAttachTarget
+    ) {
+      return;
+    }
+
+    try {
+      setIsDocActionLoading(true);
+      await attachUnlinkedDocument({
+        clientId: selectedClientId,
+        documentId: selectedDocument.id,
+        declarationId: clientAttachTarget.id as Id<"declarations">,
+      });
+      setSelectedDocument((prev: Record<string, unknown> | null) =>
+        prev
+          ? {
+              ...prev,
+              declarationId: clientAttachTarget.id,
+              mrn: clientAttachTarget.mrn,
+            }
+          : prev,
+      );
+    } catch (error: unknown) {
+      alert(userMessageFromError(error, "Failed to attach client document to filing."));
+    } finally {
+      setIsDocActionLoading(false);
+    }
+  }, [selectedDocument, selectedClientId, clientAttachTarget, attachUnlinkedDocument]);
 
   useEffect(() => {
     if (declarationFilter === "all") return;
@@ -491,7 +615,7 @@ export function DocumentsPageClient({
         });
         if (!res.ok) {
           const payload = await res.json().catch(() => ({}));
-          throw new Error(payload?.error || `Failed generating ${requirement.code}`);
+          throw new ApiError(payload?.error || `Failed generating ${requirement.code}`);
         }
       }
     } catch (error: any) {
@@ -621,8 +745,9 @@ export function DocumentsPageClient({
         typeFilter={typeFilter}
         onTypeFilterChange={handleTypeFilterChange}
         allDeclarationOptions={allDeclarationOptions}
+        showClientUploads={showClientUploads}
+        onShowClientUploadsChange={handleShowClientUploadsChange}
         onSelectDocument={handleSelectDocument}
-        onActiveToolChange={handleActiveToolChange}
         onGenerateTemplates={handleGenerateTemplates}
         isGeneratingTemplates={isGeneratingTemplates}
         canGenerateTemplates={allDeclarationOptions.length > 0}
@@ -716,6 +841,27 @@ export function DocumentsPageClient({
                     <div>
                       <p className="text-[0.625rem] font-semibold text-slate-500 uppercase tracking-wider">Linked MRN</p>
                       <p className="mt-1.5 text-[0.8125rem] font-medium text-slate-950 font-mono">{selectedDocument.mrn}</p>
+                      {!selectedDocument.isVirtual &&
+                        !selectedDocument.isClientUpload &&
+                        canLinkSelectedDocument && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2 h-7 bg-white text-[0.6875rem]"
+                          onClick={handleLinkToSelectedDeclaration}
+                          disabled={isDocActionLoading}
+                        >
+                          Link to {selectedDeclarationLabel}
+                        </Button>
+                      )}
+                      {!selectedDocument.isVirtual &&
+                        !selectedDocument.isClientUpload &&
+                        !selectedDocument.declarationId &&
+                        !selectedDeclaration && (
+                          <p className="mt-2 text-[0.625rem] text-slate-400">
+                            Choose a declaration / MRN in the toolbar to link this document.
+                          </p>
+                        )}
                     </div>
                     <div>
                       <p className="text-[0.625rem] font-semibold text-slate-500 uppercase tracking-wider">DE 2/3 Reference</p>
@@ -725,11 +871,66 @@ export function DocumentsPageClient({
                       <p className="text-[0.625rem] font-semibold text-slate-500 uppercase tracking-wider">Uploaded By</p>
                       <p className="mt-1.5 text-[0.8125rem] font-medium text-slate-950">{selectedDocument.method}</p>
                     </div>
+                    {selectedDocument.isClientUpload && (
+                      <div>
+                        <p className="text-[0.625rem] font-semibold text-slate-500 uppercase tracking-wider">Client</p>
+                        <p className="mt-1.5 text-[0.8125rem] font-medium text-slate-950">
+                          {selectedDocument.clientName || "Unknown client"}
+                        </p>
+                      </div>
+                    )}
                     <div>
                       <p className="text-[0.625rem] font-semibold text-slate-500 uppercase tracking-wider">Upload Date</p>
                       <p className="mt-1.5 text-[0.8125rem] font-medium text-slate-950">{selectedDocument.date}</p>
                     </div>
                   </div>
+                  {selectedDocument.isClientUpload &&
+                    !selectedDocument.isVirtual &&
+                    !selectedDocument.declarationId && (
+                    <div className="mt-6 border-t border-slate-200 pt-5">
+                      <p className="text-[0.625rem] font-semibold text-slate-500 uppercase tracking-wider">
+                        Attach to filing
+                      </p>
+                      {attachableDeclarations === undefined ? (
+                        <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading compatible filings…
+                        </div>
+                      ) : attachableDeclarationOptions.length === 0 ? (
+                        <p className="mt-2 text-xs text-slate-500">
+                          No compatible filings are available for this client.
+                        </p>
+                      ) : (
+                        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                          <Select
+                            value={effectiveAttachDeclarationId}
+                            onValueChange={setAttachDeclarationId}
+                          >
+                            <SelectTrigger className="h-9 flex-1 bg-white text-xs">
+                              <SelectValue placeholder="Choose filing" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Choose filing</SelectItem>
+                              {attachableDeclarationOptions.map((option) => (
+                                <SelectItem key={option.id} value={option.id}>
+                                  {option.mrn}
+                                  {option.declarationType ? ` · ${option.declarationType}` : ""}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            size="sm"
+                            className="h-9"
+                            onClick={handleAttachClientDocument}
+                            disabled={!canAttachClientDocument || isDocActionLoading}
+                          >
+                            {isDocActionLoading && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                            Attach
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </section>
 
                 <section>
@@ -893,17 +1094,6 @@ export function DocumentsPageClient({
         userId={userId}
       />
 
-      <UnifiedComplianceTool 
-        isOpen={activeTool === 'preference'} 
-        onOpenChange={(open) => !open && handleActiveToolChange(null)}
-        declarationId={declarationFilter !== "all" ? declarationFilter : null}
-      />
-
-      <LandedCostCalculator 
-        isOpen={activeTool === 'landed'} 
-        onOpenChange={(open) => !open && handleActiveToolChange(null)} 
-      />
-
       <Dialog open={isPasteOpen} onOpenChange={setIsPasteOpen}>
         <DialogContent className="sm:max-w-[640px]">
           <DialogHeader>
@@ -975,7 +1165,14 @@ export function DocumentsPageClient({
               <SelectTrigger className="h-9 w-full bg-slate-50 border-slate-200 text-xs text-slate-700">
                 <SelectValue placeholder="Select declaration" />
               </SelectTrigger>
-              <SelectContent position="popper" className="max-h-[300px] z-[110]">
+              <SelectContent
+                position="popper"
+                side="bottom"
+                align="start"
+                sideOffset={4}
+                avoidCollisions={false}
+                className="z-[110] !max-h-[220px]"
+              >
                 {allDeclarationOptions.map((decl) => (
                   <SelectItem key={decl.id} value={decl.id} className="font-mono text-xs">
                     {decl.mrn}

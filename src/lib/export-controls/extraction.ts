@@ -1,6 +1,6 @@
-import Groq from "groq-sdk";
 import { extractUnitFacts, normaliseUnitValue } from "./units";
 import { sanitizeDocumentText } from "./sanitize";
+import { createChatCompletion } from "@/lib/llm-chat";
 
 export const EXPORT_EXTRACTION_PROMPT_VERSION = "export-facts-v1";
 
@@ -186,16 +186,12 @@ Output valid JSON only matching this schema:
 Rules: copy values exactly when present; do not infer missing specs; attach source_quote from document text; keep units unchanged; use ISO-2 country codes when clear.`;
 
 export async function extractExportFactsFromText(rawText: string): Promise<ExportExtractionResult> {
-  const groqApiKey = process.env.GROQ_API_KEY;
-  if (!groqApiKey) throw new Error("Groq API Key not configured");
-
   const sanitized = sanitizeDocumentText(rawText);
   const unitHints = extractUnitFacts(sanitized).slice(0, 40);
 
-  const groq = new Groq({ apiKey: groqApiKey });
-  const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
-
-  const completion = await groq.chat.completions.create({
+  const { content: responseContent } = await createChatCompletion({
+    json: true,
+    temperature: 0.1,
     messages: [
       { role: "system", content: EXPORT_FACTS_SYSTEM_PROMPT },
       {
@@ -203,15 +199,11 @@ export async function extractExportFactsFromText(rawText: string): Promise<Expor
         content: `Document text:\n${sanitized}\n\nDetected unit patterns (hints only):\n${JSON.stringify(unitHints)}`,
       },
     ],
-    model,
-    temperature: 0.1,
-    response_format: { type: "json_object" },
   });
 
-  const responseContent = completion.choices[0]?.message?.content || "{}";
   let parsed: unknown;
   try {
-    parsed = JSON.parse(responseContent);
+    parsed = JSON.parse(responseContent || "{}");
   } catch {
     throw new Error("Failed to parse AI extraction response");
   }

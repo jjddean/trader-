@@ -9,6 +9,7 @@ import {
   EXPORT_EXTRACTION_PROMPT_VERSION,
   extractExportFactsFromText,
 } from "@/lib/export-controls/extraction";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -43,9 +44,12 @@ export async function POST(request: Request) {
     try {
       rawText = await extractTextWithTextract(buffer);
     } catch (parseError: unknown) {
-      const message = parseError instanceof Error ? parseError.message : "parse failed";
+      const message = userMessageFromError(parseError, "parse failed");
       return NextResponse.json(
-        { error: "Failed to parse document via Textract.", details: message },
+        {
+          error: "Failed to parse document via Textract. Use a clear PNG/JPEG or a single-page PDF.",
+          details: message,
+        },
         { status: 400 },
       );
     }
@@ -101,7 +105,7 @@ export async function POST(request: Request) {
     });
   } catch (error: unknown) {
     console.error("Export controls extract error:", error);
-    const message = error instanceof Error ? error.message : "Internal Server Error";
+    const message = userMessageFromError(error, "Internal Server Error");
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -37,6 +37,12 @@ export default defineSchema({
   users: defineTable({
     clerkId: v.optional(v.any()),
     email: v.optional(v.any()),
+    /**
+     * Lowercased, trimmed `email`. Exists so an address can be looked up by
+     * index: the portal-email guard previously scanned a bounded window of users
+     * and silently stopped matching once the table outgrew it.
+     */
+    emailNormalized: v.optional(v.string()),
     name: v.optional(v.any()),
     orgId: v.optional(v.any()),
     role: v.optional(v.string()),
@@ -47,7 +53,28 @@ export default defineSchema({
     /** broker | managed_service — set when onboarding form is submitted */
     onboardingPath: v.optional(v.union(v.literal("broker"), v.literal("managed_service"))),
     onboardingCompletedAt: v.optional(v.number()),
-  }).index("by_clerk", ["clerkId"]),
+  })
+    .index("by_clerk", ["clerkId"])
+    .index("by_email_normalized", ["emailNormalized"]),
+
+  trade_lanes: defineTable({
+    userId: v.string(),
+    orgId: v.optional(v.string()),
+    code: v.string(),
+    originName: v.string(),
+    originCountryCode: v.string(),
+    originUNLocode: v.string(),
+    destinationName: v.string(),
+    destinationCountryCode: v.string(),
+    destinationUNLocode: v.string(),
+    vesselImo: v.optional(v.string()),
+    mode: v.union(v.literal("ocean"), v.literal("air"), v.literal("rail"), v.literal("road")),
+    status: v.union(v.literal("draft"), v.literal("active"), v.literal("inactive")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_org", ["orgId"]),
 
   /** Self-serve onboarding form payload (before org for brokers; client create for managed). */
   onboarding_profiles: defineTable({
@@ -84,6 +111,12 @@ export default defineSchema({
     sandboxTestUserId: v.optional(v.string()),
     sandboxTestUserPassword: v.optional(v.string()),
     sandboxTestUserCreatedAt: v.optional(v.number()),
+    /**
+     * Org is entitled to file inventory-linked declarations through
+     * FreightCode's managed CNS clearance (badge RKA). Off by default: this
+     * gates a route that submits under FreightCode's own CSP badge.
+     */
+    cnsClearanceEnabled: v.optional(v.boolean()),
     updatedAt: v.number(),
     updatedBy: v.optional(v.string()),
   }).index("by_org", ["orgId"]),
@@ -214,6 +247,7 @@ export default defineSchema({
     lastUpdated: v.optional(v.any()),
     conversationId: v.optional(v.any()),
     declarationType: v.optional(v.any()),
+    additionalDeclarationType: v.optional(v.string()),
     route: v.optional(v.any()),
     commodityCode: v.optional(v.any()),
     description: v.optional(v.any()),
@@ -252,6 +286,11 @@ export default defineSchema({
     // DE 7/7 — Identification type of the means of transport. e.g. "11"
     // vessel name, "30" road vehicle reg, "40" flight number.
     transportIdType: v.optional(v.string()),
+    // DE 7/10 — Container identification number. Drives DE 7/2 ContainerCode
+    // ("1" when present, "0" when not) and the TransportEquipment element.
+    // Required for CNS inventory-linked imports: the CSP pre-check matches the
+    // declared container against the inventory record.
+    containerNumber: v.optional(v.string()),
     // DE 3/1 — overseas exporter Name+Address when dispatch ≠ GB/XI.
     exporterName: v.optional(v.string()),
     exporterCity: v.optional(v.string()),
@@ -280,11 +319,51 @@ export default defineSchema({
     // The broker's client this declaration is filed for (the represented
     // trader). Optional — self-serve declarations have no separate client.
     clientId: v.optional(v.id("clients")),
+
+    /**
+     * CNS inventory-linked transport (docs/cns/plan/).
+     *
+     * submissionTransport is stamped before the first outbound attempt and is
+     * immutable thereafter: amendments and cancellations must follow the route
+     * the declaration was created on. Absent on every pre-CNS row, which is
+     * treated as "hmrc_direct".
+     */
+    submissionTransport: v.optional(
+      v.union(v.literal("hmrc_direct"), v.literal("cns_inventory")),
+    ),
+    cnsEnvironment: v.optional(v.union(v.literal("euat"), v.literal("production"))),
+    /** Badge the declaration was submitted under. Recorded for audit. */
+    cnsBadgeId: v.optional(v.string()),
+    cnsTopic: v.optional(v.string()),
+    /** Operator-selected CNS inventory record (UCN). */
+    cnsUcn: v.optional(v.string()),
+    cnsGoodsLocationCode: v.optional(v.string()),
+    /** Declaration-side inventory reference type — expected MCR. */
+    cnsInventoryReferenceType: v.optional(v.string()),
+    /**
+     * Latest X-CSP-ID. Transport correlation for the initial request and any
+     * inventory pre-check failure. NOT a declaration tracking id — the LRN is.
+     */
+    cnsCspId: v.optional(v.string()),
+    /**
+     * Machine transport state, held alongside (not instead of) `status`. The
+     * human-readable status vocabulary is consumed across dashboard, portal and
+     * read models and is deliberately left untouched.
+     */
+    cnsTransportState: v.optional(v.string()),
+    /** Inventory state as observed: registered / arrived / rejected / linked. */
+    cnsInventoryState: v.optional(v.string()),
+    cnsInventoryErrorCode: v.optional(v.string()),
+    cnsInventoryIrcCode: v.optional(v.string()),
+    cnsInventoryErrorMessage: v.optional(v.string()),
+    cnsLastNotificationAt: v.optional(v.number()),
   })
     .index("by_user", ["userId"])
     .index("by_org", ["orgId"])
     .index("by_mrn", ["mrn"])
     .index("by_conversationId", ["conversationId"])
+    .index("by_cnsCspId", ["cnsCspId"])
+    .index("by_org_transport_status", ["orgId", "submissionTransport", "status"])
     // Stuck-declaration recovery scans by status + staleness. Without this the
     // hourly cron reads the whole table.
     .index("by_status_and_updated", ["status", "lastUpdated"])
@@ -306,6 +385,17 @@ export default defineSchema({
     contactEmail: v.optional(v.string()),
     contactPhone: v.optional(v.string()),
     notes: v.optional(v.string()),
+    /**
+     * This client holds their own licensed CNS badge.
+     *
+     * CNS compliance rule: inventory-linked declarations must be filed under the
+     * badge the inventory is assigned to, and one badge must not be shared
+     * across multiple client logins. When true, FreightCode cannot file
+     * inventory-linked entries for this client under badge RKA — they must
+     * submit under their own. FreightCode may still act as declarant for their
+     * non-inventory-linked work.
+     */
+    cnsBadgeHolder: v.optional(v.boolean()),
     // Client portal auth mapping (Clerk). Lowercased email; clerkId patched on first match.
     portalEmail: v.optional(v.string()),
     portalClerkId: v.optional(v.string()),
@@ -332,6 +422,7 @@ export default defineSchema({
     readAt: v.optional(v.number()),
   })
     .index("by_client", ["clientId"])
+    .index("by_client_sender_read", ["clientId", "senderRole", "readAt"])
     .index("by_declaration", ["declarationId"])
     .index("by_assessment", ["assessmentId"]),
 
@@ -363,6 +454,8 @@ export default defineSchema({
   documents: defineTable({
     userId: v.optional(v.any()),
     orgId: v.optional(v.string()),
+    /** Portal client that supplied the document, including before it is linked to a filing. */
+    clientId: v.optional(v.id("clients")),
     workspaceId: v.optional(v.any()),
     fileId: v.optional(v.any()),
     fileName: v.optional(v.any()),
@@ -372,6 +465,9 @@ export default defineSchema({
     uploadDate: v.optional(v.any()),
     mrn: v.optional(v.any()),
     declarationId: v.optional(v.any()),
+    linkedBy: v.optional(v.string()),
+    linkedAt: v.optional(v.number()),
+    sourceMessageId: v.optional(v.id("portal_messages")),
     auditStatus: v.optional(v.any()),
     auditResult: v.optional(v.any()),
     ocrText: v.optional(v.string()),
@@ -380,8 +476,12 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_org", ["orgId"])
+    .index("by_client", ["clientId"])
+    .index("by_source_message", ["sourceMessageId"])
     .index("by_mrn", ["mrn"])
-    .index("by_declaration", ["declarationId"]),
+    .index("by_declaration", ["declarationId"])
+    // Lets an orphaned upload be discarded without deleting a file a row claims.
+    .index("by_file", ["fileId"]),
 
   document_requirements: defineTable({
     declarationId: v.id("declarations"),
@@ -428,6 +528,13 @@ export default defineSchema({
     // HMRC IssueDateTime (ISO) — authoritative ordering, independent of receipt time.
     issueDateTime: v.optional(v.string()),
     notificationType: v.optional(v.any()),
+    /**
+     * submit | amend | cancel — which request this notification answers, resolved
+     * from the submissions row sharing its conversationId. HMRC issues a distinct
+     * conversation id per request, so this is the reliable discriminator. Payload
+     * LRN prefixes are not: CNS follow-ups carry the original create LRN.
+     */
+    originatingOperation: v.optional(v.string()),
     errorCodes: v.optional(v.any()),
     fieldErrors: v.optional(v.any()),
     rawPayload: v.optional(v.any()),
@@ -986,8 +1093,105 @@ export default defineSchema({
     declarationSnapshot: v.optional(v.any()),
     itemsSnapshot: v.optional(v.any()),
     createdAt: v.number(),
+
+    /** CNS transport fields. Absent on every direct-HMRC attempt. */
+    transport: v.optional(
+      v.union(v.literal("hmrc_direct"), v.literal("cns_inventory")),
+    ),
+    /**
+     * X-CSP-ID from the CNS 202. On an inventory pre-check rejection this and
+     * the LRN are the ONLY correlation keys — the notification carries no
+     * ConversationID and a blank MRN.
+     */
+    cspId: v.optional(v.string()),
+    /** Generated and persisted before the outbound call, for idempotency. */
+    attemptKey: v.optional(v.string()),
+    /** SHA-256 of the request XML. Never the Authorization value. */
+    requestHash: v.optional(v.string()),
+    endpoint: v.optional(v.string()),
+    startedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    /**
+     * "certain" once a definitive response arrived; "unknown" after a timeout or
+     * 5xx where CNS may still have forwarded the declaration. Drives whether a
+     * retry is permitted at all.
+     */
+    outcomeCertainty: v.optional(v.union(v.literal("certain"), v.literal("unknown"))),
+    /** Normalised CNS error for operator display and support escalation. */
+    cnsErrorCode: v.optional(v.string()),
+    cnsErrorMessage: v.optional(v.string()),
   })
     .index("by_declaration", ["declarationId"])
     .index("by_conversationId", ["conversationId"])
-    .index("by_user", ["userId"]),
+    .index("by_user", ["userId"])
+    .index("by_cspId", ["cspId"])
+    .index("by_lrn", ["lrn"]),
+
+  /**
+   * Raw CNS notification envelopes.
+   *
+   * Separate from `notifications` deliberately: that table is HMRC-shaped
+   * (conversationId / hmrcNotificationId) and has no topic, partition, Base64
+   * body or acknowledgement state. Rows here are persisted BEFORE the batch is
+   * acknowledged (Notification APIs v1.0.3 §10) and are the replay source when
+   * parsing fails — CNS is not required to redeliver an acknowledged message.
+   *
+   * Decoded DMS bodies flow onward into `notifications` through the existing
+   * parser, so the declaration timeline stays single-sourced.
+   */
+  cns_notifications: defineTable({
+    topic: v.string(),
+    /** CSP-assigned id. Unique per topic — the dedupe key. */
+    notificationId: v.string(),
+    partition: v.optional(v.number()),
+    queuedDateTime: v.optional(v.string()),
+    /** Every header from the envelope, verbatim. */
+    headers: v.optional(v.any()),
+    /** Per-notification Content-Type — determines body format, not the Accept type. */
+    contentType: v.optional(v.string()),
+    notificationType: v.optional(v.string()), // API | DMS | CILE | HEARTBEAT | UNKNOWN
+    /** Retained alongside the decoded text for audit and parser replay. */
+    bodyBase64: v.string(),
+    bodyDecoded: v.optional(v.string()),
+    /** Diagnostic only — never the dedupe key. */
+    bodyHash: v.optional(v.string()),
+    cspId: v.optional(v.string()),
+    conversationId: v.optional(v.string()),
+    badgeId: v.optional(v.string()),
+    /** LRN recovered from the body — the permanent correlation key. */
+    functionalReferenceId: v.optional(v.string()),
+    declarationId: v.optional(v.id("declarations")),
+    persistedAt: v.number(),
+    ackedAt: v.optional(v.number()),
+    processedAt: v.optional(v.number()),
+    parserError: v.optional(v.string()),
+    parseAttempts: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_topic_and_notificationId", ["topic", "notificationId"])
+    .index("by_declaration", ["declarationId"])
+    .index("by_cspId", ["cspId"])
+    .index("by_functionalReferenceId", ["functionalReferenceId"])
+    // Drives the "persisted but not yet acknowledged" and "not yet parsed" sweeps.
+    .index("by_topic_and_ackedAt", ["topic", "ackedAt"])
+    .index("by_topic_and_processedAt", ["topic", "processedAt"]),
+
+  /**
+   * Poll lease and health per topic. Exactly one active poller may consume a
+   * topic: querying a new batch before acknowledging the previous one causes the
+   * unacknowledged messages to be redelivered in the next batch.
+   */
+  cns_poll_state: defineTable({
+    topic: v.string(),
+    leaseOwner: v.optional(v.string()),
+    leaseExpiresAt: v.optional(v.number()),
+    lastPollAt: v.optional(v.number()),
+    lastSuccessAt: v.optional(v.number()),
+    consecutiveFailures: v.optional(v.number()),
+    /** Earliest permitted next poll — enforces the 30s floor after a 204. */
+    nextPollAt: v.optional(v.number()),
+    mode: v.optional(v.union(v.literal("pull"), v.literal("push"))),
+    lastError: v.optional(v.string()),
+    updatedAt: v.number(),
+  }).index("by_topic", ["topic"]),
 });

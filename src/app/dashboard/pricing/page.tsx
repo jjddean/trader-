@@ -6,7 +6,7 @@ export default function PricingPage() {
       <div>
         <h1 className="text-xl font-semibold tracking-tight text-slate-900">Plans</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Choose Starter, Pro, or Pay As You Go for your company workspace.
+          Choose Starter or Business for your company workspace, or talk to us about custom pricing.
         </p>
       </div>
       <PricingPlans />

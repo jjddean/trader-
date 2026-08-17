@@ -12,6 +12,8 @@ export interface CollectedNotification {
   timestamp?: string | number;
   /** HMRC IssueDateTime (ISO) — authoritative order when present. */
   issueDateTime?: string | null;
+  /** submit | amend | cancel — which request this notification answers. */
+  originatingOperation?: string | null;
 }
 
 /** HMRC IssueDateTime is authoritative; fall back to local receipt timestamp. */

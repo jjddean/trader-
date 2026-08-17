@@ -2,7 +2,8 @@ import { v } from "convex/values";
 import { internalQuery, mutation, query } from "./_generated/server";
 import { getActiveOrgId } from "./lib/org_access";
 import { evaluateOrgLiveReadiness } from "./lib/org_live_readiness";
-import { requireAdmin } from "./lib/user_role";
+import { getCurrentUserRole, requireAdmin } from "./lib/user_role";
+import { unauthenticatedError, userError } from "./lib/user_errors";
 
 export type OrgHmrcMode = "practice" | "live";
 
@@ -14,15 +15,26 @@ function readOrgIdFromIdentity(identity: Record<string, unknown>): string {
 function assertOrgSession(orgId: string, identity: Record<string, unknown>) {
   const sessionOrg = readOrgIdFromIdentity(identity);
   if (!sessionOrg || sessionOrg !== orgId.trim()) {
-    throw new Error("Organisation context required");
+    throw userError("organisation_context_required", "Organisation context required");
   }
 }
+
+const PRACTICE_DEFAULT = { hmrcMode: "practice" as const, hasSandboxTestUser: false };
 
 export const getModeForOrg = query({
   args: { orgId: v.string() },
   handler: async (ctx, args) => {
     const orgId = args.orgId.trim();
-    if (!orgId) return { hmrcMode: "practice" as const, hasSandboxTestUser: false };
+    if (!orgId) return PRACTICE_DEFAULT;
+
+    // Was readable by anyone for any orgId. Every caller asks about its own org,
+    // so scope it to the caller's active org rather than trusting the argument.
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return PRACTICE_DEFAULT;
+    if ((await getActiveOrgId(ctx, identity.subject)) !== orgId) {
+      const current = await getCurrentUserRole(ctx);
+      if (current?.role !== "admin") return PRACTICE_DEFAULT;
+    }
 
     const row = await ctx.db
       .query("org_hmrc_settings")
@@ -127,7 +139,7 @@ export const ensurePracticeMode = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const orgId = args.orgId.trim();
     if (!orgId) return { hmrcMode: "practice" as const, created: false };
@@ -167,12 +179,12 @@ export const saveSandboxTestUser = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const orgId = args.orgId.trim();
     const userId = args.userId.trim();
     const password = args.password.trim();
-    if (!orgId || !userId || !password) throw new Error("Invalid sandbox test user payload");
+    if (!orgId || !userId || !password) throw userError("invalid_sandbox_test_user_payload", "Invalid sandbox test user payload");
 
     assertOrgSession(orgId, identity as Record<string, unknown>);
 
@@ -183,7 +195,7 @@ export const saveSandboxTestUser = mutation({
 
     const hmrcMode = (existing?.hmrcMode ?? "practice") as OrgHmrcMode;
     if (hmrcMode === "live") {
-      throw new Error("Cannot store sandbox test user on a live organisation");
+      throw userError("cannot_store_sandbox_test_user_on", "Cannot store sandbox test user on a live organisation");
     }
 
     const patch = {
@@ -223,14 +235,14 @@ export const setMyOrgMode = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     const orgId = args.orgId.trim();
-    if (!orgId) throw new Error("Organisation context required");
+    if (!orgId) throw userError("organisation_context_required", "Organisation context required");
     assertOrgSession(orgId, identity as Record<string, unknown>);
     if (args.hmrcMode === "live") {
       const readiness = await evaluateOrgLiveReadiness(ctx, orgId);
       if (!readiness.canProceed) {
-        throw new Error(`Cannot enable live CDS: ${readiness.blockers.join(" ")}`);
+        throw userError("cannot_enable_live_cds", `Cannot enable live CDS: ${readiness.blockers.join(" ")}`);
       }
     }
     const existing = await ctx.db.query("org_hmrc_settings")
@@ -252,12 +264,12 @@ export const setOrgMode = mutation({
     await requireAdmin(ctx);
 
     const orgId = args.orgId.trim();
-    if (!orgId) throw new Error("orgId required");
+    if (!orgId) throw userError("orgid_required", "orgId required");
 
     if (args.hmrcMode === "live") {
       const readiness = await evaluateOrgLiveReadiness(ctx, orgId);
       if (!readiness.canProceed) {
-        throw new Error(`Cannot enable live CDS: ${readiness.blockers.join(" ")}`);
+        throw userError("cannot_enable_live_cds", `Cannot enable live CDS: ${readiness.blockers.join(" ")}`);
       }
     }
 

@@ -9,6 +9,7 @@ import { resolveHmrcAccessToken } from "../../../../../lib/hmrc-token";
 import { auth } from "@clerk/nextjs/server";
 import { api } from "../../../../../../convex/_generated/api";
 import type { Id } from "../../../../../../convex/_generated/dataModel";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 /**
  * GET /api/hmrc/notifications/pull?conversationId={id}
@@ -88,7 +89,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: true, ...result });
   } catch (error: unknown) {
     console.error("Pull notifications crash:", error);
-    const message = error instanceof Error ? error.message : "Internal Server Error";
+    const message = userMessageFromError(error, "Internal Server Error");
     return NextResponse.json({ error: "Internal Server Error", message }, { status: 500 });
   }
 }

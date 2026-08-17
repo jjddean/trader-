@@ -1,15 +1,21 @@
 import { NextResponse } from "next/server";
-import Groq from "groq-sdk";
-import type { ChatCompletionMessageParam } from "groq-sdk/resources/chat/completions";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import { aiChatLimiter } from "@/lib/api-rate-limiter";
+import {
+  assertLlmConfigured,
+  getLlmModel,
+  getLlmModelVersion,
+  streamChatCompletion,
+  type ChatMessage,
+} from "@/lib/llm-chat";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 type AssistantContext = Record<string, unknown>;
 
-function toChatRole(value: unknown): "user" | "assistant" | "system" | "developer" {
+function toChatRole(value: unknown): ChatMessage["role"] {
   const role = String(value ?? "user");
   if (role === "system" || role === "assistant" || role === "user" || role === "developer") {
     return role;
@@ -17,7 +23,7 @@ function toChatRole(value: unknown): "user" | "assistant" | "system" | "develope
   return "user";
 }
 
-function buildChatHistoryMessages(context: AssistantContext): ChatCompletionMessageParam[] {
+function buildChatHistoryMessages(context: AssistantContext): ChatMessage[] {
   return recordRows(context.chatHistory).map((message) => ({
     role: toChatRole(message.role),
     content: String(message.content ?? ""),
@@ -92,7 +98,8 @@ export async function POST(request: Request) {
   let convex: ConvexHttpClient | null = null;
   let conversationId: Id<"conversations"> | null = null;
   let assistantMessageId: Id<"messages"> | null = null;
-  const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+  const model = getLlmModel();
+  const modelVersion = getLlmModelVersion(model);
 
   try {
     const clerkAuth = await auth();
@@ -109,17 +116,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Convex auth token missing" }, { status: 401 });
     }
 
+    try {
+      assertLlmConfigured();
+    } catch (err) {
+      return NextResponse.json(
+        { error: userMessageFromError(err, "LLM not configured") },
+        { status: 500 },
+      );
+    }
+
     convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
     convex.setAuth(convexToken);
 
     const { query, declarationId } = await request.json();
     if (!query || typeof query !== "string") {
       return NextResponse.json({ error: "Missing query" }, { status: 400 });
-    }
-
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: "Groq API Key not configured" }, { status: 500 });
     }
 
     const conversation = await convex.mutation(
@@ -150,32 +161,27 @@ export async function POST(request: Request) {
       conversationId: activeConversationId,
       metadata: {
         declarationId: declarationId ?? null,
-        model,
+        model: modelVersion,
         state: "streaming",
       },
     });
     assistantMessageId = activeMessageId;
 
-    const groq = new Groq({ apiKey });
-    const completion = await groq.chat.completions.create({
-      model,
+    let text = "";
+    let lastPersistedLength = 0;
+    let lastPersistAt = 0;
+
+    const stream = streamChatCompletion({
+      temperature: 0.2,
+      maxTokens: 1024,
       messages: [
         { role: "system", content: buildSystemPrompt(context) },
         ...buildChatHistoryMessages(context),
         { role: "user", content: query },
       ],
-      temperature: 0.2,
-      max_tokens: 1024,
-      stream: true,
     });
 
-    let text = "";
-    let lastPersistedLength = 0;
-    let lastPersistAt = 0;
-
-    for await (const chunk of completion) {
-      const delta = chunk.choices?.[0]?.delta?.content ?? "";
-      if (!delta) continue;
+    for await (const delta of stream) {
       text += delta;
 
       const now = Date.now();
@@ -186,7 +192,7 @@ export async function POST(request: Request) {
           streamed: true,
           metadata: {
             declarationId: declarationId ?? null,
-            model,
+            model: modelVersion,
             state: "streaming",
           },
         });
@@ -205,7 +211,7 @@ export async function POST(request: Request) {
       content: text,
       metadata: {
         declarationId: declarationId ?? null,
-        model,
+        model: modelVersion,
         state: "complete",
       },
     });
@@ -221,7 +227,7 @@ export async function POST(request: Request) {
           messageId: assistantMessageId,
           content: "I couldn't reach the AI service right now. Please try again in a moment.",
           metadata: {
-            model,
+            model: modelVersion,
             state: "error",
             error: message,
           },
@@ -240,9 +246,6 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json(
-      { error: message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

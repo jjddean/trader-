@@ -12,6 +12,7 @@ import {
   type EndUserStatementInput,
   type EusuDetails,
 } from "@/lib/export-controls/end-user-statement";
+import { ApiError, userMessageFromError } from "@/lib/convex-errors";
 
 interface EndUserSendCardProps {
   assessmentId: Id<"export_assessments">;
@@ -32,6 +33,7 @@ export function EndUserSendCard({ assessmentId, variant = "send" }: EndUserSendC
     isAuthenticated ? { assessmentId } : "skip",
   );
   const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
+  const discardOrphanedUpload = useMutation(api.documents.discardOrphanedUpload);
   const saveDocument = useMutation(api.documents.saveDocument);
   const addEvidence = useMutation(api.export_controls.addExportEvidence);
 
@@ -93,6 +95,7 @@ export function EndUserSendCard({ assessmentId, variant = "send" }: EndUserSendC
   const handleSignedUpload = async (file: File) => {
     setUploading(true);
     setUploadError(null);
+    let uploadedStorageId: Id<"_storage"> | null = null;
     try {
       const postUrl = await generateUploadUrl();
       const uploadResult = await fetch(postUrl, {
@@ -102,6 +105,7 @@ export function EndUserSendCard({ assessmentId, variant = "send" }: EndUserSendC
       });
       if (!uploadResult.ok) throw new Error("Upload failed");
       const { storageId } = await uploadResult.json();
+      uploadedStorageId = storageId;
 
       const documentId = await saveDocument({
         storageId,
@@ -118,7 +122,14 @@ export function EndUserSendCard({ assessmentId, variant = "send" }: EndUserSendC
         documentId,
       });
     } catch (err: unknown) {
-      setUploadError(err instanceof Error ? err.message : "Upload failed");
+      if (uploadedStorageId) {
+        try {
+          await discardOrphanedUpload({ storageId: uploadedStorageId });
+        } catch (discardErr) {
+          console.error("[upload] failed to discard orphaned upload", discardErr);
+        }
+      }
+      setUploadError(userMessageFromError(err, "Upload failed"));
     } finally {
       setUploading(false);
     }
@@ -166,14 +177,14 @@ export function EndUserSendCard({ assessmentId, variant = "send" }: EndUserSendC
       });
 
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.error || "Send failed");
+      if (!res.ok) throw new ApiError(body.error || "Send failed");
 
       setLastUrl(body.formUrl ?? null);
       if (!body.emailSent && body.emailNote) {
         setEmailNote(body.emailNote);
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Send failed");
+      setError(userMessageFromError(err, "Send failed"));
     } finally {
       setSending(false);
     }

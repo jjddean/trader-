@@ -1,7 +1,8 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireAdmin } from "./lib/user_role";
-import { canAccessDeclaration } from "./lib/org_access";
+import { canAccessDeclaration, getActiveOrgId } from "./lib/org_access";
+import { unauthenticatedError } from "./lib/user_errors";
 
 export const logAction = internalMutation({
   args: {
@@ -44,7 +45,7 @@ export const logMyAction = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const { metadata, entityId, ipAddress, ...rest } = args;
     const details =
@@ -58,6 +59,12 @@ export const logMyAction = mutation({
     }
     if (ipAddress) {
       (details as Record<string, unknown>).ipAddress = ipAddress;
+    }
+    // Stamped server-side so an audit row always resolves to a tenant, whatever
+    // the caller passed in metadata.
+    const orgId = await getActiveOrgId(ctx, identity.subject);
+    if (orgId) {
+      (details as Record<string, unknown>).orgId = orgId;
     }
     return await ctx.db.insert("auditLogs", {
       ...rest,

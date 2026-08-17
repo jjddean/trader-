@@ -8,6 +8,7 @@ import {
   findGeneralConversationForScope,
   resolveConversationScopeId,
 } from "./lib/org_access";
+import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 
 // Re-export normalize for declaration internal paths (local alias)
 function declOrgScope(declaration: { orgId?: unknown; userId?: unknown }) {
@@ -25,7 +26,7 @@ async function ensureConversationForScope(
   if (declarationId) {
     const access = await canAccessDeclarationById(ctx, userId, declarationId);
     if (!access.allowed || !access.declaration) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const existing = await ctx.db
@@ -85,7 +86,7 @@ async function ensureConversationForDeclarationInternal(
 ) {
   const declaration = await ctx.db.get(declarationId);
   if (!declaration) {
-    throw new Error("Declaration not found");
+    throw userError("declaration_not_found", "Declaration not found");
   }
 
   const existing = await ctx.db
@@ -119,17 +120,17 @@ async function assertConversationAccess(
   conversationId: Id<"conversations">,
 ) {
   const conversation = await ctx.db.get(conversationId);
-  if (!conversation) throw new Error("Conversation not found");
+  if (!conversation) throw userError("conversation_not_found", "Conversation not found");
 
   if (conversation.declarationId) {
     const access = await canAccessDeclarationById(ctx, userId, conversation.declarationId);
-    if (!access.allowed) throw new Error("Unauthorized");
+    if (!access.allowed) throw forbiddenError();
     return conversation;
   }
 
   const scopeId = await resolveConversationScopeId(ctx, userId);
   if (!conversationScopeMatches(conversation.organizationId, scopeId)) {
-    throw new Error("Unauthorized");
+    throw forbiddenError();
   }
   return conversation;
 }
@@ -138,7 +139,7 @@ export const ensureConversation = mutation({
   args: { declarationId: v.optional(v.id("declarations")) },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     return await ensureConversationForScope(ctx, identity.subject, args.declarationId);
   },
 });
@@ -150,7 +151,7 @@ export const setConversationStatus = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     await assertConversationAccess(ctx, identity.subject, args.conversationId);
     await ctx.db.patch(args.conversationId, {
       status: args.status,
@@ -167,7 +168,7 @@ export const appendUserMessage = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     await assertConversationAccess(ctx, identity.subject, args.conversationId);
 
     const now = Date.now();
@@ -194,7 +195,7 @@ export const startAssistantMessage = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     await assertConversationAccess(ctx, identity.subject, args.conversationId);
 
     const now = Date.now();
@@ -223,10 +224,10 @@ export const updateAssistantMessage = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const message = await ctx.db.get(args.messageId);
-    if (!message) throw new Error("Message not found");
+    if (!message) throw userError("message_not_found", "Message not found");
     await assertConversationAccess(ctx, identity.subject, message.conversationId);
 
     await ctx.db.patch(args.messageId, {
@@ -249,10 +250,10 @@ export const finalizeAssistantMessage = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const message = await ctx.db.get(args.messageId);
-    if (!message) throw new Error("Message not found");
+    if (!message) throw userError("message_not_found", "Message not found");
     await assertConversationAccess(ctx, identity.subject, message.conversationId);
 
     await ctx.db.patch(args.messageId, {
@@ -276,7 +277,7 @@ export const appendAssistantEvent = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     await assertConversationAccess(ctx, identity.subject, args.conversationId);
     return await ctx.db.insert("assistantEvents", {
       conversationId: args.conversationId,
@@ -296,7 +297,7 @@ export const recordDeclarationEvent = internalMutation({
   },
   handler: async (ctx, args) => {
     const conversation = await ensureConversationForDeclarationInternal(ctx, args.declarationId);
-    if (!conversation) throw new Error("Conversation not found");
+    if (!conversation) throw userError("conversation_not_found", "Conversation not found");
     await ctx.db.insert("assistantEvents", {
       conversationId: conversation._id,
       declarationId: args.declarationId,

@@ -34,43 +34,15 @@ function makeSavePulledNotification(ctx: ActionCtx, environment: HmrcEnvironment
     };
 }
 
-export const searchHSCode = action({
-    args: {
-        query: v.string(),
-    },
-    handler: async (ctx, args) => {
-        try {
-            const url = `https://api.trade-tariff.service.gov.uk/uk/api/v2/search`;
-            
-            const response = await fetch(`${url}?q=${encodeURIComponent(args.query)}`, {
-                headers: {
-                    "Accept": "application/json",
-                    "User-Agent": "FreightCode/1.0",
-                },
-            });
+/**
+ * searchHSCode moved to src/app/api/tariff/search/route.ts.
+ *
+ * It was an unauthenticated Convex action, and the Convex websocket carries
+ * no caller address, so it could not be rate limited per caller — only a
+ * global cap, which would let one abuser deny service to everyone. The Next
+ * route limits by IP using the existing ApiRateLimiter.
+ */
 
-            if (!response.ok) {
-                console.error("Failed to fetch HMRC Search:", response.status, response.statusText);
-                return [];
-            }
-
-            const data = await response.json();
-
-            if (data && data.data) {
-                const results = data.data.attributes.results || [];
-                return results.map((r: any) => ({
-                    code: r.goods_nomenclature_item_id,
-                    description: r.description,
-                    matchType: r.match_type
-                }));
-            }
-            return [];
-        } catch (error: any) {
-            console.error("HMRC Search (Public) Error:", error.message);
-            return [];
-        }
-    },
-});
 
 /** Scheduled/cron pull — persists notifications via saveWebhook. */
 export const pullNotificationsScheduled = internalAction({

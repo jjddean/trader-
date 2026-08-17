@@ -8,6 +8,7 @@ import {
   TRE_IMPORT_MAX_BYTES,
   TRE_IMPORT_MAX_ROWS,
 } from "@/lib/tre-csv-parser";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 function rowToCommitPayload(row: ReturnType<typeof parseTreCsvRows>[number]) {
   return {
@@ -112,7 +113,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ preview, result });
   } catch (error) {
     console.error("TRE import failed:", error);
-    const message = error instanceof Error ? error.message : "Import failed";
+    const message = userMessageFromError(error, "Import failed");
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

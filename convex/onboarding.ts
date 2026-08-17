@@ -1,10 +1,16 @@
 import { v } from "convex/values";
 import type { MutationCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
+import {
+  managedServiceBindingConflict,
+  managedServiceClientToReuse,
+} from "./lib/managed_service_binding";
+import { normalizeEmail, resolveSignedInEmail } from "./lib/signed_in_email";
+import { unauthenticatedError, userError } from "./lib/user_errors";
 
 function trimRequired(value: string, label: string) {
   const t = value.trim();
-  if (!t) throw new Error(`${label} is required`);
+  if (!t) throw userError("field_required", `${label} is required`);
   return t;
 }
 
@@ -35,7 +41,10 @@ const formArgs = {
 function validateEori(value: string) {
   const eori = value.trim().toUpperCase();
   if (!/^(GB|XI)\d{12}$/.test(eori)) {
-    throw new Error("EORI number must start with GB or XI followed by 12 digits");
+    throw userError(
+      "invalid_eori",
+      "EORI number must start with GB or XI followed by 12 digits",
+    );
   }
   return eori;
 }
@@ -53,13 +62,15 @@ function validateCommonForm(args: {
     ? trimRequired(args.companyRegistrationNumber ?? "", "Company registration number")
     : trimOptional(args.companyRegistrationNumber);
   const contactJobTitle = trimRequired(args.contactJobTitle, "Job title");
-  if (!args.termsAccepted) throw new Error("You must accept the Terms of Service");
+  if (!args.termsAccepted) {
+    throw userError("terms_not_accepted", "You must accept the Terms of Service");
+  }
   return { legalEntityType, companyRegistrationNumber, contactJobTitle };
 }
 
 async function requireUser(ctx: MutationCtx) {
   const identity = await ctx.auth.getUserIdentity();
-  if (!identity) throw new Error("Unauthenticated");
+  if (!identity) throw unauthenticatedError();
   let dbUser = await ctx.db
     .query("users")
     .withIndex("by_clerk", (q) => q.eq("clerkId", identity.subject))
@@ -70,11 +81,14 @@ async function requireUser(ctx: MutationCtx) {
     const id = await ctx.db.insert("users", {
       clerkId: identity.subject,
       email,
+      emailNormalized: normalizeEmail(email),
       name: typeof identity.name === "string" ? identity.name : undefined,
     });
     dbUser = await ctx.db.get(id);
   }
-  if (!dbUser) throw new Error("User not synced — refresh and try again");
+  if (!dbUser) {
+    throw userError("user_not_synced", "Your account is still syncing. Refresh and try again.");
+  }
   return { identity, dbUser };
 }
 
@@ -117,7 +131,10 @@ export const completeBroker = mutation({
     const city = trimRequired(args.city ?? "", "City");
     const eori = validateEori(trimRequired(args.eori ?? "", "EORI number"));
     if (!args.cdsSubscribed) {
-      throw new Error("You must confirm that your organisation is subscribed to CDS");
+      throw userError(
+        "cds_not_confirmed",
+        "You must confirm that your organisation is subscribed to CDS",
+      );
     }
     const contactName = trimRequired(args.contactName, "Full name");
     const contactEmail = trimRequired(args.contactEmail, "Email").toLowerCase();
@@ -179,8 +196,13 @@ export const completeManagedService = mutation({
 
     const managedOrgId = String(process.env.FREIGHTCODE_MANAGED_ORG_ID ?? "").trim();
     if (!managedOrgId) {
-      throw new Error(
-        "Managed Service is not configured yet (FREIGHTCODE_MANAGED_ORG_ID). Contact FreightCode.",
+      console.error(
+        "[onboarding:completeManagedService] FREIGHTCODE_MANAGED_ORG_ID is not set on this deployment",
+        { clerkId: identity.subject },
+      );
+      throw userError(
+        "managed_service_unconfigured",
+        "Managed Service sign-up is unavailable right now. Please contact FreightCode support.",
       );
     }
 
@@ -193,50 +215,52 @@ export const completeManagedService = mutation({
     const contactName = trimRequired(args.contactName, "Full name");
     const contactEmail = trimRequired(args.contactEmail, "Email").toLowerCase();
 
-    const portalEmail = contactEmail;
+    // Portal identity is whatever Clerk says this session owns — never the typed
+    // contact email. Binding portalEmail to a form value let any signed-in user
+    // claim someone else's address and permanently lock them out of onboarding.
+    // contactEmail stays free text: it is the business contact, not a login.
+    const signedIn = await resolveSignedInEmail(ctx, identity);
+    if (!signedIn) {
+      throw userError(
+        "no_account_email",
+        "We could not read the email address on your account. Sign out, sign back in, and try again.",
+      );
+    }
+    // Only block on a positive "not verified". A missing or unparseable claim
+    // must not lock anyone out — that would trade one production block for another.
+    if (signedIn.verified === false) {
+      throw userError(
+        "email_not_verified",
+        "Verify your email address with the link we sent you, then set up Managed Service.",
+      );
+    }
+    const portalEmail = signedIn.email;
 
     const byClerk = await ctx.db
       .query("clients")
       .withIndex("by_portal_clerk", (q) => q.eq("portalClerkId", identity.subject))
       .first();
 
-    if (byClerk && byClerk.orgId && byClerk.orgId !== managedOrgId) {
-      throw new Error(
-        "This account is already linked to a broker’s client portal. Use a different email/account for Managed Service, or revoke portal access on that client first.",
-      );
-    }
-
     const byEmail = await ctx.db
       .query("clients")
       .withIndex("by_portal_email", (q) => q.eq("portalEmail", portalEmail))
       .first();
 
-    if (
-      byEmail &&
-      byEmail.portalClerkId &&
-      byEmail.portalClerkId !== identity.subject
-    ) {
-      throw new Error(
-        "This email is already used for portal access. Use a different contact email, or revoke portal on that client first.",
+    const conflict = managedServiceBindingConflict({ managedOrgId, byClerk, byEmail });
+    if (conflict === "portal_linked_to_broker") {
+      throw userError(
+        conflict,
+        "This account is already linked to a broker's client portal. Use a different account for Managed Service, or ask that broker to revoke portal access first.",
+      );
+    }
+    if (conflict === "email_belongs_to_broker_client") {
+      throw userError(
+        conflict,
+        "This email address is already registered as a broker's client. Contact FreightCode support to move it to Managed Service.",
       );
     }
 
-    if (
-      byEmail &&
-      byEmail.orgId &&
-      byEmail.orgId !== managedOrgId &&
-      (!byClerk || byClerk._id !== byEmail._id)
-    ) {
-      throw new Error(
-        "This email belongs to another organisation’s client. Use a different contact email.",
-      );
-    }
-
-    const existingClient =
-      byClerk ??
-      (byEmail && (!byEmail.portalClerkId || byEmail.portalClerkId === identity.subject)
-        ? byEmail
-        : null);
+    const existingClient = managedServiceClientToReuse(byClerk, byEmail);
 
     const now = Date.now();
     const tradingName = trimOptional(args.tradingName);

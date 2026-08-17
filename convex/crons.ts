@@ -17,12 +17,32 @@ crons.hourly(
   internal.hmrc_actions.recoverStuckDeclarations,
 );
 
+// Poll the CNS notification topic. The action self-gates on CNS_ENABLED, pull
+// mode and the topic lease, so this is a no-op until CNS is configured.
+// Notification APIs v1.0.3 requires no more than one poll per 30s after an empty
+// response; the lease and nextPollAt floor enforce that, not the cron interval.
+crons.interval(
+  "cns-poll-notifications",
+  { seconds: 60 },
+  internal.cns_notifications.pollTopic,
+);
+
 // Refresh stale Trade Tariff commodity caches daily (batch per run)
 crons.daily(
   "refresh-stale-tariff-cache",
   { hourUTC: 2, minuteUTC: 30 },
   internal.actions.tariff.refreshStaleCommodities,
   { batchSize: 15 },
+);
+
+// Delete stored files no documents row references. Catches uploads lost to a
+// browser refresh between the storage POST and the row insert, which the
+// client-side discard cannot reach. 24h grace so in-flight uploads are safe.
+crons.daily(
+  "sweep-orphaned-files",
+  { hourUTC: 3, minuteUTC: 15 },
+  internal.documents.sweepOrphanedFiles,
+  {},
 );
 
 export default crons;

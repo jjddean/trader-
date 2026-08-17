@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { getPreferenceDecisionFromApi } from "@/lib/preference-engine";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 export async function POST(request: Request) {
   try {
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Preference check failed";
+    const message = userMessageFromError(error, "Preference check failed");
     return NextResponse.json({ error: message }, { status: 422 });
   }
 }

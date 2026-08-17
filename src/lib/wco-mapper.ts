@@ -1,4 +1,5 @@
 import { countries } from "./data/countries";
+import { buildInventoryPreviousDocument } from "./cns/inventory-xml";
 import { resolveGoodsLocationForXml } from "./goods-location";
 import {
   buildDefermentAdditionalDocument,
@@ -17,7 +18,7 @@ import {
  * Export types: EXA, EXB, etc.
  * Defaults to IMA (standard frontier import) if unspecified.
  */
-function mapDeclarationType(type?: string, route?: string): string {
+export function mapDeclarationType(type?: string, route?: string): string {
   const prefix = route === "export" ? "EX" : "IM";
   const validTypes = ["A", "B", "C", "D", "E", "F", "J", "K", "Y", "Z"];
   const suffix = validTypes.includes((type || "").toUpperCase()) 
@@ -197,9 +198,44 @@ export function resolveTradeTermsLocationId(declaration: {
     if (alnum) return `${dest}${alnum}`;
   }
 
-  // CIF to GB: default place name when trader has not entered a coded location.
-  if (incoterm === "CIF" && dest === "GB") return "GBFELIXSTOWE";
+  // No fallback. A hardcoded default (this previously returned GBFELIXSTOWE for
+  // any CIF-to-GB lane) silently declares a place the goods were never at —
+  // e.g. a London Gateway consignment declaring Felixstowe in DE 4/1 while
+  // DE 5/23 says otherwise. Missing input is caught by
+  // validateTradeTermsLocation at submit time instead.
   return "";
+}
+
+/**
+ * DE 4/1 — delivery terms code and location.
+ *
+ * The mapper declares CustomsValuation MethodCode 1 (transaction value), and
+ * the Group 4 completion guide requires the delivery terms for method 1. Both
+ * halves are therefore mandatory here.
+ *
+ * Without this check a missing incoterm surfaced as the XML preflight failure
+ * "no_empty_tags" — technically true (TradeTerms rendered an empty
+ * ConditionCode) but giving the operator no idea which field to fill in.
+ */
+export function validateTradeTerms(declaration: {
+  incoterms?: unknown;
+  incotermLocation?: unknown;
+  destinationCountry?: unknown;
+}): string[] {
+  const errors: string[] = [];
+  const incoterm = String(declaration.incoterms || "").trim();
+
+  if (!incoterm) {
+    errors.push("Missing incoterms delivery terms code (DE 4/1), e.g. CIF.");
+    return errors;
+  }
+
+  if (!resolveTradeTermsLocationId(declaration)) {
+    errors.push(
+      "Missing incoterm location (DE 4/1) — required alongside the delivery terms code for method-1 valuation.",
+    );
+  }
+  return errors;
 }
 
 // Async lookup signature — the route passes a function backed by the Convex
@@ -384,6 +420,11 @@ export interface MapOptions {
   // (e.g. rules disabled, advisory-only), the mapper drops it before
   // emission. Codes are CategoryCode+TypeCode concatenated, e.g. "D006".
   forbiddenDocCodes?: string[];
+  // CNS inventory-linked imports only. When set, a second DE 2/1 previous
+  // document carrying the inventory reference (Z/MCR) is emitted alongside the
+  // DUCR so the CSP can match the declaration to its inventory record.
+  // Absent on every direct-HMRC declaration.
+  cnsUcn?: string;
 }
 
 /**
@@ -471,6 +512,13 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
   const isSelfRepresentation =
     declaredRepType === "self" && Boolean(declarantEori) && declarantEori === importerEori;
 
+  // DE 7/10 — container id. Whitespace stripped and upper-cased: CSP inventory
+  // records hold the ISO container number with no separators, and a mismatch
+  // here fails the pre-check rather than the schema.
+  const containerNumber = String(declaration.containerNumber ?? "")
+    .replace(/\s+/g, "")
+    .toUpperCase();
+
   const paymentError = validatePaymentFields(
     declaration.paymentMethodCode,
     declaration.defermentAccountNumber,
@@ -485,7 +533,10 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
   return {
     Declaration: {
       FunctionCode: "9",
-      TypeCode: mapDeclarationType(declaration.declarationType, declaration.route),
+      TypeCode: mapDeclarationType(
+        declaration.additionalDeclarationType || declaration.declarationType,
+        declaration.route,
+      ),
       FunctionalReferenceID: declaration.lrn || `FC-${Date.now().toString(36).toUpperCase()}`,
       GoodsItemQuantity: items.length,
       DeclarationOfficeID: declaration.presentationOffice || "",
@@ -541,7 +592,11 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
            // (per CDS schema rejection: after ArrivalTransportMeans only
            // DepartureTransportMeans/GoodsLocation/LoadingLocation/TransportEquipment
            // are valid).
-           ContainerCode: "0",
+           //
+           // DE 7/2 — "1" when the goods are containerised, "0" when not.
+           // Declaring "0" against a containerised consignment fails the CNS
+           // inventory pre-check, which matches on the container number.
+           ContainerCode: containerNumber ? "1" : "0",
            // DE 7/9 — ArrivalTransportMeans. Mirrors BorderTransportMeans
            // (R123 enforces matching identity at both layers).
            ArrivalTransportMeans: {
@@ -550,6 +605,11 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
              ModeCode: declaration.transportMode || "",
            },
            GoodsLocation: resolveGoodsLocation(declaration),
+           // DE 7/10 — container identification. Emitted only when declared;
+           // WCO sequence places TransportEquipment after GoodsLocation.
+           ...(containerNumber
+             ? { TransportEquipment: [{ SequenceNumeric: "1", ID: containerNumber }] }
+             : {}),
         },
         Destination: {
            CountryCode: normalizeCountryCode(declaration.destinationCountry)
@@ -570,6 +630,9 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
             ID: ducr,
             LineNumeric: "1",
           },
+          // DE 2/1 — CNS inventory reference (Z/MCR). Emitted only for the
+          // inventory-linked route; the direct HMRC path is unchanged.
+          ...(options.cnsUcn ? [buildInventoryPreviousDocument(options.cnsUcn)] : []),
         ],
         // CDS10020/22B/L002: LocationID must be omitted when blank — an empty string
         // fails code-list validation. ConditionCode (DE 4/1) is still required.

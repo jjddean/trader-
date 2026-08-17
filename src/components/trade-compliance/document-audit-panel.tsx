@@ -22,6 +22,7 @@ import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 const SAMPLE_TEXT = `COMMERCIAL INVOICE
 Invoice No: CI-2024-001
@@ -63,6 +64,7 @@ export function DocumentAuditPanel({
     isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated;
   const declarations = useQuery(api.declarations.getDeclarationPreviews, canQuery ? {} : "skip") || [];
   const generateUploadUrl = useMutation(api.documents.generateUploadUrl);
+  const discardOrphanedUpload = useMutation(api.documents.discardOrphanedUpload);
   const saveDocument = useMutation(api.documents.saveDocument);
 
   const handleAudit = async (textToAudit?: string, documentId?: string) => {
@@ -98,7 +100,7 @@ export function DocumentAuditPanel({
         onAssessmentCreated(data.assessmentId as Id<"export_assessments">);
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Audit failed";
+      const message = userMessageFromError(error, "Audit failed");
       setResult({
         status: "flagged",
         riskChecklist: [{
@@ -116,6 +118,7 @@ export function DocumentAuditPanel({
   const handleFile = async (file: File) => {
     setLoading(true);
     setUploadStage("Preparing Document Vault...");
+    let uploadedStorageId: Id<"_storage"> | null = null;
     try {
       setUploadStage("Uploading to Secure Vault...");
       const postUrl = await generateUploadUrl();
@@ -125,6 +128,7 @@ export function DocumentAuditPanel({
         body: file,
       });
       const { storageId } = await uploadResult.json();
+      uploadedStorageId = storageId;
 
       setUploadStage("Extracting text via AWS Textract OCR...");
       const formData = new FormData();
@@ -136,7 +140,12 @@ export function DocumentAuditPanel({
       });
 
       if (!extractRes.ok) {
-        throw new Error("AWS Textract failed to extract text from this document. Please check the file validity.");
+        const err = await extractRes.json().catch(() => ({} as { error?: string; details?: string }));
+        const detail =
+          typeof err.error === "string" && err.error.trim()
+            ? err.error.trim()
+            : "Document extraction failed. Please check the file and try again.";
+        throw new Error(detail);
       }
 
       const { rawText: extractedText } = await extractRes.json();
@@ -164,6 +173,13 @@ export function DocumentAuditPanel({
       setUploadStage("Running Compliance Audit...");
       await handleAudit(extractedText, documentId);
     } catch (error: any) {
+      if (uploadedStorageId) {
+        try {
+          await discardOrphanedUpload({ storageId: uploadedStorageId });
+        } catch (discardErr) {
+          console.error("[upload] failed to discard orphaned upload", discardErr);
+        }
+      }
       setResult({
         status: "flagged",
         riskChecklist: [{

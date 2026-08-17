@@ -9,6 +9,7 @@ import {
   resolveOrgIdForNewRecord,
 } from "./lib/org_access";
 import { resolveSubmissionRoute } from "./lib/export_routing";
+import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 
 function buildReference(now = Date.now()) {
   const year = new Date(now).getFullYear();
@@ -18,7 +19,7 @@ function buildReference(now = Date.now()) {
 
 async function getAssessmentOrThrow(ctx: any, userId: string, assessmentId: Id<"export_assessments">) {
   const assessment = await ctx.db.get(assessmentId);
-  if (!assessment) throw new Error("Assessment not found");
+  if (!assessment) throw userError("assessment_not_found", "Assessment not found");
   await assertAssessmentAccess(ctx, userId, assessment);
   return assessment;
 }
@@ -149,19 +150,19 @@ export const addExportEvidence = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const assessment = await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
 
     const label = args.label.trim();
-    if (!label) throw new Error("Label is required");
+    if (!label) throw userError("label_is_required", "Label is required");
 
     const url = args.url?.trim() || undefined;
     if (!args.documentId && !url) {
-      throw new Error("Attach an uploaded document or provide a web page URL");
+      throw userError("attach_an_uploaded_document_or_provide", "Attach an uploaded document or provide a web page URL");
     }
     if (url && !/^https?:\/\//i.test(url)) {
-      throw new Error("URL must start with http:// or https://");
+      throw userError("url_must_start_with_http_or", "URL must start with http:// or https://");
     }
 
     const evidenceId = await ctx.db.insert("export_evidence", {
@@ -189,10 +190,10 @@ export const removeExportEvidence = mutation({
   args: { evidenceId: v.id("export_evidence") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const row = await ctx.db.get(args.evidenceId);
-    if (!row) throw new Error("Evidence not found");
+    if (!row) throw userError("evidence_not_found", "Evidence not found");
     await getAssessmentOrThrow(ctx, identity.subject, row.assessmentId);
 
     await ctx.db.delete(args.evidenceId);
@@ -245,7 +246,7 @@ export const listAttachableDocuments = query({
 export const listAssessments = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     return await listAssessmentsForTenant(ctx, identity.subject);
   },
 });
@@ -254,12 +255,12 @@ export const getAssessment = query({
   args: { assessmentId: v.id("export_assessments") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const assessment = await ctx.db.get(args.assessmentId);
     if (!assessment) return null;
     if (!(await canAccessAssessment(ctx, identity.subject, assessment))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const products = await ctx.db
@@ -333,12 +334,12 @@ export const getAssessmentAuditLogs = query({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const assessment = await ctx.db.get(args.assessmentId);
     if (!assessment) return [];
     if (!(await canAccessAssessment(ctx, identity.subject, assessment))) {
-      throw new Error("Unauthorized");
+      throw forbiddenError();
     }
 
     const logs = await ctx.db
@@ -366,7 +367,7 @@ export const getProductForClassification = query({
   args: { productId: v.id("export_products") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const product = await ctx.db.get(args.productId);
     if (!product) return null;
@@ -389,13 +390,13 @@ export const createAssessment = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     let clientId: Id<"clients"> | undefined;
     if (args.declarationId) {
       const declaration = await ctx.db.get(args.declarationId);
       if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
-        throw new Error("Unauthorized");
+        throw forbiddenError();
       }
       if (declaration.clientId) clientId = declaration.clientId;
     }
@@ -448,7 +449,7 @@ export const updateAssessment = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const assessment = await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
     const { assessmentId, ...patch } = args;
@@ -486,7 +487,7 @@ export const addProduct = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
     const now = Date.now();
@@ -521,10 +522,10 @@ export const addProductSpec = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const product = await ctx.db.get(args.productId);
-    if (!product) throw new Error("Product not found");
+    if (!product) throw userError("product_not_found", "Product not found");
     await getAssessmentOrThrow(ctx, identity.subject, product.assessmentId);
 
     return await ctx.db.insert("export_product_specs", {
@@ -557,10 +558,10 @@ export const recordClassificationRun = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const product = await ctx.db.get(args.productId);
-    if (!product) throw new Error("Product not found");
+    if (!product) throw userError("product_not_found", "Product not found");
     await getAssessmentOrThrow(ctx, identity.subject, product.assessmentId);
 
     const runId = await ctx.db.insert("export_classification_runs", {
@@ -593,10 +594,10 @@ export const reviewClassificationRun = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const run = await ctx.db.get(args.runId);
-    if (!run) throw new Error("Classification run not found");
+    if (!run) throw userError("classification_run_not_found", "Classification run not found");
     await getAssessmentOrThrow(ctx, identity.subject, run.assessmentId);
 
     await ctx.db.patch(args.runId, {
@@ -636,7 +637,7 @@ export const recordSanctionsScreening = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
 
@@ -663,10 +664,10 @@ export const reviewSanctionsScreening = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const screening = await ctx.db.get(args.screeningId);
-    if (!screening) throw new Error("Screening not found");
+    if (!screening) throw userError("screening_not_found", "Screening not found");
     await getAssessmentOrThrow(ctx, identity.subject, screening.assessmentId);
 
     await ctx.db.patch(args.screeningId, {
@@ -690,7 +691,7 @@ export const createExpertRequest = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const assessment = await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
     const now = Date.now();
@@ -746,7 +747,7 @@ export const recordExportLicence = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
 
@@ -803,7 +804,7 @@ export const persistExtraction = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
     const now = Date.now();
@@ -899,7 +900,7 @@ export const refreshSubmissionRoute = mutation({
   args: { assessmentId: v.id("export_assessments") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
     await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
     return await refreshSubmissionRouteForAssessment(ctx, args.assessmentId);
   },

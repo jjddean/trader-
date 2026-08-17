@@ -5,6 +5,18 @@ import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { emailPathUrl } from "@/lib/export-controls/email-link-base";
 import { sendPortalInviteEmail } from "@/lib/portal/portal-invite-email";
+import { userErrorCode } from "@/lib/convex-errors";
+
+function publicPortalInviteError(error: unknown): string {
+  switch (userErrorCode(error)) {
+    case "portal_email_is_app_user":
+      return "This email is already associated with a FreightCode account. Use a different portal email.";
+    case "portal_email_taken":
+      return "This email is already associated with another client portal. Use a different portal email.";
+    default:
+      return "Portal access could not be updated. Please try again.";
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -120,7 +132,6 @@ export async function POST(request: Request) {
     });
   } catch (error: unknown) {
     console.error("portal invite error:", error);
-    const message = error instanceof Error ? error.message : "Internal Server Error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: publicPortalInviteError(error) }, { status: 500 });
   }
 }

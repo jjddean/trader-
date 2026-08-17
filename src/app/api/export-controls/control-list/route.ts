@@ -5,6 +5,7 @@ import {
   type ControlListEntry,
 } from "@/lib/export-controls/control-list";
 import { loadControlListForUser } from "@/lib/export-controls/load-control-list-server";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 const ENTRY_TYPES = new Set(["military", "dual_use", "firearms", "radioactive"]);
 
@@ -106,7 +107,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("Control list browse failed:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to load control list" },
+      { error: userMessageFromError(error, "Failed to load control list") },
       { status: 500 },
     );
   }

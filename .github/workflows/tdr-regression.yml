@@ -31,6 +31,9 @@ jobs:
       - name: H1 unit tests + golden XML
         run: npm run test:h1
 
+      - name: Portal authorization and document-flow regressions
+        run: npm run test:portal
+
       - name: TDR v1 dry-run preflight
         run: npm run test:tdr-dry-run
         env:

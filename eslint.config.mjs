@@ -42,6 +42,7 @@ const eslintConfig = defineConfig([
     // Dependencies & tooling caches
     "node_modules/**",
     ".vercel/**",
+    ".pytest_cache/**",
     // Local scratch & experiments (not production code)
     "tmp/**",
     "cloudagent/.wrangler/**",

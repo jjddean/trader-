@@ -30,6 +30,7 @@ import {
   DeclarationPageSkeleton,
   isConvexSessionMissing,
 } from "@/components/declaration-session-states";
+import { ApiError, userMessageFromError } from "@/lib/convex-errors";
 
 export default function GoodsItemsPage() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -116,7 +117,7 @@ export default function GoodsItemsPage() {
     try {
       await updateItem({ id: itemId as Id<"goods_items">, ...payload });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to save item";
+      const message = userMessageFromError(err, "Failed to save item");
       console.error("Failed to save item updates:", err);
       setItemSaveError(message);
       pendingUpdates.current[itemId] = { ...payload, ...pendingUpdates.current[itemId] };
@@ -419,7 +420,7 @@ export default function GoodsItemsPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to extract invoice data.");
+        throw new ApiError(data.error || "Failed to extract invoice data.");
       }
 
       // Persist exactly what the AI extracted. No invented fallbacks
@@ -471,7 +472,7 @@ export default function GoodsItemsPage() {
 
     } catch (err: unknown) {
       console.error("AI Extraction failed:", err);
-      setAiError(err instanceof Error ? err.message : "Failed to extract invoice data.");
+      setAiError(userMessageFromError(err, "Failed to extract invoice data."));
     } finally {
       setIsUploading(false);
       if (e.target) e.target.value = ''; // Reset input

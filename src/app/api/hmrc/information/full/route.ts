@@ -5,6 +5,7 @@ import { HMRC_CONFIG } from "../../../../../lib/hmrc-config";
 import { getAuthenticatedConvex } from "../../../../../lib/hmrc-route-session";
 import { resolveOrgHmrcRoutingForOrg } from "../../../../../lib/hmrc-org-routing";
 import { resolveHmrcAccessToken } from "../../../../../lib/hmrc-token";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 /**
  * GET /api/hmrc/information/full?mrn={mrn}
@@ -68,7 +69,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: true, data });
   } catch (error: unknown) {
     console.error("Full query crash:", error);
-    const message = error instanceof Error ? error.message : "Internal Server Error";
+    const message = userMessageFromError(error, "Internal Server Error");
     return NextResponse.json({ error: "Internal Server Error", message }, { status: 500 });
   }
 }

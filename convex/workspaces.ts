@@ -1,6 +1,7 @@
 /** @deprecated Legacy Convex workspaces — use Clerk orgs (`orgId` on records). Kept for existing DB rows only. */
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 
 async function requireWorkspaceAccess(
   ctx: { db: any },
@@ -8,7 +9,7 @@ async function requireWorkspaceAccess(
   userId: string,
 ) {
   const workspace = await ctx.db.get(workspaceId);
-  if (!workspace) throw new Error("Workspace not found");
+  if (!workspace) throw userError("workspace_not_found", "Workspace not found");
   if (workspace.ownerId === userId) return workspace;
 
   const membership = await ctx.db
@@ -17,7 +18,7 @@ async function requireWorkspaceAccess(
     .filter((q: any) => q.eq(q.field("workspaceId"), workspaceId))
     .first();
 
-  if (!membership) throw new Error("Unauthorized");
+  if (!membership) throw forbiddenError();
   return workspace;
 }
 
@@ -69,7 +70,7 @@ export const createWorkspace = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     const workspaceId = await ctx.db.insert("workspaces", {
       name: args.name,
@@ -94,7 +95,7 @@ export const updateWorkspaceConfig = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
+    if (!identity) throw unauthenticatedError();
 
     await requireWorkspaceAccess(ctx, args.workspaceId, identity.subject);
 

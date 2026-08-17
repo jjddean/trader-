@@ -7,6 +7,7 @@ import { aiExtractLimiter } from "@/lib/api-rate-limiter";
 import { sanitizeDocumentText } from "@/lib/export-controls/sanitize";
 import { extractExportFactsFromText } from "@/lib/export-controls/extraction";
 import { runDocumentAudit } from "@/lib/export-controls/document-audit";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
     const sanitized = sanitizeDocumentText(rawText);
 
     let extracted;
-    if (runExtraction && process.env.GROQ_API_KEY) {
+    if (runExtraction && (process.env.OPENAI_API_KEY || process.env.GROQ_API_KEY)) {
       try {
         extracted = await extractExportFactsFromText(sanitized);
       } catch (err) {
@@ -124,7 +125,7 @@ export async function POST(request: Request) {
     });
   } catch (error: unknown) {
     console.error("Document audit error:", error);
-    const message = error instanceof Error ? error.message : "Internal Server Error";
+    const message = userMessageFromError(error, "Internal Server Error");
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

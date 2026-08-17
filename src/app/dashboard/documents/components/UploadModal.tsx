@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DOCUMENT_TYPES } from "@/lib/utils/document-utils";
+import { ApiError } from "@/lib/convex-errors";
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -48,7 +49,7 @@ export function UploadModal({ isOpen, onOpenChange, allDeclarationOptions, userI
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Smart upload pipeline failed");
+        throw new ApiError(data.error || "Smart upload pipeline failed");
       }
 
       onOpenChange(false);

@@ -5,6 +5,7 @@ import { getAuthenticatedConvex } from "../../../../lib/hmrc-route-session";
 import { resolveOrgHmrcRoutingForOrg } from "../../../../lib/hmrc-org-routing";
 import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
 import { parseDeclarationStatusXml } from "../../../../lib/hmrc-information";
+import { userMessageFromError } from "@/lib/convex-errors";
 
 /**
  * GET /api/hmrc/status-query?mrn={mrn}
@@ -100,7 +101,7 @@ export async function GET(request: Request) {
     });
   } catch (error: unknown) {
     console.error("Status query crash:", error);
-    const message = error instanceof Error ? error.message : "Internal Server Error";
+    const message = userMessageFromError(error, "Internal Server Error");
     return NextResponse.json({ error: "Internal Server Error", message }, { status: 500 });
   }
 }
