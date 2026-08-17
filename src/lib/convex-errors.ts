@@ -41,6 +41,12 @@ function userErrorData(err: unknown): UserErrorData | null {
 /** Message safe to render to the customer. */
 export function userMessageFromError(err: unknown, fallback = GENERIC_ERROR_MESSAGE): string {
   if (err instanceof ApiError && err.message.trim()) return err.message;
+  // TimeoutError is raised by our own withTimeout wrapper, never by a server, so
+  // its message is ours and safe to show. Matched by name to avoid importing the
+  // client-only module into every consumer.
+  if (err instanceof Error && err.name === "TimeoutError" && err.message.trim()) {
+    return err.message;
+  }
   return userErrorData(err)?.message ?? fallback;
 }
 

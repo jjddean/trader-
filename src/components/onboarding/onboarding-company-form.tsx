@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import { countries } from "@/lib/data/countries";
 import { userMessageFromError } from "@/lib/convex-errors";
+import { withTimeout } from "@/lib/with-timeout";
 import {
   ONBOARD_INPUT,
   ONBOARD_LABEL,
@@ -139,11 +140,13 @@ export function OnboardingCompanyForm({
         cdsSubscribed: path === "broker" ? form.cdsSubscribed : undefined,
         termsAccepted: form.termsAccepted,
       };
+      // Bounded: a mutation that never settles must not leave the submit button
+      // disabled with no message. See src/lib/with-timeout.ts.
       if (path === "broker") {
-        const res = await completeBroker(payload);
+        const res = await withTimeout(completeBroker(payload));
         onSuccess(res.next);
       } else {
-        const res = await completeManaged(payload);
+        const res = await withTimeout(completeManaged(payload));
         onSuccess(res.next);
       }
     } catch (err) {
