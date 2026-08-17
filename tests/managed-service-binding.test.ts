@@ -70,6 +70,39 @@ describe("managed service portal binding", () => {
     );
   });
 
+  // The 2026-08-17 production lock-out. FREIGHTCODE_MANAGED_ORG_ID was changed,
+  // so every client created under the previous value compared unequal to the
+  // configured org and read as broker-owned. Existing customers were told their
+  // address "is already registered as a broker's client".
+  it("recognises a managed row created under a previous managed org id", () => {
+    const byEmail = { _id: "c1", orgId: "org_previous_managed", managedService: true };
+    assert.equal(
+      managedServiceBindingConflict({ managedOrgId: MANAGED, byClerk: null, byEmail }),
+      null,
+    );
+    assert.equal(managedServiceClientToReuse(null, byEmail), byEmail);
+  });
+
+  it("recognises a managed row matched by Clerk id under a previous org id", () => {
+    const byClerk = { _id: "c1", orgId: "org_previous_managed", managedService: true };
+    assert.equal(
+      managedServiceBindingConflict({ managedOrgId: MANAGED, byClerk, byEmail: null }),
+      null,
+    );
+  });
+
+  // The flag must not become a way into a broker's client.
+  it("still refuses a broker-owned row that is not flagged", () => {
+    assert.equal(
+      managedServiceBindingConflict({
+        managedOrgId: MANAGED,
+        byClerk: null,
+        byEmail: { _id: "c1", orgId: BROKER, managedService: false },
+      }),
+      "email_belongs_to_broker_client",
+    );
+  });
+
   it("does not double-report when both lookups hit the same broker row", () => {
     const row = { _id: "c1", orgId: BROKER };
     assert.equal(

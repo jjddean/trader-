@@ -396,6 +396,17 @@ export default defineSchema({
      * non-inventory-linked work.
      */
     cnsBadgeHolder: v.optional(v.boolean()),
+    /**
+     * This client was created by Managed Service onboarding, not by a broker.
+     *
+     * Recorded on the row because ownership must not be inferred by comparing
+     * orgId to FREIGHTCODE_MANAGED_ORG_ID: that variable can change, and when it
+     * did, every existing Managed Service customer was reclassified as a
+     * broker's client and locked out of sign-in with a message telling them to
+     * contact support. A row states what it is; the env var only says which org
+     * *new* rows go to.
+     */
+    managedService: v.optional(v.boolean()),
     // Client portal auth mapping (Clerk). Lowercased email; clerkId patched on first match.
     portalEmail: v.optional(v.string()),
     portalClerkId: v.optional(v.string()),
