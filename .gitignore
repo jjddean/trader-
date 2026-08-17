@@ -81,3 +81,10 @@ cloudagent/.xdg/
 # playwright artifacts
 /playwright-report/
 /test-results/
+
+# secrets — never commit any .env variant
+.env*
+
+# generated CDS XML dumps from ad-hoc runs (the frozen evidence lives in
+# docs/hmrc/ACTIVE/tdr/evidence/ per AGENT-SPEC §8, and stays tracked)
+/test-evidence/mcp-test*.xml
