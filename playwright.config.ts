@@ -10,6 +10,9 @@ const isLocalServer = baseURL.startsWith("http://localhost");
 export default defineConfig({
   testDir: "./e2e",
   globalSetup: "./e2e/global-setup.ts",
+  // Clerk dev instances cap at 50 organisations; the auth journeys create
+  // several per run. Without this the suite eventually blocks itself.
+  globalTeardown: "./e2e/global-teardown.ts",
   timeout: 60_000,
   expect: {
     timeout: 10_000,

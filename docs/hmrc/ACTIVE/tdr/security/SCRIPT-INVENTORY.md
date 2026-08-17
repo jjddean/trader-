@@ -21,7 +21,7 @@
 | Script | Purpose | Tag | Notes |
 |--------|---------|-----|-------|
 | `scripts/tdr-dry-run.mjs` | TDR v1 dry-run preflight gate | **KEEP** | Merge gate; CI runs this |
-| `scripts/generate-training-data.mjs` | LoRA dataset generation | **KEEP** | B — ML pipeline |
+| `scripts/generate-training-data.mjs` | LoRA dataset generation (v3, read a Convex export that no longer exists) | **DELETED** | Superseded by `scripts/lora/generate_reasoning_consistency_data.py` |
 | `scripts/build-appendix-16c-codes.js` | Appendix 16C goods location codes | **KEEP** | Reference data build |
 | `scripts/parse-hmrc-data.mjs` | HMRC data parsing | **ARCHIVE** | One-off ingestion |
 | `scripts/fetch-hmrc-bulk.mjs` | Bulk HMRC data fetch | **ARCHIVE** | Data ingestion |
@@ -135,7 +135,7 @@
 
 | Script | Purpose | Tag |
 |--------|---------|-----|
-| `generate-training-data.mjs` | Root LoRA data gen (duplicate path?) | **KEEP** | Also under scripts/ pattern |
+| `generate-training-data.mjs` | Root LoRA synthetic data gen (v1) | **DELETED** | Superseded by `npm run lora:prepare:v2` |
 | `test-evidence/run-hmrc-scenarios.js` | Primary TT runner | **KEEP** |
 
 ---

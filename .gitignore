@@ -64,6 +64,16 @@ __pycache__/
 
 # wrangler (cloudagent local dev/build cache)
 cloudagent/.wrangler/
+cloudagent/.xdg/
+
+# one-off working files (lint dumps, codemod scripts, Convex table exports)
+/eslint_report.*
+/build.log
+/snapshot.zip
+/convex-export.json
+/diverged_numstat.csv
+*/documents.jsonl
+*/generated_schema.jsonl
 
 /lora-runpod-worker-json-bundle/
 /lora-runpod-worker-json-bundle.zip
