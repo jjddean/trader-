@@ -93,7 +93,8 @@
     "esbuild": "0.28.1",
     "ws": "8.21.0",
     "postcss": "8.5.23",
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.3",
+    "nanoid": "^3.3.18"
   },
   "devDependencies": {
     "@clerk/testing": "^2.2.24",

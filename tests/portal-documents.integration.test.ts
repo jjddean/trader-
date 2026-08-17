@@ -424,7 +424,7 @@ describe("broker attachment invariants", () => {
         documentId,
         declarationId: targetDeclarationId,
       }),
-    ).rejects.toThrow("Unauthorized");
+    ).rejects.toThrow(/"code":"forbidden"/);
 
     const state = await t.run(async (ctx) => ({
       document: await ctx.db.get(documentId),
@@ -724,12 +724,12 @@ describe("portal list and download visibility", () => {
       portalB.mutation(api.client_portal.getMyDocumentDownloadUrl, {
         documentId: mislinkedDocumentId,
       }),
-    ).rejects.toThrow("Unauthorized");
+    ).rejects.toThrow(/"code":"forbidden"/);
     await expect(
       portalB.mutation(api.client_portal.getMyDocumentDownloadUrl, {
         documentId: brokerCodeOnlyDocumentId,
       }),
-    ).rejects.toThrow("Unauthorized");
+    ).rejects.toThrow(/"code":"forbidden"/);
   });
 
   it("hides a corrupt cross-tenant declaration and strips its link metadata from client documents", async () => {
