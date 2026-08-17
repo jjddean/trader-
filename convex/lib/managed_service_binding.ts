@@ -20,6 +20,28 @@ export type ManagedBindingConflict =
 export interface ManagedBindingCandidate<Id> {
   _id: Id;
   orgId?: string;
+  /** Set by completeManagedService. True means this row is ours, not a broker's. */
+  managedService?: boolean;
+}
+
+/**
+ * A candidate belongs to a broker only if it carries some other org AND was not
+ * created by Managed Service.
+ *
+ * Comparing orgId to the configured managed org is not sufficient on its own:
+ * FREIGHTCODE_MANAGED_ORG_ID changed on production on 2026-08-17, and every
+ * client created under the previous value immediately looked broker-owned.
+ * Existing customers were told their address "is already registered as a
+ * broker's client" and sent to support. The flag makes a row's origin a fact
+ * about the row rather than a function of current configuration.
+ */
+function isBrokerOwned<Id>(
+  candidate: ManagedBindingCandidate<Id> | null | undefined,
+  managedOrgId: string,
+): boolean {
+  if (!candidate) return false;
+  if (candidate.managedService) return false;
+  return Boolean(candidate.orgId) && candidate.orgId !== managedOrgId;
 }
 
 export interface ManagedBindingInput<Id> {
@@ -35,16 +57,11 @@ export function managedServiceBindingConflict<Id>(
 ): ManagedBindingConflict | null {
   const { managedOrgId, byClerk, byEmail } = input;
 
-  if (byClerk && byClerk.orgId && byClerk.orgId !== managedOrgId) {
+  if (isBrokerOwned(byClerk, managedOrgId)) {
     return "portal_linked_to_broker";
   }
 
-  if (
-    byEmail &&
-    byEmail.orgId &&
-    byEmail.orgId !== managedOrgId &&
-    (!byClerk || byClerk._id !== byEmail._id)
-  ) {
+  if (isBrokerOwned(byEmail, managedOrgId) && (!byClerk || byClerk._id !== byEmail!._id)) {
     return "email_belongs_to_broker_client";
   }
 

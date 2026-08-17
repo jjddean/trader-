@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import type { MutationCtx } from "./_generated/server";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import {
   managedServiceBindingConflict,
   managedServiceClientToReuse,
@@ -285,6 +285,9 @@ export const completeManagedService = mutation({
         contactPhone: trimOptional(args.contactPhone),
         notes: noteParts.join(" · "),
         orgId: managedOrgId,
+        // Stamp origin on the row: FREIGHTCODE_MANAGED_ORG_ID can change, and
+        // rows created under an older value must not later read as broker-owned.
+        managedService: true,
         portalEmail,
         portalClerkId: identity.subject,
         status: "active" as const,
@@ -304,6 +307,7 @@ export const completeManagedService = mutation({
         contactEmail,
         contactPhone: trimOptional(args.contactPhone),
         notes: noteParts.join(" · "),
+        managedService: true,
         portalEmail,
         portalClerkId: identity.subject,
         status: "active",
@@ -354,5 +358,54 @@ export const completeManagedService = mutation({
     });
 
     return { next: "portal" as const, clientId };
+  },
+});
+
+/**
+ * Marks pre-existing Managed Service clients so they survive a change to
+ * FREIGHTCODE_MANAGED_ORG_ID.
+ *
+ * Rows created before `managedService` existed can only be recognised by the
+ * note completeManagedService has always written. Identifying them by orgId
+ * would defeat the purpose — the whole failure was that the org id moved.
+ *
+ * Dry run by default:
+ *   npx convex run onboarding:backfillManagedServiceFlag '{}' --prod
+ *   npx convex run onboarding:backfillManagedServiceFlag '{"dryRun":false}' --prod
+ */
+const MANAGED_SERVICE_NOTE = "Source: Managed Service onboarding";
+
+export const backfillManagedServiceFlag = internalMutation({
+  args: { dryRun: v.optional(v.boolean()), limit: v.optional(v.number()) },
+  returns: v.object({
+    dryRun: v.boolean(),
+    scanned: v.number(),
+    patched: v.number(),
+    alreadySet: v.number(),
+    notManagedService: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    const dryRun = args.dryRun ?? true;
+    const rows = await ctx.db.query("clients").take(args.limit ?? 5000);
+
+    let patched = 0;
+    let alreadySet = 0;
+    let notManagedService = 0;
+
+    for (const row of rows) {
+      if (row.managedService) {
+        alreadySet += 1;
+        continue;
+      }
+      const notes = typeof row.notes === "string" ? row.notes : "";
+      if (!notes.includes(MANAGED_SERVICE_NOTE)) {
+        notManagedService += 1;
+        continue;
+      }
+      if (!dryRun) await ctx.db.patch(row._id, { managedService: true });
+      patched += 1;
+    }
+
+    return { dryRun, scanned: rows.length, patched, alreadySet, notManagedService };
   },
 });
