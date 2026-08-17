@@ -5,6 +5,11 @@ import { internalMutation, internalQuery, mutation, query } from "./_generated/s
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { evaluateCompleteness } from "./lib/declaration_completeness";
+import {
+  editBlockedMessage,
+  isEditableStatus,
+  mayBeginInitialSubmission,
+} from "./lib/declaration_editing";
 import { replayDeclarationStatus } from "./lib/replay_declaration_status";
 import { collectDeclarationNotifications } from "./lib/collect_declaration_notifications";
 import { resolveDeclarationCdsBadge } from "./lib/cds_badge";
@@ -1583,6 +1588,12 @@ export const deleteDeclaration = mutation({
       throw userError("unauthorized_you_do_not_own_this", "Unauthorized: You do not own this declaration.");
     }
 
+    // A filed declaration is the local record of a live customs entry. Deleting
+    // it destroys the evidence trail for something HMRC still holds.
+    if (!isEditableStatus(existing.status)) {
+      throw userError("declaration_filed", editBlockedMessage(existing.status));
+    }
+
     // Read preview before deletion to capture delta values
     const existingPreview = await ctx.db
       .query("declaration_preview")
@@ -1641,14 +1652,10 @@ export const beginSubmission = mutation({
     }
 
     const status = String(existing.status ?? "Draft");
-    const blocked = [
-      "Processing",
-      "Accepted",
-      "Amended",
-      "Amendment Processing",
-      "Cancellation Requested",
-    ];
-    if (blocked.includes(status)) {
+    // Allow-list, not a deny-list. The old deny-list named five statuses, so
+    // anything absent fell through and was re-filed as a new declaration —
+    // "Cleared" among them. Unknown statuses now fail closed.
+    if (!mayBeginInitialSubmission(existing.status)) {
       throw new Error(
         `SUBMIT_BLOCKED: declaration is "${status}" — cannot submit. Amend a live declaration, or wait for the in-flight submission to finish.`,
       );
@@ -1774,6 +1781,13 @@ export const updateDeclarationDetails = mutation({
     const existing = await ctx.db.get(args.id);
     if (!existing || !(await canAccessDeclaration(ctx, identity.subject, existing))) {
       throw forbiddenError();
+    }
+
+    // Patching customs fields after filing would silently desync the stored
+    // record from what HMRC holds. Post-filing changes go through amend/cancel,
+    // which build proper CDS XML.
+    if (!isEditableStatus(existing.status)) {
+      throw userError("declaration_filed", editBlockedMessage(existing.status));
     }
 
     const mop = String(args.paymentMethodCode ?? "").trim().toUpperCase();

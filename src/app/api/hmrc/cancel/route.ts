@@ -34,14 +34,31 @@ export async function POST(request: Request) {
     }
     const { convex, userId } = session;
 
-    const { declarationId, mrn, reason } = await request.json();
-    if (!declarationId || !mrn) {
-      return NextResponse.json({ error: "Missing declarationId or mrn" }, { status: 400 });
+    const { declarationId, mrn: clientMrn, reason } = await request.json();
+    if (!declarationId) {
+      return NextResponse.json({ error: "Missing declarationId" }, { status: 400 });
     }
 
     const lane = await convex.query(api.declarations.getLane, { id: declarationId });
     if (!lane) {
       return NextResponse.json({ error: "Declaration not found" }, { status: 404 });
+    }
+
+    // Invalidation targets the stored MRN, never a client-supplied one. Access
+    // to declarationId does not prove ownership of an MRN typed into the body,
+    // and an invalidation aimed at the wrong filing is not recoverable.
+    const mrn = String(lane.mrn ?? "").trim();
+    if (!mrn) {
+      return NextResponse.json(
+        { error: "This declaration has no MRN yet, so there is nothing to cancel at HMRC." },
+        { status: 409 },
+      );
+    }
+    if (clientMrn !== undefined && String(clientMrn).trim() && String(clientMrn).trim() !== mrn) {
+      return NextResponse.json(
+        { error: "This declaration has changed since the page loaded. Reload and try again." },
+        { status: 409 },
+      );
     }
 
     const orgRouting = await resolveOrgHmrcRoutingForDeclaration(
