@@ -88,3 +88,8 @@ cloudagent/.xdg/
 # generated CDS XML dumps from ad-hoc runs (the frozen evidence lives in
 # docs/hmrc/ACTIVE/tdr/evidence/ per AGENT-SPEC §8, and stays tracked)
 /test-evidence/mcp-test*.xml
+
+# generated UK Sanctions List snapshots (~12.5k designations, several MB each).
+# Rebuilt on demand by `npm run export-controls:refresh-sanctions`; the
+# authoritative copy lives in R2, pointed at by the sanctions_list dataset row.
+/data/export-controls/sanctions-*.json

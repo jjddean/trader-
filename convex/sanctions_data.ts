@@ -77,3 +77,61 @@ export const recordVersion = internalMutation({
     });
   },
 });
+
+/**
+ * Operational view of the sanctions pipeline — source version, ingest age,
+ * entity count and the active storage URL screening will actually fetch.
+ * Answers "why is screening failing" without a database inspection.
+ */
+export const getSanctionsHealth = query({
+  handler: async (ctx) => {
+    const latest = await ctx.db
+      .query("sanctions_versions")
+      .withIndex("by_publishedAt")
+      .order("desc")
+      .first();
+
+    const dataset = await ctx.db
+      .query("referenceDatasets")
+      .withIndex("by_name", (q) => q.eq("name", "sanctions_list"))
+      .order("desc")
+      .first();
+
+    const freshness = await evaluateFreshness(ctx);
+
+    // Screening needs both: a snapshot to score against and a dataset row
+    // telling the route where to fetch it.
+    const blockers: string[] = [];
+    if (!latest) blockers.push("no_snapshot_recorded");
+    if (!dataset) blockers.push("no_active_dataset_row");
+    if (dataset && !dataset.storageUrl && !dataset.storagePath) {
+      blockers.push("dataset_row_has_no_location");
+    }
+    if (latest && !freshness.fresh) blockers.push("snapshot_stale");
+
+    return {
+      ready: blockers.length === 0,
+      blockers,
+      snapshot: latest
+        ? {
+            version: latest.publishedAt,
+            entityCount: latest.entityCount,
+            sourceHash: latest.sourceHash,
+            ingestedAt: latest.ingestedAt,
+            ageHours: Math.round((Date.now() - latest.ingestedAt) / (60 * 60 * 1000)),
+            fresh: freshness.fresh,
+          }
+        : null,
+      activeDataset: dataset
+        ? {
+            version: dataset.version,
+            storagePath: dataset.storagePath,
+            storageUrl: dataset.storageUrl,
+            lastUpdated: dataset.lastUpdated,
+          }
+        : null,
+      remediation:
+        blockers.length === 0 ? null : "npm run export-controls:refresh-sanctions",
+    };
+  },
+});
