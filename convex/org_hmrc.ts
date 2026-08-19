@@ -304,17 +304,26 @@ export const listOrganisationsForAdmin = query({
   handler: async (ctx) => {
     await requireAdmin(ctx);
 
-    const [settings, declarations, users] = await Promise.all([
+    // Org discovery reads `declaration_preview`, not `declarations`. Both carry
+    // one row per declaration, but a declaration document is ~70 fields of
+    // customs data while the preview is a small read-model row — and the only
+    // thing wanted here is the orgId string. Sweeping the fat table put this
+    // query on course for Convex's 8 MiB per-call read cap, at which point the
+    // admin page throws instead of degrading.
+    const [settings, previews, users] = await Promise.all([
       ctx.db.query("org_hmrc_settings").take(500),
-      ctx.db.query("declarations").take(3000),
+      ctx.db.query("declaration_preview").take(3000),
       ctx.db.query("users").take(500),
     ]);
 
     const memberEmailByOrg = new Map<string, string>();
+    const memberOrgIds = new Set<string>();
     for (const user of users) {
       const orgId = typeof user.orgId === "string" ? user.orgId.trim() : "";
+      if (!orgId) continue;
+      memberOrgIds.add(orgId);
       const email = typeof user.email === "string" ? user.email.trim() : "";
-      if (!orgId || !email || memberEmailByOrg.has(orgId)) continue;
+      if (!email || memberEmailByOrg.has(orgId)) continue;
       memberEmailByOrg.set(orgId, email);
     }
 
@@ -339,8 +348,17 @@ export const listOrganisationsForAdmin = query({
       });
     }
 
-    for (const decl of declarations) {
-      const orgId = typeof decl.orgId === "string" ? decl.orgId.trim() : "";
+    // Orgs with no settings row still belong in this table — that is how an org
+    // silently running on the default practice mode becomes visible. Discovered
+    // from member rows as well as declarations, so an org whose declarations all
+    // predate the read model is still listed.
+    const discoveredOrgIds = [
+      ...memberOrgIds,
+      ...previews.map((preview) =>
+        typeof preview.orgId === "string" ? preview.orgId.trim() : "",
+      ),
+    ];
+    for (const orgId of discoveredOrgIds) {
       if (!orgId || orgMap.has(orgId)) continue;
       orgMap.set(orgId, {
         hmrcMode: "practice",

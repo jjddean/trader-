@@ -1,4 +1,5 @@
 import type { MutationCtx, QueryCtx } from "../_generated/server";
+import { forbiddenError, unauthenticatedError } from "./user_errors";
 
 type AuthCtx = Pick<QueryCtx, "auth" | "db"> | Pick<MutationCtx, "auth" | "db">;
 
@@ -48,9 +49,14 @@ export async function getCurrentUserRole(ctx: AuthCtx) {
   return { identity, dbUser, role, email };
 }
 
+/**
+ * Thrown as ConvexError, not Error, on purpose: a Convex production deployment
+ * redacts a plain `Error` to the string "Server Error" before it reaches the
+ * browser (see lib/user_errors.ts). A denied admin then reached the client as an
+ * opaque crash — the global error boundary — instead of a readable refusal.
+ */
 export async function requireAdmin(ctx: AuthCtx): Promise<void> {
   const current = await getCurrentUserRole(ctx);
-  if (!current || current.role !== "admin") {
-    throw new Error("Unauthorized: Admin access required");
-  }
+  if (!current) throw unauthenticatedError();
+  if (current.role !== "admin") throw forbiddenError();
 }
