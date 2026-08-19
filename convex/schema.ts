@@ -55,7 +55,10 @@ export default defineSchema({
     onboardingCompletedAt: v.optional(v.number()),
   })
     .index("by_clerk", ["clerkId"])
-    .index("by_email_normalized", ["emailNormalized"]),
+    .index("by_email_normalized", ["emailNormalized"])
+    // Notification fan-out resolves org members by this index. Without it the
+    // emitter would scan the whole users table on every org-scoped event.
+    .index("by_org", ["orgId"]),
 
   trade_lanes: defineTable({
     userId: v.string(),
@@ -562,6 +565,78 @@ export default defineSchema({
     .index("by_conv_type_ts", ["conversationId", "notificationType", "timestamp"]) // used for dedupe
     .index("by_idempotencyKey", ["idempotencyKey"])
     .index("by_hmrcNotificationId", ["hmrcNotificationId"]),
+
+  /**
+   * The in-app inbox. Distinct from `notifications` above, which is the
+   * append-only HMRC evidence log and stays HMRC-sourced only (CLAUDE.md).
+   * Rows here are app-layer and disposable: an HMRC row is *mirrored* into this
+   * table carrying `sourceTable`/`sourceId` back to the evidence, so pruning the
+   * inbox never destroys a record.
+   *
+   * Delivery is fan-out — one row per recipient, not one shared row plus a
+   * read-state join table. Per-user preferences can then be applied at emit time
+   * and the unread count stays a single indexed read.
+   * See docs/notifications/IMPLEMENTATION-PLAN.md §3.1 and §7.1.
+   */
+  app_notifications: defineTable({
+    /** Exactly one audience is set: `userId` for staff, `clientId` for portal contacts. */
+    userId: v.optional(v.string()),
+    clientId: v.optional(v.id("clients")),
+    /** Tenant tag on staff rows. Undefined = personal workspace. */
+    orgId: v.optional(v.string()),
+
+    /** Typed key from convex/lib/notification_events.ts — never a free string. */
+    event: v.string(),
+    category: v.string(),
+    severity: v.union(
+      v.literal("critical"),
+      v.literal("action_required"),
+      v.literal("info"),
+    ),
+
+    /** Resolved at emit time so history survives later label changes. */
+    title: v.string(),
+    body: v.optional(v.string()),
+    href: v.optional(v.string()),
+
+    declarationId: v.optional(v.id("declarations")),
+    sourceTable: v.optional(v.string()),
+    sourceId: v.optional(v.string()),
+    metadata: v.optional(v.any()),
+
+    /** User-facing read state. Unrelated to `notifications.processed`, a pipeline flag. */
+    readAt: v.optional(v.number()),
+    dismissedAt: v.optional(v.number()),
+    dedupeKey: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    // orgId sits between the audience and the sort key so switching active org
+    // filters without a table scan.
+    .index("by_user_org_created", ["userId", "orgId", "createdAt"])
+    .index("by_user_org_read", ["userId", "orgId", "readAt"])
+    .index("by_client_created", ["clientId", "createdAt"])
+    .index("by_client_read", ["clientId", "readAt"])
+    .index("by_declaration", ["declarationId"])
+    .index("by_dedupeKey", ["dedupeKey"]),
+
+  /**
+   * Per-user, per-category delivery preferences. A missing row means "use the
+   * category default" (convex/lib/notification_events.ts), so no backfill is
+   * needed and defaults can change without rewriting stored rows.
+   */
+  notification_preferences: defineTable({
+    userId: v.string(),
+    /** Per-org override. Undefined = the user's personal-workspace setting. */
+    orgId: v.optional(v.string()),
+    category: v.string(),
+    inApp: v.boolean(),
+    /** Stored now, not delivered — email is a later pass. */
+    email: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user_org_category", ["userId", "orgId", "category"])
+    .index("by_user", ["userId"]),
 
   dashboard_summary: defineTable({
     userId: v.string(),

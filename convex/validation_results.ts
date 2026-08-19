@@ -1,8 +1,9 @@
 import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { evaluateRules, type RuleDefinition, type ScenarioInput } from "./lib/rule_engine";
-import { canAccessDeclaration } from "./lib/org_access";
+import { canAccessDeclaration, orgIdFromDeclaration } from "./lib/org_access";
 import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
+import { notify } from "./lib/notify";
 
 export const listForDeclaration = query({
   args: { declarationId: v.id("declarations") },
@@ -113,6 +114,31 @@ export const recompute = mutation({
     }
 
     const blockingFails = results.filter((r) => r.status === "fail" && r.severity === "blocking");
+
+    // Transition-only. `recompute` runs after every item edit, so emitting on
+    // state rather than on change would make this the loudest source in the app
+    // by an order of magnitude. Only crossing the blocked/unblocked boundary is
+    // worth telling anyone about.
+    const wasBlocked = previous.some((r) => r.status === "fail" && r.severity === "blocking");
+    const isBlocked = blockingFails.length > 0;
+    if (wasBlocked !== isBlocked) {
+      await notify(ctx, {
+        event: isBlocked ? "validation.blocking_failure" : "validation.cleared",
+        userId: String(decl.userId || identity.subject),
+        orgId: orgIdFromDeclaration(decl),
+        title: isBlocked
+          ? `${blockingFails.length} blocking validation ${blockingFails.length === 1 ? "failure" : "failures"}`
+          : "Validation passed",
+        body: isBlocked
+          ? blockingFails.slice(0, 2).map((r) => r.ruleName).join("; ")
+          : undefined,
+        href: `/dashboard/declarations/${args.declarationId}`,
+        declarationId: args.declarationId,
+        // One standing row per declaration: the latest verdict replaces the last.
+        dedupeKey: `validation:${args.declarationId}`,
+      });
+    }
+
     return {
       total: results.length,
       blockingFailures: blockingFails.length,

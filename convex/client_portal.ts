@@ -10,6 +10,7 @@ import {
 } from "./declarations";
 import { resolveSubmissionRoute } from "./lib/export_routing";
 import { resolveSignedInEmail } from "./lib/signed_in_email";
+import { notify } from "./lib/notify";
 import {
   canPortalClientSeeDocument,
   clientDeclarationAttachmentConflict,
@@ -897,6 +898,24 @@ export const sendMyMessage = mutation({
       createdAt: now,
     });
 
+    // A client message notifies the *broker*, not the client who sent it — the
+    // audience is the org, and no clientId is passed, so this never reflects
+    // back into the portal. Collapsed per client so a burst of messages is one
+    // "you have messages" row rather than one per line typed.
+    await notify(ctx, {
+      event: "portal.message_received",
+      orgId,
+      userId: typeof client.userId === "string" ? client.userId : undefined,
+      title: `New message from ${client.name || "a client"}`,
+      body: body.slice(0, 140),
+      href: args.declarationId
+        ? `/dashboard/declarations/${args.declarationId}`
+        : "/dashboard/clients",
+      declarationId: args.declarationId,
+      dedupeKey: `portal-msg:${client._id}`,
+      metadata: { messageId, clientId: client._id },
+    });
+
     return { messageId };
   },
 });
@@ -1108,6 +1127,21 @@ export const saveMyDocument = mutation({
         updatedAt: Date.now(),
       });
     }
+
+    // Broker-side audience again: the upload needs review by the team, and the
+    // client already knows they uploaded it.
+    await notify(ctx, {
+      event: "portal.document_uploaded",
+      orgId,
+      userId: typeof client.userId === "string" ? client.userId : undefined,
+      title: `${client.name || "A client"} uploaded a document`,
+      body: fileName,
+      href: targetDeclarationId
+        ? `/dashboard/documents?declaration=${targetDeclarationId}`
+        : "/dashboard/documents",
+      declarationId: targetDeclarationId,
+      metadata: { documentId, clientId: client._id, requirementCode: requirement?.code },
+    });
 
     await ctx.db.insert("auditLogs", {
       userId: identity.subject,

@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
 import { updateSubscriptionImpl } from "./subscriptions";
 import { periodEndMs, planFromSubscriptionObject } from "./lib/stripe_plan";
+import { notify } from "./lib/notify";
 
 async function resolveClerkUserId(
   ctx: Parameters<typeof updateSubscriptionImpl>[0],
@@ -66,17 +67,39 @@ async function applySubscriptionLifecycle(
       plan: "Starter",
       currentPeriodEnd: Date.now(),
     });
+    await notify(ctx, {
+      event: "billing.subscription_updated",
+      userId: clerkId,
+      title: "Subscription cancelled",
+      body: "Your plan has reverted to Starter.",
+      href: "/dashboard/settings?tab=subscription",
+      dedupeKey: `billing:${clerkId}`,
+    });
     return;
   }
 
+  const status = subscription.status ?? "active";
   await updateSubscriptionImpl(ctx, {
     userId: clerkId,
     stripeCustomerId: String(subscription.customer ?? ""),
     stripeSubscriptionId: subscription.id,
-    status: subscription.status ?? "active",
+    status,
     plan: planFromSubscriptionObject(subscription),
     currentPeriodEnd: periodEndMs(subscription),
   });
+
+  // Only the states a user must act on. Stripe sends `updated` for routine
+  // renewals too, and notifying on those would be noise on every billing cycle.
+  if (status === "past_due" || status === "unpaid" || status === "incomplete_expired") {
+    await notify(ctx, {
+      event: "billing.payment_failed",
+      userId: clerkId,
+      title: "Payment failed",
+      body: "Update your payment method to avoid losing access.",
+      href: "/dashboard/settings?tab=subscription",
+      dedupeKey: `billing:${clerkId}`,
+    });
+  }
 }
 
 /** Stripe webhook events — internal only; verify signature before calling. */

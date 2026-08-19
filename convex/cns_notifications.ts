@@ -6,6 +6,8 @@ import {
   readCnsNotificationConfig,
   validateCnsNotificationConfig,
 } from "./lib/cns_config";
+import { orgIdFromDeclaration } from "./lib/org_access";
+import { notify } from "./lib/notify";
 import {
   acknowledgeBatch,
   getNotificationBatch,
@@ -362,6 +364,30 @@ export const processNotification = internalMutation({
       await ctx.scheduler.runAfter(0, internal.declarations.refreshDeclarationPreviewInternal, {
         declarationId,
       });
+
+      // Deliberately worded as an inventory problem, not an HMRC rejection —
+      // the declaration never reached CDS, and mislabelling it would send the
+      // user to the wrong remediation.
+      const rejected = await ctx.db.get(declarationId);
+      if (rejected) {
+        await notify(ctx, {
+          event: "cns.inventory_rejected",
+          userId: String(rejected.userId || ""),
+          orgId: orgIdFromDeclaration(rejected),
+          title: "Inventory linking rejected",
+          body: inventory.ircDescription
+            || inventory.validationCode
+            || "The CSP rejected the inventory record. The declaration did not reach HMRC.",
+          href: `/dashboard/declarations/${declarationId}/status`,
+          declarationId,
+          dedupeKey: `cns-inventory:${declarationId}`,
+          metadata: {
+            validationCode: inventory.validationCode,
+            ircCode: inventory.ircCode,
+          },
+        });
+      }
+
       return await finish("inventory_rejected", {
         declarationId,
         functionalReferenceId: inventory.functionalReferenceId || undefined,

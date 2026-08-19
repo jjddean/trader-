@@ -11,6 +11,7 @@ import {
 } from "./lib/org_access";
 import { clientDocumentAttachmentConflict } from "./lib/portal_document_policy";
 import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
+import { notify } from "./lib/notify";
 
 const DOC_CODE_REGEX = /(?:^|[^A-Z0-9])([A-Z]\d{3}|\d{4})(?:[^A-Z0-9]|$)/;
 
@@ -610,6 +611,8 @@ export const upsertRequirementsForDeclaration = mutation({
 
     const incomingCodes = new Set<string>();
     const ops: Promise<unknown>[] = [];
+    /** Blocking requirements still missing once this write lands. */
+    const unmetAfter: string[] = [];
 
     for (const requirement of args.requirements) {
       const code = String(requirement.code).toUpperCase();
@@ -629,6 +632,12 @@ export const upsertRequirementsForDeclaration = mutation({
           : hasExistingDoc
             ? "uploaded"
             : "missing";
+        if (
+          nextStatus === "missing" &&
+          (requirement.requirementLevel || existingRow.requirementLevel || "blocking") === "blocking"
+        ) {
+          unmetAfter.push(code);
+        }
         ops.push(ctx.db.patch(existingRow._id, {
           name: requirement.name,
           type: requirement.type,
@@ -640,6 +649,9 @@ export const upsertRequirementsForDeclaration = mutation({
           updatedAt: now,
         }));
       } else {
+        if (!hasExistingDoc && (requirement.requirementLevel || "blocking") === "blocking") {
+          unmetAfter.push(code);
+        }
         ops.push(ctx.db.insert("document_requirements", {
           declarationId: args.declarationId,
           userId: identity.subject,
@@ -667,6 +679,30 @@ export const upsertRequirementsForDeclaration = mutation({
     }
 
     await Promise.all(ops);
+
+    // Transition-only, and collapsed to one standing row per declaration: this
+    // mutation reruns whenever the preference tool re-derives requirements, so
+    // emitting per requirement would produce a burst of near-identical rows for
+    // what is really a single condition — "this declaration is missing paperwork".
+    const unmetBefore = existing.filter(
+      (row: any) =>
+        String(row.status || "missing") === "missing" &&
+        String(row.requirementLevel || "blocking") === "blocking",
+    ).length;
+    if (unmetAfter.length > 0 !== unmetBefore > 0) {
+      await notify(ctx, {
+        event: unmetAfter.length > 0 ? "documents.requirement_unmet" : "documents.requirements_cleared",
+        userId: String(declaration.userId || identity.subject),
+        orgId: orgIdFromDeclaration(declaration),
+        title: unmetAfter.length > 0
+          ? `${unmetAfter.length} required ${unmetAfter.length === 1 ? "document" : "documents"} missing`
+          : "All required documents supplied",
+        body: unmetAfter.length > 0 ? unmetAfter.slice(0, 4).join(", ") : undefined,
+        href: `/dashboard/documents?declaration=${args.declarationId}`,
+        declarationId: args.declarationId,
+        dedupeKey: `docs-unmet:${args.declarationId}`,
+      });
+    }
 
     return { success: true, count: args.requirements.length };
   },
