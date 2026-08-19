@@ -1,5 +1,7 @@
 # Consultant Review Network Plan
 
+**Status:** ACTIVE — strategy. Phase 1 build detail lives in `CONSULTANT-PILOT-BUILD-PLAN.md`.
+
 ## Objective
 
 Turn FreightCode's existing secure consultant-review flow into a reusable, commercially operated expert-review service. FreightCode remains the workflow and integration owner, approved consultants provide specialist decisions, and connected trade applications receive structured status updates and completed outcomes.

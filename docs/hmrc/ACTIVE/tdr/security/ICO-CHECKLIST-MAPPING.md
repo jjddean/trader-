@@ -1,7 +1,7 @@
 # ICO self-assessment — policy mapping
 
 **Product:** Freightcode · **Last updated:** 2026-06-15  
-**Source policy:** [`documentation/R_and_D/information_security_policy.md`](../../../../documentation/R_and_D/information_security_policy.md)  
+**Source policy:** [`documentation/R_and_D/information_security_policy.md`](../../../../../documentation/R_and_D/information_security_policy.md)  
 **Ops summary:** [`OPS-SECURITY.md`](./OPS-SECURITY.md)
 
 Mapping to the [ICO security outcomes](https://ico.org.uk/for-organisations/advice-for-small-organisations/create-your-own-security-outcomes/) checklist themes.

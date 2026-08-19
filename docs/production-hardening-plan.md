@@ -1,9 +1,10 @@
 # Production Hardening Plan
 
-Status: **steps 1–12 complete** (2026-08-16). Readiness board below.
-Eight commits on `fix/production-hardening`, **none deployed** — production still
-runs the pre-fix build, so every GREEN below describes the branch, not the live
-site.
+**Status:** ACTIVE — steps 1–12 complete (2026-08-16), board re-verified 2026-08-19.
+
+The hardening work is **merged and deployed**: PR #26 plus #29–#32 are on `main`,
+and production serves the Convex-probing `/api/health` route from this work. The
+2026-08-16 caveat that nothing was deployed no longer applies.
 
 Authenticated e2e: `npm run test:e2e:auth`. Requires a Clerk **development**
 instance (`pk_test_`/`sk_test_`) in `.env.local`; the harness refuses to run
@@ -12,7 +13,9 @@ deleted through the Clerk Backend API, run against the **dev** Convex deployment
 Note: the dev instance now throttles after heavy use, so a full pass can fail on
 `ClerkAPIResponseError: Forbidden` — specs pass in isolation.
 
-Mode: production-hardening. FreightCode is live; estimated 50–60% production-ready.
+Mode: production-hardening. FreightCode is live. Readiness was estimated at
+50–60% when this plan opened; the board below scores **71%** as of 2026-08-19
+(8 🟢 · 8 🟠 · 1 🔴, scoring 🟢=1 and 🟠=0.5 across 17 areas).
 Objective: systematically harden the existing product until the core operational
 platform is production-safe.
 
@@ -197,7 +200,7 @@ Maintain a simple status per core area:
 **Do not mark an area GREEN just because its happy path works.** It must also have
 correct permissions, failure handling, recovery and production-safe data behaviour.
 
-### Status board — 2026-08-16
+### Status board — 2026-08-16, re-verified 2026-08-19
 
 Rule applied as written: GREEN needs correct permissions, failure handling,
 recovery and production-safe data behaviour — not just a working happy path.
@@ -215,20 +218,28 @@ recovery and production-safe data behaviour — not just a working happy path.
 | CNS | 🟠 AMBER | Cancel classification fixed on both ingest paths; follow-ups now correlate by X-CSP-ID. Cargo release is not visible anywhere in the app. |
 | Documents / uploads | 🟢 GREEN | All five flows discard orphans on failure; daily sweep as backstop, which removed 22 real orphans on dev. |
 | Error surface | 🟢 GREEN | 330 → 47 plain throws; 81 UI sites use the safe renderer; a static test asserts the pattern repo-wide and caught four instances no one had looked at. |
-| Observability | 🟠 AMBER | Correlation IDs through submit/amend/cancel, audit rows stamped with org. No alerting, no dashboards — none of the tools in the plan are installed. |
-| Charges / payments | 🔴 RED | Stripe live keys in place, but `STRIPE_PRO_PRICE_ID` and `STRIPE_PAYG_PRICE_ID` are missing from production. Two of three plans cannot check out. |
+| Observability | 🔴 RED | Correlation IDs through submit/amend/cancel, audit rows stamped with org. Zero monitoring packages installed — no Sentry, BetterStack, PostHog or OTel anywhere in `package.json`. No alerting, no dashboards. Downgraded from AMBER on 2026-08-19: no failure reaches anyone. |
+| Charges / payments | 🟢 GREEN | Resolved 2026-08-19. Plans became Starter and Business (`convex/lib/stripe_plan.ts`); `STRIPE_STARTER_PRICE_ID` and `STRIPE_BUSINESS_PRICE_ID` are both set in the Convex **production** deployment. |
 | Messages | 🟠 AMBER | Reachable and isolated; no dedicated journey test. |
 | Export controls | 🟠 AMBER | Endpoints audited and tenancy verified; no journey test. |
 | Data resilience | 🟠 AMBER | Every query bounded, no unindexed scans, schema changes additive. Backup and restore never verified — dashboard only. |
 | Rate limiting | 🟠 AMBER | Public tariff lookup moved behind a limited route. Other Convex functions have none. |
 
-**Nothing is GREEN that depends on undeployed code.** Every 🟢 above is true of
-the branch, not of production. Production still runs the pre-fix build.
+**2026-08-19 re-verification.** The branch is merged and live, so every 🟢 above
+now describes production. Gates run clean on `main`: `tsc --noEmit`,
+`lint:security`, unit 94, h1 191, tre 28, cns 133, portal 14, sanctions 6+3,
+tdr-dry-run `"failed": []`.
 
-**The one 🔴 is not mine to fix:** two Stripe price IDs missing from the
-production deployment after the live-key swap.
+**To move past 71%:** install observability and alerting, rate-limit Convex
+functions (`notifications.saveWebhook` first — see P0-13), verify a restore, and
+get the CDS submit path under some form of test.
 
-------|--------|-------|
+### Earlier board — 2026-08-15 (superseded by the board above)
+
+Kept as a record of the first pass. Do not read it as current state.
+
+| Area | Status | Basis |
+|------|--------|-------|
 | Authentication / sign-up | ⬜ not assessed | |
 | Organisation creation | ⬜ not assessed | |
 | Broker onboarding | 🟠 AMBER | Happy path + resubmit + server-side validation covered by e2e; org handoff, recovery and permissions not yet exercised |

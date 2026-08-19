@@ -1,5 +1,7 @@
 # Remaining CNS Plan
 
+**Status:** ACTIVE — item 1 complete; items 2–6 outstanding (clean CDS acceptance, amend, cancel, reliability, production config).
+
 ## 1. CDS error display — Complete
 
 - Parse `StatementDescription`.

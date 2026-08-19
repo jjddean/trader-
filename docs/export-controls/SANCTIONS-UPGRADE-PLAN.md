@@ -1,6 +1,6 @@
 # Sanctions Screening Upgrade Plan
 
-Status: saved for staged implementation. Complete one part at a time and verify its exit criteria before starting the next part.
+**Status:** ACTIVE — staged implementation. Complete one part at a time and verify its exit criteria before starting the next part.
 
 ## Current baseline
 

@@ -1,5 +1,7 @@
 # Client portal — plan
 
+**Status:** DONE — client portal shipped; covered by `e2e/auth/portal-journey.spec.ts`. History, not instructions.
+
 ## Workflow
 
 1. Home → what needs you  

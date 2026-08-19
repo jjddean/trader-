@@ -1,6 +1,6 @@
 # Plan: TRE CSV import (user-facing)
 
-**Status:** Phase 1 shipped (upload UI + parser + org-scoped import) · Phase 2 feature-complete locally (opportunities engine + UI), pending deploy  
+**Status:** ACTIVE — Phase 1 shipped `d6b58cf` (upload UI + parser + org-scoped import) · Phase 2 feature-complete locally (opportunities engine + UI), pending deploy  
 **Backlog:** [`BACKLOG.md`](./BACKLOG.md) P1 — **done 2026-06-23** (`d6b58cf`)  
 **Last updated:** 2026-06-23
 

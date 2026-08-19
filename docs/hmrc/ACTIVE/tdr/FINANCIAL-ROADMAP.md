@@ -1,5 +1,7 @@
 # Financial Features Roadmap (Post-TDR)
 
+**Status:** ACTIVE — roadmap; the DAN prerequisite is complete.
+
 Validated against HMRC and UK Trade Tariff guidance.
 
 **Prerequisite:** DAN (Duty Deferment Account Number) support — **complete** (see [`DELIVERY-PLAN.md`](./DELIVERY-PLAN.md) §1).

@@ -19,6 +19,33 @@ Data layers (not behaviour):
 
 ---
 
+## Plan documents
+
+**A plan doc is history unless its status line says ACTIVE.** Every plan under
+`docs/` carries a `**Status:**` line directly under its title, in one of four
+forms:
+
+| Status | Meaning |
+|--------|---------|
+| `ACTIVE` | Current intent. Safe to work from — still verify it against the code. |
+| `DONE` | Built and shipped. A record of what happened, not a task list. |
+| `SUPERSEDED BY <path>` | Read the named file instead. |
+| `FUTURE — not started` | Approved for later. Do not start it without being asked. |
+
+Rules:
+
+- **Never execute a plan without checking its status line first**, and never on
+  the strength of the status line alone — confirm against the code, because a
+  plan can be stale in ways its own header does not admit.
+- Any `ARCHIVE/` directory is **read-only**: `docs/ARCHIVE/`,
+  `docs/hmrc/ARCHIVE/`. Do not execute, update or "fix" what is in them.
+- `docs/hmrc/ACTIVE/tdr/BACKLOG.md` is the single live index. A plan it does not
+  link is not current work.
+- Finishing a plan means updating its status line in the same change, and moving
+  it to the matching `ARCHIVE/` when nothing outstanding remains.
+
+---
+
 ## What This App Is
 
 Freightcode is a UK customs declarations SaaS — WCO-compliant XML to HMRC CDS for importers and brokers. See `docs/hmrc/ACTIVE/tdr/AGENT-SPEC.md` for environment and compliance rules.
@@ -39,7 +66,7 @@ Freightcode is a UK customs declarations SaaS — WCO-compliant XML to HMRC CDS 
 | Charts | Recharts |
 | Search | Typesense |
 | OCR | AWS Textract |
-| AI | Groq SDK |
+| AI | OpenAI in production, Groq locally — `src/lib/llm-chat.ts` selects by `AI_PROVIDER`/`VERCEL_ENV` |
 | Document upload | HMRC Secure Document Environment (S3 presigned URLs) |
 | Testing | Playwright (E2E), manual HMRC scenario scripts |
 | Deployment | Vercel (production) |

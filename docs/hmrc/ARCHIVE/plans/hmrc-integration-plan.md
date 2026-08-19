@@ -1,5 +1,7 @@
 # Phase 3: HMRC API Integration Layer Implementation Plan
 
+**Status:** SUPERSEDED — Phase 3 scaffold; the integration shipped. Current behaviour is defined by `docs/hmrc/ACTIVE/tdr/AGENT-SPEC.md`. History, not instructions.
+
 Now that the local database and frontend UI validation are complete, this phase focuses entirely on the backend orchestration layer that connects the Freightcode Next.js server directly to HMRC's Customs Declaration Service (CDS) APIs.
 
 ## User Review Required

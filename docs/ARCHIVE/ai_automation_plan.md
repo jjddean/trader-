@@ -1,5 +1,7 @@
 # Phase 4: AI Automations Implementation Plan
 
+**Status:** SUPERSEDED BY `docs/dev/AI-FIX-PLAN.md`. History, not instructions.
+
 The objective of Phase 4 is to leverage the AI configurations defined in your `.env.local` to dramatically speed up the declaration process for your end-users. We will introduce two powerful AI features to the frontend builder.
 
 ## Proposed Architecture

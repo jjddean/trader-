@@ -32,9 +32,9 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 | [`FINANCIAL-ROADMAP.md`](./FINANCIAL-ROADMAP.md) | Duty estimates, variance, reclaim |
 | [`TRE-CSV-IMPORT-PLAN.md`](./TRE-CSV-IMPORT-PLAN.md) | User-facing TRE upload — phased plan |
 | [`../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md`](../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md) | Future: B1 export, I1/C1 simplified — spec + phases |
-| [`DELIVERY-PLAN.md`](./DELIVERY-PLAN.md) | Redirect → here |
+| [`DELIVERY-PLAN.md`](./DELIVERY-PLAN.md) | SUPERSEDED — redirect → here |
 | [`PRODUCT-PROGRESS-LOG.md`](./PRODUCT-PROGRESS-LOG.md) | Chronological ship log (green ticks per deploy) |
-| [`hmrc-integration-plan.md`](./hmrc-integration-plan.md) | Archived Phase 3 scaffold |
+| [`../../ARCHIVE/plans/hmrc-integration-plan.md`](../../ARCHIVE/plans/hmrc-integration-plan.md) | Archived Phase 3 scaffold — history, not instructions |
 
 ---
 

@@ -1,5 +1,7 @@
 # Implementation Plan: Cloudagent AI Classification & Compliance Audit
 
+**Status:** DONE — both endpoints built. The worker is live and consumed by `src/app/api/ai/gir-audit/route.ts`.
+
 This document outlines the plan to integrate two AI-powered endpoints into the `cloudagent` worker: `/classify` and `/api/compliance-audit`.
 
 ## 1. Safety & Security

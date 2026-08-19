@@ -1,5 +1,7 @@
 # CNS Inventory-Linked Imports — plan
 
+**Status:** ACTIVE — Parts 1–4 built, Parts 5–8 outstanding.
+
 **Start with [REVISED-PLAN.md](REVISED-PLAN.md)** — 8 August 2026. It supersedes
 the scoping in Part 1 and covers both operating models. The parts below remain
 accurate as build records.

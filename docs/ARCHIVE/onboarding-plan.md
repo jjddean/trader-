@@ -1,5 +1,7 @@
 # Onboarding plan
 
+**Status:** DONE — broker and Managed Service onboarding shipped; covered by `e2e/auth/broker-onboarding.spec.ts` and `e2e/auth/managed-service-onboarding.spec.ts`. History, not instructions.
+
 ## Flow
 1. Sign up (Clerk) → `/after-auth`  
 2. Invite bind → `/portal` (skip forms)  
