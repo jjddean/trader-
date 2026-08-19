@@ -1,6 +1,6 @@
 # Consultant Pilot — Build Plan
 
-Status: proposed. Concrete build plan for the Phase 1 pilot described in
+**Status:** ACTIVE — proposed, not started. Concrete build plan for the Phase 1 pilot described in
 `CONSULTANT-REVIEW-NETWORK-PLAN.md`, grounded in the code as it exists today.
 
 That document describes the commercial and multi-phase shape of the service and
