@@ -1,6 +1,6 @@
 # App Notification Pipeline — Implementation Plan
 
-Status: **built and audited**. Steps 0–12 implemented 2026-08-18. Deployed to dev only.
+**Status:** ACTIVE — built and audited. Steps 0–12 implemented 2026-08-18. Deployed to dev only.
 See §8 for the audit and the remaining work to close.
 Author: agent audit, 2026-08-17.
 
