@@ -91,6 +91,7 @@ import type * as lib_user_errors from "../lib/user_errors.js";
 import type * as lib_user_role from "../lib/user_role.js";
 import type * as notification_preferences from "../notification_preferences.js";
 import type * as notifications from "../notifications.js";
+import type * as notifications_backfill from "../notifications_backfill.js";
 import type * as onboarding from "../onboarding.js";
 import type * as org_hmrc from "../org_hmrc.js";
 import type * as org_migration from "../org_migration.js";
@@ -203,6 +204,7 @@ declare const fullApi: ApiFromModules<{
   "lib/user_role": typeof lib_user_role;
   notification_preferences: typeof notification_preferences;
   notifications: typeof notifications;
+  notifications_backfill: typeof notifications_backfill;
   onboarding: typeof onboarding;
   org_hmrc: typeof org_hmrc;
   org_migration: typeof org_migration;
