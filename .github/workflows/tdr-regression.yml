@@ -52,6 +52,11 @@ jobs:
       - name: Portal authorization and document-flow regressions
         run: npm run test:portal
 
+      # tests/export-controls/ held 15 files that no npm script ran, the sanctions
+      # pair included. The pipeline they cover had no gate at all.
+      - name: Export-control regressions (control list, sanctions, draft pack, EUSU)
+        run: npm run test:export-controls
+
       - name: TDR v1 dry-run preflight
         run: npm run test:tdr-dry-run
         env:

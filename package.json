@@ -43,7 +43,8 @@
     "lora:runpod:download": "python scripts/lora/runpod/runpod_train.py download",
     "lora:deploy": "node scripts/lora/run.mjs deploy",
     "lora:all": "python scripts/lora/pipeline.py train && python scripts/lora/pipeline.py wait && npm run lora:deploy",
-    "test:all": "npm run test:unit && npm run test:h1 && npm run test:tre && npm run test:cns && npm run test:portal && npm run test:tdr-dry-run"
+    "test:all": "npm run test:unit && npm run test:h1 && npm run test:tre && npm run test:cns && npm run test:portal && npm run test:export-controls && npm run test:tdr-dry-run",
+    "test:export-controls": "node --test --import tsx \"tests/export-controls/*.test.ts\" && node --test \"tests/export-controls/*.test.mjs\""
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1003.0",
