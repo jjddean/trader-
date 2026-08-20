@@ -9,10 +9,33 @@ import { cn } from "@/lib/utils";
 import { AdminOrgCdsModeList } from "@/components/admin/admin-org-cds-mode-list";
 import { PlatformUsersSection } from "@/components/admin/platform-users-section";
 
+/**
+ * Mirrors GET /api/health (src/app/api/health/route.ts).
+ *
+ * Every field is optional and the response is narrowed rather than cast: the
+ * route previously returned a `services` object, was reshaped into
+ * `dependencies` + `configured`, and this page went on reading `services.convex`
+ * through an unchecked cast — which crashed the whole admin area on a property
+ * of undefined. An optional shape degrades to "unknown" instead.
+ */
 interface HealthPayload {
-  status: string;
-  environment: string;
-  services: { convex: boolean; hmrc: boolean; clerk: boolean };
+  status?: string;
+  environment?: string;
+  /** Live reachability probes. */
+  dependencies?: {
+    convex?: { status?: string; latencyMs?: number; reason?: string };
+  };
+  /** Configuration presence only — says nothing about reachability. */
+  configured?: {
+    convex?: boolean;
+    hmrc?: boolean;
+    clerk?: boolean;
+    productionHmrcOAuth?: boolean;
+  };
+}
+
+function asHealthPayload(value: unknown): HealthPayload {
+  return value && typeof value === "object" ? (value as HealthPayload) : {};
 }
 
 export default function AdminHmrcPage() {
@@ -31,7 +54,7 @@ export default function AdminHmrcPage() {
   useEffect(() => {
     fetch("/api/health")
       .then((res) => res.json())
-      .then((data) => setHealth(data as HealthPayload))
+      .then((data) => setHealth(asHealthPayload(data)))
       .catch(() => setHealthError("Could not reach /api/health"));
   }, []);
 
@@ -65,12 +88,24 @@ export default function AdminHmrcPage() {
       <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
         <div className="border-b border-slate-100 px-6 py-4">
           <h2 className="text-sm font-semibold text-slate-900">Service connectivity</h2>
-          <p className="mt-0.5 text-xs text-slate-500">From GET /api/health — env vars populated, not live latency tests.</p>
+          <p className="mt-0.5 text-xs text-slate-500">
+            From GET /api/health — Convex is a live probe; HMRC and Clerk report configured env vars only.
+          </p>
         </div>
         <div className="grid grid-cols-1 gap-px bg-slate-100 sm:grid-cols-3">
-          <ServiceTile name="Convex" ok={health?.services.convex} loading={!health && !healthError} />
-          <ServiceTile name="HMRC OAuth" ok={health?.services.hmrc} loading={!health && !healthError} />
-          <ServiceTile name="Clerk" ok={health?.services.clerk} loading={!health && !healthError} />
+          <ServiceTile
+            name="Convex"
+            ok={health?.dependencies?.convex?.status === "ok"}
+            failLabel={health?.dependencies?.convex?.reason === "not_configured" ? "Missing env" : "Unreachable"}
+            okLabel={
+              typeof health?.dependencies?.convex?.latencyMs === "number"
+                ? `Reachable · ${health.dependencies.convex.latencyMs}ms`
+                : "Reachable"
+            }
+            loading={!health && !healthError}
+          />
+          <ServiceTile name="HMRC OAuth" ok={health?.configured?.hmrc} loading={!health && !healthError} />
+          <ServiceTile name="Clerk" ok={health?.configured?.clerk} loading={!health && !healthError} />
         </div>
         {healthError && (
           <p className="border-t border-slate-100 px-6 py-3 text-xs text-red-600">{healthError}</p>
@@ -179,7 +214,19 @@ function EnvCard({ label, value, mono }: { label: string; value: string; mono?: 
   );
 }
 
-function ServiceTile({ name, ok, loading }: { name: string; ok?: boolean; loading?: boolean }) {
+function ServiceTile({
+  name,
+  ok,
+  loading,
+  failLabel = "Missing env",
+  okLabel = "Configured",
+}: {
+  name: string;
+  ok?: boolean;
+  loading?: boolean;
+  failLabel?: string;
+  okLabel?: string;
+}) {
   return (
     <div className="bg-white px-6 py-4">
       <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{name}</p>
@@ -187,11 +234,11 @@ function ServiceTile({ name, ok, loading }: { name: string; ok?: boolean; loadin
         <Loader2 className="mt-2 h-4 w-4 animate-spin text-slate-400" />
       ) : ok ? (
         <p className="mt-2 flex items-center gap-1 text-xs font-medium text-green-700">
-          <CheckCircle2 className="h-3.5 w-3.5" /> Configured
+          <CheckCircle2 className="h-3.5 w-3.5" /> {okLabel}
         </p>
       ) : (
         <p className="mt-2 flex items-center gap-1 text-xs font-medium text-red-700">
-          <XCircle className="h-3.5 w-3.5" /> Missing env
+          <XCircle className="h-3.5 w-3.5" /> {failLabel}
         </p>
       )}
     </div>

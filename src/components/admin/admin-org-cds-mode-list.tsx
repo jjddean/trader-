@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useOrganization } from "@clerk/nextjs";
-import { useConvex, useMutation, useQuery } from "convex/react";
+import { useConvex, useConvexAuth, useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { cn } from "@/lib/utils";
 import {
@@ -16,7 +16,13 @@ export function AdminOrgCdsModeList() {
   const convex = useConvex();
   const { organization } = useOrganization();
   const activeOrgId = organization?.id ?? "";
-  const orgs = useQuery(api.org_hmrc.listOrganisationsForAdmin, {});
+  const { isAuthenticated } = useConvexAuth();
+  // Matches the sibling query on the admin setup page: an unauthenticated call
+  // is refused server-side, and useQuery rethrows that into the error boundary.
+  const orgs = useQuery(
+    api.org_hmrc.listOrganisationsForAdmin,
+    isAuthenticated ? {} : "skip",
+  );
   const setOrgHmrcMode = useMutation(api.org_hmrc.setOrgMode);
   const [pendingOrgId, setPendingOrgId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

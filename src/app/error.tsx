@@ -12,8 +12,9 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log the error to the browser console. 
-    // If you ever want to push UI crashes to Convex, you can call a mutation here!
+    // The only record of this crash. Nothing is shipped to a server-side sink,
+    // so the copy below must not promise that it was — and the digest is
+    // rendered in production because it is the sole handle a user can quote.
     console.error("Caught by Next.js Error Boundary:", error);
   }, [error]);
 
@@ -27,10 +28,16 @@ export default function GlobalError({
         Something went wrong
       </h1>
       
-      <p className="mb-10 max-w-md text-[16px] leading-relaxed text-slate-600 mx-auto">
-        We encountered an unexpected error while trying to render this page. 
-        The issue has been logged, and we recommend trying your request again.
+      <p className="mb-6 max-w-md text-[16px] leading-relaxed text-slate-600 mx-auto">
+        We encountered an unexpected error while trying to render this page.
+        Try your request again — if it keeps happening, quote the reference below.
       </p>
+
+      {error.digest && (
+        <p className="mb-10 font-mono text-[12px] text-slate-400">
+          Reference {error.digest}
+        </p>
+      )}
       
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-sm mx-auto">
         <button
