@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
@@ -6,14 +6,25 @@ import { NextResponse } from "next/server";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
 import { aiClassifyLimiter } from "@/lib/api-rate-limiter";
-import { loadSanctionsSnapshot } from "@/lib/export-controls/sanctions/snapshot";
+import { loadSanctionsSnapshot, type SanctionsSnapshot } from "@/lib/export-controls/sanctions/snapshot";
 import { buildSanctionsIndex, screenParties, type ScreenSubjectInput } from "@/lib/export-controls/sanctions/screen";
 import { sanctionsClearanceScore } from "@/lib/export-controls/sanctions/scoring";
 import { userMessageFromError } from "@/lib/convex-errors";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
-async function resolveSanctionsUrl(convexToken: string): Promise<string> {
+const SANCTIONS_DATA_DIR = path.join(process.cwd(), "data", "export-controls");
+
+/** Screening cannot proceed — surfaced as 503 + remediation, not a generic 500. */
+class SanctionsUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "SanctionsUnavailableError";
+  }
+}
+
+/** Active snapshot URL from the sanctions_list dataset row, or null if unregistered. */
+async function resolveSanctionsUrl(convexToken: string): Promise<string | null> {
   convex.setAuth(convexToken);
   const dataset = await convex.query(api.reference_data.getLatestDataset, {
     name: "sanctions_list",
@@ -22,17 +33,58 @@ async function resolveSanctionsUrl(convexToken: string): Promise<string> {
   if (dataset?.storagePath && process.env.NEXT_PUBLIC_R2_PUBLIC_URL) {
     return `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}${dataset.storagePath}`;
   }
-  throw new Error("Sanctions list dataset URL not configured");
+  return null;
 }
 
-async function loadSanctionsWithFallback(url: string) {
+/** Newest sanctions-*.json on disk. Resolved dynamically — never a pinned filename. */
+async function findLocalSnapshot(): Promise<string | null> {
   try {
-    return await loadSanctionsSnapshot(url);
+    const files = (await readdir(SANCTIONS_DATA_DIR))
+      .filter((f) => f.startsWith("sanctions-") && f.endsWith(".json"))
+      .sort()
+      .reverse();
+    return files[0] ? path.join(SANCTIONS_DATA_DIR, files[0]) : null;
   } catch {
-    const localPath = path.join(process.cwd(), "data", "export-controls", "sanctions-2026-06-26.json");
-    const raw = await readFile(localPath, "utf8");
-    return JSON.parse(raw);
+    return null;
   }
+}
+
+/**
+ * Remote snapshot first, newest local snapshot as fallback.
+ *
+ * The fallback also covers a missing dataset row (url === null), not only a
+ * failed fetch: previously resolveSanctionsUrl() threw first, so on a fresh
+ * deployment the fallback was unreachable and the caller saw HTTP 500.
+ */
+async function loadSanctionsWithFallback(
+  url: string | null,
+): Promise<{ snapshot: SanctionsSnapshot; source: "r2" | "local" }> {
+  if (url) {
+    try {
+      return { snapshot: await loadSanctionsSnapshot(url), source: "r2" };
+    } catch (error: unknown) {
+      console.warn(
+        "[sanctions] Remote snapshot unavailable, falling back to local:",
+        error instanceof Error ? error.message : error,
+      );
+    }
+  } else {
+    console.warn("[sanctions] No active sanctions_list dataset row; trying local snapshot");
+  }
+
+  const localPath = await findLocalSnapshot();
+  if (!localPath) {
+    throw new SanctionsUnavailableError(
+      url
+        ? "Sanctions list could not be fetched and no local snapshot is available. Run: npm run export-controls:refresh-sanctions"
+        : "Sanctions list is not configured. Run: npm run export-controls:refresh-sanctions",
+    );
+  }
+
+  return {
+    snapshot: JSON.parse(await readFile(localPath, "utf8")) as SanctionsSnapshot,
+    source: "local",
+  };
 }
 
 export async function POST(request: Request) {
@@ -56,7 +108,7 @@ export async function POST(request: Request) {
     const persist = body.persist !== false;
     const subjects = body.subjects as ScreenSubjectInput[] | undefined;
 
-    let parties: ScreenSubjectInput[] = subjects ?? [];
+    const parties: ScreenSubjectInput[] = subjects ?? [];
 
     if (parties.length === 0 && assessmentId) {
       const detail = await convex.query(api.export_controls.getAssessment, { assessmentId });
@@ -88,7 +140,7 @@ export async function POST(request: Request) {
 
     const freshness = await convex.query(api.sanctions_data.isSnapshotFresh, {});
     const sanctionsUrl = await resolveSanctionsUrl(convexToken);
-    const snapshot = await loadSanctionsWithFallback(sanctionsUrl);
+    const { snapshot, source: snapshotSource } = await loadSanctionsWithFallback(sanctionsUrl);
     const index = buildSanctionsIndex(snapshot);
     const results = screenParties(index, parties);
 
@@ -123,6 +175,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       sanctionsVersion: snapshot.version,
+      snapshotSource,
       snapshotFresh: freshness,
       sanctionsClearance: sanctionsClearanceScore(freshness.fresh, hasBlockBandHit),
       canAutoClear: false,
@@ -142,6 +195,13 @@ export async function POST(request: Request) {
       persisted: persist && assessmentId ? { screeningIds } : null,
     });
   } catch (error: unknown) {
+    if (error instanceof SanctionsUnavailableError) {
+      console.error("Export controls screen unavailable:", error.message);
+      return NextResponse.json(
+        { error: error.message, code: "sanctions_unavailable" },
+        { status: 503 },
+      );
+    }
     console.error("Export controls screen error:", error);
     const message = userMessageFromError(error, "Internal Server Error");
     return NextResponse.json({ error: message }, { status: 500 });

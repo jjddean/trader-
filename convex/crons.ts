@@ -45,4 +45,13 @@ crons.daily(
   {},
 );
 
+// Daily UK Sanctions List check. Compares a fresh sha256 of the official UKSL
+// XML against the recorded snapshot hash and flags a stale (>48h) snapshot.
+// Ingest stays manual — `npm run export-controls:refresh-sanctions`.
+crons.daily(
+  "check-sanctions-snapshot",
+  { hourUTC: 4, minuteUTC: 0 },
+  internal.actions.sanctions.checkSanctionsSnapshot,
+);
+
 export default crons;
