@@ -1,5 +1,7 @@
 # CNS integration — revised plan
 
+**Status:** ACTIVE — supersedes the Part 1 scoping; governs the CNS build.
+
 Date: 8 August 2026. Supersedes the scoping in Part 1 §5.
 
 The original governing spec assumed one operating model: FreightCode filing under

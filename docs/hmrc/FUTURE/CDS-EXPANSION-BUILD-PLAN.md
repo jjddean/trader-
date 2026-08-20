@@ -1,6 +1,6 @@
 # CDS expansion build plan — B1 export, I1 simplified import, C1 simplified export
 
-**Status:** Future — not started  
+**Status:** FUTURE — not started  
 **Spec:** [`../specs/cds-api/declaration-categories-index.md`](../specs/cds-api/declaration-categories-index.md)  
 **Backlog:** [`../ACTIVE/tdr/BACKLOG.md`](../ACTIVE/tdr/BACKLOG.md)  
 **Last updated:** 2026-06-20

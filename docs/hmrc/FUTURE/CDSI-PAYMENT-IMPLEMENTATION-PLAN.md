@@ -1,6 +1,6 @@
 # FreightCode CDS payment and CDSI implementation specification
 
-Status: **FROZEN — approved implementation plan for later delivery**  
+**Status:** FUTURE — not started. Frozen, approved plan for later delivery.  
 Scope owner: FreightCode  
 Scope: UK CDS import H1 declarations currently produced by FreightCode  
 Rule for changing this plan: implementation convenience does not change the scope. Amend it only where a newer HMRC publication, schema, code list, or verified Trade Test response contradicts this specification. Record such a change with its source and date before changing application behaviour.

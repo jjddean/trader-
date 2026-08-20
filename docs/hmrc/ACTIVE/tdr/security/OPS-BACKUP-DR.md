@@ -1,7 +1,7 @@
 # Backup & disaster recovery one-pager
 
 **Product:** Freightcode · **Last updated:** 2026-06-15  
-**Detail:** [`documentation/R_and_D/disaster_recovery_plan.md`](../../../../documentation/R_and_D/disaster_recovery_plan.md)
+**Detail:** [`documentation/R_and_D/disaster_recovery_plan.md`](../../../../../documentation/R_and_D/disaster_recovery_plan.md)
 
 ---
 

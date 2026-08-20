@@ -1,7 +1,7 @@
 # Operations security one-pager
 
 **Product:** Freightcode (freightcode.co.uk) · **Last updated:** 2026-06-15  
-**Detail:** [`documentation/R_and_D/information_security_policy.md`](../../../../documentation/R_and_D/information_security_policy.md)
+**Detail:** [`documentation/R_and_D/information_security_policy.md`](../../../../../documentation/R_and_D/information_security_policy.md)
 
 ---
 

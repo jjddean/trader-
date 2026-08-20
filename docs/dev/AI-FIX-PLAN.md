@@ -1,5 +1,7 @@
 # AI fix plan
 
+**Status:** ACTIVE — 5 items open.
+
 Saved from product review (2026-07-28). Interim LLMs: **OpenAI in production**, **Groq locally** (`src/lib/llm-chat.ts`). Trained customs models later swap behind the same APIs.
 
 Duty / preference / tariff maths stay **deterministic** — AI explains, does not invent rates.

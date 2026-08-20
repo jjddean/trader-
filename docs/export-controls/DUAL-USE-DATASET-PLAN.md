@@ -1,5 +1,7 @@
 # GB Dual-Use Training Dataset Plan
 
+**Status:** ACTIVE — 24 of 104 items ticked.
+
 Last updated: 11 July 2026
 
 ## Objective

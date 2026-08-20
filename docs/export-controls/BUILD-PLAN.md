@@ -1,6 +1,6 @@
 # FreightCode Export Controls Module — Build Plan
 
-**Status:** Agreed working plan · tick boxes as work completes  
+**Status:** ACTIVE — 67 of 128 items ticked (checked 2026-08-19). Also holds the verified regulatory facts in §0  
 **Created:** 2026-07-03  
 **Last updated:** 2026-07-12 (§Consultant loop — no Settings roster / multi-pick)
 **Scope:** UK export-control LITE draft packs — decision-support and draft-generation only. FreightCode never submits to government systems and never gives binding legal advice.
