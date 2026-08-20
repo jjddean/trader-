@@ -4,6 +4,7 @@ import { mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { canAccessDeclaration } from "./lib/org_access";
 import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
+import { notify } from "./lib/notify";
 const hmrcEnvironment = v.union(v.literal("sandbox"), v.literal("production"));
 type HmrcEnvironment = "sandbox" | "production";
 
@@ -137,6 +138,17 @@ export const disconnectToken = mutation({
         action: "hmrc_auth_disconnected",
         details: JSON.stringify({ environment, timestamp: Date.now() }),
         timestamp: Date.now(),
+      });
+
+      // Personal-scoped: the token belongs to this user, so only they need to
+      // reconnect it. No orgId, so it does not fan out to the whole team.
+      await notify(ctx, {
+        event: "hmrc_auth.disconnected",
+        userId: identity.subject,
+        title: `HMRC ${environment} connection removed`,
+        body: "Reconnect before submitting declarations.",
+        href: "/dashboard/settings?tab=security",
+        dedupeKey: `hmrc-auth:${identity.subject}:${environment}`,
       });
     }
   },

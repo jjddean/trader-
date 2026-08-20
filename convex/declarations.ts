@@ -47,6 +47,7 @@ import {
   STUCK_HMRC_STATUS_VALUES,
 } from "./lib/stuck_declarations";
 import { followUpClaim } from "./lib/follow_up_claim";
+import { notify } from "./lib/notify";
 import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 
 type EstimateMethod = "tariff_measures" | "historical_fallback" | "hmrc_confirmed";
@@ -997,6 +998,25 @@ async function upsertDeclarationPreviewByDeclaration(
         dutyVarianceAmount: financialFields.dutyVarianceAmount,
         vatVarianceAmount: financialFields.vatVarianceAmount,
         varianceKinds: financialFields.varianceKinds,
+      },
+    });
+
+    // The surrounding condition is already an edge — it fires only when the
+    // alert was absent on the previous preview — so no further guard is needed.
+    await notify(ctx, {
+      event: "finance.variance_detected",
+      userId: declarationUserId,
+      orgId: orgIdFromDeclaration(declaration),
+      title: "Duty variance detected",
+      body: declaration.mrn
+        ? `HMRC's assessment differs from the estimate on MRN ${String(declaration.mrn)}.`
+        : "HMRC's assessment differs from the estimate on this declaration.",
+      href: `/dashboard/declarations/${declarationId}/status`,
+      declarationId,
+      dedupeKey: `variance:${declarationId}`,
+      metadata: {
+        dutyVarianceAmount: financialFields.dutyVarianceAmount,
+        vatVarianceAmount: financialFields.vatVarianceAmount,
       },
     });
   }

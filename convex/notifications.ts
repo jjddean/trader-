@@ -13,7 +13,9 @@ import { statusAfterNotification } from "./lib/notification_status";
 import type { MutationCtx } from "./_generated/server";
 import { collectDeclarationNotifications } from "./lib/collect_declaration_notifications";
 import { assertIngestSecret } from "./lib/secret_compare";
-import { canAccessDeclaration, listNotificationsForTenant, orgIdFromDeclaration } from "./lib/org_access";
+import { canAccessDeclaration, orgIdFromDeclaration } from "./lib/org_access";
+import { notify } from "./lib/notify";
+import { eventForNotification, titleForNotification } from "./lib/notification_events";
 
 const hmrcEnvironment = v.union(v.literal("sandbox"), v.literal("production"));
 
@@ -261,6 +263,40 @@ export const saveWebhook = mutation({
             notificationType: args.notificationType,
           },
         });
+
+        // Mirror into the in-app inbox. This row is derived and disposable — the
+        // evidence stays on the `notifications` row inserted above, which this
+        // points back to via sourceId. Emitted only when the correlation held
+        // (no MRN mismatch), so a suspect link never raises a user-facing alert.
+        const event = eventForNotification({
+          notificationType: args.notificationType,
+          isAmendmentAccepted: amendAccepted,
+          isAmendmentRejected: amendRejected,
+          isCancellationRejected: cancelRejected,
+          isInvalidationAccepted: invAccepted,
+        });
+        const errorCodes = args.errorCodes ?? [];
+        await notify(ctx, {
+          event,
+          userId: declaration.userId,
+          orgId: orgIdFromDeclaration(declaration),
+          title: titleForNotification(event, args.notificationType),
+          body: errorCodes.length > 0
+            ? `${declaration.mrn || args.mrn || "Declaration"} — ${errorCodes.slice(0, 3).join(", ")}`
+            : (args.mrn && args.mrn !== "UNKNOWN" ? `MRN ${args.mrn}` : undefined),
+          href: `/dashboard/declarations/${declaration._id}/status`,
+          declarationId: declaration._id,
+          sourceTable: "notifications",
+          sourceId: notificationId,
+          // One inbox row per evidence row. Guards the backfill in
+          // convex/notifications_backfill.ts against double-writing a mirror.
+          dedupeKey: `hmrc:${notificationId}`,
+          metadata: {
+            notificationType: args.notificationType,
+            newStatus,
+            errorCodes: errorCodes.slice(0, 10),
+          },
+        });
       }
 
       await ctx.db.patch(notificationId, {
@@ -295,15 +331,5 @@ export const getWebhooks = query({
       conversationId: args.conversationId,
       mrn: args.mrn,
     });
-  },
-});
-
-export const getUserNotifications = query({
-  args: { userId: v.optional(v.string()) },
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-
-    return await listNotificationsForTenant(ctx, identity.subject, 15);
   },
 });

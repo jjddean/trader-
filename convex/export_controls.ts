@@ -10,6 +10,7 @@ import {
 } from "./lib/org_access";
 import { resolveSubmissionRoute } from "./lib/export_routing";
 import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
+import { notify } from "./lib/notify";
 
 function buildReference(now = Date.now()) {
   const year = new Date(now).getFullYear();
@@ -639,9 +640,9 @@ export const recordSanctionsScreening = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw unauthenticatedError();
 
-    await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
+    const assessment = await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
 
-    return await ctx.db.insert("sanctions_screenings", {
+    const screeningId = await ctx.db.insert("sanctions_screenings", {
       assessmentId: args.assessmentId,
       subjectType: args.subjectType,
       subjectName: args.subjectName,
@@ -653,6 +654,23 @@ export const recordSanctionsScreening = mutation({
       reviewStatus: "pending",
       createdAt: Date.now(),
     });
+
+    // A screening row is only written when something matched, so every one of
+    // these needs a human. No dedupe key: each matched subject is a distinct
+    // decision and collapsing them would hide all but the most recent.
+    if (args.matchedUniqueId) {
+      await notify(ctx, {
+        event: "export_controls.sanctions_hit",
+        userId: String(assessment.userId || identity.subject),
+        orgId: typeof assessment.orgId === "string" ? assessment.orgId : undefined,
+        title: `Sanctions match: ${args.subjectName}`,
+        body: args.matchReason || `Matched as ${args.subjectType.replace(/_/g, " ")}.`,
+        href: `/dashboard/trade-compliance?assessment=${args.assessmentId}`,
+        metadata: { screeningId, subjectType: args.subjectType, score: args.score },
+      });
+    }
+
+    return screeningId;
   },
 });
 
@@ -721,6 +739,17 @@ export const createExpertRequest = mutation({
       requestId,
       reasonCode: args.reasonCode,
     });
+
+    await notify(ctx, {
+      event: "export_controls.expert_requested",
+      userId: String(assessment.userId || identity.subject),
+      orgId: typeof assessment.orgId === "string" ? assessment.orgId : undefined,
+      title: "Expert review requested",
+      body: `Assessment moved to review required (${args.reasonCode}).`,
+      href: `/dashboard/trade-compliance?assessment=${args.assessmentId}`,
+      dedupeKey: `expert-request:${args.assessmentId}`,
+      metadata: { requestId, reasonCode: args.reasonCode },
+    });
     return requestId;
   },
 });
@@ -749,7 +778,7 @@ export const recordExportLicence = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw unauthenticatedError();
 
-    await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
+    const assessment = await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
 
     const licenceId = await ctx.db.insert("export_licences", {
       assessmentId: args.assessmentId,
@@ -764,6 +793,16 @@ export const recordExportLicence = mutation({
     await logExportAction(ctx, identity.subject, "export_licence_recorded", args.assessmentId, {
       licenceId,
       licenceType: args.licenceType,
+    });
+
+    await notify(ctx, {
+      event: "export_controls.licence_recorded",
+      userId: String(assessment.userId || identity.subject),
+      orgId: typeof assessment.orgId === "string" ? assessment.orgId : undefined,
+      title: `Export licence recorded (${args.licenceType.toUpperCase()})`,
+      body: args.licenceRef ? `Reference ${args.licenceRef}` : args.applicationRef,
+      href: `/dashboard/trade-compliance?assessment=${args.assessmentId}`,
+      metadata: { licenceId, licenceType: args.licenceType },
     });
     return licenceId;
   },
