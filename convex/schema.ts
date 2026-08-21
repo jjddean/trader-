@@ -228,6 +228,9 @@ export default defineSchema({
     checksum: v.optional(v.string()),
     createdAt: v.number(),
     completedAt: v.optional(v.number()),
+    /** Set when later assessment changes make this historical sign-off stale. */
+    supersededAt: v.optional(v.number()),
+    supersededBy: v.optional(v.string()),
   })
     .index("by_org", ["orgId"])
     .index("by_user", ["userId"]),
@@ -820,26 +823,102 @@ export default defineSchema({
   expert_requests: defineTable({
     assessmentId: v.id("export_assessments"),
     requestedBy: v.string(),
+    /**
+     * "consultant_dispatch" marks a row created by Request sign-off. Other
+     * reason codes come from `createExpertRequest` and are unrelated internal
+     * review flags — the consultant status lookup must not confuse the two.
+     */
     reasonCode: v.string(),
     slaDueAt: v.optional(v.number()),
     status: v.string(),
+    /**
+     * Frozen review subject — see convex/lib/consultant_review_snapshot.ts.
+     * Immutable once written: a later exporter edit must not change what the
+     * consultant was asked to review.
+     */
     assessmentSnapshot: v.any(),
     consultantEmail: v.optional(v.string()),
     consultantName: v.optional(v.string()),
+    consultantRole: v.optional(
+      v.union(v.literal("adviser"), v.literal("applies_on_behalf"), v.literal("eor")),
+    ),
+    senderNote: v.optional(v.string()),
     advisoryNotes: v.optional(v.string()),
     outcome: v.optional(v.union(v.literal("cleared"), v.literal("blocked"))),
     applicationRef: v.optional(v.string()),
     licenceRef: v.optional(v.string()),
+    licenceType: v.optional(
+      v.union(
+        v.literal("siel"),
+        v.literal("sitcl"),
+        v.literal("sitl"),
+        v.literal("f680"),
+        v.literal("oiel"),
+        v.literal("oitcl"),
+        v.literal("ogel"),
+        v.literal("otsi"),
+        v.literal("other"),
+      ),
+    ),
     completedAt: v.optional(v.number()),
+
+    // --- external consultant system (Phase 1: BEC) ---
+    /** Partner that received this case. "bec" today; generic by design. */
+    externalSystem: v.optional(v.string()),
+    /** Case id the partner returned. Correlates their record with ours. */
+    externalCaseId: v.optional(v.string()),
+    deliveryStatus: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("delivered"),
+        v.literal("failed"),
+        v.literal("revoked"),
+        v.literal("expired"),
+      ),
+    ),
+    deliveredAt: v.optional(v.number()),
+    deliveryError: v.optional(v.string()),
+    /** Dispatch validity. Past this, the partner may no longer complete it. */
+    expiresAt: v.optional(v.number()),
+    /** Indexed lifecycle flag for bounded expiry sweeps. */
+    dispatchOpen: v.optional(v.boolean()),
+    revokedAt: v.optional(v.number()),
+    revokedBy: v.optional(v.string()),
+    /**
+     * Set when a later exporter edit invalidates a completed dispatch. The
+     * row stays for the audit trail; `status` becomes "superseded".
+     */
+    supersededAt: v.optional(v.number()),
+    supersededBy: v.optional(v.string()),
+
+    // --- reviewer identity on completion ---
+    reviewerSystem: v.optional(v.string()),
+    reviewerExternalId: v.optional(v.string()),
+    reviewerEmail: v.optional(v.string()),
+    /** True when the identity came from the reviewer's authenticated session. */
+    reviewerVerified: v.optional(v.boolean()),
+
+    /** First partner-authenticated consultant to claim this dispatch. */
+    assignedConsultantExternalId: v.optional(v.string()),
+    assignedConsultantEmail: v.optional(v.string()),
+    assignedConsultantName: v.optional(v.string()),
+    assignedConsultantAt: v.optional(v.number()),
+
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_assessment", ["assessmentId"]),
+  })
+    .index("by_assessment", ["assessmentId"])
+    .index("by_external_case", ["externalSystem", "externalCaseId"])
+    .index("by_dispatch_open_expiry", ["dispatchOpen", "expiresAt"]),
 
   export_review_tokens: defineTable({
     assessmentId: v.id("export_assessments"),
     expertRequestId: v.id("expert_requests"),
     orgId: v.optional(v.string()),
-    token: v.string(),
+    /** Plaintext exists only on legacy sender-issued rows. */
+    token: v.optional(v.string()),
+    /** SHA-256 of a route-held session credential for handoff-issued rows. */
+    tokenHash: v.optional(v.string()),
     consultantEmail: v.string(),
     consultantName: v.optional(v.string()),
     consultantRole: v.optional(
@@ -852,14 +931,164 @@ export default defineSchema({
     openedAt: v.optional(v.number()),
     completedAt: v.optional(v.number()),
     revoked: v.optional(v.boolean()),
+
+    /**
+     * How this token came to exist.
+     *
+     * "handoff" — minted when a partner redeemed a one-time launch code. Short
+     * lived, and the consultant identity on it was proved by the partner's own
+     * authenticated session, so completions carry a verified reviewer.
+     *
+     * "sender" — the legacy emailed link. A FreightCode user typed the
+     * consultant's address and nothing verified who opened it. Retained as a
+     * deliberate fallback for a partner outage, not the normal path.
+     */
+    issuedVia: v.optional(v.union(v.literal("handoff"), v.literal("sender"))),
+    /** Partner slug that redeemed the handoff. */
+    partnerSlug: v.optional(v.string()),
+    /** The partner's own user id for the consultant. */
+    consultantExternalId: v.optional(v.string()),
+    consultantVerified: v.optional(v.boolean()),
   })
     .index("by_token", ["token"])
+    .index("by_token_hash", ["tokenHash"])
     .index("by_assessment", ["assessmentId"]),
+
+  /**
+   * One-time launch codes for the partner handoff.
+   *
+   * A partner's server asks for one, gets a URL back, and redirects the
+   * consultant's browser to it. Redemption consumes the row and mints a
+   * short-lived review token bound to the consultant identity the partner
+   * asserted. Codes are stored as a SHA-256 hash — a database reader must not
+   * be able to replay one inside its (short) validity window.
+   */
+  consultant_handoffs: defineTable({
+    codeHash: v.string(),
+    expertRequestId: v.id("expert_requests"),
+    assessmentId: v.id("export_assessments"),
+    partnerSlug: v.string(),
+    consultantExternalId: v.string(),
+    consultantEmail: v.optional(v.string()),
+    consultantName: v.optional(v.string()),
+    expiresAt: v.number(),
+    consumedAt: v.optional(v.number()),
+    /** Review token minted on redemption, for the audit trail. */
+    issuedTokenId: v.optional(v.id("export_review_tokens")),
+    createdAt: v.number(),
+  })
+    .index("by_code_hash", ["codeHash"])
+    .index("by_expert_request", ["expertRequestId"]),
+
+  /** Durable replay claims for signed consultant-partner requests. */
+  consultant_partner_requests: defineTable({
+    partnerSlug: v.string(),
+    requestId: v.string(),
+    digest: v.string(),
+    requestTimestamp: v.number(),
+    receivedAt: v.number(),
+  })
+    .index("by_partner_request", ["partnerSlug", "requestId"])
+    .index("by_partner_received_at", ["partnerSlug", "receivedAt"]),
+
+  /** Durable, bounded-retry delivery of consultant case and status events. */
+  consultant_partner_status_outbox: defineTable({
+    expertRequestId: v.id("expert_requests"),
+    partnerSlug: v.string(),
+    externalCaseId: v.string(),
+    status: v.union(
+      v.literal("received"),
+      v.literal("in_review"),
+      v.literal("completed"),
+      v.literal("blocked"),
+      v.literal("revoked"),
+      v.literal("expired"),
+    ),
+    /** Optional only for rows created before the durable event protocol. */
+    eventId: v.optional(v.string()),
+    eventType: v.optional(
+      v.union(
+        v.literal("consultant.case.created"),
+        v.literal("consultant.case.status_changed"),
+      ),
+    ),
+    eventKind: v.optional(v.union(v.literal("initial"), v.literal("status"))),
+    occurredAt: v.optional(v.number()),
+    sequence: v.optional(v.number()),
+    /** Exact JSON bytes signed and retried for this event. */
+    rawBody: v.optional(v.string()),
+    state: v.union(
+      v.literal("pending"),
+      v.literal("delivering"),
+      v.literal("delivered"),
+      v.literal("superseded"),
+      v.literal("exhausted"),
+    ),
+    attempts: v.number(),
+    nextAttemptAt: v.number(),
+    claimId: v.optional(v.string()),
+    claimedAt: v.optional(v.number()),
+    leaseExpiresAt: v.optional(v.number()),
+    lastAttemptAt: v.optional(v.number()),
+    lastError: v.optional(v.string()),
+    deliveredAt: v.optional(v.number()),
+    responseCaseId: v.optional(v.string()),
+    exhaustedNotifiedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_request_status", ["expertRequestId", "status"])
+    .index("by_expert_request", ["expertRequestId"])
+    .index("by_request_sequence", ["expertRequestId", "sequence"])
+    .index("by_event_id", ["eventId"])
+    .index("by_state_next_attempt", ["state", "nextAttemptAt"])
+    .index("by_state_lease_expiry", ["state", "leaseExpiresAt"]),
+
+  /** Append-only delivery history; a row is never updated after insertion. */
+  consultant_partner_delivery_attempts: defineTable({
+    outboxId: v.id("consultant_partner_status_outbox"),
+    eventId: v.string(),
+    claimId: v.string(),
+    attemptNumber: v.number(),
+    phase: v.union(
+      v.literal("claimed"),
+      v.literal("delivered"),
+      v.literal("failed"),
+      v.literal("lease_expired"),
+      v.literal("superseded"),
+    ),
+    occurredAt: v.number(),
+    httpStatus: v.optional(v.number()),
+    error: v.optional(v.string()),
+    responseCaseId: v.optional(v.string()),
+    responseBytes: v.optional(v.number()),
+  })
+    .index("by_outbox", ["outboxId", "occurredAt"])
+    .index("by_event", ["eventId", "occurredAt"]),
+
+  /** Immutable storage references captured in a consultant review packet. */
+  consultant_review_files: defineTable({
+    expertRequestId: v.id("expert_requests"),
+    assessmentId: v.id("export_assessments"),
+    evidenceId: v.id("export_evidence"),
+    storageId: v.id("_storage"),
+    fileName: v.string(),
+    contentType: v.string(),
+    fileSize: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_request_evidence", ["expertRequestId", "evidenceId"])
+    .index("by_storage", ["storageId"]),
 
   export_end_user_tokens: defineTable({
     assessmentId: v.id("export_assessments"),
     reviewTokenId: v.optional(v.id("export_review_tokens")),
-    token: v.string(),
+    /** Legacy URL bearer. New rows never write this field. */
+    token: v.optional(v.string()),
+    /** Hash of the one-time code sent by email, removed when redeemed. */
+    redemptionCodeHash: v.optional(v.string()),
+    /** Hash of the separate HttpOnly-cookie session. */
+    tokenHash: v.optional(v.string()),
     recipientEmail: v.string(),
     /** Where to send the "EUSU submitted" notification. */
     notifyEmail: v.optional(v.string()),
@@ -867,12 +1096,19 @@ export default defineSchema({
     expiresAt: v.number(),
     createdBy: v.string(),
     createdAt: v.number(),
+    redeemedAt: v.optional(v.number()),
     openedAt: v.optional(v.number()),
     completedAt: v.optional(v.number()),
     notifiedAt: v.optional(v.number()),
     revoked: v.optional(v.boolean()),
+    revokedAt: v.optional(v.number()),
+    /** Immutable copy of the exact undertaking accepted from this recipient. */
+    submittedStatement: v.optional(v.any()),
   })
     .index("by_token", ["token"])
+    .index("by_redemption_code_hash", ["redemptionCodeHash"])
+    .index("by_token_hash", ["tokenHash"])
+    .index("by_review_token", ["reviewTokenId"])
     .index("by_assessment", ["assessmentId"]),
 
   // Product evidence attached to an assessment for the DBT/ECJU supporting-doc bundle.
@@ -895,7 +1131,9 @@ export default defineSchema({
     productId: v.optional(v.id("export_products")),
     addedBy: v.string(),
     addedAt: v.number(),
-  }).index("by_assessment", ["assessmentId"]),
+  })
+    .index("by_assessment", ["assessmentId"])
+    .index("by_document", ["documentId"]),
 
   export_licences: defineTable({
     assessmentId: v.id("export_assessments"),
