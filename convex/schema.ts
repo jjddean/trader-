@@ -303,6 +303,52 @@ export default defineSchema({
     exporterLine: v.optional(v.string()),
     exporterPostcode: v.optional(v.string()),
     exporterEori: v.optional(v.string()),
+    /**
+     * Export declaration category (B1 standard export / re-export, C1 C&F
+     * simplified). Absent means the import family — the H1 path. Obligations:
+     * `docs/hmrc/specs/cds-api/appendix-22a-b1-obligations.md`.
+     */
+    declarationCategory: v.optional(
+      v.union(v.literal("B1"), v.literal("C1"), v.literal("I1")),
+    ),
+    // DE 3/1 country for the export exporter block — on an export the exporter
+    // is the declaring party, so its country is not the dispatch country.
+    exporterCountry: v.optional(v.string()),
+    // DE 3/9 + 3/10 — Consignee. The export counterpart of DE 3/15/3/16 Importer.
+    consigneeEori: v.optional(v.string()),
+    consigneeName: v.optional(v.string()),
+    consigneeCity: v.optional(v.string()),
+    consigneeLine: v.optional(v.string()),
+    consigneePostcode: v.optional(v.string()),
+    consigneeCountry: v.optional(v.string()),
+    // DE 3/31 + 3/32 — Carrier (Declaration/Consignment/Carrier).
+    carrierEori: v.optional(v.string()),
+    carrierName: v.optional(v.string()),
+    // DE 3/39 — holder of the authorisation. Conditional on B1, mandatory on C1.
+    authorisationHolderEori: v.optional(v.string()),
+    authorisationCategoryCode: v.optional(v.string()),
+    // DE 4/2 — transport charges method of payment.
+    transportChargesMethodOfPayment: v.optional(v.string()),
+    // DE 4/15 — exchange rate.
+    exchangeRate: v.optional(v.string()),
+    // DE 5/12 — customs office of exit. Mandatory on B1 and C1, no import equivalent.
+    customsOfficeOfExit: v.optional(v.string()),
+    // DE 5/18 — countries of routing, in transit order.
+    countriesOfRouting: v.optional(v.array(v.string())),
+    // DE 7/5 — inland mode of transport.
+    inlandTransportMode: v.optional(v.string()),
+    // DE 7/7 — identity of the means of transport at departure. Export uses
+    // departure identity; ArrivalTransportMeans is import-only.
+    departureTransportId: v.optional(v.string()),
+    departureTransportIdType: v.optional(v.string()),
+    // DE 7/14 + 7/15 — active means crossing the border, and its nationality.
+    borderTransportId: v.optional(v.string()),
+    borderTransportIdType: v.optional(v.string()),
+    borderTransportNationality: v.optional(v.string()),
+    // DE 7/10 — container identification number.
+    containerId: v.optional(v.string()),
+    // DE 7/18 — seal number.
+    sealNumber: v.optional(v.string()),
     // DE 8/5 — GoodsShipment/TransactionNatureCode (WCOID 103).
     transactionNatureCode: v.optional(v.string()),
     // DE 2/6 — duty deferment account number (optional; surfaced on Financial Records).
@@ -464,6 +510,8 @@ export default defineSchema({
     supplementaryUnitCode: v.optional(v.string()),
     // DE 6/10 — number of packages. Mandatory per Appendix 21A H1.
     packageCount: v.optional(v.number()),
+    // DE 8/6 — statistical value. Conditional on B1 export items.
+    statisticalValue: v.optional(v.number()),
     // DE 6/9 — package type code (PK, BX, CT, etc.). Mandatory per Appendix 21A H1.
     packageType: v.optional(v.string()),
   }).index("by_declaration", ["declarationId"]).index("by_owner", ["ownerId"]),

@@ -28,13 +28,13 @@ export function mapDeclarationType(type?: string, route?: string): string {
 }
 
 // Format mass measures to 3 decimal places (CDS DE 6/1, 6/5).
-function formatMass(value: unknown): string {
+export function formatMass(value: unknown): string {
   const n = parseFloat(String(value ?? ""));
   return (isFinite(n) && n > 0 ? n : 0).toFixed(3);
 }
 
 // Clamp net to <= gross. CDS rejects when item net mass exceeds declared gross mass.
-function clampNetToGross(net: unknown, gross: unknown): string {
+export function clampNetToGross(net: unknown, gross: unknown): string {
   const g = parseFloat(String(gross ?? ""));
   const n = parseFloat(String(net ?? ""));
   const grossNum = isFinite(g) && g > 0 ? g : 0;
@@ -43,13 +43,13 @@ function clampNetToGross(net: unknown, gross: unknown): string {
 }
 
 // Format monetary amounts to 2 decimal places (CDS DE 4/11, 4/14).
-function formatAmount(value: unknown): string {
+export function formatAmount(value: unknown): string {
   const n = parseFloat(String(value ?? ""));
   return (isFinite(n) && n > 0 ? n : 0).toFixed(2);
 }
 
 // DE 6/2 — supplementary units (n..16,6 per Group 6). Must be > 0 when declared.
-function formatSupplementaryQty(value: unknown): string | null {
+export function formatSupplementaryQty(value: unknown): string | null {
   const n = parseFloat(String(value ?? ""));
   if (!isFinite(n) || n <= 0) return null;
   const fixed = n.toFixed(6);
@@ -69,11 +69,11 @@ export function commodityRequiresSupplementaryUnit(commodityCode: unknown): bool
 
 // Strip ALL whitespace from transport identifiers (DE 7/9). CDS R123 rejects
 // vessel/wagon IDs containing spaces.
-function stripTransportId(value: unknown): string {
+export function stripTransportId(value: unknown): string {
   return String(value ?? "").replace(/\s+/g, "");
 }
 
-function commodityClassifications(codeValue: unknown) {
+export function commodityClassifications(codeValue: unknown) {
   const code = String(codeValue || "").replace(/\s+/g, "");
   if (/^\d{10}$/.test(code)) {
     return [
@@ -84,7 +84,7 @@ function commodityClassifications(codeValue: unknown) {
   return code ? [{ ID: code, IdentificationTypeCode: "TSP" }] : [];
 }
 
-function normalizeCountryCode(value: unknown): string {
+export function normalizeCountryCode(value: unknown): string {
   const raw = String(value || "").trim();
   if (!raw) return "";
   const upper = raw.toUpperCase();

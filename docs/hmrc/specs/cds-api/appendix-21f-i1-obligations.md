@@ -3,7 +3,7 @@
 | | |
 |--|--|
 | Source | https://www.gov.uk/government/publications/appendix-21-import-declaration-category-data-sets/appendix-21f-declaration-category-data-sets-i1-cf |
-| Retrieved | 2026-08-05 |
+| Retrieved | 2026-08-05 (obligation matrix re-verified against source 2026-08-21) |
 | Status | implementation mirror (official page retrieved in-session; obligation matrix captured for engineering use) |
 | Behaviour authority | `docs/hmrc/ACTIVE/tdr/AGENT-SPEC.md` |
 
@@ -39,7 +39,7 @@ Key conditions from the published page:
 | 1/2 | Additional declaration type | A | Y | Required for I1 C&F |
 | 1/6 | Goods item number | A | X | Required item count |
 | 1/8 | Signature / authentication | D | Y | Only when a paper declaration is used |
-| 1/9 | Total number of items | A | Y | Required |
+| 1/9 | Total number of items | C | Y | Optional for economic operators |
 | 1/10 | Procedure | A | X | Procedure code required |
 | 1/11 | Additional procedure | A | X | Additional procedure code required |
 | 2/1 | Previous documents | A | X, Y | Must reference prior docs when applicable |
@@ -108,6 +108,19 @@ These are the most important implementation rules for the current app:
 - `DE 7/4` remains mandatory for the border transport block.
 - `DE 2/3` must remain valid for item-level document handling; reduced-form import does not mean document-less import.
 - Procedure-code guard is mandatory: the app must reject I1 if the selected CPC requires H1.
+
+## 4a. Build state (2026-08-22)
+
+| Item | State |
+|------|-------|
+| `declarationCategory = "I1"` in schema | done — `convex/schema.ts` |
+| `mapToCDS_I1` | done — `src/lib/i1-mapper.ts` |
+| I1 renderer, XSD-ordered | done — `src/lib/i1-xml-renderer.ts` |
+| Category dispatch on the submit route | done — `src/app/api/hmrc/submit/route.ts` |
+| Mandatory-element gate | done — `validateI1Declaration()` / `validateI1SubmitGate()`; **not** yet in `rule_seed.ts` |
+| Fixtures | done — `tests/i1/`, run by `npm run test:i1` |
+| Procedure-code guard (CPC requiring H1) | **not started** — DE 1/2 is guarded to C/F, but the CPC-level check in §4 is not implemented |
+| I1 UI field set | **not started** |
 
 ## 5. Implementation gate
 

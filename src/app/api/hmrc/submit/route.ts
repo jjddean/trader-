@@ -9,6 +9,11 @@ import { declarationsEndpointUrl } from "../../../../lib/hmrc-config";
 import { resolveOrgHmrcRoutingForDeclaration } from "../../../../lib/hmrc-org-routing";
 import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
 import { buildPayloadDebugSnapshot, renderH1Xml, validateXmlPreflight } from "../../../../lib/h1-xml-renderer";
+import { mapToCDS_B1 } from "../../../../lib/b1-mapper";
+import { mapToCDS_I1 } from "../../../../lib/i1-mapper";
+import { renderI1Xml } from "../../../../lib/i1-xml-renderer";
+import { resolveDeclarationCategory, validateB1SubmitGate, validateI1SubmitGate } from "../../../../lib/submit-category";
+import { renderB1Xml } from "../../../../lib/b1-xml-renderer";
 import { validateGoodsLocationForSubmit } from "../../../../lib/goods-location";
 import { validateGoodsItemSequences } from "../../../../lib/submit-goods-items";
 import { logHmrcAudit } from "../../../../lib/audit-log";
@@ -44,6 +49,8 @@ type SubmitItemInput = {
 };
 
 type SubmitDeclarationInput = {
+  /** Export data set (B1/C1). Absent means the import family — see submit-category.ts. */
+  declarationCategory?: string;
   eori?: string;
   dispatchCountry?: string;
   destinationCountry?: string;
@@ -220,7 +227,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No goods items found for declaration" }, { status: 400 });
     }
 
-    const baselineErrors = validateDeclaration(lane, items);
+    // Category decides both the pre-mapper gate and the mapper/renderer pair.
+    // The H1 gate asserts the full import obligation set and must not run on
+    // another category — see src/lib/submit-category.ts.
+    const declarationCategory = resolveDeclarationCategory(lane);
+    const isB1Export = declarationCategory === "B1";
+    const isI1Import = declarationCategory === "I1";
+    const baselineErrors = isB1Export
+      ? validateB1SubmitGate(lane as Record<string, unknown>, items as Record<string, unknown>[])
+      : isI1Import
+        ? validateI1SubmitGate(lane as Record<string, unknown>, items as Record<string, unknown>[])
+        : validateDeclaration(lane, items);
     if (baselineErrors.length > 0) {
       return NextResponse.json(
         { error: "Declaration incomplete", missing: baselineErrors },
@@ -375,12 +392,19 @@ export async function POST(request: Request) {
 
     let payloadInfo;
     try {
-      payloadInfo = mapToCDS_H1(lane, items, {
-        omitAdditionalDocuments,
-        forbiddenDocCodes,
-        // DE 2/1 Z/MCR inventory reference — CNS route only.
-        ...(transport === "cns_inventory" ? { cnsUcn: routingContext.cnsUcn } : {}),
-      });
+      // Category dispatch. B1 is the standard export data set (Appendix 22A);
+      // anything else stays on the import family. The two mappers do not share
+      // a payload shape — see docs/hmrc/specs/cds-api/appendix-22a-b1-obligations.md.
+      payloadInfo = isB1Export
+        ? mapToCDS_B1(lane, items, { omitAdditionalDocuments, forbiddenDocCodes })
+        : isI1Import
+          ? mapToCDS_I1(lane, items, { omitAdditionalDocuments, forbiddenDocCodes })
+          : mapToCDS_H1(lane, items, {
+              omitAdditionalDocuments,
+              forbiddenDocCodes,
+              // DE 2/1 Z/MCR inventory reference — CNS route only.
+              ...(transport === "cns_inventory" ? { cnsUcn: routingContext.cnsUcn } : {}),
+            });
     } catch (mappingError: unknown) {
       const message = userMessageFromError(mappingError, "Unknown mapping error");
       return NextResponse.json(
@@ -425,7 +449,11 @@ export async function POST(request: Request) {
     }
 
     // Convert the JSON payload into the required HMRC XML Envelope
-    const xmlPayload = renderH1Xml(payloadInfo);
+    const xmlPayload = isB1Export
+      ? renderB1Xml(payloadInfo)
+      : isI1Import
+        ? renderI1Xml(payloadInfo)
+        : renderH1Xml(payloadInfo);
 
     const xmlPreflight = validateXmlPreflight(xmlPayload, lane.eori || "", {
       requireAdditionalDocument: !omitAdditionalDocuments,
