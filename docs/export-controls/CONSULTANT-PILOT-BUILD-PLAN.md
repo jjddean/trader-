@@ -1,7 +1,18 @@
 # Consultant Pilot — Build Plan
 
-**Status:** ACTIVE — proposed, not started. Concrete build plan for the Phase 1 pilot described in
-`CONSULTANT-REVIEW-NETWORK-PLAN.md`, grounded in the code as it exists today.
+**Status:** SUPERSEDED on 2026-08-21. Do not implement from this file.
+
+FreightCode now dispatches to a configured consultant partner, freezes the
+review packet, uses signed replay-checked partner requests, exchanges a
+single-use handoff for a hash-at-rest HttpOnly-cookie session, binds the
+verified consultant identity, and closes related credentials on terminal
+states. The browser review URL is `/r/export/review` and contains no reusable
+credential. See `CONSULTANT-REVIEW-NETWORK-PLAN.md` for the protocol and
+`ENTERPRISE-SECURITY-TOOLS.md` for current/deferred security controls.
+
+The remaining BEC-side assignment, RLS, signed receiver and operational
+deployment work is external to this repository. The text below is retained as
+historical pilot rationale only.
 
 That document describes the commercial and multi-phase shape of the service and
 is still a draft. This one covers only what gets built for one consultant (BEC)
