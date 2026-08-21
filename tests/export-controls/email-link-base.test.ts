@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
-import { emailLinkBaseUrl, emailPathUrl } from "../../src/lib/export-controls/email-link-base";
+import {
+  emailLinkBaseUrl,
+  emailPathUrl,
+  secureCredentialPathUrl,
+} from "../../src/lib/export-controls/email-link-base";
 
 describe("emailLinkBaseUrl", () => {
   const prevFrom = process.env.RESEND_FROM_EMAIL;
@@ -46,5 +50,31 @@ describe("emailLinkBaseUrl", () => {
     process.env.RESEND_FROM_EMAIL = "freightcode <info@freightcode.co.uk>";
     process.env.NEXT_PUBLIC_APP_URL = "http://localhost:3000";
     assert.equal(emailLinkBaseUrl(), "http://localhost:3000");
+  });
+
+  it("uses only the configured canonical origin for credential links", () => {
+    process.env.NEXT_PUBLIC_APP_URL = "https://www.freightcode.co.uk";
+    const poisoned = new Request("https://attacker.example/api/consultant-partner/handoff", {
+      headers: {
+        host: "attacker.example",
+        "x-forwarded-host": "attacker.example",
+        "x-forwarded-proto": "https",
+      },
+    });
+    assert.equal(
+      secureCredentialPathUrl("/r/export/h/code", poisoned),
+      "https://www.freightcode.co.uk/r/export/h/code",
+    );
+  });
+
+  it("rejects non-local request-host fallback for credential links", () => {
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    const request = new Request("https://attacker.example/api/consultant-partner/handoff");
+    assert.throws(() => secureCredentialPathUrl("/r/export/h/code", request));
+  });
+
+  it("rejects a configured credential origin containing a path", () => {
+    process.env.NEXT_PUBLIC_APP_URL = "https://www.freightcode.co.uk/app";
+    assert.throws(() => secureCredentialPathUrl("/r/export/h/code"));
   });
 });
