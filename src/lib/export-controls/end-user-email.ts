@@ -14,6 +14,9 @@ export async function sendEndUserStatementEmail(input: EndUserDispatchEmailInput
   sent: boolean;
   reason?: string;
 }> {
+  if (process.env.EXPORT_CONTROL_EMAIL_EGRESS_APPROVED !== "true") {
+    return { sent: false, reason: "Export-control email egress is not approved" };
+  }
   const apiKey = process.env.RESEND_API_KEY?.trim();
   const from = process.env.RESEND_FROM_EMAIL?.trim();
 
@@ -92,6 +95,9 @@ export async function sendEusuSubmittedEmail(input: EusuSubmittedEmailInput): Pr
   sent: boolean;
   reason?: string;
 }> {
+  if (process.env.EXPORT_CONTROL_EMAIL_EGRESS_APPROVED !== "true") {
+    return { sent: false, reason: "Export-control email egress is not approved" };
+  }
   const apiKey = process.env.RESEND_API_KEY?.trim();
   const from = process.env.RESEND_FROM_EMAIL?.trim();
 
