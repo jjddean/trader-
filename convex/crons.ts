@@ -54,4 +54,13 @@ crons.daily(
   internal.actions.sanctions.checkSanctionsSnapshot,
 );
 
+// Close consultant reviews nobody completed before their expiry, and tell the
+// partner inbox. Hourly is enough: expiry is measured in days, and the handoff
+// and completion paths both re-check validity anyway.
+crons.hourly(
+  "expire-consultant-dispatches",
+  { minuteUTC: 20 },
+  internal.consultant_partner_sync.expireLapsedDispatches,
+);
+
 export default crons;

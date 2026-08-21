@@ -155,6 +155,7 @@ export const NOTIFICATION_EVENTS = {
   "export_controls.licence_required": { category: "export_controls", severity: "action_required", title: "Export licence required" },
   "export_controls.licence_recorded": { category: "export_controls", severity: "info", title: "Export licence recorded" },
   "export_controls.expert_requested": { category: "export_controls", severity: "info", title: "Expert review requested" },
+  "export_controls.consultant_delivery_failed": { category: "export_controls", severity: "action_required", title: "Consultant delivery failed" },
   "export_controls.consultant_review_completed": { category: "export_controls", severity: "action_required", title: "Consultant review completed" },
   "export_controls.end_user_statement_submitted": { category: "export_controls", severity: "info", title: "End-user statement submitted" },
 

@@ -69,6 +69,15 @@ async function updateRequirementStatusForDeclaration(
   });
 }
 
+async function storageFileIsRetainedForConsultantReview(ctx: any, storageId: any) {
+  return Boolean(
+    await ctx.db
+      .query("consultant_review_files")
+      .withIndex("by_storage", (q: any) => q.eq("storageId", storageId))
+      .first(),
+  );
+}
+
 export const trackUpload = mutation({
   args: {
     declarationId: v.id("declarations"),
@@ -315,7 +324,10 @@ export const deleteDocument = mutation({
       throw forbiddenError();
     }
 
-    if (document.fileId) {
+    if (
+      document.fileId &&
+      !(await storageFileIsRetainedForConsultantReview(ctx, document.fileId))
+    ) {
       await ctx.storage.delete(document.fileId);
     }
     await ctx.db.delete(args.documentId);
@@ -379,7 +391,10 @@ export const replaceDocument = mutation({
       throw forbiddenError();
     }
 
-    if (existing.fileId) {
+    if (
+      existing.fileId &&
+      !(await storageFileIsRetainedForConsultantReview(ctx, existing.fileId))
+    ) {
       await ctx.storage.delete(existing.fileId);
     }
 
@@ -950,9 +965,8 @@ export const getRequirementTelemetry = query({
  * before the discard can run, leaving bytes with no owner, no orgId and no
  * tenancy check. This is the backstop.
  *
- * `documents.fileId` is the only schema field that references a stored file —
- * verified before writing this. If another table ever stores a storage id, this
- * sweep must learn about it or it will delete live data.
+ * Both live documents and immutable consultant-review file references retain
+ * stored bytes. The sweep checks both before deleting anything.
  */
 export const sweepOrphanedFiles = internalMutation({
   args: {
@@ -989,6 +1003,10 @@ export const sweepOrphanedFiles = internalMutation({
         .withIndex("by_file", (q) => q.eq("fileId", file._id))
         .first();
       if (claimed) {
+        referenced += 1;
+        continue;
+      }
+      if (await storageFileIsRetainedForConsultantReview(ctx, file._id)) {
         referenced += 1;
         continue;
       }

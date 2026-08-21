@@ -213,6 +213,35 @@ export async function canAccessDocument(
   return false;
 }
 
+/**
+ * Evidence documents must share the assessment's exact tenant boundary.
+ * Merely being reachable by the same user is insufficient when one record is
+ * organization-scoped and the other is personal-scoped.
+ */
+export async function documentBelongsToAssessmentTenant(
+  ctx: Ctx,
+  document: { userId?: unknown; orgId?: unknown; declarationId?: unknown } | null | undefined,
+  assessment: { userId?: unknown; orgId?: unknown } | null | undefined,
+): Promise<boolean> {
+  if (!document || !assessment) return false;
+
+  const assessmentOrgId = normalizeOrgId(assessment.orgId);
+  const documentOrgId = normalizeOrgId(document.orgId);
+  if (documentOrgId) return documentOrgId === assessmentOrgId;
+
+  if (document.declarationId) {
+    const declaration = await ctx.db.get(document.declarationId as Id<"declarations">);
+    const declarationOrgId = normalizeOrgId(declaration?.orgId);
+    if (declarationOrgId) return declarationOrgId === assessmentOrgId;
+  }
+
+  return (
+    !assessmentOrgId &&
+    String(document.userId ?? "") !== "" &&
+    String(document.userId) === String(assessment.userId ?? "")
+  );
+}
+
 export function orgIdFromDeclaration(declaration: Doc<"declarations"> | null | undefined) {
   const orgId = normalizeOrgId(declaration?.orgId);
   return orgId || undefined;
