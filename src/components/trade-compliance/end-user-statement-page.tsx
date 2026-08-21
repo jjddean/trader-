@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useMutation, useQuery } from "convex/react";
 import { Check, Download, Loader2, Plus, Printer, Trash2 } from "lucide-react";
-import { api } from "../../../convex/_generated/api";
 import {
   openEndUserStatementPrintDialog,
   downloadEndUserStatementHtml,
@@ -14,7 +12,7 @@ import {
   type EusuItemLine,
   type EusuRoles,
 } from "@/lib/export-controls/end-user-statement";
-import { userMessageFromError } from "@/lib/convex-errors";
+import { ApiError, userMessageFromError } from "@/lib/convex-errors";
 
 const inputCls = "mt-1 h-9 w-full rounded-md border border-slate-200 px-3 text-xs";
 const textareaCls = "mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-xs";
@@ -62,14 +60,39 @@ function YesNo({
   );
 }
 
-export function EndUserStatementPage({ token }: { token: string }) {
-  const data = useQuery(api.compliance_end_user.getEndUserFormByToken, { token });
-  const markOpened = useMutation(api.compliance_end_user.markEndUserTokenOpened);
-  const submit = useMutation(api.compliance_end_user.submitEndUserStatement);
+interface SubmittedStatement {
+  signedBy: string;
+  signedAt: number;
+  endUserName: string;
+  endUserAddress: string;
+  endUserCountry: string;
+  contactName: string;
+  contactEmail?: string;
+  intendedUse: string;
+  eusu?: EusuDetails;
+}
+
+interface EndUserFormData {
+  expiresAt: number;
+  completedAt?: number;
+  recipientEmail: string;
+  senderNote?: string;
+  submittedStatement?: SubmittedStatement;
+  assessment: {
+    reference: string;
+    destinationCountry?: string;
+    consignee?: unknown;
+    endUser?: unknown;
+    intendedUse?: string;
+  };
+  products: Array<{ name: string; techDescription?: string; quantity?: number }>;
+}
+
+export function EndUserStatementPage() {
+  const [data, setData] = useState<EndUserFormData | null | undefined>(undefined);
 
   // Export process (roles)
   const [roles, setRoles] = useState<EusuRoles>(defaultRoles);
-  const [rolesSeeded, setRolesSeeded] = useState(false);
 
   // Section 1
   const [exporterName, setExporterName] = useState("");
@@ -77,7 +100,6 @@ export function EndUserStatementPage({ token }: { token: string }) {
 
   // Section 2
   const [items, setItems] = useState<EusuItemLine[]>([]);
-  const [itemsSeeded, setItemsSeeded] = useState(false);
 
   // Section 3
   const [consigneeName, setConsigneeName] = useState("");
@@ -117,38 +139,55 @@ export function EndUserStatementPage({ token }: { token: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [submittedStatement, setSubmittedStatement] = useState<SubmittedStatement | undefined>();
 
   useEffect(() => {
-    if (!data || data.completedAt) return;
-    void markOpened({ token });
-  }, [data, markOpened, token]);
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await fetch("/api/export-controls/end-user-statement", {
+          cache: "no-store",
+          credentials: "same-origin",
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          setData(null);
+          return;
+        }
+        const form = (await response.json()) as EndUserFormData;
+        setData(form);
 
-  useEffect(() => {
-    if (!data?.assessment) return;
-    const eu = data.assessment.endUser as { name?: string; address?: string; country?: string } | undefined;
-    if (eu?.name && !endUserName) setEndUserName(eu.name);
-    if (eu?.address && !endUserAddress) setEndUserAddress(eu.address);
-    if (eu?.country && !endUserCountry) setEndUserCountry(eu.country);
-    if (data.assessment.intendedUse && !intendedUse) setIntendedUse(data.assessment.intendedUse);
-    if (data.recipientEmail && !contactEmail) setContactEmail(data.recipientEmail);
-    const consignee = data.assessment.consignee as { name?: string; address?: string } | undefined;
-    if (consignee?.name && !consigneeName) setConsigneeName(consignee.name);
-    if (consignee?.address && !consigneeAddress) setConsigneeAddress(consignee.address);
-    if (consignee?.name && !rolesSeeded) setRoles((prev) => ({ ...prev, consignee: true }));
-    if (!rolesSeeded) setRolesSeeded(true);
-    if (!itemsSeeded) {
-      setItems(
-        data.products.length > 0
-          ? data.products.map((p) => ({
-              description: p.techDescription?.trim() || p.name,
-              quantity: p.quantity != null ? String(p.quantity) : "",
-              unit: "",
-            }))
-          : [{ description: "", quantity: "", unit: "" }],
-      );
-      setItemsSeeded(true);
-    }
-  }, [data, contactEmail, consigneeAddress, consigneeName, endUserAddress, endUserCountry, endUserName, intendedUse, itemsSeeded, rolesSeeded]);
+        const endUser = form.assessment.endUser as
+          | { name?: string; address?: string; country?: string }
+          | undefined;
+        const consignee = form.assessment.consignee as
+          | { name?: string; address?: string }
+          | undefined;
+        setEndUserName(endUser?.name ?? "");
+        setEndUserAddress(endUser?.address ?? "");
+        setEndUserCountry(endUser?.country ?? "");
+        setIntendedUse(form.assessment.intendedUse ?? "");
+        setContactEmail(form.recipientEmail);
+        setConsigneeName(consignee?.name ?? "");
+        setConsigneeAddress(consignee?.address ?? "");
+        setRoles({ ...defaultRoles, consignee: Boolean(consignee?.name) });
+        setItems(
+          form.products.length > 0
+            ? form.products.map((product) => ({
+                description: product.techDescription?.trim() || product.name,
+                quantity: product.quantity != null ? String(product.quantity) : "",
+                unit: "",
+              }))
+            : [{ description: "", quantity: "", unit: "" }],
+        );
+      } catch (loadError: unknown) {
+        if (!(loadError instanceof DOMException && loadError.name === "AbortError")) {
+          setData(null);
+        }
+      }
+    })();
+    return () => controller.abort();
+  }, []);
 
   if (data === undefined) {
     return (
@@ -167,20 +206,10 @@ export function EndUserStatementPage({ token }: { token: string }) {
     );
   }
 
-  const statement = data.assessment.endUserStatement as {
-    signedBy: string;
-    signedAt: number;
-    endUserName: string;
-    endUserAddress: string;
-    endUserCountry: string;
-    contactName: string;
-    contactEmail?: string;
-    intendedUse: string;
-    eusu?: EusuDetails;
-  } | undefined;
+  const statement = submittedStatement ?? data.submittedStatement;
 
   if (data.completedAt || done) {
-    const signedAt = statement?.signedAt ?? Date.now();
+    const signedAt = statement?.signedAt ?? 0;
     const printInput = statement && {
       assessmentReference: data.assessment.reference,
       destinationCountry: data.assessment.destinationCountry,
@@ -270,26 +299,38 @@ export function EndUserStatementPage({ token }: { token: string }) {
             ? stockistLikelyExports.trim() || undefined
             : undefined,
       };
-      await submit({
-        token,
-        endUserName,
-        endUserAddress,
-        endUserCountry,
-        contactName,
-        contactEmail: contactEmail.trim() || undefined,
-        intendedUse,
-        noProhibitedEndUse,
-        noDiversion,
-        signedBy,
-        eusu,
-      });
-      setDone(true);
-      // Notify the sender; failure here must not affect the buyer's submission.
-      void fetch("/api/export-controls/eusu-submitted", {
+      const response = await fetch("/api/export-controls/end-user-statement", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
+        credentials: "same-origin",
+        body: JSON.stringify({
+          endUserName,
+          endUserAddress,
+          endUserCountry,
+          contactName,
+          contactEmail: contactEmail.trim() || undefined,
+          intendedUse,
+          noProhibitedEndUse,
+          noDiversion,
+          signedBy,
+          eusu,
+        }),
+      });
+      const result = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        statement?: SubmittedStatement;
+      };
+      if (!response.ok) throw new ApiError(result.error || "Failed to submit");
+      setSubmittedStatement(result.statement);
+
+      // Notification failure does not undo the immutable undertaking.
+      await fetch("/api/export-controls/eusu-submitted", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({}),
       }).catch(() => undefined);
+      setDone(true);
     } catch (err: unknown) {
       setError(userMessageFromError(err, "Failed to submit"));
     } finally {

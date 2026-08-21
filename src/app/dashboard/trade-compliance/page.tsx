@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { useUser } from "@clerk/nextjs";
+import { useSearchParams } from "next/navigation";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
@@ -64,6 +65,34 @@ const assessmentTabs: Array<{ id: AssessmentTab; label: string }> = [
   { id: "draft", label: "Licence management" },
   { id: "audit", label: "Audit Log" },
 ];
+
+function AssessmentDeepLinkOpener({
+  assessments,
+  onOpen,
+}: {
+  assessments: ReturnType<typeof useQuery<typeof api.export_controls.listAssessments>>;
+  onOpen: (assessmentId: Id<"export_assessments">) => void;
+}) {
+  const searchParams = useSearchParams();
+  const handledAssessment = useRef("");
+  const requestedAssessment = searchParams.get("assessment")?.trim() ?? "";
+
+  useEffect(() => {
+    if (!requestedAssessment) {
+      handledAssessment.current = "";
+      return;
+    }
+    if (assessments === undefined || handledAssessment.current === requestedAssessment) return;
+
+    handledAssessment.current = requestedAssessment;
+    const authorizedAssessment = assessments.find(
+      (assessment) => String(assessment._id) === requestedAssessment,
+    );
+    if (authorizedAssessment) onOpen(authorizedAssessment._id);
+  }, [assessments, onOpen, requestedAssessment]);
+
+  return null;
+}
 
 function formatAssessmentDate(ts: number) {
   return new Date(ts).toLocaleDateString("en-GB", {
@@ -299,10 +328,10 @@ export default function TradeCompliancePage() {
   );
   const createAssessment = useMutation(api.export_controls.createAssessment);
 
-  const openAssessment = (id: Id<"export_assessments">, tab: AssessmentTab = "overview") => {
+  const openAssessment = useCallback((id: Id<"export_assessments">, tab: AssessmentTab = "overview") => {
     setSelectedAssessmentId(id);
     setAssessmentTab(tab);
-  };
+  }, []);
 
   const closeAssessment = () => {
     setSelectedAssessmentId(null);
@@ -349,6 +378,9 @@ export default function TradeCompliancePage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 p-8">
+      <Suspense fallback={null}>
+        <AssessmentDeepLinkOpener assessments={assessments} onOpen={openAssessment} />
+      </Suspense>
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-slate-900">Trade Compliance</h1>

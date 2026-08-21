@@ -36,12 +36,22 @@ const SECURITY_HEADERS = [
   { key: "Content-Security-Policy-Report-Only", value: CSP_REPORT_ONLY },
 ];
 
+const CONSULTANT_REVIEW_HEADERS = [
+  { key: "Cache-Control", value: "private, no-store, max-age=0" },
+  { key: "Referrer-Policy", value: "no-referrer" },
+  { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+];
+
 const nextConfig: NextConfig = {
   trailingSlash: false,
   serverExternalPackages: ["@aws-sdk/client-textract"],
   // Applied to every route including /api. vercel.json is {} and stays that way:
   // App Router headers belong here so they survive local dev and preview builds.
-  headers: async () => [{ source: "/:path*", headers: SECURITY_HEADERS }],
+  headers: async () => [
+    { source: "/:path*", headers: SECURITY_HEADERS },
+    { source: "/r/export/:path*", headers: CONSULTANT_REVIEW_HEADERS },
+    { source: "/r/end-user/:path*", headers: CONSULTANT_REVIEW_HEADERS },
+  ],
   redirects: async () => {
     return [
       {

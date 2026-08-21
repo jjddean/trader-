@@ -41,8 +41,7 @@ export function EndUserSendCard({ assessmentId, variant = "send" }: EndUserSendC
   const [senderNote, setSenderNote] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastUrl, setLastUrl] = useState<string | null>(null);
-  const [emailNote, setEmailNote] = useState<string | null>(null);
+  const [sentTo, setSentTo] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -81,7 +80,7 @@ export function EndUserSendCard({ assessmentId, variant = "send" }: EndUserSendC
           contactEmail: statement.contactEmail,
           intendedUse: statement.intendedUse ?? "",
           signedBy: statement.signedBy ?? "",
-          signedAt: statement.signedAt ?? Date.now(),
+          signedAt: statement.signedAt ?? 0,
           eusu: statement.eusu,
         }
       : null;
@@ -162,8 +161,7 @@ export function EndUserSendCard({ assessmentId, variant = "send" }: EndUserSendC
 
     setSending(true);
     setError(null);
-    setEmailNote(null);
-    setLastUrl(null);
+    setSentTo(null);
 
     try {
       const res = await fetch("/api/export-controls/send-to-end-user", {
@@ -178,11 +176,7 @@ export function EndUserSendCard({ assessmentId, variant = "send" }: EndUserSendC
 
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new ApiError(body.error || "Send failed");
-
-      setLastUrl(body.formUrl ?? null);
-      if (!body.emailSent && body.emailNote) {
-        setEmailNote(body.emailNote);
-      }
+      setSentTo(body.recipientEmail ?? email);
     } catch (err: unknown) {
       setError(userMessageFromError(err, "Send failed"));
     } finally {
@@ -318,15 +312,10 @@ export function EndUserSendCard({ assessmentId, variant = "send" }: EndUserSendC
 
           {error && <p className="text-xs text-red-700">{error}</p>}
 
-          {lastUrl && (
+          {sentTo && (
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs">
-              <p className="font-medium text-slate-700">Form link</p>
-              <a href={lastUrl} className="mt-1 break-all text-slate-600 underline" target="_blank" rel="noreferrer">
-                {lastUrl}
-              </a>
-              {emailNote && (
-                <p className="mt-2 text-amber-800">Email not sent ({emailNote}). Copy link manually.</p>
-              )}
+              <p className="font-medium text-slate-700">Sent to {sentTo}</p>
+              <p className="mt-1 text-slate-600">The one-time access link was delivered by email.</p>
             </div>
           )}
 

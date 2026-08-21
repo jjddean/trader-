@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useMutation, useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { Check, Copy, Download, ExternalLink, Loader2, Send } from "lucide-react";
-import { api } from "../../../convex/_generated/api";
+import type { api } from "../../../convex/_generated/api";
 import {
   buildDraftPackBundle,
   EVIDENCE_KIND_LABELS,
@@ -13,9 +13,35 @@ import { resolveSubmissionRoute } from "@/lib/export-controls/routing";
 import { sanctionsOneLiner } from "@/lib/export-controls/sanctions-summary";
 import { ApiError, userMessageFromError } from "@/lib/convex-errors";
 
-function roleGuidance() {
-  return "Export licence application draft pack for your review.";
+function roleGuidance(role: "adviser" | "applies_on_behalf" | "eor") {
+  if (role === "adviser") {
+    return "Advisory review only. The exporter remains responsible for the application and export decision.";
+  }
+  if (role === "eor") {
+    return "Review as exporter of record. Confirm your authority and the evidence before signing off.";
+  }
+  return "Review and prepare the export licence application on the exporter's behalf.";
 }
+
+type ReviewQueryData = NonNullable<
+  FunctionReturnType<typeof api.compliance_consultant.getReviewByToken>
+>;
+type ReviewData = ReviewQueryData & {
+  endUserToken?: {
+    _id: string;
+    completedAt?: number;
+    statement?: {
+      endUserName?: string;
+      endUserAddress?: string;
+      endUserCountry?: string;
+      contactName?: string;
+      contactEmail?: string;
+      intendedUse?: string;
+      signedBy?: string;
+      signedAt?: number;
+    } | null;
+  } | null;
+};
 
 function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
@@ -36,29 +62,66 @@ function CopyButton({ value }: { value: string }) {
   );
 }
 
-export function ConsultantReviewPage({ token }: { token: string }) {
-  const data = useQuery(api.compliance_consultant.getReviewByToken, { token });
-  const endUserToken = useQuery(api.compliance_end_user.getLatestEndUserTokenForReview, { reviewToken: token });
-  const markOpened = useMutation(api.compliance_consultant.markReviewTokenOpened);
-  const completeReview = useMutation(api.compliance_consultant.completeConsultantReview);
-
+export function ConsultantReviewPage() {
+  const [data, setData] = useState<ReviewData | null | undefined>(undefined);
   const [advisoryNotes, setAdvisoryNotes] = useState("");
   const [applicationRef, setApplicationRef] = useState("");
   const [licenceRef, setLicenceRef] = useState("");
   const [endUserEmail, setEndUserEmail] = useState("");
   const [endUserNote, setEndUserNote] = useState("");
   const [sendingEndUser, setSendingEndUser] = useState(false);
-  const [endUserLink, setEndUserLink] = useState<string | null>(null);
+  const [endUserSentTo, setEndUserSentTo] = useState<string | null>(null);
   const [endUserSendNote, setEndUserSendNote] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [acknowledgedEndUserTokenId, setAcknowledgedEndUserTokenId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (data && !data.completedAt) {
-      void markOpened({ token });
-    }
-  }, [data, markOpened, token]);
+    const controller = new AbortController();
+    let initialRequest = true;
+
+    const loadReview = async () => {
+      const isInitialRequest = initialRequest;
+      initialRequest = false;
+      try {
+        const response = await fetch("/api/export-controls/consultant-review", {
+          cache: "no-store",
+          credentials: "same-origin",
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          if (isInitialRequest) setData(null);
+          return;
+        }
+        const review = (await response.json()) as ReviewData;
+        setData(review);
+        if (isInitialRequest && !review.completedAt) {
+          await fetch("/api/export-controls/consultant-review", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            body: JSON.stringify({ action: "opened" }),
+            signal: controller.signal,
+          });
+        }
+      } catch (loadError: unknown) {
+        if (
+          isInitialRequest &&
+          !(loadError instanceof DOMException && loadError.name === "AbortError")
+        ) {
+          setData(null);
+        }
+      }
+    };
+
+    void loadReview();
+    const intervalId = window.setInterval(() => void loadReview(), 10_000);
+    return () => {
+      window.clearInterval(intervalId);
+      controller.abort();
+    };
+  }, []);
 
   if (data === undefined) {
     return (
@@ -91,6 +154,11 @@ export function ConsultantReviewPage({ token }: { token: string }) {
   }
 
   const evidence = data.evidence ?? [];
+  const endUserToken = data.endUserToken;
+  const submittedEndUserTokenId = endUserToken?.completedAt ? String(endUserToken._id) : null;
+  const endUserStatement = endUserToken?.statement;
+  const endUserStatementAcknowledged =
+    !submittedEndUserTokenId || acknowledgedEndUserTokenId === submittedEndUserTokenId;
 
   const bundle = buildDraftPackBundle({
     assessment: data.assessment,
@@ -114,13 +182,23 @@ export function ConsultantReviewPage({ token }: { token: string }) {
     setSubmitting(true);
     setError(null);
     try {
-      await completeReview({
-        token,
-        advisoryNotes,
-        outcome,
-        applicationRef: applicationRef.trim() || undefined,
-        licenceRef: licenceRef.trim() || undefined,
+      const response = await fetch("/api/export-controls/consultant-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          action: "complete",
+          advisoryNotes,
+          outcome,
+          applicationRef: applicationRef.trim() || undefined,
+          licenceRef: licenceRef.trim() || undefined,
+          acknowledgedEndUserTokenId: submittedEndUserTokenId
+            ? acknowledgedEndUserTokenId
+            : undefined,
+        }),
       });
+      const result = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) throw new ApiError(result.error || "Failed to save review");
       setDone(true);
     } catch (err: unknown) {
       setError(userMessageFromError(err, "Failed to save review"));
@@ -134,22 +212,19 @@ export function ConsultantReviewPage({ token }: { token: string }) {
     if (!email) return;
     setSendingEndUser(true);
     setEndUserSendNote(null);
+    setEndUserSentTo(null);
     try {
       const res = await fetch("/api/export-controls/send-to-end-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          reviewToken: token,
           recipientEmail: email,
           senderNote: endUserNote.trim() || undefined,
         }),
       });
       const json = await res.json();
       if (!res.ok) throw new ApiError(json.error || "Failed to send");
-      setEndUserLink(json.formUrl as string);
-      if (!json.emailSent && json.emailNote) {
-        setEndUserSendNote(`Email not sent (${json.emailNote}). Copy the link below.`);
-      }
+      setEndUserSentTo(json.recipientEmail ?? email);
     } catch (err: unknown) {
       setEndUserSendNote(userMessageFromError(err, "Failed to send"));
     } finally {
@@ -164,7 +239,7 @@ export function ConsultantReviewPage({ token }: { token: string }) {
       <header className="border-b border-slate-200 bg-white px-6 py-5">
         <p className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">Freightcode · Consultant review</p>
         <h1 className="mt-1 text-lg font-semibold text-slate-900">{data.assessment.reference}</h1>
-        <p className="mt-1 text-xs text-slate-500">{roleGuidance()}</p>
+        <p className="mt-1 text-xs text-slate-500">{roleGuidance(data.consultantRole)}</p>
         {data.senderNote && (
           <p className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
             <span className="font-medium">Note from sender:</span> {data.senderNote}
@@ -273,9 +348,54 @@ export function ConsultantReviewPage({ token }: { token: string }) {
             </a>
           </p>
           {endUserToken?.completedAt ? (
-            <p className="mt-3 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">
-              EUSU submitted.
-            </p>
+            <div className="mt-3 space-y-3 rounded-md border border-green-200 bg-green-50 px-3 py-3 text-xs text-green-900">
+              <p className="font-medium">EUSU submitted.</p>
+              {endUserStatement && (
+                <dl className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
+                  <div>
+                    <dt className="text-[10px] font-medium text-green-700 uppercase">End user</dt>
+                    <dd>{endUserStatement.endUserName || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[10px] font-medium text-green-700 uppercase">Country</dt>
+                    <dd>{endUserStatement.endUserCountry || "—"}</dd>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <dt className="text-[10px] font-medium text-green-700 uppercase">Address</dt>
+                    <dd className="whitespace-pre-wrap">{endUserStatement.endUserAddress || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[10px] font-medium text-green-700 uppercase">Contact</dt>
+                    <dd>{endUserStatement.contactName || "—"}</dd>
+                    {endUserStatement.contactEmail && <dd>{endUserStatement.contactEmail}</dd>}
+                  </div>
+                  <div>
+                    <dt className="text-[10px] font-medium text-green-700 uppercase">Signed by</dt>
+                    <dd>{endUserStatement.signedBy || "—"}</dd>
+                    {endUserStatement.signedAt && (
+                      <dd>{new Date(endUserStatement.signedAt).toLocaleString("en-GB")}</dd>
+                    )}
+                  </div>
+                  <div className="sm:col-span-2">
+                    <dt className="text-[10px] font-medium text-green-700 uppercase">Intended use</dt>
+                    <dd className="whitespace-pre-wrap">{endUserStatement.intendedUse || "—"}</dd>
+                  </div>
+                </dl>
+              )}
+              <label className="flex items-start gap-2 border-t border-green-200 pt-3">
+                <input
+                  type="checkbox"
+                  checked={acknowledgedEndUserTokenId === submittedEndUserTokenId}
+                  onChange={(event) =>
+                    setAcknowledgedEndUserTokenId(
+                      event.target.checked ? submittedEndUserTokenId : null,
+                    )
+                  }
+                  className="mt-0.5"
+                />
+                <span>I have reviewed and acknowledge this exact submitted EUSU.</span>
+              </label>
+            </div>
           ) : (
             <div className="mt-4 space-y-3">
               <div>
@@ -314,13 +434,10 @@ export function ConsultantReviewPage({ token }: { token: string }) {
               {endUserSendNote && (
                 <p className="text-xs text-slate-600">{endUserSendNote}</p>
               )}
-              {(endUserLink || (endUserToken && !endUserToken.completedAt)) && (
-                <div className="flex items-center gap-2 rounded-md border border-slate-100 bg-slate-50 px-3 py-2">
-                  <p className="min-w-0 flex-1 truncate text-[11px] text-slate-600">
-                    {endUserLink ?? `…/r/end-user/${endUserToken?.token}`}
-                  </p>
-                  <CopyButton value={endUserLink ?? `${window.location.origin}/r/end-user/${endUserToken?.token}`} />
-                </div>
+              {endUserSentTo && (
+                <p className="rounded-md border border-slate-100 bg-slate-50 px-3 py-2 text-[11px] text-slate-600">
+                  One-time access link sent to {endUserSentTo}.
+                </p>
               )}
             </div>
           )}
@@ -370,7 +487,7 @@ export function ConsultantReviewPage({ token }: { token: string }) {
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                disabled={submitting || !advisoryNotes.trim()}
+                disabled={submitting || !advisoryNotes.trim() || !endUserStatementAcknowledged}
                 onClick={() => void handleSubmit("cleared")}
                 className="h-9 rounded-md bg-black px-4 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
               >
@@ -378,7 +495,7 @@ export function ConsultantReviewPage({ token }: { token: string }) {
               </button>
               <button
                 type="button"
-                disabled={submitting || !advisoryNotes.trim()}
+                disabled={submitting || !advisoryNotes.trim() || !endUserStatementAcknowledged}
                 onClick={() => void handleSubmit("blocked")}
                 className="h-9 rounded-md border border-red-200 bg-red-50 px-4 text-xs font-medium text-red-800 hover:bg-red-100 disabled:opacity-50"
               >
