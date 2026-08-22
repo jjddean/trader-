@@ -36,6 +36,8 @@ import type * as crons from "../crons.js";
 import type * as declaration_completeness from "../declaration_completeness.js";
 import type * as declarations from "../declarations.js";
 import type * as documents from "../documents.js";
+import type * as ens_declarations from "../ens_declarations.js";
+import type * as ens_outcomes from "../ens_outcomes.js";
 import type * as export_controls from "../export_controls.js";
 import type * as financial_obligations from "../financial_obligations.js";
 import type * as goods_items from "../goods_items.js";
@@ -149,6 +151,8 @@ declare const fullApi: ApiFromModules<{
   declaration_completeness: typeof declaration_completeness;
   declarations: typeof declarations;
   documents: typeof documents;
+  ens_declarations: typeof ens_declarations;
+  ens_outcomes: typeof ens_outcomes;
   export_controls: typeof export_controls;
   financial_obligations: typeof financial_obligations;
   goods_items: typeof goods_items;

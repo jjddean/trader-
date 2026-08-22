@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "lint:security": "eslint src/lib/secrets-equal.ts src/lib/api-rate-limiter.ts src/app/api/hmrc src/app/api/stripe src/app/api/ai/extract src/app/api/ai/classify src/app/api/ai/smart-upload src/app/api/ai/chat src/app/api/ai/gir-audit convex/http.ts convex/stripe_webhooks.ts convex/hmrc_internal.ts convex/subscriptions.ts convex/notifications.ts convex/documents.ts convex/client_portal.ts convex/clients.ts convex/lib/portal_document_policy.ts --max-warnings 0",
+    "lint:security": "eslint src/lib/secrets-equal.ts src/lib/api-rate-limiter.ts src/app/api/hmrc src/app/api/stripe src/app/api/ai/extract src/app/api/ai/classify src/app/api/ai/smart-upload src/app/api/ai/chat src/app/api/ai/gir-audit convex/http.ts convex/stripe_webhooks.ts convex/hmrc_internal.ts convex/subscriptions.ts convex/notifications.ts convex/documents.ts convex/client_portal.ts convex/clients.ts convex/lib/portal_document_policy.ts convex/ens_declarations.ts convex/ens_outcomes.ts --max-warnings 0",
     "test:h1": "node --test --import tsx \"tests/h1/*.test.ts\"",
     "test:unit": "node --test --import tsx \"tests/!(*.integration).test.ts\"",
     "test:fo": "node --test --import tsx tests/h1/financial-obligations.test.ts && node scripts/check-financial-obligations.mjs",
