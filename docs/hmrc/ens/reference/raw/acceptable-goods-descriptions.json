@@ -1,0 +1,856 @@
+{
+  "list": "Acceptable Goods Descriptions",
+  "slug": "acceptable-goods-descriptions",
+  "source": "https://developer.service.hmrc.gov.uk/guides/safety-and-security-import-declarations-end-to-end-service-guide/documentation/appendix.html#acceptable-goods-descriptions",
+  "retrieved": "2026-08-22",
+  "columns": [
+    "Unacceptable Goods Description",
+    "Acceptable Goods Description"
+  ],
+  "entries": [
+    {
+      "unacceptable_goods_description": "Accessories",
+      "acceptable_goods_description": "Bathroom fittings, Lighting and electrical accessories"
+    },
+    {
+      "unacceptable_goods_description": "Adapter",
+      "acceptable_goods_description": "(See other specific example in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Agricultural products",
+      "acceptable_goods_description": "Oranges, Fish, Rice, Bread"
+    },
+    {
+      "unacceptable_goods_description": "Aid consignment",
+      "acceptable_goods_description": "Blankets, Medications"
+    },
+    {
+      "unacceptable_goods_description": "Alcohol",
+      "acceptable_goods_description": "Denatured industrial ethyl alcohol, undenatured industrial ethyl alcohol of an alcoholic strength by volume of 80 % vol., Whiskey, Rum"
+    },
+    {
+      "unacceptable_goods_description": "All kind of Cargo",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "All kind of Goods",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Animals",
+      "acceptable_goods_description": "Horse, Poultry, Bovine"
+    },
+    {
+      "unacceptable_goods_description": "Apparel",
+      "acceptable_goods_description": "Men’s Shirts, Lingerie, Girls’ Vests, Boys’ Jackets"
+    },
+    {
+      "unacceptable_goods_description": "Appliances",
+      "acceptable_goods_description": "Refrigerator, Stove, Microwave Oven, Coffee Machines"
+    },
+    {
+      "unacceptable_goods_description": "Arms",
+      "acceptable_goods_description": "Daggers, Machine guns"
+    },
+    {
+      "unacceptable_goods_description": "Articles",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Artwork",
+      "acceptable_goods_description": "(Specify which type of Artwork: Bust, picture, bronze sculpture)"
+    },
+    {
+      "unacceptable_goods_description": "As ordered […]",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "As per attached [invoice]",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Attached [manifest]",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Auto",
+      "acceptable_goods_description": "Ford Fiesta, VW Polo"
+    },
+    {
+      "unacceptable_goods_description": "Auto Parts",
+      "acceptable_goods_description": "Automobile Brakes, Windshield Glass for Automobiles"
+    },
+    {
+      "unacceptable_goods_description": "Automobiles",
+      "acceptable_goods_description": "Ford Fiesta, VW Polo"
+    },
+    {
+      "unacceptable_goods_description": "AWB/ HAWB",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Baggage",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Bags (or other types of packaging",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Battery",
+      "acceptable_goods_description": "Lithium batteries"
+    },
+    {
+      "unacceptable_goods_description": "Bazaar goods",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Biological Substances",
+      "acceptable_goods_description": "(See chemicals or other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Birthday gifts",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Bits",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Boards",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Box",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Cables",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Cars",
+      "acceptable_goods_description": "Ford Fiesta, VW Polo"
+    },
+    {
+      "unacceptable_goods_description": "Case",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Caps",
+      "acceptable_goods_description": "Plastic Caps"
+    },
+    {
+      "unacceptable_goods_description": "Cartons, CTN",
+      "acceptable_goods_description": "New packaging made of carton, Cartons to be recycled, A4 print paper packaged in cartons"
+    },
+    {
+      "unacceptable_goods_description": "Charity",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Chemicals",
+      "acceptable_goods_description": "The name mentioned in the ECICS database or the actual Chemicals name (not brand name)"
+    },
+    {
+      "unacceptable_goods_description": "Chemicals, flammable",
+      "acceptable_goods_description": "The name mentioned in the ECICS database or the actual Chemicals name (not brand name)"
+    },
+    {
+      "unacceptable_goods_description": "Chemicals, hazardous",
+      "acceptable_goods_description": "The name mentioned in the ECICS database or the actual Chemicals name (not brand name)"
+    },
+    {
+      "unacceptable_goods_description": "Chemicals, nonHazardous",
+      "acceptable_goods_description": "The name mentioned in the ECICS database or the actual Chemicals name (not brand name)"
+    },
+    {
+      "unacceptable_goods_description": "Cleaning products",
+      "acceptable_goods_description": "Detergents"
+    },
+    {
+      "unacceptable_goods_description": "Clothes",
+      "acceptable_goods_description": "Men’s Shirts, Lingerie, Girls’ Vests, Boys’,Jackets"
+    },
+    {
+      "unacceptable_goods_description": "Clothing",
+      "acceptable_goods_description": "Men’s Shirts, Lingerie, Girls’ Vests, Boys’,Jackets"
+    },
+    {
+      "unacceptable_goods_description": "Collected items",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Commodity",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Company names",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Component",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Consol, CON, CNSL",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Consolidated cargo",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Consolidated goods",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Consolidated",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Consolidation",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Consumer",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Courier",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Courier bags",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Courier goods",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Courier material",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Dangerous goods",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Decorative crafts",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Decorative items",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Decorations",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Didactic articles",
+      "acceptable_goods_description": "Pencils, Smartboards, Books"
+    },
+    {
+      "unacceptable_goods_description": "Documents,",
+      "acceptable_goods_description": "Passports (or any other kind of documents)"
+    },
+    {
+      "unacceptable_goods_description": "Documentations,",
+      "acceptable_goods_description": "No data"
+    },
+    {
+      "unacceptable_goods_description": "Docs, Dox",
+      "acceptable_goods_description": "No data"
+    },
+    {
+      "unacceptable_goods_description": "Drugs",
+      "acceptable_goods_description": "Cough syrup, insulin doses, seasonal flu vaccine (preferably INN name for a pure substance)"
+    },
+    {
+      "unacceptable_goods_description": "Drums (‘Drums” is acceptable where it refers to musical instruments )",
+      "acceptable_goods_description": "Empty plastic barrels for packaging, Liquid hand soap transported in drums"
+    },
+    {
+      "unacceptable_goods_description": "e-Commerce",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Electronic equipment",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Electronic goods",
+      "acceptable_goods_description": "Computers, Televisions, CD Players, Walkmans, Tape Record, Mobile Phones, Monitors, Printers"
+    },
+    {
+      "unacceptable_goods_description": "Electronic items",
+      "acceptable_goods_description": "Computers, Televisions, CD Players, Walkmans, Tape Record, Mobile Phones, Monitors, Printers"
+    },
+    {
+      "unacceptable_goods_description": "Electronics",
+      "acceptable_goods_description": "Computers, Televisions, CD Players, Walkmans, Tape Record, Mobile Phones, Monitors, Printers"
+    },
+    {
+      "unacceptable_goods_description": "Equipment, EQP",
+      "acceptable_goods_description": "Oil Well Equipment, Poultry equipment"
+    },
+    {
+      "unacceptable_goods_description": "Exhibition goods",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Express",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Firearm",
+      "acceptable_goods_description": "Machine guns, Guns, Pistols"
+    },
+    {
+      "unacceptable_goods_description": "Fish",
+      "acceptable_goods_description": "European Hake, Swordfish, Lobsters, Tuna"
+    },
+    {
+      "unacceptable_goods_description": "Food",
+      "acceptable_goods_description": "Prepared cakes, Rice, Tomatoes sauce, Powdered eggs"
+    },
+    {
+      "unacceptable_goods_description": "Foodstuff",
+      "acceptable_goods_description": "Beverages (See other examples for “Agricultural products”)"
+    },
+    {
+      "unacceptable_goods_description": "Footwear",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Freight All Kinds",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Fresh Fruit",
+      "acceptable_goods_description": "Apples, Apricots, Bananas, Pineapples"
+    },
+    {
+      "unacceptable_goods_description": "Fresh Herbs",
+      "acceptable_goods_description": "Basil, Thyme, Parsley"
+    },
+    {
+      "unacceptable_goods_description": "Fresh Plants",
+      "acceptable_goods_description": "Lavandula angustifolia, Rosmarinus officinalis, Prunus avium"
+    },
+    {
+      "unacceptable_goods_description": "Fresh Vegetable",
+      "acceptable_goods_description": "Broccoli, Tomatoes, Onions, Eggplants"
+    },
+    {
+      "unacceptable_goods_description": "From UPU Postal",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Fruit",
+      "acceptable_goods_description": "Oranges, Pears, Bananas, Apples, Strawberries"
+    },
+    {
+      "unacceptable_goods_description": "Fruit products",
+      "acceptable_goods_description": "Apricot pulp, Apple pulp, Mixed fruits pulp"
+    },
+    {
+      "unacceptable_goods_description": "Fruit Pulp",
+      "acceptable_goods_description": "Apricot pulp, Apple pulp, Mixed fruits pulp"
+    },
+    {
+      "unacceptable_goods_description": "Fuel",
+      "acceptable_goods_description": "Diesel fuel, Petrol, Gasoline"
+    },
+    {
+      "unacceptable_goods_description": "Garments",
+      "acceptable_goods_description": "Cotton T-shirts, Silk headscarves"
+    },
+    {
+      "unacceptable_goods_description": "General cargo",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "General goods",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "General merchandise",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Gift box",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Gifts",
+      "acceptable_goods_description": "Dolls, Remote Control cars (describe type of gifts)"
+    },
+    {
+      "unacceptable_goods_description": "Gizmos",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Glass",
+      "acceptable_goods_description": "Glass panel for windows, Glass blocks"
+    },
+    {
+      "unacceptable_goods_description": "Goods, GDS",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Granulate",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Handcraft",
+      "acceptable_goods_description": "(Describe which type of Handicrafts -Vases, dishes, Necklaces, chairs-)"
+    },
+    {
+      "unacceptable_goods_description": "Handicraft",
+      "acceptable_goods_description": "(Describe which type of Handicrafts -Vases, dishes, Necklaces, chairs-)"
+    },
+    {
+      "unacceptable_goods_description": "Handling codes",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Hardware for gift",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Herbs",
+      "acceptable_goods_description": "Basil, Thyme, Parsley"
+    },
+    {
+      "unacceptable_goods_description": "Home goods",
+      "acceptable_goods_description": "Plates, Dishes, Tableware, ( See also examples for “Appliances”)"
+    },
+    {
+      "unacceptable_goods_description": "Household goods",
+      "acceptable_goods_description": "Plates, Dishes, Tableware, ( See also examples for “Appliances”)"
+    },
+    {
+      "unacceptable_goods_description": "Invoice",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "I.T. goods",
+      "acceptable_goods_description": "(See examples for “Electronics”)"
+    },
+    {
+      "unacceptable_goods_description": "Industrial products",
+      "acceptable_goods_description": "(See examples for “Electronics”)"
+    },
+    {
+      "unacceptable_goods_description": "Instruments",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Iron, Steel",
+      "acceptable_goods_description": "Iron Pipes, Steel Pipes, Iron Building Material, Steel Building Material"
+    },
+    {
+      "unacceptable_goods_description": "Iso Tanks",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Jewellery, Jewelry",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Jewels",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Joint shipping",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Label",
+      "acceptable_goods_description": "Paper printed A4 labels, Plastic labels"
+    },
+    {
+      "unacceptable_goods_description": "Leather Articles",
+      "acceptable_goods_description": "Saddles, Leather Handbags, Leather Jackets"
+    },
+    {
+      "unacceptable_goods_description": "Line",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Likewise",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Liquids, Fluids",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Live Animals",
+      "acceptable_goods_description": "Dogs (Labrador retriever), Cows (Aberdeen angus)"
+    },
+    {
+      "unacceptable_goods_description": "Live plants",
+      "acceptable_goods_description": "Lavandula angustifolia, Rosmarinus officinalis, Prunus avium"
+    },
+    {
+      "unacceptable_goods_description": "Machine parts",
+      "acceptable_goods_description": "Pump, Seals, Engines"
+    },
+    {
+      "unacceptable_goods_description": "Machinery",
+      "acceptable_goods_description": "Metal Working Machinery, Cigarette Making Machinery, Sewing Machines, Printing Machines"
+    },
+    {
+      "unacceptable_goods_description": "Machines",
+      "acceptable_goods_description": "( See Examples for “Machinery”)"
+    },
+    {
+      "unacceptable_goods_description": "Mail",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Materials",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "MDF",
+      "acceptable_goods_description": "MDF boards, wooden chipboard for MDF"
+    },
+    {
+      "unacceptable_goods_description": "Meat",
+      "acceptable_goods_description": "Poultry meat, Beef meat, Pork meat, Lamb meat"
+    },
+    {
+      "unacceptable_goods_description": "Medical equipment",
+      "acceptable_goods_description": "Band aids, Medical ventilator, blood sampling syringes"
+    },
+    {
+      "unacceptable_goods_description": "Medicines",
+      "acceptable_goods_description": "Antiviral sprays, Viagra pills, Painkillers, Anti-inflammatories, Mucolytic (preferably INN name for a pure substance)"
+    },
+    {
+      "unacceptable_goods_description": "Merchandise, Merc.",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Metal",
+      "acceptable_goods_description": "Iron scrap, Steel tubes, Aluminium wire"
+    },
+    {
+      "unacceptable_goods_description": "Miscellaneous products, Misc, Mixed, Mix",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Model",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "None",
+      "acceptable_goods_description": "(Describe type of goods)"
+    },
+    {
+      "unacceptable_goods_description": "Non-Woven",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Odd parts",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Oil",
+      "acceptable_goods_description": "Mineral oil, lubricating oil, vegetable oil, palm oil"
+    },
+    {
+      "unacceptable_goods_description": "Ore",
+      "acceptable_goods_description": "Iron Ore, Copper Ore"
+    },
+    {
+      "unacceptable_goods_description": "Others",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Pad",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Package numbers",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Pallets, PLT",
+      "acceptable_goods_description": "Empty wooden pallets, Empty steel pallets for airfreight"
+    },
+    {
+      "unacceptable_goods_description": "Parcel",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Party accessories",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Parts",
+      "acceptable_goods_description": "(See Examples for “Machine parts”)"
+    },
+    {
+      "unacceptable_goods_description": "Perishables",
+      "acceptable_goods_description": "Broccoli, Tomatoes, Chicken breasts"
+    },
+    {
+      "unacceptable_goods_description": "Personal address",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Personal effects",
+      "acceptable_goods_description": "(See Examples in the Table)"
+    },
+    {
+      "unacceptable_goods_description": "Pharmaceutical",
+      "acceptable_goods_description": "Cough syrup, insulin doses, seasonal flu vaccine (preferably INN name for a pure substance)"
+    },
+    {
+      "unacceptable_goods_description": "Pieces, pces",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Pipes",
+      "acceptable_goods_description": "Plastic Pipes, Steel Pipes, Copper Pipes"
+    },
+    {
+      "unacceptable_goods_description": "Plants",
+      "acceptable_goods_description": "Cut Christmas trees, Tulips bulbs, fresh Lavandula angustifolia in pots, cuttings of rosemary in pots"
+    },
+    {
+      "unacceptable_goods_description": "Plastic Goods",
+      "acceptable_goods_description": "Plastic Kitchenware, Plastic House Ware"
+    },
+    {
+      "unacceptable_goods_description": "Plates",
+      "acceptable_goods_description": "Vehicle registration plates, Iron plates"
+    },
+    {
+      "unacceptable_goods_description": "Polyurethane",
+      "acceptable_goods_description": "Polyurethane Threads, Polyurethane Medical Gloves"
+    },
+    {
+      "unacceptable_goods_description": "Powder",
+      "acceptable_goods_description": "Wheat flour type 00, Industrial icing sugar, Iron powder"
+    },
+    {
+      "unacceptable_goods_description": "Pre-addressed parcel",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Printed material",
+      "acceptable_goods_description": "Paper labels with logo, Printed plastic fabric in rolls"
+    },
+    {
+      "unacceptable_goods_description": "Private things",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Produce",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Products",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Propellant",
+      "acceptable_goods_description": "(See Examples for Chemicals)"
+    },
+    {
+      "unacceptable_goods_description": "PVC items",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Quilts",
+      "acceptable_goods_description": "Cotton quilts (beddings)"
+    },
+    {
+      "unacceptable_goods_description": "Raw material",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Returned goods",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Rod",
+      "acceptable_goods_description": "Welding Rod, Fuel Rod, Copper Rod"
+    },
+    {
+      "unacceptable_goods_description": "Rubber Articles",
+      "acceptable_goods_description": "Rubber Hisses, Rubber Conveyor Belts"
+    },
+    {
+      "unacceptable_goods_description": "Said to Contain",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Sample",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Samples for analysis",
+      "acceptable_goods_description": "Blood sample for analysis, Salt (sodium chloride) for analysis"
+    },
+    {
+      "unacceptable_goods_description": "Sanitary goods",
+      "acceptable_goods_description": "Towels, Buckets, Detergents, Tooth brushes"
+    },
+    {
+      "unacceptable_goods_description": "Scrap",
+      "acceptable_goods_description": "Plastic Scrap, Foam Scrap, Iron Scrap"
+    },
+    {
+      "unacceptable_goods_description": "See [invoice]",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "See attached invoice",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Several",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Several goods",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Shoes",
+      "acceptable_goods_description": "Men leather shoes, Women plastic sandals, Kids fabric shoes"
+    },
+    {
+      "unacceptable_goods_description": "Snickers",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Souvenirs",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Spare",
+      "acceptable_goods_description": "(See Examples for “Machine parts”)"
+    },
+    {
+      "unacceptable_goods_description": "Spare parts, SPPT",
+      "acceptable_goods_description": "(See Examples for “Machine parts”)"
+    },
+    {
+      "unacceptable_goods_description": "Sporting Goods",
+      "acceptable_goods_description": "Football shoes, boxing gloves, surf board"
+    },
+    {
+      "unacceptable_goods_description": "Stuff",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Substance",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Tablet accessories",
+      "acceptable_goods_description": "Plastic cases for tablets, Chargers for tablets"
+    },
+    {
+      "unacceptable_goods_description": "Tablets",
+      "acceptable_goods_description": "iPad, Tablets Samsung"
+    },
+    {
+      "unacceptable_goods_description": "Technology",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Test",
+      "acceptable_goods_description": "COVID-19 Quick tests, Leather shoes (sample), Recycled toilet paper (test shipment)"
+    },
+    {
+      "unacceptable_goods_description": "Textile goods",
+      "acceptable_goods_description": "Cotton fabric in rolls, Polyester curtains, Cotton sheets"
+    },
+    {
+      "unacceptable_goods_description": "Textiles",
+      "acceptable_goods_description": "Linen Fabric, T-shirts (See Examples for “Apparel)"
+    },
+    {
+      "unacceptable_goods_description": "Things",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Tires",
+      "acceptable_goods_description": "New car tires"
+    },
+    {
+      "unacceptable_goods_description": "Tools",
+      "acceptable_goods_description": "Hand Tools, Electric Tools"
+    },
+    {
+      "unacceptable_goods_description": "Toys",
+      "acceptable_goods_description": "(See Examples for \"Gifts”)"
+    },
+    {
+      "unacceptable_goods_description": "Tubing",
+      "acceptable_goods_description": "Copper tubes, Iron tubes"
+    },
+    {
+      "unacceptable_goods_description": "Uniform",
+      "acceptable_goods_description": "Men’s Shirts, Lingerie, Girls’ Vests, Boys’ Jackets"
+    },
+    {
+      "unacceptable_goods_description": "Vaccine",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Various",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Various goods",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Various products",
+      "acceptable_goods_description": "(See other specific examples in the Table)"
+    },
+    {
+      "unacceptable_goods_description": "Vegetables",
+      "acceptable_goods_description": "Broccoli, Tomatoes, Onions, Eggplants"
+    },
+    {
+      "unacceptable_goods_description": "Vehicles",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Waste",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Weapons",
+      "acceptable_goods_description": "Daggers, Machine guns"
+    },
+    {
+      "unacceptable_goods_description": "Wearing apparel",
+      "acceptable_goods_description": "Men’s Shirts, Lingerie, Girls’ Vests, Boys’ Jackets"
+    },
+    {
+      "unacceptable_goods_description": "White goods",
+      "acceptable_goods_description": "(See other specific examples in the table)"
+    },
+    {
+      "unacceptable_goods_description": "Wires",
+      "acceptable_goods_description": "Iron and Steel Wire, Copper Wire"
+    },
+    {
+      "unacceptable_goods_description": "Wooden articles",
+      "acceptable_goods_description": "Wooden furniture, Wooden kitchen utensils"
+    }
+  ]
+}

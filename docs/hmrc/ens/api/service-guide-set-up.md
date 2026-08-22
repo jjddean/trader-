@@ -1,0 +1,68 @@
+# Safety and Security Import Declarations — Set up
+
+> Source: https://developer.service.hmrc.gov.uk/guides/safety-and-security-import-declarations-end-to-end-service-guide/documentation/set-up.html
+> Retrieved: 2026-08-22
+> Verbatim mirror of the HMRC page. Do not edit — re-download to update.
+
+---
+
+# Set up
+
+This video gives some background to the ICS uplift and API endpoints:
+
+Software vendors will be required to register standard applications with HMRC. End users will be required to have a Safety and Security enrolment assigned to their Government Gateway Credential.
+
+Open the Authentication for Software vendors process diagram in a new tab .
+
+The end user authenticates directly with us using their Government Gateway account, and grants authority to your software for specific scopes. We then issue an OAuth 2.0 access_token that is specific to the end user. Your application passes the access token in subsequent API requests to user-restricted endpoints. A user access_token expires after 4 hours and will need to be refreshed.
+
+Full details and examples can be found on the HMRC Developer Hub:
+
+https://developer.service.hmrc.gov.uk/api-documentation/docs/authorisation/user-restricted-endpoints
+
+## Community System Providers
+
+Community System Providers (CSP) do not need to enrol with S&S GB but may register privileged applications with HMRC, which is in line with the practice previously used for the Customs Declaration Service (CDS).
+
+Privileged applications do not require each end user to have Government Gateway credentials.
+
+Following registration, the credentials you are supplied with can be used to generate a Time-based One-Time Password (TOTP) code which is exchanged for an access_token .
+
+## Submit and acknowledge a IE313 and IE315
+
+Open the submit and acknowledge a IE313 and IE315 process diagram in a new tab .
+
+## Advanced notifications
+
+Open the advanced notifications process diagram in a new tab .
+
+## Advanced notification Do Not Load (DNL) messages
+
+For deep-sea containerised shipments only a Do Not Load (DNL) message (IE351) may be issued. This will be sent to the person submitting the declaration.
+
+## Test environment
+
+Our test environment will allow you to test your software. You will need to authenticate through the API platform.
+
+You may need to create an S&S GB test user to test the APIs.
+
+The test environment will allow you to submit:
+
+- ENS declarations
+- ENS amendments
+
+It will also allow you to:
+
+- collect responses
+- acknowledge responses
+- list unacknowledged responses
+
+The test environment will also validate submissions against the schema and business rules.
+
+The stub will also simulate any risking responses returning the movement reference number (MRN) and error code scenarios. (For details of risking response simulations available, see submissions API.)
+
+Our test environment allows you to use a header to test accept responses and with a different value test reject responses.
+
+All responses returned are in XML as in the current system.
+
+Our test environment will not allow performance or load testing. You can use a latency header for delayed responses in milliseconds.

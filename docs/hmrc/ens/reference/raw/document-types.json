@@ -1,0 +1,2424 @@
+{
+  "list": "Document Type",
+  "slug": "document-types",
+  "source": "https://developer.service.hmrc.gov.uk/guides/safety-and-security-import-declarations-end-to-end-service-guide/documentation/appendix.html#document-types",
+  "retrieved": "2026-08-22",
+  "columns": [
+    "Document Type",
+    "Description"
+  ],
+  "entries": [
+    {
+      "document_type": "2",
+      "description": "Certificate of conformity"
+    },
+    {
+      "document_type": "3",
+      "description": "Certificate of quality"
+    },
+    {
+      "document_type": "18",
+      "description": "Movement certificate A.TR.1"
+    },
+    {
+      "document_type": "235",
+      "description": "Container list"
+    },
+    {
+      "document_type": "271",
+      "description": "Packing list"
+    },
+    {
+      "document_type": "325",
+      "description": "Proforma invoice"
+    },
+    {
+      "document_type": "380",
+      "description": "Commercial invoice"
+    },
+    {
+      "document_type": "703",
+      "description": "House waybill"
+    },
+    {
+      "document_type": "704",
+      "description": "Master bill of lading"
+    },
+    {
+      "document_type": "705",
+      "description": "Bill of lading"
+    },
+    {
+      "document_type": "714",
+      "description": "House bill of lading"
+    },
+    {
+      "document_type": "720",
+      "description": "CIM consignment note (rail)"
+    },
+    {
+      "document_type": "722",
+      "description": "Road list-SMGS"
+    },
+    {
+      "document_type": "730",
+      "description": "Road consignment note"
+    },
+    {
+      "document_type": "740",
+      "description": "Air waybill"
+    },
+    {
+      "document_type": "741",
+      "description": "Master air waybill"
+    },
+    {
+      "document_type": "750",
+      "description": "Despatch note (post parcels)"
+    },
+    {
+      "document_type": "760",
+      "description": "Multimodal/combined transport doc."
+    },
+    {
+      "document_type": "785",
+      "description": "Cargo manifest"
+    },
+    {
+      "document_type": "787",
+      "description": "Bordereau"
+    },
+    {
+      "document_type": "820",
+      "description": "Despatch note model T"
+    },
+    {
+      "document_type": "821",
+      "description": "Despatch note model T1"
+    },
+    {
+      "document_type": "822",
+      "description": "Despatch note model T2"
+    },
+    {
+      "document_type": "823",
+      "description": "Control document T5"
+    },
+    {
+      "document_type": "825",
+      "description": "Despatch note model T2L"
+    },
+    {
+      "document_type": "830",
+      "description": "Goods declaration for exportation"
+    },
+    {
+      "document_type": "851",
+      "description": "Phytosanitary certificate"
+    },
+    {
+      "document_type": "852",
+      "description": "Sanitary certificate"
+    },
+    {
+      "document_type": "853",
+      "description": "Veterinary certificate"
+    },
+    {
+      "document_type": "861",
+      "description": "Certificate of origin"
+    },
+    {
+      "document_type": "862",
+      "description": "Declaration of origin"
+    },
+    {
+      "document_type": "864",
+      "description": "Preference certificate of origin"
+    },
+    {
+      "document_type": "865",
+      "description": "Certificate of origin form GSP"
+    },
+    {
+      "document_type": "911",
+      "description": "Import licence"
+    },
+    {
+      "document_type": "933",
+      "description": "Cargo declaration (arrival)"
+    },
+    {
+      "document_type": "941",
+      "description": "Embargo permit"
+    },
+    {
+      "document_type": "951",
+      "description": "TIF form"
+    },
+    {
+      "document_type": "952",
+      "description": "TIR carnet"
+    },
+    {
+      "document_type": "954",
+      "description": "EUR 1 certificate of origin"
+    },
+    {
+      "document_type": "955",
+      "description": "ATA carnet"
+    },
+    {
+      "document_type": "A001",
+      "description": "Certificate of authenticity fresh ‘EMPEROR’ table grapes"
+    },
+    {
+      "document_type": "A004",
+      "description": "Certificate of authenticity Tobacco"
+    },
+    {
+      "document_type": "A007",
+      "description": "Certificate of authenticity - Frozen beef and veal (crop, chuck and blade and brisket cuts)"
+    },
+    {
+      "document_type": "A008",
+      "description": "Certificate of authenticity fresh sweet oranges ‘high quality’"
+    },
+    {
+      "document_type": "A009",
+      "description": "Certificate of authenticity fresh minneola"
+    },
+    {
+      "document_type": "A010",
+      "description": "Certificate of authenticity concentrated orange juice"
+    },
+    {
+      "document_type": "A014",
+      "description": "Certificate of authenticity HANDI"
+    },
+    {
+      "document_type": "A015",
+      "description": "Certificate of authenticity (silk or cotton handloom products)"
+    },
+    {
+      "document_type": "A016",
+      "description": "Certificate of authenticity Beef and Veal - Thin skirt"
+    },
+    {
+      "document_type": "A017",
+      "description": "Certificate of authenticity as mentioned in Regulation (EU) No 593/2013 or as mentioned in Implementing Regulation (EU) 2020/761"
+    },
+    {
+      "document_type": "A019",
+      "description": "Certificate of quality (Nitrate from Chile)"
+    },
+    {
+      "document_type": "A022",
+      "description": "Certificate of authenticity B ‘Basmati Rice’ for export to the European Community"
+    },
+    {
+      "document_type": "A023",
+      "description": "Certificate of authenticity Beef and Veal, Implementing Regulation (EU) 2020/1988"
+    },
+    {
+      "document_type": "A030",
+      "description": "Certificate of authenticity for export to the European Union - Fragrant rice"
+    },
+    {
+      "document_type": "C001",
+      "description": "Attestation of equivalence as mentioned in Regulation (EC) No 1295/2008 (OJ L 340)"
+    },
+    {
+      "document_type": "C006",
+      "description": "Export permit (Council Decision (EU) 2017/37 (OJ L 11))"
+    },
+    {
+      "document_type": "C008",
+      "description": "Document issued by the competent authority or agency in the third country of origin, Implementing Regulation (EU) 2020/1988"
+    },
+    {
+      "document_type": "C012",
+      "description": "Certificate for the export of pasta to the USA (P 2 certificate)."
+    },
+    {
+      "document_type": "C013",
+      "description": "Certificate IMA 1"
+    },
+    {
+      "document_type": "C014",
+      "description": "V I 1 document"
+    },
+    {
+      "document_type": "C015",
+      "description": "V I 2 extract"
+    },
+    {
+      "document_type": "C017",
+      "description": "V I 1 document annotated in compliance with Regulation (EU) 2018/273, Article 25 (2)"
+    },
+    {
+      "document_type": "C018",
+      "description": "V I 2 extract annotated in compliance with Regulation (EU) 2018/273, Article 25 (2)"
+    },
+    {
+      "document_type": "C019",
+      "description": "OPO - Authorisation for the use of outward processing procedure (Column 8b, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C026",
+      "description": "Certificate of registration in a herdbook certifying the purity of the breed"
+    },
+    {
+      "document_type": "C027",
+      "description": "Pedigree certificate"
+    },
+    {
+      "document_type": "C034",
+      "description": "‘Kimberley’ EU certificate"
+    },
+    {
+      "document_type": "C039",
+      "description": "ICCAT swordfish statistical document"
+    },
+    {
+      "document_type": "C040",
+      "description": "ICCAT, IOTC or IATTC bigeye tuna statistical document"
+    },
+    {
+      "document_type": "C041",
+      "description": "ICCAT bluefin tuna re-export certificate (Reg 640/2010, L 194)"
+    },
+    {
+      "document_type": "C042",
+      "description": "ICCAT swordfish re-export certificate"
+    },
+    {
+      "document_type": "C043",
+      "description": "ICCAT, IOTC or IATTC bigeye tuna re-export certificate"
+    },
+    {
+      "document_type": "C046",
+      "description": "Banana weighing certificate"
+    },
+    {
+      "document_type": "C047",
+      "description": "ICCAT Bluefin tuna catch document (BCD)"
+    },
+    {
+      "document_type": "C050",
+      "description": "Certificate as mentioned in Regulation (EU) No 1308/2013 (OJ L 347)"
+    },
+    {
+      "document_type": "C052",
+      "description": "Export authorisation for restricted goods and technologies"
+    },
+    {
+      "document_type": "C055",
+      "description": "Declaration of compliance (Annex IV of Regulation (EU) No 10/2011)"
+    },
+    {
+      "document_type": "C056",
+      "description": "Certificate concerning pelts of certain wild animal species and of goods incorporating such pelts subject to Council Regulation (EEC) No 3254/91"
+    },
+    {
+      "document_type": "C057",
+      "description": "Copy of the declaration of conformity - Option A, as referred to in Article 1.2 and in the Annex of Regulation (EU) 2016/879"
+    },
+    {
+      "document_type": "C058",
+      "description": "The statement of conformity with the end-of-waste criteria referred to in Article 5(1) of Council Regulation (EU) No 333/2011 is to be issued for each consignment of scrap metal ceased to be waste"
+    },
+    {
+      "document_type": "C060",
+      "description": "Declaration to be provided for every consignment of kitchenware falling under the provisions of (EU) Regulation 284/2011, originating in or consigned from the People’s Republic of China and Hong Kong Special Administrative Region, China"
+    },
+    {
+      "document_type": "C064",
+      "description": "Authorisation for export or import of goods that could be used for torture (Regulation (EU) 2019/125)"
+    },
+    {
+      "document_type": "C065",
+      "description": "Permit for invasive alien species in accordance with Art. 8 of Regulation (EU) 1143/2014"
+    },
+    {
+      "document_type": "C067",
+      "description": "Import authorisation for restricted goods and technologies (Council Regulation (EU) No 267/2012)"
+    },
+    {
+      "document_type": "C068",
+      "description": "Union General Export Authorisation EU GEA (Regulation (EU) 2019/125)"
+    },
+    {
+      "document_type": "C069",
+      "description": "Authorisation issued by competent authority (Reg. (EU) 2017/1509)"
+    },
+    {
+      "document_type": "C070",
+      "description": "Prior authorisation - Restrictive measures against Libya - Council Regulation (EU) No 2016/44"
+    },
+    {
+      "document_type": "C071",
+      "description": "Form for granting or denying written consent, pursuant to article 4(1) of Regulation (EU) 2017/852 of the European Parliament and of the Council on mercury, to the import of mercury or of the mixtures of mercury listed in Annex I to that Regulation"
+    },
+    {
+      "document_type": "C072",
+      "description": "Aircraft’s registration certificate in accordance with the Convention on International Civil Aviation dated 7 December 1944"
+    },
+    {
+      "document_type": "C073",
+      "description": "REACH Authorisation, according to Title VII of Regulation (EC) No 1907/2006"
+    },
+    {
+      "document_type": "C074",
+      "description": "Zootechnical certificate (Regulation (EU) 2016/1012, Article 37)"
+    },
+    {
+      "document_type": "C075",
+      "description": "Document indicating that purebred breeding animals are to be entered in a breeding book maintained by a breed society or registered in a breeding register maintained by a breeding operation (Regulation (EU) 2016/1012, Article 37)"
+    },
+    {
+      "document_type": "C076",
+      "description": "Authorisation issued by competent authority (Annex II, Part VI of Reg. (EU) 2017/1509)"
+    },
+    {
+      "document_type": "C077",
+      "description": "Authorisation issued by competent authority (Annex II, Part VIII of Reg. (EU) 2017/1509)"
+    },
+    {
+      "document_type": "C078",
+      "description": "Identification document for equidae (Regulation (EU) 2016/1012, Article 32)"
+    },
+    {
+      "document_type": "C079",
+      "description": "Copy of the declaration of conformity - Option B, as referred to in Article 1.2 and in the Annex of Regulation (EU) 2016/879"
+    },
+    {
+      "document_type": "C080",
+      "description": "Simplified V I 1 document"
+    },
+    {
+      "document_type": "C081",
+      "description": "Self-certification Simplified VI 1 document"
+    },
+    {
+      "document_type": "C082",
+      "description": "Copy of the declaration of conformity - Option C, as referred to in Article 1.2 and in the Annex of Regulation (EU) 2016/879"
+    },
+    {
+      "document_type": "C083",
+      "description": "Self-certificate for wine imported from the United Kingdom into the European Union (TCA Agreement – Appendix 15-C)"
+    },
+    {
+      "document_type": "C084",
+      "description": "Exemption by virtue of Articles 3 and 4 of regulation 2019/2122 (animals intended for scientific purposes, research and diagnostic samples, and samples for product analysis and quality testing)."
+    },
+    {
+      "document_type": "C085",
+      "description": "Common Health Entry Document for Plants and Plant Products (CHED-PP) (as set out in Part 2, Section C of Annex II to Commission Implementing Regulation (EU) 2019/1715 (OJ L 261))"
+    },
+    {
+      "document_type": "C089",
+      "description": "Export authorisation - Vaccines against SARS-related coronaviruses (SARS-CoV species)"
+    },
+    {
+      "document_type": "C090",
+      "description": "Certificate issued by the Servicio Nacional de Sanidad y Calidad Agroalimentaria (Senasa) of Argentina for flint maize"
+    },
+    {
+      "document_type": "C100",
+      "description": "Registered Exporter number"
+    },
+    {
+      "document_type": "C119",
+      "description": "Authorised Release Certificate — EASA Form 1 (Appendix I to Annex I to Regulation (EU) No 748/2012), or equivalent certificate."
+    },
+    {
+      "document_type": "C400",
+      "description": "Presentation of the required ‘CITES’ certificate"
+    },
+    {
+      "document_type": "C401",
+      "description": "CITES Export permit or Re-export certificate issued by an EU-country"
+    },
+    {
+      "document_type": "C402",
+      "description": "CITES Export permit or Re-export certificate issued by a third country"
+    },
+    {
+      "document_type": "C403",
+      "description": "CITES Travelling exhibition certificate"
+    },
+    {
+      "document_type": "C404",
+      "description": "CITES Personal ownership certificate"
+    },
+    {
+      "document_type": "C405",
+      "description": "CITES Sample collection certificate"
+    },
+    {
+      "document_type": "C406",
+      "description": "CITES Musical instrument certificate"
+    },
+    {
+      "document_type": "C501",
+      "description": "AEOC - Authorisation for the status of Authorised Economic Operator – Customs simplifications (Column 2, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C502",
+      "description": "AEOS - Authorisation for the status of Authorised Economic Operator – Security and safety (Column 2, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C503",
+      "description": "AEOF - Authorisation for the status of Authorised Economic Operator – Customs simplifications/Security and safety (Column 2, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C504",
+      "description": "CVA - Authorisation for the simplification of the determination of amounts being part of the customs value of goods (Column 3, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C505",
+      "description": "CGU - Authorisation for the provision of a comprehensive guarantee, including possible reduction or waiver (Column 4a, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C506",
+      "description": "DPO - Authorisation for the deferment of payment (Column 4b, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C507",
+      "description": "REP - Decision for the repayment of the amounts of import or export duty (Column 4c, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C508",
+      "description": "REM - Decision for the remission of the amounts of import or export duty (Column 4c, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C509",
+      "description": "TST - Authorisation for the operation of storage facilities for the temporary storage of goods (Column 5, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C510",
+      "description": "RSS - Authorisation to establish regular shipping services (Column 6a, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C511",
+      "description": "ACP - Authorisation for the status of authorised issuer to establish the proof of the customs status of Union goods (Column 6b, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C512",
+      "description": "SDE - Authorisation to use simplified declaration (Column 7a, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C513",
+      "description": "CCL - Authorisation for centralised clearance (Colum 7b, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C514",
+      "description": "EIR - Authorisation for making a customs declaration through an entry of data in the declarant’s records, including for the export procedure (Column 7c, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C515",
+      "description": "SAS - Authorisation for self-assessment (Column 7d, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C516",
+      "description": "TEA - Authorisation for the use of temporary admission (Column 8d, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C517",
+      "description": "CWP - Authorisation for the operation of storage facilities for the customs warehousing of goods in a private customs warehouse (Column 8e, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C518",
+      "description": "CW1 - Authorisation for the operation of storage facilities for the customs warehousing of goods in a public customs warehouse type I (Column 8e, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C519",
+      "description": "CW2 - Authorisation for the operation of storage facilities for the customs warehousing of goods in a public customs warehouse type II (Column 8e, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C520",
+      "description": "ACT - Authorisation for the status of authorised consignee for TIR procedure (Column 9a, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C521",
+      "description": "ACR - Authorisation for the status of authorised consignor for Union transit (Column 9b, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C522",
+      "description": "ACE - Authorisation for the status of authorised consignee for Union transit (Column 9c, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C523",
+      "description": "SSE - Authorisation for the use of seals of a special type (Column 9d, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C524",
+      "description": "TRD - Authorisation to use transit declaration with a reduced dataset (Column 9e, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C525",
+      "description": "ETD - Authorisation for the use of an electronic transport document as customs declaration (Column 9f, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C526",
+      "description": "AWB - Authorisation for the status of authorised weigher of bananas (Column 7e, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C600",
+      "description": "Authorisation to operate a customs warehouse or to use the arrangements in a type E warehouse"
+    },
+    {
+      "document_type": "C601",
+      "description": "IPO - Authorisation for the use of inward processing procedure (Column 8a, Annex A of Delegated regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C602",
+      "description": "Declaration of particulars relating to customs value (continuation sheet D.V.1BIS)"
+    },
+    {
+      "document_type": "C605",
+      "description": "Information sheet INF3"
+    },
+    {
+      "document_type": "C612",
+      "description": "Internal Community transit declaration, T2F"
+    },
+    {
+      "document_type": "C613",
+      "description": "Consignment note CIM (T2)"
+    },
+    {
+      "document_type": "C614",
+      "description": "Consignment note CIM (T2F)"
+    },
+    {
+      "document_type": "C615",
+      "description": "TR transfer note (T1)"
+    },
+    {
+      "document_type": "C616",
+      "description": "TR transfer note (T2)"
+    },
+    {
+      "document_type": "C617",
+      "description": "TR transfer note (T2F)"
+    },
+    {
+      "document_type": "C618",
+      "description": "Air manifest (T2F)"
+    },
+    {
+      "document_type": "C619",
+      "description": "Maritime manifest (T2F)"
+    },
+    {
+      "document_type": "C620",
+      "description": "T2LF document"
+    },
+    {
+      "document_type": "C621",
+      "description": "Proof of customs status: fishing logbook, landing declaration, transhipment declaration or data from the vessel monitoring system, as stipulated in Article 199(1)(e) of Regulation (EU) 2015/2447"
+    },
+    {
+      "document_type": "C622",
+      "description": "Certificate of customs status"
+    },
+    {
+      "document_type": "C623",
+      "description": "Transhipment certificate EXP.1"
+    },
+    {
+      "document_type": "C624",
+      "description": "Form 302"
+    },
+    {
+      "document_type": "C625",
+      "description": "Rhine Manifest"
+    },
+    {
+      "document_type": "C626",
+      "description": "BTI - Decision relating to Binding Tariff Information (Column 1a, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C627",
+      "description": "BOI - Decision relating to Binding Origin Information (Column 1b, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "C631",
+      "description": "Formal letter validating the use of non-wooden or recycled materials for paper products, issued by the Ministry of Industry of the FLEGT VPA partner country from which the paper products are originating"
+    },
+    {
+      "document_type": "C635",
+      "description": "CITES Label for Scientific Material"
+    },
+    {
+      "document_type": "C638",
+      "description": "CITES Import permit"
+    },
+    {
+      "document_type": "C639",
+      "description": "CITES Import notification"
+    },
+    {
+      "document_type": "C640",
+      "description": "Common Veterinary Entry Document (CVED) in accordance with Commission Regulation (EC) No. 282/2004, used for veterinary checks on live animals"
+    },
+    {
+      "document_type": "C641",
+      "description": "Dissostichus - catch document import"
+    },
+    {
+      "document_type": "C644",
+      "description": "Certificate of inspection for organic products"
+    },
+    {
+      "document_type": "C645",
+      "description": "Certificate for military equipment"
+    },
+    {
+      "document_type": "C647",
+      "description": "Confirmation of receipt"
+    },
+    {
+      "document_type": "C651",
+      "description": "Electronic administrative document (e-AD), as referred to in Article 3(1) of Reg. (EC) No 684/2009"
+    },
+    {
+      "document_type": "C652",
+      "description": "Accompanying documents for the carriage of wine products"
+    },
+    {
+      "document_type": "C656",
+      "description": "Dissostichus - Catch document export"
+    },
+    {
+      "document_type": "C657",
+      "description": "Sanitary certificate"
+    },
+    {
+      "document_type": "C658",
+      "description": "Fallback Accompanying Document for movements of excise goods under suspension of excise duty (FAD), as referred to in Article 8(1) Reg. (EC) No 684/2009"
+    },
+    {
+      "document_type": "C659",
+      "description": "Prior written declaration"
+    },
+    {
+      "document_type": "C660",
+      "description": "Export notification"
+    },
+    {
+      "document_type": "C661",
+      "description": "Explicit consent"
+    },
+    {
+      "document_type": "C662",
+      "description": "Import decision"
+    },
+    {
+      "document_type": "C664",
+      "description": "CN22 declaration according to Article 144 of the Regulation (EU) 2015/2446 (UCC DA)"
+    },
+    {
+      "document_type": "C665",
+      "description": "CN23 declaration according to Article 144 of the Regulation (EU) 2015/2446 (UCC DA)"
+    },
+    {
+      "document_type": "C666",
+      "description": "Certificate issued by the Federal Grain Inspection Service (FGIS)"
+    },
+    {
+      "document_type": "C667",
+      "description": "Laboratory analysis"
+    },
+    {
+      "document_type": "C668",
+      "description": "Certificate issued by the USA wet milling industry in accordance with Regulation (EC) No 1375/2007 before 7.3.2017"
+    },
+    {
+      "document_type": "C669",
+      "description": "Notification document as mentioned in Regulation (EC) No 1013/2006 (OJ L 190) - Article 4 and Annex IA"
+    },
+    {
+      "document_type": "C670",
+      "description": "Movement document as mentioned in Regulation (EC) No 1013/2006 (OJ L 190) – Article 4 and Annex IB"
+    },
+    {
+      "document_type": "C671",
+      "description": "Certificate issued by the Canadian Grain Commission (CGC)"
+    },
+    {
+      "document_type": "C672",
+      "description": "Information document accompanying shipments of waste as mentioned in Regulation (EC) No 1013/2006 (OJ L 190) – Article 18 and Annex VII"
+    },
+    {
+      "document_type": "C673",
+      "description": "Catch certificate"
+    },
+    {
+      "document_type": "C676",
+      "description": "Import/export authorisation issued by the competent authorities of the Member States"
+    },
+    {
+      "document_type": "C678",
+      "description": "Common entry document (CED) (model of which is set out in Annex II of the Regulation (EC) No 669/2009 (OJ L 194))"
+    },
+    {
+      "document_type": "C679",
+      "description": "Attesting Document (seal product), issued by a recognised body in accordance with Regulation (EU) No 737/2010 prior to 18 October 2015"
+    },
+    {
+      "document_type": "C680",
+      "description": "Written notification of import and document giving evidence where the products were acquired (seal product)"
+    },
+    {
+      "document_type": "C683",
+      "description": "European Union - Attesting document for seal products resulting from hunt by Inuit or other indigenous communities for placing on the Union’s market in accordance with Article 3 (1) of Regulation (EC) No 1007/2009 on trade in seal products"
+    },
+    {
+      "document_type": "C684",
+      "description": "Certificate in accordance with the model set out in the Annex of Regulation (EU) No 2015/949 (OJ L 156, p.2)"
+    },
+    {
+      "document_type": "C685",
+      "description": "Report containing the results of sampling and analysis performed in accordance with the provisions of Commission Regulation (EC) No 401/2006 of 23 February 2006, or with equivalent requirements, by a laboratory approved for that purpose by the Canadian Grain Commission"
+    },
+    {
+      "document_type": "C687",
+      "description": "Health certificate as mentioned in Annex III of Commission Implementing Decision (EU) No 884/2011(OJ L 343, p, 140)"
+    },
+    {
+      "document_type": "C688",
+      "description": "Analytical report as mentioned in Annex IV of Commission Implementing Decision 2011/884/EU (OJ L 343, 23.12.2011, p. 140)"
+    },
+    {
+      "document_type": "C689",
+      "description": "Export authorisation issued according to Regulation EC No 147/2003"
+    },
+    {
+      "document_type": "C690",
+      "description": "FLEGT import licence for timber"
+    },
+    {
+      "document_type": "C692",
+      "description": "Results of sampling and analysis performed by a USDA approved laboratory carried out in accordance with the provisions of Commission Regulation (EC) No 401/2006 of 23 February 2006"
+    },
+    {
+      "document_type": "C693",
+      "description": "Certificate issued by the USA wet milling industry in accordance with Commission Implementing Regulation (EU) 2017/337"
+    },
+    {
+      "document_type": "C700",
+      "description": "Information sheet INF4"
+    },
+    {
+      "document_type": "C710",
+      "description": "Information sheet"
+    },
+    {
+      "document_type": "C715",
+      "description": "Import-One-Stop-Shop (IOSS) number - individual VAT identification number (Art. 369q of Council Directive (EU) 2017/2455)"
+    },
+    {
+      "document_type": "C990",
+      "description": "End use authorisation ships and platforms (Column 8c, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "D005",
+      "description": "Commercial invoice within the framework of undertakings"
+    },
+    {
+      "document_type": "D008",
+      "description": "Invoice with a signed declaration"
+    },
+    {
+      "document_type": "D017",
+      "description": "Commercial invoice within the framework of undertakings and Export Undertaking Certificate issued by CCCME (Annex III of Regulation 513/2013 as amended by Regulation 748/2013)"
+    },
+    {
+      "document_type": "D018",
+      "description": "Invoice for transactions which are not exempted from countervailing/anti-dumping duties"
+    },
+    {
+      "document_type": "D019",
+      "description": "Authorisation to use a customs procedure with economic impact/end-use within the context of an anti-dumping/countervailing measure (Column 8c, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "D020",
+      "description": "Commercial invoice and mill certificate as defined in Regulation 2022/58"
+    },
+    {
+      "document_type": "D022",
+      "description": "Commercial invoice from the manufacturer to the trader bearing a declaration of the manufacturer as specified in Annex 3 of Reg. 2019/2131 and commercial invoice from the trader to the importer"
+    },
+    {
+      "document_type": "E012",
+      "description": "Export licence ‘Cultural goods’ (Regulation (EC) No 116/2009)"
+    },
+    {
+      "document_type": "E013",
+      "description": "Export licence ‘controlled substances’ (ozone), issued by the Commission."
+    },
+    {
+      "document_type": "E014",
+      "description": "Export licence for milk products under quota in accordance with Regulation (EU) 2020/761"
+    },
+    {
+      "document_type": "E017",
+      "description": "Export certificate issued by the competent authorities of a third country"
+    },
+    {
+      "document_type": "E020",
+      "description": "Export authorisation for firearms (Regulation (EU) No 258/2012)"
+    },
+    {
+      "document_type": "E990",
+      "description": "Export authorisation for goods that could be used for the purpose of torture or other cruel, inhuman or degrading treatment or punishment"
+    },
+    {
+      "document_type": "I004",
+      "description": "Surveillance document issued by the competent authorities of a Member State valid throughout the EU"
+    },
+    {
+      "document_type": "K020",
+      "description": "Tariff quota - order number 09.8250 requested and not exhausted"
+    },
+    {
+      "document_type": "K022",
+      "description": "No data"
+    },
+    {
+      "document_type": "K025",
+      "description": "Tariff quota - order number 09.8258 requested and not exhausted"
+    },
+    {
+      "document_type": "K026",
+      "description": "Tariff quota - order number 09.8259 requested and not exhausted"
+    },
+    {
+      "document_type": "K027",
+      "description": "Tariff quota - order number 09.8253 requested and not exhausted"
+    },
+    {
+      "document_type": "K028",
+      "description": "Tariff quota - order number 09.8255 requested and not exhausted"
+    },
+    {
+      "document_type": "K029",
+      "description": "Tariff quota - order number 09.8256 requested and not exhausted"
+    },
+    {
+      "document_type": "L001",
+      "description": "Import licence AGRIM"
+    },
+    {
+      "document_type": "L079",
+      "description": "Textile products: import licence"
+    },
+    {
+      "document_type": "L081",
+      "description": "Certificate of analysis (Commission Implementing Regulation (EU) 2020/1988)"
+    },
+    {
+      "document_type": "L082",
+      "description": "Certificate of conformity (Commission Implementing Regulation (EU) 2020/1988)"
+    },
+    {
+      "document_type": "L100",
+      "description": "Import licence ‘controlled substances’ (ozone), issued by the Commission"
+    },
+    {
+      "document_type": "L116",
+      "description": "Kimberley Process Certificate"
+    },
+    {
+      "document_type": "L135",
+      "description": "Import authorisation (precursors) issued by the competent authorities of the Member State where the importer is established"
+    },
+    {
+      "document_type": "L136",
+      "description": "Goods, containing, or relying on, ozone-depleting substances, to be used as feedstock or for laboratory and analytical uses"
+    },
+    {
+      "document_type": "L137",
+      "description": "Import authorisation by virtue of article 3m.5 of Council Regulation (EU) 833/2014 (Bulgaria)"
+    },
+    {
+      "document_type": "L138",
+      "description": "Import authorization by virtue of article 3m.6 of Council Regulation (EU) 833/2014 (Croatia)"
+    },
+    {
+      "document_type": "L139",
+      "description": "Import authorisation by virtue of article 3g.7 of Council Regulation (EU) 833/2014"
+    },
+    {
+      "document_type": "L142",
+      "description": "Import authorisation by virtue of article 3i paragraph 3c of Council Regulation (EU) 833/2014"
+    },
+    {
+      "document_type": "L143",
+      "description": "Import authorisation by virtue of article 12b.2 of Council Regulation (EU) 833/2014"
+    },
+    {
+      "document_type": "L144",
+      "description": "Import authorisation by virtue of article 3i paragraph 3e of Council Regulation (EU) 833/2014"
+    },
+    {
+      "document_type": "L838",
+      "description": "Import authorisation by virtue of article 3o.7 of Council Regulation (EU) 833/2014"
+    },
+    {
+      "document_type": "N002",
+      "description": "Certificate of conformity with the European Union marketing standards for fresh fruit and vegetables"
+    },
+    {
+      "document_type": "N003",
+      "description": "Certificate of quality"
+    },
+    {
+      "document_type": "N018",
+      "description": "ATR certificate"
+    },
+    {
+      "document_type": "N235",
+      "description": "Container list"
+    },
+    {
+      "document_type": "N271",
+      "description": "Packing list"
+    },
+    {
+      "document_type": "N325",
+      "description": "Proforma invoice"
+    },
+    {
+      "document_type": "N337",
+      "description": "Summary declaration for temporary storage"
+    },
+    {
+      "document_type": "N355",
+      "description": "Entry summary declaration"
+    },
+    {
+      "document_type": "N380",
+      "description": "Commercial invoice"
+    },
+    {
+      "document_type": "N703",
+      "description": "House waybill"
+    },
+    {
+      "document_type": "N704",
+      "description": "Master bill of lading"
+    },
+    {
+      "document_type": "N705",
+      "description": "Bill of lading"
+    },
+    {
+      "document_type": "N710",
+      "description": "Maritime manifest (T1)"
+    },
+    {
+      "document_type": "N714",
+      "description": "House bill of lading"
+    },
+    {
+      "document_type": "N720",
+      "description": "Consignment note CIM"
+    },
+    {
+      "document_type": "N722",
+      "description": "Road list - SMGS"
+    },
+    {
+      "document_type": "N730",
+      "description": "Road consignment note"
+    },
+    {
+      "document_type": "N740",
+      "description": "Air waybill"
+    },
+    {
+      "document_type": "N741",
+      "description": "Master airwaybill"
+    },
+    {
+      "document_type": "N750",
+      "description": "movement by post including parcel post"
+    },
+    {
+      "document_type": "N760",
+      "description": "Multimodal/combined transport document"
+    },
+    {
+      "document_type": "N785",
+      "description": "Cargo manifest"
+    },
+    {
+      "document_type": "N787",
+      "description": "Bordereau (cargo load list)"
+    },
+    {
+      "document_type": "N820",
+      "description": "Transit declaration ‘T’"
+    },
+    {
+      "document_type": "N821",
+      "description": "External Community transit declaration / common transit, T1"
+    },
+    {
+      "document_type": "N822",
+      "description": "Internal Community transit declaration T2"
+    },
+    {
+      "document_type": "N825",
+      "description": "T2L document"
+    },
+    {
+      "document_type": "N830",
+      "description": "Goods declaration for exportation"
+    },
+    {
+      "document_type": "N851",
+      "description": "Phytosanitary certificate"
+    },
+    {
+      "document_type": "N852",
+      "description": "Analysis and health certificate"
+    },
+    {
+      "document_type": "N853",
+      "description": "Common Veterinary Entry Document (CVED) in accordance with Regulation (EC) No 136/2004, used for veterinary check on products"
+    },
+    {
+      "document_type": "N864",
+      "description": "Invoice declaration or origin declaration made out by any exporter on invoice or any other commercial document"
+    },
+    {
+      "document_type": "N933",
+      "description": "Cargo declaration (arrival)"
+    },
+    {
+      "document_type": "N934",
+      "description": "Declaration of particulars relating to customs value D.V.1"
+    },
+    {
+      "document_type": "N935",
+      "description": "Invoice on the basis of which the customs value of the goods is declared"
+    },
+    {
+      "document_type": "N941",
+      "description": "Embargo permit"
+    },
+    {
+      "document_type": "N951",
+      "description": "TIF form"
+    },
+    {
+      "document_type": "N952",
+      "description": "TIR Carnet"
+    },
+    {
+      "document_type": "N954",
+      "description": "Movement certificate EUR.1"
+    },
+    {
+      "document_type": "N955",
+      "description": "ATA carnet"
+    },
+    {
+      "document_type": "N988",
+      "description": "Authorisation to use simplified procedures - local clearance procedure – export (pre-departure declaration required according to Art. 285a 1 of Commission Regulation (EEC) No 2454/93)"
+    },
+    {
+      "document_type": "N989",
+      "description": "Authorisation to use simplified procedures - local clearance procedure – export (Waiver of pre-departure declaration according to Art. 285a 1a of Commission Regulation (EEC) No 2454/93)"
+    },
+    {
+      "document_type": "N990",
+      "description": "EUS - Authorisation for the use of end use procedure (Column 8c, Annex A of Delegated Regulation (EU) 2015/2446)"
+    },
+    {
+      "document_type": "U004",
+      "description": "Certificate of origin for imports of products subject to special non-preferential import arrangements into the European Union established in accordance with Article 57 of Commission Implementing Regulation (EU) 2015/2447"
+    },
+    {
+      "document_type": "U005",
+      "description": "Certificate of designation of origin issued by the competent authorities"
+    },
+    {
+      "document_type": "U045",
+      "description": "Movement certificate EUR-MED"
+    },
+    {
+      "document_type": "U048",
+      "description": "Invoice declaration EUR-MED"
+    },
+    {
+      "document_type": "U059",
+      "description": "Origin declaration containing the following statement in English: ‘Derogation - Annex II(a) of Protocol concerning the definition of 'originating products ’ and methods of administrative cooperation ‘"
+    },
+    {
+      "document_type": "U062",
+      "description": "Reference to Annex 5-A of Council Decision (EU) 2017/37 (OJ L 11)"
+    },
+    {
+      "document_type": "U063",
+      "description": "Proof of origin containing the following statement in English: ‘Derogation — Annex II(a) of Protocol 3 — name of the Development Zone or industrial area and authorisation number granted by the competent authorities of Jordan’"
+    },
+    {
+      "document_type": "U067",
+      "description": "Certificate EUR 1. bearing the endorsement 'Derogation — Decision No 1/2022 of the ESA-EU Customs Cooperation Committee of 19 October 2022’ or ‘Dérogation — Décision no 1/2022 du comité de coopération douanière AfOA-UE du 19 octobre 2022’"
+    },
+    {
+      "document_type": "U068",
+      "description": "Proof of origin containing the following statement in English: ‘Product originating in accordance with Appendix 2A of Annex II’"
+    },
+    {
+      "document_type": "U069",
+      "description": "Proof of origin containing the following statement in English: ‘Product originating in accordance with Appendix 5 of Annex II’"
+    },
+    {
+      "document_type": "U071",
+      "description": "Proof of origin containing the following statement: ‘Product originating in accordance with Appendix 2A of Annex II (Concerning the Definition of the Concept of 'Originating Products’ and Methods of Administrative Cooperation)‘ (OJ L 346, 15.12.2012)"
+    },
+    {
+      "document_type": "U074",
+      "description": "Certificate of origin for imports of agricultural products into the European Union, used in the framework of tariff quotas according to Article 13, Regulation (EU) 2020/1988"
+    },
+    {
+      "document_type": "U075",
+      "description": "Movement certificate EUR. 1 (under the condition that in box 7 the remark 'Transitional Rules’ is inserted) in the context of the Pan-Euro-Mediterranean transitional rules of origin"
+    },
+    {
+      "document_type": "U076",
+      "description": "Origin declaration (under the condition that the declaration mentions “origin according to the transitional rules”) in the context of the Pan-Euro-Mediterranean transitional rules of origin"
+    },
+    {
+      "document_type": "U088",
+      "description": "Origin declaration stating European Union origin, in the context of the Canada-European Union Comprehensive Economic and Trade Agreement (CETA)"
+    },
+    {
+      "document_type": "U090",
+      "description": "Movement certificate EUR. 1 - Movement certificate EUR-MED (under the condition that in box 7 the remark ‘no cumulation applied’ is marked with a cross) stating European Community origin, in the context of the agreement between the European Economic Community and the Swiss Confederation (codification/key: U090)"
+    },
+    {
+      "document_type": "U091",
+      "description": "Invoice declaration - Invoice declaration EUR-MED (under the condition the declaration contains the remark ‘no cumulation applied’), stating European Community origin, in the context of the agreement between the European Economic Community and the Swiss Confederation"
+    },
+    {
+      "document_type": "U099",
+      "description": "Certificate EUR.1 bearing the endorsement ‘Derogation-Regulation (EU) 2017/882’"
+    },
+    {
+      "document_type": "U101",
+      "description": "Statement on origin made out by an exporter registered in Singapore"
+    },
+    {
+      "document_type": "U110",
+      "description": "Statement on Origin (Article 3.16(2)(a) and 3.17(5)(a) of the EU-Japan EPA)"
+    },
+    {
+      "document_type": "U111",
+      "description": "Statement on Origin for multiple shipments of identical products (Article 3.16(2)(a) and Article 3.17(5)(b) of the EU-Japan EPA)"
+    },
+    {
+      "document_type": "U112",
+      "description": "Importer’s knowledge (Article 3.16(2)(b) of the EU-Japan EPA)"
+    },
+    {
+      "document_type": "U113",
+      "description": "Statement on origin made out by a Registered Exporter in the framework of OAD for a total value of originating products consigned not exceeding 10 000 €"
+    },
+    {
+      "document_type": "U114",
+      "description": "Statement on origin made out by a Registered Exporter in the framework of OAD for a total value of originating products consigned exceeding 10 000 €"
+    },
+    {
+      "document_type": "U115",
+      "description": "Statement on origin made out by a non-registered Exporter in the framework of OAD for a total value of originating products consigned not exceeding 10 000 €"
+    },
+    {
+      "document_type": "U116",
+      "description": "Statement on Origin (Article 56 (4) point (a) of the EU-UK TCA)"
+    },
+    {
+      "document_type": "U117",
+      "description": "Importer’s knowledge (Article 58 of the EU-UK TCA)"
+    },
+    {
+      "document_type": "U118",
+      "description": "Statement on Origin for multiple shipments of identical products (Article 56 (4) point (b) of the EU-UK TCA)"
+    },
+    {
+      "document_type": "U119",
+      "description": "Statement on Origin (‘Derogation – Commission Implementing Regulation (EU) 2021/966’)"
+    },
+    {
+      "document_type": "U161",
+      "description": "Invoice declaration or origin declaration made out by any exporter on invoice or any other commercial document within the framework of GSP for a total value of originating products not exceeding 6000 €, according to Art. 75 of Reg. 2015/2447"
+    },
+    {
+      "document_type": "U162",
+      "description": "Invoice declaration or origin declaration made out on invoice by any exporter or any other commercial document neither in the framework of GSP nor EUR-MED for a total value of originating products not exceeding 6000 EUR"
+    },
+    {
+      "document_type": "U163",
+      "description": "Invoice declaration or origin declaration EUR-MED made out by any exporter on invoice or any other commercial document for a total value of originating products not exceeding 6000 EUR"
+    },
+    {
+      "document_type": "U164",
+      "description": "Statement on origin made out by a Registered Exporter in the framework of GSP for a total value of originating products consigned not exceeding 6 000 €"
+    },
+    {
+      "document_type": "U165",
+      "description": "Statement on origin made out by a Registered Exporter in the framework of GSP for a total value of originating products consigned exceeding 6000 €"
+    },
+    {
+      "document_type": "U166",
+      "description": "Statement on origin made out by a non-registered Exporter in the framework of GSP for a total value of originating products consigned not exceeding 6000 €"
+    },
+    {
+      "document_type": "U167",
+      "description": "Statement on origin made out by a non-registered EU re-consignor in the framework of GSP for a total value of originating products of the initial consignment to be split exceeding 6000 €"
+    },
+    {
+      "document_type": "U168",
+      "description": "Replacement origin declaration, replacement invoice declaration or replacement statement on origin made out by an APPROVED exporter or by a REGISTERED exporter where the total value of originating product in the initial consignment to be split does not exceed the applicable value threshold, according to Art. 69(2a) of Reg. 2015/2447"
+    },
+    {
+      "document_type": "U169",
+      "description": "Replacement origin declaration, replacement invoice declaration or replacement statement on origin made out by an APPROVED exporter or by a REGISTERED exporter where the total value of originating product in the initial consignment to be split exceeds the applicable value threshold, according to Art. 69(2a) of Reg. 2015/2447"
+    },
+    {
+      "document_type": "U170",
+      "description": "Replacement origin declaration or replacement invoice declaration made out by any re-consignor where the total value of originating products in the initial consignment to be split does not exceed the applicable value threshold, according to Art. 69(2b) of Reg. 2015/2447"
+    },
+    {
+      "document_type": "U171",
+      "description": "Replacement origin declaration or replacement invoice declaration made out by any re-consignor where the total value of originating products in the initial consignment to be split exceeds the applicable value threshold, according to Art. 69(2c) of Reg. 2015/2447"
+    },
+    {
+      "document_type": "U176",
+      "description": "Certificate EUR.1 bearing the endorsement ‘Derogation - Decision No 1/2021 of the ESA-EU Customs Cooperation Committee of 2 August 2021’ or ‘Dérogation - Décision n° 1/2021 du Comité de Coopération Douanière AfOA-UE du 2 août 2021’"
+    },
+    {
+      "document_type": "U177",
+      "description": "Proof of origin containing the following statement in English: ‘Derogation — Annex B(a) of Protocol Concerning the definition of the concept of ‘originating products’ and methods of administrative cooperation of the EU-Singapore FTA’."
+    },
+    {
+      "document_type": "U178",
+      "description": "Proof of origin containing the following statement in English: ‘Origin quotas – Product originating in accordance with Annex ORIG-2A ’."
+    },
+    {
+      "document_type": "U500",
+      "description": "EUR.2 form"
+    },
+    {
+      "document_type": "X001",
+      "description": "Export licence AGREX"
+    },
+    {
+      "document_type": "X035",
+      "description": "Export authorisation (precursors) issued by the competent authorities of the Member State where the exporter is established."
+    },
+    {
+      "document_type": "X060",
+      "description": "Individual Export Authorisation - Article 12(1)(a) of the Regulation (EU) 2021/821 of the European Parliament and of the Council"
+    },
+    {
+      "document_type": "X061",
+      "description": "Union General Export Authorisation No EU001 - ANNEX II A - referred to in Article 12(1)(d) of the Regulation (EU) 2021/821 of the European Parliament and of the Council"
+    },
+    {
+      "document_type": "X062",
+      "description": "Union General Export Authorisation No EU002 - ANNEX II B - referred to in Article 12(1)(d) of the Regulation (EU) 2021/821 of the European Parliament and of the Council"
+    },
+    {
+      "document_type": "X063",
+      "description": "Union General Export Authorisation No EU003 - ANNEX II C - referred to in Article 12(1)(d) of the Regulation (EU) 2021/821 of the European Parliament and of the Council"
+    },
+    {
+      "document_type": "X064",
+      "description": "Union General Export Authorisation No EU004 - ANNEX II D - referred to in Article 12(1)(d) of the Regulation (EU) 2021/821 of the European Parliament and of the Council"
+    },
+    {
+      "document_type": "X065",
+      "description": "Union General Export Authorisation No EU005 - ANNEX II E - referred to in Article 12(1)(d) of the Regulation (EU) 2021/821 of the European Parliament and of the Council"
+    },
+    {
+      "document_type": "X066",
+      "description": "Union General Export Authorisation No EU006 - ANNEX II F - referred to in Article 12(1)(d) of the Regulation (EU) 2021/821 of the European Parliament and of the Council"
+    },
+    {
+      "document_type": "X067",
+      "description": "Union General Export Authorisation No EU007 - ANNEX II G - referred to in Article 12(1)(d) of the Regulation (EU) 2021/821 of the European Parliament and of the Council"
+    },
+    {
+      "document_type": "X068",
+      "description": "Union General Export Authorisation No EU008 - ANNEX II H - referred to in Article 12(1)(d) of the Regulation (EU) 2021/821 of the European Parliament and of the Council"
+    },
+    {
+      "document_type": "X070",
+      "description": "Global Export Authorisation - referred to in Article 12(1)(b) of the Regulation (EU) 2021/821 of the European Parliament and of the Council"
+    },
+    {
+      "document_type": "X071",
+      "description": "National General Export Authorisations in national Official Journals - ANNEX III C - referred to in Article 12(6) of the Regulation (EU) 2021/821 of the European Parliament and of the Council"
+    },
+    {
+      "document_type": "X072",
+      "description": "Transit Licence for dual Use Items - referred to in Article 7 of the Regulation (EU) 2021/821 of the European Parliament and of the Council"
+    },
+    {
+      "document_type": "X802",
+      "description": "Export authorisation by virtue of paragraphs 1 and 3 of Article 2e of Council Regulation (EU) No 692/2014"
+    },
+    {
+      "document_type": "X803",
+      "description": "Export authorisation by virtue of articles 1e.4 and 1fa.1 of Regulation (EC) No 765/2006"
+    },
+    {
+      "document_type": "X804",
+      "description": "The prohibitions defined in articles 1e.1 and 1f.1 of Council Regulation (EC) No 765/2006 do not apply (see contractual exemptions in article 1f.5 - export authorization)"
+    },
+    {
+      "document_type": "X805",
+      "description": "Export authorisation by virtue of article 1f.4 of Regulation (EC) No 765/2006"
+    },
+    {
+      "document_type": "X806",
+      "description": "Export authorisation by virtue of article 1f.5a of Regulation (EC) No 765/2006"
+    },
+    {
+      "document_type": "X807",
+      "description": "Export authorisation by virtue of article 1sa.7 of Regulation (EC) No 765/2006"
+    },
+    {
+      "document_type": "X808",
+      "description": "Export authorisation by virtue of article 1f.4a of Regulation (EC) No 765/2006"
+    },
+    {
+      "document_type": "X817",
+      "description": "Export authorisation by virtue of article 3f 4. of Council Regulation (EU) 833/2014"
+    },
+    {
+      "document_type": "X819",
+      "description": "Export authorisation by virtue of article 3.6 of Council Regulation (EU) 833/2014"
+    },
+    {
+      "document_type": "X823",
+      "description": "Export authorisation by virtue of article 3h.4 of Council Regulation (EU) 833/2014"
+    },
+    {
+      "document_type": "X824",
+      "description": "Export authorisation by virtue of article 3h.4a of Council Regulation (EU) 833/2014"
+    },
+    {
+      "document_type": "X830",
+      "description": "Export authorisation by virtue of article 3c.6 of Council Regulation (EU) 833/2014"
+    },
+    {
+      "document_type": "X831",
+      "description": "Export authorisation by virtue of article 3c. paragraph 6c of Council Regulation (EU) 833/2014"
+    },
+    {
+      "document_type": "X832",
+      "description": "Export authorisation by virtue of article 3c.6e of Council Regulation (EU) 833/2014"
+    },
+    {
+      "document_type": "X834",
+      "description": "Export authorisation by virtue of article 3k.5 of Council Regulation (EU) 833/2014"
+    },
+    {
+      "document_type": "X835",
+      "description": "Export authorisation by virtue of article 3k.5a of Council Regulation (EU) 833/2014"
+    },
+    {
+      "document_type": "X836",
+      "description": "Export authorisation by virtue of articles 2.4(b) or article 2a.4(b) of Council Regulation (EU) No 2014/833"
+    },
+    {
+      "document_type": "X837",
+      "description": "Export authorisation by virtue of article 3k.5b of Council Regulation (EU) 833/2014"
+    },
+    {
+      "document_type": "X839",
+      "description": "Export authorisation by virtue of article 3c paragraph 6a of Council Regulation (EU) 833/2014"
+    },
+    {
+      "document_type": "X840",
+      "description": "Export authorization by virtue of article 5q paragraph 1 of Council Regulation (EU) 833/2014"
+    },
+    {
+      "document_type": "X985",
+      "description": "Export authorisation by virtue of article 7 of Council Regulation (EU) 2022/263"
+    },
+    {
+      "document_type": "X990",
+      "description": "Export authorisation by virtue of articles 2.4 or article 2a.4 and 2b.1 of Council Regulation (EU) No 833/2014"
+    },
+    {
+      "document_type": "X991",
+      "description": "The prohibitions defined in articles 2.1 and 2a.1 of Council Regulation (EU) No 2014/833 do not apply (see contractual exemptions in article 2.5 and article 2a.5 - export authorization)"
+    },
+    {
+      "document_type": "X992",
+      "description": "Export authorisation, or case of emergency, by virtue of article 3b.4 of Council Regulation (EU) No 2014/833"
+    },
+    {
+      "document_type": "X993",
+      "description": "Export authorisation by virtue of articles 2 (3) (a) or 2 (3) (b) of Council Regulation (EU) 2023/1529"
+    },
+    {
+      "document_type": "Y001",
+      "description": "Wholly obtained in Lebanon and transported directly from that country to the Community."
+    },
+    {
+      "document_type": "Y003",
+      "description": "Wholly obtained in Tunisia and transported directly from that country to the Community."
+    },
+    {
+      "document_type": "Y006",
+      "description": "Stamp (at beginning/end of each piece) and directly transported"
+    },
+    {
+      "document_type": "Y007",
+      "description": "Seal (fixed to each piece) and directly transported"
+    },
+    {
+      "document_type": "Y008",
+      "description": "Transported directly from Türkiye to the European Union"
+    },
+    {
+      "document_type": "Y013",
+      "description": "Insertion of one of the following endorsements in the ‘Remarks’ column of a goods movement certificate. Regulation (EEC) no 1518/76 (OJ L 169/37): Taxe spéciale à l'exportation appliquée Særlig udførselsafgift opkrævet Sonderausfuhrabgabe erhoben Special export charge collected Applicata tassa speciale all'esportazione Bijzondere"
+    },
+    {
+      "document_type": "Y015",
+      "description": "The rough diamonds are contained in tamper-resistant containers, and the seals applied at export by the participant (Kimberley process) are not broken"
+    },
+    {
+      "document_type": "Y017",
+      "description": "Wholly obtained in Jordan and transported directly from that country to the Community"
+    },
+    {
+      "document_type": "Y019",
+      "description": "Request for preferential treatment for Iceland"
+    },
+    {
+      "document_type": "Y020",
+      "description": "Request for preferential treatment for Norway"
+    },
+    {
+      "document_type": "Y021",
+      "description": "Request for EEA preferential treatment"
+    },
+    {
+      "document_type": "Y022",
+      "description": "Consignor / exporter (AEO certificate number)"
+    },
+    {
+      "document_type": "Y023",
+      "description": "Consignee (AEO certificate number)"
+    },
+    {
+      "document_type": "Y024",
+      "description": "Declarant (AEO certificate number)"
+    },
+    {
+      "document_type": "Y025",
+      "description": "Representative (AEO certificate number)"
+    },
+    {
+      "document_type": "Y026",
+      "description": "Principal (AEO certificate number)"
+    },
+    {
+      "document_type": "Y027",
+      "description": "Warehousekeeper (AEO certificate number)"
+    },
+    {
+      "document_type": "Y028",
+      "description": "Carrier (AEO certificate number)"
+    },
+    {
+      "document_type": "Y029",
+      "description": "Other authorised economic operator (AEO certificate number)"
+    },
+    {
+      "document_type": "Y031",
+      "description": "This certificate code may be used to indicate that shipments are coming from or going to an Authorised Economic Operator (AEO) in a third country with which the European Union (EU) has concluded a mutual recognition agreement regarding AEO programmes. In addition to the certificate code (Y031) the identification code of this third country AEO must"
+    },
+    {
+      "document_type": "Y032",
+      "description": "Other goods than those seal products mentioned in Regulation (EU) 2015/1850 (OJ L 271)"
+    },
+    {
+      "document_type": "Y033",
+      "description": "Derogation from import prohibition by virtue of Article 4(2) of Council Regulation (EU) 2017/1509"
+    },
+    {
+      "document_type": "Y034",
+      "description": "Derogation from export prohibition by virtue of Article 4.1 of Council Regulation (EU) 2017/1509"
+    },
+    {
+      "document_type": "Y036",
+      "description": "The declared goods are exempted from the presentation of the concerned licence by virtue of Article 3 (1) points a, b, d and e and (2) of Commission Delegated Regulation (EU) 2016/1237 (OJ L 206)"
+    },
+    {
+      "document_type": "Y037",
+      "description": "Goods exempted from the prohibition – biathlon equipment"
+    },
+    {
+      "document_type": "Y038",
+      "description": "Derogation from import prohibition by virtue of Article 14 of Council Regulation (EU) 2017/1509"
+    },
+    {
+      "document_type": "Y040",
+      "description": "VAT identification number issued in the Member State of importation for the importer designated or recognised under Article 201 of the VAT Directive as liable for payment of VAT"
+    },
+    {
+      "document_type": "Y041",
+      "description": "VAT identification number of the customer who is liable for the VAT on the intra-Community acquisition of goods in accordance with Article 200 of the VAT Directive"
+    },
+    {
+      "document_type": "Y042",
+      "description": "VAT identification number issued in the Member State of importation for tax representative"
+    },
+    {
+      "document_type": "Y043",
+      "description": "Reimportation of textile products following an outward processing operation, in accordance with Regulation (EC) No 32/2000 - ANNEX II"
+    },
+    {
+      "document_type": "Y044",
+      "description": "Evidence that the imported goods are intended to be transported or dispatched from the Member State of importation to another Member State"
+    },
+    {
+      "document_type": "Y046",
+      "description": "Goods not covered by the provisions of Regulation (EU) No 284/2011"
+    },
+    {
+      "document_type": "Y053",
+      "description": "Goods not concerned by labelling requirements on fluorinated greenhouse gases as referred to Article 12, paragraph 1 of Regulation (EU) No 517/2014"
+    },
+    {
+      "document_type": "Y054",
+      "description": "Goods labelled according to the provisions of Article 12, paragraph 1 of Regulation (EU) No 517/2014"
+    },
+    {
+      "document_type": "Y057",
+      "description": "Goods not requiring the presentation of a FLEGT import licence for timber"
+    },
+    {
+      "document_type": "Y058",
+      "description": "Exemption by virtue of Article 7 of Commission Delegated Regulation 2019/2122 (Goods which form part of passengers’ personal luggage and are intended for personal consumption or use) or Article 10 (small consignments of goods sent to natural persons which are not intended to be placed on the market) of Commission Delegated Regulation 2019/2122"
+    },
+    {
+      "document_type": "Y062",
+      "description": "Products which are not containing, consisting of or produced from rice (Commission Implementing Decision 2011/884/EU)"
+    },
+    {
+      "document_type": "Y063",
+      "description": "Goods not consigned from China"
+    },
+    {
+      "document_type": "Y066",
+      "description": "Products which are not containing or consisting of betel leaves (‘Piper betle’)"
+    },
+    {
+      "document_type": "Y069",
+      "description": "Goods not consigned from Iran"
+    },
+    {
+      "document_type": "Y070",
+      "description": "Exemption from the requirement of presenting FLEGT licence by virtue of Article 4.3 of Council Regulation (EC) No 2173/2005"
+    },
+    {
+      "document_type": "Y072",
+      "description": "Goods with EU origin returning from Andorra, according to the relevant EU legislation"
+    },
+    {
+      "document_type": "Y073",
+      "description": "Goods with EU origin returning from Switzerland, according to the relevant EU legislation"
+    },
+    {
+      "document_type": "Y074",
+      "description": "Goods with EU origin returning from the Faroe Islands, according to the relevant EU legislation"
+    },
+    {
+      "document_type": "Y075",
+      "description": "Goods with EU origin returning from Greenland, according to the relevant EU legislation"
+    },
+    {
+      "document_type": "Y076",
+      "description": "Goods with EU origin returning from Iceland, according to the relevant EU legislation"
+    },
+    {
+      "document_type": "Y077",
+      "description": "Goods with EU origin returning from Lichtenstein, according to the relevant EU legislation"
+    },
+    {
+      "document_type": "Y078",
+      "description": "Goods with EU origin returning from Norway, according to the relevant EU legislation"
+    },
+    {
+      "document_type": "Y079",
+      "description": "Goods with EU origin returning from San Marino, according to the relevant EU legislation"
+    },
+    {
+      "document_type": "Y082",
+      "description": "Derogation from export prohibition by virtue of Article 16e (1) of Council Regulation (EU) 2017/1509"
+    },
+    {
+      "document_type": "Y083",
+      "description": "Derogation from export prohibition by virtue of Article 16g of Council Regulation (EU) 2017/1509"
+    },
+    {
+      "document_type": "Y084",
+      "description": "Derogation from import prohibition by virtue of Article 16i (1) of Council Regulation (EU) 2017/1509"
+    },
+    {
+      "document_type": "Y085",
+      "description": "Goods imported in the framework of ‘Autonomous trade measures’"
+    },
+    {
+      "document_type": "Y086",
+      "description": "Request for preferential treatment for Albania"
+    },
+    {
+      "document_type": "Y087",
+      "description": "Request for preferential treatment for Bosnia and Hercegovina"
+    },
+    {
+      "document_type": "Y088",
+      "description": "Request for preferential treatment for Montenegro"
+    },
+    {
+      "document_type": "Y089",
+      "description": "Request for preferential treatment for the North Macedonia"
+    },
+    {
+      "document_type": "Y090",
+      "description": "Request for preferential treatment for the customs territory of Kosovo"
+    },
+    {
+      "document_type": "Y091",
+      "description": "Request for preferential treatment for Serbia"
+    },
+    {
+      "document_type": "Y100",
+      "description": "Special entries on the import licence AGRIM"
+    },
+    {
+      "document_type": "Y105",
+      "description": "Generic exemption from REACH authorisation (Art. 56 of Regulation (EC) No 1907/2006)"
+    },
+    {
+      "document_type": "Y106",
+      "description": "Compliance with the REACH restrictions defined in Column 2 of Annex XVII of Regulation (EC) No 1907/2006"
+    },
+    {
+      "document_type": "Y107",
+      "description": "Goods exempted from the prohibition - spare parts from aircrafts mentioned in the ‘CD’ footnote"
+    },
+    {
+      "document_type": "Y108",
+      "description": "Goods exempted from the prohibition – sport equipment of calibre .22 inches"
+    },
+    {
+      "document_type": "Y109",
+      "description": "Specific exemption from REACH authorisation (exempted (categories of) use listed in Annex XIV of Regulation (EC) No 1907/2006)"
+    },
+    {
+      "document_type": "Y110",
+      "description": "Exemption from REACH restrictions by virtue of Article 67(1) and 67(2) of Regulation (EC) No 1907/2006"
+    },
+    {
+      "document_type": "Y113",
+      "description": "Substance/mixture not subjected to the provisions of Regulation (EC) No 1907/2006 (Annex XVII)"
+    },
+    {
+      "document_type": "Y115",
+      "description": "Exemption from Authorization (Title VII) Article 2 point 5 and 8 of Regulation (EC) No 1907/2006 (REACH)"
+    },
+    {
+      "document_type": "Y117",
+      "description": "Dangerous product — release for free circulation not authorised — Regulation (EU) 2019/1020, Art. 28(1)"
+    },
+    {
+      "document_type": "Y118",
+      "description": "Product not in conformity — release for free circulation not authorised — Regulation (EU) 2019/1020, Art. 28(2)"
+    },
+    {
+      "document_type": "Y119",
+      "description": "Waiver of the proof of preferential origin, in the framework of EU preferential trade arrangements"
+    },
+    {
+      "document_type": "Y120",
+      "description": "Undertaking importing less than 100 tonnes of CO2 equivalent of hydrofluorocarbons per year and exempted from the reduction of the quantity of hydrofluorocarbons placed on the EU market according to article 15.2 first sub paragraph of Regulation (EU) N° 517/2014"
+    },
+    {
+      "document_type": "Y123",
+      "description": "Undertaking registered according to Art. 19 of Regulation (EU) No 517/2014, and Article 1.2 of Commission Implementing Regulation (EU) 1191/2014 as amended by Commission Implementing Regulation (EU) 2017/1375"
+    },
+    {
+      "document_type": "Y124",
+      "description": "Undertaking importing smaller amount of fluorinated greenhouse gases per year than that specified in Article 19.1 for bulk imports and 19.4 for products and equipment imports, and therefore not covered by the registration requirement according to Art. 19.1 and 19.4 of Regulation (EU) No 517/2014, and Article 1.2 of Commission Implementing…"
+    },
+    {
+      "document_type": "Y125",
+      "description": "Import falling under Article 15.1 of Regulation (EU) N° 517/2014 on the reduction of the quantity of hydrofluorocarbons placed on the EU market"
+    },
+    {
+      "document_type": "Y127",
+      "description": "Goods not dispatched from Türkiye"
+    },
+    {
+      "document_type": "Y150",
+      "description": "Exemption by virtue paragraph 2,3 Article 2 of Regulation (EU) 649/2012"
+    },
+    {
+      "document_type": "Y200",
+      "description": "Belgium - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y201",
+      "description": "Bulgaria - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y202",
+      "description": "Denmark - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y203",
+      "description": "Germany - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y204",
+      "description": "Estonia - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y205",
+      "description": "Ireland - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y206",
+      "description": "Greece - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y207",
+      "description": "Spain - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y208",
+      "description": "France - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y209",
+      "description": "Croatia - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y210",
+      "description": "Italy - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y211",
+      "description": "Cyprus - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y212",
+      "description": "Latvia - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y213",
+      "description": "Lithuania - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y214",
+      "description": "Malta - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y215",
+      "description": "The Netherlands - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y216",
+      "description": "Poland - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y217",
+      "description": "Portugal - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y218",
+      "description": "Romania - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y219",
+      "description": "Slovenia - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y220",
+      "description": "Finland - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y221",
+      "description": "Sweden - Continental shelf or Exclusive Economic Zone (Regulation 2019/1131 establishing a customs tool, OJ L 179, p. 12)"
+    },
+    {
+      "document_type": "Y223",
+      "description": "Exemption from safeguard measure by virtue of Art. 2 of Reg. (EU) 2019/67"
+    },
+    {
+      "document_type": "Y300",
+      "description": "Goods not concerned by Council Decision 2013/798/CFSP concerning restrictive measures against the Central African Republic"
+    },
+    {
+      "document_type": "Y301",
+      "description": "Goods excepted from the prohibition, according to Article 2.1 of Council Decision 2013/798/CFSP"
+    },
+    {
+      "document_type": "Y703",
+      "description": "Goods not concerned by Regulation (EU) 2023/1100"
+    },
+    {
+      "document_type": "Y800",
+      "description": "Goods not consigned from Bangladesh"
+    },
+    {
+      "document_type": "Y801",
+      "description": "Goods other than those concerned by the prohibitions defined in articles 1e.1 and 1f.1 of Regulation (EC) No 765/2006"
+    },
+    {
+      "document_type": "Y802",
+      "description": "The prohibitions defined in articles 1e.1 and 1f.1 of Regulation (EC) No 765/2006 do not apply (see exemptions in articles 1e.3 and 1f.3)"
+    },
+    {
+      "document_type": "Y805",
+      "description": "The prohibitions defined in article 1o of Council Regulation (EC) No 765/2006 do not apply (see contractual exemptions in article 1o.2)"
+    },
+    {
+      "document_type": "Y806",
+      "description": "The prohibitions defined in article 1p of Council Regulation (EU) No 765/2006 do not apply (see contractual exemptions in article 1p.2)"
+    },
+    {
+      "document_type": "Y807",
+      "description": "The prohibitions defined in article 1q of Council Regulation (EC) No765/2006apply (see contractual exemptions in article 1q.2)"
+    },
+    {
+      "document_type": "Y808",
+      "description": "The prohibitions defined in article 1r of Council Regulation (EC) No 765/2006 do not apply (see contractual exemptions in article 1r.2)"
+    },
+    {
+      "document_type": "Y809",
+      "description": "The prohibitions defined in article 1s of Council Regulation (EC) No 765/2006 do not apply (see contractual exemptions in article 1s.2)"
+    },
+    {
+      "document_type": "Y810",
+      "description": "Goods other than those concerned by the prohibitions defined in article 5i.1 of Regulation (EU) No 833/2014"
+    },
+    {
+      "document_type": "Y811",
+      "description": "The prohibitions defined in article 1s.1 of Council Regulation (EC) No 765/2006 do not apply (see exemptions in article 1s.2)"
+    },
+    {
+      "document_type": "Y812",
+      "description": "The prohibitions defined in article 5i paragraph 1 of Council Regulation (EU) No 2014/833 do not apply (see exemptions in article 5i paragraph 2)"
+    },
+    {
+      "document_type": "Y813",
+      "description": "Goods other than those concerned by the prohibitions defined in article 1za.1 of Regulation (EC) No 765/2006"
+    },
+    {
+      "document_type": "Y814",
+      "description": "The prohibitions defined in article 1za paragraph 1 of Council Regulation (EC) No 765/2006 do not apply (see exemptions in article 1za paragraph 2)"
+    },
+    {
+      "document_type": "Y815",
+      "description": "Goods other than those concerned by the prohibitions defined in article 3f paragraph 1 of Regulation (EU) No 833/2014"
+    },
+    {
+      "document_type": "Y816",
+      "description": "The prohibitions defined in article 3f paragraph 1 of Council Regulation (EU) No 833/2014 do not apply (see exemptions in article 3f paragraph 3)"
+    },
+    {
+      "document_type": "Y818",
+      "description": "The prohibitions defined in article 3 paragraphs 1 and 2 of Council Regulation (EU) No 833/2014 do not apply (see exemptions in article 3 paragraph 6)"
+    },
+    {
+      "document_type": "Y820",
+      "description": "The prohibitions defined in articles 3.1 and 3.2 of Council Regulation (EU) No 833/2014 do not apply (see contractual exemptions in article 3.4)"
+    },
+    {
+      "document_type": "Y821",
+      "description": "Goods other than those concerned by the prohibitions defined in article 3h.1 of Regulation (EU) No 833/2014"
+    },
+    {
+      "document_type": "Y822",
+      "description": "The prohibitions defined in article 3h.1 of Council Regulation (EU) No 833/2014 do not apply (see exemptions in articles 3h.2 and 3h.3)"
+    },
+    {
+      "document_type": "Y824",
+      "description": "Evidence of the country of origin of the iron and steel inputs used for processing of the product in a third country"
+    },
+    {
+      "document_type": "Y825",
+      "description": "The prohibitions defined in article 3g.1 of Council Regulation (EU) No 833/2014 do not apply (see contractual exemptions in article 3g.2)"
+    },
+    {
+      "document_type": "Y831",
+      "description": "The prohibitions defined in article 3i.1 of Council Regulation (EU) No 833/2014 do not apply (see contractual exemptions in article 3i.3)"
+    },
+    {
+      "document_type": "Y832",
+      "description": "The prohibitions defined in article 3k.1 of Council Regulation (EU) No 833/2014 do not apply (see contractual exemptions in article 3k.3a)"
+    },
+    {
+      "document_type": "Y833",
+      "description": "The prohibitions defined in article 3k paragraph 1 of Council Regulation (EU) No 833/2014 do not apply (see exemptions in article 3k paragraph 4)"
+    },
+    {
+      "document_type": "Y835",
+      "description": "Goods other than those concerned by the prohibitions defined in article 3i paragraph 1 of Regulation (EU) No 833/2014"
+    },
+    {
+      "document_type": "Y838",
+      "description": "No data"
+    },
+    {
+      "document_type": "Y839",
+      "description": "The prohibitions defined in article 1 of Commission Implementing Regulation (EU) 2023/903 do not apply (see contractual exemptions in article 1)"
+    },
+    {
+      "document_type": "Y840",
+      "description": "The prohibitions defined in article 3m.1 of Council Regulation (EU) No 833/2014 do not apply (see contractual exemptions in article 3m.3)"
+    },
+    {
+      "document_type": "Y841",
+      "description": "The prohibitions defined in article 3m.1 of Council Regulation (EU) No 833/2014 do not apply (see exemptions in article 3m.3 (d) and 3m.4)"
+    },
+    {
+      "document_type": "Y842",
+      "description": "The prohibitions defined in article 3m.1 of Council Regulation (EU) No 833/2014 do not apply (see exemptions in article 3m.9)"
+    },
+    {
+      "document_type": "Y843",
+      "description": "The prohibitions defined in article 3o.1 of Council Regulation (EU) No 833/2014 do not apply (see exemptions in article 3o.5,6,7)"
+    },
+    {
+      "document_type": "Y844",
+      "description": "Goods not released for free circulation in Bulgaria, Hungary, Poland, Romania or Slovakia"
+    },
+    {
+      "document_type": "Y845",
+      "description": "Goods other than those concerned by the prohibitions defined in article 3o of Regulation (EU) No 833/2014"
+    },
+    {
+      "document_type": "Y846",
+      "description": "Goods other than those concerned by the prohibitions defined in article 2aa of Regulation (EU) No 833/2014"
+    },
+    {
+      "document_type": "Y847",
+      "description": "Goods other than those concerned by the prohibitions defined in article 3c of Regulation (EU) No 833/2014"
+    },
+    {
+      "document_type": "Y848",
+      "description": "The prohibitions defined in article 3c.1 of Council Regulation (EU) No 833/2014 do not apply (see contractual exemptions in article 3c.5a)"
+    },
+    {
+      "document_type": "Y849",
+      "description": "The prohibitions defined in article 3g.1 of Council Regulation (EU) No 833/2014 do not apply (see contractual exemptions in article 3g.3)"
+    },
+    {
+      "document_type": "Y850",
+      "description": "The prohibitions defined in article 3i.1 of Council Regulation (EU) No 833/2014 do not apply (see contractual exemptions in article 3i.3b)"
+    },
+    {
+      "document_type": "Y851",
+      "description": "The prohibitions defined in article 3i.1 of Council Regulation (EU) No 833/2014 do not apply (see exemptions in article 3i.3a)"
+    },
+    {
+      "document_type": "Y852",
+      "description": "The prohibitions defined in article 3k.1 of Council Regulation (EU) No 833/2014 do not apply (see contractual exemptions in article 3k.3)"
+    },
+    {
+      "document_type": "Y853",
+      "description": "Iron and steel products processed in a third country, not incorporating iron and steel products originating in Russia as listed in Annex XVII of Regulation (EU) No 833/2014"
+    },
+    {
+      "document_type": "Y854",
+      "description": "The declared goods are not concerned by Commission Implementing Regulation (EU) 2020/1158."
+    },
+    {
+      "document_type": "Y855",
+      "description": "Exemption from import restrictions by virtue of Article 1(2) of Commission Implementing Regulation (EU) 2020/1158 (Chernobyl accident)."
+    },
+    {
+      "document_type": "Y856",
+      "description": "The prohibitions defined in article 3c.1 of Council Regulation (EU) No 833/2014 do not apply (see contractual exemptions in article 3c.5c)"
+    },
+    {
+      "document_type": "Y857",
+      "description": "The prohibitions defined in article 3i.1 of Council Regulation (EU) No 833/2014 do not apply (see contractual exemptions in article 3i.3d)"
+    },
+    {
+      "document_type": "Y858",
+      "description": "The prohibitions defined in article 3k.1 of Council Regulation (EU) No 833/2014 do not apply (see contractual exemptions in article 3k.3c)"
+    },
+    {
+      "document_type": "Y859",
+      "description": "Goods entered the territory of the customs union of the EU and presented to customs authorities prior to the entry into force or to applicability date of the present sanction, whichever is latest (see Article 12e of Regulation (EU) No 833/2014)"
+    },
+    {
+      "document_type": "Y860",
+      "description": "The prohibitions defined in article 3c.1 of Council Regulation (EU) No 833/2014 do not apply (see contractual exemptions in article 3c.5b)"
+    },
+    {
+      "document_type": "Y861",
+      "description": "The prohibitions defined in article 3i.1 of Council Regulation (EU) No 833/2014 do not apply (see contractual exemptions in article 3i.3ba)"
+    },
+    {
+      "document_type": "Y862",
+      "description": "The prohibitions defined in article 3k.1 of Council Regulation (EU) No 833/2014 do not apply (see contractual exemptions in article 3k.3b)"
+    },
+    {
+      "document_type": "Y863",
+      "description": "Goods other than those concerned by the prohibitions defined in article 3k paragraph 1 of Regulation (EU) No 833/2014"
+    },
+    {
+      "document_type": "Y864",
+      "description": "The proof of origin indicates that the production conferring originating status has not taken place in a location within the territories brought under Israeli administration since June 1967."
+    },
+    {
+      "document_type": "Y865",
+      "description": "The prohibitions defined in article 3k.1 of Council Regulation (EU) No 833/2014 do not apply (see contractual exemptions in article 3k.3b)"
+    },
+    {
+      "document_type": "Y866",
+      "description": "Goods other than those concerned by the prohibitions defined in article 1ba of Regulation (EU) No 765/2006"
+    },
+    {
+      "document_type": "Y867",
+      "description": "The prohibitions defined in article 1f.1 of Council Regulation (EC) No 765/2006 do not apply (see exemptions in article 1f.4a)"
+    },
+    {
+      "document_type": "Y868",
+      "description": "Goods other than those concerned by the prohibitions defined in article 1sa.1 of Regulation (EC) No 765/2006"
+    },
+    {
+      "document_type": "Y869",
+      "description": "The prohibitions defined in article 1sa of Council Regulation (EC) No 765/2006 do not apply (see contractual exemptions in article 1sa.5)"
+    },
+    {
+      "document_type": "Y890",
+      "description": "Goods other than those concerned by the prohibitions defined in article 2.1 of Regulation (EU) 2023/1529"
+    },
+    {
+      "document_type": "Y892",
+      "description": "The prohibitions defined in article 2.1 of Council Regulation (EU) 2023/1529 do not apply (see contractual exemptions in article 2.7)"
+    },
+    {
+      "document_type": "Y900",
+      "description": "Declared goods do not belong to the Washington Convention (CITES)"
+    },
+    {
+      "document_type": "Y901",
+      "description": "Product not included in the dual use list"
+    },
+    {
+      "document_type": "Y902",
+      "description": "Goods other than those described in the OZ footnotes linked to the measure"
+    },
+    {
+      "document_type": "Y903",
+      "description": "Declared goods are not included in the list of cultural goods"
+    },
+    {
+      "document_type": "Y904",
+      "description": "Goods other than those described in the TR footnotes linked to the measure"
+    },
+    {
+      "document_type": "Y906",
+      "description": "Goods other than those described in the TR footnotes linked to the measure (708)"
+    },
+    {
+      "document_type": "Y907",
+      "description": "Goods that will be used by military or civil personnel of a Member State, if such personnel is taking part in an EU or UN peace keeping or crisis management operation in the third country of destination, or in an operation based on agreements between Member States and third countries in the field of defence"
+    },
+    {
+      "document_type": "Y908",
+      "description": "Export to the following territories of Member States (Greenland, New Caledonia and Dependencies, French Polynesia, French Southern and Antarctic Territories, Wallis and Futuna Islands, Mayotte, St Pierre and Miquelon, Büsingen), provided that the goods are used by an authority in charge of law enforcement in both the country or territory of destin"
+    },
+    {
+      "document_type": "Y909",
+      "description": "The declared goods are not concerned by Regulation (EC) No. 1984/2003 (and/or Reg. (EU) No. 640/2010)."
+    },
+    {
+      "document_type": "Y910",
+      "description": "Bigeye tuna taken by seiners or baitboats and intended mainly for the canning industry in the areas of application of the Agreement for the establishment of the Indian Ocean Tuna Commission (IOTC Agreement) and the ICCAT Convention."
+    },
+    {
+      "document_type": "Y915",
+      "description": "Reference Identification Number"
+    },
+    {
+      "document_type": "Y916",
+      "description": "Product not subjected to the provisions of Regulation (EU) No 649/2012 on the export and import of dangerous chemicals, Annex I"
+    },
+    {
+      "document_type": "Y917",
+      "description": "Product not subjected to the provisions of Regulation (EU) No 649/2012 on the export and import of dangerous chemicals, Annex V"
+    },
+    {
+      "document_type": "Y918",
+      "description": "The declared goods are not concerned by Council Regulation (EC) No. 147/2003, Annex III"
+    },
+    {
+      "document_type": "Y919",
+      "description": "Reference Identification Number for chemicals subject to the provisions of Art. 2(3) of Regulation (EU) No 649/2012"
+    },
+    {
+      "document_type": "Y920",
+      "description": "Goods other than those described in the footnotes linked to the measure"
+    },
+    {
+      "document_type": "Y921",
+      "description": "Goods exempted from the prohibition"
+    },
+    {
+      "document_type": "Y922",
+      "description": "Other than cats and dogs fur as mentioned by Regulation (EC) No 1523/2007 (OJ L 343)"
+    },
+    {
+      "document_type": "Y923",
+      "description": "Product not subjected to the provisions of Regulation (EC) No 1013/2006 (OJ L 190)"
+    },
+    {
+      "document_type": "Y924",
+      "description": "Goods not concerned by Regulation (EU) 2017/852"
+    },
+    {
+      "document_type": "Y925",
+      "description": "Export for laboratory-scale research or laboratory analysis (Article 3 (3) of Regulation (EU) 2017/852)"
+    },
+    {
+      "document_type": "Y926",
+      "description": "Goods not concerned by import prohibition on fluorinated greenhouse gases"
+    },
+    {
+      "document_type": "Y927",
+      "description": "The declared goods are not concerned by Council Regulation (EC) No. 1005/2008"
+    },
+    {
+      "document_type": "Y929",
+      "description": "Goods not concerned by Regulation (EC) No 834/2007 (organic products)"
+    },
+    {
+      "document_type": "Y930",
+      "description": "The declared goods are not concerned by Commission Decision 2007/275/EC and Commission Implementing Regulation (EU) 2019/2007"
+    },
+    {
+      "document_type": "Y931",
+      "description": "Goods benefitting from derogation to veterinary controls according to Article 6.1b of Commission Decision (EC) No 275/2007"
+    },
+    {
+      "document_type": "Y932",
+      "description": "Goods benefitting from a derogation to CITES controls according to Article 7(3) of Council Regulation (EC) No 338/97"
+    },
+    {
+      "document_type": "Y934",
+      "description": "Product not subjected to the provisions of Regulation (EU) No 258/2012 for export of firearms, their parts and components and ammunition"
+    },
+    {
+      "document_type": "Y935",
+      "description": "Goods not covered by the provisions of Regulation (EU) 1332/2013 (OJ L 335)"
+    },
+    {
+      "document_type": "Y937",
+      "description": "The declared goods are not concerned by Commission Implementing Regulation (EU) 2019/1793"
+    },
+    {
+      "document_type": "Y939",
+      "description": "Goods not covered by the provisions of Regulation (EU) No 833/2014, Annex II"
+    },
+    {
+      "document_type": "Y942",
+      "description": "The declared goods are not concerned by Commission Implementing Regulation (EU) 2016/1141"
+    },
+    {
+      "document_type": "Y944",
+      "description": "Goods other than those described in Annex VI (Petroleum products) of Reg. (EU) 2017/1509"
+    },
+    {
+      "document_type": "Y945",
+      "description": "Travellers’ personal effects or goods of a non-commercial nature for travellers’ personal use contained in their luggage (Art 10.2 of Regulation (EU) 2017/1509)"
+    },
+    {
+      "document_type": "Y946",
+      "description": "Goods necessary for the official purposes of diplomatic or consular missions of Member States in the DPRK or international organisations enjoying immunities in accordance with international law, or to the personal effects of their staff (Art 10.3 of Regulation (EU) 2017/1509)"
+    },
+    {
+      "document_type": "Y947",
+      "description": "Transaction authorised by the competent authority of the Member State for humanitarian purposes (Art 10.4 of Regulation (EU) 2017/1509)"
+    },
+    {
+      "document_type": "Y948",
+      "description": "Goods other than those described in Annex VIII (Luxury goods) of Reg. (EU) 2017/1509"
+    },
+    {
+      "document_type": "Y949",
+      "description": "Goods other than those described in the footnotes linked to the measure (Reg 267/2012)"
+    },
+    {
+      "document_type": "Y950",
+      "description": "Goods other than pre-charged equipment with hydrofluorocarbons"
+    },
+    {
+      "document_type": "Y951",
+      "description": "Exemptions from the Reduction of the quantity of hydrofluorocarbons placed on the market by virtue of Article 15.2 of Regulation (EU) No 517/2014"
+    },
+    {
+      "document_type": "Y952",
+      "description": "Goods exempted from Article 2a, paragraph 1 of Council Regulation (EU) No 2016/44"
+    },
+    {
+      "document_type": "Y953",
+      "description": "Goods not concerned by Council Regulation (EU) No 2016/44 concerning restrictive measures in view of the situation in Libya"
+    },
+    {
+      "document_type": "Y955",
+      "description": "Goods other than those falling under the import prohibitions defined in article 7.2 of Regulation (EU) N° 517/2014"
+    },
+    {
+      "document_type": "Y956",
+      "description": "Goods other than those falling under the reduction of the quantity of hydrofluorocarbons placed on the EU market defined in article 15 of Regulation (EU) N° 517/2014"
+    },
+    {
+      "document_type": "Y957",
+      "description": "Goods other than those described in the MG footnotes linked to the measure (Annex II, Part V of Reg. (EU) 2017/1509)"
+    },
+    {
+      "document_type": "Y958",
+      "description": "Goods other than those described in Annex IV (Gold, titanium, vanadium ore, rare-earth minerals) of Reg. (EU) 2017/1509"
+    },
+    {
+      "document_type": "Y959",
+      "description": "Goods other than those described in Annex V (Coal, iron and iron ore) of Reg. (EU) 2017/1509"
+    },
+    {
+      "document_type": "Y960",
+      "description": "Goods other than those described in Annex VII (Copper, nickel, silver and zinc) of Reg. (EU) 2017/1509"
+    },
+    {
+      "document_type": "Y961",
+      "description": "Goods other than those described in Annex IX (Gold, precious metals and diamonds) of Reg. (EU) 2017/1509"
+    },
+    {
+      "document_type": "Y962",
+      "description": "Goods other than those described in Annex X (Statues) of Reg. (EU) 2017/1509"
+    },
+    {
+      "document_type": "Y963",
+      "description": "Goods other than those described in the MG footnotes linked to the measure (Annex II, Part IV of Reg. (EU) 2017/1509)"
+    },
+    {
+      "document_type": "Y964",
+      "description": "Goods other than those described in Annex XIa (Seafood) of Reg. (EU) 2017/1509"
+    },
+    {
+      "document_type": "Y965",
+      "description": "Goods other than those described in Annex XIb (Lead and lead ore) of Reg. (EU) 2017/1509"
+    },
+    {
+      "document_type": "Y966",
+      "description": "Goods other than those described in the MG footnotes linked to the measure (Missile Technology Control Regime list - Annex III of Reg. (EU) 267/2012)"
+    },
+    {
+      "document_type": "Y967",
+      "description": "Goods other than those described in Annex XId (Refined petroleum products) of Reg. (EU) 2017/1509"
+    },
+    {
+      "document_type": "Y968",
+      "description": "Goods not exceeding a sales price of 50 € per litre"
+    },
+    {
+      "document_type": "Y969",
+      "description": "Mercury-added products essential for civil protection and military uses; or intended for research, calibration of instrumentation or for use as reference standard (Article 5 (2) of Regulation (EU) 2017/852)"
+    },
+    {
+      "document_type": "Y970",
+      "description": "Goods other than those described in the MG footnotes linked to the measure (Annex II, Part VI of Reg. (EU) 2017/1509)"
+    },
+    {
+      "document_type": "Y971",
+      "description": "Goods other than those described in the MG footnotes linked to the measure (Annex II, Part VIII of Reg. (EU) 2017/1509)"
+    },
+    {
+      "document_type": "Y976",
+      "description": "Goods other than those falling under the registration obligation defined in Article 1.2 of Regulation (EU) 1191/2014 as amended by Commission Implementing Regulation (EU) 2017/1375"
+    },
+    {
+      "document_type": "Y978",
+      "description": "Exemption by virtue paragraph 3 of Article 1 of Regulation (EU) 2019/1793"
+    },
+    {
+      "document_type": "Y980",
+      "description": "Goods benefitting from derogation to veterinary controls according to Article 4 of Commission Delegated Regulation (EU) 2019/2126"
+    },
+    {
+      "document_type": "Y981",
+      "description": "‘Exemption by virtue of Article 1(5) of Regulation (EU) 2021/111 - last 3 subparagraphs: donation or resale, humanitarian emergency response, exports to facilities located on the continental shelf of a Member State or the exclusive economic zone declared by a Member State pursuant to UNCLOS’"
+    },
+    {
+      "document_type": "Y983",
+      "description": "The prohibitions defined in articles 2.1 and 4.1 of Council Regulation (EU) 2022/263 do not apply (see exemptions in articles 2.2 and 4.3)"
+    },
+    {
+      "document_type": "Y984",
+      "description": "Goods not originating from or not destined for the non-government controlled areas of Ukraine in the oblasts of Donetsk, Kherson, Luhansk and Zaporizhzhia"
+    },
+    {
+      "document_type": "Y986",
+      "description": "Exemption from import prohibition according to articles 11.1 and 11.2 of Regulation (EU) N° 517/2014"
+    },
+    {
+      "document_type": "Y987",
+      "description": "The prohibitions defined in articles 2.1 and 2a.1 of Council Regulation (EU) No 833/2014 do not apply (see exemptions in articles 2.3 and 2a.3)"
+    },
+    {
+      "document_type": "Y988",
+      "description": "A proof that the product has been exported from the United States to the Union prior to 10.11.2020 ( Reg. 2020/1646)"
+    },
+    {
+      "document_type": "Y993",
+      "description": "The prohibitions defined in article 3b.1 of Council Regulation (EU) No 2014/833 do not apply (see contractual exemptions in article 3b.3)"
+    },
+    {
+      "document_type": "Y994",
+      "description": "The prohibitions defined in article 3c.1 of Council Regulation (EU) No 2014/833 do not apply (see contractual exemptions in article 3c.5)"
+    },
+    {
+      "document_type": "Y995",
+      "description": "Goods other than those concerned by the prohibitions defined in articles 2.1 and 2a.1 of Regulation (EU) No 833/2014"
+    },
+    {
+      "document_type": "Y996",
+      "description": "Goods other than those concerned by the prohibitions defined in article 3b.1 of Regulation (EU) No 833/2014"
+    },
+    {
+      "document_type": "Y997",
+      "description": "Goods not originating from or destined to Crimea or Sevastopol (Articles 2 and 2b.1 of Council Regulation (EU) No 692/2014)"
+    },
+    {
+      "document_type": "Y998",
+      "description": "There are no reasonable grounds to determine that the goods are to be used in Crimea or Sevastopol (Article 2b.3 of Council Regulation (EU) No 692/2014)"
+    },
+    {
+      "document_type": "ZZZ",
+      "description": "other"
+    }
+  ]
+}

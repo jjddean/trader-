@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="advancedNotifications" type="availableAdvancedNotificationsType"/>
+  <xs:complexType name="availableAdvancedNotificationsType">
+    <xs:sequence>
+      <xs:element name="response" type="responseType" maxOccurs="50"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="responseType">
+    <xs:sequence>
+      <xs:element type="xs:token" name="correlationId"/>
+      <xs:element type="xs:token" name="notificationId"/>
+      <xs:element type="xs:token" name="link">
+        <xs:annotation>
+          <xs:documentation>
+            This link can be used as a HTTP GET request to collect the full response message
+            This link can be used as a HTTP DELETE request to Acknowledge the response
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

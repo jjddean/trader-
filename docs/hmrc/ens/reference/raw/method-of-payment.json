@@ -1,0 +1,40 @@
+{
+  "list": "Method of Payment",
+  "slug": "method-of-payment",
+  "source": "https://developer.service.hmrc.gov.uk/guides/safety-and-security-import-declarations-end-to-end-service-guide/documentation/appendix.html#method-of-payment",
+  "retrieved": "2026-08-22",
+  "columns": [
+    "Payment Code",
+    "Method"
+  ],
+  "entries": [
+    {
+      "payment_code": "A",
+      "method": "Payment in cash"
+    },
+    {
+      "payment_code": "B",
+      "method": "Payment by credit card"
+    },
+    {
+      "payment_code": "C",
+      "method": "Payment by cheque"
+    },
+    {
+      "payment_code": "D",
+      "method": "Other"
+    },
+    {
+      "payment_code": "H",
+      "method": "Electronic credit transfer"
+    },
+    {
+      "payment_code": "Y",
+      "method": "Account holder with carrier"
+    },
+    {
+      "payment_code": "Z",
+      "method": "Not pre-paid"
+    }
+  ]
+}

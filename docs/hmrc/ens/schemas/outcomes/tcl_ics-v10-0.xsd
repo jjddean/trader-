@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tcl="http://ics.dgtaxud.ec/tcl_ics" targetNamespace="http://ics.dgtaxud.ec/tcl_ics" version="10.0" id="tcl_ics" elementFormDefault="unqualified" attributeFormDefault="unqualified"/>

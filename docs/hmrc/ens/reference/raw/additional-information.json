@@ -1,0 +1,40 @@
+{
+  "list": "Additional Information",
+  "slug": "additional-information",
+  "source": "https://developer.service.hmrc.gov.uk/guides/safety-and-security-import-declarations-end-to-end-service-guide/documentation/appendix.html#additional-information",
+  "retrieved": "2026-08-22",
+  "columns": [
+    "Additional Information ID",
+    "Description"
+  ],
+  "entries": [
+    {
+      "additional_information_id": "100",
+      "description": "Simplified authorisation"
+    },
+    {
+      "additional_information_id": "10600",
+      "description": "Negotiable Bill of lading ‘to order blank endorsed’"
+    },
+    {
+      "additional_information_id": "30300",
+      "description": "Export Id"
+    },
+    {
+      "additional_information_id": "30600",
+      "description": "In EXS, where negotiable bills of lading ‘to order blank endorsed’ are concerned and the consignee particulars are unknown"
+    },
+    {
+      "additional_information_id": "DG0",
+      "description": "Export subject to restriction"
+    },
+    {
+      "additional_information_id": "DG1",
+      "description": "Export subject to duties"
+    },
+    {
+      "additional_information_id": "DG2",
+      "description": "Export"
+    }
+  ]
+}

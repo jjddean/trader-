@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="outcomeResponse" type="outcomeResponseType"/>
+  <xs:complexType name="acknowledgementType">
+    <xs:attribute type="xs:string" name="method"/>
+    <xs:attribute type="xs:string" name="href"/>
+ </xs:complexType>
+  <xs:complexType name="outcomeResponseType">
+    <xs:sequence>
+      <xs:element type="xs:anyType" name="response"/>
+      <xs:element type="acknowledgementType" name="acknowledgement"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

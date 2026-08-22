@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ie="http://ics.dgtaxud.ec/CC316A" xmlns:complex_ics="http://ics.dgtaxud.ec/complex_ics" xmlns:simple_ics="http://ics.dgtaxud.ec/simple_ics" xmlns:tcl_ics="http://ics.dgtaxud.ec/tcl_ics" xmlns:simple="http://ics.dgtaxud.ec/simple" xmlns:tcl="http://ics.dgtaxud.ec/tcl" xmlns:doc="http://ics.dgtaxud.ec/doc" targetNamespace="http://ics.dgtaxud.ec/CC316A" attributeFormDefault="unqualified" elementFormDefault="unqualified" version="36.00">
+  <!--=========================================-->
+  <!--===== IE316:E_ENS_REJ  -->
+  <!--===== ENTRY SUMMARY DECLARATION REJECTED  -->
+  <!--===== ICS P1 Phase Definition  -->
+  <!--===== DDNIA 11.00  -->
+  <!--===== XSD version v36.00  -->
+  <!--=========================================-->
+  <!--===== Imports =====-->
+  <xs:import namespace="http://ics.dgtaxud.ec/doc" schemaLocation="doc-v10-0.xsd" />
+  <xs:import namespace="http://ics.dgtaxud.ec/complex_ics" schemaLocation="complex_types_ics-v10-0.xsd" />
+  <xs:import namespace="http://ics.dgtaxud.ec/simple_ics" schemaLocation="simple_types_ics-v10-0.xsd" />
+  <xs:import namespace="http://ics.dgtaxud.ec/tcl_ics" schemaLocation="tcl_ics-v10-0.xsd" />
+  <xs:import namespace="http://ics.dgtaxud.ec/simple" schemaLocation="simple_types-v10-0.xsd" />
+  <xs:import namespace="http://ics.dgtaxud.ec/tcl" schemaLocation="tcl-v10-0.xsd" />
+  <!--===== Root Element =====-->
+  <xs:element name="CC316A" type="ie:CC316AType" />
+  <!--===== Root Element Content =====-->
+  <xs:complexType name="CC316AType">
+    <xs:sequence>
+      <xs:group ref="ie:MESSAGE" />
+      <xs:element name="HEAHEA" type="ie:HEAHEAType">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="HEADER" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="FUNERRER1" type="ie:FUNERRER1Type" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="FUNCTIONAL ERROR" />
+            <doc:rule name="R123" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <!--===== MESSAGE Content =====-->
+  <xs:group name="MESSAGE">
+    <xs:sequence>
+      <xs:element name="MesSenMES3" type="simple:Alphanumeric_Max35">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="Message sender" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="MesRecMES6" type="simple:Alphanumeric_Max35">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="Message recipient" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="DatOfPreMES9" type="simple:DatePrepType">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="Date of preparation" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="TimOfPreMES10" type="simple:TimeType">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="Time of preparation" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="PriMES15" type="simple:Alpha_1" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="Priority" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="TesIndMES18" type="tcl:Flag" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="Test indicator" />
+            <doc:rule name="TR9085" />
+            <doc:codeList name="Flag" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="MesIdeMES19" type="simple:Alphanumeric_Max14">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="Message identification" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="MesTypMES20" type="tcl:MessageTypes">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="Message type" />
+            <doc:codeList name="MessageTypes" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="CorIdeMES25" type="simple:Alphanumeric_Max14" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="Correlation identifier" />
+            <doc:rule name="TR9181" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <!--===== HEADER =====-->
+  <xs:complexType name="HEAHEAType">
+    <xs:annotation>
+      <xs:documentation>
+        <doc:description value="HEADER" />
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="RefNumHEA4" type="simple:Alphanumeric_Max22">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="Reference number" />
+            <doc:rule name="R891" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="DecRejReaHEA252" type="simple:Alphanumeric_Max350" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="Declaration rejection reason" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="DecRejReaHEA252LNG" type="simple:LanguageCodeType" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="Declaration rejection reason LNG" />
+            <doc:rule name="TR0099" />
+            <doc:codeList name="LanguageCodes" type="business" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="DecRejDatTimHEA116" type="simple:DateTimeType">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="Declaration rejection date and time" />
+            <doc:rule name="R660" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <!--===== FUNCTIONAL ERROR =====-->
+  <xs:complexType name="FUNERRER1Type">
+    <xs:annotation>
+      <xs:documentation>
+        <doc:description value="FUNCTIONAL ERROR" />
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="ErrTypER11" type="tcl:FunctionalErrorCodes">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="Error type" />
+            <doc:rule name="R098" />
+            <doc:codeList name="FunctionalErrorCodes" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="ErrPoiER12" type="simple:Alphanumeric_Max210">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="Error pointer" />
+            <doc:rule name="R098" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="ErrReaER13" type="simple:Alphanumeric_Max6" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="Error reason" />
+            <doc:rule name="R098" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="OriAttValER14" type="simple:Alphanumeric_Max140" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            <doc:description value="Original attribute value" />
+            <doc:rule name="R098" />
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>
+

@@ -1,0 +1,2387 @@
+{
+  "hmrcService": "Safety & Security GB",
+  "retrieved": "2026-08-22",
+  "bands": {
+    "4000-4999": "XML schema validation",
+    "8000-8999": "business rule validation"
+  },
+  "distinctCodes": 182,
+  "codes": [
+    {
+      "errorCode": "4065",
+      "band": "schema",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/MesSenMES3",
+        "/CC315A/MesSenMES3"
+      ]
+    },
+    {
+      "errorCode": "8102",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A",
+        "/CC315A"
+      ]
+    },
+    {
+      "errorCode": "8103",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS",
+        "/CC315A/GOOITEGDS"
+      ]
+    },
+    {
+      "errorCode": "8104",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS",
+        "/CC315A/GOOITEGDS"
+      ]
+    },
+    {
+      "errorCode": "8105",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCE1",
+        "/CC315A/TRACONCE1"
+      ]
+    },
+    {
+      "errorCode": "8107",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8108",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8109",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8111",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8112",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8113",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8114",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 4,
+      "contexts": [
+        "/CC313A/GOOITEGDS/IDEMEATRAGI970/IdeMeaTraGIMEATRA971",
+        "/CC313A/HEAHEA",
+        "/CC315A/GOOITEGDS/IDEMEATRAGI970/IdeMeaTraGIMEATRA971",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8115",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8116",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8117",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8118",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8119",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 4,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCO2",
+        "/CC313A/TRACONCO1",
+        "/CC315A/GOOITEGDS/TRACONCO2",
+        "/CC315A/TRACONCO1"
+      ]
+    },
+    {
+      "errorCode": "8120",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCO1",
+        "/CC315A/TRACONCO1"
+      ]
+    },
+    {
+      "errorCode": "8121",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCO1",
+        "/CC315A/TRACONCO1"
+      ]
+    },
+    {
+      "errorCode": "8122",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCO1",
+        "/CC315A/TRACONCO1"
+      ]
+    },
+    {
+      "errorCode": "8123",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCO1",
+        "/CC315A/TRACONCO1"
+      ]
+    },
+    {
+      "errorCode": "8124",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCO1",
+        "/CC315A/TRACONCO1"
+      ]
+    },
+    {
+      "errorCode": "8125",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCE1",
+        "/CC315A/TRACONCE1"
+      ]
+    },
+    {
+      "errorCode": "8126",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCE1",
+        "/CC315A/TRACONCE1"
+      ]
+    },
+    {
+      "errorCode": "8127",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCE1",
+        "/CC315A/TRACONCE1"
+      ]
+    },
+    {
+      "errorCode": "8128",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCE1",
+        "/CC315A/TRACONCE1"
+      ]
+    },
+    {
+      "errorCode": "8129",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCE1",
+        "/CC315A/TRACONCE1"
+      ]
+    },
+    {
+      "errorCode": "8130",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/NOTPAR670",
+        "/CC315A/NOTPAR670"
+      ]
+    },
+    {
+      "errorCode": "8131",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/NOTPAR670",
+        "/CC315A/NOTPAR670"
+      ]
+    },
+    {
+      "errorCode": "8132",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/NOTPAR670",
+        "/CC315A/NOTPAR670"
+      ]
+    },
+    {
+      "errorCode": "8133",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/NOTPAR670",
+        "/CC315A/NOTPAR670"
+      ]
+    },
+    {
+      "errorCode": "8134",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/NOTPAR670",
+        "/CC315A/NOTPAR670"
+      ]
+    },
+    {
+      "errorCode": "8135",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/MetOfPayGDI12",
+        "/CC315A/GOOITEGDS/MetOfPayGDI12"
+      ]
+    },
+    {
+      "errorCode": "8136",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PlaLoaGOOITE333",
+        "/CC315A/GOOITEGDS/PlaLoaGOOITE333"
+      ]
+    },
+    {
+      "errorCode": "8137",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCO2",
+        "/CC315A/GOOITEGDS/TRACONCO2"
+      ]
+    },
+    {
+      "errorCode": "8138",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCO2",
+        "/CC315A/GOOITEGDS/TRACONCO2"
+      ]
+    },
+    {
+      "errorCode": "8139",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCO2",
+        "/CC315A/GOOITEGDS/TRACONCO2"
+      ]
+    },
+    {
+      "errorCode": "8140",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCO2",
+        "/CC315A/GOOITEGDS/TRACONCO2"
+      ]
+    },
+    {
+      "errorCode": "8141",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCO2",
+        "/CC315A/GOOITEGDS/TRACONCO2"
+      ]
+    },
+    {
+      "errorCode": "8142",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2",
+        "/CC315A/GOOITEGDS/TRACONCE2"
+      ]
+    },
+    {
+      "errorCode": "8143",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2",
+        "/CC315A/GOOITEGDS/TRACONCE2"
+      ]
+    },
+    {
+      "errorCode": "8144",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2",
+        "/CC315A/GOOITEGDS/TRACONCE2"
+      ]
+    },
+    {
+      "errorCode": "8145",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2",
+        "/CC315A/GOOITEGDS/TRACONCE2"
+      ]
+    },
+    {
+      "errorCode": "8146",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2",
+        "/CC315A/GOOITEGDS/TRACONCE2"
+      ]
+    },
+    {
+      "errorCode": "8147",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/IDEMEATRAGI970",
+        "/CC315A/GOOITEGDS/IDEMEATRAGI970"
+      ]
+    },
+    {
+      "errorCode": "8149",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PACGS2",
+        "/CC315A/GOOITEGDS/PACGS2"
+      ]
+    },
+    {
+      "errorCode": "8150",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PACGS2",
+        "/CC315A/GOOITEGDS/PACGS2"
+      ]
+    },
+    {
+      "errorCode": "8151",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PACGS2",
+        "/CC315A/GOOITEGDS/PACGS2"
+      ]
+    },
+    {
+      "errorCode": "8152",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PACGS2",
+        "/CC315A/GOOITEGDS/PACGS2"
+      ]
+    },
+    {
+      "errorCode": "8153",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PACGS2",
+        "/CC315A/GOOITEGDS/PACGS2"
+      ]
+    },
+    {
+      "errorCode": "8154",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PRTNOT640",
+        "/CC315A/GOOITEGDS/PRTNOT640"
+      ]
+    },
+    {
+      "errorCode": "8155",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PRTNOT640",
+        "/CC315A/GOOITEGDS/PRTNOT640"
+      ]
+    },
+    {
+      "errorCode": "8156",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PRTNOT640",
+        "/CC315A/GOOITEGDS/PRTNOT640"
+      ]
+    },
+    {
+      "errorCode": "8157",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PRTNOT640",
+        "/CC315A/GOOITEGDS/PRTNOT640"
+      ]
+    },
+    {
+      "errorCode": "8158",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PRTNOT640",
+        "/CC315A/GOOITEGDS/PRTNOT640"
+      ]
+    },
+    {
+      "errorCode": "8159",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACARENT601",
+        "/CC315A/TRACARENT601"
+      ]
+    },
+    {
+      "errorCode": "8160",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACARENT601",
+        "/CC315A/TRACARENT601"
+      ]
+    },
+    {
+      "errorCode": "8161",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACARENT601",
+        "/CC315A/TRACARENT601"
+      ]
+    },
+    {
+      "errorCode": "8162",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACARENT601",
+        "/CC315A/TRACARENT601"
+      ]
+    },
+    {
+      "errorCode": "8163",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACARENT601",
+        "/CC315A/TRACARENT601"
+      ]
+    },
+    {
+      "errorCode": "8164",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACARENT601",
+        "/CC315A/TRACARENT601"
+      ]
+    },
+    {
+      "errorCode": "8170",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS",
+        "/CC315A/GOOITEGDS"
+      ]
+    },
+    {
+      "errorCode": "8171",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PlaUnlGOOITE333",
+        "/CC315A/GOOITEGDS/PlaUnlGOOITE333"
+      ]
+    },
+    {
+      "errorCode": "8193",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A",
+        "/CC315A"
+      ]
+    },
+    {
+      "errorCode": "8195",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACARENT601/TINTRACARENT602",
+        "/CC315A/TRACARENT601/TINTRACARENT602"
+      ]
+    },
+    {
+      "errorCode": "8198",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/IDEMEATRAGI970",
+        "/CC315A/GOOITEGDS/IDEMEATRAGI970"
+      ]
+    },
+    {
+      "errorCode": "8199",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS",
+        "/CC315A/GOOITEGDS"
+      ]
+    },
+    {
+      "errorCode": "8204",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCE1",
+        "/CC315A/TRACONCE1"
+      ]
+    },
+    {
+      "errorCode": "8206",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8207",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS",
+        "/CC315A/GOOITEGDS"
+      ]
+    },
+    {
+      "errorCode": "8208",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2",
+        "/CC315A/GOOITEGDS/TRACONCE2"
+      ]
+    },
+    {
+      "errorCode": "8220",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCO1",
+        "/CC315A/TRACONCO1"
+      ]
+    },
+    {
+      "errorCode": "8221",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCO1",
+        "/CC315A/TRACONCO1"
+      ]
+    },
+    {
+      "errorCode": "8222",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCO1",
+        "/CC315A/TRACONCO1"
+      ]
+    },
+    {
+      "errorCode": "8223",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCO1",
+        "/CC315A/TRACONCO1"
+      ]
+    },
+    {
+      "errorCode": "8224",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCO1",
+        "/CC315A/TRACONCO1"
+      ]
+    },
+    {
+      "errorCode": "8225",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCE1",
+        "/CC315A/TRACONCE1"
+      ]
+    },
+    {
+      "errorCode": "8226",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCE1",
+        "/CC315A/TRACONCE1"
+      ]
+    },
+    {
+      "errorCode": "8227",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCE1",
+        "/CC315A/TRACONCE1"
+      ]
+    },
+    {
+      "errorCode": "8228",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCE1",
+        "/CC315A/TRACONCE1"
+      ]
+    },
+    {
+      "errorCode": "8229",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCE1",
+        "/CC315A/TRACONCE1"
+      ]
+    },
+    {
+      "errorCode": "8230",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/NOTPAR670",
+        "/CC315A/NOTPAR670"
+      ]
+    },
+    {
+      "errorCode": "8231",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/NOTPAR670",
+        "/CC315A/NOTPAR670"
+      ]
+    },
+    {
+      "errorCode": "8232",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/NOTPAR670",
+        "/CC315A/NOTPAR670"
+      ]
+    },
+    {
+      "errorCode": "8233",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/NOTPAR670",
+        "/CC315A/NOTPAR670"
+      ]
+    },
+    {
+      "errorCode": "8234",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/NOTPAR670",
+        "/CC315A/NOTPAR670"
+      ]
+    },
+    {
+      "errorCode": "8237",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCO2",
+        "/CC315A/GOOITEGDS/TRACONCO2"
+      ]
+    },
+    {
+      "errorCode": "8238",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCO2",
+        "/CC315A/GOOITEGDS/TRACONCO2"
+      ]
+    },
+    {
+      "errorCode": "8239",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCO2",
+        "/CC315A/GOOITEGDS/TRACONCO2"
+      ]
+    },
+    {
+      "errorCode": "8240",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCO2",
+        "/CC315A/GOOITEGDS/TRACONCO2"
+      ]
+    },
+    {
+      "errorCode": "8241",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCO2",
+        "/CC315A/GOOITEGDS/TRACONCO2"
+      ]
+    },
+    {
+      "errorCode": "8242",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2",
+        "/CC315A/GOOITEGDS/TRACONCE2"
+      ]
+    },
+    {
+      "errorCode": "8243",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2",
+        "/CC315A/GOOITEGDS/TRACONCE2"
+      ]
+    },
+    {
+      "errorCode": "8244",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2",
+        "/CC315A/GOOITEGDS/TRACONCE2"
+      ]
+    },
+    {
+      "errorCode": "8245",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2",
+        "/CC315A/GOOITEGDS/TRACONCE2"
+      ]
+    },
+    {
+      "errorCode": "8246",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2",
+        "/CC315A/GOOITEGDS/TRACONCE2"
+      ]
+    },
+    {
+      "errorCode": "8254",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PRTNOT640",
+        "/CC315A/GOOITEGDS/PRTNOT640"
+      ]
+    },
+    {
+      "errorCode": "8255",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PRTNOT640",
+        "/CC315A/GOOITEGDS/PRTNOT640"
+      ]
+    },
+    {
+      "errorCode": "8256",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PRTNOT640",
+        "/CC315A/GOOITEGDS/PRTNOT640"
+      ]
+    },
+    {
+      "errorCode": "8257",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PRTNOT640",
+        "/CC315A/GOOITEGDS/PRTNOT640"
+      ]
+    },
+    {
+      "errorCode": "8258",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PRTNOT640",
+        "/CC315A/GOOITEGDS/PRTNOT640"
+      ]
+    },
+    {
+      "errorCode": "8259",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACARENT601",
+        "/CC315A/TRACARENT601"
+      ]
+    },
+    {
+      "errorCode": "8260",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACARENT601",
+        "/CC315A/TRACARENT601"
+      ]
+    },
+    {
+      "errorCode": "8261",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACARENT601",
+        "/CC315A/TRACARENT601"
+      ]
+    },
+    {
+      "errorCode": "8262",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACARENT601",
+        "/CC315A/TRACARENT601"
+      ]
+    },
+    {
+      "errorCode": "8263",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACARENT601",
+        "/CC315A/TRACARENT601"
+      ]
+    },
+    {
+      "errorCode": "8611",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A",
+        "/CC315A"
+      ]
+    },
+    {
+      "errorCode": "8612",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS",
+        "/CC315A/GOOITEGDS"
+      ]
+    },
+    {
+      "errorCode": "8616",
+      "band": "business",
+      "messages": [
+        "IE315"
+      ],
+      "occurrences": 1,
+      "contexts": [
+        "/CC315A/CUSOFFLON/RefNumCOL1"
+      ]
+    },
+    {
+      "errorCode": "8617",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A",
+        "/CC315A"
+      ]
+    },
+    {
+      "errorCode": "8619",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/NOTPAR670",
+        "/CC315A/NOTPAR670"
+      ]
+    },
+    {
+      "errorCode": "8620",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PRTNOT640",
+        "/CC315A/GOOITEGDS/PRTNOT640"
+      ]
+    },
+    {
+      "errorCode": "8621",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PRTNOT640",
+        "/CC315A/GOOITEGDS/PRTNOT640"
+      ]
+    },
+    {
+      "errorCode": "8622",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS",
+        "/CC315A/GOOITEGDS"
+      ]
+    },
+    {
+      "errorCode": "8623",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS",
+        "/CC315A/GOOITEGDS"
+      ]
+    },
+    {
+      "errorCode": "8624",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2",
+        "/CC315A/GOOITEGDS/TRACONCE2"
+      ]
+    },
+    {
+      "errorCode": "8625",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2",
+        "/CC315A/GOOITEGDS/TRACONCE2"
+      ]
+    },
+    {
+      "errorCode": "8626",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCO1/NamCO17",
+        "/CC315A/TRACONCO1/NamCO17"
+      ]
+    },
+    {
+      "errorCode": "8627",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCO1/StrAndNumCO122",
+        "/CC315A/TRACONCO1/StrAndNumCO122"
+      ]
+    },
+    {
+      "errorCode": "8628",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCO1/PosCodCO123",
+        "/CC315A/TRACONCO1/PosCodCO123"
+      ]
+    },
+    {
+      "errorCode": "8629",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCO1/CitCO124",
+        "/CC315A/TRACONCO1/CitCO124"
+      ]
+    },
+    {
+      "errorCode": "8630",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCO1/CouCO125",
+        "/CC315A/TRACONCO1/CouCO125"
+      ]
+    },
+    {
+      "errorCode": "8631",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCE1/NamCE17",
+        "/CC315A/TRACONCE1/NamCE17"
+      ]
+    },
+    {
+      "errorCode": "8632",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCE1/StrAndNumCE122",
+        "/CC315A/TRACONCE1/StrAndNumCE122"
+      ]
+    },
+    {
+      "errorCode": "8633",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCE1/PosCodCE123",
+        "/CC315A/TRACONCE1/PosCodCE123"
+      ]
+    },
+    {
+      "errorCode": "8634",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCE1/CitCE124",
+        "/CC315A/TRACONCE1/CitCE124"
+      ]
+    },
+    {
+      "errorCode": "8635",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACONCE1/CouCE125",
+        "/CC315A/TRACONCE1/CouCE125"
+      ]
+    },
+    {
+      "errorCode": "8636",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/NOTPAR670/NamNOTPAR672",
+        "/CC315A/NOTPAR670/NamNOTPAR672"
+      ]
+    },
+    {
+      "errorCode": "8637",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/NOTPAR670/StrNumNOTPAR673",
+        "/CC315A/NOTPAR670/StrNumNOTPAR673"
+      ]
+    },
+    {
+      "errorCode": "8638",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/NOTPAR670/PosCodNOTPAR676",
+        "/CC315A/NOTPAR670/PosCodNOTPAR676"
+      ]
+    },
+    {
+      "errorCode": "8639",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/NOTPAR670/CitNOTPAR674",
+        "/CC315A/NOTPAR670/CitNOTPAR674"
+      ]
+    },
+    {
+      "errorCode": "8640",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/NOTPAR670/CouCodNOTPAR675",
+        "/CC315A/NOTPAR670/CouCodNOTPAR675"
+      ]
+    },
+    {
+      "errorCode": "8641",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCO2/NamCO27",
+        "/CC315A/GOOITEGDS/TRACONCO2/NamCO27"
+      ]
+    },
+    {
+      "errorCode": "8642",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCO2/StrAndNumCO222",
+        "/CC315A/GOOITEGDS/TRACONCO2/StrAndNumCO222"
+      ]
+    },
+    {
+      "errorCode": "8643",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCO2/PosCodCO223",
+        "/CC315A/GOOITEGDS/TRACONCO2/PosCodCO223"
+      ]
+    },
+    {
+      "errorCode": "8644",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCO2/CitCO224",
+        "/CC315A/GOOITEGDS/TRACONCO2/CitCO224"
+      ]
+    },
+    {
+      "errorCode": "8645",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCO2/CouCO225",
+        "/CC315A/GOOITEGDS/TRACONCO2/CouCO225"
+      ]
+    },
+    {
+      "errorCode": "8646",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2/NamCE27",
+        "/CC315A/GOOITEGDS/TRACONCE2/NamCE27"
+      ]
+    },
+    {
+      "errorCode": "8647",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2/StrAndNumCE222",
+        "/CC315A/GOOITEGDS/TRACONCE2/StrAndNumCE222"
+      ]
+    },
+    {
+      "errorCode": "8648",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2/PosCodCE223",
+        "/CC315A/GOOITEGDS/TRACONCE2/PosCodCE223"
+      ]
+    },
+    {
+      "errorCode": "8649",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2/CitCE224",
+        "/CC315A/GOOITEGDS/TRACONCE2/CitCE224"
+      ]
+    },
+    {
+      "errorCode": "8650",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/TRACONCE2/CouCE225",
+        "/CC315A/GOOITEGDS/TRACONCE2/CouCE225"
+      ]
+    },
+    {
+      "errorCode": "8651",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PRTNOT640/NamPRTNOT642",
+        "/CC315A/GOOITEGDS/PRTNOT640/NamPRTNOT642"
+      ]
+    },
+    {
+      "errorCode": "8652",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PRTNOT640/StrNumPRTNOT646",
+        "/CC315A/GOOITEGDS/PRTNOT640/StrNumPRTNOT646"
+      ]
+    },
+    {
+      "errorCode": "8653",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PRTNOT640/PstCodPRTNOT644",
+        "/CC315A/GOOITEGDS/PRTNOT640/PstCodPRTNOT644"
+      ]
+    },
+    {
+      "errorCode": "8654",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PRTNOT640/CtyPRTNOT643",
+        "/CC315A/GOOITEGDS/PRTNOT640/CtyPRTNOT643"
+      ]
+    },
+    {
+      "errorCode": "8655",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PRTNOT640/CouCodGINOT647",
+        "/CC315A/GOOITEGDS/PRTNOT640/CouCodGINOT647"
+      ]
+    },
+    {
+      "errorCode": "8656",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRAREP/NamTRE1",
+        "/CC315A/TRAREP/NamTRE1"
+      ]
+    },
+    {
+      "errorCode": "8657",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRAREP/StrAndNumTRE1",
+        "/CC315A/TRAREP/StrAndNumTRE1"
+      ]
+    },
+    {
+      "errorCode": "8658",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRAREP/PosCodTRE1",
+        "/CC315A/TRAREP/PosCodTRE1"
+      ]
+    },
+    {
+      "errorCode": "8659",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRAREP/CitTRE1",
+        "/CC315A/TRAREP/CitTRE1"
+      ]
+    },
+    {
+      "errorCode": "8660",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRAREP/CouCodTRE1",
+        "/CC315A/TRAREP/CouCodTRE1"
+      ]
+    },
+    {
+      "errorCode": "8661",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/PERLODSUMDEC/NamPLD1",
+        "/CC315A/PERLODSUMDEC/NamPLD1"
+      ]
+    },
+    {
+      "errorCode": "8662",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/PERLODSUMDEC/StrAndNumPLD1",
+        "/CC315A/PERLODSUMDEC/StrAndNumPLD1"
+      ]
+    },
+    {
+      "errorCode": "8663",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/PERLODSUMDEC/PosCodPLD1",
+        "/CC315A/PERLODSUMDEC/PosCodPLD1"
+      ]
+    },
+    {
+      "errorCode": "8664",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/PERLODSUMDEC/CitPLD1",
+        "/CC315A/PERLODSUMDEC/CitPLD1"
+      ]
+    },
+    {
+      "errorCode": "8665",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/PERLODSUMDEC/CouCodPLD1",
+        "/CC315A/PERLODSUMDEC/CouCodPLD1"
+      ]
+    },
+    {
+      "errorCode": "8666",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACARENT601/NamTRACARENT604",
+        "/CC315A/TRACARENT601/NamTRACARENT604"
+      ]
+    },
+    {
+      "errorCode": "8667",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACARENT601/StrNumTRACARENT607",
+        "/CC315A/TRACARENT601/StrNumTRACARENT607"
+      ]
+    },
+    {
+      "errorCode": "8668",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACARENT601/PstCodTRACARENT606",
+        "/CC315A/TRACARENT601/PstCodTRACARENT606"
+      ]
+    },
+    {
+      "errorCode": "8669",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACARENT601/CtyTRACARENT603",
+        "/CC315A/TRACARENT601/CtyTRACARENT603"
+      ]
+    },
+    {
+      "errorCode": "8670",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/TRACARENT601/CouCodTRACARENT605",
+        "/CC315A/TRACARENT601/CouCodTRACARENT605"
+      ]
+    },
+    {
+      "errorCode": "8671",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8672",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8673",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8674",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 4,
+      "contexts": [
+        "/CC313A/GOOITEGDS/GroMasGDS46",
+        "/CC313A/HEAHEA/TotGroMasHEA307",
+        "/CC315A/GOOITEGDS/GroMasGDS46",
+        "/CC315A/HEAHEA/TotGroMasHEA307"
+      ]
+    },
+    {
+      "errorCode": "8675",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 4,
+      "contexts": [
+        "/CC313A/GOOITEGDS/GroMasGDS46",
+        "/CC313A/HEAHEA/TotGroMasHEA307",
+        "/CC315A/GOOITEGDS/GroMasGDS46",
+        "/CC315A/HEAHEA/TotGroMasHEA307"
+      ]
+    },
+    {
+      "errorCode": "8676",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 4,
+      "contexts": [
+        "/CC313A/GOOITEGDS/GroMasGDS46",
+        "/CC313A/HEAHEA/TotGroMasHEA307",
+        "/CC315A/GOOITEGDS/GroMasGDS46",
+        "/CC315A/HEAHEA/TotGroMasHEA307"
+      ]
+    },
+    {
+      "errorCode": "8677",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 4,
+      "contexts": [
+        "/CC313A/GOOITEGDS/GroMasGDS46",
+        "/CC313A/HEAHEA/TotGroMasHEA307",
+        "/CC315A/GOOITEGDS/GroMasGDS46",
+        "/CC315A/HEAHEA/TotGroMasHEA307"
+      ]
+    },
+    {
+      "errorCode": "8678",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/IteNumGDS7",
+        "/CC315A/GOOITEGDS/IteNumGDS7"
+      ]
+    },
+    {
+      "errorCode": "8679",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/GroMasGDS46",
+        "/CC315A/GOOITEGDS/GroMasGDS46"
+      ]
+    },
+    {
+      "errorCode": "8680",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PACGS2/NumOfPacGS24",
+        "/CC315A/GOOITEGDS/PACGS2/NumOfPacGS24"
+      ]
+    },
+    {
+      "errorCode": "8681",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS/PACGS2/NumOfPieGS25",
+        "/CC315A/GOOITEGDS/PACGS2/NumOfPieGS25"
+      ]
+    },
+    {
+      "errorCode": "8684",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A",
+        "/CC315A"
+      ]
+    },
+    {
+      "errorCode": "8685",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8686",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8687",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/GOOITEGDS",
+        "/CC315A/GOOITEGDS"
+      ]
+    },
+    {
+      "errorCode": "8688",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A",
+        "/CC315A"
+      ]
+    },
+    {
+      "errorCode": "8689",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8690",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8691",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/HEAHEA",
+        "/CC315A/HEAHEA"
+      ]
+    },
+    {
+      "errorCode": "8692",
+      "band": "business",
+      "messages": [
+        "IE313",
+        "IE315"
+      ],
+      "occurrences": 2,
+      "contexts": [
+        "/CC313A/PERLODSUMDEC/TINPLD1",
+        "/CC315A/PERLODSUMDEC/TINPLD1"
+      ]
+    }
+  ]
+}

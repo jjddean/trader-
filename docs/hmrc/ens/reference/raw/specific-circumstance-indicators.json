@@ -1,0 +1,28 @@
+{
+  "list": "Specific Circumstance Indicator",
+  "slug": "specific-circumstance-indicators",
+  "source": "https://developer.service.hmrc.gov.uk/guides/safety-and-security-import-declarations-end-to-end-service-guide/documentation/appendix.html#specific-circumstance-indicators",
+  "retrieved": "2026-08-22",
+  "columns": [
+    "Specific Circumstance Indicator",
+    "Description"
+  ],
+  "entries": [
+    {
+      "specific_circumstance_indicator": "A",
+      "description": "Postal and express consignments"
+    },
+    {
+      "specific_circumstance_indicator": "C",
+      "description": "Road mode of transport"
+    },
+    {
+      "specific_circumstance_indicator": "D",
+      "description": "Rail mode of transport"
+    },
+    {
+      "specific_circumstance_indicator": "E",
+      "description": "Authorised economic operator"
+    }
+  ]
+}

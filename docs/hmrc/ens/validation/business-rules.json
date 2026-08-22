@@ -1,0 +1,1898 @@
+{
+  "hmrcService": "Safety & Security GB",
+  "retrieved": "2026-08-22",
+  "note": "Scenario text is copied verbatim from HMRC. Schema errors are in the 4000-4999 range; business rule errors are mainly 8000-8999.",
+  "messages": {
+    "IE315": {
+      "label": "New ENS",
+      "schema": "CC315A",
+      "source": "https://developer.service.hmrc.gov.uk/guides/safety-and-security-import-declarations-end-to-end-service-guide/documentation/Level2Validation-315.html",
+      "ruleCount": 188,
+      "rules": [
+        {
+          "errorCode": "4065",
+          "contextElement": "/CC315A/MesSenMES3",
+          "scenario": "[Message sender] must match pattern “[A-Z]{2}[^\\n\\r]{1,15}/[0-9]{10}”."
+        },
+        {
+          "errorCode": "8102",
+          "contextElement": "/CC315A",
+          "scenario": "Each [Item number] is unique throughout the declaration. The items shall be numbered in a sequential fashion, starting from ‘1’ for the first item and incrementing the numbering by ‘1’ for each following item."
+        },
+        {
+          "errorCode": "8103",
+          "contextElement": "/CC315A/GOOITEGDS",
+          "scenario": "[Gross mass] should be present if not ([Specific circumstance indicator] eq ‘E’ or [Total gross mass])."
+        },
+        {
+          "errorCode": "8104",
+          "contextElement": "/CC315A/GOOITEGDS",
+          "scenario": "[Place of loading] should be present if not [Place of loading]."
+        },
+        {
+          "errorCode": "8105",
+          "contextElement": "/CC315A/TRACONCE1",
+          "scenario": "[TIN] should be present if [Specific circumstance indicator] eq ‘E’."
+        },
+        {
+          "errorCode": "8107",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "[Identity of means of transport crossing border] should be present if ([Transport mode at border] equals 1) or ([Transport mode at border] equals ‘8’)."
+        },
+        {
+          "errorCode": "8108",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "[Nationality of means of transport crossing border] should be present if ([Transport mode at border] equals 3, 10 or 11) and [Identity of means of transport crossing border]."
+        },
+        {
+          "errorCode": "8109",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "[Total number of packages] should be present if [Packages] is present."
+        },
+        {
+          "errorCode": "8111",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "IF first digit of [Specific circumstance indicator] is ‘C’ THEN [Transport mode at border] cannot be ‘1’, ‘2’, ‘4’, ‘8’, ‘10’ or ‘11’."
+        },
+        {
+          "errorCode": "8112",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "IF first digit of [Specific circumstance indicator] is ‘D’ THEN [Transport mode at border] cannot be ‘1’, ‘3’, ‘4’, ‘8’, ‘10’ or ‘11’."
+        },
+        {
+          "errorCode": "8113",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "[Identity of means of transport crossing border] should not be present if [Transport mode at border] equals 4."
+        },
+        {
+          "errorCode": "8114",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "IF [Transport mode at border] = ‘1’ or ‘8’ THEN [Identity of means of transport crossing border] consists either of the International Maritime Organisation (IMO) ship identification number or of the European Vessel Identification Number (ENI)."
+        },
+        {
+          "errorCode": "8114",
+          "contextElement": "/CC315A/GOOITEGDS/IDEMEATRAGI970/IdeMeaTraGIMEATRA971",
+          "scenario": "IF [Transport mode at border] = ‘1’ or ‘8’ THEN [Identity of means of transport crossing border] consists either of the International Maritime Organisation (IMO) ship identification number or of the European Vessel Identification Number (ENI)."
+        },
+        {
+          "errorCode": "8115",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "[Nationality of means of transport crossing border] should not be present if not ( ([Transport mode at border] equals 3 or [Transport mode at border] equals 10 or [Transport mode at border] equals 11) and [Identity of means of transport crossing border] )."
+        },
+        {
+          "errorCode": "8116",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "[Total number of packages] should not be present if not ( [Packages] )."
+        },
+        {
+          "errorCode": "8117",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "[Total number of packages] is equal to the sum of all [Number of packages] + all [Number of pieces] + a value of ‘1’ for each declared ‘bulk’."
+        },
+        {
+          "errorCode": "8118",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "IF [Transport mode at border] = ‘4’ THEN [Conveyance reference number] consists of the (IATA) flight number."
+        },
+        {
+          "errorCode": "8119",
+          "contextElement": "/CC315A/TRACONCO1",
+          "scenario": "[(Consignor) Trader] should not be present if [(Consignor) Trader Type]."
+        },
+        {
+          "errorCode": "8119",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCO2",
+          "scenario": "[(Consignor) Trader Type] should not be present if [(Consignor) trader]."
+        },
+        {
+          "errorCode": "8120",
+          "contextElement": "/CC315A/TRACONCO1",
+          "scenario": "[Name] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8121",
+          "contextElement": "/CC315A/TRACONCO1",
+          "scenario": "[Street and number] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8122",
+          "contextElement": "/CC315A/TRACONCO1",
+          "scenario": "[Postal code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8123",
+          "contextElement": "/CC315A/TRACONCO1",
+          "scenario": "[City] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8124",
+          "contextElement": "/CC315A/TRACONCO1",
+          "scenario": "[Country code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8125",
+          "contextElement": "/CC315A/TRACONCE1",
+          "scenario": "[Name] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8126",
+          "contextElement": "/CC315A/TRACONCE1",
+          "scenario": "[Street and number] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8127",
+          "contextElement": "/CC315A/TRACONCE1",
+          "scenario": "[Postal code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8128",
+          "contextElement": "/CC315A/TRACONCE1",
+          "scenario": "[City] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8129",
+          "contextElement": "/CC315A/TRACONCE1",
+          "scenario": "[Country code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8130",
+          "contextElement": "/CC315A/NOTPAR670",
+          "scenario": "[Name] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8131",
+          "contextElement": "/CC315A/NOTPAR670",
+          "scenario": "[Street and number] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8132",
+          "contextElement": "/CC315A/NOTPAR670",
+          "scenario": "[Postal code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8133",
+          "contextElement": "/CC315A/NOTPAR670",
+          "scenario": "[City] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8134",
+          "contextElement": "/CC315A/NOTPAR670",
+          "scenario": "[Country code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8135",
+          "contextElement": "/CC315A/GOOITEGDS/MetOfPayGDI12",
+          "scenario": "[Transport charges / method of payment] should not be present if [Transport charges / method of payment]."
+        },
+        {
+          "errorCode": "8136",
+          "contextElement": "/CC315A/GOOITEGDS/PlaLoaGOOITE333",
+          "scenario": "[Place of loading] should not be present if [Place of loading]."
+        },
+        {
+          "errorCode": "8137",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCO2",
+          "scenario": "[Name] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8138",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCO2",
+          "scenario": "[Street name and number] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8139",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCO2",
+          "scenario": "[Postal code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8140",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCO2",
+          "scenario": "[City] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8141",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCO2",
+          "scenario": "[Country code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8142",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2",
+          "scenario": "[Name] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8143",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2",
+          "scenario": "[Street name and number] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8144",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2",
+          "scenario": "[Postal code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8145",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2",
+          "scenario": "[City] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8146",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2",
+          "scenario": "[Country code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8147",
+          "contextElement": "/CC315A/GOOITEGDS/IDEMEATRAGI970",
+          "scenario": "[Nationality] should be present if not ([Transport mode at border] eq 2)."
+        },
+        {
+          "errorCode": "8149",
+          "contextElement": "/CC315A/GOOITEGDS/PACGS2",
+          "scenario": "IF ‘Kind of packages’ (Box 31) indicates ‘BULK’ (UNECE rec 21 : ‘VQ’, ‘VG’, ‘VL’, ‘VY’, ‘VR’, ‘VS’ or ‘VO’) THEN ‘Number of packages’ (box 31) can not be used, ‘Number of Pieces’ (box 31) can not be used."
+        },
+        {
+          "errorCode": "8150",
+          "contextElement": "/CC315A/GOOITEGDS/PACGS2",
+          "scenario": "IF ‘Kind of packages’ (Box 31) indicates ‘UNPACKED’ (UNECE rec 21 : = ‘NE’, ‘NF’ or ‘NG’) THEN ‘Number of packages’ can not be used, ‘Number of Pieces’ (box 31) = ‘R’."
+        },
+        {
+          "errorCode": "8151",
+          "contextElement": "/CC315A/GOOITEGDS/PACGS2",
+          "scenario": "IF ‘Kind of packages’ (Box 31) indicates neither ‘BULK’ nor ‘UNPACKED’ THEN ‘Number of packages’ (box 31) = ‘R’, ‘Number of Pieces’ (box 31) can not be used."
+        },
+        {
+          "errorCode": "8152",
+          "contextElement": "/CC315A/GOOITEGDS/PACGS2",
+          "scenario": "IF ‘Kind of packages’ (Box 31) indicates neither ‘BULK’ nor ‘UNPACKED’ and the attribute ‘Specific circumstance indicator’ is not used THEN the attribute ‘Marks & numbers of Packages (Box 31)’ = ‘R’ ELSE the attribute ‘Marks & numbers of Packages (Box 31)’ = ‘O’."
+        },
+        {
+          "errorCode": "8153",
+          "contextElement": "/CC315A/GOOITEGDS/PACGS2",
+          "scenario": "In case the value of a MESSAGE.GOODS ITEM.PACKAGES.Number of Packages is ‘0’ then there should exist at least one GOODS ITEM with the same ‘Marks and Numbers of Packages’, and ‘Number of Packages’ with value greater than ‘0’."
+        },
+        {
+          "errorCode": "8154",
+          "contextElement": "/CC315A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Name] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8155",
+          "contextElement": "/CC315A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Street name and number] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8156",
+          "contextElement": "/CC315A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Postal code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8157",
+          "contextElement": "/CC315A/GOOITEGDS/PRTNOT640",
+          "scenario": "[City] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8158",
+          "contextElement": "/CC315A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Country code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8159",
+          "contextElement": "/CC315A/TRACARENT601",
+          "scenario": "[Name] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8160",
+          "contextElement": "/CC315A/TRACARENT601",
+          "scenario": "[Street and number] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8161",
+          "contextElement": "/CC315A/TRACARENT601",
+          "scenario": "[Postal code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8162",
+          "contextElement": "/CC315A/TRACARENT601",
+          "scenario": "[City] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8163",
+          "contextElement": "/CC315A/TRACARENT601",
+          "scenario": "[Country code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8164",
+          "contextElement": "/CC315A/TRACARENT601",
+          "scenario": "[TIN] should be present if [Transport mode at border] eq 1 or [Transport mode at border] eq 4 or [Transport mode at border] eq 8 or [Transport mode at border] eq 10 or [Transport mode at border] eq 11."
+        },
+        {
+          "errorCode": "8170",
+          "contextElement": "/CC315A/GOOITEGDS",
+          "scenario": "[Produced documents and certificates] should be present if not ( [Commercial reference number] is present or [Commercial reference number] is present )."
+        },
+        {
+          "errorCode": "8171",
+          "contextElement": "/CC315A/GOOITEGDS/PlaUnlGOOITE333",
+          "scenario": "[Place of unloading] should not be present if [Place of unloading]."
+        },
+        {
+          "errorCode": "8193",
+          "contextElement": "/CC315A",
+          "scenario": "If any instances of [(Consignor) Trader Type] are present, there must be at least two, and they must not all be the same."
+        },
+        {
+          "errorCode": "8195",
+          "contextElement": "/CC315A/TRACARENT601/TINTRACARENT602",
+          "scenario": "[TIN] is valid if and only if this does not equal [TIN]."
+        },
+        {
+          "errorCode": "8198",
+          "contextElement": "/CC315A/GOOITEGDS/IDEMEATRAGI970",
+          "scenario": "[(Means of transport at border) Identity] should not be present if [Identity of means of transport crossing border] or ( [Transport mode at border] equals 4 )."
+        },
+        {
+          "errorCode": "8199",
+          "contextElement": "/CC315A/GOOITEGDS",
+          "scenario": "[(Means of transport at border) Identity] should be present if not ( [Identity of means of transport crossing border] is present or ( [Transport mode at border] equals ‘4’ ) )."
+        },
+        {
+          "errorCode": "8204",
+          "contextElement": "/CC315A/TRACONCE1",
+          "scenario": "[(Consignee) trader] is prohibited if [Additional information coded] eq ‘10600’ for at least one goods item."
+        },
+        {
+          "errorCode": "8206",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "[Total number of items] should equal the number of [Goods item] present."
+        },
+        {
+          "errorCode": "8207",
+          "contextElement": "/CC315A/GOOITEGDS",
+          "scenario": "[(Code) commodity] should be present if not ( [Goods description] )."
+        },
+        {
+          "errorCode": "8208",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2",
+          "scenario": "[TIN] should be present if [Specific circumstance indicator] eq ‘E’ and [(Consignee) Trader Type]."
+        },
+        {
+          "errorCode": "8220",
+          "contextElement": "/CC315A/TRACONCO1",
+          "scenario": "[Name] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8221",
+          "contextElement": "/CC315A/TRACONCO1",
+          "scenario": "[Street and number] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8222",
+          "contextElement": "/CC315A/TRACONCO1",
+          "scenario": "[Postal code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8223",
+          "contextElement": "/CC315A/TRACONCO1",
+          "scenario": "[City] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8224",
+          "contextElement": "/CC315A/TRACONCO1",
+          "scenario": "[Country code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8225",
+          "contextElement": "/CC315A/TRACONCE1",
+          "scenario": "[Name] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8226",
+          "contextElement": "/CC315A/TRACONCE1",
+          "scenario": "[Street and number] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8227",
+          "contextElement": "/CC315A/TRACONCE1",
+          "scenario": "[Postal code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8228",
+          "contextElement": "/CC315A/TRACONCE1",
+          "scenario": "[City] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8229",
+          "contextElement": "/CC315A/TRACONCE1",
+          "scenario": "[Country code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8230",
+          "contextElement": "/CC315A/NOTPAR670",
+          "scenario": "[Name] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8231",
+          "contextElement": "/CC315A/NOTPAR670",
+          "scenario": "[Street and number] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8232",
+          "contextElement": "/CC315A/NOTPAR670",
+          "scenario": "[Postal code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8233",
+          "contextElement": "/CC315A/NOTPAR670",
+          "scenario": "[City] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8234",
+          "contextElement": "/CC315A/NOTPAR670",
+          "scenario": "[Country code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8237",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCO2",
+          "scenario": "[Name] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8238",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCO2",
+          "scenario": "[Street and number] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8239",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCO2",
+          "scenario": "[Postal code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8240",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCO2",
+          "scenario": "[City] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8241",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCO2",
+          "scenario": "[Country code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8242",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2",
+          "scenario": "[Name] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8243",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2",
+          "scenario": "[Street and number] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8244",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2",
+          "scenario": "[Postal code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8245",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2",
+          "scenario": "[City] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8246",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2",
+          "scenario": "[Country code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8254",
+          "contextElement": "/CC315A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Name] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8255",
+          "contextElement": "/CC315A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Street and number] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8256",
+          "contextElement": "/CC315A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Postal code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8257",
+          "contextElement": "/CC315A/GOOITEGDS/PRTNOT640",
+          "scenario": "[City] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8258",
+          "contextElement": "/CC315A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Country code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8259",
+          "contextElement": "/CC315A/TRACARENT601",
+          "scenario": "[Name] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8260",
+          "contextElement": "/CC315A/TRACARENT601",
+          "scenario": "[Street and number] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8261",
+          "contextElement": "/CC315A/TRACARENT601",
+          "scenario": "[Postal code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8262",
+          "contextElement": "/CC315A/TRACARENT601",
+          "scenario": "[City] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8263",
+          "contextElement": "/CC315A/TRACARENT601",
+          "scenario": "[Country code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8611",
+          "contextElement": "/CC315A",
+          "scenario": "[Goods item] may occur up to 999 times."
+        },
+        {
+          "errorCode": "8612",
+          "contextElement": "/CC315A/GOOITEGDS",
+          "scenario": "[(Means of transport at border) Identity] can occur up to 999 times."
+        },
+        {
+          "errorCode": "8616",
+          "contextElement": "/CC315A/CUSOFFLON/RefNumCOL1",
+          "scenario": "[Reference number] is valid if and only if this does not equal [Reference number]."
+        },
+        {
+          "errorCode": "8617",
+          "contextElement": "/CC315A",
+          "scenario": "[Seals ID] may occur up to 9999 times."
+        },
+        {
+          "errorCode": "8619",
+          "contextElement": "/CC315A/NOTPAR670",
+          "scenario": "[Notify party] is prohibited if there is at least one [Goods item] without an [Additional information coded] equal to ‘10600’."
+        },
+        {
+          "errorCode": "8620",
+          "contextElement": "/CC315A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Notify party] is prohibited if this [Goods item] does not have an [Additional information coded] equal to ‘10600’."
+        },
+        {
+          "errorCode": "8621",
+          "contextElement": "/CC315A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Notify party] is prohibited if [Notify party] is present."
+        },
+        {
+          "errorCode": "8622",
+          "contextElement": "/CC315A/GOOITEGDS",
+          "scenario": "[Notify party] should be present if this [Goods item] has an [Additional information coded] equal to ‘10600’ and [Notify party] is absent."
+        },
+        {
+          "errorCode": "8623",
+          "contextElement": "/CC315A/GOOITEGDS",
+          "scenario": "[(Consignee) Trader Type] is mandatory if no [Additional information coded] eq ‘10600’ for this goods item, and [(Consignee) trader] is not present."
+        },
+        {
+          "errorCode": "8624",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2",
+          "scenario": "[(Consignee) Trader Type] is prohibited if [Additional information coded] eq ‘10600’ for this goods item."
+        },
+        {
+          "errorCode": "8625",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2",
+          "scenario": "[(Consignee) Trader Type] is prohibited if [(Consignee) trader] is present."
+        },
+        {
+          "errorCode": "8626",
+          "contextElement": "/CC315A/TRACONCO1/NamCO17",
+          "scenario": "[Name] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8627",
+          "contextElement": "/CC315A/TRACONCO1/StrAndNumCO122",
+          "scenario": "[Street and number] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8628",
+          "contextElement": "/CC315A/TRACONCO1/PosCodCO123",
+          "scenario": "[Postal code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8629",
+          "contextElement": "/CC315A/TRACONCO1/CitCO124",
+          "scenario": "[City] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8630",
+          "contextElement": "/CC315A/TRACONCO1/CouCO125",
+          "scenario": "[Country code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8631",
+          "contextElement": "/CC315A/TRACONCE1/NamCE17",
+          "scenario": "[Name] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8632",
+          "contextElement": "/CC315A/TRACONCE1/StrAndNumCE122",
+          "scenario": "[Street and number] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8633",
+          "contextElement": "/CC315A/TRACONCE1/PosCodCE123",
+          "scenario": "[Postal code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8634",
+          "contextElement": "/CC315A/TRACONCE1/CitCE124",
+          "scenario": "[City] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8635",
+          "contextElement": "/CC315A/TRACONCE1/CouCE125",
+          "scenario": "[Country code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8636",
+          "contextElement": "/CC315A/NOTPAR670/NamNOTPAR672",
+          "scenario": "[Name] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8637",
+          "contextElement": "/CC315A/NOTPAR670/StrNumNOTPAR673",
+          "scenario": "[Street and number] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8638",
+          "contextElement": "/CC315A/NOTPAR670/PosCodNOTPAR676",
+          "scenario": "[Postal code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8639",
+          "contextElement": "/CC315A/NOTPAR670/CitNOTPAR674",
+          "scenario": "[City] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8640",
+          "contextElement": "/CC315A/NOTPAR670/CouCodNOTPAR675",
+          "scenario": "[Country code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8641",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCO2/NamCO27",
+          "scenario": "[Name] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8642",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCO2/StrAndNumCO222",
+          "scenario": "[Street name and number] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8643",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCO2/PosCodCO223",
+          "scenario": "[Postal code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8644",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCO2/CitCO224",
+          "scenario": "[City] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8645",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCO2/CouCO225",
+          "scenario": "[Country code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8646",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2/NamCE27",
+          "scenario": "[Name] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8647",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2/StrAndNumCE222",
+          "scenario": "[Street name and number] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8648",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2/PosCodCE223",
+          "scenario": "[Postal code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8649",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2/CitCE224",
+          "scenario": "[City] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8650",
+          "contextElement": "/CC315A/GOOITEGDS/TRACONCE2/CouCE225",
+          "scenario": "[Country code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8651",
+          "contextElement": "/CC315A/GOOITEGDS/PRTNOT640/NamPRTNOT642",
+          "scenario": "[Name] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8652",
+          "contextElement": "/CC315A/GOOITEGDS/PRTNOT640/StrNumPRTNOT646",
+          "scenario": "[Street name and number] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8653",
+          "contextElement": "/CC315A/GOOITEGDS/PRTNOT640/PstCodPRTNOT644",
+          "scenario": "[Postal code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8654",
+          "contextElement": "/CC315A/GOOITEGDS/PRTNOT640/CtyPRTNOT643",
+          "scenario": "[City] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8655",
+          "contextElement": "/CC315A/GOOITEGDS/PRTNOT640/CouCodGINOT647",
+          "scenario": "[Country code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8656",
+          "contextElement": "/CC315A/TRAREP/NamTRE1",
+          "scenario": "[Name] should not be present."
+        },
+        {
+          "errorCode": "8657",
+          "contextElement": "/CC315A/TRAREP/StrAndNumTRE1",
+          "scenario": "[Street and number] should not be present."
+        },
+        {
+          "errorCode": "8658",
+          "contextElement": "/CC315A/TRAREP/PosCodTRE1",
+          "scenario": "[Postal code] should not be present."
+        },
+        {
+          "errorCode": "8659",
+          "contextElement": "/CC315A/TRAREP/CitTRE1",
+          "scenario": "[City] should not be present."
+        },
+        {
+          "errorCode": "8660",
+          "contextElement": "/CC315A/TRAREP/CouCodTRE1",
+          "scenario": "[Country code] should not be present."
+        },
+        {
+          "errorCode": "8661",
+          "contextElement": "/CC315A/PERLODSUMDEC/NamPLD1",
+          "scenario": "[Name] should not be present."
+        },
+        {
+          "errorCode": "8662",
+          "contextElement": "/CC315A/PERLODSUMDEC/StrAndNumPLD1",
+          "scenario": "[Street and number] should not be present."
+        },
+        {
+          "errorCode": "8663",
+          "contextElement": "/CC315A/PERLODSUMDEC/PosCodPLD1",
+          "scenario": "[Postal code] should not be present."
+        },
+        {
+          "errorCode": "8664",
+          "contextElement": "/CC315A/PERLODSUMDEC/CitPLD1",
+          "scenario": "[City] should not be present."
+        },
+        {
+          "errorCode": "8665",
+          "contextElement": "/CC315A/PERLODSUMDEC/CouCodPLD1",
+          "scenario": "[Country code] should not be present."
+        },
+        {
+          "errorCode": "8666",
+          "contextElement": "/CC315A/TRACARENT601/NamTRACARENT604",
+          "scenario": "[Name] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8667",
+          "contextElement": "/CC315A/TRACARENT601/StrNumTRACARENT607",
+          "scenario": "[Street and number] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8668",
+          "contextElement": "/CC315A/TRACARENT601/PstCodTRACARENT606",
+          "scenario": "[Postal code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8669",
+          "contextElement": "/CC315A/TRACARENT601/CtyTRACARENT603",
+          "scenario": "[City] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8670",
+          "contextElement": "/CC315A/TRACARENT601/CouCodTRACARENT605",
+          "scenario": "[Country code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8671",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "[Total number of items] should not have leading zeros."
+        },
+        {
+          "errorCode": "8672",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "[Total number of packages] should not have leading zeros."
+        },
+        {
+          "errorCode": "8673",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "[Total gross mass] should not have a sign."
+        },
+        {
+          "errorCode": "8674",
+          "contextElement": "/CC315A/HEAHEA/TotGroMasHEA307",
+          "scenario": "Value should not have leading zeros."
+        },
+        {
+          "errorCode": "8674",
+          "contextElement": "/CC315A/GOOITEGDS/GroMasGDS46",
+          "scenario": "Value should not have leading zeros."
+        },
+        {
+          "errorCode": "8675",
+          "contextElement": "/CC315A/HEAHEA/TotGroMasHEA307",
+          "scenario": "Value should not have more than 11 digits."
+        },
+        {
+          "errorCode": "8675",
+          "contextElement": "/CC315A/GOOITEGDS/GroMasGDS46",
+          "scenario": "Value should not have more than 11 digits."
+        },
+        {
+          "errorCode": "8676",
+          "contextElement": "/CC315A/HEAHEA/TotGroMasHEA307",
+          "scenario": "Value should not have more than 3 decimal digits."
+        },
+        {
+          "errorCode": "8676",
+          "contextElement": "/CC315A/GOOITEGDS/GroMasGDS46",
+          "scenario": "Value should not have more than 3 decimal digits."
+        },
+        {
+          "errorCode": "8677",
+          "contextElement": "/CC315A/HEAHEA/TotGroMasHEA307",
+          "scenario": "Value should have at least one digit before and after the decimal point if the decimal point is present."
+        },
+        {
+          "errorCode": "8677",
+          "contextElement": "/CC315A/GOOITEGDS/GroMasGDS46",
+          "scenario": "Value should have at least one digit before and after the decimal point if the decimal point is present."
+        },
+        {
+          "errorCode": "8678",
+          "contextElement": "/CC315A/GOOITEGDS/IteNumGDS7",
+          "scenario": "[Item number] should not have leading zeros."
+        },
+        {
+          "errorCode": "8679",
+          "contextElement": "/CC315A/GOOITEGDS/GroMasGDS46",
+          "scenario": "[Gross mass] should not have a sign."
+        },
+        {
+          "errorCode": "8680",
+          "contextElement": "/CC315A/GOOITEGDS/PACGS2/NumOfPacGS24",
+          "scenario": "[Number of packages] should not have leading zeros."
+        },
+        {
+          "errorCode": "8681",
+          "contextElement": "/CC315A/GOOITEGDS/PACGS2/NumOfPieGS25",
+          "scenario": "[Number of pieces] should not have leading zeros."
+        },
+        {
+          "errorCode": "8684",
+          "contextElement": "/CC315A",
+          "scenario": "At least two [Itinerary] should be present."
+        },
+        {
+          "errorCode": "8685",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "IF [Transport mode at border] = ‘1’ AND [Conveyance reference number] begins with “XFER” THEN [Conveyance reference number] must consist of the letters “XFER” followed by one or more alphanumeric characters, which can optionally be followed by a separator (“:” (colon) or “-” (hyphen)) and one or more alphanumeric characters."
+        },
+        {
+          "errorCode": "8686",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "[Total gross mass] must be greater than or equal to the sum of [Gross mass]."
+        },
+        {
+          "errorCode": "8687",
+          "contextElement": "/CC315A/GOOITEGDS",
+          "scenario": "[Place of unloading] should be present if not ( [Place of unloading] is present ) and not ( [Specific circumstance indicator] equals ‘E’ )."
+        },
+        {
+          "errorCode": "8688",
+          "contextElement": "/CC315A",
+          "scenario": "[Packages] should be present."
+        },
+        {
+          "errorCode": "8689",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "[Transport mode at border] may only take the values ‘1’, ‘2’, ‘3’, ‘4’, ‘8’, ‘10’ or ‘11’."
+        },
+        {
+          "errorCode": "8690",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "[Transport mode at border] must not contain leading zeros."
+        },
+        {
+          "errorCode": "8691",
+          "contextElement": "/CC315A/HEAHEA",
+          "scenario": "[Specific circumstance indicator] may only take the values ‘C’, ‘D’ or ‘E’."
+        },
+        {
+          "errorCode": "8692",
+          "contextElement": "/CC315A/PERLODSUMDEC/TINPLD1",
+          "scenario": "[TIN] must begin with ‘GB’."
+        }
+      ]
+    },
+    "IE313": {
+      "label": "ENS amendment",
+      "schema": "CC313A",
+      "source": "https://developer.service.hmrc.gov.uk/guides/safety-and-security-import-declarations-end-to-end-service-guide/documentation/Level2Validation-313.html",
+      "ruleCount": 187,
+      "rules": [
+        {
+          "errorCode": "4065",
+          "contextElement": "/CC313A/MesSenMES3",
+          "scenario": "[Message sender] must match pattern “[A-Z]{2}[^\\n\\r]{1,15}/[0-9]{10}”."
+        },
+        {
+          "errorCode": "8102",
+          "contextElement": "/CC313A",
+          "scenario": "Each [Item number] is unique throughout the declaration. The items shall be numbered in a sequential fashion, starting from ‘1’ for the first item and incrementing the numbering by ‘1’ for each following item."
+        },
+        {
+          "errorCode": "8103",
+          "contextElement": "/CC313A/GOOITEGDS",
+          "scenario": "[Gross mass] should be present if not ([Specific circumstance indicator] eq ‘E’ or [Total gross mass])."
+        },
+        {
+          "errorCode": "8104",
+          "contextElement": "/CC313A/GOOITEGDS",
+          "scenario": "[Place of loading] should be present if not [Place of loading]."
+        },
+        {
+          "errorCode": "8105",
+          "contextElement": "/CC313A/TRACONCE1",
+          "scenario": "[TIN] should be present if [Specific circumstance indicator] eq ‘E’."
+        },
+        {
+          "errorCode": "8107",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "[Identity of means of transport crossing border] should be present if ([Transport mode at border] equals 1) or ([Transport mode at border] equals ‘8’)."
+        },
+        {
+          "errorCode": "8108",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "[Nationality of means of transport crossing border] should be present if ([Transport mode at border] equals 3, 10 or 11) and [Identity of means of transport crossing border]."
+        },
+        {
+          "errorCode": "8109",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "[Total number of packages] should be present if [Packages] is present."
+        },
+        {
+          "errorCode": "8111",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "IF first digit of [Specific circumstance indicator] is ‘C’ THEN [Transport mode at border] cannot be ‘1’, ‘2’, ‘4’, ‘8’, ‘10’ or ‘11’."
+        },
+        {
+          "errorCode": "8112",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "IF first digit of [Specific circumstance indicator] is ‘D’ THEN [Transport mode at border] cannot be ‘1’, ‘3’, ‘4’, ‘8’, ‘10’ or ‘11’."
+        },
+        {
+          "errorCode": "8113",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "[Identity of means of transport crossing border] should not be present if [Transport mode at border] equals 4."
+        },
+        {
+          "errorCode": "8114",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "IF [Transport mode at border] = ‘1’ or ‘8’ THEN [Identity of means of transport crossing border] consists either of the International Maritime Organisation (IMO) ship identification number or of the European Vessel Identification Number (ENI)."
+        },
+        {
+          "errorCode": "8114",
+          "contextElement": "/CC313A/GOOITEGDS/IDEMEATRAGI970/IdeMeaTraGIMEATRA971",
+          "scenario": "IF [Transport mode at border] = ‘1’ or ‘8’ THEN [Identity of means of transport crossing border] consists either of the International Maritime Organisation (IMO) ship identification number or of the European Vessel Identification Number (ENI)."
+        },
+        {
+          "errorCode": "8115",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "[Nationality of means of transport crossing border] should not be present if not ( ([Transport mode at border] equals 3 or [Transport mode at border] equals 10 or [Transport mode at border] equals 11) and [Identity of means of transport crossing border] )."
+        },
+        {
+          "errorCode": "8116",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "[Total number of packages] should not be present if not ( [Packages] )."
+        },
+        {
+          "errorCode": "8117",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "[Total number of packages] is equal to the sum of all [Number of packages] + all [Number of pieces] + a value of ‘1’ for each declared ‘bulk’."
+        },
+        {
+          "errorCode": "8118",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "IF [Transport mode at border] = ‘4’ THEN [Conveyance reference number] consists of the (IATA) flight number."
+        },
+        {
+          "errorCode": "8119",
+          "contextElement": "/CC313A/TRACONCO1",
+          "scenario": "[(Consignor) Trader] should not be present if [(Consignor) Trader Type]."
+        },
+        {
+          "errorCode": "8119",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCO2",
+          "scenario": "[(Consignor) Trader Type] should not be present if [(Consignor) trader]."
+        },
+        {
+          "errorCode": "8120",
+          "contextElement": "/CC313A/TRACONCO1",
+          "scenario": "[Name] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8121",
+          "contextElement": "/CC313A/TRACONCO1",
+          "scenario": "[Street and number] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8122",
+          "contextElement": "/CC313A/TRACONCO1",
+          "scenario": "[Postal code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8123",
+          "contextElement": "/CC313A/TRACONCO1",
+          "scenario": "[City] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8124",
+          "contextElement": "/CC313A/TRACONCO1",
+          "scenario": "[Country code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8125",
+          "contextElement": "/CC313A/TRACONCE1",
+          "scenario": "[Name] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8126",
+          "contextElement": "/CC313A/TRACONCE1",
+          "scenario": "[Street and number] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8127",
+          "contextElement": "/CC313A/TRACONCE1",
+          "scenario": "[Postal code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8128",
+          "contextElement": "/CC313A/TRACONCE1",
+          "scenario": "[City] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8129",
+          "contextElement": "/CC313A/TRACONCE1",
+          "scenario": "[Country code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8130",
+          "contextElement": "/CC313A/NOTPAR670",
+          "scenario": "[Name] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8131",
+          "contextElement": "/CC313A/NOTPAR670",
+          "scenario": "[Street and number] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8132",
+          "contextElement": "/CC313A/NOTPAR670",
+          "scenario": "[Postal code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8133",
+          "contextElement": "/CC313A/NOTPAR670",
+          "scenario": "[City] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8134",
+          "contextElement": "/CC313A/NOTPAR670",
+          "scenario": "[Country code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8135",
+          "contextElement": "/CC313A/GOOITEGDS/MetOfPayGDI12",
+          "scenario": "[Transport charges / method of payment] should not be present if [Transport charges / method of payment]."
+        },
+        {
+          "errorCode": "8136",
+          "contextElement": "/CC313A/GOOITEGDS/PlaLoaGOOITE333",
+          "scenario": "[Place of loading] should not be present if [Place of loading]."
+        },
+        {
+          "errorCode": "8137",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCO2",
+          "scenario": "[Name] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8138",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCO2",
+          "scenario": "[Street name and number] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8139",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCO2",
+          "scenario": "[Postal code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8140",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCO2",
+          "scenario": "[City] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8141",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCO2",
+          "scenario": "[Country code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8142",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2",
+          "scenario": "[Name] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8143",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2",
+          "scenario": "[Street name and number] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8144",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2",
+          "scenario": "[Postal code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8145",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2",
+          "scenario": "[City] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8146",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2",
+          "scenario": "[Country code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8147",
+          "contextElement": "/CC313A/GOOITEGDS/IDEMEATRAGI970",
+          "scenario": "[Nationality] should be present if not ([Transport mode at border] eq 2)."
+        },
+        {
+          "errorCode": "8149",
+          "contextElement": "/CC313A/GOOITEGDS/PACGS2",
+          "scenario": "IF ‘Kind of packages’ (Box 31) indicates ‘BULK’ (UNECE rec 21 : ‘VQ’, ‘VG’, ‘VL’, ‘VY’, ‘VR’, ‘VS’ or ‘VO’) THEN ‘Number of packages’ (box 31) can not be used, ‘Number of Pieces’ (box 31) can not be used."
+        },
+        {
+          "errorCode": "8150",
+          "contextElement": "/CC313A/GOOITEGDS/PACGS2",
+          "scenario": "IF ‘Kind of packages’ (Box 31) indicates ‘UNPACKED’ (UNECE rec 21 : = ‘NE’, ‘NF’ or ‘NG’) THEN ‘Number of packages’ can not be used, ‘Number of Pieces’ (box 31) = ‘R’."
+        },
+        {
+          "errorCode": "8151",
+          "contextElement": "/CC313A/GOOITEGDS/PACGS2",
+          "scenario": "IF ‘Kind of packages’ (Box 31) indicates neither ‘BULK’ nor ‘UNPACKED’ THEN ‘Number of packages’ (box 31) = ‘R’, ‘Number of Pieces’ (box 31) can not be used."
+        },
+        {
+          "errorCode": "8152",
+          "contextElement": "/CC313A/GOOITEGDS/PACGS2",
+          "scenario": "IF ‘Kind of packages’ (Box 31) indicates neither ‘BULK’ nor ‘UNPACKED’ and the attribute ‘Specific circumstance indicator’ is not used THEN the attribute ‘Marks & numbers of Packages (Box 31)’ = ‘R’ ELSE the attribute ‘Marks & numbers of Packages (Box 31)’ = ‘O’."
+        },
+        {
+          "errorCode": "8153",
+          "contextElement": "/CC313A/GOOITEGDS/PACGS2",
+          "scenario": "In case the value of a MESSAGE.GOODS ITEM.PACKAGES.Number of Packages is ‘0’ then there should exist at least one GOODS ITEM with the same ‘Marks and Numbers of Packages’, and ‘Number of Packages’ with value greater than ‘0’."
+        },
+        {
+          "errorCode": "8154",
+          "contextElement": "/CC313A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Name] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8155",
+          "contextElement": "/CC313A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Street name and number] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8156",
+          "contextElement": "/CC313A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Postal code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8157",
+          "contextElement": "/CC313A/GOOITEGDS/PRTNOT640",
+          "scenario": "[City] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8158",
+          "contextElement": "/CC313A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Country code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8159",
+          "contextElement": "/CC313A/TRACARENT601",
+          "scenario": "[Name] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8160",
+          "contextElement": "/CC313A/TRACARENT601",
+          "scenario": "[Street and number] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8161",
+          "contextElement": "/CC313A/TRACARENT601",
+          "scenario": "[Postal code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8162",
+          "contextElement": "/CC313A/TRACARENT601",
+          "scenario": "[City] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8163",
+          "contextElement": "/CC313A/TRACARENT601",
+          "scenario": "[Country code] should be present if not ( [TIN] )."
+        },
+        {
+          "errorCode": "8164",
+          "contextElement": "/CC313A/TRACARENT601",
+          "scenario": "[TIN] should be present if [Transport mode at border] eq 1 or [Transport mode at border] eq 4 or [Transport mode at border] eq 8 or [Transport mode at border] eq 10 or [Transport mode at border] eq 11."
+        },
+        {
+          "errorCode": "8170",
+          "contextElement": "/CC313A/GOOITEGDS",
+          "scenario": "[Produced documents and certificates] should be present if not ( [Commercial reference number] is present or [Commercial reference number] is present )."
+        },
+        {
+          "errorCode": "8171",
+          "contextElement": "/CC313A/GOOITEGDS/PlaUnlGOOITE333",
+          "scenario": "[Place of unloading] should not be present if [Place of unloading]."
+        },
+        {
+          "errorCode": "8193",
+          "contextElement": "/CC313A",
+          "scenario": "If any instances of [(Consignor) Trader Type] are present, there must be at least two, and they must not all be the same."
+        },
+        {
+          "errorCode": "8195",
+          "contextElement": "/CC313A/TRACARENT601/TINTRACARENT602",
+          "scenario": "[TIN] is valid if and only if this does not equal [TIN]."
+        },
+        {
+          "errorCode": "8198",
+          "contextElement": "/CC313A/GOOITEGDS/IDEMEATRAGI970",
+          "scenario": "[(Means of transport at border) Identity] should not be present if [Identity of means of transport crossing border] or ( [Transport mode at border] equals 4 )."
+        },
+        {
+          "errorCode": "8199",
+          "contextElement": "/CC313A/GOOITEGDS",
+          "scenario": "[(Means of transport at border) Identity] should be present if not ( [Identity of means of transport crossing border] is present or ( [Transport mode at border] equals ‘4’ ) )."
+        },
+        {
+          "errorCode": "8204",
+          "contextElement": "/CC313A/TRACONCE1",
+          "scenario": "[(Consignee) trader] is prohibited if [Additional information coded] eq ‘10600’ for at least one goods item."
+        },
+        {
+          "errorCode": "8206",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "[Total number of items] should equal the number of [Goods item] present."
+        },
+        {
+          "errorCode": "8207",
+          "contextElement": "/CC313A/GOOITEGDS",
+          "scenario": "[(Code) commodity] should be present if not ( [Goods description] )."
+        },
+        {
+          "errorCode": "8208",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2",
+          "scenario": "[TIN] should be present if [Specific circumstance indicator] eq ‘E’ and [(Consignee) Trader Type]."
+        },
+        {
+          "errorCode": "8220",
+          "contextElement": "/CC313A/TRACONCO1",
+          "scenario": "[Name] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8221",
+          "contextElement": "/CC313A/TRACONCO1",
+          "scenario": "[Street and number] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8222",
+          "contextElement": "/CC313A/TRACONCO1",
+          "scenario": "[Postal code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8223",
+          "contextElement": "/CC313A/TRACONCO1",
+          "scenario": "[City] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8224",
+          "contextElement": "/CC313A/TRACONCO1",
+          "scenario": "[Country code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8225",
+          "contextElement": "/CC313A/TRACONCE1",
+          "scenario": "[Name] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8226",
+          "contextElement": "/CC313A/TRACONCE1",
+          "scenario": "[Street and number] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8227",
+          "contextElement": "/CC313A/TRACONCE1",
+          "scenario": "[Postal code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8228",
+          "contextElement": "/CC313A/TRACONCE1",
+          "scenario": "[City] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8229",
+          "contextElement": "/CC313A/TRACONCE1",
+          "scenario": "[Country code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8230",
+          "contextElement": "/CC313A/NOTPAR670",
+          "scenario": "[Name] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8231",
+          "contextElement": "/CC313A/NOTPAR670",
+          "scenario": "[Street and number] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8232",
+          "contextElement": "/CC313A/NOTPAR670",
+          "scenario": "[Postal code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8233",
+          "contextElement": "/CC313A/NOTPAR670",
+          "scenario": "[City] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8234",
+          "contextElement": "/CC313A/NOTPAR670",
+          "scenario": "[Country code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8237",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCO2",
+          "scenario": "[Name] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8238",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCO2",
+          "scenario": "[Street and number] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8239",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCO2",
+          "scenario": "[Postal code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8240",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCO2",
+          "scenario": "[City] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8241",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCO2",
+          "scenario": "[Country code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8242",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2",
+          "scenario": "[Name] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8243",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2",
+          "scenario": "[Street and number] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8244",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2",
+          "scenario": "[Postal code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8245",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2",
+          "scenario": "[City] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8246",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2",
+          "scenario": "[Country code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8254",
+          "contextElement": "/CC313A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Name] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8255",
+          "contextElement": "/CC313A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Street and number] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8256",
+          "contextElement": "/CC313A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Postal code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8257",
+          "contextElement": "/CC313A/GOOITEGDS/PRTNOT640",
+          "scenario": "[City] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8258",
+          "contextElement": "/CC313A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Country code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8259",
+          "contextElement": "/CC313A/TRACARENT601",
+          "scenario": "[Name] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8260",
+          "contextElement": "/CC313A/TRACARENT601",
+          "scenario": "[Street and number] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8261",
+          "contextElement": "/CC313A/TRACARENT601",
+          "scenario": "[Postal code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8262",
+          "contextElement": "/CC313A/TRACARENT601",
+          "scenario": "[City] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8263",
+          "contextElement": "/CC313A/TRACARENT601",
+          "scenario": "[Country code] should be present for a non-GB [TIN]."
+        },
+        {
+          "errorCode": "8611",
+          "contextElement": "/CC313A",
+          "scenario": "[Goods item] may occur up to 999 times."
+        },
+        {
+          "errorCode": "8612",
+          "contextElement": "/CC313A/GOOITEGDS",
+          "scenario": "[(Means of transport at border) Identity] can occur up to 999 times."
+        },
+        {
+          "errorCode": "8617",
+          "contextElement": "/CC313A",
+          "scenario": "[Seals ID] may occur up to 9999 times."
+        },
+        {
+          "errorCode": "8619",
+          "contextElement": "/CC313A/NOTPAR670",
+          "scenario": "[Notify party] is prohibited if there is at least one [Goods item] without an [Additional information coded] equal to ‘10600’."
+        },
+        {
+          "errorCode": "8620",
+          "contextElement": "/CC313A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Notify party] is prohibited if this [Goods item] does not have an [Additional information coded] equal to ‘10600’."
+        },
+        {
+          "errorCode": "8621",
+          "contextElement": "/CC313A/GOOITEGDS/PRTNOT640",
+          "scenario": "[Notify party] is prohibited if [Notify party] is present."
+        },
+        {
+          "errorCode": "8622",
+          "contextElement": "/CC313A/GOOITEGDS",
+          "scenario": "[Notify party] should be present if this [Goods item] has an [Additional information coded] equal to ‘10600’ and [Notify party] is absent."
+        },
+        {
+          "errorCode": "8623",
+          "contextElement": "/CC313A/GOOITEGDS",
+          "scenario": "[(Consignee) Trader Type] is mandatory if no [Additional information coded] eq ‘10600’ for this goods item, and [(Consignee) trader] is not present."
+        },
+        {
+          "errorCode": "8624",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2",
+          "scenario": "[(Consignee) Trader Type] is prohibited if [Additional information coded] eq ‘10600’ for this goods item."
+        },
+        {
+          "errorCode": "8625",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2",
+          "scenario": "[(Consignee) Trader Type] is prohibited if [(Consignee) trader] is present."
+        },
+        {
+          "errorCode": "8626",
+          "contextElement": "/CC313A/TRACONCO1/NamCO17",
+          "scenario": "[Name] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8627",
+          "contextElement": "/CC313A/TRACONCO1/StrAndNumCO122",
+          "scenario": "[Street and number] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8628",
+          "contextElement": "/CC313A/TRACONCO1/PosCodCO123",
+          "scenario": "[Postal code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8629",
+          "contextElement": "/CC313A/TRACONCO1/CitCO124",
+          "scenario": "[City] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8630",
+          "contextElement": "/CC313A/TRACONCO1/CouCO125",
+          "scenario": "[Country code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8631",
+          "contextElement": "/CC313A/TRACONCE1/NamCE17",
+          "scenario": "[Name] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8632",
+          "contextElement": "/CC313A/TRACONCE1/StrAndNumCE122",
+          "scenario": "[Street and number] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8633",
+          "contextElement": "/CC313A/TRACONCE1/PosCodCE123",
+          "scenario": "[Postal code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8634",
+          "contextElement": "/CC313A/TRACONCE1/CitCE124",
+          "scenario": "[City] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8635",
+          "contextElement": "/CC313A/TRACONCE1/CouCE125",
+          "scenario": "[Country code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8636",
+          "contextElement": "/CC313A/NOTPAR670/NamNOTPAR672",
+          "scenario": "[Name] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8637",
+          "contextElement": "/CC313A/NOTPAR670/StrNumNOTPAR673",
+          "scenario": "[Street and number] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8638",
+          "contextElement": "/CC313A/NOTPAR670/PosCodNOTPAR676",
+          "scenario": "[Postal code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8639",
+          "contextElement": "/CC313A/NOTPAR670/CitNOTPAR674",
+          "scenario": "[City] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8640",
+          "contextElement": "/CC313A/NOTPAR670/CouCodNOTPAR675",
+          "scenario": "[Country code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8641",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCO2/NamCO27",
+          "scenario": "[Name] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8642",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCO2/StrAndNumCO222",
+          "scenario": "[Street name and number] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8643",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCO2/PosCodCO223",
+          "scenario": "[Postal code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8644",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCO2/CitCO224",
+          "scenario": "[City] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8645",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCO2/CouCO225",
+          "scenario": "[Country code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8646",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2/NamCE27",
+          "scenario": "[Name] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8647",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2/StrAndNumCE222",
+          "scenario": "[Street name and number] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8648",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2/PosCodCE223",
+          "scenario": "[Postal code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8649",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2/CitCE224",
+          "scenario": "[City] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8650",
+          "contextElement": "/CC313A/GOOITEGDS/TRACONCE2/CouCE225",
+          "scenario": "[Country code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8651",
+          "contextElement": "/CC313A/GOOITEGDS/PRTNOT640/NamPRTNOT642",
+          "scenario": "[Name] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8652",
+          "contextElement": "/CC313A/GOOITEGDS/PRTNOT640/StrNumPRTNOT646",
+          "scenario": "[Street name and number] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8653",
+          "contextElement": "/CC313A/GOOITEGDS/PRTNOT640/PstCodPRTNOT644",
+          "scenario": "[Postal code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8654",
+          "contextElement": "/CC313A/GOOITEGDS/PRTNOT640/CtyPRTNOT643",
+          "scenario": "[City] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8655",
+          "contextElement": "/CC313A/GOOITEGDS/PRTNOT640/CouCodGINOT647",
+          "scenario": "[Country code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8656",
+          "contextElement": "/CC313A/TRAREP/NamTRE1",
+          "scenario": "[Name] should not be present."
+        },
+        {
+          "errorCode": "8657",
+          "contextElement": "/CC313A/TRAREP/StrAndNumTRE1",
+          "scenario": "[Street and number] should not be present."
+        },
+        {
+          "errorCode": "8658",
+          "contextElement": "/CC313A/TRAREP/PosCodTRE1",
+          "scenario": "[Postal code] should not be present."
+        },
+        {
+          "errorCode": "8659",
+          "contextElement": "/CC313A/TRAREP/CitTRE1",
+          "scenario": "[City] should not be present."
+        },
+        {
+          "errorCode": "8660",
+          "contextElement": "/CC313A/TRAREP/CouCodTRE1",
+          "scenario": "[Country code] should not be present."
+        },
+        {
+          "errorCode": "8661",
+          "contextElement": "/CC313A/PERLODSUMDEC/NamPLD1",
+          "scenario": "[Name] should not be present."
+        },
+        {
+          "errorCode": "8662",
+          "contextElement": "/CC313A/PERLODSUMDEC/StrAndNumPLD1",
+          "scenario": "[Street and number] should not be present."
+        },
+        {
+          "errorCode": "8663",
+          "contextElement": "/CC313A/PERLODSUMDEC/PosCodPLD1",
+          "scenario": "[Postal code] should not be present."
+        },
+        {
+          "errorCode": "8664",
+          "contextElement": "/CC313A/PERLODSUMDEC/CitPLD1",
+          "scenario": "[City] should not be present."
+        },
+        {
+          "errorCode": "8665",
+          "contextElement": "/CC313A/PERLODSUMDEC/CouCodPLD1",
+          "scenario": "[Country code] should not be present."
+        },
+        {
+          "errorCode": "8666",
+          "contextElement": "/CC313A/TRACARENT601/NamTRACARENT604",
+          "scenario": "[Name] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8667",
+          "contextElement": "/CC313A/TRACARENT601/StrNumTRACARENT607",
+          "scenario": "[Street and number] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8668",
+          "contextElement": "/CC313A/TRACARENT601/PstCodTRACARENT606",
+          "scenario": "[Postal code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8669",
+          "contextElement": "/CC313A/TRACARENT601/CtyTRACARENT603",
+          "scenario": "[City] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8670",
+          "contextElement": "/CC313A/TRACARENT601/CouCodTRACARENT605",
+          "scenario": "[Country code] should not be present if GB [TIN] is present."
+        },
+        {
+          "errorCode": "8671",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "[Total number of items] should not have leading zeros."
+        },
+        {
+          "errorCode": "8672",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "[Total number of packages] should not have leading zeros."
+        },
+        {
+          "errorCode": "8673",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "[Total gross mass] should not have a sign."
+        },
+        {
+          "errorCode": "8674",
+          "contextElement": "/CC313A/HEAHEA/TotGroMasHEA307",
+          "scenario": "Value should not have leading zeros."
+        },
+        {
+          "errorCode": "8674",
+          "contextElement": "/CC313A/GOOITEGDS/GroMasGDS46",
+          "scenario": "Value should not have leading zeros."
+        },
+        {
+          "errorCode": "8675",
+          "contextElement": "/CC313A/HEAHEA/TotGroMasHEA307",
+          "scenario": "Value should not have more than 11 digits."
+        },
+        {
+          "errorCode": "8675",
+          "contextElement": "/CC313A/GOOITEGDS/GroMasGDS46",
+          "scenario": "Value should not have more than 11 digits."
+        },
+        {
+          "errorCode": "8676",
+          "contextElement": "/CC313A/HEAHEA/TotGroMasHEA307",
+          "scenario": "Value should not have more than 3 decimal digits."
+        },
+        {
+          "errorCode": "8676",
+          "contextElement": "/CC313A/GOOITEGDS/GroMasGDS46",
+          "scenario": "Value should not have more than 3 decimal digits."
+        },
+        {
+          "errorCode": "8677",
+          "contextElement": "/CC313A/HEAHEA/TotGroMasHEA307",
+          "scenario": "Value should have at least one digit before and after the decimal point if the decimal point is present."
+        },
+        {
+          "errorCode": "8677",
+          "contextElement": "/CC313A/GOOITEGDS/GroMasGDS46",
+          "scenario": "Value should have at least one digit before and after the decimal point if the decimal point is present."
+        },
+        {
+          "errorCode": "8678",
+          "contextElement": "/CC313A/GOOITEGDS/IteNumGDS7",
+          "scenario": "[Item number] should not have leading zeros."
+        },
+        {
+          "errorCode": "8679",
+          "contextElement": "/CC313A/GOOITEGDS/GroMasGDS46",
+          "scenario": "[Gross mass] should not have a sign."
+        },
+        {
+          "errorCode": "8680",
+          "contextElement": "/CC313A/GOOITEGDS/PACGS2/NumOfPacGS24",
+          "scenario": "[Number of packages] should not have leading zeros."
+        },
+        {
+          "errorCode": "8681",
+          "contextElement": "/CC313A/GOOITEGDS/PACGS2/NumOfPieGS25",
+          "scenario": "[Number of pieces] should not have leading zeros."
+        },
+        {
+          "errorCode": "8684",
+          "contextElement": "/CC313A",
+          "scenario": "At least two [Itinerary] should be present."
+        },
+        {
+          "errorCode": "8685",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "IF [Transport mode at border] = ‘1’ AND [Conveyance reference number] begins with “XFER” THEN [Conveyance reference number] must consist of the letters “XFER” followed by one or more alphanumeric characters, which can optionally be followed by a separator (“:” (colon) or “-” (hyphen)) and one or more alphanumeric characters."
+        },
+        {
+          "errorCode": "8686",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "[Total gross mass] must be greater than or equal to the sum of [Gross mass]."
+        },
+        {
+          "errorCode": "8687",
+          "contextElement": "/CC313A/GOOITEGDS",
+          "scenario": "[Place of unloading] should be present if not ( [Place of unloading] is present ) and not ( [Specific circumstance indicator] equals ‘E’ )."
+        },
+        {
+          "errorCode": "8688",
+          "contextElement": "/CC313A",
+          "scenario": "[Packages] should be present."
+        },
+        {
+          "errorCode": "8689",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "[Transport mode at border] may only take the values ‘1’, ‘2’, ‘3’, ‘4’, ‘8’, ‘10’ or ‘11’."
+        },
+        {
+          "errorCode": "8690",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "[Transport mode at border] must not contain leading zeros."
+        },
+        {
+          "errorCode": "8691",
+          "contextElement": "/CC313A/HEAHEA",
+          "scenario": "[Specific circumstance indicator] may only take the values ‘C’, ‘D’ or ‘E’."
+        },
+        {
+          "errorCode": "8692",
+          "contextElement": "/CC313A/PERLODSUMDEC/TINPLD1",
+          "scenario": "[TIN] must begin with ‘GB’."
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="entryDeclarationResponses" type="availableResponsesType"/>
+  <xs:complexType name="availableResponsesType">
+    <xs:sequence>
+      <xs:element name="response" type="responseType" maxOccurs="50"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="responseType">
+    <xs:sequence>
+      <xs:element type="xs:token" name="correlationId"/>
+      <xs:element type="xs:token" name="link">
+        <xs:annotation>
+          <xs:documentation>
+            This link can be used as a HTTP GET request to collect the full response message
+            This link can be used as a HTTP DELETE request to Acknowledge the response
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element type="xs:token" name="MRN" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            This element is only present for declarations that have been successfully issued with an MRN.
+            If no MRN element is present, perform a GET on the link to collect the error response
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

@@ -1,0 +1,40 @@
+{
+  "list": "Mode of Transport",
+  "slug": "modes-of-transport",
+  "source": "https://developer.service.hmrc.gov.uk/guides/safety-and-security-import-declarations-end-to-end-service-guide/documentation/appendix.html#modes-of-transport",
+  "retrieved": "2026-08-22",
+  "columns": [
+    "Code",
+    "Mode of Transport"
+  ],
+  "entries": [
+    {
+      "code": "1",
+      "mode_of_transport": "Maritime"
+    },
+    {
+      "code": "2",
+      "mode_of_transport": "Rail"
+    },
+    {
+      "code": "3",
+      "mode_of_transport": "Road (Channel Tunnel – Le Shuttle service)"
+    },
+    {
+      "code": "4",
+      "mode_of_transport": "Air (including fly trucks)"
+    },
+    {
+      "code": "8",
+      "mode_of_transport": "Inland water transport"
+    },
+    {
+      "code": "10",
+      "mode_of_transport": "Roll-on roll-off — accompanied"
+    },
+    {
+      "code": "11",
+      "mode_of_transport": "Roll-on roll-off — unaccompanied"
+    }
+  ]
+}
