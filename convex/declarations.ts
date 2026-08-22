@@ -1793,6 +1793,46 @@ export const updateDeclarationDetails = mutation({
     // inventory-linked locations.
     containerNumber: v.optional(v.string()),
     cnsUcn: v.optional(v.string()),
+    /**
+     * Declaration category. Absent keeps the H1 full import data set.
+     * Obligations per category live under docs/hmrc/specs/cds-api/.
+     */
+    declarationCategory: v.optional(
+      v.union(v.literal("B1"), v.literal("C1"), v.literal("I1")),
+    ),
+    // DE 3/1 — exporter country (export categories declare their own) and
+    // DE 3/2 EORI. The Name/City/Line/Postcode args are declared above.
+    exporterCountry: v.optional(v.string()),
+    exporterEori: v.optional(v.string()),
+    // DE 3/9 + 3/10 — Consignee (export counterpart of Importer).
+    consigneeEori: v.optional(v.string()),
+    consigneeName: v.optional(v.string()),
+    consigneeCity: v.optional(v.string()),
+    consigneeLine: v.optional(v.string()),
+    consigneePostcode: v.optional(v.string()),
+    consigneeCountry: v.optional(v.string()),
+    // DE 3/31 + 3/32 — Carrier.
+    carrierEori: v.optional(v.string()),
+    carrierName: v.optional(v.string()),
+    // DE 3/39 — holder of the authorisation (mandatory on C1 and I1).
+    authorisationHolderEori: v.optional(v.string()),
+    authorisationCategoryCode: v.optional(v.string()),
+    // DE 4/2 and DE 4/15.
+    transportChargesMethodOfPayment: v.optional(v.string()),
+    exchangeRate: v.optional(v.string()),
+    // DE 5/12 — customs office of exit (mandatory on B1 and C1).
+    customsOfficeOfExit: v.optional(v.string()),
+    // DE 5/18 — countries of routing.
+    countriesOfRouting: v.optional(v.array(v.string())),
+    // DE 7/5, 7/7, 7/10, 7/14, 7/15, 7/18.
+    inlandTransportMode: v.optional(v.string()),
+    departureTransportId: v.optional(v.string()),
+    departureTransportIdType: v.optional(v.string()),
+    borderTransportId: v.optional(v.string()),
+    borderTransportIdType: v.optional(v.string()),
+    borderTransportNationality: v.optional(v.string()),
+    containerId: v.optional(v.string()),
+    sealNumber: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -1808,6 +1848,23 @@ export const updateDeclarationDetails = mutation({
     // which build proper CDS XML.
     if (!isEditableStatus(existing.status)) {
       throw userError("declaration_filed", editBlockedMessage(existing.status));
+    }
+
+    // `route` on this table carries HMRC's document-check route ("Route 1")
+    // for dashboard-created rows, not a trade direction, so it cannot be used
+    // to police the category. Only a value that explicitly contradicts the
+    // category is rejected.
+    const category = args.declarationCategory;
+    if (category) {
+      const routeValue = String(args.route ?? "").trim().toLowerCase();
+      const expected = category === "I1" ? "import" : "export";
+      const contradicts =
+        (routeValue === "import" || routeValue === "export") && routeValue !== expected;
+      if (contradicts) {
+        throw new Error(
+          `Declaration category ${category} is a ${expected} data set but route is "${routeValue}".`,
+        );
+      }
     }
 
     const mop = String(args.paymentMethodCode ?? "").trim().toUpperCase();
@@ -1844,6 +1901,31 @@ export const updateDeclarationDetails = mutation({
       ...(args.invoiceTotal !== undefined ? { invoiceTotal: args.invoiceTotal } : {}),
       ...(args.incoterms !== undefined ? { incoterms: args.incoterms } : {}),
       ...(args.incotermLocation !== undefined ? { incotermLocation: args.incotermLocation } : {}),
+      ...(args.declarationCategory !== undefined ? { declarationCategory: args.declarationCategory } : {}),
+      ...(args.exporterCountry !== undefined ? { exporterCountry: args.exporterCountry } : {}),
+      ...(args.exporterEori !== undefined ? { exporterEori: args.exporterEori } : {}),
+      ...(args.consigneeEori !== undefined ? { consigneeEori: args.consigneeEori } : {}),
+      ...(args.consigneeName !== undefined ? { consigneeName: args.consigneeName } : {}),
+      ...(args.consigneeCity !== undefined ? { consigneeCity: args.consigneeCity } : {}),
+      ...(args.consigneeLine !== undefined ? { consigneeLine: args.consigneeLine } : {}),
+      ...(args.consigneePostcode !== undefined ? { consigneePostcode: args.consigneePostcode } : {}),
+      ...(args.consigneeCountry !== undefined ? { consigneeCountry: args.consigneeCountry } : {}),
+      ...(args.carrierEori !== undefined ? { carrierEori: args.carrierEori } : {}),
+      ...(args.carrierName !== undefined ? { carrierName: args.carrierName } : {}),
+      ...(args.authorisationHolderEori !== undefined ? { authorisationHolderEori: args.authorisationHolderEori } : {}),
+      ...(args.authorisationCategoryCode !== undefined ? { authorisationCategoryCode: args.authorisationCategoryCode } : {}),
+      ...(args.transportChargesMethodOfPayment !== undefined ? { transportChargesMethodOfPayment: args.transportChargesMethodOfPayment } : {}),
+      ...(args.exchangeRate !== undefined ? { exchangeRate: args.exchangeRate } : {}),
+      ...(args.customsOfficeOfExit !== undefined ? { customsOfficeOfExit: args.customsOfficeOfExit } : {}),
+      ...(args.countriesOfRouting !== undefined ? { countriesOfRouting: args.countriesOfRouting } : {}),
+      ...(args.inlandTransportMode !== undefined ? { inlandTransportMode: args.inlandTransportMode } : {}),
+      ...(args.departureTransportId !== undefined ? { departureTransportId: args.departureTransportId } : {}),
+      ...(args.departureTransportIdType !== undefined ? { departureTransportIdType: args.departureTransportIdType } : {}),
+      ...(args.borderTransportId !== undefined ? { borderTransportId: args.borderTransportId } : {}),
+      ...(args.borderTransportIdType !== undefined ? { borderTransportIdType: args.borderTransportIdType } : {}),
+      ...(args.borderTransportNationality !== undefined ? { borderTransportNationality: args.borderTransportNationality } : {}),
+      ...(args.containerId !== undefined ? { containerId: args.containerId } : {}),
+      ...(args.sealNumber !== undefined ? { sealNumber: args.sealNumber } : {}),
       ...(args.transportMode !== undefined ? { transportMode: args.transportMode } : {}),
       ...(args.transportId !== undefined ? { transportId: args.transportId } : {}),
       ...(args.transportIdType !== undefined ? { transportIdType: args.transportIdType } : {}),

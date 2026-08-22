@@ -31,6 +31,37 @@ import {
 } from "@/lib/payment-method";
 import { userMessageFromError } from "@/lib/convex-errors";
 
+/**
+ * Declaration category selector. "" is the H1 full import data set — the
+ * historic behaviour for every existing row. Obligations per category:
+ * docs/hmrc/specs/cds-api/appendix-2{1a,1f,2a,2d}-*-obligations.md
+ */
+type DeclarationCategoryChoice = "" | "B1" | "C1" | "I1";
+
+const DECLARATION_CATEGORIES: { value: DeclarationCategoryChoice; label: string }[] = [
+  { value: "", label: "H1 — full import declaration" },
+  { value: "I1", label: "I1 C&F — simplified import (regular use)" },
+  { value: "B1", label: "B1 — standard export / re-export" },
+  { value: "C1", label: "C1 C&F — simplified export (regular use)" },
+];
+
+/** B1 and C1 file against the export data sets. */
+function isExportCategory(category: DeclarationCategoryChoice): boolean {
+  return category === "B1" || category === "C1";
+}
+
+/** I1 and C1 are the simplified data sets — both require DE 3/39. */
+function isSimplifiedCategory(category: DeclarationCategoryChoice): boolean {
+  return category === "I1" || category === "C1";
+}
+
+/** DE 1/2 additional declaration type implied by the chosen category. */
+function defaultDeclarationTypeFor(category: DeclarationCategoryChoice): string {
+  if (category === "B1") return "A";
+  if (isSimplifiedCategory(category)) return "C";
+  return "H1";
+}
+
 const TRANSPORT_MODE_OPTIONS = [
   { value: "1", label: "1 — Sea" },
   { value: "2", label: "2 — Rail" },
@@ -123,6 +154,19 @@ export default function CoreSchemaPage() {
     defermentAccountNumber: "",
     containerNumber: "",
     cnsUcn: "",
+    // Declaration category. "" keeps the H1 full import data set.
+    declarationCategory: "" as DeclarationCategoryChoice,
+    customsOfficeOfExit: "",
+    authorisationHolderEori: "",
+    authorisationCategoryCode: "",
+    consigneeEori: "",
+    consigneeName: "",
+    consigneeCity: "",
+    consigneeLine: "",
+    consigneePostcode: "",
+    consigneeCountry: "",
+    containerId: "",
+    sealNumber: "",
   });
 
   React.useEffect(() => {
@@ -146,6 +190,18 @@ export default function CoreSchemaPage() {
       invoiceTotal: d.invoiceTotal != null ? String(d.invoiceTotal) : "",
       incoterms: (d.incoterms as string) || "",
       incotermLocation: (d.incotermLocation as string) || "",
+      declarationCategory: ((d.declarationCategory as string) || "") as DeclarationCategoryChoice,
+      customsOfficeOfExit: (d.customsOfficeOfExit as string) || "",
+      authorisationHolderEori: (d.authorisationHolderEori as string) || "",
+      authorisationCategoryCode: (d.authorisationCategoryCode as string) || "",
+      consigneeEori: (d.consigneeEori as string) || "",
+      consigneeName: (d.consigneeName as string) || "",
+      consigneeCity: (d.consigneeCity as string) || "",
+      consigneeLine: (d.consigneeLine as string) || "",
+      consigneePostcode: (d.consigneePostcode as string) || "",
+      consigneeCountry: (d.consigneeCountry as string) || "",
+      containerId: (d.containerId as string) || "",
+      sealNumber: (d.sealNumber as string) || "",
       goodsLocationKind:
         inferGoodsLocationKind({
           goodsLocationKind: d.goodsLocationKind,
@@ -236,6 +292,18 @@ export default function CoreSchemaPage() {
         exporterLine: formData.exporterLine.trim(),
         exporterPostcode: formData.exporterPostcode.trim(),
         transactionNatureCode: formData.transactionNatureCode.trim(),
+        declarationCategory: formData.declarationCategory || undefined,
+        customsOfficeOfExit: formData.customsOfficeOfExit.trim().toUpperCase(),
+        authorisationHolderEori: formData.authorisationHolderEori.trim().toUpperCase(),
+        authorisationCategoryCode: formData.authorisationCategoryCode.trim().toUpperCase(),
+        consigneeEori: formData.consigneeEori.trim().toUpperCase(),
+        consigneeName: formData.consigneeName.trim(),
+        consigneeCity: formData.consigneeCity.trim(),
+        consigneeLine: formData.consigneeLine.trim(),
+        consigneePostcode: formData.consigneePostcode.trim(),
+        consigneeCountry: formData.consigneeCountry,
+        containerId: formData.containerId.trim().toUpperCase(),
+        sealNumber: formData.sealNumber.trim(),
         paymentMethodCode: formData.paymentMethodCode.trim().toUpperCase() || undefined,
         defermentAccountNumber: requiresDefermentAccount(formData.paymentMethodCode)
           ? formData.defermentAccountNumber.replace(/\D/g, "")
@@ -355,20 +423,41 @@ export default function CoreSchemaPage() {
               </p>
             </div>
 
-            {/* Declaration Category */}
+            {/* Declaration category (DE 1/2 data set). Drives which obligations
+                the submit route enforces — see src/lib/submit-category.ts. */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Declaration Category
-                <span className="text-red-500">*</span>
               </label>
-              <Select value={formData.declarationType} onValueChange={(v) => setFormData({ ...formData, declarationType: v })}>
+              <Select
+                value={formData.declarationCategory || "H1"}
+                onValueChange={(v) => {
+                  const category = (v === "H1" ? "" : v) as DeclarationCategoryChoice;
+                  setFormData({
+                    ...formData,
+                    declarationCategory: category,
+                    // DE 1/2. The simplified sets accept only C or F; B1 is a
+                    // standard declaration (A); H1 keeps its historic value.
+                    declarationType: defaultDeclarationTypeFor(category),
+                  });
+                }}
+              >
                 <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent position="popper">
-                  <SelectItem value="H1">H1 (Release for Free Circulation)</SelectItem>
+                  {DECLARATION_CATEGORIES.map((c) => (
+                    <SelectItem key={c.value || "H1"} value={c.value || "H1"}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              <p className="text-[11px] text-slate-500">
+                {isExportCategory(formData.declarationCategory)
+                  ? "Export data set — importer, preference and valuation fields are not declared."
+                  : "Import data set."}
+              </p>
             </div>
 
             {/* Routing */}
@@ -405,6 +494,203 @@ export default function CoreSchemaPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* DE 1/2 — the simplified sets are regular-use only: C or F. */}
+            {isSimplifiedCategory(formData.declarationCategory) && (
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
+                  Additional Declaration Type (DE 1/2)
+                  <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  value={formData.declarationType === "F" ? "F" : "C"}
+                  onValueChange={(v) => setFormData({ ...formData, declarationType: v })}
+                >
+                  <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent position="popper">
+                    <SelectItem value="C">C — simplified declaration, regular use</SelectItem>
+                    <SelectItem value="F">F — simplified declaration, regular use (EIDR)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* DE 3/39 — mandatory on both simplified sets: the SDP/EIDR
+                authorisation is what permits the reduced form. */}
+            {isSimplifiedCategory(formData.declarationCategory) && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
+                    Holder of the Authorisation (DE 3/39)
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.authorisationHolderEori}
+                    onChange={(e) => setFormData({ ...formData, authorisationHolderEori: e.target.value })}
+                    placeholder="GB123456789012"
+                    className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+                  />
+                  <p className="text-[10px] text-slate-400 flex items-center gap-1">
+                    <Info className="h-3 w-3" />
+                    EORI holding the SDP or EIDR authorisation.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Authorisation Type Code
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.authorisationCategoryCode}
+                    onChange={(e) => setFormData({ ...formData, authorisationCategoryCode: e.target.value })}
+                    placeholder="SDE"
+                    className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* DE 5/12 — mandatory on both export sets. No import equivalent. */}
+            {isExportCategory(formData.declarationCategory) && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
+                    Customs Office of Exit (DE 5/12)
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.customsOfficeOfExit}
+                    onChange={(e) => setFormData({ ...formData, customsOfficeOfExit: e.target.value })}
+                    placeholder="GB000060"
+                    className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+                  />
+                  <p className="text-[10px] text-slate-400 flex items-center gap-1">
+                    <Info className="h-3 w-3" />
+                    Office where the goods leave the UK.
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* DE 3/9 + 3/10 — Consignee. The export counterpart of Importer. */}
+            {isExportCategory(formData.declarationCategory) && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Consignee EORI / ID (DE 3/10)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.consigneeEori}
+                    onChange={(e) => setFormData({ ...formData, consigneeEori: e.target.value })}
+                    className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Consignee Name (DE 3/9)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.consigneeName}
+                    onChange={(e) => setFormData({ ...formData, consigneeName: e.target.value })}
+                    className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Consignee Address Line
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.consigneeLine}
+                    onChange={(e) => setFormData({ ...formData, consigneeLine: e.target.value })}
+                    className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Consignee City
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.consigneeCity}
+                    onChange={(e) => setFormData({ ...formData, consigneeCity: e.target.value })}
+                    className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Consignee Postcode
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.consigneePostcode}
+                    onChange={(e) => setFormData({ ...formData, consigneePostcode: e.target.value })}
+                    className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Consignee Country
+                  </label>
+                  <Select
+                    value={formData.consigneeCountry}
+                    onValueChange={(v) => setFormData({ ...formData, consigneeCountry: v })}
+                  >
+                    <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+                      <SelectValue placeholder="Country" />
+                    </SelectTrigger>
+                    <SelectContent position="popper" className="max-h-[300px]">
+                      {countries.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>
+                          {c.code} — {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+
+            {/* DE 7/10 + 7/18 — container and seal. DE 7/2 is derived from
+                whether a container number is present. */}
+            {formData.declarationCategory !== "" && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Container Number (DE 7/10)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.containerId}
+                    onChange={(e) => setFormData({ ...formData, containerId: e.target.value })}
+                    placeholder="MSKU1234567"
+                    className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+                  />
+                </div>
+              </>
+            )}
+
+            {isExportCategory(formData.declarationCategory) && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Seal Number (DE 7/18)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.sealNumber}
+                    onChange={(e) => setFormData({ ...formData, sealNumber: e.target.value })}
+                    className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
+                  />
+                </div>
+              </>
+            )}
 
             {/* Dispatch Country — DE 5/14. A-mandatory per Appendix 21A. */}
             <div className="space-y-2">

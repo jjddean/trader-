@@ -63,9 +63,7 @@ describe("resolveDeclarationCategory — routing", () => {
   it("routes everything else to the H1 full import data set", () => {
     assert.equal(resolveDeclarationCategory({}), "H1");
     assert.equal(resolveDeclarationCategory({ declarationCategory: "" }), "H1");
-    // C1 has obligations documented but no mapper yet — must not silently
-    // fall onto another category's payload.
-    assert.equal(resolveDeclarationCategory({ declarationCategory: "C1" }), "H1");
+    assert.equal(resolveDeclarationCategory({ declarationCategory: "ZZ" }), "H1");
     assert.equal(resolveDeclarationCategory(null), "H1");
     assert.equal(resolveDeclarationCategory(undefined), "H1");
     // route alone must not flip the data set — category is the switch.
