@@ -10,9 +10,11 @@ import { resolveOrgHmrcRoutingForDeclaration } from "../../../../lib/hmrc-org-ro
 import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
 import { buildPayloadDebugSnapshot, renderH1Xml, validateXmlPreflight } from "../../../../lib/h1-xml-renderer";
 import { mapToCDS_B1 } from "../../../../lib/b1-mapper";
+import { mapToCDS_C1 } from "../../../../lib/c1-mapper";
+import { renderC1Xml } from "../../../../lib/c1-xml-renderer";
 import { mapToCDS_I1 } from "../../../../lib/i1-mapper";
 import { renderI1Xml } from "../../../../lib/i1-xml-renderer";
-import { resolveDeclarationCategory, validateB1SubmitGate, validateI1SubmitGate } from "../../../../lib/submit-category";
+import { resolveDeclarationCategory, validateB1SubmitGate, validateC1SubmitGate, validateI1SubmitGate } from "../../../../lib/submit-category";
 import { renderB1Xml } from "../../../../lib/b1-xml-renderer";
 import { validateGoodsLocationForSubmit } from "../../../../lib/goods-location";
 import { validateGoodsItemSequences } from "../../../../lib/submit-goods-items";
@@ -232,12 +234,17 @@ export async function POST(request: Request) {
     // another category — see src/lib/submit-category.ts.
     const declarationCategory = resolveDeclarationCategory(lane);
     const isB1Export = declarationCategory === "B1";
+    const isC1Export = declarationCategory === "C1";
     const isI1Import = declarationCategory === "I1";
+    const laneRecord = lane as Record<string, unknown>;
+    const itemRecords = items as Record<string, unknown>[];
     const baselineErrors = isB1Export
-      ? validateB1SubmitGate(lane as Record<string, unknown>, items as Record<string, unknown>[])
-      : isI1Import
-        ? validateI1SubmitGate(lane as Record<string, unknown>, items as Record<string, unknown>[])
-        : validateDeclaration(lane, items);
+      ? validateB1SubmitGate(laneRecord, itemRecords)
+      : isC1Export
+        ? validateC1SubmitGate(laneRecord, itemRecords)
+        : isI1Import
+          ? validateI1SubmitGate(laneRecord, itemRecords)
+          : validateDeclaration(lane, items);
     if (baselineErrors.length > 0) {
       return NextResponse.json(
         { error: "Declaration incomplete", missing: baselineErrors },
@@ -397,14 +404,16 @@ export async function POST(request: Request) {
       // a payload shape — see docs/hmrc/specs/cds-api/appendix-22a-b1-obligations.md.
       payloadInfo = isB1Export
         ? mapToCDS_B1(lane, items, { omitAdditionalDocuments, forbiddenDocCodes })
-        : isI1Import
-          ? mapToCDS_I1(lane, items, { omitAdditionalDocuments, forbiddenDocCodes })
-          : mapToCDS_H1(lane, items, {
-              omitAdditionalDocuments,
-              forbiddenDocCodes,
-              // DE 2/1 Z/MCR inventory reference — CNS route only.
-              ...(transport === "cns_inventory" ? { cnsUcn: routingContext.cnsUcn } : {}),
-            });
+        : isC1Export
+          ? mapToCDS_C1(lane, items, { omitAdditionalDocuments, forbiddenDocCodes })
+          : isI1Import
+            ? mapToCDS_I1(lane, items, { omitAdditionalDocuments, forbiddenDocCodes })
+            : mapToCDS_H1(lane, items, {
+                omitAdditionalDocuments,
+                forbiddenDocCodes,
+                // DE 2/1 Z/MCR inventory reference — CNS route only.
+                ...(transport === "cns_inventory" ? { cnsUcn: routingContext.cnsUcn } : {}),
+              });
     } catch (mappingError: unknown) {
       const message = userMessageFromError(mappingError, "Unknown mapping error");
       return NextResponse.json(
@@ -451,9 +460,11 @@ export async function POST(request: Request) {
     // Convert the JSON payload into the required HMRC XML Envelope
     const xmlPayload = isB1Export
       ? renderB1Xml(payloadInfo)
-      : isI1Import
-        ? renderI1Xml(payloadInfo)
-        : renderH1Xml(payloadInfo);
+      : isC1Export
+        ? renderC1Xml(payloadInfo)
+        : isI1Import
+          ? renderI1Xml(payloadInfo)
+          : renderH1Xml(payloadInfo);
 
     const xmlPreflight = validateXmlPreflight(xmlPayload, lane.eori || "", {
       requireAdditionalDocument: !omitAdditionalDocuments,

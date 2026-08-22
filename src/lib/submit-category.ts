@@ -15,15 +15,16 @@
  */
 
 import { validateB1Declaration } from "./b1-mapper";
+import { validateC1Declaration } from "./c1-mapper";
 import { validateI1Declaration } from "./i1-mapper";
 import { validateGoodsLocationForSubmit } from "./goods-location";
 import { validateGoodsItemSequences } from "./submit-goods-items";
 import { commodityRequiresSupplementaryUnit } from "./wco-mapper";
 
-export type DeclarationCategory = "B1" | "I1" | "H1";
+export type DeclarationCategory = "B1" | "C1" | "I1" | "H1";
 
 /** Categories with their own mapper, renderer and gate. */
-const ROUTED_CATEGORIES: readonly DeclarationCategory[] = ["B1", "I1"];
+const ROUTED_CATEGORIES: readonly DeclarationCategory[] = ["B1", "C1", "I1"];
 
 /**
  * Which data set a declaration files under. Anything that is not an explicitly
@@ -40,6 +41,11 @@ export function resolveDeclarationCategory(lane: unknown): DeclarationCategory {
 /** True when the submit route must take the export mapper and renderer. */
 export function isB1ExportDeclaration(lane: unknown): boolean {
   return resolveDeclarationCategory(lane) === "B1";
+}
+
+/** True when the submit route must take the simplified export mapper and renderer. */
+export function isC1ExportDeclaration(lane: unknown): boolean {
+  return resolveDeclarationCategory(lane) === "C1";
 }
 
 /** True when the submit route must take the simplified import mapper and renderer. */
@@ -98,6 +104,20 @@ export function validateI1SubmitGate(
 ): string[] {
   return [
     ...validateI1Declaration(lane ?? {}, items ?? []),
+    ...sharedGate(lane, items),
+  ];
+}
+
+/**
+ * Pre-mapper gate for C1 C&F. The reduced export form makes DE 2/3, DE 3/39,
+ * DE 6/9, DE 6/11 and DE 7/2 mandatory, and drops eleven elements B1 carries.
+ */
+export function validateC1SubmitGate(
+  lane: Record<string, unknown>,
+  items: Record<string, unknown>[],
+): string[] {
+  return [
+    ...validateC1Declaration(lane ?? {}, items ?? []),
     ...sharedGate(lane, items),
   ];
 }

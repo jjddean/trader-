@@ -70,9 +70,13 @@ describe("validateI1Declaration — mandatory data elements", () => {
     assert.deepEqual(validateI1Declaration(decl(), baseItems), []);
   });
 
-  it("rejects a declaration that is not on the import route", () => {
+  it("rejects a declaration explicitly marked as an export", () => {
     const errors = validateI1Declaration(decl({ route: "export" }), baseItems);
-    assert.ok(errors.some((e) => e.includes('route must be "import"')));
+    assert.ok(errors.some((e) => e.includes("I1 is an import data set")));
+  });
+
+  it("accepts a document-check route value such as \"Route 1\"", () => {
+    assert.deepEqual(validateI1Declaration(decl({ route: "Route 1" }), baseItems), []);
   });
 
   // DE 1/2 selects the data set: only C and F are I1 C&F regular use.

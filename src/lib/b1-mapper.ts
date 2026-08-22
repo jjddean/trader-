@@ -184,8 +184,14 @@ export function validateB1Declaration(
 ): string[] {
   const errors: string[] = [];
 
-  if (trimmed(declaration.route).toLowerCase() !== "export") {
-    errors.push('Declaration route must be "export" for a B1 declaration');
+  // `route` is overloaded on this table: it holds HMRC's document-check route
+  // ("Route 1") on rows created through the dashboard, and the trade direction
+  // ("import"/"export") on rows built by the mappers and fixtures. The category
+  // is what selects the data set, so direction is only cross-checked when the
+  // field actually carries a direction.
+  const routeValue = trimmed(declaration.route).toLowerCase();
+  if (routeValue === "import") {
+    errors.push('Declaration route is "import" but B1 is an export data set');
   }
   const category = trimmed(declaration.declarationCategory).toUpperCase();
   if (category && category !== "B1") {

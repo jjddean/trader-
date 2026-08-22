@@ -64,9 +64,14 @@ describe("validateB1Declaration — mandatory data elements", () => {
     assert.deepEqual(validateB1Declaration(decl(), baseItems), []);
   });
 
-  it("rejects a declaration that is not on the export route", () => {
+  it("rejects a declaration explicitly marked as an import", () => {
     const errors = validateB1Declaration(decl({ route: "import" }), baseItems);
-    assert.ok(errors.some((e) => e.includes('route must be "export"')));
+    assert.ok(errors.some((e) => e.includes("B1 is an export data set")));
+  });
+
+  // The dashboard stores HMRC's document-check route here, not a direction.
+  it("accepts a document-check route value such as \"Route 1\"", () => {
+    assert.deepEqual(validateB1Declaration(decl({ route: "Route 1" }), baseItems), []);
   });
 
   it("rejects a C1 declaration routed to the B1 mapper", () => {

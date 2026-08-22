@@ -75,8 +75,10 @@ export function validateI1Declaration(
 ): string[] {
   const errors: string[] = [];
 
-  if (trimmed(declaration.route).toLowerCase() !== "import") {
-    errors.push('Declaration route must be "import" for an I1 declaration');
+  // See the note in b1-mapper.ts — `route` may carry HMRC's document-check
+  // route rather than a trade direction, so only a contradicting value fails.
+  if (trimmed(declaration.route).toLowerCase() === "export") {
+    errors.push('Declaration route is "export" but I1 is an import data set');
   }
   const category = trimmed(declaration.declarationCategory).toUpperCase();
   if (category && category !== "I1") {

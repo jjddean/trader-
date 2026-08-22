@@ -9,6 +9,8 @@ import { mapToCDS_H1 } from "../../src/lib/wco-mapper";
 import { renderH1Xml } from "../../src/lib/h1-xml-renderer";
 import { mapToCDS_B1 } from "../../src/lib/b1-mapper";
 import { renderB1Xml } from "../../src/lib/b1-xml-renderer";
+import { mapToCDS_C1 } from "../../src/lib/c1-mapper";
+import { renderC1Xml } from "../../src/lib/c1-xml-renderer";
 import { mapToCDS_I1 } from "../../src/lib/i1-mapper";
 import { renderI1Xml } from "../../src/lib/i1-xml-renderer";
 
@@ -306,6 +308,22 @@ describe("WCO XSD structural conformance", () => {
 
   it("B1 renders only declared elements, in sequence order", () => {
     const xml = renderB1Xml(mapToCDS_B1(b1Declaration as never, b1Items as never));
+    assert.deepEqual(structuralViolations(xml), []);
+  });
+
+  it("C1 renders only declared elements, in sequence order", () => {
+    const c1Declaration = {
+      ...b1Declaration,
+      declarationCategory: "C1",
+      declarationType: "C",
+      authorisationHolderEori: "GB553202734852",
+      authorisationCategoryCode: "SDE",
+      transactionNatureCode: undefined,
+      exchangeRate: undefined,
+      inlandTransportMode: undefined,
+      borderTransportNationality: undefined,
+    };
+    const xml = renderC1Xml(mapToCDS_C1(c1Declaration as never, b1Items as never));
     assert.deepEqual(structuralViolations(xml), []);
   });
 
