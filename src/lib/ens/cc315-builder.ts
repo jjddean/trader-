@@ -88,14 +88,22 @@ function el(tag: string, value: unknown, indent: string): string {
 }
 
 /**
+ * How a party's address is treated.
+ *
+ * - `gb-tin-suppressed` — the default. Rules 8626–8670 prohibit address parts
+ *   whenever the party carries a GB TIN, because the TIN identifies it outright.
+ *   Service guide v1.9 states the same thing for the notify party specifically.
+ * - `tin-only` — rules 8656–8665: TRAREP and PERLODSUMDEC never carry an
+ *   address, whatever the TIN's country.
+ */
+type AddressPolicy = "gb-tin-suppressed" | "tin-only";
+
+/**
  * A party block.
  *
  * HMRC gives every party its own element names, so the suffixes are passed in
  * rather than assumed. Order follows the schema: Name, Street, Postcode, City,
  * Country, [LNG], TIN.
- *
- * `suppressAddressWhenGbEori` implements service guide v1.9: when a notify
- * party has a GB EORI the address children must not be provided at all.
  */
 function partyXml(
   tag: string,
@@ -109,12 +117,11 @@ function partyXml(
     tin: string;
   },
   indent: string,
-  suppressAddressWhenGbEori = false,
+  policy: AddressPolicy = "gb-tin-suppressed",
 ): string {
   if (!party) return "";
   const eori = text(party.eori);
-  const gbEori = /^GB/i.test(eori);
-  const dropAddress = suppressAddressWhenGbEori && gbEori;
+  const dropAddress = policy === "tin-only" || /^GB/i.test(eori);
 
   const inner = dropAddress
     ? ""
@@ -222,7 +229,7 @@ function goodsItemXml(item: EnsGoodsItem, indent: string): string {
     + containers
     + transports
     + packages
-    + partyXml("PRTNOT640", item.notifyParty, PARTY_IDS.itemNotifyParty, i2, true)
+    + partyXml("PRTNOT640", item.notifyParty, PARTY_IDS.itemNotifyParty, i2)
     + `\n${indent}</GOOITEGDS>`
   );
 }
@@ -323,12 +330,12 @@ function buildMessage(
     + header
     + partyXml("TRACONCO1", declaration.consignor, PARTY_IDS.consignor, "  ")
     + partyXml("TRACONCE1", declaration.consignee, PARTY_IDS.consignee, "  ")
-    + partyXml("NOTPAR670", declaration.notifyParty, PARTY_IDS.notifyParty, "  ", true)
+    + partyXml("NOTPAR670", declaration.notifyParty, PARTY_IDS.notifyParty, "  ")
     + (declaration.goodsItems ?? []).map((item) => goodsItemXml(item, "  ")).join("")
     + itinerary
     + lodgement
-    + partyXml("TRAREP", declaration.representative, PARTY_IDS.representative, "  ")
-    + partyXml("PERLODSUMDEC", declaration.personLodgingSummaryDeclaration, PARTY_IDS.personLodging, "  ")
+    + partyXml("TRAREP", declaration.representative, PARTY_IDS.representative, "  ", "tin-only")
+    + partyXml("PERLODSUMDEC", declaration.personLodgingSummaryDeclaration, PARTY_IDS.personLodging, "  ", "tin-only")
     + seals
     + firstEntry
     + subsequentEntry
