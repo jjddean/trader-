@@ -109,3 +109,5 @@ Findings recorded at retrieval:
 4. `SuccessResponse-v2-0.xsd` imports two W3C schemas HMRC does not host. Taken
    from W3C so the set compiles offline; they are the only non-HMRC files under
    `schemas/`.
+5. The specific circumstance indicator appendix lists `A`, `C`, `D`, `E` but
+   business rule 8691 permits only `C`, `D`, `E`. See `SOURCES.md` §6.

@@ -468,6 +468,56 @@ const RULES: Rule[] = [
     },
   },
   {
+    errorCode: "8111",
+    contextElement: "/CC315A/HEAHEA",
+    scenario:
+      "IF first digit of [Specific circumstance indicator] is ‘C’ THEN [Transport mode at border] cannot be ‘1’, ‘2’, ‘4’, ‘8’, ‘10’ or ‘11’.",
+    evaluate: ({ declaration }) => {
+      if (text(declaration.specificCircumstanceIndicator).toUpperCase().charAt(0) !== "C") return [];
+      const mode = text(declaration.transportModeAtBorder);
+      return ["1", "2", "4", "8", "10", "11"].includes(mode)
+        ? [`Specific circumstance indicator C (road) is not compatible with transport mode ${mode}.`]
+        : [];
+    },
+  },
+  {
+    errorCode: "8112",
+    contextElement: "/CC315A/HEAHEA",
+    scenario:
+      "IF first digit of [Specific circumstance indicator] is ‘D’ THEN [Transport mode at border] cannot be ‘1’, ‘3’, ‘4’, ‘8’, ‘10’ or ‘11’.",
+    evaluate: ({ declaration }) => {
+      if (text(declaration.specificCircumstanceIndicator).toUpperCase().charAt(0) !== "D") return [];
+      const mode = text(declaration.transportModeAtBorder);
+      return ["1", "3", "4", "8", "10", "11"].includes(mode)
+        ? [`Specific circumstance indicator D (rail) is not compatible with transport mode ${mode}.`]
+        : [];
+    },
+  },
+  {
+    errorCode: "8152",
+    contextElement: "/CC315A/GOOITEGDS/PACGS2",
+    scenario:
+      "IF ‘Kind of packages’ (Box 31) indicates neither ‘BULK’ nor ‘UNPACKED’ and the attribute ‘Specific circumstance indicator’ is not used THEN the attribute ‘Marks & numbers of Packages (Box 31)’ = ‘R’ ELSE the attribute ‘Marks & numbers of Packages (Box 31)’ = ‘O’.",
+    evaluate: ({ declaration }) => {
+      // Marks are required only for ordinary packaging with no SCI declared.
+      // With an SCI present they become optional, so nothing to check.
+      if (present(declaration.specificCircumstanceIndicator)) return [];
+      const errors: string[] = [];
+      items(declaration).forEach((item) => {
+        (item.packages ?? []).forEach((pkg) => {
+          const kind = text(pkg.kindOfPackages).toUpperCase();
+          if (!kind || BULK_PACKAGE_KINDS.has(kind) || UNPACKED_PACKAGE_KINDS.has(kind)) return;
+          if (!present(pkg.marksAndNumbers)) {
+            errors.push(
+              `Goods item ${item.itemNumber}: marks and numbers are required for package kind ${kind} when no specific circumstance indicator is declared.`,
+            );
+          }
+        });
+      });
+      return errors;
+    },
+  },
+  {
     errorCode: "8692",
     contextElement: "/CC315A/PERLODSUMDEC/TINPLD1",
     scenario: "[TIN] must begin with ‘GB’.",
@@ -632,14 +682,11 @@ const RULES: Rule[] = [
  */
 export const DEFERRED_RULES: { errorCode: string; reason: string }[] = [
   { errorCode: "8104", reason: "Header/item place-of-loading interaction; HMRC's label does not distinguish the two levels and the condition reads as a tautology without the item context." },
-  { errorCode: "8111", reason: "Specific circumstance indicator C against transport mode — needs the SCI first-digit code list, which HMRC publishes only as prose." },
-  { errorCode: "8112", reason: "As 8111, for indicator D." },
-  { errorCode: "8114", reason: "IMO/ENI vessel identifier format for modes 1 and 8; requires an external identifier registry to check meaningfully." },
-  { errorCode: "8118", reason: "IATA flight number format for mode 4; requires an IATA reference list not shipped by HMRC." },
+  { errorCode: "8114", reason: "For modes 1 and 8 the transport identity must BE an IMO or ENI number. HMRC states the semantic requirement but publishes no pattern, and both are allocated registries — a format guess would reject valid vessels." },
+  { errorCode: "8118", reason: "For mode 4 the conveyance reference must BE an IATA flight number. As 8114, HMRC gives no pattern and airline designators are an allocated list." },
   { errorCode: "8119", reason: "Consignor Trader vs Trader Type mutual exclusion; the Trader Type variant is not modelled in EnsDeclaration yet." },
   { errorCode: "8135", reason: "Header/item transport-charges interaction; same label ambiguity as 8104." },
   { errorCode: "8136", reason: "Header/item place-of-loading interaction; same label ambiguity as 8104." },
-  { errorCode: "8152", reason: "Package-kind rule qualified by specific circumstance indicator; depends on the SCI code list, as 8111." },
   { errorCode: "8153", reason: "Zero-package cross-item rule; needs the full multi-item shape settled before it can be enforced without false positives." },
   { errorCode: "8171", reason: "Header/item place-of-unloading interaction; same label ambiguity as 8104." },
   { errorCode: "8193", reason: "Consignor Trader Type cardinality; not modelled yet, as 8119." },

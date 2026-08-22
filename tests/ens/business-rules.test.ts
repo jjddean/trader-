@@ -37,7 +37,13 @@ const base: EnsDeclaration = {
   carrier: { eori: "GB111222333444" },
   // Rule 8207 requires a commodity code when there is no goods description.
   goodsItems: [
-    { itemNumber: 1, goodsDescription: "Machine parts", grossMass: 100, packages: [{ kindOfPackages: "BX", numberOfPackages: 2 }] },
+    {
+      itemNumber: 1,
+      goodsDescription: "Machine parts",
+      grossMass: 100,
+      // Rule 8152 requires marks for ordinary packaging with no SCI declared.
+      packages: [{ kindOfPackages: "BX", numberOfPackages: 2, marksAndNumbers: "ACME-1" }],
+    },
   ],
   totalNumberOfPackages: 2,
 };
@@ -343,5 +349,58 @@ describe("violation shape", () => {
 
   it("a clean declaration produces no violations", () => {
     assert.deepEqual(run(), []);
+  });
+});
+
+describe("8111 / 8112 / 8152 — specific circumstance indicator", () => {
+  it("SCI C (road) is incompatible with maritime, rail, air, inland water and roro", () => {
+    for (const mode of ["1", "2", "4", "8", "10", "11"]) {
+      assert.ok(
+        codes({ specificCircumstanceIndicator: "C", transportModeAtBorder: mode, carrier: { eori: "GB111222333444" } }).includes("8111"),
+        `mode ${mode} should be rejected for SCI C`,
+      );
+    }
+  });
+
+  it("SCI C is compatible with mode 3 (road via Channel Tunnel)", () => {
+    assert.ok(!codes({ specificCircumstanceIndicator: "C", transportModeAtBorder: "3" }).includes("8111"));
+  });
+
+  it("SCI D (rail) is incompatible with everything except mode 2", () => {
+    for (const mode of ["1", "3", "4", "8", "10", "11"]) {
+      assert.ok(
+        codes({ specificCircumstanceIndicator: "D", transportModeAtBorder: mode, carrier: { eori: "GB111222333444" } }).includes("8112"),
+        `mode ${mode} should be rejected for SCI D`,
+      );
+    }
+    assert.ok(!codes({ specificCircumstanceIndicator: "D", transportModeAtBorder: "2" }).includes("8112"));
+  });
+
+  it("marks are required for ordinary packaging when no SCI is declared", () => {
+    const c = codes({
+      goodsItems: [{ itemNumber: 1, goodsDescription: "x", grossMass: 1, packages: [{ kindOfPackages: "BX", numberOfPackages: 1 }] }],
+      totalNumberOfPackages: 1,
+    });
+    assert.ok(c.includes("8152"));
+  });
+
+  // The ELSE branch: with an SCI present the marks become optional.
+  it("marks are optional once an SCI is declared", () => {
+    const c = codes({
+      specificCircumstanceIndicator: "E",
+      goodsItems: [{ itemNumber: 1, goodsDescription: "x", grossMass: 1, packages: [{ kindOfPackages: "BX", numberOfPackages: 1 }] }],
+      totalNumberOfPackages: 1,
+    });
+    assert.ok(!c.includes("8152"));
+  });
+
+  it("marks are not required for bulk or unpacked kinds", () => {
+    for (const kind of ["VR", "NE"]) {
+      const c = codes({
+        goodsItems: [{ itemNumber: 1, goodsDescription: "x", grossMass: 1, packages: [{ kindOfPackages: kind, numberOfPieces: 2 }] }],
+        totalNumberOfPackages: kind === "VR" ? 1 : 2,
+      });
+      assert.ok(!c.includes("8152"), `${kind} should not require marks`);
+    }
   });
 });

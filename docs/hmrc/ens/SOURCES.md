@@ -206,6 +206,26 @@ Field catalogue: `reference/raw/fields.json` — 151 fields generated from
 `reference/fields.md` (79 mandatory, 37 optional, 34 conditional, 1 "M except
 for air movements").
 
+### Finding — the appendix and the validation rules disagree on SCI
+
+`reference/specific-circumstance-indicators.md` lists **four** values:
+
+| Code | Description |
+|------|-------------|
+| A | Postal and express consignments |
+| C | Road mode of transport |
+| D | Rail mode of transport |
+| E | Authorised economic operator |
+
+Business rule **8691** states: *"[Specific circumstance indicator] may only take
+the values 'C', 'D' or 'E'."* — `A` is absent.
+
+The validation rule is what CDS enforces, so a declaration carrying `A` will be
+rejected even though HMRC's own appendix lists it. `ens-rules.ts` follows the
+rule, not the appendix, and rejects `A`. If a postal or express consignment ever
+needs `A`, this is the contradiction to raise with HMRC rather than a bug in
+FreightCode.
+
 ---
 
 ## 7. Not obtained
