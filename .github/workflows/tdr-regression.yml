@@ -19,6 +19,17 @@ jobs:
 
       - run: npm ci
 
+      # ENS XSD conformance validates generated XML against HMRC's own schemas
+      # via lxml (tests/ens/xsd-conformance.test.ts). Without this the suite
+      # skips instead of failing, and the strongest ENS check silently stops
+      # running in CI.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install lxml (ENS schema validation)
+        run: python -m pip install --quiet lxml
+
       - name: Dependency audit (high+, production deps)
         run: npm audit --audit-level=high --omit=dev
 
@@ -42,6 +53,9 @@ jobs:
 
       - name: H1 unit tests + golden XML
         run: npm run test:h1
+
+      - name: ENS (Safety & Security GB) regressions
+        run: npm run test:ens
 
       - name: TRE regressions
         run: npm run test:tre

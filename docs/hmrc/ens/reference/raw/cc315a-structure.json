@@ -1,0 +1,1290 @@
+{
+  "message": "CC315A",
+  "label": "New ENS (IE315)",
+  "schema": "CC315A-v11-2.xsd",
+  "note": "Derived from the HMRC XSD. The XSD is authoritative; regenerate rather than edit. Descriptions and condition names are HMRC's own doc: annotations.",
+  "elementCount": 144,
+  "structure": [
+    {
+      "element": "MesSenMES3",
+      "minOccurs": "1",
+      "maxOccurs": "1",
+      "type": "Alphanumeric_Max35",
+      "description": "Message sender"
+    },
+    {
+      "element": "MesRecMES6",
+      "minOccurs": "0",
+      "maxOccurs": "1",
+      "type": "Alphanumeric_Max35",
+      "description": "Message recipient"
+    },
+    {
+      "element": "DatOfPreMES9",
+      "minOccurs": "1",
+      "maxOccurs": "1",
+      "type": "DatePrepType",
+      "description": "Date of preparation"
+    },
+    {
+      "element": "TimOfPreMES10",
+      "minOccurs": "1",
+      "maxOccurs": "1",
+      "type": "TimeType",
+      "description": "Time of preparation"
+    },
+    {
+      "element": "PriMES15",
+      "minOccurs": "0",
+      "maxOccurs": "1",
+      "type": "Alpha_1",
+      "description": "Priority"
+    },
+    {
+      "element": "MesIdeMES19",
+      "minOccurs": "1",
+      "maxOccurs": "1",
+      "type": "Alphanumeric_Max14",
+      "description": "Message identification"
+    },
+    {
+      "element": "MesTypMES20",
+      "minOccurs": "1",
+      "maxOccurs": "1",
+      "type": "MessageTypes",
+      "description": "Message type"
+    },
+    {
+      "element": "CorIdeMES25",
+      "minOccurs": "0",
+      "maxOccurs": "1",
+      "type": "Alphanumeric_Max14",
+      "description": "Correlation identifier"
+    },
+    {
+      "element": "HEAHEA",
+      "minOccurs": "1",
+      "maxOccurs": "1",
+      "type": "HEAHEAType",
+      "description": "HEADER",
+      "children": [
+        {
+          "element": "RefNumHEA4",
+          "minOccurs": "1",
+          "maxOccurs": "1",
+          "type": "Alphanumeric_Max22",
+          "description": "Reference number"
+        },
+        {
+          "element": "TraModAtBorHEA76",
+          "minOccurs": "1",
+          "maxOccurs": "1",
+          "type": "Numeric_Max2",
+          "description": "Transport mode at border",
+          "conditions": [
+            "C529"
+          ]
+        },
+        {
+          "element": "IdeOfMeaOfTraCroHEA85",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "Alphanumeric_Max27",
+          "description": "Identity of means of transport crossing border",
+          "conditions": [
+            "C017",
+            "C514"
+          ]
+        },
+        {
+          "element": "IdeOfMeaOfTraCroHEA85LNG",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "LanguageCodeType",
+          "description": "Identity of means of transport crossing border LNG"
+        },
+        {
+          "element": "NatOfMeaOfTraCroHEA87",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "CountryCodeType",
+          "description": "Nationality of means of transport crossing border",
+          "conditions": [
+            "C024"
+          ]
+        },
+        {
+          "element": "TotNumOfIteHEA305",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "Numeric_Max5",
+          "description": "Total number of items"
+        },
+        {
+          "element": "TotNumOfPacHEA306",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "Numeric_Max7",
+          "description": "Total number of packages",
+          "conditions": [
+            "C582"
+          ]
+        },
+        {
+          "element": "TotGroMasHEA307",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "Decimal_11_3",
+          "description": "Total gross mass"
+        },
+        {
+          "element": "DecPlaHEA394",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "Alphanumeric_Max35",
+          "description": "Declaration place"
+        },
+        {
+          "element": "DecPlaHEA394LNG",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "LanguageCodeType",
+          "description": "Declaration place LNG"
+        },
+        {
+          "element": "SpeCirIndHEA1",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "AlphaCapital1Type",
+          "description": "Specific Circumstance Indicator"
+        },
+        {
+          "element": "TraChaMetOfPayHEA1",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "AlphaCapital1Type",
+          "description": "Transport charges/ Method of Payment"
+        },
+        {
+          "element": "ComRefNumHEA",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "Alphanumeric_Max70",
+          "description": "Commercial Reference Number",
+          "conditions": [
+            "C567"
+          ]
+        },
+        {
+          "element": "ConRefNumHEA",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "Alphanumeric_Max35",
+          "description": "Conveyance reference number",
+          "conditions": [
+            "C518"
+          ]
+        },
+        {
+          "element": "PlaLoaGOOITE334",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "AlphanumericSpecMax35Type",
+          "description": "Place of loading",
+          "conditions": [
+            "C574"
+          ]
+        },
+        {
+          "element": "PlaLoaGOOITE334LNG",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "LanguageCodeType",
+          "description": "Place of loading LNG"
+        },
+        {
+          "element": "PlaUnlGOOITE334",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "AlphanumericSpecMax35Type",
+          "description": "Place of unloading"
+        },
+        {
+          "element": "CodPlUnHEA357LNG",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "LanguageCodeType",
+          "description": "Place of unloading LNG"
+        },
+        {
+          "element": "DecDatTimHEA114",
+          "minOccurs": "1",
+          "maxOccurs": "1",
+          "type": "DateTimeType",
+          "description": "Declaration date and time"
+        }
+      ]
+    },
+    {
+      "element": "TRACONCO1",
+      "minOccurs": "0",
+      "maxOccurs": "1",
+      "type": "TRACONCO1Type",
+      "description": "(CONSIGNOR) TRADER",
+      "conditions": [
+        "C511"
+      ],
+      "children": [
+        {
+          "element": "NamCO17",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "TradNameType",
+          "description": "Name",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "StrAndNumCO122",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "StreetNumType",
+          "description": "Street and number",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "PosCodCO123",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "PostalCodeType",
+          "description": "Postal code",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "CitCO124",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "CityType",
+          "description": "City",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "CouCO125",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "CountryCodeType",
+          "description": "Country code",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "NADLNGCO",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "LanguageCodeType",
+          "description": "NAD LNG"
+        },
+        {
+          "element": "TINCO159",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "TINType",
+          "description": "TIN"
+        }
+      ]
+    },
+    {
+      "element": "TRACONCE1",
+      "minOccurs": "0",
+      "maxOccurs": "1",
+      "type": "TRACONCE1Type",
+      "description": "(CONSIGNEE) TRADER",
+      "conditions": [
+        "C583"
+      ],
+      "children": [
+        {
+          "element": "NamCE17",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "TradNameType",
+          "description": "Name",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "StrAndNumCE122",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "StreetNumType",
+          "description": "Street and number",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "PosCodCE123",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "PostalCodeType",
+          "description": "Postal code",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "CitCE124",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "CityType",
+          "description": "City",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "CouCE125",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "CountryCodeType",
+          "description": "Country code",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "NADLNGCE",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "LanguageCodeType",
+          "description": "NAD LNG"
+        },
+        {
+          "element": "TINCE159",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "TINType",
+          "description": "TIN",
+          "conditions": [
+            "C562"
+          ]
+        }
+      ]
+    },
+    {
+      "element": "NOTPAR670",
+      "minOccurs": "0",
+      "maxOccurs": "1",
+      "type": "NOTPAR670Type",
+      "description": "NOTIFY PARTY",
+      "conditions": [
+        "C583"
+      ],
+      "children": [
+        {
+          "element": "NamNOTPAR672",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "TradNameType",
+          "description": "Name",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "StrNumNOTPAR673",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "StreetNumType",
+          "description": "Street and number",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "PosCodNOTPAR676",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "PostalCodeType",
+          "description": "Postal code",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "CitNOTPAR674",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "CityType",
+          "description": "City",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "CouCodNOTPAR675",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "CountryCodeType",
+          "description": "Country code",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "NOTPAR670LNG",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "LanguageCodeType",
+          "description": "NAD LNG"
+        },
+        {
+          "element": "TINNOTPAR671",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "TINType",
+          "description": "TIN"
+        }
+      ]
+    },
+    {
+      "element": "GOOITEGDS",
+      "minOccurs": "1",
+      "maxOccurs": "unbounded",
+      "type": "GOOITEGDSType",
+      "description": "GOODS ITEM",
+      "children": [
+        {
+          "element": "IteNumGDS7",
+          "minOccurs": "1",
+          "maxOccurs": "1",
+          "type": "Numeric_Max5",
+          "description": "Item number"
+        },
+        {
+          "element": "GooDesGDS23",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "Alphanumeric_Max280",
+          "description": "Goods description"
+        },
+        {
+          "element": "GooDesGDS23LNG",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "LanguageCodeType",
+          "description": "Goods description LNG"
+        },
+        {
+          "element": "GroMasGDS46",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "Decimal_11_3",
+          "description": "Gross mass",
+          "conditions": [
+            "C592"
+          ]
+        },
+        {
+          "element": "MetOfPayGDI12",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "AlphaCapital1Type",
+          "description": "Transport charges/ Method of Payment",
+          "conditions": [
+            "C576"
+          ]
+        },
+        {
+          "element": "ComRefNumGIM1",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "Alphanumeric_Max70",
+          "description": "Commercial Reference Number",
+          "conditions": [
+            "C567"
+          ]
+        },
+        {
+          "element": "UNDanGooCodGDI1",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "Numeric_4",
+          "description": "UN dangerous goods code"
+        },
+        {
+          "element": "PlaLoaGOOITE333",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "AlphanumericSpecMax35Type",
+          "description": "Place of loading",
+          "conditions": [
+            "C574"
+          ]
+        },
+        {
+          "element": "PlaLoaGOOITE333LNG",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "LanguageCodeType",
+          "description": "Place of loading LNG"
+        },
+        {
+          "element": "PlaUnlGOOITE333",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "AlphanumericSpecMax35Type",
+          "description": "Place of unloading",
+          "conditions": [
+            "C579"
+          ]
+        },
+        {
+          "element": "PlaUnlGOOITE333LNG",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "LanguageCodeType",
+          "description": "Place of unloading LNG"
+        },
+        {
+          "element": "PRODOCDC2",
+          "minOccurs": "0",
+          "maxOccurs": "99",
+          "type": "PRODOCDC2Type",
+          "description": "PRODUCED DOCUMENTS/CERTIFICATES",
+          "conditions": [
+            "C567"
+          ],
+          "children": [
+            {
+              "element": "DocTypDC21",
+              "minOccurs": "1",
+              "maxOccurs": "1",
+              "type": "Alphanumeric_Max4",
+              "description": "Document type"
+            },
+            {
+              "element": "DocRefDC23",
+              "minOccurs": "1",
+              "maxOccurs": "1",
+              "type": "Alphanumeric_Max35",
+              "description": "Document reference"
+            },
+            {
+              "element": "DocRefDCLNG",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "LanguageCodeType",
+              "description": "Document reference LNG"
+            }
+          ]
+        },
+        {
+          "element": "SPEMENMT2",
+          "minOccurs": "0",
+          "maxOccurs": "99",
+          "type": "SPEMENMT2Type",
+          "description": "SPECIAL MENTIONS",
+          "children": [
+            {
+              "element": "AddInfCodMT23",
+              "minOccurs": "1",
+              "maxOccurs": "1",
+              "type": "Alphanumeric_Max5",
+              "description": "Additional information coded"
+            }
+          ]
+        },
+        {
+          "element": "TRACONCO2",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "TRACONCO2Type",
+          "description": "(CONSIGNOR) TRADER",
+          "conditions": [
+            "C511"
+          ],
+          "children": [
+            {
+              "element": "NamCO27",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "TradNameType",
+              "description": "Name",
+              "conditions": [
+                "C501"
+              ]
+            },
+            {
+              "element": "StrAndNumCO222",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "StreetNumType",
+              "description": "Street and number",
+              "conditions": [
+                "C501"
+              ]
+            },
+            {
+              "element": "PosCodCO223",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "PostalCodeType",
+              "description": "Postal code",
+              "conditions": [
+                "C501"
+              ]
+            },
+            {
+              "element": "CitCO224",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "CityType",
+              "description": "City",
+              "conditions": [
+                "C501"
+              ]
+            },
+            {
+              "element": "CouCO225",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "CountryCodeType",
+              "description": "Country code",
+              "conditions": [
+                "C501"
+              ]
+            },
+            {
+              "element": "NADLNGGTCO",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "LanguageCodeType",
+              "description": "NAD LNG"
+            },
+            {
+              "element": "TINCO259",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "TINType",
+              "description": "TIN"
+            }
+          ]
+        },
+        {
+          "element": "COMCODGODITM",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "COMCODGODITMType",
+          "description": "(CODE) COMMODITY",
+          "conditions": [
+            "C585"
+          ],
+          "children": [
+            {
+              "element": "ComNomCMD1",
+              "minOccurs": "1",
+              "maxOccurs": "1",
+              "type": "NumericMin4Max8Type",
+              "description": "Combined Nomenclature"
+            }
+          ]
+        },
+        {
+          "element": "TRACONCE2",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "TRACONCE2Type",
+          "description": "(CONSIGNEE) TRADER",
+          "conditions": [
+            "C584"
+          ],
+          "children": [
+            {
+              "element": "NamCE27",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "TradNameType",
+              "description": "Name",
+              "conditions": [
+                "C501"
+              ]
+            },
+            {
+              "element": "StrAndNumCE222",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "StreetNumType",
+              "description": "Street and number",
+              "conditions": [
+                "C501"
+              ]
+            },
+            {
+              "element": "PosCodCE223",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "PostalCodeType",
+              "description": "Postal code",
+              "conditions": [
+                "C501"
+              ]
+            },
+            {
+              "element": "CitCE224",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "CityType",
+              "description": "City",
+              "conditions": [
+                "C501"
+              ]
+            },
+            {
+              "element": "CouCE225",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "CountryCodeType",
+              "description": "Country code",
+              "conditions": [
+                "C501"
+              ]
+            },
+            {
+              "element": "NADLNGGICE",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "LanguageCodeType",
+              "description": "NAD LNG"
+            },
+            {
+              "element": "TINCE259",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "TINType",
+              "description": "TIN",
+              "conditions": [
+                "C562"
+              ]
+            }
+          ]
+        },
+        {
+          "element": "CONNR2",
+          "minOccurs": "0",
+          "maxOccurs": "99",
+          "type": "CONNR2Type",
+          "description": "CONTAINERS",
+          "children": [
+            {
+              "element": "ConNumNR21",
+              "minOccurs": "1",
+              "maxOccurs": "1",
+              "type": "Alphanumeric_Max17",
+              "description": "Container number"
+            }
+          ]
+        },
+        {
+          "element": "IDEMEATRAGI970",
+          "minOccurs": "0",
+          "maxOccurs": "unbounded",
+          "type": "IDEMEATRAGI970Type",
+          "description": "(MEANS OF TRANSPORT AT BORDER) IDENTITY",
+          "conditions": [
+            "C019"
+          ],
+          "children": [
+            {
+              "element": "NatIDEMEATRAGI973",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "CountryCodeType",
+              "description": "Nationality",
+              "conditions": [
+                "C020"
+              ]
+            },
+            {
+              "element": "IdeMeaTraGIMEATRA971",
+              "minOccurs": "1",
+              "maxOccurs": "1",
+              "type": "Alphanumeric_Max27",
+              "description": "Identity of means of transport crossing border",
+              "conditions": [
+                "C514"
+              ]
+            },
+            {
+              "element": "IdeMeaTraGIMEATRA972LNG",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "LanguageCodeType",
+              "description": "Identity of means of transport crossing border LNG"
+            }
+          ]
+        },
+        {
+          "element": "PACGS2",
+          "minOccurs": "0",
+          "maxOccurs": "99",
+          "type": "PACGS2Type",
+          "description": "PACKAGES",
+          "conditions": [
+            "C577"
+          ],
+          "children": [
+            {
+              "element": "KinOfPacGS23",
+              "minOccurs": "1",
+              "maxOccurs": "1",
+              "type": "Alphanumeric_2",
+              "description": "Kind of packages"
+            },
+            {
+              "element": "NumOfPacGS24",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "Numeric_Max5",
+              "description": "Number of packages",
+              "conditions": [
+                "C062"
+              ]
+            },
+            {
+              "element": "NumOfPieGS25",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "Numeric_Max5",
+              "description": "Number of pieces",
+              "conditions": [
+                "C062"
+              ]
+            },
+            {
+              "element": "MarNumOfPacGSL21",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "Alphanumeric_Max140",
+              "description": "Marks & numbers of packages (long)",
+              "conditions": [
+                "C062"
+              ]
+            },
+            {
+              "element": "MarNumOfPacGSL21LNG",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "LanguageCodeType",
+              "description": "Marks & numbers of packages (long) LNG"
+            }
+          ]
+        },
+        {
+          "element": "PRTNOT640",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "PRTNOT640Type",
+          "description": "NOTIFY PARTY",
+          "conditions": [
+            "C584"
+          ],
+          "children": [
+            {
+              "element": "NamPRTNOT642",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "TradNameType",
+              "description": "Name",
+              "conditions": [
+                "C501"
+              ]
+            },
+            {
+              "element": "StrNumPRTNOT646",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "StreetNumType",
+              "description": "Street and number",
+              "conditions": [
+                "C501"
+              ]
+            },
+            {
+              "element": "PstCodPRTNOT644",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "PostalCodeType",
+              "description": "Postal code",
+              "conditions": [
+                "C501"
+              ]
+            },
+            {
+              "element": "CtyPRTNOT643",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "CityType",
+              "description": "City",
+              "conditions": [
+                "C501"
+              ]
+            },
+            {
+              "element": "CouCodGINOT647",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "CountryCodeType",
+              "description": "Country code",
+              "conditions": [
+                "C501"
+              ]
+            },
+            {
+              "element": "PRTNOT640LNG",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "LanguageCodeType",
+              "description": "NAD LNG"
+            },
+            {
+              "element": "TINPRTNOT641",
+              "minOccurs": "0",
+              "maxOccurs": "1",
+              "type": "TINType",
+              "description": "TIN"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "element": "ITI",
+      "minOccurs": "0",
+      "maxOccurs": "99",
+      "type": "ITIType",
+      "description": "ITINERARY",
+      "conditions": [
+        "C570"
+      ],
+      "children": [
+        {
+          "element": "CouOfRouCodITI1",
+          "minOccurs": "1",
+          "maxOccurs": "1",
+          "type": "CountryCodeType",
+          "description": "Country of routing code"
+        }
+      ]
+    },
+    {
+      "element": "CUSOFFLON",
+      "minOccurs": "0",
+      "maxOccurs": "1",
+      "type": "CUSOFFLONType",
+      "description": "(LODGEMENT) CUSTOMS OFFICE",
+      "children": [
+        {
+          "element": "RefNumCOL1",
+          "minOccurs": "1",
+          "maxOccurs": "1",
+          "type": "CORefNumType",
+          "description": "Reference number"
+        }
+      ]
+    },
+    {
+      "element": "TRAREP",
+      "minOccurs": "0",
+      "maxOccurs": "1",
+      "type": "TRAREPType",
+      "description": "(REPRESENTATIVE) TRADER",
+      "children": [
+        {
+          "element": "NamTRE1",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "TradNameType",
+          "description": "Name",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "StrAndNumTRE1",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "StreetNumType",
+          "description": "Street and number",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "PosCodTRE1",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "PostalCodeType",
+          "description": "Postal code",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "CitTRE1",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "CityType",
+          "description": "City",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "CouCodTRE1",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "CountryCodeType",
+          "description": "Country code",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "TRAREPLNG",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "LanguageCodeType",
+          "description": "NAD LNG"
+        },
+        {
+          "element": "TINTRE1",
+          "minOccurs": "1",
+          "maxOccurs": "1",
+          "type": "TINType",
+          "description": "TIN"
+        }
+      ]
+    },
+    {
+      "element": "PERLODSUMDEC",
+      "minOccurs": "1",
+      "maxOccurs": "1",
+      "type": "PERLODSUMDECType",
+      "description": "(LODGING SUMMARY DECLARATION) PERSON",
+      "children": [
+        {
+          "element": "NamPLD1",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "TradNameType",
+          "description": "Name",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "StrAndNumPLD1",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "StreetNumType",
+          "description": "Street and number",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "PosCodPLD1",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "PostalCodeType",
+          "description": "Postal code",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "CitPLD1",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "CityType",
+          "description": "City",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "CouCodPLD1",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "CountryCodeType",
+          "description": "Country code",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "PERLODSUMDECLNG",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "LanguageCodeType",
+          "description": "NAD LNG"
+        },
+        {
+          "element": "TINPLD1",
+          "minOccurs": "1",
+          "maxOccurs": "1",
+          "type": "TINType",
+          "description": "TIN"
+        }
+      ]
+    },
+    {
+      "element": "SEAID529",
+      "minOccurs": "0",
+      "maxOccurs": "unbounded",
+      "type": "SEAID529Type",
+      "description": "SEALS ID",
+      "children": [
+        {
+          "element": "SeaIdSEAID530",
+          "minOccurs": "1",
+          "maxOccurs": "1",
+          "type": "Alphanumeric_Max20",
+          "description": "Seals identity"
+        },
+        {
+          "element": "SeaIdSEAID530LNG",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "LanguageCodeType",
+          "description": "Seals identity LNG"
+        }
+      ]
+    },
+    {
+      "element": "CUSOFFFENT730",
+      "minOccurs": "1",
+      "maxOccurs": "1",
+      "type": "CUSOFFFENT730Type",
+      "description": "(FIRST ENTRY) CUSTOMS OFFICE",
+      "children": [
+        {
+          "element": "RefNumCUSOFFFENT731",
+          "minOccurs": "1",
+          "maxOccurs": "1",
+          "type": "CORefNumType",
+          "description": "Reference number"
+        },
+        {
+          "element": "ExpDatOfArrFIRENT733",
+          "minOccurs": "1",
+          "maxOccurs": "1",
+          "type": "DateTimeType",
+          "description": "Expected date and time of arrival"
+        }
+      ]
+    },
+    {
+      "element": "CUSOFFSENT740",
+      "minOccurs": "0",
+      "maxOccurs": "99",
+      "type": "CUSOFFSENT740Type",
+      "description": "(SUBSEQUENT ENTRY) CUSTOMS OFFICE",
+      "children": [
+        {
+          "element": "RefNumSUBENR909",
+          "minOccurs": "1",
+          "maxOccurs": "1",
+          "type": "CORefNumType",
+          "description": "Reference number"
+        }
+      ]
+    },
+    {
+      "element": "TRACARENT601",
+      "minOccurs": "0",
+      "maxOccurs": "1",
+      "type": "TRACARENT601Type",
+      "description": "(ENTRY CARRIER) TRADER",
+      "children": [
+        {
+          "element": "NamTRACARENT604",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "TradNameType",
+          "description": "Name",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "StrNumTRACARENT607",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "StreetNumType",
+          "description": "Street and number",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "PstCodTRACARENT606",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "PostalCodeType",
+          "description": "Postal code",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "CtyTRACARENT603",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "CityType",
+          "description": "City",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "CouCodTRACARENT605",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "CountryCodeType",
+          "description": "Country code",
+          "conditions": [
+            "C501"
+          ]
+        },
+        {
+          "element": "TRACARENT601LNG",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "LanguageCodeType",
+          "description": "NAD LNG"
+        },
+        {
+          "element": "TINTRACARENT602",
+          "minOccurs": "0",
+          "maxOccurs": "1",
+          "type": "TINType",
+          "description": "TIN",
+          "conditions": [
+            "C502"
+          ]
+        }
+      ]
+    }
+  ]
+}

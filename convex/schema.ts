@@ -1280,4 +1280,153 @@ export default defineSchema({
     lastError: v.optional(v.string()),
     updatedAt: v.number(),
   }).index("by_topic", ["topic"]),
+  /**
+   * ENS (Safety & Security GB) declarations.
+   *
+   * Deliberately separate from `declarations`, which is CDS/WCO-shaped. ENS is
+   * a different message family (ICS CC315A/CC313A) with its own identifiers,
+   * lifecycle and APIs; overloading the CDS table would force every CDS query
+   * to filter by a discriminator it does not otherwise need.
+   *
+   * Spec: docs/hmrc/ens/IMPLEMENTATION_SPEC.md
+   * Domain model: src/lib/ens/types.ts
+   */
+  ens_declarations: defineTable({
+    userId: v.string(),
+    orgId: v.optional(v.string()),
+    clientId: v.optional(v.id("clients")),
+    /**
+     * Stamped at creation from org mode, locked on first submission, exactly as
+     * `declarations.environment` is — so a sandbox ENS can never be replayed at
+     * production.
+     */
+    environment: v.optional(v.union(v.literal("sandbox"), v.literal("production"))),
+    /**
+     * draft | submitted | accepted | rejected | amended | failed.
+     * `submitted` means HMRC accepted the MESSAGE and returned a correlation
+     * id. It does not mean the declaration was accepted — that requires an
+     * outcome. See src/lib/ens/types.ts.
+     */
+    status: v.string(),
+
+    /** DE-equivalent header fields. Shapes are validated at the mutation. */
+    localReferenceNumber: v.string(),
+    transportModeAtBorder: v.optional(v.string()),
+    identityOfMeansOfTransport: v.optional(v.string()),
+    nationalityOfMeansOfTransport: v.optional(v.string()),
+    totalGrossMass: v.optional(v.number()),
+    declarationPlace: v.optional(v.string()),
+    specificCircumstanceIndicator: v.optional(v.string()),
+    transportChargesMethodOfPayment: v.optional(v.string()),
+    commercialReferenceNumber: v.optional(v.string()),
+    conveyanceReferenceNumber: v.optional(v.string()),
+    placeOfLoading: v.optional(v.string()),
+    placeOfUnloading: v.optional(v.string()),
+    customsOfficeOfFirstEntry: v.optional(v.string()),
+    expectedArrivalDateTime: v.optional(v.string()),
+    subsequentEntryOffices: v.optional(v.array(v.string())),
+    lodgementCustomsOffice: v.optional(v.string()),
+
+    /** Party and collection blocks, shaped by src/lib/ens/types.ts. */
+    consignor: v.optional(v.any()),
+    consignee: v.optional(v.any()),
+    notifyParty: v.optional(v.any()),
+    representative: v.optional(v.any()),
+    personLodgingSummaryDeclaration: v.optional(v.any()),
+    carrier: v.optional(v.any()),
+    itinerary: v.optional(v.any()),
+    seals: v.optional(v.any()),
+    goodsItems: v.optional(v.any()),
+
+    /** HMRC correlation. The correlation id is the only handle until an MRN exists. */
+    correlationId: v.optional(v.string()),
+    messageId: v.optional(v.string()),
+    movementReferenceNumber: v.optional(v.string()),
+    submittedAt: v.optional(v.number()),
+    /** SHA-256 of the submitted XML. Never the Authorization value. */
+    requestHash: v.optional(v.string()),
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_org", ["orgId"])
+    .index("by_user", ["userId"])
+    .index("by_correlationId", ["correlationId"])
+    .index("by_mrn", ["movementReferenceNumber"])
+    .index("by_lrn", ["localReferenceNumber"]),
+
+  /**
+   * Outcomes collected from the S&S Outcomes API.
+   *
+   * Append-only evidence. `acknowledgedAt` is set only after the row is
+   * durably stored: acknowledgement is a destructive read at HMRC and an
+   * acknowledged outcome cannot be re-fetched.
+   */
+  ens_outcomes: defineTable({
+    ensDeclarationId: v.optional(v.id("ens_declarations")),
+    orgId: v.optional(v.string()),
+    correlationId: v.string(),
+    /** IE328 accepted | IE316 rejected | IE304 amend accepted | IE305 amend rejected */
+    outcomeType: v.string(),
+    movementReferenceNumber: v.optional(v.string()),
+    errors: v.optional(v.any()),
+    rawXml: v.optional(v.string()),
+    receivedAt: v.number(),
+    acknowledgedAt: v.optional(v.number()),
+  })
+    .index("by_correlationId", ["correlationId"])
+    .index("by_declaration", ["ensDeclarationId"])
+    .index("by_org", ["orgId"])
+    .index("by_acknowledgedAt", ["acknowledgedAt"]),
+
+  /**
+   * Advanced notifications and interventions (IE351), including Do Not Load.
+   *
+   * `doNotLoad` is stored as its own flag rather than derived at read time: a
+   * DNL is an operational stop and must be findable without parsing XML.
+   */
+  ens_notifications: defineTable({
+    ensDeclarationId: v.optional(v.id("ens_declarations")),
+    orgId: v.optional(v.string()),
+    notificationId: v.string(),
+    correlationId: v.optional(v.string()),
+    movementReferenceNumber: v.optional(v.string()),
+    interventions: v.optional(v.any()),
+    doNotLoad: v.boolean(),
+    rawXml: v.optional(v.string()),
+    receivedAt: v.number(),
+    acknowledgedAt: v.optional(v.number()),
+  })
+    .index("by_notificationId", ["notificationId"])
+    .index("by_declaration", ["ensDeclarationId"])
+    .index("by_org", ["orgId"])
+    .index("by_doNotLoad", ["doNotLoad"])
+    .index("by_acknowledgedAt", ["acknowledgedAt"]),
+
+  /**
+   * One row per outbound ENS request. Mirrors the role `hmrc_requests` plays
+   * for CDS: the audit record of what was sent, kept even when the submission
+   * failed.
+   */
+  ens_submissions: defineTable({
+    ensDeclarationId: v.id("ens_declarations"),
+    userId: v.string(),
+    orgId: v.optional(v.string()),
+    environment: v.optional(v.union(v.literal("sandbox"), v.literal("production"))),
+    /** "submit" (IE315) | "amend" (IE313) */
+    operation: v.string(),
+    messageType: v.string(),
+    correlationId: v.optional(v.string()),
+    localReferenceNumber: v.optional(v.string()),
+    movementReferenceNumber: v.optional(v.string()),
+    httpStatus: v.optional(v.number()),
+    outcome: v.optional(v.string()),
+    requestXml: v.optional(v.string()),
+    responseXml: v.optional(v.string()),
+    errors: v.optional(v.any()),
+    createdAt: v.number(),
+  })
+    .index("by_declaration", ["ensDeclarationId"])
+    .index("by_correlationId", ["correlationId"])
+    .index("by_org", ["orgId"]),
 });
