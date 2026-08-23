@@ -309,8 +309,23 @@ export default defineSchema({
      * `docs/hmrc/specs/cds-api/appendix-22a-b1-obligations.md`.
      */
     declarationCategory: v.optional(
-      v.union(v.literal("B1"), v.literal("C1"), v.literal("I1")),
+      v.union(v.literal("B1"), v.literal("C1"), v.literal("I1"), v.literal("H2")),
     ),
+    /**
+     * DE 2/7 — identification of warehouse. Mandatory on H2 and on no other
+     * import category. Two components: a type letter and the warehouse
+     * reference including its country code, e.g. U + 1234567GB.
+     *
+     * Header level by design: HMRC requires every goods item on one
+     * declaration to be entered to the SAME warehouse, so there is
+     * deliberately no per-item equivalent.
+     *
+     * Spec: docs/hmrc/customs-warehousing/reference/warehouse-types.json
+     */
+    warehouseTypeCode: v.optional(v.string()),
+    warehouseIdentifier: v.optional(v.string()),
+    /** DE 5/27 — supervising customs office. Optional on GB declarations. */
+    supervisingCustomsOffice: v.optional(v.string()),
     // DE 3/1 country for the export exporter block — on an export the exporter
     // is the declaring party, so its country is not the dispatch country.
     exporterCountry: v.optional(v.string()),

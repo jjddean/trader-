@@ -16,15 +16,16 @@
 
 import { validateB1Declaration } from "./b1-mapper";
 import { validateC1Declaration } from "./c1-mapper";
+import { validateH2Declaration } from "./h2-mapper";
 import { validateI1Declaration } from "./i1-mapper";
 import { validateGoodsLocationForSubmit } from "./goods-location";
 import { validateGoodsItemSequences } from "./submit-goods-items";
 import { commodityRequiresSupplementaryUnit } from "./wco-mapper";
 
-export type DeclarationCategory = "B1" | "C1" | "I1" | "H1";
+export type DeclarationCategory = "B1" | "C1" | "H2" | "I1" | "H1";
 
 /** Categories with their own mapper, renderer and gate. */
-const ROUTED_CATEGORIES: readonly DeclarationCategory[] = ["B1", "C1", "I1"];
+const ROUTED_CATEGORIES: readonly DeclarationCategory[] = ["B1", "C1", "H2", "I1"];
 
 /**
  * Which data set a declaration files under. Anything that is not an explicitly
@@ -46,6 +47,11 @@ export function isB1ExportDeclaration(lane: unknown): boolean {
 /** True when the submit route must take the simplified export mapper and renderer. */
 export function isC1ExportDeclaration(lane: unknown): boolean {
   return resolveDeclarationCategory(lane) === "C1";
+}
+
+/** True when the submit route must take the customs warehousing mapper. */
+export function isH2WarehouseDeclaration(lane: unknown): boolean {
+  return resolveDeclarationCategory(lane) === "H2";
 }
 
 /** True when the submit route must take the simplified import mapper and renderer. */
@@ -118,6 +124,23 @@ export function validateC1SubmitGate(
 ): string[] {
   return [
     ...validateC1Declaration(lane ?? {}, items ?? []),
+    ...sharedGate(lane, items),
+  ];
+}
+
+/**
+ * Pre-mapper gate for H2 customs warehousing.
+ *
+ * H2 declares almost no Group 4 — duty is suspended at entry — so the H1 gate,
+ * which demands an invoice currency and valuation data, would reject a valid
+ * warehouse entry. It also enforces DE 2/7, which exists on no other category.
+ */
+export function validateH2SubmitGate(
+  lane: Record<string, unknown>,
+  items: Record<string, unknown>[],
+): string[] {
+  return [
+    ...validateH2Declaration(lane ?? {}, items ?? []),
     ...sharedGate(lane, items),
   ];
 }

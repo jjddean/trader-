@@ -52,6 +52,9 @@ jobs:
       - name: I1 simplified import regressions
         run: npm run test:i1
 
+      - name: H2 customs warehousing regressions
+        run: npm run test:h2
+
       - name: TRE regressions
         run: npm run test:tre
 

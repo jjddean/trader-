@@ -12,9 +12,10 @@ import { buildPayloadDebugSnapshot, renderH1Xml, validateXmlPreflight } from "..
 import { mapToCDS_B1 } from "../../../../lib/b1-mapper";
 import { mapToCDS_C1 } from "../../../../lib/c1-mapper";
 import { renderC1Xml } from "../../../../lib/c1-xml-renderer";
+import { mapToCDS_H2 } from "../../../../lib/h2-mapper";
 import { mapToCDS_I1 } from "../../../../lib/i1-mapper";
 import { renderI1Xml } from "../../../../lib/i1-xml-renderer";
-import { resolveDeclarationCategory, validateB1SubmitGate, validateC1SubmitGate, validateI1SubmitGate } from "../../../../lib/submit-category";
+import { resolveDeclarationCategory, validateB1SubmitGate, validateC1SubmitGate, validateH2SubmitGate, validateI1SubmitGate } from "../../../../lib/submit-category";
 import { renderB1Xml } from "../../../../lib/b1-xml-renderer";
 import { validateGoodsLocationForSubmit } from "../../../../lib/goods-location";
 import { validateGoodsItemSequences } from "../../../../lib/submit-goods-items";
@@ -236,6 +237,7 @@ export async function POST(request: Request) {
     const isB1Export = declarationCategory === "B1";
     const isC1Export = declarationCategory === "C1";
     const isI1Import = declarationCategory === "I1";
+    const isH2Warehouse = declarationCategory === "H2";
     const laneRecord = lane as Record<string, unknown>;
     const itemRecords = items as Record<string, unknown>[];
     const baselineErrors = isB1Export
@@ -244,7 +246,9 @@ export async function POST(request: Request) {
         ? validateC1SubmitGate(laneRecord, itemRecords)
         : isI1Import
           ? validateI1SubmitGate(laneRecord, itemRecords)
-          : validateDeclaration(lane, items);
+          : isH2Warehouse
+            ? validateH2SubmitGate(laneRecord, itemRecords)
+            : validateDeclaration(lane, items);
     if (baselineErrors.length > 0) {
       return NextResponse.json(
         { error: "Declaration incomplete", missing: baselineErrors },
@@ -411,7 +415,9 @@ export async function POST(request: Request) {
           ? mapToCDS_C1(lane, items, { omitAdditionalDocuments, forbiddenDocCodes })
           : isI1Import
             ? mapToCDS_I1(lane, items, { omitAdditionalDocuments, forbiddenDocCodes })
-            : mapToCDS_H1(lane, items, {
+            : isH2Warehouse
+              ? mapToCDS_H2(lane, items, { omitAdditionalDocuments, forbiddenDocCodes })
+              : mapToCDS_H1(lane, items, {
                 omitAdditionalDocuments,
                 forbiddenDocCodes,
                 ...(transport === "cns_inventory" ? { cnsUcn: routingContext.cnsUcn } : {}),
