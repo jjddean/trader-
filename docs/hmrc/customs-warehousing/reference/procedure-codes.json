@@ -1,0 +1,74 @@
+{
+  "feature": "Customs Warehousing",
+  "cdsCategory": "H2",
+  "dataElement": "1/10",
+  "source": "https://www.gov.uk/government/publications/appendix-1-de-110-requested-and-previous-procedure-codes-of-the-customs-declaration-service-cds/requested-procedure-71-entry-to-a-customs-warehouse-cw",
+  "hmrcUpdated": "2026-08-13",
+  "retrieved": "2026-08-23",
+  "mirror": "../declarations/procedure-71.md",
+  "note": "Entry codes only. Removal is a separate declaration — see dischargeProcedures below. Only one 4-digit procedure code per goods item, and every procedure code on one declaration must be in the same declaration category.",
+  "entryProcedures": [
+    { "code": "7100", "requested": "71", "previous": "00", "description": "Entry to a customs warehouse, no previous procedure" },
+    { "code": "7110", "requested": "71", "previous": "10", "description": "Re-import to a customs warehouse, goods previously exported" },
+    { "code": "7121", "requested": "71", "previous": "21", "description": "Re-import under Outward Processing, entering a customs warehouse" },
+    { "code": "7122", "requested": "71", "previous": "22", "description": "Re-import under Outward Processing not covered by 7121" },
+    { "code": "7123", "requested": "71", "previous": "23", "description": "Customs warehouse entry with a Returned Goods Relief claim" },
+    { "code": "7151", "requested": "71", "previous": "51", "description": "Customs warehouse entry, goods previously under Inward Processing" },
+    { "code": "7153", "requested": "71", "previous": "53", "description": "Customs warehouse entry from Inward Processing, specific circumstances" },
+    { "code": "7154", "requested": "71", "previous": "54", "description": "Inward Processing goods entering a customs warehouse with a relief claim" },
+    { "code": "7171", "requested": "71", "previous": "71", "description": "Entry from processing in a bonded warehouse" },
+    { "code": "7178", "requested": "71", "previous": "78", "description": "Entry from another special procedure" }
+  ],
+  "declarationCategories": {
+    "note": "Categories permitted for 7100 per the Appendix 1 page. Other 71-series codes may differ — check the per-code section of the mirror.",
+    "permitted": ["H2", "I1 C&F", "C21i EIDR NOP"]
+  },
+  "declarationType": {
+    "dataElement": "1/1",
+    "values": [
+      { "code": "IM", "when": "Goods do not have Customs Union status" },
+      { "code": "CO", "when": "Goods have Customs Union status. Additional Procedure Code F15 must also be declared in DE 1/11." }
+    ]
+  },
+  "additionalDeclarationType": {
+    "dataElement": "1/2",
+    "permitted": ["A", "C", "D", "F", "J", "K"],
+    "prohibited": ["Y", "Z"],
+    "reason": "The obligation to lodge a supplementary declaration is waived where goods are placed under a customs warehousing procedure (Article 167(2)(a) UCC), so the supplementary types Y and Z have no use on entry."
+  },
+  "additionalProcedureCodes": {
+    "dataElement": "1/11",
+    "note": "Listed for 7100. Other 71-series codes carry their own lists — see the mirror.",
+    "7100": { "union": ["F15"], "national": ["000", "1VW", "2CD", "2CG"] }
+  },
+  "previousDocuments": {
+    "dataElement": "2/1",
+    "note": "Y-category SDE and CLE codes are excluded because the supplementary declaration is waived on entry for both SDP and EIDR.",
+    "types": [
+      { "category": "X", "type": "337", "meaning": "Temporary Storage Declaration", "reference": "The TSD or stock reference", "goodsItem": "Goods item number from the TSD or stock reference" },
+      { "category": "Z", "type": "355", "meaning": "Entry Summary Declaration", "reference": "The ENS MRN", "goodsItem": "Goods item number from the ENS" },
+      { "category": "Z", "type": "ZZZ", "meaning": "Any other previous reference", "reference": "Another recognisable reference, for example a stock reference", "goodsItem": "Goods item number from the previous document" },
+      { "category": "Z", "type": "DCR", "meaning": "DUCR", "reference": "The DUCR assigned in commercial records", "goodsItem": null },
+      { "category": "Z", "type": "DCS", "meaning": "DUCR part number", "reference": "Part numbers associated with the DUCR", "goodsItem": null }
+    ]
+  },
+  "dischargeProcedures": {
+    "note": "Discharge is always a NEW declaration citing 71 as the previous procedure. One warehouse entry may be discharged by many declarations.",
+    "codes": [
+      {
+        "code": "4071",
+        "description": "Release to free circulation and home use of goods removed from a customs warehouse",
+        "categories": ["H1", "H5", "I1 B&E"],
+        "authorisation": "Customs Warehousing",
+        "source": "https://www.gov.uk/government/publications/appendix-1-de-110-requested-and-previous-procedure-codes-of-the-customs-declaration-service-cds/requested-procedure-40-release-to-free-circulation",
+        "note": "The MRN of this declaration must be given to the warehousekeeper as evidence the goods entered a procedure. Where additional declaration type B is used, no supplementary declaration is required."
+      },
+      {
+        "code": "31xx",
+        "description": "Re-export or dispatch of non-Union goods following a special procedure",
+        "categories": ["B1", "C1 C&F", "C1 B&E"],
+        "note": "Export side. The 31 series is already in the B1/C1 allowable requested-procedure set."
+      }
+    ]
+  }
+}

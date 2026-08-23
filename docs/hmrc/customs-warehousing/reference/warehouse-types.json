@@ -1,0 +1,76 @@
+{
+  "feature": "Customs Warehousing",
+  "retrieved": "2026-08-23",
+  "sources": [
+    {
+      "for": "DE 2/7 types permitted on procedure 71, DE 2/3 document codes, DE 3/39 authorisation type codes",
+      "url": "https://www.gov.uk/government/publications/appendix-1-de-110-requested-and-previous-procedure-codes-of-the-customs-declaration-service-cds/requested-procedure-71-entry-to-a-customs-warehouse-cw",
+      "hmrcUpdated": "2026-08-13"
+    },
+    {
+      "for": "DE 2/7 general format and the full type list including non-customs warehouse types",
+      "url": "https://www.gov.uk/government/publications/cds-uk-trade-tariff-volume-3-import-declaration-completion-guide/group-2-references-of-messages-document-certificates-and-authorisations"
+    }
+  ],
+
+  "de_2_7_identificationOfWarehouse": {
+    "obligation": "A (mandatory) on H2 — the data element that exists on no other import category",
+    "format": "One type letter (a1), then the warehouse reference number or warehouse ID (an..35) which carries the authorising country code",
+    "example": "R1234567GB",
+    "identifierLengths": {
+      "customsWarehouse": "7 digits",
+      "exciseWarehouse": "13 digits",
+      "isleOfManFreeZone": "0000006"
+    },
+    "typesPermittedOnProcedure71": [
+      { "code": "R", "meaning": "Public customs warehouse type 1", "gbPermitted": true, "xiPermitted": true },
+      { "code": "S", "meaning": "Public customs warehouse type 2", "gbPermitted": false, "xiPermitted": false },
+      { "code": "T", "meaning": "Public customs warehouse type 3", "gbPermitted": false, "xiPermitted": false },
+      { "code": "U", "meaning": "Private customs warehouse", "gbPermitted": true, "xiPermitted": true }
+    ],
+    "typesInTheWiderCodeListButNotForProcedure71": [
+      { "code": "Y", "meaning": "Non-customs warehouse" },
+      { "code": "Z", "meaning": "Free zone" }
+    ],
+    "restrictions": [
+      "Warehouse types S and T may not be used with any warehouse ID carrying a country code of GB or XI (Appendix 1, procedure 71).",
+      "All goods items on one declaration must be entered to the SAME warehouse.",
+      "For imports to Northern Ireland, GB in DE 2/7 is restricted to excise premises and certain legacy customs warehouse diversions; everything else must use XI (Group 2 completion guide)."
+    ],
+    "discrepancy": "The Group 2 completion guide states only that S and T may not be used with GB. The procedure 71 page, which is more recent and more specific, extends that to GB or XI. The procedure page is taken as authoritative; verify before relying on it for an XI submission."
+  },
+
+  "de_2_3_authorisationDocumentCodes": [
+    { "documentCode": "C517", "authorisationTypeCode": "CWP", "meaning": "Private customs warehouse", "identifier": "Country code + CWP + the customs warehouse authorisation number" },
+    { "documentCode": "C518", "authorisationTypeCode": "CW1", "meaning": "Public customs warehouse type 1", "identifier": "Country code + CW1 + the customs warehouse authorisation number" },
+    { "documentCode": "C519", "authorisationTypeCode": "CW2", "meaning": "Public customs warehouse type 2", "identifier": "Country code + CW2 + the customs warehouse authorisation number", "restriction": "CW2 must not be used with GB or XI" }
+  ],
+
+  "de_3_39_authorisationTypeCodes": [
+    { "code": "CWP", "meaning": "Authorisation for a private customs warehouse", "identifier": "EORI of the authorisation holder" },
+    { "code": "CW1", "meaning": "Authorisation for a public customs warehouse type 1", "identifier": "EORI of the authorisation holder" },
+    { "code": "CW2", "meaning": "Authorisation for a public customs warehouse type 2", "identifier": "EORI of the authorisation holder", "restriction": "Cannot be used with GB or XI" }
+  ],
+  "de_3_39_note": "The authorisation TYPE code and holder EORI go in DE 3/39; the corresponding authorisation DECISION number goes in DE 2/3 against the matching document code. The two must be declared as a pair.",
+
+  "de_2_2_additionalInformationCodes": [
+    {
+      "code": "PREMS",
+      "meaning": "Premises name and address",
+      "declare": "Full name, address and country of the warehouse where the goods can be examined, with the premises country code suffixed after a hyphen",
+      "condition": "Do NOT complete PREMS if the premises code in DE 2/7 is a UK-allocated warehouse"
+    },
+    {
+      "code": "WHSRP",
+      "meaning": "Preference to be claimed on removal",
+      "declare": "The type of preference claimed, for example GSP, ACP, EFTA",
+      "condition": "Used when a preferential rate will be claimed on removal from the warehouse. DE 4/17, 5/16 and, where appropriate, 5/15 must also be completed at entry."
+    }
+  ],
+
+  "de_5_27_supervisingCustomsOffice": {
+    "obligation": "Optional on all GB declarations",
+    "source": "Appendix 17: DE 5/27 Supervising Office Codes",
+    "note": "The office applicable to the customs warehouse authorisation held. It appears in the authorisation letter."
+  }
+}

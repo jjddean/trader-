@@ -1,0 +1,337 @@
+{
+  "feature": "Customs Warehousing",
+  "cdsCategory": "H2",
+  "retrieved": "2026-08-23",
+  "note": "Rules derived from the mirrors in this pack. Each carries its HMRC source so it can be re-checked. Nothing here is implemented; there is no H2 mapper, renderer or gate in FreightCode.",
+  "sources": {
+    "appendix21b": "https://www.gov.uk/government/publications/appendix-21-import-declaration-category-data-sets/appendix-21b-declaration-category-data-sets-h2",
+    "procedure71": "https://www.gov.uk/government/publications/appendix-1-de-110-requested-and-previous-procedure-codes-of-the-customs-declaration-service-cds/requested-procedure-71-entry-to-a-customs-warehouse-cw",
+    "handbook": "https://www.gov.uk/guidance/special-procedure-customs-warehousing"
+  },
+
+  "rules": [
+    {
+      "ruleId": "H2-CAT-PROC",
+      "source": "procedure71",
+      "de": "1/10",
+      "condition": "declarationCategory == 'H2'",
+      "requirement": "The first two digits of every goods item's procedure code must be 71.",
+      "result": "Reject before submission.",
+      "freightcodeField": "goodsItems[].procedureCode"
+    },
+    {
+      "ruleId": "H2-PROC-CATEGORY-UNIFORM",
+      "source": "procedure71",
+      "de": "1/10",
+      "condition": "always",
+      "requirement": "Every procedure code on one declaration must belong to the same declaration category. HMRC states this explicitly for H2.",
+      "result": "Reject a declaration mixing H2 procedure codes with codes from another category.",
+      "freightcodeField": "goodsItems[].procedureCode"
+    },
+    {
+      "ruleId": "H2-PROC-ONE-PER-ITEM",
+      "source": "procedure71",
+      "de": "1/10",
+      "condition": "always",
+      "requirement": "Only one 4-digit procedure code may be declared against each goods item.",
+      "result": "Reject.",
+      "freightcodeField": "goodsItems[].procedureCode"
+    },
+    {
+      "ruleId": "H2-PROC-KNOWN-CODE",
+      "source": "procedure71",
+      "de": "1/10",
+      "condition": "declarationCategory == 'H2'",
+      "requirement": "The procedure code must be one of 7100, 7110, 7121, 7122, 7123, 7151, 7153, 7154, 7171, 7178.",
+      "result": "Reject an unlisted 71-series code.",
+      "freightcodeField": "goodsItems[].procedureCode",
+      "referenceData": "reference/procedure-codes.json#entryProcedures"
+    },
+    {
+      "ruleId": "H2-SAME-WAREHOUSE",
+      "source": "procedure71 + handbook/receiving",
+      "de": "2/7",
+      "condition": "declarationCategory == 'H2'",
+      "requirement": "All goods items must be entered to the SAME customs warehouse identified in DE 2/7.",
+      "result": "Reject a declaration whose items reference different warehouses.",
+      "freightcodeField": "identificationOfWarehouse",
+      "note": "DE 2/7 is header-level (Y), so the constraint is structural: FreightCode must not offer a per-item warehouse."
+    },
+    {
+      "ruleId": "H2-WAREHOUSE-MANDATORY",
+      "source": "appendix21b",
+      "de": "2/7",
+      "condition": "declarationCategory == 'H2'",
+      "requirement": "DE 2/7 is A (mandatory) at header level.",
+      "result": "Reject.",
+      "freightcodeField": "identificationOfWarehouse"
+    },
+    {
+      "ruleId": "H2-WAREHOUSE-TYPE",
+      "source": "procedure71",
+      "de": "2/7",
+      "condition": "declarationCategory == 'H2'",
+      "requirement": "The warehouse type letter must be R, S, T or U. Y (non-customs warehouse) and Z (free zone) exist in the wider code list but are not valid on procedure 71.",
+      "result": "Reject.",
+      "freightcodeField": "identificationOfWarehouse.type"
+    },
+    {
+      "ruleId": "H2-WAREHOUSE-ST-NOT-GB-XI",
+      "source": "procedure71",
+      "de": "2/7",
+      "condition": "warehouseType in ('S','T')",
+      "requirement": "Types S and T may not be used with a warehouse ID carrying a country code of GB or XI.",
+      "result": "Reject.",
+      "freightcodeField": "identificationOfWarehouse",
+      "note": "The Group 2 completion guide states GB only; the procedure page extends it to XI. Unresolved — see reference/warehouse-types.json#discrepancy."
+    },
+    {
+      "ruleId": "H2-AUTH-HOLDER-MANDATORY",
+      "source": "appendix21b",
+      "de": "3/39",
+      "condition": "declarationCategory == 'H2'",
+      "requirement": "DE 3/39 holder of the authorisation is A (mandatory) — it is D on H1.",
+      "result": "Reject.",
+      "freightcodeField": "authorisationHolder"
+    },
+    {
+      "ruleId": "H2-AUTH-TYPE-PAIR",
+      "source": "procedure71",
+      "de": "3/39 + 2/3",
+      "condition": "declarationCategory == 'H2'",
+      "requirement": "The authorisation type code and holder EORI in DE 3/39 must be paired with the matching document code and authorisation decision number in DE 2/3: CWP↔C517, CW1↔C518, CW2↔C519.",
+      "result": "Reject an unpaired declaration.",
+      "freightcodeField": "authorisationHolder, documents[]",
+      "referenceData": "reference/warehouse-types.json#de_2_3_authorisationDocumentCodes"
+    },
+    {
+      "ruleId": "H2-AUTH-TYPE-MATCHES-WAREHOUSE-TYPE",
+      "source": "procedure71",
+      "de": "3/39 vs 2/7",
+      "condition": "declarationCategory == 'H2'",
+      "requirement": "The authorisation type must be consistent with the DE 2/7 warehouse type: U private ↔ CWP, R public type 1 ↔ CW1, S public type 2 ↔ CW2.",
+      "result": "Warn or reject.",
+      "freightcodeField": "identificationOfWarehouse.type, authorisationHolder.typeCode",
+      "confidence": "inferred — HMRC does not state the cross-check explicitly, but the code sets map one to one. Verify before enforcing as blocking."
+    },
+    {
+      "ruleId": "H2-CW2-NOT-GB-XI",
+      "source": "procedure71",
+      "de": "3/39 + 2/3",
+      "condition": "authorisationTypeCode == 'CW2'",
+      "requirement": "CW2 must not be used with GB or XI.",
+      "result": "Reject.",
+      "freightcodeField": "authorisationHolder.typeCode"
+    },
+    {
+      "ruleId": "H2-DECL-TYPE",
+      "source": "procedure71",
+      "de": "1/1",
+      "condition": "declarationCategory == 'H2'",
+      "requirement": "DE 1/1 must be IM, or CO where the goods have Customs Union status.",
+      "result": "Reject any other value.",
+      "freightcodeField": "declarationType"
+    },
+    {
+      "ruleId": "H2-CO-REQUIRES-F15",
+      "source": "procedure71",
+      "de": "1/1 + 1/11",
+      "condition": "declarationType == 'CO'",
+      "requirement": "Additional Procedure Code F15 must be declared in DE 1/11.",
+      "result": "Reject.",
+      "freightcodeField": "declarationType, goodsItems[].additionalProcedureCode"
+    },
+    {
+      "ruleId": "H2-ADDITIONAL-DECL-TYPE",
+      "source": "procedure71",
+      "de": "1/2",
+      "condition": "procedureCode startsWith '71'",
+      "requirement": "DE 1/2 must be one of A, C, D, F, J or K.",
+      "result": "Reject.",
+      "freightcodeField": "additionalDeclarationType"
+    },
+    {
+      "ruleId": "H2-NO-SUPPLEMENTARY",
+      "source": "procedure71",
+      "de": "1/2",
+      "condition": "procedureCode startsWith '71'",
+      "requirement": "Types Y and Z must not be used. The supplementary declaration obligation is waived on entry to customs warehousing (UCC Article 167(2)(a)).",
+      "result": "Reject, and never schedule a supplementary declaration for a warehouse entry.",
+      "freightcodeField": "additionalDeclarationType",
+      "note": "This also means the CDS supplementary-declaration workflow must be suppressed for H2, not merely left unused."
+    },
+    {
+      "ruleId": "H2-APC-7100",
+      "source": "procedure71",
+      "de": "1/11",
+      "condition": "procedureCode == '7100'",
+      "requirement": "Additional Procedure Code must be F15 (Union) or one of 000, 1VW, 2CD, 2CG (National).",
+      "result": "Reject.",
+      "freightcodeField": "goodsItems[].additionalProcedureCode",
+      "note": "Other 71-series codes carry different APC lists — see declarations/procedure-71.md per code."
+    },
+    {
+      "ruleId": "H2-PREMS-CONDITIONAL",
+      "source": "procedure71",
+      "de": "2/2",
+      "condition": "DE 2/7 is not a UK-allocated warehouse code",
+      "requirement": "AI statement PREMS must carry the full name, address and country of the warehouse, with the country code suffixed after a hyphen.",
+      "result": "Reject if missing. Conversely, do NOT declare PREMS when DE 2/7 is a UK-allocated warehouse code.",
+      "freightcodeField": "additionalInformation[]"
+    },
+    {
+      "ruleId": "H2-WHSRP-PREFERENCE",
+      "source": "procedure71",
+      "de": "2/2 + 4/17 + 5/15 + 5/16",
+      "condition": "a preferential rate will be claimed on removal",
+      "requirement": "AI statement WHSRP must state the preference type, and DE 4/17, 5/16 and where appropriate 5/15 must be completed AT ENTRY.",
+      "result": "Reject if the intent to claim preference on removal is recorded without these.",
+      "freightcodeField": "additionalInformation[], preference, countryOfPreferentialOrigin",
+      "note": "Consequence for the stock account: preference intent is captured at entry and consumed at discharge, so the stock lot must carry it."
+    },
+    {
+      "ruleId": "H2-NO-VALUATION-BLOCK",
+      "source": "appendix21b",
+      "de": "Group 4",
+      "condition": "declarationCategory == 'H2'",
+      "requirement": "Group 4 is absent apart from DE 4/17 preference (C). Valuation method, delivery terms, tax calculation, method of payment, deferred payment, additions and deductions and invoice totals are not declared, because no charge arises at entry.",
+      "result": "Reject a payload carrying any of them.",
+      "freightcodeField": "valuationMethod, incoterms, paymentMethodCode, defermentAccountNumber, invoiceTotal"
+    },
+    {
+      "ruleId": "H2-NO-GUARANTEE",
+      "source": "procedure71 / handbook",
+      "de": "8/2, 8/3",
+      "condition": "declarationCategory == 'H2'",
+      "requirement": "Guarantee information is not declared on an H2 declaration.",
+      "result": "Reject a payload carrying DE 8/2 or 8/3.",
+      "freightcodeField": "guaranteeType, guaranteeReference",
+      "note": "A Customs Comprehensive Guarantee is still required for the AUTHORISATION — it is simply not declared per consignment."
+    },
+    {
+      "ruleId": "H2-STATISTICAL-VALUE-MANDATORY",
+      "source": "appendix21b",
+      "de": "8/6",
+      "condition": "declarationCategory == 'H2'",
+      "requirement": "DE 8/6 statistical value is A at item level.",
+      "result": "Reject.",
+      "freightcodeField": "goodsItems[].statisticalValue"
+    },
+    {
+      "ruleId": "H2-PACKAGING-MANDATORY",
+      "source": "appendix21b",
+      "de": "6/9, 6/10, 6/11",
+      "condition": "declarationCategory == 'H2'",
+      "requirement": "Type of packages, number of packages and shipping marks are all A at item level — all three are D on H1.",
+      "result": "Reject.",
+      "freightcodeField": "goodsItems[].packageType, packageCount, shippingMarks"
+    },
+    {
+      "ruleId": "H2-NO-NET-MASS",
+      "source": "appendix21b",
+      "de": "6/1",
+      "condition": "declarationCategory == 'H2'",
+      "requirement": "Net mass is not on the H2 data set. Gross mass (6/5) is A.",
+      "result": "Reject a payload carrying DE 6/1.",
+      "freightcodeField": "goodsItems[].netWeightKg"
+    },
+    {
+      "ruleId": "H2-DOCUMENTS-MANDATORY",
+      "source": "appendix21b",
+      "de": "2/3",
+      "condition": "declarationCategory == 'H2'",
+      "requirement": "DE 2/3 is A at item level — it is D on H1. DE 8/7 write-off functionality is carried inside it.",
+      "result": "Reject an item with no documents.",
+      "freightcodeField": "goodsItems[].documents"
+    },
+    {
+      "ruleId": "H2-EIDR-C514",
+      "source": "procedure71",
+      "de": "2/3 + 3/39",
+      "condition": "Entry in Declarant's Records is used",
+      "requirement": "Document code C514 must be declared, with the corresponding authorisation holder EORI in DE 3/39.",
+      "result": "Reject if EIDR is indicated without the pair.",
+      "freightcodeField": "documents[], authorisationHolder"
+    }
+  ],
+
+  "operationalRules": [
+    {
+      "ruleId": "CW-ARRIVAL-5-DAYS",
+      "source": "handbook/receiving",
+      "requirement": "Goods are expected to arrive at the warehouse within 5 working days of the customs declaration being cleared. The same limit applies to goods received from another customs procedure.",
+      "result": "Flag an overdue receipt; an unexplained delay must be reported to the supervising office by the depositor.",
+      "freightcodeField": "warehouseEntry.releasedAt, warehouseEntry.receivedAt"
+    },
+    {
+      "ruleId": "CW-DISCREPANCY-REPORT",
+      "source": "handbook/receiving",
+      "requirement": "All discrepancies between the entry declaration and the goods received must be reported to the supervising office. Once resolved, the entry must be amended.",
+      "result": "Block the stock lot from normal status until resolved; record the amendment.",
+      "freightcodeField": "warehouseEntry.status"
+    },
+    {
+      "ruleId": "CW-UNDERSHIPMENT-14-DAYS",
+      "source": "handbook/receiving",
+      "requirement": "A shortage must be notified to the supervising office within 14 days of the date of entry to the procedure, with evidence that the missing goods were never entered.",
+      "result": "Deadline tracked from entry date, not receipt date.",
+      "freightcodeField": "warehouseEntry.enteredAt"
+    },
+    {
+      "ruleId": "CW-OVERSHIPMENT",
+      "source": "handbook/receiving",
+      "requirement": "Excess goods are dutiable. If not being warehoused, the original declaration is NOT amended — a separate free-circulation declaration covers the excess. If they are being warehoused, notify the supervising office within 14 days, store provisionally, and produce a revised invoice and a statement.",
+      "result": "Two distinct flows; never silently increase the stock lot quantity.",
+      "freightcodeField": "warehouseEntry, stockLot.quantityEntered"
+    },
+    {
+      "ruleId": "CW-NO-REMOVAL-BEFORE-RELEASE",
+      "source": "handbook/discharge",
+      "requirement": "Goods must not be physically removed until the warehousekeeper has evidence HMRC released them AND the details are entered in the stock account. This does not apply under EIDR.",
+      "result": "The stock account write is a precondition of physical removal, not a record of it.",
+      "freightcodeField": "movement.type == 'DISCHARGE'"
+    },
+    {
+      "ruleId": "CW-DUTY-POINT",
+      "source": "handbook/discharge",
+      "requirement": "Duties become payable when the removal entry is presented and accepted. The date of acceptance establishes the duty rate, regardless of when the goods physically move. Under SCDP, the EIDR entry date is the acceptance date.",
+      "result": "Store the acceptance date on the discharge, and use it — not the movement date — for duty.",
+      "freightcodeField": "discharge.acceptedAt"
+    },
+    {
+      "ruleId": "CW-FIFO",
+      "source": "handbook/discharge",
+      "requirement": "Where goods share an 8-digit commodity code, commercial quality and technical characteristics and cannot be told apart, removal may be on a first in, first out basis — earliest entry against earliest removal.",
+      "result": "FIFO is permitted, not mandatory, and does not relieve the preference/proof-of-origin obligations.",
+      "freightcodeField": "stockLot allocation strategy"
+    },
+    {
+      "ruleId": "CW-DBT-LICENCE-DEFERRED",
+      "source": "handbook/receiving",
+      "requirement": "Goods needing a DBT licence may be warehoused without presenting it, but the stock record must be noted that the licence must be produced when the goods are declared to free circulation.",
+      "result": "The stock lot carries a licence-required flag that blocks discharge to free circulation until satisfied.",
+      "freightcodeField": "stockLot.licenceRequired"
+    },
+    {
+      "ruleId": "CW-RECORDS-4-YEARS",
+      "source": "handbook/duty-management + authorisation",
+      "requirement": "Records must be kept for a minimum of 4 years after the goods have been discharged from the procedure.",
+      "result": "Retention is measured from discharge, not from entry.",
+      "freightcodeField": "retention policy"
+    },
+    {
+      "ruleId": "CW-REAL-TIME-STOCK",
+      "source": "handbook/duty-management",
+      "requirement": "Stock records must always show the current stock under the procedure in real time, unless authorised to use a duty management system in support of a commercial system — in which case updates must be no later than before midnight of the following warehouse operation day.",
+      "result": "Two distinct authorised modes. FreightCode must know which one the warehouse is authorised for.",
+      "freightcodeField": "customsWarehouse.stockUpdateMode"
+    },
+    {
+      "ruleId": "CW-OFFICER-UPDATE-ON-REQUEST",
+      "source": "handbook/duty-management",
+      "requirement": "The warehousekeeper must be able to update stock records at an HMRC officer's request so the officer can view current stock under the procedure.",
+      "result": "There must be an on-demand reconcile/refresh an officer can witness.",
+      "freightcodeField": "operational requirement"
+    }
+  ]
+}
