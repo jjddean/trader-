@@ -10,6 +10,7 @@ import {
 import { getAuthenticatedConvex } from "../../../../../lib/hmrc-route-session";
 import { resolveOrgHmrcRoutingForDeclaration } from "../../../../../lib/hmrc-org-routing";
 import { resolveHmrcAccessToken } from "../../../../../lib/hmrc-token";
+import { resolveDocumentType } from "../../../../../lib/hmrc-supporting-evidence";
 import { logHmrcAudit } from "../../../../../lib/audit-log";
 
 /**
@@ -68,7 +69,10 @@ export async function POST(request: Request) {
     }
 
     const initiateUrl = `${hmrcContext.apiBaseUrl}/customs/declarations/file-upload`;
-    const docType = typeof documentType === "string" && documentType.trim() ? documentType.trim() : "invoice";
+    // DocumentType is optional in HMRC's schema with no published value list,
+    // so it is omitted when the caller has no reliable value rather than
+    // defaulting to "invoice" — see resolveDocumentType.
+    const docType = resolveDocumentType({ selected: typeof documentType === "string" ? documentType : undefined });
     const requestXml = buildFileUploadRequestXml({ mrn, documentType: docType });
 
     const hmrcResponse = await fetchHmrc(

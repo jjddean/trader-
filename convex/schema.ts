@@ -490,6 +490,19 @@ export default defineSchema({
     ocrText: v.optional(v.string()),
     hmrcUploadReference: v.optional(v.string()),
     hmrcConversationId: v.optional(v.string()),
+    /**
+     * Position within the HMRC file-upload group this file was sent in. HMRC
+     * accepts up to 11 files per initiate and returns one Reference each;
+     * keeping the pair lets an outcome notification be traced back to the file
+     * and to the other files it was sent with.
+     */
+    fileSequenceNo: v.optional(v.number()),
+    fileGroupSize: v.optional(v.number()),
+    /**
+     * DE 2/2 StatementCode from the DMSDOC documentary check this file answers,
+     * when it was sent in response to one. Absent on a proactive upload.
+     */
+    requestedStatementCode: v.optional(v.string()),
   })
     .index("by_user", ["userId"])
     .index("by_org", ["orgId"])
