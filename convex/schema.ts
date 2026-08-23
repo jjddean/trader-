@@ -345,8 +345,8 @@ export default defineSchema({
     borderTransportId: v.optional(v.string()),
     borderTransportIdType: v.optional(v.string()),
     borderTransportNationality: v.optional(v.string()),
-    // DE 7/10 — container identification number.
-    containerId: v.optional(v.string()),
+    // DE 7/10 container id is `containerNumber`, declared with the CNS
+    // transport fields below — one field, not two.
     // DE 7/18 — seal number.
     sealNumber: v.optional(v.string()),
     // DE 8/5 — GoodsShipment/TransactionNatureCode (WCOID 103).

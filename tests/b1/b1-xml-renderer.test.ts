@@ -36,7 +36,7 @@ const declaration: Record<string, unknown> = {
   carrierEori: "GB111222333444",
   countriesOfRouting: ["FR", "ES"],
   sealNumber: "SEAL-88213",
-  containerId: "MSKU1234567",
+  containerNumber: "MSKU1234567",
   authorisationHolderEori: "GB553202734852",
   authorisationCategoryCode: "CSE",
   transportChargesMethodOfPayment: "H",

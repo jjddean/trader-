@@ -193,7 +193,7 @@ export function mapToCDS_C1(
   const carrierEori = trimmed(declaration.carrierEori);
   const carrierName = trimmed(declaration.carrierName);
   const freightMop = trimmed(declaration.transportChargesMethodOfPayment);
-  const containerId = trimmed(declaration.containerId);
+  const containerNumber = trimmed(declaration.containerNumber);
   const sealId = trimmed(declaration.sealNumber);
 
   return {
@@ -247,14 +247,14 @@ export function mapToCDS_C1(
         ...buildB1ConsigneeBlock(declaration),
         Consignment: {
           // DE 7/2 — container indicator, mandatory on C1.
-          ContainerCode: containerId ? "1" : "0",
+          ContainerCode: containerNumber ? "1" : "0",
           // DE 7/7 departure identity is not on the C1 data set.
           GoodsLocation: resolveGoodsLocationForXml(declaration),
-          ...(containerId || sealId
+          ...(containerNumber || sealId
             ? {
                 TransportEquipment: {
                   SequenceNumeric: "1",
-                  ...(containerId ? { ID: containerId } : {}),
+                  ...(containerNumber ? { ID: containerNumber } : {}),
                   ...(sealId ? { Seal: { SequenceNumeric: "1", ID: sealId } } : {}),
                 },
               }

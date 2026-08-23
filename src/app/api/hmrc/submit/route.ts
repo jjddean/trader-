@@ -399,9 +399,12 @@ export async function POST(request: Request) {
 
     let payloadInfo;
     try {
-      // Category dispatch. B1 is the standard export data set (Appendix 22A);
-      // anything else stays on the import family. The two mappers do not share
-      // a payload shape — see docs/hmrc/specs/cds-api/appendix-22a-b1-obligations.md.
+      // Category dispatch. B1/C1 are the export data sets and I1 the simplified
+      // import set; anything else stays on H1. The mappers do not share a
+      // payload shape — see docs/hmrc/specs/cds-api/.
+      //
+      // The CNS inventory reference (DE 2/1 Z/MCR) is an inventory-linked
+      // import concern and is passed on the H1 path only.
       payloadInfo = isB1Export
         ? mapToCDS_B1(lane, items, { omitAdditionalDocuments, forbiddenDocCodes })
         : isC1Export
@@ -411,7 +414,6 @@ export async function POST(request: Request) {
             : mapToCDS_H1(lane, items, {
                 omitAdditionalDocuments,
                 forbiddenDocCodes,
-                // DE 2/1 Z/MCR inventory reference — CNS route only.
                 ...(transport === "cns_inventory" ? { cnsUcn: routingContext.cnsUcn } : {}),
               });
     } catch (mappingError: unknown) {
