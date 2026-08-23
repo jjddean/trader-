@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { mapToCDS_B1, validateB1Declaration, IMPORT_ONLY_FIELDS } from "../../src/lib/b1-mapper";
+import { validateCdsCodeLists } from "../../src/lib/wco-mapper";
 
 /**
  * Obligation source: docs/hmrc/specs/cds-api/appendix-22a-b1-obligations.md
@@ -258,5 +259,54 @@ describe("mapToCDS_B1 — payload shape", () => {
     const docs = payload.Declaration.GoodsShipment.GovernmentAgencyGoodsItem[0].AdditionalDocument;
     assert.equal(docs.length, 1);
     assert.equal(docs[0].TypeCode, "935");
+  });
+});
+
+describe("code-list validation is scoped to the data set", () => {
+  /**
+   * `previous_procedure_codes` is seeded from HMRC's *import*
+   * previous-procedures file (convex/actions/cds_codes.ts). 1040 is a standard
+   * permanent export, but "40" is not an import previous procedure, so
+   * measuring a B1 against that list rejected a valid declaration.
+   */
+  it("does not check an export previous procedure against the import list", async () => {
+    const asked: string[] = [];
+    const lookup = async (listName: string, values: string[]) => {
+      asked.push(listName);
+      return listName === "previous_procedure_codes" ? values : [];
+    };
+
+    const payload = { Declaration: { GoodsShipment: { GovernmentAgencyGoodsItem: [{}] } } };
+    const items = [{ procedureCode: "1040" }];
+
+    const exportErrors = await validateCdsCodeLists(payload, items, lookup, { category: "B1" });
+    assert.equal(
+      asked.includes("previous_procedure_codes"),
+      false,
+      "the import previous-procedure list must not be consulted for an export data set",
+    );
+    assert.deepEqual(exportErrors, []);
+  });
+
+  it("still checks the previous procedure on an import data set", async () => {
+    const lookup = async (listName: string, values: string[]) =>
+      listName === "previous_procedure_codes" ? values : [];
+    const payload = { Declaration: { GoodsShipment: { GovernmentAgencyGoodsItem: [{}] } } };
+    const errors = await validateCdsCodeLists(payload, [{ procedureCode: "4000" }], lookup, {
+      category: "H1",
+    });
+    assert.equal(errors.length, 1);
+    assert.match(errors[0].reason, /import-previous-procedures/);
+  });
+
+  it("still checks the requested procedure on both", async () => {
+    const asked: string[] = [];
+    const lookup = async (listName: string) => {
+      asked.push(listName);
+      return [];
+    };
+    const payload = { Declaration: { GoodsShipment: { GovernmentAgencyGoodsItem: [{}] } } };
+    await validateCdsCodeLists(payload, [{ procedureCode: "1040" }], lookup, { category: "B1" });
+    assert.ok(asked.includes("procedure_codes"));
   });
 });

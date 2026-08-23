@@ -261,11 +261,21 @@ const LIST = {
 // Validate every code-list-bound value in the mapper output against the
 // authoritative HMRC datasets. Returns one error per invented/unknown code.
 // Method 1 valuation has a special invariant: it requires N935 on the items.
+export interface CodeListValidationOptions {
+  /**
+   * Which data set is being validated. Only the import lists are seeded, so an
+   * export declaration must not be measured against them.
+   */
+  category?: "H1" | "I1" | "B1" | "C1";
+}
+
 export async function validateCdsCodeLists(
   payloadInfo: any,
   items: any[],
   lookup: CodeListLookup,
+  options: CodeListValidationOptions = {},
 ): Promise<{ field: string; reason: string }[]> {
+  const isExportDataSet = options.category === "B1" || options.category === "C1";
   const errors: { field: string; reason: string }[] = [];
   const decl = payloadInfo?.Declaration ?? {};
   const shipment = decl?.GoodsShipment ?? {};
@@ -357,12 +367,20 @@ export async function validateCdsCodeLists(
           reason: `Requested procedure '${current}' is not in the HMRC government-procedure-types list (DE 1/10 first pair).`,
         });
       }
-      const missingPrevious = await lookup(LIST.previousProcedureCodes, [previous]);
-      if (missingPrevious.length) {
-        errors.push({
-          field: `${fieldPrefix}.procedureCode`,
-          reason: `Previous procedure '${previous}' is not in the HMRC import-previous-procedures list (DE 1/10 second pair).`,
-        });
+      // `previous_procedure_codes` is seeded from HMRC's *import*
+      // previous-procedures file (see convex/actions/cds_codes.ts). Measuring
+      // an export declaration against it rejects valid export procedure codes
+      // — 1040 is a standard permanent export, but "40" is not an import
+      // previous procedure. Skipped until the export list is seeded, matching
+      // how the route already fails open on an unseeded list.
+      if (!isExportDataSet) {
+        const missingPrevious = await lookup(LIST.previousProcedureCodes, [previous]);
+        if (missingPrevious.length) {
+          errors.push({
+            field: `${fieldPrefix}.procedureCode`,
+            reason: `Previous procedure '${previous}' is not in the HMRC import-previous-procedures list (DE 1/10 second pair).`,
+          });
+        }
       }
     }
 

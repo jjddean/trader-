@@ -448,7 +448,7 @@ export async function POST(request: Request) {
         console.error(`[SUBMIT] Code-list lookup for '${listName}' failed — codes left unvalidated (fail-open):`, lookupErr);
         return [];
       }
-    });
+    }, { category: declarationCategory });
     if (codeListErrors.length > 0) {
       return NextResponse.json(
         {
