@@ -123,6 +123,7 @@ import type * as tre_imports from "../tre_imports.js";
 import type * as users from "../users.js";
 import type * as validation_results from "../validation_results.js";
 import type * as waitlist from "../waitlist.js";
+import type * as warehouse_entries from "../warehouse_entries.js";
 import type * as workspaces from "../workspaces.js";
 
 import type {
@@ -247,6 +248,7 @@ declare const fullApi: ApiFromModules<{
   users: typeof users;
   validation_results: typeof validation_results;
   waitlist: typeof waitlist;
+  warehouse_entries: typeof warehouse_entries;
   workspaces: typeof workspaces;
 }>;
 

@@ -55,6 +55,9 @@ jobs:
       - name: H2 customs warehousing regressions
         run: npm run test:h2
 
+      - name: Customs warehouse stock account regressions
+        run: npm run test:warehouse
+
       - name: TRE regressions
         run: npm run test:tre
 
