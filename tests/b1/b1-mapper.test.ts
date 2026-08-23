@@ -234,7 +234,7 @@ describe("mapToCDS_B1 — payload shape", () => {
   });
 
   it("sets ContainerCode to 1 when a container is declared", () => {
-    const payload = mapToCDS_B1(decl({ containerId: "MSKU1234567" }), baseItems) as any;
+    const payload = mapToCDS_B1(decl({ containerNumber: "MSKU1234567" }), baseItems) as any;
     assert.equal(payload.Declaration.GoodsShipment.Consignment.ContainerCode, "1");
   });
 

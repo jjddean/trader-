@@ -1789,10 +1789,6 @@ export const updateDeclarationDetails = mutation({
     transactionNatureCode: v.optional(v.string()),
     defermentAccountNumber: v.optional(v.string()),
     paymentMethodCode: v.optional(v.string()),
-    // DE 7/10 container id, and the CNS inventory reference (UCN) for
-    // inventory-linked locations.
-    containerNumber: v.optional(v.string()),
-    cnsUcn: v.optional(v.string()),
     /**
      * Declaration category. Absent keeps the H1 full import data set.
      * Obligations per category live under docs/hmrc/specs/cds-api/.
@@ -1831,8 +1827,11 @@ export const updateDeclarationDetails = mutation({
     borderTransportId: v.optional(v.string()),
     borderTransportIdType: v.optional(v.string()),
     borderTransportNationality: v.optional(v.string()),
-    containerId: v.optional(v.string()),
     sealNumber: v.optional(v.string()),
+    // DE 7/10 container id, and the CNS inventory reference (UCN) for
+    // inventory-linked locations.
+    containerNumber: v.optional(v.string()),
+    cnsUcn: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -1861,8 +1860,9 @@ export const updateDeclarationDetails = mutation({
       const contradicts =
         (routeValue === "import" || routeValue === "export") && routeValue !== expected;
       if (contradicts) {
-        throw new Error(
-          `Declaration category ${category} is a ${expected} data set but route is "${routeValue}".`,
+        throw userError(
+          "category_route_mismatch",
+          `Declaration category ${category} is a ${expected} data set, but the route is set to "${routeValue}".`,
         );
       }
     }
@@ -1924,7 +1924,7 @@ export const updateDeclarationDetails = mutation({
       ...(args.borderTransportId !== undefined ? { borderTransportId: args.borderTransportId } : {}),
       ...(args.borderTransportIdType !== undefined ? { borderTransportIdType: args.borderTransportIdType } : {}),
       ...(args.borderTransportNationality !== undefined ? { borderTransportNationality: args.borderTransportNationality } : {}),
-      ...(args.containerId !== undefined ? { containerId: args.containerId } : {}),
+      ...(args.containerNumber !== undefined ? { containerNumber: args.containerNumber } : {}),
       ...(args.sealNumber !== undefined ? { sealNumber: args.sealNumber } : {}),
       ...(args.transportMode !== undefined ? { transportMode: args.transportMode } : {}),
       ...(args.transportId !== undefined ? { transportId: args.transportId } : {}),

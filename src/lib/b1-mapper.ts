@@ -162,13 +162,13 @@ function buildDeclarationConsignment(declaration: Record<string, unknown>) {
 
 /** DE 7/18 — seals, carried on TransportEquipment. */
 function buildTransportEquipment(declaration: Record<string, unknown>) {
-  const containerId = trimmed(declaration.containerId);
+  const containerNumber = trimmed(declaration.containerNumber);
   const sealId = trimmed(declaration.sealNumber);
-  if (!containerId && !sealId) return {};
+  if (!containerNumber && !sealId) return {};
   return {
     TransportEquipment: {
       SequenceNumeric: "1",
-      ...(containerId ? { ID: containerId } : {}),
+      ...(containerNumber ? { ID: containerNumber } : {}),
       ...(sealId ? { Seal: { SequenceNumeric: "1", ID: sealId } } : {}),
     },
   };
@@ -354,7 +354,7 @@ export function mapToCDS_B1(
         TransactionNatureCode: trimmed(declaration.transactionNatureCode),
         ...buildB1ConsigneeBlock(declaration),
         Consignment: {
-          ContainerCode: trimmed(declaration.containerId) ? "1" : "0",
+          ContainerCode: trimmed(declaration.containerNumber) ? "1" : "0",
           // DE 7/7 — identity at departure. Export never carries
           // ArrivalTransportMeans.
           ...(stripTransportId(declaration.departureTransportId || declaration.transportId)

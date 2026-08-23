@@ -258,7 +258,7 @@ export function mapToCDS_I1(
         // DE 8/5 TransactionNatureCode is not on the I1 data set.
         Consignment: {
           // DE 7/2 — container indicator, mandatory on I1.
-          ContainerCode: trimmed(declaration.containerId) ? "1" : "0",
+          ContainerCode: trimmed(declaration.containerNumber) ? "1" : "0",
           // DE 7/9 ArrivalTransportMeans is not on the I1 data set.
           GoodsLocation: resolveGoodsLocationForXml(declaration),
         },

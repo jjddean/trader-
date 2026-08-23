@@ -152,8 +152,6 @@ export default function CoreSchemaPage() {
     transactionNatureCode: "",
     paymentMethodCode: "",
     defermentAccountNumber: "",
-    containerNumber: "",
-    cnsUcn: "",
     // Declaration category. "" keeps the H1 full import data set.
     declarationCategory: "" as DeclarationCategoryChoice,
     customsOfficeOfExit: "",
@@ -165,8 +163,9 @@ export default function CoreSchemaPage() {
     consigneeLine: "",
     consigneePostcode: "",
     consigneeCountry: "",
-    containerId: "",
     sealNumber: "",
+    containerNumber: "",
+    cnsUcn: "",
   });
 
   React.useEffect(() => {
@@ -200,7 +199,6 @@ export default function CoreSchemaPage() {
       consigneeLine: (d.consigneeLine as string) || "",
       consigneePostcode: (d.consigneePostcode as string) || "",
       consigneeCountry: (d.consigneeCountry as string) || "",
-      containerId: (d.containerId as string) || "",
       sealNumber: (d.sealNumber as string) || "",
       goodsLocationKind:
         inferGoodsLocationKind({
@@ -302,7 +300,6 @@ export default function CoreSchemaPage() {
         consigneeLine: formData.consigneeLine.trim(),
         consigneePostcode: formData.consigneePostcode.trim(),
         consigneeCountry: formData.consigneeCountry,
-        containerId: formData.containerId.trim().toUpperCase(),
         sealNumber: formData.sealNumber.trim(),
         paymentMethodCode: formData.paymentMethodCode.trim().toUpperCase() || undefined,
         defermentAccountNumber: requiresDefermentAccount(formData.paymentMethodCode)
@@ -667,8 +664,8 @@ export default function CoreSchemaPage() {
                   </label>
                   <input
                     type="text"
-                    value={formData.containerId}
-                    onChange={(e) => setFormData({ ...formData, containerId: e.target.value })}
+                    value={formData.containerNumber}
+                    onChange={(e) => setFormData({ ...formData, containerNumber: e.target.value })}
                     placeholder="MSKU1234567"
                     className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
                   />

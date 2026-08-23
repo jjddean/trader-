@@ -33,7 +33,7 @@ const baseDeclaration: Record<string, unknown> = {
   consigneeLine: "200 Dock Street",
   consigneePostcode: "07102",
   consigneeCountry: "US",
-  containerId: "MSKU1234567",
+  containerNumber: "MSKU1234567",
   sealNumber: "SEAL-88213",
 };
 
