@@ -35,6 +35,7 @@ import type * as compliance_end_user from "../compliance_end_user.js";
 import type * as consultant_handoff from "../consultant_handoff.js";
 import type * as consultant_partner_sync from "../consultant_partner_sync.js";
 import type * as crons from "../crons.js";
+import type * as customs_warehouses from "../customs_warehouses.js";
 import type * as declaration_completeness from "../declaration_completeness.js";
 import type * as declarations from "../declarations.js";
 import type * as documents from "../documents.js";
@@ -158,6 +159,7 @@ declare const fullApi: ApiFromModules<{
   consultant_handoff: typeof consultant_handoff;
   consultant_partner_sync: typeof consultant_partner_sync;
   crons: typeof crons;
+  customs_warehouses: typeof customs_warehouses;
   declaration_completeness: typeof declaration_completeness;
   declarations: typeof declarations;
   documents: typeof documents;

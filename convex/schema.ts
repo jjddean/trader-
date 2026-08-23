@@ -1581,4 +1581,245 @@ export default defineSchema({
     lastError: v.optional(v.string()),
     updatedAt: v.number(),
   }).index("by_topic", ["topic"]),
+  /**
+   * Customs warehouse master record.
+   *
+   * One row per authorised warehouse, not per organisation: HMRC requires a
+   * separate application for Great Britain and Northern Ireland, so an operator
+   * holding both has two rows.
+   *
+   * Spec: docs/hmrc/customs-warehousing/IMPLEMENTATION_SPEC.md §4
+   */
+  customs_warehouses: defineTable({
+    userId: v.string(),
+    orgId: v.optional(v.string()),
+    name: v.string(),
+
+    /** DE 2/7 — type letter (R/S/T/U) and the identifier ending in a country code. */
+    warehouseTypeCode: v.string(),
+    warehouseIdentifier: v.string(),
+
+    /** DE 3/39 authorisation type, DE 2/3 document code, and the decision number. */
+    authorisationTypeCode: v.optional(v.string()),
+    documentCode: v.optional(v.string()),
+    authorisationNumber: v.optional(v.string()),
+    authorisationHolderEori: v.string(),
+
+    /** DE 5/27, from the authorisation letter. DE 5/23 for the goods location. */
+    supervisingCustomsOffice: v.optional(v.string()),
+    goodsLocationCode: v.optional(v.string()),
+
+    addressLine: v.optional(v.string()),
+    city: v.optional(v.string()),
+    postcode: v.optional(v.string()),
+    country: v.optional(v.string()),
+
+    /**
+     * HMRC's standard is real-time stock. `closing_balance` is permitted only
+     * where the warehousekeeper is authorised to run a duty management system
+     * in support of a commercial system, and then updates must land before
+     * midnight of the following warehouse operation day. EIDR removals force
+     * real_time.
+     */
+    stockUpdateMode: v.union(v.literal("real_time"), v.literal("closing_balance")),
+    eidrAuthorised: v.boolean(),
+
+    /** From the authorisation application. */
+    permittedCommodityCodes: v.optional(v.array(v.string())),
+    permittedProcedureCodes: v.optional(v.array(v.string())),
+    coStorageApproved: v.boolean(),
+    commonStorageApproved: v.boolean(),
+    fifoApproved: v.boolean(),
+    ufhApproved: v.boolean(),
+
+    /** CCG unless the holder is AEO or meets AEO conditions. */
+    guaranteeReference: v.optional(v.string()),
+    aeoStatus: v.boolean(),
+
+    authorisationValidFrom: v.optional(v.number()),
+    authorisationValidTo: v.optional(v.number()),
+    status: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_org", ["orgId"])
+    .index("by_user", ["userId"])
+    .index("by_identifier", ["warehouseIdentifier"]),
+
+  /**
+   * Links an H2 declaration to a physical receipt.
+   *
+   * Kept separate from the stock lot because one entry can be received short,
+   * over or damaged, and HMRC has distinct reporting duties for each.
+   */
+  warehouse_entries: defineTable({
+    customsWarehouseId: v.id("customs_warehouses"),
+    declarationId: v.optional(v.id("declarations")),
+    orgId: v.optional(v.string()),
+
+    entryMrn: v.optional(v.string()),
+    /** Starts the 14-day discrepancy notification clock. */
+    enteredAt: v.optional(v.number()),
+    /** CDS release. Goods are expected within 5 working days of this. */
+    releasedAt: v.optional(v.number()),
+    receivedAt: v.optional(v.number()),
+
+    /**
+     * DRAFT | H2_SUBMITTED | CDS_ACCEPTED | RELEASED_TO_WAREHOUSING |
+     * AWAITING_RECEIPT | RECEIVED | DISCREPANCY | REJECTED
+     */
+    status: v.string(),
+    discrepancyType: v.optional(v.string()),
+    discrepancyReportedAt: v.optional(v.number()),
+    supervisingOfficeRef: v.optional(v.string()),
+    notes: v.optional(v.string()),
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_warehouse", ["customsWarehouseId"])
+    .index("by_declaration", ["declarationId"])
+    .index("by_org", ["orgId"])
+    .index("by_mrn", ["entryMrn"])
+    .index("by_status", ["status"]),
+
+  /**
+   * The stock account. One row per goods item admitted to the procedure.
+   *
+   * `quantityRemaining` is maintained alongside `quantityEntered` because
+   * partial discharge is normal — one entry may be discharged by many
+   * declarations, and the balance stays under procedure until it reaches zero.
+   */
+  warehouse_stock_lots: defineTable({
+    customsWarehouseId: v.id("customs_warehouses"),
+    warehouseEntryId: v.id("warehouse_entries"),
+    orgId: v.optional(v.string()),
+
+    /** The audit-trail anchor HMRC expects back to the declaration of entry. */
+    entryMrn: v.optional(v.string()),
+    entryGoodsItemNumber: v.optional(v.number()),
+    procedureCode: v.optional(v.string()),
+
+    commodityCode: v.optional(v.string()),
+    description: v.optional(v.string()),
+    originCountry: v.optional(v.string()),
+
+    packages: v.optional(v.number()),
+    packageType: v.optional(v.string()),
+    grossMass: v.optional(v.number()),
+    quantityEntered: v.number(),
+    quantityRemaining: v.number(),
+    statisticalValue: v.optional(v.number()),
+
+    /** "How the goods will be identified in the warehouse" — from the application. */
+    warehouseLocation: v.optional(v.string()),
+
+    /**
+     * The document gate. HMRC requires a duty management system to identify
+     * goods carrying a preference, quota or licensing restriction and ensure
+     * the certificate is available BEFORE release to free circulation, so these
+     * are stored on the lot and block discharge.
+     */
+    licenceRequired: v.boolean(),
+    licenceReference: v.optional(v.string()),
+    licenceProducedAt: v.optional(v.number()),
+    preferenceClaimIntended: v.boolean(),
+    preferenceType: v.optional(v.string()),
+    proofOfOriginRef: v.optional(v.string()),
+    quotaOrderNumber: v.optional(v.string()),
+
+    coStorageGroupId: v.optional(v.string()),
+    commonStorageGroupId: v.optional(v.string()),
+
+    /**
+     * UNDER_PROCEDURE | PARTIALLY_DISCHARGED | DISCHARGED |
+     * TEMPORARILY_REMOVED | BLOCKED | WRITTEN_OFF
+     */
+    status: v.string(),
+    enteredAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_warehouse", ["customsWarehouseId"])
+    .index("by_entry", ["warehouseEntryId"])
+    .index("by_org", ["orgId"])
+    .index("by_status", ["status"])
+    .index("by_commodity", ["customsWarehouseId", "commodityCode"])
+    .index("by_mrn", ["entryMrn"]),
+
+  /**
+   * Append-only movement ledger.
+   *
+   * Balances are derived from this, never edited in place: HMRC audits the
+   * trail rather than the total. `occurredAt` and `recordedAt` are separate
+   * because closing-balance mode permits a lag, and the size of that lag is
+   * exactly what an assurance visit checks.
+   */
+  warehouse_movements: defineTable({
+    stockLotId: v.id("warehouse_stock_lots"),
+    customsWarehouseId: v.id("customs_warehouses"),
+    orgId: v.optional(v.string()),
+
+    /**
+     * RECEIPT | INTERNAL_MOVE | TRANSFER | ADJUSTMENT | USUAL_FORM_OF_HANDLING |
+     * TEMPORARY_REMOVAL | RETURN | SAMPLING | LOSS | DESTRUCTION | DISCHARGE
+     */
+    type: v.string(),
+    /** Signed. Negative removes from stock. Zero for location-only moves. */
+    quantity: v.number(),
+    balanceAfter: v.number(),
+
+    occurredAt: v.number(),
+    recordedAt: v.number(),
+    userId: v.string(),
+
+    reason: v.optional(v.string()),
+    /** MRN or reference of the declaration that caused this movement. */
+    declarationRef: v.optional(v.string()),
+    documentRef: v.optional(v.string()),
+    /** Supervising office approval, where the operation requires one. */
+    approvalRef: v.optional(v.string()),
+    fromLocation: v.optional(v.string()),
+    toLocation: v.optional(v.string()),
+  })
+    .index("by_lot", ["stockLotId"])
+    .index("by_warehouse", ["customsWarehouseId"])
+    .index("by_org", ["orgId"])
+    .index("by_type", ["customsWarehouseId", "type"]),
+
+  /**
+   * Discharge of the procedure.
+   *
+   * Many rows per stock lot: partial discharge is normal and modelling one
+   * entry as having a single discharge MRN would make the product
+   * non-compliant.
+   */
+  warehouse_discharges: defineTable({
+    stockLotId: v.id("warehouse_stock_lots"),
+    customsWarehouseId: v.id("customs_warehouses"),
+    orgId: v.optional(v.string()),
+
+    /** free_circulation | re_export | other_procedure | destruction */
+    dischargeType: v.string(),
+    quantity: v.number(),
+
+    declarationId: v.optional(v.id("declarations")),
+    dischargeMrn: v.optional(v.string()),
+    /** 4071 to free circulation, 31xx to re-export. */
+    procedureCode: v.optional(v.string()),
+
+    /**
+     * The duty point. Duties become payable when the removal entry is accepted,
+     * and the acceptance date fixes the rate regardless of when the goods
+     * physically move. Not the movement date.
+     */
+    acceptedAt: v.optional(v.number()),
+    /** When the licence / preference gate was cleared. */
+    documentsVerifiedAt: v.optional(v.number()),
+
+    createdAt: v.number(),
+  })
+    .index("by_lot", ["stockLotId"])
+    .index("by_warehouse", ["customsWarehouseId"])
+    .index("by_org", ["orgId"])
+    .index("by_mrn", ["dischargeMrn"]),
 });
