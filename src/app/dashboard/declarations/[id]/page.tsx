@@ -127,6 +127,16 @@ export default function CoreSchemaPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const hydratedVersionRef = useRef<string | null>(null);
+  /**
+   * Snapshot of the form exactly as it was last hydrated from the server.
+   *
+   * Fifteen mutations bump `lastUpdated` on a declaration — rule recompute,
+   * requirement upserts, status changes. Each one changes the hydration
+   * version, and without this the effect below would re-run mid-edit and
+   * replace everything the user had typed but not yet saved, which reads as a
+   * field that refuses to save.
+   */
+  const hydratedSnapshotRef = useRef<string | null>(null);
   const [formData, setFormData] = useState({
     eori: "",
     declarationType: "H1",
@@ -172,9 +182,18 @@ export default function CoreSchemaPage() {
     if (!declaration || !id) return;
     const version = `${id}:${String(declaration.lastUpdated ?? declaration._creationTime ?? "")}`;
     if (hydratedVersionRef.current === version) return;
+
+    // Unsaved edits win over a background write. The first hydration always
+    // runs; after that, the form is only refreshed while it still matches what
+    // was last hydrated into it.
+    const dirty =
+      hydratedSnapshotRef.current !== null &&
+      JSON.stringify(formData) !== hydratedSnapshotRef.current;
+    if (dirty) return;
+
     hydratedVersionRef.current = version;
     const d = declaration as Record<string, unknown>;
-    setFormData({
+    const next: typeof formData = {
       eori: (d.eori as string) || "",
       declarationType: "H1",
       additionalDeclarationType: (d.additionalDeclarationType as string) || "A",
@@ -216,7 +235,12 @@ export default function CoreSchemaPage() {
       defermentAccountNumber: (d.defermentAccountNumber as string) || "",
       containerNumber: (d.containerNumber as string) || "",
       cnsUcn: (d.cnsUcn as string) || "",
-    });
+    };
+    hydratedSnapshotRef.current = JSON.stringify(next);
+    setFormData(next);
+    // `formData` is read only to detect unsaved edits; adding it to the deps
+    // would re-run this on every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [declaration, id]);
 
   const handleSave = async (e?: React.FormEvent) => {
@@ -308,6 +332,11 @@ export default function CoreSchemaPage() {
         containerNumber: formData.containerNumber.trim().toUpperCase(),
         cnsUcn: formData.cnsUcn.trim().toUpperCase(),
       });
+      // The save succeeded, so the form is no longer ahead of the server and
+      // must accept the next hydration — the mutation clears data elements the
+      // chosen category forbids, and those clearances have to reach the screen.
+      hydratedSnapshotRef.current = null;
+      hydratedVersionRef.current = null;
       if (validationMessages.length > 0) {
         setSaveError(`Saved draft. Still blocking: ${validationMessages[0]}`);
       } else {
