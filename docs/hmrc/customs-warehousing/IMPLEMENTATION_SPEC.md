@@ -1,6 +1,7 @@
 # Customs Warehousing — FreightCode implementation specification
 
-**Status:** FUTURE — not started
+**Status:** ACTIVE — H2 declaration filing is built. Warehouse stock
+management (phases F–J) is out of scope. Read [`STATUS.md`](STATUS.md) first.
 
 | | |
 |--|--|
@@ -16,7 +17,9 @@ Translates HMRC's specification into FreightCode engineering requirements
 without changing any HMRC rule. Where this document and a mirror disagree, the
 mirror wins.
 
-Nothing here is implemented. No existing CDS behaviour changes.
+The H2 declaration is implemented. The warehouse stock account described from
+§6 onward is out of scope — see [`STATUS.md`](STATUS.md). No existing CDS
+behaviour changes.
 
 ---
 
