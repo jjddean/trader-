@@ -34,7 +34,7 @@ Source: [CDSSG04130 — Finding the Declaration Category and Data Set](https://w
 | Appendix | Category | Declaration title | Usage (abbrev.) |
 |----------|----------|-------------------|-----------------|
 | 21A | **H1** | Release for free circulation / end-use | Standard import (Freightcode baseline) |
-| 21B | H2 | Customs warehousing | Special procedure |
+| **21B** | **H2** | Customs warehousing | Special procedure — [`appendix-21b-h2-obligations.md`](appendix-21b-h2-obligations.md) |
 | 21C | H3 | Temporary admission | Special procedure |
 | 21D | H4 | Inward processing | Special procedure |
 | 21E | H5 | Special fiscal territories | Import |
