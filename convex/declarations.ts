@@ -1882,6 +1882,51 @@ export const updateDeclarationDetails = mutation({
       throw userError("deferment_account_number_must_be_exactly", "Deferment account number must be exactly 7 digits (DE 2/6).");
     }
 
+    // Data elements each category forbids. Kept in step with the mappers'
+    // IMPORT_ONLY_FIELDS / NOT_ON_C1_FIELDS / H1_ONLY_FIELDS lists — the
+    // mapper throws when any are present, so a value left behind by a category
+    // switch makes the declaration unsubmittable with nothing on the form to
+    // explain why. Cleared on save rather than merely rejected at submit.
+    const FORBIDDEN_BY_CATEGORY: Record<string, string[]> = {
+      B1: [
+        "importerEori",
+        "incoterms",
+        "incotermLocation",
+        "defermentAccountNumber",
+        "paymentMethodCode",
+        "valuationMethod",
+        "preferenceCode",
+      ],
+      C1: [
+        "importerEori",
+        "incoterms",
+        "incotermLocation",
+        "defermentAccountNumber",
+        "paymentMethodCode",
+        "valuationMethod",
+        "preferenceCode",
+        "transactionNatureCode",
+        "exchangeRate",
+        "inlandTransportMode",
+        "departureTransportId",
+        "borderTransportNationality",
+      ],
+      I1: [
+        "transactionNatureCode",
+        "exchangeRate",
+        "inlandTransportMode",
+        "sellerName",
+        "sellerEori",
+        "buyerName",
+        "buyerEori",
+      ],
+    };
+    const clearedByCategory = Object.fromEntries(
+      (FORBIDDEN_BY_CATEGORY[String(category ?? "")] ?? [])
+        .filter((field) => String((existing as Record<string, unknown>)[field] ?? "").trim())
+        .map((field) => [field, undefined]),
+    );
+
     await ctx.db.patch(args.id, {
       eori: args.eori,
       declarationType: args.declarationType,
@@ -1942,6 +1987,8 @@ export const updateDeclarationDetails = mutation({
         : {}),
       ...(args.containerNumber !== undefined ? { containerNumber: args.containerNumber.trim() || undefined } : {}),
       ...(args.cnsUcn !== undefined ? { cnsUcn: args.cnsUcn.trim().toUpperCase() || undefined } : {}),
+      // Last, so it wins over any forbidden value the form still submitted.
+      ...clearedByCategory,
       lastUpdated: Date.now(),
     });
     await upsertDeclarationPreviewByDeclaration(ctx, args.id);

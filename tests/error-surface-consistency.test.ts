@@ -43,13 +43,23 @@ describe("error surface consistency", () => {
    */
   it("API-sourced throws use ApiError, not Error", () => {
     const offenders: string[] = [];
-    const pattern = /throw new Error\(\s*(?:body|data|json|payload|result|res)\??\.\w+\s*\|\|/g;
+    const patterns = [
+      // throw new Error(data.error || "fallback")
+      /throw new Error\(\s*(?:body|data|json|payload|result|res)\??\.\w+\s*\|\|/g,
+      // throw new Error(`${data.error || "fallback"} ...`) — the template-literal
+      // form the original pattern missed, which hid a swallowed dry-run message.
+      /throw new Error\(\s*`[^`]*\$\{\s*(?:body|data|json|payload|result|res)\??\.\w+/g,
+      // throw new Error(typeof data.error === "string" ? ... )
+      /throw new Error\(\s*(?:\n\s*)?typeof\s+(?:body|data|json|payload|result|res)\??\.\w+/g,
+    ];
 
     for (const { file, text } of sourceFiles) {
       if (!/userMessageFromError/.test(text)) continue;
-      for (const match of text.matchAll(pattern)) {
-        const line = text.slice(0, match.index).split("\n").length;
-        offenders.push(`${file}:${line}`);
+      for (const pattern of patterns) {
+        for (const match of text.matchAll(pattern)) {
+          const line = text.slice(0, match.index).split("\n").length;
+          offenders.push(`${file}:${line}`);
+        }
       }
     }
     assert.deepEqual(offenders, [], `plain Error carrying an API message:\n${offenders.join("\n")}`);

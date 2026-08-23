@@ -8,6 +8,10 @@ import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { ShieldCheck, Send, Loader2, AlertTriangle, CheckCircle2, Code2 } from "lucide-react";
 import { mapToCDS_H1 } from "@/lib/wco-mapper";
+import { mapToCDS_B1, validateB1Declaration } from "@/lib/b1-mapper";
+import { mapToCDS_C1, validateC1Declaration } from "@/lib/c1-mapper";
+import { mapToCDS_I1, validateI1Declaration } from "@/lib/i1-mapper";
+import { resolveDeclarationCategory } from "@/lib/submit-category";
 import { generateClientFraudHeaders } from "@/lib/hmrc-fraud-headers";
 import { getHmrcRequirementSetForDeclaration } from "@/lib/utils/document-utils";
 import {
@@ -16,7 +20,7 @@ import {
   isConvexSessionMissing,
 } from "@/components/declaration-session-states";
 import type { Doc } from "../../../../../../convex/_generated/dataModel";
-import { userMessageFromError } from "@/lib/convex-errors";
+import { ApiError, userMessageFromError } from "@/lib/convex-errors";
 
 type DocumentRequirementRow = Pick<
   Doc<"document_requirements">,
@@ -215,13 +219,38 @@ export default function SubmitPage() {
     router.replace(`/dashboard/declarations/${declarationId}/status`);
   }, [declaration, declarationId, isLiveDeclaration, router]);
   
-  // Generate the WCO payload for preview (mapper throws if overseas exporter missing).
-  let wcoPayloadPreview: ReturnType<typeof mapToCDS_H1> | null = null;
+  // Generate the WCO payload for preview. The mapper must match the category
+  // the submit route will actually use — previewing an H1 for a B1 declaration
+  // showed a payload that could never be sent, under a caption promising it
+  // was exactly what would be transmitted.
+  const previewCategory = resolveDeclarationCategory(declaration);
+  let wcoPayloadPreview: unknown = null;
+  let previewBlockers: string[] = [];
   if (isReady && declaration && items) {
-    try {
-      wcoPayloadPreview = mapToCDS_H1(declaration, items);
-    } catch {
-      wcoPayloadPreview = null;
+    // The validators are asked directly rather than catching the mapper's
+    // throw: they return the reasons as a list, so nothing has to be recovered
+    // from an error message, and no raw Error text can reach the screen.
+    previewBlockers =
+      previewCategory === "B1"
+        ? validateB1Declaration(declaration, items)
+        : previewCategory === "C1"
+          ? validateC1Declaration(declaration, items)
+          : previewCategory === "I1"
+            ? validateI1Declaration(declaration, items)
+            : [];
+    if (previewBlockers.length === 0) {
+      try {
+        wcoPayloadPreview =
+          previewCategory === "B1"
+            ? mapToCDS_B1(declaration, items)
+            : previewCategory === "C1"
+              ? mapToCDS_C1(declaration, items)
+              : previewCategory === "I1"
+                ? mapToCDS_I1(declaration, items)
+                : mapToCDS_H1(declaration, items);
+      } catch {
+        wcoPayloadPreview = null;
+      }
     }
   }
   const debugGoodsLocation = dryRunResult?.payloadDebug?.goodsShipment?.consignment;
@@ -251,11 +280,11 @@ export default function SubmitPage() {
 
     try {
       if (!isAuthenticated) {
-        throw new Error("Convex session not authenticated. Please refresh and sign in again.");
+        throw new ApiError("Convex session not authenticated. Please refresh and sign in again.");
       }
       // 1. Verify OAuth Token Status before attempting
       if (!hmrcTokens || Date.now() > (hmrcTokens.expiresAt ?? 0)) {
-        throw new Error("HMRC Developer Hub OAuth token is missing or expired. Please reconnect in Settings.");
+        throw new ApiError("HMRC Developer Hub OAuth token is missing or expired. Please reconnect in Settings.");
       }
 
       // 2. Call the Next.js API route that handles the actual WCO mapping and POST to HMRC
@@ -279,7 +308,7 @@ export default function SubmitPage() {
       if (!res.ok) {
         console.log("HMRC validation details:", data.details, data.fields);
         if (res.status === 409 && data.code === "SUBMIT_BLOCKED") {
-          throw new Error(
+          throw new ApiError(
             typeof data.error === "string" && data.error
               ? data.error
               : "This declaration is already live with HMRC. Use Amend on the Status page, or create a new declaration.",
@@ -306,7 +335,7 @@ export default function SubmitPage() {
           : data.error
             ? String(data.error)
             : `Request failed (HTTP ${res.status})`;
-        throw new Error(errorMessage);
+        throw new ApiError(errorMessage);
       }
 
       // 3. Advance to Status timeline page to await the MRN webhook
@@ -327,10 +356,10 @@ export default function SubmitPage() {
 
     try {
       if (!isAuthenticated) {
-        throw new Error("Convex session not authenticated. Please refresh and sign in again.");
+        throw new ApiError("Convex session not authenticated. Please refresh and sign in again.");
       }
       if (!hmrcTokens || Date.now() > (hmrcTokens.expiresAt ?? 0)) {
-        throw new Error("HMRC Developer Hub OAuth token is missing or expired. Please reconnect in Settings.");
+        throw new ApiError("HMRC Developer Hub OAuth token is missing or expired. Please reconnect in Settings.");
       }
 
       const fraudHeaders = generateClientFraudHeaders(userId || undefined);
@@ -369,7 +398,10 @@ export default function SubmitPage() {
               .join("\n")
           : "";
         const message = data.message ? `\n${data.message}` : "";
-        throw new Error(`${data.error || "Dry run failed"}${message}${blockingRuleErrors}${missingFields}${failedChecks}${missingHeaders}${fieldErrors}\nHTTP ${res.status}`);
+        // ApiError, not Error: userMessageFromError discards a plain Error and
+        // renders the fallback, which threw away everything assembled above —
+        // a mapping rejection surfaced as a bare "Dry run failed".
+        throw new ApiError(`${data.error || "Dry run failed"}${message}${blockingRuleErrors}${missingFields}${failedChecks}${missingHeaders}${fieldErrors}\nHTTP ${res.status}`);
       }
 
       setDryRunResult(data as DryRunPayload);
@@ -718,20 +750,37 @@ export default function SubmitPage() {
             </div>
           )}
 
-          {wcoPayloadPreview && (
+          {(wcoPayloadPreview || previewBlockers.length > 0) && (
             <div className="mt-8 border-t border-slate-100 pt-6">
               <div className="flex items-center gap-2 mb-4">
                 <Code2 className="h-5 w-5 text-blue-500" />
                 <h3 className="text-sm font-semibold text-slate-900">WCO 3.6 Payload Preview</h3>
               </div>
-              <p className="text-xs text-slate-500 mb-4">
-                This is the exact JSON structure that will be transmitted to the HMRC Customs Declarations API.
-              </p>
-              <div className="rounded-md bg-slate-900 p-4 max-h-96 overflow-y-auto w-full">
-                <pre className="text-[10px] text-green-400 font-mono whitespace-pre-wrap break-all">
-                  {JSON.stringify(wcoPayloadPreview, null, 2)}
-                </pre>
-              </div>
+              {wcoPayloadPreview ? (
+                <>
+                  <p className="text-xs text-slate-500 mb-4">
+                    The {previewCategory} data set, built by the same mapper the submit route uses.
+                    This is the JSON structure that will be transmitted to the HMRC Customs
+                    Declarations API.
+                  </p>
+                  <div className="rounded-md bg-slate-900 p-4 max-h-96 overflow-y-auto w-full">
+                    <pre className="text-[10px] text-green-400 font-mono whitespace-pre-wrap break-all">
+                      {JSON.stringify(wcoPayloadPreview, null, 2)}
+                    </pre>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-xs font-semibold text-amber-900">
+                    No {previewCategory} payload can be built from this declaration yet.
+                  </p>
+                  <ul className="mt-2 space-y-1">
+                    {previewBlockers.map((reason, i) => (
+                      <li key={i} className="text-xs text-amber-800">• {reason}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 

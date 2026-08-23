@@ -402,7 +402,9 @@ export default function CoreSchemaPage() {
             </div>
 
             {/* Importer EORI — DE 3/16. A-mandatory per Appendix 21A. */}
-            <div className="space-y-2">
+            {/* DE 3/16 does not exist on B1 or C1 — the mapper rejects it, and
+                leaving the input on screen invites a value that blocks submit. */}
+            <div className={`space-y-2 ${isExportCategory(formData.declarationCategory) ? "hidden" : ""}`}>
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
                 Importer EORI (DE 3/16)
                 <span className="text-red-500">*</span>
@@ -922,7 +924,8 @@ export default function CoreSchemaPage() {
               </p>
             </div>
 
-            <div className="space-y-2">
+            {/* DE 4/1 is import-only; B1 and C1 forbid it. */}
+            <div className={`space-y-2 ${isExportCategory(formData.declarationCategory) ? "hidden" : ""}`}>
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Incoterms (DE 4/1)
               </label>
