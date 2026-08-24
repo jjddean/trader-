@@ -1,4 +1,5 @@
 import { xmlEscape } from "./xml-utils";
+import { findOverLengthValues } from "./wco-max-lengths";
 
 type XmlRecord = Record<string, unknown>;
 
@@ -41,12 +42,25 @@ export function validateXmlPreflight(
   if (requireAdditionalDocument) {
     checks.has_additional_document = xmlPayload.includes("<AdditionalDocument>");
   }
+  // Schema value lengths. HMRC validates these before CDS reads the
+  // declaration, and rejects the whole message with no notification and no
+  // MRN — so an over-length postcode looks identical to silence.
+  const overLength = findOverLengthValues(xmlPayload);
+  checks.within_schema_lengths = overLength.length === 0;
+
   const failed = Object.entries(checks)
     .filter(([, ok]) => !ok)
-    .map(([key]) => key);
+    .map(([key]) =>
+      key === "within_schema_lengths"
+        ? `within_schema_lengths: ${overLength
+            .map((f) => `${f.element} is ${f.length} characters, schema allows ${f.maxLength} ("${f.value}")`)
+            .join("; ")}`
+        : key,
+    );
   return {
     valid: failed.length === 0,
     failed,
+    overLength,
   };
 }
 
