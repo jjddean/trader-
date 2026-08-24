@@ -45,22 +45,6 @@ const DECLARATION_CATEGORIES: { value: DeclarationCategoryChoice; label: string 
   { value: "C1", label: "C1 C&F — simplified export (regular use)" },
 ];
 
-/**
- * Label for a stored country code.
- *
- * Radix fills the trigger from the selected `SelectItem`'s text, which is only
- * available once `SelectContent` has mounted. A code loaded from the server
- * into a dropdown the user has never opened therefore shows the placeholder,
- * making a saved value look unsaved. Passing the label explicitly renders it
- * regardless of whether the list has been opened.
- */
-function countryLabel(code: string): string | undefined {
-  const trimmed = code.trim().toUpperCase();
-  if (!trimmed) return undefined;
-  const match = countries.find((c) => c.code === trimmed);
-  return match ? `${match.name} (${match.code})` : trimmed;
-}
-
 /** B1 and C1 file against the export data sets. */
 function isExportCategory(category: DeclarationCategoryChoice): boolean {
   return category === "B1" || category === "C1";
@@ -658,9 +642,7 @@ export default function CoreSchemaPage() {
                     onValueChange={(v) => setFormData({ ...formData, consigneeCountry: v })}
                   >
                     <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
-                      <SelectValue placeholder="Country">
-                        {countryLabel(formData.consigneeCountry)}
-                      </SelectValue>
+                      <SelectValue placeholder="Country" />
                     </SelectTrigger>
                     <SelectContent position="popper" className="max-h-[300px]">
                       {countries.map((c) => (
@@ -717,9 +699,7 @@ export default function CoreSchemaPage() {
               </label>
               <Select value={formData.dispatchCountry} onValueChange={(v) => setFormData({ ...formData, dispatchCountry: v })}>
                 <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
-                  <SelectValue placeholder="Country goods shipped FROM">
-                    {countryLabel(formData.dispatchCountry)}
-                  </SelectValue>
+                  <SelectValue placeholder="Country goods shipped FROM" />
                 </SelectTrigger>
                 <SelectContent position="popper" className="max-h-[300px]">
                   {countries.map((c) => (
@@ -796,9 +776,7 @@ export default function CoreSchemaPage() {
               </label>
               <Select value={formData.destinationCountry} onValueChange={(v) => setFormData({ ...formData, destinationCountry: v })}>
                 <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
-                  <SelectValue placeholder="Country goods shipped TO">
-                    {countryLabel(formData.destinationCountry)}
-                  </SelectValue>
+                  <SelectValue placeholder="Country goods shipped TO" />
                 </SelectTrigger>
                 <SelectContent position="popper" className="max-h-[300px]">
                   {countries.map((c) => (
@@ -826,12 +804,7 @@ export default function CoreSchemaPage() {
                 }
               >
                 <SelectTrigger className={selectFieldClassName}>
-                  <SelectValue placeholder="Select maritime port or wharf (Appendix 16C)">
-                    {formData.locationId
-                      ? PORT_LOCATION_OPTIONS.find((o) => o.code === formData.locationId)?.name ??
-                        formData.locationId
-                      : undefined}
-                  </SelectValue>
+                  <SelectValue placeholder="Select maritime port or wharf (Appendix 16C)" />
                 </SelectTrigger>
                 <SelectContent position="popper" className="max-h-[300px]">
                   {PORT_LOCATION_OPTIONS.map(({ code, name }) => (
@@ -1025,12 +998,7 @@ export default function CoreSchemaPage() {
                   }
                 >
                   <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
-                    <SelectValue placeholder="Select method">
-                      {formData.paymentMethodCode
-                        ? PAYMENT_METHOD_OPTIONS.find((o) => o.value === formData.paymentMethodCode)
-                            ?.label ?? formData.paymentMethodCode
-                        : undefined}
-                    </SelectValue>
+                    <SelectValue placeholder="Select method" />
                   </SelectTrigger>
                   <SelectContent position="popper">
                     {PAYMENT_METHOD_OPTIONS.map((opt) => (
