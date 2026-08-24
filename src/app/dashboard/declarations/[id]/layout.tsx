@@ -23,6 +23,12 @@ import {
 } from "@/lib/declaration-status-display";
 import { PreClearanceEstimate } from "@/components/pre-clearance-estimate";
 
+/** B1 and C1 file against the export data sets, which carry no A00 or B00. */
+function isExportCategory(declaration: { declarationCategory?: unknown } | null | undefined): boolean {
+  const category = String(declaration?.declarationCategory ?? "").trim().toUpperCase();
+  return category === "B1" || category === "C1";
+}
+
 export default function DeclarationWorkspaceLayout({
   children,
 }: {
@@ -181,7 +187,11 @@ export default function DeclarationWorkspaceLayout({
               })}
             </nav>
 
-            {estimateReady && financialEstimate && (
+            {/* Import duty (A00) and import VAT (B00) do not arise on an export
+                declaration — B1 and C1 emit no DutyTaxFee at all — so showing a
+                pre-clearance cost estimate against one states a liability that
+                does not exist. */}
+            {estimateReady && financialEstimate && !isExportCategory(resolvedDeclaration) && (
               <PreClearanceEstimate compact {...financialEstimate} />
             )}
           </div>
