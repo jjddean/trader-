@@ -1,6 +1,7 @@
 # CDS expansion build plan — B1 export, I1 simplified import, C1 simplified export
 
-**Status:** FUTURE — not started  
+**Status:** SUPERSEDED BY ../ACTIVE/tdr/EXPORT-COMPLETION-CHECKLIST.md — B1, C1
+and I1 are built; the checklist tracks what remains.  
 **Spec:** [`../specs/cds-api/declaration-categories-index.md`](../specs/cds-api/declaration-categories-index.md)  
 **Backlog:** [`../ACTIVE/tdr/BACKLOG.md`](../ACTIVE/tdr/BACKLOG.md)  
 **Last updated:** 2026-06-20
