@@ -443,3 +443,66 @@ describe("DE 3/1 exporter and DE 4/11 invoice total", () => {
     assert.equal(payload.Declaration.InvoiceAmount.value, "9999.99");
   });
 });
+
+describe("DE 3/1 and DE 3/2 are mutually exclusive", () => {
+  /**
+   * HMRC export completion guide, Group 3 (retrieved 2026-08-24):
+   *   DE 3/2 "is mandatory where the Exporter holds an EORI"
+   *   DE 3/1 "is only required where an EORI is not held" and
+   *          "must be left blank where an EU or GB EORI is provided in DE 3/2"
+   */
+  const withExporter = (fields: Record<string, unknown>) => {
+    const { exporterEori: _e, exporterName: _n, exporterCity: _c, exporterLine: _l,
+            exporterPostcode: _p, ...rest } = baseDeclaration as Record<string, unknown>;
+    return { ...rest, ...fields };
+  };
+
+  it("emits the EORI form alone, with no address", () => {
+    const payload = mapToCDS_B1(
+      withExporter({
+        exporterEori: "GB553202734852",
+        exporterName: "Acme Ltd",
+        exporterLine: "1 Dock Road",
+        exporterCity: "Dover",
+        exporterPostcode: "CT17 9TF",
+      }),
+      baseItems,
+    ) as { Declaration: { Exporter?: Record<string, unknown> } };
+    assert.deepEqual(payload.Declaration.Exporter, { ID: "GB553202734852" });
+  });
+
+  it("emits name and address when no EORI is held", () => {
+    const payload = mapToCDS_B1(
+      withExporter({
+        exporterName: "Acme Ltd",
+        exporterLine: "1 Dock Road",
+        exporterCity: "Dover",
+        exporterPostcode: "CT17 9TF",
+        exporterCountry: "GB",
+      }),
+      baseItems,
+    ) as { Declaration: { Exporter?: { ID?: string; Name?: string } } };
+    assert.equal(payload.Declaration.Exporter?.Name, "Acme Ltd");
+    assert.equal(payload.Declaration.Exporter?.ID, undefined);
+  });
+
+  it("does not accept an EORI the mapper will ignore", () => {
+    // An EU EORI passes no GB/XI check, so validation must demand the address
+    // rather than letting the mapper omit the Exporter element entirely.
+    const errors = validateB1Declaration(withExporter({ exporterEori: "FR12345678901" }), baseItems);
+    assert.match(errors.join(" "), /exporter \(DE 3\/1 \+ 3\/2\)/i);
+  });
+
+  it("validation and mapping agree on every accepted form", () => {
+    for (const fields of [
+      { exporterEori: "GB553202734852" },
+      { exporterEori: "XI553202734852" },
+      { exporterName: "Acme Ltd", exporterLine: "1 Dock Road", exporterCity: "Dover", exporterPostcode: "CT17 9TF" },
+    ]) {
+      const decl = withExporter(fields);
+      assert.deepEqual(validateB1Declaration(decl, baseItems), [], JSON.stringify(fields));
+      const payload = mapToCDS_B1(decl, baseItems) as { Declaration: { Exporter?: unknown } };
+      assert.ok(payload.Declaration.Exporter, `no Exporter emitted for ${JSON.stringify(fields)}`);
+    }
+  });
+});

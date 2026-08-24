@@ -67,7 +67,16 @@ function trimmed(value: unknown): string {
   return String(value ?? "").trim();
 }
 
-function isGbXiEori(value: unknown): boolean {
+/**
+ * EORI forms the DE 3/2 mapping accepts.
+ *
+ * HMRC's export completion guide (Group 3, retrieved 2026-08-24) says a GB,
+ * EU or XI EORI may be used. Only GB and XI are matched here because the EU
+ * member-state formats are not yet established in this repo — an EU EORI
+ * therefore falls to the DE 3/1 name-and-address branch, and validation
+ * demands that address rather than letting the party go unidentified.
+ */
+export function isGbXiEori(value: unknown): boolean {
   return /^(GB|XI)\d{12}$/i.test(trimmed(value));
 }
 
@@ -230,7 +239,10 @@ export function validateB1Declaration(
   // address. The mapper emits one form or the other; with neither, the
   // Exporter element is omitted entirely and CDS has no exporter at all.
   {
-    const hasEori = Boolean(trimmed(declaration.exporterEori));
+    // Must match what the mapper will actually accept. Validating a bare
+    // non-empty string here while the mapper takes only GB/XI would let an
+    // EU EORI pass and then emit no Exporter element at all.
+    const hasEori = isGbXiEori(declaration.exporterEori);
     const hasAddress =
       Boolean(trimmed(declaration.exporterName)) &&
       Boolean(trimmed(declaration.exporterCity)) &&

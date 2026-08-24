@@ -30,7 +30,7 @@ import {
   normalizeCountryCode,
   stripTransportId,
 } from "./wco-mapper";
-import { buildB1ConsigneeBlock, buildB1ExporterBlock } from "./b1-mapper";
+import { buildB1ConsigneeBlock, buildB1ExporterBlock, isGbXiEori } from "./b1-mapper";
 import { resolveGoodsLocationForXml } from "./goods-location";
 
 export interface C1MapOptions {
@@ -114,7 +114,10 @@ export function validateC1Declaration(
   // address. The mapper emits one form or the other; with neither, the
   // Exporter element is omitted entirely and CDS has no exporter at all.
   {
-    const hasEori = Boolean(trimmed(declaration.exporterEori));
+    // Must match what the mapper will actually accept. Validating a bare
+    // non-empty string here while the mapper takes only GB/XI would let an
+    // EU EORI pass and then emit no Exporter element at all.
+    const hasEori = isGbXiEori(declaration.exporterEori);
     const hasAddress =
       Boolean(trimmed(declaration.exporterName)) &&
       Boolean(trimmed(declaration.exporterCity)) &&
