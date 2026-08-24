@@ -145,6 +145,8 @@ export default function CoreSchemaPage() {
     goodsLocationKind: "" as GoodsLocationKind | "",
     locationId: "",
     presentationOffice: "",
+    exporterEori: "",
+    exporterCountry: "",
     exporterName: "",
     exporterCity: "",
     exporterLine: "",
@@ -207,6 +209,8 @@ export default function CoreSchemaPage() {
         }) || "",
       locationId: (d.locationId as string) || "",
       presentationOffice: (d.presentationOffice as string) || "",
+      exporterEori: (d.exporterEori as string) || "",
+      exporterCountry: (d.exporterCountry as string) || "",
       exporterName: (d.exporterName as string) || "",
       exporterCity: (d.exporterCity as string) || "",
       exporterLine: (d.exporterLine as string) || "",
@@ -285,6 +289,8 @@ export default function CoreSchemaPage() {
           undefined,
         locationId: formData.locationId.trim() || String(declaration?.locationId ?? "").trim(),
         presentationOffice: formData.presentationOffice.trim(),
+        exporterEori: formData.exporterEori.trim().toUpperCase(),
+        exporterCountry: formData.exporterCountry,
         exporterName: formData.exporterName.trim(),
         exporterCity: formData.exporterCity.trim(),
         exporterLine: formData.exporterLine.trim(),
@@ -714,6 +720,77 @@ export default function CoreSchemaPage() {
             </div>
 
             <DeclarationClientPicker declarationId={id} />
+
+            {/* DE 3/1 + 3/2 — Exporter on the export data sets.
+                The block below is the *import* rule: it appears only when goods
+                are dispatched from outside GB, because on an import the
+                exporter is the overseas seller. On a B1 or C1 the goods leave
+                GB, so that condition is never true and DE 3/1 could not be
+                entered at all. The exporter here is the UK party sending the
+                goods, identified by EORI where it holds one. */}
+            {isExportCategory(formData.declarationCategory) && (
+              <div className="md:col-span-2 space-y-3 rounded-md border border-slate-200 bg-slate-50/80 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-700">
+                  Exporter (DE 3/1 + 3/2)
+                </p>
+                <p className="text-[11px] text-slate-600">
+                  The party sending the goods out of the UK. A GB or XI EORI is
+                  enough on its own — give name and address only where the
+                  exporter holds no EORI.
+                </p>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="text-xs font-medium text-slate-600">Exporter EORI (DE 3/2)</label>
+                    <input
+                      type="text"
+                      className="w-full rounded-md border border-slate-200 p-2.5 text-sm"
+                      value={formData.exporterEori}
+                      onChange={(e) =>
+                        setFormData({ ...formData, exporterEori: e.target.value.toUpperCase() })
+                      }
+                      placeholder="e.g. GB123456789000"
+                    />
+                  </div>
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="text-xs font-medium text-slate-600">Exporter name</label>
+                    <input
+                      type="text"
+                      className="w-full rounded-md border border-slate-200 p-2.5 text-sm"
+                      value={formData.exporterName}
+                      onChange={(e) => setFormData({ ...formData, exporterName: e.target.value })}
+                      placeholder="Only needed without an EORI"
+                    />
+                  </div>
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="text-xs font-medium text-slate-600">Address line</label>
+                    <input
+                      type="text"
+                      className="w-full rounded-md border border-slate-200 p-2.5 text-sm"
+                      value={formData.exporterLine}
+                      onChange={(e) => setFormData({ ...formData, exporterLine: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-600">City</label>
+                    <input
+                      type="text"
+                      className="w-full rounded-md border border-slate-200 p-2.5 text-sm"
+                      value={formData.exporterCity}
+                      onChange={(e) => setFormData({ ...formData, exporterCity: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-600">Postcode</label>
+                    <input
+                      type="text"
+                      className="w-full rounded-md border border-slate-200 p-2.5 text-sm"
+                      value={formData.exporterPostcode}
+                      onChange={(e) => setFormData({ ...formData, exporterPostcode: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {formData.dispatchCountry && formData.dispatchCountry !== "GB" && formData.dispatchCountry !== "XI" && (
               <div className="md:col-span-2 space-y-3 rounded-md border border-slate-200 bg-slate-50/80 p-4">

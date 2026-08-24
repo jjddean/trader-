@@ -370,3 +370,76 @@ describe("DE 1/2 reaches the payload", () => {
     }
   });
 });
+
+describe("DE 3/1 exporter and DE 4/11 invoice total", () => {
+  /**
+   * The form's only exporter block was gated on `dispatchCountry !== GB`, an
+   * import rule — on an export the goods leave GB, so DE 3/1 could never be
+   * entered and the Exporter element was omitted from the payload entirely.
+   * Nothing in validation objected.
+   */
+  it("rejects a declaration with no exporter at all", () => {
+    const { exporterEori: _e, exporterName: _n, exporterCity: _c, exporterLine: _l,
+            exporterPostcode: _p, ...withoutExporter } = baseDeclaration as Record<string, unknown>;
+    const errors = validateB1Declaration(withoutExporter, baseItems);
+    assert.match(errors.join(" "), /exporter \(DE 3\/1 \+ 3\/2\)/i);
+  });
+
+  it("accepts an exporter identified by EORI alone", () => {
+    const { exporterName: _n, exporterCity: _c, exporterLine: _l, exporterPostcode: _p,
+            ...eoriOnly } = baseDeclaration as Record<string, unknown>;
+    assert.deepEqual(
+      validateB1Declaration({ ...eoriOnly, exporterEori: "GB553202734852" }, baseItems),
+      [],
+    );
+  });
+
+  it("accepts an exporter identified by name and address", () => {
+    const { exporterEori: _e, ...addressOnly } = baseDeclaration as Record<string, unknown>;
+    assert.deepEqual(
+      validateB1Declaration(
+        {
+          ...addressOnly,
+          exporterName: "Acme Ltd",
+          exporterLine: "1 Dock Road",
+          exporterCity: "Dover",
+          exporterPostcode: "CT17 9TF",
+        },
+        baseItems,
+      ),
+      [],
+    );
+  });
+
+  it("rejects a half-complete address with no EORI", () => {
+    const { exporterEori: _e, ...partial } = baseDeclaration as Record<string, unknown>;
+    const errors = validateB1Declaration(
+      { ...partial, exporterName: "Acme Ltd", exporterCity: "", exporterLine: "", exporterPostcode: "" },
+      baseItems,
+    );
+    assert.match(errors.join(" "), /exporter \(DE 3\/1 \+ 3\/2\)/i);
+  });
+
+  it("sums the item values when DE 4/11 is left blank", () => {
+    // The form promises "if empty, mapper sums from items". B1 used the field
+    // directly and emitted 0.00 against a populated statistical value.
+    const payload = mapToCDS_B1(
+      { ...baseDeclaration, invoiceTotal: undefined },
+      baseItems,
+    ) as { Declaration: { InvoiceAmount: { value: string } } };
+    const expected = baseItems.reduce(
+      (sum, item) => sum + (parseFloat(String((item as Record<string, unknown>).valueAmount ?? "")) || 0),
+      0,
+    );
+    assert.equal(payload.Declaration.InvoiceAmount.value, expected.toFixed(2));
+    assert.notEqual(payload.Declaration.InvoiceAmount.value, "0.00");
+  });
+
+  it("uses an explicit DE 4/11 override when given", () => {
+    const payload = mapToCDS_B1(
+      { ...baseDeclaration, invoiceTotal: "9999.99" },
+      baseItems,
+    ) as { Declaration: { InvoiceAmount: { value: string } } };
+    assert.equal(payload.Declaration.InvoiceAmount.value, "9999.99");
+  });
+});

@@ -110,6 +110,23 @@ export function validateC1Declaration(
     );
   }
 
+  // DE 3/1 + 3/2 — the exporter must be identifiable, by EORI or by name and
+  // address. The mapper emits one form or the other; with neither, the
+  // Exporter element is omitted entirely and CDS has no exporter at all.
+  {
+    const hasEori = Boolean(trimmed(declaration.exporterEori));
+    const hasAddress =
+      Boolean(trimmed(declaration.exporterName)) &&
+      Boolean(trimmed(declaration.exporterCity)) &&
+      Boolean(trimmed(declaration.exporterLine)) &&
+      Boolean(trimmed(declaration.exporterPostcode));
+    if (!hasEori && !hasAddress) {
+      errors.push(
+        "Missing exporter (DE 3/1 + 3/2) — give an EORI, or the exporter's name, address line, city and postcode",
+      );
+    }
+  }
+
   // DE 3/18 — declarant EORI.
   if (!trimmed(declaration.eori)) {
     errors.push("Missing declarant EORI (DE 3/18)");
@@ -197,6 +214,11 @@ export function mapToCDS_C1(
   const containerNumber = trimmed(declaration.containerNumber);
   const sealId = trimmed(declaration.sealNumber);
 
+  const itemValueSum = items.reduce(
+    (acc, item) => acc + (parseFloat(String(item.valueAmount ?? "")) || 0),
+    0,
+  );
+
   return {
     Declaration: {
       FunctionCode: "9",
@@ -207,7 +229,12 @@ export function mapToCDS_C1(
       DeclarationOfficeID: trimmed(declaration.presentationOffice),
       InvoiceAmount: {
         currencyID: currency,
-        value: formatAmount(declaration.invoiceTotal),
+        // DE 4/11. Falls back to the sum of item values when the declarant has
+        // not overridden it, matching the H1 path and what the form promises.
+        // Emitting 0.00 against a populated statistical value is contradictory.
+        value: formatAmount(
+          parseFloat(String(declaration.invoiceTotal ?? "")) || itemValueSum,
+        ),
       },
       // DE 6/18 total packages is not on the C1 data set.
       // DE 3/39 — mandatory on C1.
