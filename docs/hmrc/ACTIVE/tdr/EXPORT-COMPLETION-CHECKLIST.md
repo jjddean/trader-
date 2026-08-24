@@ -1,7 +1,9 @@
 # B1 / C1 / I1 — completion checklist
 
-**Status:** ACTIVE — B1 and C1 build against HMRC and are accepted; neither has
-been cleared by CDS. I1 is untested against HMRC.
+**Status:** ACTIVE — B1 has been submitted to HMRC twice and returned HTTP 202
+both times. "Accepted" means only that the gateway took the message: no MRN was
+issued and no DMS notification has ever come back, so B1 has not been processed
+by CDS. C1 and I1 have never been submitted.
 
 **Supersedes the "not started" claim in**
 [`../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md`](../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md).
