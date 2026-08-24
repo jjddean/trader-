@@ -1921,10 +1921,12 @@ export const updateDeclarationDetails = mutation({
         "buyerEori",
       ],
     };
+    // Cleared unconditionally, not only where the stored record already held a
+    // value: the form keeps its state when a field is hidden by a category
+    // switch, so a value typed before the switch is still submitted and would
+    // otherwise be written through to a declaration that forbids it.
     const clearedByCategory = Object.fromEntries(
-      (FORBIDDEN_BY_CATEGORY[String(category ?? "")] ?? [])
-        .filter((field) => String((existing as Record<string, unknown>)[field] ?? "").trim())
-        .map((field) => [field, undefined]),
+      (FORBIDDEN_BY_CATEGORY[String(category ?? "")] ?? []).map((field) => [field, undefined]),
     );
 
     await ctx.db.patch(args.id, {

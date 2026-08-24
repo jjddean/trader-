@@ -251,6 +251,22 @@ export default function CoreSchemaPage() {
       if (!formData.transactionNatureCode.trim()) {
         validationMessages.push("Nature of transaction (DE 8/5) is required.");
       }
+      // The mutation clears the elements the chosen category forbids. Clearing
+      // them in form state too keeps what is on screen and what is submitted in
+      // step, so a value typed before a category switch is not sent at all.
+      const forbiddenOnExport = [
+        "importerEori",
+        "incoterms",
+        "incotermLocation",
+        "defermentAccountNumber",
+        "paymentMethodCode",
+      ] as const;
+      const exportCategory = isExportCategory(formData.declarationCategory);
+      const scrubbed = { ...formData };
+      if (exportCategory) {
+        for (const field of forbiddenOnExport) scrubbed[field] = "";
+      }
+
       const paymentError = validatePaymentFields(
         formData.paymentMethodCode,
         requiresDefermentAccount(formData.paymentMethodCode)
@@ -275,11 +291,11 @@ export default function CoreSchemaPage() {
         transportId: formData.transportId.trim(),
         transportIdType: normalizeTransportIdType(formData.transportIdType),
         destinationCountry: formData.destinationCountry,
-        importerEori: formData.importerEori.trim(),
+        importerEori: scrubbed.importerEori.trim(),
         invoiceCurrency: formData.invoiceCurrency.trim().toUpperCase(),
         invoiceTotal: invoiceTotalParsed === null || Number.isFinite(invoiceTotalParsed) ? invoiceTotalParsed : null,
-        incoterms: formData.incoterms.trim().toUpperCase(),
-        incotermLocation: formData.incotermLocation.trim(),
+        incoterms: scrubbed.incoterms.trim().toUpperCase(),
+        incotermLocation: scrubbed.incotermLocation.trim(),
         // Fall back to inferring from the code itself. Sending undefined makes
         // the mutation skip the field entirely, so an unset kind could never be
         // persisted even when the code alone identified the location.
@@ -307,9 +323,9 @@ export default function CoreSchemaPage() {
         consigneePostcode: formData.consigneePostcode.trim(),
         consigneeCountry: formData.consigneeCountry,
         sealNumber: formData.sealNumber.trim(),
-        paymentMethodCode: formData.paymentMethodCode.trim().toUpperCase() || undefined,
-        defermentAccountNumber: requiresDefermentAccount(formData.paymentMethodCode)
-          ? formData.defermentAccountNumber.replace(/\D/g, "")
+        paymentMethodCode: scrubbed.paymentMethodCode.trim().toUpperCase() || undefined,
+        defermentAccountNumber: requiresDefermentAccount(scrubbed.paymentMethodCode)
+          ? scrubbed.defermentAccountNumber.replace(/\D/g, "")
           : undefined,
         containerNumber: formData.containerNumber.trim().toUpperCase(),
         cnsUcn: formData.cnsUcn.trim().toUpperCase(),
