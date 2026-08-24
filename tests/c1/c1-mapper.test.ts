@@ -14,7 +14,7 @@ const baseDeclaration: Record<string, unknown> = {
   _id: "c1exportdeclarationrecordid000001",
   route: "export",
   declarationCategory: "C1",
-  declarationType: "C",
+  additionalDeclarationType: "C",
   lrn: "FC-C1TEST01",
   eori: "GB553202734852",
   exporterEori: "GB553202734852",
@@ -81,10 +81,10 @@ describe("validateC1Declaration — mandatory data elements", () => {
 
   it("accepts DE 1/2 codes C and F only", () => {
     for (const t of ["C", "F"]) {
-      assert.deepEqual(validateC1Declaration(decl({ declarationType: t }), baseItems), []);
+      assert.deepEqual(validateC1Declaration(decl({ additionalDeclarationType: t }), baseItems), []);
     }
     assert.ok(
-      validateC1Declaration(decl({ declarationType: "A" }), baseItems)
+      validateC1Declaration(decl({ additionalDeclarationType: "A" }), baseItems)
         .some((e) => e.includes("not valid for C1 C&F") && e.includes("B1")),
     );
   });
@@ -133,7 +133,7 @@ describe("mapToCDS_C1 — payload shape", () => {
   it("emits an EX TypeCode carrying the C&F letter", () => {
     assert.equal((mapToCDS_C1(decl(), baseItems) as any).Declaration.TypeCode, "EXC");
     assert.equal(
-      (mapToCDS_C1(decl({ declarationType: "F" }), baseItems) as any).Declaration.TypeCode,
+      (mapToCDS_C1(decl({ additionalDeclarationType: "F" }), baseItems) as any).Declaration.TypeCode,
       "EXF",
     );
   });

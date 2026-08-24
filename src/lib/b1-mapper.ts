@@ -47,6 +47,19 @@ export const IMPORT_ONLY_FIELDS = [
   "preferenceCode",
 ] as const;
 
+/**
+ * DE 1/2 additional declaration types, per the CDS export completion guide,
+ * Group 1 (retrieved 2026-08-24):
+ * https://www.gov.uk/government/publications/uk-trade-tariff-cds-volume-3-export-declaration-completion-guide/group-1-message-information-including-procedure-codes
+ *
+ * | A | standard, goods arrived | D | standard, pre-lodged |
+ * | B | simplified occasional, arrived | E | simplified occasional, pre-lodged |
+ * | C | simplified regular, arrived | F | simplified regular, pre-lodged |
+ * | Y | supplementary for C/F | Z | supplementary for EIDR |
+ */
+export const ADDITIONAL_DECLARATION_TYPES = ["A", "B", "C", "D", "E", "F", "Y", "Z"] as const;
+export type AdditionalDeclarationType = (typeof ADDITIONAL_DECLARATION_TYPES)[number];
+
 /** DE 8/6 statistical value currency. CDS requires GBP on export declarations. */
 const STATISTICAL_VALUE_CURRENCY = "GBP";
 
@@ -199,8 +212,17 @@ export function validateB1Declaration(
   }
 
   // DE 1/2 — additional declaration type.
-  if (!trimmed(declaration.declarationType)) {
+  //
+  // Read from `additionalDeclarationType`, not `declarationType`: the latter
+  // holds the declaration *category* ("H1"), and passing it here meant every
+  // B1 was emitted as EXA regardless of what the user selected.
+  const b1DeclType = trimmed(declaration.additionalDeclarationType).toUpperCase();
+  if (!b1DeclType) {
     errors.push("Missing additional declaration type (DE 1/2)");
+  } else if (!ADDITIONAL_DECLARATION_TYPES.includes(b1DeclType as AdditionalDeclarationType)) {
+    errors.push(
+      `Additional declaration type ${b1DeclType} is not a valid DE 1/2 code (${ADDITIONAL_DECLARATION_TYPES.join(", ")})`,
+    );
   }
   // DE 2/5 LRN is not validated here — like the H1 path, the mapper generates
   // one when the caller has not assigned it yet.
@@ -305,7 +327,7 @@ export function mapToCDS_B1(
     Declaration: {
       FunctionCode: "9",
       // DE 1/1 + 1/2 — EX prefix, never IM.
-      TypeCode: mapDeclarationType(trimmed(declaration.declarationType), "export"),
+      TypeCode: mapDeclarationType(trimmed(declaration.additionalDeclarationType), "export"),
       FunctionalReferenceID: lrn,
       GoodsItemQuantity: items.length,
       DeclarationOfficeID: trimmed(declaration.presentationOffice),

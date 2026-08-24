@@ -188,7 +188,7 @@ const b1Declaration = {
   _id: "b1exportdeclarationrecordid000001",
   route: "export",
   declarationCategory: "B1",
-  declarationType: "A",
+  additionalDeclarationType: "A",
   lrn: "FC-B1TEST01",
   eori: "GB553202734852",
   exporterEori: "GB553202734852",
@@ -247,7 +247,7 @@ const i1Declaration = {
   _id: "i1importdeclarationrecordid000001",
   route: "import",
   declarationCategory: "I1",
-  declarationType: "C",
+  additionalDeclarationType: "C",
   lrn: "FC-I1TEST01",
   eori: "GB553202734852",
   importerEori: "GB553202734852",
@@ -315,7 +315,8 @@ describe("WCO XSD structural conformance", () => {
     const c1Declaration = {
       ...b1Declaration,
       declarationCategory: "C1",
-      declarationType: "C",
+      // DE 1/2 — C1 C&F permits only C or F.
+      additionalDeclarationType: "C",
       authorisationHolderEori: "GB553202734852",
       authorisationCategoryCode: "SDE",
       transactionNatureCode: undefined,

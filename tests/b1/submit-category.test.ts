@@ -18,7 +18,7 @@ import {
 const b1Lane: Record<string, unknown> = {
   route: "export",
   declarationCategory: "B1",
-  declarationType: "A",
+  additionalDeclarationType: "A",
   eori: "GB553202734852",
   exporterEori: "GB553202734852",
   destinationCountry: "US",
@@ -76,7 +76,7 @@ describe("validateI1SubmitGate — simplified import obligations at the route bo
   const i1Lane: Record<string, unknown> = {
     route: "import",
     declarationCategory: "I1",
-    declarationType: "C",
+    additionalDeclarationType: "C",
     eori: "GB553202734852",
     authorisationHolderEori: "GB553202734852",
     locationId: "GBAUFXTFXTFXT",

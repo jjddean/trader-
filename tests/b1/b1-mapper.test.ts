@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { mapToCDS_B1, validateB1Declaration, IMPORT_ONLY_FIELDS } from "../../src/lib/b1-mapper";
+import {
+  ADDITIONAL_DECLARATION_TYPES,
+  IMPORT_ONLY_FIELDS,
+  mapToCDS_B1,
+  validateB1Declaration,
+} from "../../src/lib/b1-mapper";
 import { validateCdsCodeLists } from "../../src/lib/wco-mapper";
 
 /**
@@ -13,7 +18,7 @@ const baseDeclaration: Record<string, unknown> = {
   _id: "b1exportdeclarationrecordid000001",
   route: "export",
   declarationCategory: "B1",
-  declarationType: "A",
+  additionalDeclarationType: "A",
   lrn: "FC-B1TEST01",
   eori: "GB553202734852",
   exporterEori: "GB553202734852",
@@ -308,5 +313,60 @@ describe("code-list validation is scoped to the data set", () => {
     const payload = { Declaration: { GoodsShipment: { GovernmentAgencyGoodsItem: [{}] } } };
     await validateCdsCodeLists(payload, [{ procedureCode: "1040" }], lookup, { category: "B1" });
     assert.ok(asked.includes("procedure_codes"));
+  });
+});
+
+describe("DE 1/2 reaches the payload", () => {
+  /**
+   * `declarationType` on the declarations table holds the *category* ("H1"),
+   * not DE 1/2. All three category mappers read it for the additional
+   * declaration type, and `mapDeclarationType` silently falls back to "A" for
+   * anything it does not recognise — so every B1 was emitted as EXA whatever
+   * the user selected, and C1/I1 could never validate at all.
+   *
+   * These fixtures use the field names the app actually stores.
+   */
+  const asStored = (additionalDeclarationType: string) => ({
+    ...baseDeclaration,
+    declarationType: "H1",
+    additionalDeclarationType,
+  });
+
+  it("emits EXD when the user selects D, not EXA", () => {
+    const payload = mapToCDS_B1(asStored("D"), baseItems) as {
+      Declaration: { TypeCode: string };
+    };
+    assert.equal(payload.Declaration.TypeCode, "EXD");
+  });
+
+  it("emits EXA when the user selects A", () => {
+    const payload = mapToCDS_B1(asStored("A"), baseItems) as {
+      Declaration: { TypeCode: string };
+    };
+    assert.equal(payload.Declaration.TypeCode, "EXA");
+  });
+
+  it("never reads the category as DE 1/2", () => {
+    // "H1" is not a DE 1/2 code; it must be rejected, not silently become "A".
+    const errors = validateB1Declaration(
+      { ...baseDeclaration, declarationType: "H1", additionalDeclarationType: "" },
+      baseItems,
+    );
+    assert.match(errors.join(" "), /additional declaration type \(DE 1\/2\)/i);
+  });
+
+  it("rejects a DE 1/2 code that is not in HMRC's list", () => {
+    const errors = validateB1Declaration(asStored("Q"), baseItems);
+    assert.match(errors.join(" "), /not a valid DE 1\/2 code/i);
+  });
+
+  it("accepts every published DE 1/2 code", () => {
+    for (const code of ADDITIONAL_DECLARATION_TYPES) {
+      assert.deepEqual(
+        validateB1Declaration(asStored(code), baseItems),
+        [],
+        `DE 1/2 ${code} should be accepted`,
+      );
+    }
   });
 });

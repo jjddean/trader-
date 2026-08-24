@@ -8,7 +8,7 @@ const declaration: Record<string, unknown> = {
   _id: "b1exportdeclarationrecordid000001",
   route: "export",
   declarationCategory: "B1",
-  declarationType: "A",
+  additionalDeclarationType: "A",
   lrn: "FC-B1TEST01",
   ducr: "6GB553202734852-B1TEST",
   eori: "GB553202734852",

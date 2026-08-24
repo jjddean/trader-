@@ -13,7 +13,7 @@ const baseDeclaration: Record<string, unknown> = {
   _id: "i1importdeclarationrecordid000001",
   route: "import",
   declarationCategory: "I1",
-  declarationType: "C",
+  additionalDeclarationType: "C",
   lrn: "FC-I1TEST01",
   eori: "GB553202734852",
   importerEori: "GB553202734852",
@@ -82,12 +82,12 @@ describe("validateI1Declaration — mandatory data elements", () => {
   // DE 1/2 selects the data set: only C and F are I1 C&F regular use.
   it("accepts DE 1/2 codes C and F", () => {
     for (const t of ["C", "F"]) {
-      assert.deepEqual(validateI1Declaration(decl({ declarationType: t }), baseItems), []);
+      assert.deepEqual(validateI1Declaration(decl({ additionalDeclarationType: t }), baseItems), []);
     }
   });
 
   it("rejects a DE 1/2 code that belongs to the H1 full data set", () => {
-    const errors = validateI1Declaration(decl({ declarationType: "A" }), baseItems);
+    const errors = validateI1Declaration(decl({ additionalDeclarationType: "A" }), baseItems);
     assert.ok(errors.some((e) => e.includes("not valid for I1 C&F") && e.includes("H1")));
   });
 
@@ -148,7 +148,7 @@ describe("mapToCDS_I1 — payload shape", () => {
   it("emits an IM TypeCode carrying the C&F letter", () => {
     assert.equal((mapToCDS_I1(decl(), baseItems) as any).Declaration.TypeCode, "IMC");
     assert.equal(
-      (mapToCDS_I1(decl({ declarationType: "F" }), baseItems) as any).Declaration.TypeCode,
+      (mapToCDS_I1(decl({ additionalDeclarationType: "F" }), baseItems) as any).Declaration.TypeCode,
       "IMF",
     );
   });

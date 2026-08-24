@@ -87,7 +87,8 @@ export function validateI1Declaration(
 
   // DE 1/2 — additional declaration type. I1 C&F is the regular-use simplified
   // declaration: only C and F select this data set.
-  const declType = trimmed(declaration.declarationType).toUpperCase();
+  // DE 1/2 lives in `additionalDeclarationType`; `declarationType` is the category.
+  const declType = trimmed(declaration.additionalDeclarationType).toUpperCase();
   if (!declType) {
     errors.push("Missing additional declaration type (DE 1/2)");
   } else if (!I1_ADDITIONAL_DECLARATION_TYPES.includes(declType as "C" | "F")) {
@@ -201,7 +202,7 @@ export function mapToCDS_I1(
     Declaration: {
       FunctionCode: "9",
       // DE 1/1 + 1/2 — IM prefix with the C&F simplified type letter.
-      TypeCode: mapDeclarationType(trimmed(declaration.declarationType), "import"),
+      TypeCode: mapDeclarationType(trimmed(declaration.additionalDeclarationType), "import"),
       FunctionalReferenceID: lrn,
       GoodsItemQuantity: items.length,
       DeclarationOfficeID: trimmed(declaration.presentationOffice),

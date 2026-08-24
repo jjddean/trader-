@@ -100,7 +100,8 @@ export function validateC1Declaration(
   }
 
   // DE 1/2 — only C and F select the simplified export data set.
-  const declType = trimmed(declaration.declarationType).toUpperCase();
+  // DE 1/2 lives in `additionalDeclarationType`; `declarationType` is the category.
+  const declType = trimmed(declaration.additionalDeclarationType).toUpperCase();
   if (!declType) {
     errors.push("Missing additional declaration type (DE 1/2)");
   } else if (!C1_ADDITIONAL_DECLARATION_TYPES.includes(declType as "C" | "F")) {
@@ -200,7 +201,7 @@ export function mapToCDS_C1(
     Declaration: {
       FunctionCode: "9",
       // DE 1/1 + 1/2 — EX prefix with the C&F simplified type letter.
-      TypeCode: mapDeclarationType(trimmed(declaration.declarationType), "export"),
+      TypeCode: mapDeclarationType(trimmed(declaration.additionalDeclarationType), "export"),
       FunctionalReferenceID: lrn,
       GoodsItemQuantity: items.length,
       DeclarationOfficeID: trimmed(declaration.presentationOffice),
