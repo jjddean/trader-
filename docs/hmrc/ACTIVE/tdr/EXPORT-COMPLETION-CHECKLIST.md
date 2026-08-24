@@ -31,10 +31,12 @@ by the mapper — previous document from the DUCR, LRN from the reference, total
 packages summed from the items — so they cannot be absent. The I1 gap has not
 been examined.
 
-**Accepted is not cleared.** Two B1 submissions returned HTTP 202 with a
-conversation ID. Neither produced an MRN or any DMS notification, and the
-second was later found to carry no exporter at all. A 202 says the message was
-taken, nothing more.
+**What "accepted" is worth.** Two B1 submissions returned HTTP 202 with an
+`X-Conversation-ID`. That proves the message reached HMRC's API gateway and
+nothing beyond it — not that CDS received it, parsed it, or agreed with it.
+Neither produced an MRN or any notification, and the second was later found to
+carry no exporter at all, so a 202 does not even mean the contents were
+filable.
 
 ---
 
@@ -59,7 +61,10 @@ taken, nothing more.
 ## 2. Submission path
 
 - [x] Renders XML that passes the WCO XSD structural check
-- [x] Accepted by HMRC — 202 with a conversation ID
+- [x] Reached HMRC's API gateway — 202 with an `X-Conversation-ID` header,
+      which HMRC generates. Evidence stops there: nothing shows the message
+      reached CDS itself
+- [ ] **Reached CDS.** Unproven. The only evidence would be a DMS notification
 - [ ] **DMSACC or DMSREJ received.** Nothing has come back from either
       submission. Imports on the same setup answer in 39–51 seconds
 - [ ] MRN issued
