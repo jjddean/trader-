@@ -420,7 +420,14 @@ export default function GoodsItemsPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new ApiError(data.error || "Failed to extract invoice data.");
+        // `details` carries the reason the route logged — a retired model, a
+        // missing key. Without it the user only ever sees "Internal Server
+        // Error" while the cause sits in the server log.
+        throw new ApiError(
+          [data.error || "Failed to extract invoice data.", data.details]
+            .filter(Boolean)
+            .join(" — "),
+        );
       }
 
       // Persist exactly what the AI extracted. No invented fallbacks

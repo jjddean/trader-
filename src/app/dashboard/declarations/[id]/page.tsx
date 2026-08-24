@@ -938,7 +938,10 @@ export default function CoreSchemaPage() {
               />
             </div>
 
-            <div className="space-y-2">
+            {/* DE 4/1 is import-only. The save clears it on B1 and C1, so
+                leaving the input visible lets a value be typed and silently
+                dropped. Hidden with its Incoterms sibling. */}
+            <div className={`space-y-2 ${isExportCategory(formData.declarationCategory) ? "hidden" : ""}`}>
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Incoterm location (DE 4/1)
               </label>
@@ -976,7 +979,12 @@ export default function CoreSchemaPage() {
 
           </div>
 
-          <div className="border-t border-slate-100 pt-6">
+          {/* DE 4/8 and DE 2/6 are import-only — the export data sets carry no
+              duty at declaration. The save clears both on B1 and C1, so the
+              section is hidden rather than left to accept discarded input. */}
+          <div
+            className={`border-t border-slate-100 pt-6 ${isExportCategory(formData.declarationCategory) ? "hidden" : ""}`}
+          >
             <h3 className="text-sm font-medium text-slate-900">Duty payment</h3>
             <p className="mt-1 text-[11px] text-slate-500">
               DE 4/8 method of payment and DE 2/6 deferment account. Required when paying via deferment (MOP E or R).
