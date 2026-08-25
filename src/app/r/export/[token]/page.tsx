@@ -1,10 +1,11 @@
-import { ConsultantReviewPage } from "@/components/trade-compliance/consultant-review-page";
+import { redirect } from "next/navigation";
 
-export default async function ExportConsultantReviewRoute({
-  params,
-}: {
-  params: Promise<{ token: string }>;
-}) {
-  const { token } = await params;
-  return <ConsultantReviewPage token={token} />;
+export const dynamic = "force-dynamic";
+
+/**
+ * Legacy review tokens were reusable credentials embedded in URLs. New
+ * handoffs use a hashed, HttpOnly-cookie session at /r/export/review.
+ */
+export default function LegacyExportConsultantReviewRoute() {
+  redirect("/r/export/unavailable");
 }

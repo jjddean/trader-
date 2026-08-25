@@ -45,7 +45,8 @@ Use the existing FreightCode workflow as the starting point:
 7. FreightCode writes the result to the assessment, licence record and audit history.
 8. The related result remains available for the CDS declaration and export-clearance record.
 
-Email remains a fallback notification during the pilot.
+Consultant email fallback is deferred. Pilot delivery uses the authenticated
+partner inbox only; assessment data is never sent as an email attachment.
 
 ### Consultant application requirements
 
@@ -58,7 +59,10 @@ The consultant's application needs only:
 - An **Open secure review** action.
 - Optional receipt of status updates for opened, waiting, completed, blocked and expired cases.
 
-The webhook must not contain sensitive evidence. It carries metadata and a one-time handoff code. The consultant's server exchanges that code with FreightCode, and FreightCode binds the case to the verified consultant identity.
+The webhook must not contain sensitive evidence or a browser credential. It
+carries routing metadata and the registered FreightCode handoff endpoint. The
+consultant's server requests a one-time code only when an authenticated,
+assigned consultant opens the case.
 
 ### How to build the consultant link in their application
 
@@ -134,11 +138,51 @@ It must not include the evidence pack, declarations, personal data beyond the ag
 The consultant application's backend calls a FreightCode endpoint equivalent to:
 
 ```text
-POST /v1/consultant-reviews/{reviewId}/handoff
+POST /api/consultant-partner/handoff
 Authorization: Bearer <partner credential>
+Content-Digest: sha-256=:<base64 SHA-256 of the exact body>:
+X-FC-Signature-Version: v1
+X-FC-Key-Id: <active key id>
+X-FC-Request-Id: <unique request id>
+X-FC-Timestamp: <epoch milliseconds>
+X-FC-Signature: sha256=<base64 HMAC-SHA-256>
+
+{"externalCaseId":"<FreightCode dispatch id>","consultant":{"id":"<verified partner user id>","email":"...","name":"..."}}
 ```
 
-FreightCode returns a short-lived, single-use URL. The browser is redirected there, the code is consumed, and the consultant continues inside the existing FreightCode secure-review page. This is the specific link between the two applications.
+The canonical HMAC input is the uppercase method, path and query, timestamp,
+request ID, content digest and exact JSON bytes, separated by newlines. The
+receiver enforces the timestamp window and durably rejects replayed request
+IDs before issuing a handoff.
+
+FreightCode's Next.js and Convex runtimes require the same partner registry in
+their separate environment stores:
+
+```json
+[
+  {
+    "slug": "bec",
+    "name": "British Export Control",
+    "intakeUrl": "https://<registered-host>/api/integrations/cases",
+    "inboundKey": "<BEC-to-FreightCode bearer>",
+    "outboundKey": "<FreightCode-to-BEC bearer>",
+    "inboundSigningKey": "<at least 32 random bytes>",
+    "outboundSigningKey": "<at least 32 random bytes>",
+    "keyId": "bec-YYYY-NN"
+  }
+]
+```
+
+`CONSULTANT_PARTNER_SECRET` is the separate Next-to-Convex secret. Bearer-only
+partner requests and plaintext consultant-token URLs are permanently disabled.
+Real values must not be
+committed to the repository.
+
+FreightCode returns a short-lived, single-use URL. Redemption stores only a
+SHA-256 hash of the new review-session secret, sets the secret in a Secure,
+HttpOnly, SameSite=Lax cookie, and redirects to `/r/export/review`. The stable
+review URL, React tree, browser storage and JSON responses contain no review
+credential.
 ### FreightCode changes required for the pilot
 
 - Add consultant-partner records and per-partner credentials.
@@ -147,7 +191,8 @@ FreightCode returns a short-lived, single-use URL. The browser is redirected the
 - Replace reusable bearer-link delivery with a one-time handoff exchange for integrated partners.
 - Bind accepted reviews to an authenticated consultant account.
 - Add review statuses: `new`, `opened`, `waiting_for_information`, `ready_to_complete`, `completed`, `blocked`, `expired` and `revoked`.
-- Keep the existing token link and email as a controlled fallback.
+- Reject legacy raw-token review URLs unless an explicit temporary migration
+  flag enables them.
 - Record every delivery, access, request and decision in the audit trail.
 
 ## Phase 2 — Reusable provider API

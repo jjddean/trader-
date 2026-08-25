@@ -5,12 +5,14 @@ import {
   assertAssessmentAccess,
   canAccessAssessment,
   canAccessDeclaration,
+  documentBelongsToAssessmentTenant,
   listAssessmentsForTenant,
   resolveOrgIdForNewRecord,
 } from "./lib/org_access";
 import { resolveSubmissionRoute } from "./lib/export_routing";
 import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 import { notify } from "./lib/notify";
+import { assertNoOpenConsultantDispatch } from "./lib/consultant_dispatch_guard";
 
 function buildReference(now = Date.now()) {
   const year = new Date(now).getFullYear();
@@ -90,7 +92,12 @@ async function refreshSubmissionRouteForAssessment(ctx: any, assessmentId: Id<"e
 }
 
 /** Evidence rows with a resolved download URL + file metadata for the DBT bundle. */
-export async function collectEvidenceWithUrls(ctx: any, assessmentId: Id<"export_assessments">) {
+export async function collectEvidenceWithUrls(
+  ctx: any,
+  assessmentId: Id<"export_assessments">,
+) {
+  const assessment = await ctx.db.get(assessmentId);
+  if (!assessment) return [];
   const rows = await ctx.db
     .query("export_evidence")
     .withIndex("by_assessment", (q: any) => q.eq("assessmentId", assessmentId))
@@ -106,7 +113,7 @@ export async function collectEvidenceWithUrls(ctx: any, assessmentId: Id<"export
 
         if (row.documentId) {
           const document = await ctx.db.get(row.documentId);
-          if (document) {
+          if (document && (await documentBelongsToAssessmentTenant(ctx, document, assessment))) {
             fileName = typeof document.fileName === "string" ? document.fileName : undefined;
             fileSize = document.fileSize;
             if (document.fileId) {
@@ -154,6 +161,7 @@ export const addExportEvidence = mutation({
     if (!identity) throw unauthenticatedError();
 
     const assessment = await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
+    await assertNoOpenConsultantDispatch(ctx, args.assessmentId);
 
     const label = args.label.trim();
     if (!label) throw userError("label_is_required", "Label is required");
@@ -164,6 +172,20 @@ export const addExportEvidence = mutation({
     }
     if (url && !/^https?:\/\//i.test(url)) {
       throw userError("url_must_start_with_http_or", "URL must start with http:// or https://");
+    }
+
+    if (args.documentId) {
+      const document = await ctx.db.get(args.documentId);
+      if (!document || !(await documentBelongsToAssessmentTenant(ctx, document, assessment))) {
+        throw forbiddenError();
+      }
+    }
+
+    if (args.productId) {
+      const product = await ctx.db.get(args.productId);
+      if (!product || product.assessmentId !== args.assessmentId) {
+        throw userError("product_not_found", "Product not found");
+      }
     }
 
     const evidenceId = await ctx.db.insert("export_evidence", {
@@ -196,6 +218,7 @@ export const removeExportEvidence = mutation({
     const row = await ctx.db.get(args.evidenceId);
     if (!row) throw userError("evidence_not_found", "Evidence not found");
     await getAssessmentOrThrow(ctx, identity.subject, row.assessmentId);
+    await assertNoOpenConsultantDispatch(ctx, row.assessmentId);
 
     await ctx.db.delete(args.evidenceId);
     await logExportAction(ctx, identity.subject, "export_evidence_removed", row.assessmentId, {
@@ -453,6 +476,7 @@ export const updateAssessment = mutation({
     if (!identity) throw unauthenticatedError();
 
     const assessment = await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
+    await assertNoOpenConsultantDispatch(ctx, args.assessmentId);
     const { assessmentId, ...patch } = args;
 
     // If linking a declaration, inherit its clientId when not explicitly set.
@@ -491,6 +515,7 @@ export const addProduct = mutation({
     if (!identity) throw unauthenticatedError();
 
     await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
+    await assertNoOpenConsultantDispatch(ctx, args.assessmentId);
     const now = Date.now();
 
     return await ctx.db.insert("export_products", {
@@ -528,6 +553,7 @@ export const addProductSpec = mutation({
     const product = await ctx.db.get(args.productId);
     if (!product) throw userError("product_not_found", "Product not found");
     await getAssessmentOrThrow(ctx, identity.subject, product.assessmentId);
+    await assertNoOpenConsultantDispatch(ctx, product.assessmentId);
 
     return await ctx.db.insert("export_product_specs", {
       productId: args.productId,
@@ -564,6 +590,7 @@ export const recordClassificationRun = mutation({
     const product = await ctx.db.get(args.productId);
     if (!product) throw userError("product_not_found", "Product not found");
     await getAssessmentOrThrow(ctx, identity.subject, product.assessmentId);
+    await assertNoOpenConsultantDispatch(ctx, product.assessmentId);
 
     const runId = await ctx.db.insert("export_classification_runs", {
       productId: args.productId,
@@ -600,6 +627,7 @@ export const reviewClassificationRun = mutation({
     const run = await ctx.db.get(args.runId);
     if (!run) throw userError("classification_run_not_found", "Classification run not found");
     await getAssessmentOrThrow(ctx, identity.subject, run.assessmentId);
+    await assertNoOpenConsultantDispatch(ctx, run.assessmentId);
 
     await ctx.db.patch(args.runId, {
       finalControlEntry: args.approved ? args.finalControlEntry : undefined,
@@ -641,6 +669,7 @@ export const recordSanctionsScreening = mutation({
     if (!identity) throw unauthenticatedError();
 
     const assessment = await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
+    await assertNoOpenConsultantDispatch(ctx, args.assessmentId);
 
     const screeningId = await ctx.db.insert("sanctions_screenings", {
       assessmentId: args.assessmentId,
@@ -687,6 +716,7 @@ export const reviewSanctionsScreening = mutation({
     const screening = await ctx.db.get(args.screeningId);
     if (!screening) throw userError("screening_not_found", "Screening not found");
     await getAssessmentOrThrow(ctx, identity.subject, screening.assessmentId);
+    await assertNoOpenConsultantDispatch(ctx, screening.assessmentId);
 
     await ctx.db.patch(args.screeningId, {
       reviewStatus: args.reviewStatus,
@@ -712,6 +742,7 @@ export const createExpertRequest = mutation({
     if (!identity) throw unauthenticatedError();
 
     const assessment = await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
+    await assertNoOpenConsultantDispatch(ctx, args.assessmentId);
     const now = Date.now();
 
     const detail = await ctx.db
@@ -779,6 +810,7 @@ export const recordExportLicence = mutation({
     if (!identity) throw unauthenticatedError();
 
     const assessment = await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
+    await assertNoOpenConsultantDispatch(ctx, args.assessmentId);
 
     const licenceId = await ctx.db.insert("export_licences", {
       assessmentId: args.assessmentId,
@@ -846,6 +878,7 @@ export const persistExtraction = mutation({
     if (!identity) throw unauthenticatedError();
 
     await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
+    await assertNoOpenConsultantDispatch(ctx, args.assessmentId);
     const now = Date.now();
 
     await ctx.db.patch(args.assessmentId, {
@@ -941,6 +974,7 @@ export const refreshSubmissionRoute = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw unauthenticatedError();
     await getAssessmentOrThrow(ctx, identity.subject, args.assessmentId);
+    await assertNoOpenConsultantDispatch(ctx, args.assessmentId);
     return await refreshSubmissionRouteForAssessment(ctx, args.assessmentId);
   },
 });

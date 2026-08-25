@@ -116,3 +116,62 @@ export function resolveSubmissionRoute(input: RoutingInput): RoutingResult {
     sourceUrl: ROUTING_SOURCE_URL,
   };
 }
+
+/** Every licence type `export_licences.licenceType` accepts. */
+export type ExportLicenceType =
+  | "siel"
+  | "sitcl"
+  | "sitl"
+  | "f680"
+  | "oiel"
+  | "oitcl"
+  | "ogel"
+  | "otsi"
+  | "other";
+
+/**
+ * Licence type implied by a submission route, where the route determines it.
+ *
+ * Derived from the routing rules above, read in the other direction:
+ *
+ *  - `lite` — LITE is the GOV.UK SIEL service, and `resolveSubmissionRoute`
+ *    only leaves a case on LITE when the licence type is SIEL (any other type
+ *    forces SPIRE). So LITE ⇒ SIEL.
+ *  - `otsi` — the OTSI sanctions route, matching the `otsi` licence type.
+ *  - `spire` — SPIRE carries SIEL, SITCL, SITL, F680, OIEL and OITCL alike, and
+ *    a case reaches it from a sanctioned destination or a SPIRE-only control
+ *    entry regardless of licence type. The route does NOT determine the type,
+ *    so nothing may be asserted: `other` until a human records the real one.
+ *  - `none` — routing undecided (no destination, no classification). Same.
+ *
+ * Consultant sign-off used to hardcode `siel`, which wrote a SIEL record for
+ * OTSI and SPIRE cases that were never SIEL applications.
+ */
+export function licenceTypeForRoute(route: SubmissionRoute): ExportLicenceType {
+  switch (route) {
+    case "lite":
+      return "siel";
+    case "otsi":
+      return "otsi";
+    case "spire":
+    case "none":
+    default:
+      return "other";
+  }
+}
+
+export const EXPORT_LICENCE_TYPES: readonly ExportLicenceType[] = [
+  "siel",
+  "sitcl",
+  "sitl",
+  "f680",
+  "oiel",
+  "oitcl",
+  "ogel",
+  "otsi",
+  "other",
+];
+
+export function isExportLicenceType(value: unknown): value is ExportLicenceType {
+  return typeof value === "string" && (EXPORT_LICENCE_TYPES as readonly string[]).includes(value);
+}

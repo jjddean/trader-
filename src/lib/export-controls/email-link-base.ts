@@ -23,7 +23,9 @@ function isLocalHost(hostnameOrOrigin: string): boolean {
 
 function originFromUrl(raw: string): string | null {
   try {
-    return new URL(raw).origin;
+    const parsed = new URL(raw);
+    if (parsed.username || parsed.password || parsed.search || parsed.hash) return null;
+    return parsed.origin;
   } catch {
     return null;
   }
@@ -40,6 +42,23 @@ function requestOrigin(request?: Request): string | null {
 }
 
 export function emailLinkBaseUrl(request?: Request): string {
+  if (process.env.NODE_ENV === "production") {
+    const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
+    if (!configured) throw new Error("NEXT_PUBLIC_APP_URL is required for email links");
+    const parsed = new URL(configured);
+    if (
+      parsed.protocol !== "https:" ||
+      parsed.username ||
+      parsed.password ||
+      parsed.search ||
+      parsed.hash ||
+      parsed.pathname !== "/"
+    ) {
+      throw new Error("NEXT_PUBLIC_APP_URL is not a valid email origin");
+    }
+    return parsed.origin;
+  }
+
   const fromRequest = requestOrigin(request);
   if (fromRequest && isLocalHost(fromRequest)) {
     return fromRequest;
@@ -66,4 +85,38 @@ export function emailPathUrl(path: string, request?: Request): string {
   const base = emailLinkBaseUrl(request).replace(/\/$/, "");
   const suffix = path.startsWith("/") ? path : `/${path}`;
   return `${base}${suffix}`;
+}
+
+/**
+ * Canonical origin for URLs that carry a one-time credential.
+ * Production never trusts Host/X-Forwarded-Host or an email From domain.
+ */
+export function secureCredentialPathUrl(path: string, request?: Request): string {
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (configured) {
+    const parsed = new URL(configured);
+    const local = isLocalHost(parsed.hostname);
+    if (
+      parsed.username ||
+      parsed.password ||
+      parsed.search ||
+      parsed.hash ||
+      parsed.pathname !== "/" ||
+      (parsed.protocol !== "https:" && !(process.env.NODE_ENV !== "production" && local))
+    ) {
+      throw new Error("NEXT_PUBLIC_APP_URL is not a valid credential origin");
+    }
+    const suffix = path.startsWith("/") ? path : `/${path}`;
+    return `${parsed.origin}${suffix}`;
+  }
+
+  if (process.env.NODE_ENV !== "production" && request) {
+    const origin = new URL(request.url).origin;
+    if (isLocalHost(origin)) {
+      const suffix = path.startsWith("/") ? path : `/${path}`;
+      return `${origin}${suffix}`;
+    }
+  }
+
+  throw new Error("NEXT_PUBLIC_APP_URL is required for credential links");
 }

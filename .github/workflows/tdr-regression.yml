@@ -57,6 +57,9 @@ jobs:
       - name: Export-control regressions (control list, sanctions, draft pack, EUSU)
         run: npm run test:export-controls
 
+      - name: Consultant integration regressions
+        run: npm run test:consultant
+
       - name: TDR v1 dry-run preflight
         run: npm run test:tdr-dry-run
         env:
