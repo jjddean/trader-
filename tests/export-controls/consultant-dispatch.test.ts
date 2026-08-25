@@ -11,7 +11,7 @@ import {
   dispatchIsOpen,
   CONSULTANT_DISPATCH_REASON,
 } from "../../convex/compliance_consultant";
-import { buildSubjectLabel } from "../../src/lib/export-controls/partner-dispatch";
+import { buildPartnerSubjectLabel } from "../../convex/lib/consultant_partner_outbox";
 
 const FROZEN_AT = 1_760_000_000_000;
 const EXPIRES_AT = FROZEN_AT + 14 * 24 * 60 * 60 * 1000;
@@ -258,23 +258,23 @@ describe("dispatch validity", () => {
 describe("partner subject label", () => {
   /**
    * The label is the only free text that reaches a partner inbox, so it must
-   * never carry goods, parties or values.
+   * never carry goods, parties or values. Built from the frozen snapshot, so
+   * the assertions run against the same input the outbox uses.
    */
   it("describes the case without naming goods or parties", () => {
-    const label = buildSubjectLabel({
-      destinationCountry: "TR",
-      productCount: 4,
-      controlled: true,
-    });
-    assert.equal(label, "Controlled goods · 4 items · destination TR");
+    const label = buildPartnerSubjectLabel(buildFixture());
+
+    assert.equal(label, "Controlled goods · 1 item · destination TR");
     assert.equal(label.includes("Aselsan"), false);
     assert.equal(label.includes("Thermal"), false);
+    assert.equal(label.includes("18500"), false);
   });
 
   it("omits destination when unknown", () => {
-    assert.equal(
-      buildSubjectLabel({ productCount: 1, controlled: false }),
-      "Export assessment · 1 item",
-    );
+    const label = buildPartnerSubjectLabel({
+      ...buildFixture({ destinationCountry: undefined }),
+      products: [],
+    });
+    assert.equal(label, "Export assessment · 0 items");
   });
 });

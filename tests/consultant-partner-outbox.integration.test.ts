@@ -353,3 +353,98 @@ describe("consultant partner outbox claims", () => {
     });
   });
 });
+
+/**
+ * The exact bytes we put on a partner's wire.
+ *
+ * Two defects lived here, and neither was visible to a test that checked only
+ * one side of the contract:
+ *
+ *   1. `source` carried the PARTNER's slug ("bec") instead of ours
+ *      ("freightcode"). The partner authenticates the sender by that field, so
+ *      every status update was rejected as an unknown source.
+ *   2. `externalCaseId` carried the id the PARTNER generated and returned at
+ *      intake, instead of the id we sent them. The partner keys the case on
+ *      what we sent, so the lookup missed even once the slug was right.
+ *
+ * These assert the payload the production builders emit, against the contract
+ * in BEC's docs/INTEGRATION.md. The second case only reproduces after a
+ * delivered intake has written the partner's own id onto the request, which is
+ * why it runs the initial delivery first.
+ */
+describe("outbound partner payload contract", () => {
+  it("identifies us as the source on the initial case event", async () => {
+    const t = createHarness();
+    const assessmentId = await seedAssessment(t);
+    const created = await t
+      .withIdentity(exporter)
+      .mutation(api.compliance_consultant.createConsultantDispatch, {
+        assessmentId,
+        partnerSlug: PARTNER_SLUG,
+        consultantRole: "adviser",
+      });
+
+    const initial = await t.run(async (ctx) =>
+      ctx.db
+        .query("consultant_partner_status_outbox")
+        .withIndex("by_request_status", (q) =>
+          q.eq("expertRequestId", created.expertRequestId).eq("status", "received"),
+        )
+        .unique(),
+    );
+
+    const body = JSON.parse(initial!.rawBody!);
+    expect(body.source).toBe("freightcode");
+    expect(body.source).not.toBe(PARTNER_SLUG);
+    expect(body.externalCaseId).toBe(String(created.expertRequestId));
+  });
+
+  it("sends the id we gave at intake, not the one the partner returned", async () => {
+    const t = createHarness();
+    const assessmentId = await seedAssessment(t);
+    const created = await t
+      .withIdentity(exporter)
+      .mutation(api.compliance_consultant.createConsultantDispatch, {
+        assessmentId,
+        partnerSlug: PARTNER_SLUG,
+        consultantRole: "adviser",
+      });
+
+    const initial = await t.run(async (ctx) =>
+      ctx.db
+        .query("consultant_partner_status_outbox")
+        .withIndex("by_request_status", (q) =>
+          q.eq("expertRequestId", created.expertRequestId).eq("status", "received"),
+        )
+        .unique(),
+    );
+    await t.action(internal.consultant_partner_sync.deliverPartnerOutbox, {
+      outboxId: initial!._id,
+    });
+
+    // The partner's own id is now on the request. A status event must still
+    // carry ours.
+    const afterIntake = await t.run(async (ctx) => ctx.db.get(created.expertRequestId));
+    expect(afterIntake?.externalCaseId).toBe(PARTNER_CASE_ID);
+
+    await t
+      .withIdentity(exporter)
+      .mutation(api.compliance_consultant.revokeConsultantDispatch, {
+        expertRequestId: created.expertRequestId,
+      });
+
+    const revoked = await t.run(async (ctx) =>
+      ctx.db
+        .query("consultant_partner_status_outbox")
+        .withIndex("by_request_status", (q) =>
+          q.eq("expertRequestId", created.expertRequestId).eq("status", "revoked"),
+        )
+        .unique(),
+    );
+
+    const body = JSON.parse(revoked!.rawBody!);
+    expect(body.source).toBe("freightcode");
+    expect(body.externalCaseId).toBe(String(created.expertRequestId));
+    expect(body.externalCaseId).not.toBe(PARTNER_CASE_ID);
+  });
+});
