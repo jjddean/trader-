@@ -898,6 +898,16 @@ export default defineSchema({
     /** True when the identity came from the reviewer's authenticated session. */
     reviewerVerified: v.optional(v.boolean()),
 
+    /**
+     * The end-user undertaking the reviewer confirmed having read.
+     *
+     * The review form makes the tick mandatory once a statement has been
+     * submitted, so the completion carries which one was acknowledged rather
+     * than leaving that gate on the client alone.
+     */
+    acknowledgedEndUserTokenId: v.optional(v.id("export_end_user_tokens")),
+    acknowledgedEndUserAt: v.optional(v.number()),
+
     /** First partner-authenticated consultant to claim this dispatch. */
     assignedConsultantExternalId: v.optional(v.string()),
     assignedConsultantEmail: v.optional(v.string()),

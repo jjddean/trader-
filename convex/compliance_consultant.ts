@@ -810,6 +810,7 @@ export const completeConsultantReview = mutation({
     outcome: v.union(v.literal("cleared"), v.literal("blocked")),
     applicationRef: v.optional(v.string()),
     licenceRef: v.optional(v.string()),
+    acknowledgedEndUserTokenId: v.optional(v.id("export_end_user_tokens")),
   },
   handler: async (ctx, args) => {
     const row = await findReviewCredential(ctx, args);
@@ -828,8 +829,35 @@ export const completeConsultantReview = mutation({
       throw userError("link_expired_or_invalid", "This review is no longer open");
     }
 
+    // The form only lets a reviewer submit once they have ticked the
+    // acknowledgement, but that gate lives in the browser. Re-resolve the
+    // statement here and require the tick to name it, so a request assembled
+    // outside the form cannot clear an export without it.
+    const endUserTokens = await ctx.db
+      .query("export_end_user_tokens")
+      .withIndex("by_review_token", (q) => q.eq("reviewTokenId", row._id))
+      .collect();
+    const latestEndUserToken = endUserTokens.sort(
+      (a, b) => b.createdAt - a.createdAt,
+    )[0];
+    const requiresAcknowledgement = Boolean(latestEndUserToken?.completedAt);
+
+    if (requiresAcknowledgement) {
+      if (args.acknowledgedEndUserTokenId !== latestEndUserToken._id) {
+        throw userError(
+          "end_user_statement_not_acknowledged",
+          "Confirm you have read the end-user statement before completing this review",
+        );
+      }
+    } else if (args.acknowledgedEndUserTokenId) {
+      throw userError("invalid_acknowledgement", "Invalid acknowledgement");
+    }
+
     const result = await applyConsultantCompletion(ctx, {
       expertRequestId: row.expertRequestId,
+      acknowledgedEndUserTokenId: requiresAcknowledgement
+        ? latestEndUserToken._id
+        : undefined,
       assessmentId: row.assessmentId,
       outcome: args.outcome,
       advisoryNotes: args.advisoryNotes,

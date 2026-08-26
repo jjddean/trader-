@@ -53,6 +53,8 @@ export interface ConsultantCompletionInput {
   licenceRef?: string;
   reviewer: ConsultantReviewer;
   completedAt: number;
+  /** End-user undertaking the reviewer confirmed reading, where one exists. */
+  acknowledgedEndUserTokenId?: Id<"export_end_user_tokens">;
 }
 
 export interface ConsultantCompletionResult {
@@ -150,6 +152,8 @@ export async function applyConsultantCompletion(
     reviewerExternalId: input.reviewer.externalId,
     reviewerEmail: input.reviewer.email ?? undefined,
     reviewerVerified: input.reviewer.verified,
+    acknowledgedEndUserTokenId: input.acknowledgedEndUserTokenId,
+    acknowledgedEndUserAt: input.acknowledgedEndUserTokenId ? now : undefined,
   });
 
   await ctx.db.patch(input.assessmentId, {

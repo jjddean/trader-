@@ -1,6 +1,7 @@
 import { ConvexHttpClient } from "convex/browser";
 import { NextResponse } from "next/server";
 import { api } from "../../../../../convex/_generated/api";
+import type { Id } from "../../../../../convex/_generated/dataModel";
 import {
   CONSULTANT_REVIEW_ACTION_MAX_BYTES,
   consultantReviewCredentialFromRequest,
@@ -106,7 +107,14 @@ export async function POST(request: Request) {
       return json({ ok: true });
     }
 
-    const allowed = new Set(["action", "advisoryNotes", "outcome", "applicationRef", "licenceRef"]);
+    const allowed = new Set([
+      "action",
+      "advisoryNotes",
+      "outcome",
+      "applicationRef",
+      "licenceRef",
+      "acknowledgedEndUserTokenId",
+    ]);
     if (action !== "complete" || Object.keys(body).some((key) => !allowed.has(key))) {
       return json({ error: "Request not accepted" }, 400);
     }
@@ -115,6 +123,18 @@ export async function POST(request: Request) {
     const outcome = body.outcome;
     const applicationRef = typeof body.applicationRef === "string" ? body.applicationRef.trim() : undefined;
     const licenceRef = typeof body.licenceRef === "string" ? body.licenceRef.trim() : undefined;
+    const acknowledgedEndUserTokenId =
+      typeof body.acknowledgedEndUserTokenId === "string"
+        ? body.acknowledgedEndUserTokenId.trim()
+        : undefined;
+    if (
+      body.acknowledgedEndUserTokenId !== undefined &&
+      (typeof body.acknowledgedEndUserTokenId !== "string" ||
+        !acknowledgedEndUserTokenId ||
+        acknowledgedEndUserTokenId.length > 64)
+    ) {
+      return json({ error: "Request not accepted" }, 400);
+    }
     if (
       !advisoryNotes ||
       advisoryNotes.length > 5_000 ||
@@ -131,6 +151,9 @@ export async function POST(request: Request) {
       outcome,
       applicationRef: applicationRef || undefined,
       licenceRef: licenceRef || undefined,
+      acknowledgedEndUserTokenId: acknowledgedEndUserTokenId as
+        | Id<"export_end_user_tokens">
+        | undefined,
     });
     const response = json({ ok: true });
     response.cookies.set(expiredConsultantReviewCookie());
