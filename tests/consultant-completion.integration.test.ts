@@ -850,3 +850,95 @@ describe("evidence access", () => {
     expect(file).toBeNull();
   });
 });
+
+/**
+ * The review form makes the end-user acknowledgement mandatory once a statement
+ * has been submitted, and posts which statement was ticked. That field reached
+ * the completion route rejected — it was absent from the allowed-key list — so
+ * any assessment carrying a completed undertaking could not be signed off at
+ * all. These cover both halves: the field is accepted, and the gate it
+ * represents is enforced here rather than only in the browser.
+ */
+describe("end-user statement acknowledgement", () => {
+  async function reviewWithCompletedStatement(t: ReturnType<typeof createHarness>) {
+    const assessmentId = await seedAssessment(t);
+    const { token } = await reviewToken(t, assessmentId);
+    const endUser = await t.mutation(api.compliance_end_user.createEndUserDispatch, {
+      ...credential(token),
+      redemptionCodeHash: redemptionCodeHash("acknowledged"),
+      recipientEmail: "buyer@example.com",
+    });
+    const tokenId = endUser.tokenId as Id<"export_end_user_tokens">;
+    await t.run(async (ctx) => ctx.db.patch(tokenId, { completedAt: Date.now() }));
+    return { token, tokenId };
+  }
+
+  it("completes when the acknowledged statement is named", async () => {
+    const t = createHarness();
+    const { token, tokenId } = await reviewWithCompletedStatement(t);
+
+    await t.mutation(api.compliance_consultant.completeConsultantReview, {
+      ...credential(token),
+      advisoryNotes: "Undertaking read and accepted.",
+      outcome: "cleared",
+      acknowledgedEndUserTokenId: tokenId,
+    });
+
+    const request = await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("export_review_tokens")
+        .withIndex("by_token_hash")
+        .collect();
+      const review = row.find((entry) => entry.assessmentId);
+      return review ? ctx.db.get(review.expertRequestId) : null;
+    });
+    expect(request?.acknowledgedEndUserTokenId).toBe(tokenId);
+    expect(typeof request?.acknowledgedEndUserAt).toBe("number");
+  });
+
+  it("refuses to complete when the statement is not acknowledged", async () => {
+    const t = createHarness();
+    const { token } = await reviewWithCompletedStatement(t);
+
+    await expect(
+      t.mutation(api.compliance_consultant.completeConsultantReview, {
+        ...credential(token),
+        advisoryNotes: "Cleared without reading the undertaking.",
+        outcome: "cleared",
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("refuses an acknowledgement naming a superseded statement", async () => {
+    const t = createHarness();
+    const assessmentId = await seedAssessment(t);
+    const { token } = await reviewToken(t, assessmentId);
+
+    const first = await t.mutation(api.compliance_end_user.createEndUserDispatch, {
+      ...credential(token),
+      redemptionCodeHash: redemptionCodeHash("first"),
+      recipientEmail: "buyer@example.com",
+    });
+    const second = await t.mutation(api.compliance_end_user.createEndUserDispatch, {
+      ...credential(token),
+      redemptionCodeHash: redemptionCodeHash("second"),
+      recipientEmail: "buyer@example.com",
+    });
+    await t.run(async (ctx) =>
+      ctx.db.patch(second.tokenId as Id<"export_end_user_tokens">, {
+        completedAt: Date.now(),
+      }),
+    );
+
+    // The reviewer must acknowledge the statement that was actually returned,
+    // not an earlier one that was superseded.
+    await expect(
+      t.mutation(api.compliance_consultant.completeConsultantReview, {
+        ...credential(token),
+        advisoryNotes: "Acknowledged the wrong undertaking.",
+        outcome: "cleared",
+        acknowledgedEndUserTokenId: first.tokenId as Id<"export_end_user_tokens">,
+      }),
+    ).rejects.toThrow();
+  });
+});
