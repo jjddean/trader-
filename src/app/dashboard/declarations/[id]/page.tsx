@@ -538,9 +538,13 @@ export default function CoreSchemaPage() {
               </div>
             )}
 
-            {/* DE 3/39 — mandatory on both simplified sets: the SDP/EIDR
-                authorisation is what permits the reduced form. */}
-            {isSimplifiedCategory(formData.declarationCategory) && (
+            {/* DE 3/39 — the SDP/EIDR authorisation on the simplified sets, and
+                on an arrived export, where CDS12120 rejects the declaration
+                without it: "the appropriate authorisation has not been declared
+                for this Declaration Type". */}
+            {(isSimplifiedCategory(formData.declarationCategory) ||
+              (isExportCategory(formData.declarationCategory) &&
+                formData.additionalDeclarationType === "A")) && (
               <>
                 <div className="space-y-2">
                   <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
