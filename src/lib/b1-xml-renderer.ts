@@ -206,7 +206,16 @@ export function renderB1Xml(payloadInfo: unknown): string {
         ? `\n        <StatisticalValueAmount currencyID="${xmlEscape(str(statValue.currencyID) || "GBP")}">${xmlEscape(str(statValue.value))}</StatisticalValueAmount>`
         : "";
 
-      const additionalDocumentsXml = asArray(item.AdditionalDocument)
+            const additionalInformationXml = asArray(item.AdditionalInformation)
+          .map(
+            (ai) => `
+        <AdditionalInformation>
+          <StatementCode>${xmlEscape(str((ai as Record<string, unknown>).StatementCode))}</StatementCode>
+          <StatementDescription>${xmlEscape(str((ai as Record<string, unknown>).StatementDescription))}</StatementDescription>
+        </AdditionalInformation>`,
+          )
+          .join("");
+  const additionalDocumentsXml = asArray(item.AdditionalDocument)
         .map((doc) => {
           const category = str(doc.CategoryCode);
           const docId = str(doc.ID);
@@ -276,7 +285,7 @@ export function renderB1Xml(payloadInfo: unknown): string {
       // GovernmentProcedure → Origin → Packaging.
       return `
       <GovernmentAgencyGoodsItem>
-        <SequenceNumeric>${xmlEscape(str(item.SequenceNumeric))}</SequenceNumeric>${statValueXml}${additionalDocumentsXml}
+        <SequenceNumeric>${xmlEscape(str(item.SequenceNumeric))}</SequenceNumeric>${statValueXml}${additionalDocumentsXml}${additionalInformationXml}
         <Commodity>
           <Description>${xmlEscape(str(commodity.Description))}</Description>${classificationXml}
           <GoodsMeasure>

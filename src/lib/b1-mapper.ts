@@ -235,6 +235,11 @@ export function validateB1Declaration(
   }
   // DE 2/5 LRN is not validated here — like the H1 path, the mapper generates
   // one when the caller has not assigned it yet.
+  // CDS12070: a declared container mandates a seal on the export data set.
+  if (trimmed(declaration.containerNumber) && !trimmed(declaration.sealNumber)) {
+    errors.push("Missing seal number (DE 7/18) — required when a container is declared (DE 7/10)");
+  }
+
   // DE 3/1 + 3/2 — the exporter must be identifiable, by EORI or by name and
   // address. The mapper emits one form or the other; with neither, the
   // Exporter element is omitted entirely and CDS has no exporter at all.
@@ -374,7 +379,6 @@ export function mapToCDS_B1(
           parseFloat(String(declaration.invoiceTotal ?? "")) || itemValueSum,
         ),
       },
-      TotalGrossMassMeasure: formatMass(declaration.totalGrossWeight || totalGrossWeight),
       TotalPackageQuantity: totalPackages,
       // DE 3/39 — holder of the authorisation (conditional on B1).
       ...(authorisationHolder
@@ -460,7 +464,7 @@ export function mapToCDS_B1(
                 CategoryCode: trimmed(source.CategoryCode ?? source.categoryCode),
                 TypeCode: trimmed(source.TypeCode ?? source.typeCode),
                 ID: trimmed(source.ID ?? source.id),
-                StatusCode: trimmed(source.StatusCode ?? source.statusCode),
+                StatusCode: trimmed(source.StatusCode ?? source.statusCode) || "AC",
               };
             })
             .filter((doc) => doc.CategoryCode && doc.TypeCode && doc.ID)
@@ -472,6 +476,16 @@ export function mapToCDS_B1(
 
           return {
             SequenceNumeric: index + 1,
+            // DE 2/2. Appendix 4A code 00400 — "Identity between declarant and
+            // exporter", enter "Exporter". Required when DE 3/19 Representative
+            // is absent; CDS12074 rejects the declaration without it.
+            ...(trimmed(declaration.representativeEori) || trimmed(declaration.representativeName)
+              ? {}
+              : {
+                  AdditionalInformation: [
+                    { StatementCode: "00400", StatementDescription: "Exporter" },
+                  ],
+                }),
             // DE 8/6 — statistical value. Conditional on B1, emitted when known.
             ...(item.statisticalValue != null || item.valueAmount != null
               ? {

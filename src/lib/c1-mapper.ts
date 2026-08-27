@@ -310,7 +310,7 @@ export function mapToCDS_C1(
                 CategoryCode: trimmed(source.CategoryCode ?? source.categoryCode),
                 TypeCode: trimmed(source.TypeCode ?? source.typeCode),
                 ID: trimmed(source.ID ?? source.id),
-                StatusCode: trimmed(source.StatusCode ?? source.statusCode),
+                StatusCode: trimmed(source.StatusCode ?? source.statusCode) || "AC",
               };
             })
             .filter((doc) => doc.CategoryCode && doc.TypeCode && doc.ID)

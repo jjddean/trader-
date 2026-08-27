@@ -240,7 +240,11 @@ describe("mapToCDS_B1 — payload shape", () => {
   });
 
   it("sets ContainerCode to 1 when a container is declared", () => {
-    const payload = mapToCDS_B1(decl({ containerNumber: "MSKU1234567" }), baseItems) as any;
+    // CDS12070 — a declared container mandates a seal.
+    const payload = mapToCDS_B1(
+      decl({ containerNumber: "MSKU1234567", sealNumber: "SEAL0099" }),
+      baseItems,
+    ) as any;
     assert.equal(payload.Declaration.GoodsShipment.Consignment.ContainerCode, "1");
   });
 
@@ -504,5 +508,63 @@ describe("DE 3/1 and DE 3/2 are mutually exclusive", () => {
       const payload = mapToCDS_B1(decl, baseItems) as { Declaration: { Exporter?: unknown } };
       assert.ok(payload.Declaration.Exporter, `no Exporter emitted for ${JSON.stringify(fields)}`);
     }
+  });
+});
+
+describe("CDS rejection of FC-MT7W5R6P, 24 Aug", () => {
+  /**
+   * Four faults CDS reported on the first export it validated. Codes and
+   * meanings from docs/hmrc/specs/error-codes/cds-error-codes-2026-03-11.ods.
+   */
+  it("CDS12071 — gross mass is not declared at both header and item level", () => {
+    const payload = mapToCDS_B1(baseDeclaration, baseItems) as {
+      Declaration: Record<string, unknown> & {
+        GoodsShipment: { GovernmentAgencyGoodsItem: Array<Record<string, unknown>> };
+      };
+    };
+    assert.equal(payload.Declaration.TotalGrossMassMeasure, undefined);
+    const item = payload.Declaration.GoodsShipment.GovernmentAgencyGoodsItem[0] as {
+      Commodity: { GoodsMeasure: { GrossMassMeasure?: string } };
+    };
+    assert.ok(item.Commodity.GoodsMeasure.GrossMassMeasure);
+  });
+
+  it("CDS12074 — self-representation carries AI 00400 at item level", () => {
+    const payload = mapToCDS_B1(baseDeclaration, baseItems) as {
+      Declaration: { GoodsShipment: { GovernmentAgencyGoodsItem: Array<Record<string, unknown>> } };
+    };
+    const [item] = payload.Declaration.GoodsShipment.GovernmentAgencyGoodsItem;
+    const ai = (item.AdditionalInformation ?? []) as Array<Record<string, string>>;
+    assert.deepEqual(ai, [{ StatementCode: "00400", StatementDescription: "Exporter" }]);
+  });
+
+  it("CDS12074 — the statement is omitted when a representative is declared", () => {
+    const payload = mapToCDS_B1(
+      { ...baseDeclaration, representativeEori: "GB553202734852" },
+      baseItems,
+    ) as { Declaration: { GoodsShipment: { GovernmentAgencyGoodsItem: Array<Record<string, unknown>> } } };
+    const [item] = payload.Declaration.GoodsShipment.GovernmentAgencyGoodsItem;
+    assert.equal(item.AdditionalInformation, undefined);
+  });
+
+  it("CDS77002 — every document carries a status code", () => {
+    const withDoc = items({
+      additionalDocuments: [{ CategoryCode: "N", TypeCode: "935", ID: "INV-1" }],
+    });
+    const payload = mapToCDS_B1(baseDeclaration, withDoc) as {
+      Declaration: { GoodsShipment: { GovernmentAgencyGoodsItem: Array<Record<string, unknown>> } };
+    };
+    const [item] = payload.Declaration.GoodsShipment.GovernmentAgencyGoodsItem;
+    const docs = (item.AdditionalDocument ?? []) as Array<Record<string, string>>;
+    assert.equal(docs.length, 1);
+    assert.equal(docs[0].StatusCode, "AC");
+  });
+
+  it("CDS12070 — a container without a seal is rejected before submission", () => {
+    const errors = validateB1Declaration(
+      { ...baseDeclaration, containerNumber: "MSKU1234567", sealNumber: "" },
+      baseItems,
+    );
+    assert.match(errors.join(" "), /seal number \(DE 7\/18\)/i);
   });
 });
