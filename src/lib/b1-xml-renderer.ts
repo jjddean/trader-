@@ -317,8 +317,8 @@ export function renderB1Xml(payloadInfo: unknown): string {
       declarationOfficeId ? `\n    <DeclarationOfficeID>${xmlEscape(declarationOfficeId)}</DeclarationOfficeID>` : ""
     }
     <InvoiceAmount currencyID="${xmlEscape(str(invoice.currencyID))}">${xmlEscape(str(invoice.value))}</InvoiceAmount>
-    <TotalGrossMassMeasure unitCode="KGM">${xmlEscape(str(d.TotalGrossMassMeasure))}</TotalGrossMassMeasure>
-    <TotalPackageQuantity>${xmlEscape(str(d.TotalPackageQuantity))}</TotalPackageQuantity>${authHolderXml}${btmXml}${declConsignmentXml}${currencyExchangeXml}
+${str(d.TotalGrossMassMeasure) ? `
+    <TotalGrossMassMeasure unitCode="KGM">${xmlEscape(str(d.TotalGrossMassMeasure))}</TotalGrossMassMeasure>` : ""}    <TotalPackageQuantity>${xmlEscape(str(d.TotalPackageQuantity))}</TotalPackageQuantity>${authHolderXml}${btmXml}${declConsignmentXml}${currencyExchangeXml}
     <Declarant>
       <ID>${xmlEscape(str(read(d, "Declarant").ID))}</ID>
     </Declarant>${exitOfficeXml}${exporterXml}

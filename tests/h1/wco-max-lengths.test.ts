@@ -105,3 +105,44 @@ describe("preflight blocks an over-length value", () => {
     assert.deepEqual(result.overLength, []);
   });
 });
+
+describe("empty elements", () => {
+  /**
+   * Removing TotalGrossMassMeasure from the B1 mapper left the renderer
+   * emitting `<TotalGrossMassMeasure unitCode="KGM"></TotalGrossMassMeasure>`,
+   * which HMRC rejected: "'' is not a valid value for 'decimal'". The
+   * preflight's empty-tag check required a tag with no attributes, so it could
+   * not see it — and every measure and amount carries one.
+   */
+  const wrap = (inner: string) =>
+    `<MetaData><Declaration><FunctionCode>9</FunctionCode><TypeCode>EXD</TypeCode>
+     <ID>GB553202734852</ID>${inner}
+     <GoodsShipment><PreviousDocument/><AdditionalDocument/></GoodsShipment>
+     </Declaration></MetaData>`;
+
+  it("catches an empty element that carries an attribute", () => {
+    const result = validateXmlPreflight(
+      wrap('<TotalGrossMassMeasure unitCode="KGM"></TotalGrossMassMeasure>'),
+      "GB553202734852",
+    );
+    assert.ok(result.failed.includes("no_empty_tags"));
+  });
+
+  it("still catches an empty element with no attribute", () => {
+    const result = validateXmlPreflight(wrap("<TotalPackageQuantity></TotalPackageQuantity>"), "GB553202734852");
+    assert.ok(result.failed.includes("no_empty_tags"));
+  });
+
+  it("accepts a populated element", () => {
+    const result = validateXmlPreflight(
+      wrap('<TotalGrossMassMeasure unitCode="KGM">168.000</TotalGrossMassMeasure>'),
+      "GB553202734852",
+    );
+    assert.ok(!result.failed.includes("no_empty_tags"));
+  });
+
+  it("accepts a self-closing element", () => {
+    const result = validateXmlPreflight(wrap("<PreviousDocument/>"), "GB553202734852");
+    assert.ok(!result.failed.includes("no_empty_tags"));
+  });
+});

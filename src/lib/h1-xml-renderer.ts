@@ -29,7 +29,10 @@ export function validateXmlPreflight(
     has_goods_shipment: xmlPayload.includes("<GoodsShipment>"),
     has_previous_document: xmlPayload.includes("<PreviousDocument>"),
     no_y922: !xmlPayload.includes("<TypeCode>922</TypeCode>"),
-    no_empty_tags: !/<([A-Za-z][\w]*)\s*>\s*<\/\1>/.test(xmlPayload),
+    // Attributes included: every measure carries unitCode and every amount
+    // currencyID, so the original pattern could not see the elements most
+    // likely to be empty. HMRC rejects those as an invalid decimal.
+    no_empty_tags: !/<([A-Za-z][\w]*)(?:\s[^>]*)?>\s*<\/\1>/.test(xmlPayload),
     // N/A is valid in DE 6/11 MarksNumbersID (see trade-test scenario XML evidence).
     no_placeholders: (() => {
       const withoutAllowedMarks = xmlPayload.replace(
