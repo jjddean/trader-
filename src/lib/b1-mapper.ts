@@ -186,12 +186,18 @@ function buildDeclarationConsignment(declaration: Record<string, unknown>) {
 function buildTransportEquipment(declaration: Record<string, unknown>) {
   const containerNumber = trimmed(declaration.containerNumber);
   const sealId = trimmed(declaration.sealNumber);
-  if (!containerNumber && !sealId) return {};
+  // CDS asks for DE 7/18 even where nothing is sealed. The export completion
+  // guide, Group 7: "When no seals are used: In Number of seals, enter: 0 and
+  // In Seal Identifier, enter: NOSEALS". Omitting the element is what produced
+  // CDS12070 against Consignment/TransportEquipment/Seal.
+  const seal = sealId
+    ? { SequenceNumeric: "1", ID: sealId }
+    : { SequenceNumeric: "0", ID: "NOSEALS" };
   return {
     TransportEquipment: {
       SequenceNumeric: "1",
       ...(containerNumber ? { ID: containerNumber } : {}),
-      ...(sealId ? { Seal: { SequenceNumeric: "1", ID: sealId } } : {}),
+      Seal: seal,
     },
   };
 }
@@ -235,11 +241,6 @@ export function validateB1Declaration(
   }
   // DE 2/5 LRN is not validated here — like the H1 path, the mapper generates
   // one when the caller has not assigned it yet.
-  // CDS12070: a declared container mandates a seal on the export data set.
-  if (trimmed(declaration.containerNumber) && !trimmed(declaration.sealNumber)) {
-    errors.push("Missing seal number (DE 7/18) — required when a container is declared (DE 7/10)");
-  }
-
   // DE 3/1 + 3/2 — the exporter must be identifiable, by EORI or by name and
   // address. The mapper emits one form or the other; with neither, the
   // Exporter element is omitted entirely and CDS has no exporter at all.

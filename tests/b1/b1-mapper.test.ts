@@ -560,11 +560,26 @@ describe("CDS rejection of FC-MT7W5R6P, 24 Aug", () => {
     assert.equal(docs[0].StatusCode, "AC");
   });
 
-  it("CDS12070 — a container without a seal is rejected before submission", () => {
-    const errors = validateB1Declaration(
-      { ...baseDeclaration, containerNumber: "MSKU1234567", sealNumber: "" },
+  it("CDS12070 — DE 7/18 is declared as NOSEALS when nothing is sealed", () => {
+    // Export completion guide, Group 7: "When no seals are used: In Number of
+    // seals, enter: 0 and In Seal Identifier, enter: NOSEALS". Omitting the
+    // element is what CDS rejected.
+    const payload = mapToCDS_B1({ ...baseDeclaration, sealNumber: "" }, baseItems) as {
+      Declaration: { GoodsShipment: { Consignment: { TransportEquipment?: Record<string, unknown> } } };
+    };
+    const te = payload.Declaration.GoodsShipment.Consignment.TransportEquipment;
+    assert.deepEqual(te?.Seal, { SequenceNumeric: "0", ID: "NOSEALS" });
+  });
+
+  it("CDS12070 — a declared seal is carried through", () => {
+    const payload = mapToCDS_B1(
+      { ...baseDeclaration, containerNumber: "MSKU1234567", sealNumber: "SEAL0099" },
       baseItems,
-    );
-    assert.match(errors.join(" "), /seal number \(DE 7\/18\)/i);
+    ) as {
+      Declaration: { GoodsShipment: { Consignment: { TransportEquipment?: Record<string, unknown> } } };
+    };
+    const te = payload.Declaration.GoodsShipment.Consignment.TransportEquipment;
+    assert.deepEqual(te?.Seal, { SequenceNumeric: "1", ID: "SEAL0099" });
+    assert.equal(te?.ID, "MSKU1234567");
   });
 });
