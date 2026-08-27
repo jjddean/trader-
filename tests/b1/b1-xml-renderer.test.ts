@@ -158,7 +158,8 @@ describe("renderB1Xml — XSD element ordering", () => {
       "TypeCode",
       "GoodsItemQuantity",
       "DeclarationOfficeID",
-      "TotalGrossMassMeasure",
+      // TotalGrossMassMeasure is deliberately absent: CDS12071 rejects DE 6/5
+      // declared at both header and item level, so B1 emits it per item only.
       "TotalPackageQuantity",
       "AuthorisationHolder",
       "BorderTransportMeans",
