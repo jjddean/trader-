@@ -11,7 +11,7 @@ interface OrgSwitcherProps {
 
 /**
  * Clerk OrganizationSwitcher at a fixed 12px base so it is not inflated by
- * globals.css text-scale (default 1.125× on html).
+ * globals.css text-scale (default 1× on html).
  */
 export function OrgSwitcher({ className, hidePersonal = false }: OrgSwitcherProps) {
   return (
