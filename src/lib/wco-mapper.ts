@@ -6,6 +6,8 @@ import {
   resolveDeclarationPayment,
   validatePaymentFields,
 } from "./payment-method";
+import { resolveCdsTypeCode } from "../../convex/lib/cds_type_code";
+import { resolveH1ValuationMethodCode } from "../../convex/lib/h1_valuation";
 
 // validateCdsFields was deleted. The submit route already runs evaluateRules
 // from convex/lib/rule_engine.ts before mapping — that is the single source
@@ -209,9 +211,8 @@ export function resolveTradeTermsLocationId(declaration: {
 /**
  * DE 4/1 — delivery terms code and location.
  *
- * The mapper declares CustomsValuation MethodCode 1 (transaction value), and
- * the Group 4 completion guide requires the delivery terms for method 1. Both
- * halves are therefore mandatory here.
+ * H1 files DE 4/16 Method 1 only (convex/lib/h1_valuation.ts). Group 4
+ * requires delivery terms for method 1. Both halves are therefore mandatory.
  *
  * Without this check a missing incoterm surfaced as the XML preflight failure
  * "no_empty_tags" — technically true (TradeTerms rendered an empty
@@ -547,14 +548,12 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
   const { dan, mop } = resolveDeclarationPayment(declaration);
   const headerDefermentDocs = dan ? [buildDefermentAdditionalDocument(dan)] : [];
   const dutyTaxFeeMethod = mop ? { MethodCode: mop } : {};
+  const valuationMethodCode = resolveH1ValuationMethodCode(declaration, items);
 
   return {
     Declaration: {
       FunctionCode: "9",
-      TypeCode: mapDeclarationType(
-        declaration.additionalDeclarationType || declaration.declarationType,
-        declaration.route,
-      ),
+      TypeCode: resolveCdsTypeCode(declaration.additionalDeclarationType, declaration.route),
       FunctionalReferenceID: declaration.lrn || `FC-${Date.now().toString(36).toUpperCase()}`,
       GoodsItemQuantity: items.length,
       DeclarationOfficeID: declaration.presentationOffice || "",
@@ -754,9 +753,9 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
                 },
               }
             },
-            // DE 4/16 — Customs valuation method. "1" = transaction value of the imported goods.
+            // DE 4/16 — Method 1 only. Value comes from convex/lib/h1_valuation.ts.
             CustomsValuation: {
-              MethodCode: "1",
+              MethodCode: valuationMethodCode,
             },
             Packaging: [
               {

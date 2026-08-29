@@ -3,6 +3,13 @@
 // outside Convex so the submit route can re-use the same evaluation
 // without round-tripping through Convex for each rule.
 
+import { resolveCdsTypeCode } from "./cds_type_code";
+import {
+  H1_SUPPORTED_VALUATION_METHOD,
+  isH1DeclarationCategory,
+  resolveH1Valuation,
+} from "./h1_valuation";
+
 export type Severity = "blocking" | "advisory";
 export type Status = "pass" | "fail" | "skip";
 
@@ -34,7 +41,8 @@ export type PredicateName =
   | "ITEM_VALUE_SUM_MATCHES_INVOICE"
   | "ALL_ITEMS_HAVE_PROCEDURE"
   | "WILDCARD_FORBID_ALL_DOCUMENTS"
-  | "OVERSEAS_EXPORTER_ADDRESS";
+  | "OVERSEAS_EXPORTER_ADDRESS"
+  | "H1_VALUATION_FILEABLE";
 
 export interface Effects {
   requiredDocuments?: {
@@ -113,7 +121,15 @@ export interface Scenario {
 
 export interface ScenarioInput {
   declaration: {
+    /** CDS DE 1/2 letter (A/B/C/D/…). Not H1/B1/C1/I1. */
+    additionalDeclarationType?: string;
+    /** Category string (H1/B1/…). Not DE 1/2. Ignored by resolveScenario. */
     declarationType?: string;
+    /** Submit-category field. Absent/unknown is H1. */
+    declarationCategory?: string;
+    representationType?: string;
+    invoiceCurrency?: string;
+    h1Method1ConfirmedAt?: number;
     route?: string;
     dispatchCountry?: string;
     transportMode?: string;
@@ -139,6 +155,7 @@ export interface ScenarioInput {
     additionalProcedureCode?: string;
     valuationMethod?: string;
     valueAmount?: number | string;
+    valueCurrency?: string;
     preferenceCode?: string; // DE 4/17 — "100" or blank = no preference
     additionalDocuments?: Array<{
       categoryCode?: string; CategoryCode?: string;
@@ -171,11 +188,46 @@ function uniq(values: Array<string | undefined | null>): string[] {
   return Array.from(new Set(values.map((v) => String(v || "").trim()).filter(Boolean)));
 }
 
-function mapDeclType(type?: string, route?: string): string {
-  const prefix = route === "export" ? "EX" : "IM";
-  const valid = ["A", "B", "C", "D", "E", "F", "J", "K", "Y", "Z"];
-  const suffix = valid.includes((type || "").toUpperCase()) ? (type || "A").toUpperCase() : "A";
-  return `${prefix}${suffix}`;
+export function scenarioInputFromRecords(
+  declaration: Record<string, unknown>,
+  items: Array<Record<string, unknown>>,
+): ScenarioInput {
+  return {
+    declaration: {
+      additionalDeclarationType: declaration.additionalDeclarationType as string | undefined,
+      declarationType: declaration.declarationType as string | undefined,
+      declarationCategory: declaration.declarationCategory as string | undefined,
+      representationType: declaration.representationType as string | undefined,
+      invoiceCurrency: declaration.invoiceCurrency as string | undefined,
+      h1Method1ConfirmedAt: declaration.h1Method1ConfirmedAt as number | undefined,
+      route: declaration.route as string | undefined,
+      dispatchCountry: declaration.dispatchCountry as string | undefined,
+      transportMode: declaration.transportMode as string | undefined,
+      transportId: declaration.transportId as string | undefined,
+      transportIdType: declaration.transportIdType as string | undefined,
+      valuationMethod: declaration.valuationMethod as string | undefined,
+      mode: declaration.mode as string | undefined,
+      invoiceTotal: declaration.invoiceTotal as number | string | undefined,
+      exporterEori: declaration.exporterEori as string | undefined,
+      exporterName: declaration.exporterName as string | undefined,
+      exporterCity: declaration.exporterCity as string | undefined,
+      exporterLine: declaration.exporterLine as string | undefined,
+      exporterPostcode: declaration.exporterPostcode as string | undefined,
+      transactionNatureCode: declaration.transactionNatureCode as string | undefined,
+    },
+    items: items.map((i) => ({
+      commodityCode: i.commodityCode as string | undefined,
+      hsCode: i.hsCode as string | undefined,
+      originCountry: i.originCountry as string | undefined,
+      procedureCode: i.procedureCode as string | undefined,
+      additionalProcedureCode: i.additionalProcedureCode as string | undefined,
+      valuationMethod: i.valuationMethod as string | undefined,
+      valueAmount: i.valueAmount as number | string | undefined,
+      valueCurrency: i.valueCurrency as string | undefined,
+      preferenceCode: i.preferenceCode as string | undefined,
+      additionalDocuments: Array.isArray(i.additionalDocuments) ? i.additionalDocuments : [],
+    })),
+  };
 }
 
 export function resolveScenario(input: ScenarioInput): Scenario {
@@ -184,14 +236,21 @@ export function resolveScenario(input: ScenarioInput): Scenario {
   const addlProcs = items.map((i) => String(i.additionalProcedureCode || "").trim() || "000");
   const commodities = items.map((i) => String(i.commodityCode || i.hsCode || "").replace(/\s+/g, ""));
   const origins = items.map((i) => String(i.originCountry || "").trim().toUpperCase());
-  // Default Method 1 — declaration may override per-item later. The mapper
-  // currently hard-codes "1"; once that field becomes user-editable this
-  // resolver picks it up automatically.
-  const valuationMethods = items.map((i) => String(i.valuationMethod || declaration.valuationMethod || "1"));
+  // H1: product policy Method 1 only (convex/lib/h1_valuation.ts).
+  // Other categories keep the previous default so B1/C1/I1 behaviour is unchanged.
+  const valuationMethods = isH1DeclarationCategory(declaration)
+    ? resolveH1Valuation(declaration, items).supported
+      ? items.length > 0
+        ? items.map(() => H1_SUPPORTED_VALUATION_METHOD)
+        : [H1_SUPPORTED_VALUATION_METHOD]
+      : []
+    : items
+        .map((i) => String(i.valuationMethod || declaration.valuationMethod || "").trim())
+        .filter(Boolean);
   const preferenceCodes = items.map((i) => String(i.preferenceCode || "").trim());
 
   return {
-    declarationType: mapDeclType(declaration.declarationType, declaration.route),
+    declarationType: resolveCdsTypeCode(declaration.additionalDeclarationType, declaration.route),
     procedureCodes: uniq(procPairs),
     additionalProcedureCodes: uniq(addlProcs),
     commodityCodes: uniq(commodities),
@@ -336,6 +395,37 @@ function runPredicate(
         ok: present.length === 0,
         detail: present.length === 0 ? undefined : `Documents present in minimal mode: ${present.join(", ")}`,
         evidence: { present },
+      };
+    }
+    case "H1_VALUATION_FILEABLE": {
+      const resolved = resolveH1Valuation(input.declaration, input.items);
+      if (!resolved.isH1) {
+        return { ok: true, detail: "Skipped: not H1" };
+      }
+      if (!resolved.supported) {
+        return {
+          ok: false,
+          detail: resolved.reason,
+          evidence: { unsupportedCodes: resolved.unsupportedCodes },
+        };
+      }
+      if (resolved.confirmationRequired && !resolved.confirmationPresent) {
+        return {
+          ok: false,
+          detail: resolved.reason,
+          evidence: {
+            consignmentValue: resolved.consignmentValue,
+            valueCurrency: resolved.valueCurrency,
+            confirmationRequired: true,
+          },
+        };
+      }
+      return {
+        ok: true,
+        evidence: {
+          methodCode: resolved.methodCode,
+          confirmationRequired: resolved.confirmationRequired,
+        },
       };
     }
     case "OVERSEAS_EXPORTER_ADDRESS": {

@@ -382,6 +382,13 @@ export function renderH1Xml(payloadInfo: unknown): string {
         const originXml = origin.CountryCode
           ? `\n        <Origin>\n          <CountryCode>${xmlEscape(origin.CountryCode)}</CountryCode>\n          <TypeCode>${xmlEscape(origin.TypeCode || "1")}</TypeCode>\n        </Origin>`
           : "";
+        const valuationMethodCode = String(read(item, "CustomsValuation").MethodCode || "").trim();
+        const customsValuationXml = valuationMethodCode
+          ? `
+        <CustomsValuation>
+          <MethodCode>${xmlEscape(valuationMethodCode)}</MethodCode>
+        </CustomsValuation>`
+          : "";
         return `
       <GovernmentAgencyGoodsItem>
         <SequenceNumeric>${xmlEscape(item.SequenceNumeric)}</SequenceNumeric>
@@ -396,10 +403,7 @@ export function renderH1Xml(payloadInfo: unknown): string {
             <GrossMassMeasure unitCode="KGM">${xmlEscape(goodsMeasure.GrossMassMeasure || 0)}</GrossMassMeasure>
             <NetNetWeightMeasure unitCode="KGM">${xmlEscape(goodsMeasure.NetNetWeightMeasure || 0)}</NetNetWeightMeasure>${tariffQtyXml}
           </GoodsMeasure>${invoiceLineXml}
-        </Commodity>
-        <CustomsValuation>
-          <MethodCode>${xmlEscape(read(item, "CustomsValuation").MethodCode || "1")}</MethodCode>
-        </CustomsValuation>
+        </Commodity>${customsValuationXml}
         ${procedures.map((proc) => `
         <GovernmentProcedure>
           <CurrentCode>${xmlEscape(proc.CurrentCode)}</CurrentCode>

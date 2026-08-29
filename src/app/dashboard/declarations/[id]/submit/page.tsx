@@ -14,18 +14,14 @@ import { mapToCDS_I1, validateI1Declaration } from "@/lib/i1-mapper";
 import { resolveDeclarationCategory } from "@/lib/submit-category";
 import { generateClientFraudHeaders } from "@/lib/hmrc-fraud-headers";
 import { getHmrcRequirementSetForDeclaration } from "@/lib/utils/document-utils";
+import { resolveSubmitReadiness } from "@/lib/submit-filing-readiness";
+import { resolveH1Valuation } from "../../../../../../convex/lib/h1_valuation";
 import {
   ConvexSessionMissing,
   DeclarationPageSkeleton,
   isConvexSessionMissing,
 } from "@/components/declaration-session-states";
-import type { Doc } from "../../../../../../convex/_generated/dataModel";
 import { ApiError, userMessageFromError } from "@/lib/convex-errors";
-
-type DocumentRequirementRow = Pick<
-  Doc<"document_requirements">,
-  "status" | "requirementLevel" | "code"
->;
 
 export default function SubmitPage() {
   const { isLoaded, isSignedIn, userId } = useAuth();
@@ -60,6 +56,7 @@ export default function SubmitPage() {
   );
   const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
   const approveIndirectRepresentation = useMutation(api.representation.approveIndirectRepresentation);
+  const confirmH1Method1Valuation = useMutation(api.declarations.confirmH1Method1Valuation);
 
   const hmrcEnvironment = orgHmrc?.hmrcMode === "live" ? "production" : "sandbox";
   const hmrcTokens = useQuery(
@@ -138,6 +135,8 @@ export default function SubmitPage() {
   const [dryRunPassed, setDryRunPassed] = useState(false);
   const [approvalError, setApprovalError] = useState<string | null>(null);
   const [isApproving, setIsApproving] = useState(false);
+  const [method1ConfirmError, setMethod1ConfirmError] = useState<string | null>(null);
+  const [isConfirmingMethod1, setIsConfirmingMethod1] = useState(false);
   const [liveSubmitConfirmed, setLiveSubmitConfirmed] = useState(false);
 
   const readResponsePayload = async (res: Response) => {
@@ -171,23 +170,20 @@ export default function SubmitPage() {
     });
   }, [declarationId, declaration, upsertRequirementsForDeclaration]);
 
-  // Submit gate: rule engine completeness (single source of truth) + persisted doc requirements.
-  const missingBlockingRequirements = (requirements || []).filter(
-    (req: DocumentRequirementRow) =>
-      req.status === "missing" && (req.requirementLevel || "blocking") === "blocking",
-  );
-  const missingAdvisoryRequirements = (requirements || []).filter(
-    (req: DocumentRequirementRow) =>
-      req.status === "missing" && (req.requirementLevel || "blocking") === "advisory",
-  );
-  const missingBlockingCodes = missingBlockingRequirements
-    .map((req: DocumentRequirementRow) => String(req.code || "UNKNOWN"));
-  const missingAdvisoryCodes = missingAdvisoryRequirements
-    .map((req: DocumentRequirementRow) => String(req.code || "UNKNOWN"));
-
-  const completenessReady = completeness?.ready === true;
+  // Filing readiness: rule-engine completeness only.
+  // document_requirements / REQUIRED_DOCS remain a checklist, not a second submit gate.
+  const {
+    isReady,
+    completenessReady,
+    missingBlockingChecklist: missingBlockingRequirements,
+    missingAdvisoryChecklist: missingAdvisoryRequirements,
+    missingBlockingCodes,
+    missingAdvisoryCodes,
+  } = resolveSubmitReadiness({
+    completenessReady: completeness?.ready === true,
+    requirements: requirements || [],
+  });
   const completenessMissing = completeness?.missing ?? [];
-  const isReady = completenessReady && missingBlockingRequirements.length === 0;
   // Org-level Live (production) CDS mode — distinct from declaration *status*.
   const isOrgLiveMode = orgHmrc?.hmrcMode === "live";
   // Live submissions are legally binding; require an explicit confirmation.
@@ -195,6 +191,11 @@ export default function SubmitPage() {
   const representationRequiresApproval = representationStatus?.approvalRequired === true;
   const representationApprovalReady = !representationRequiresApproval
     || (representationStatus?.approved === true && representationStatus?.approvalCurrent === true);
+  const h1Valuation = declaration && items
+    ? resolveH1Valuation(declaration, items)
+    : null;
+  const h1ValuationReady = !h1Valuation?.isH1
+    || (h1Valuation.supported && (!h1Valuation.confirmationRequired || h1Valuation.confirmationPresent));
 
   const ruleEngineBlocked =
     dryRunResult?.localPreflight?.ruleEngine === "blocked"
@@ -270,6 +271,17 @@ export default function SubmitPage() {
       setApprovalError(userMessageFromError(err, "Failed to approve indirect representation"));
     } finally {
       setIsApproving(false);
+    }
+  };
+  const handleConfirmH1Method1 = async () => {
+    setIsConfirmingMethod1(true);
+    setMethod1ConfirmError(null);
+    try {
+      await confirmH1Method1Valuation({ id: declarationId });
+    } catch (err: unknown) {
+      setMethod1ConfirmError(userMessageFromError(err, "Failed to record Method 1 confirmation"));
+    } finally {
+      setIsConfirmingMethod1(false);
     }
   };
   const handleSubmit = async () => {
@@ -480,7 +492,7 @@ export default function SubmitPage() {
               <div>
                 <p className={`text-sm font-medium ${missingBlockingRequirements.length > 0 ? "text-red-700" : "text-slate-900"}`}>Required Documents (Blocking)</p>
                 <p className="text-xs text-slate-500">
-                  Submit gate is based on persisted declaration requirements.
+                  Document checklist from persisted document_requirements. Does not independently block Dry Run or Submit.
                   {missingBlockingCodes.length > 0 ? ` Missing: ${missingBlockingCodes.join(", ")}` : ""}
                 </p>
               </div>
@@ -511,6 +523,23 @@ export default function SubmitPage() {
                     ) : null}
                     {!representationApprovalReady && representationStatus?.reason ? (
                       <span className="block mt-1 text-red-600">{representationStatus.reason}</span>
+                    ) : null}
+                  </p>
+                </div>
+              </li>
+            )}
+            {h1Valuation?.isH1 && (!h1Valuation.supported || h1Valuation.confirmationRequired) && (
+              <li className="flex items-start gap-3">
+                {!h1ValuationReady ? <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
+                <div>
+                  <p className={`text-sm font-medium ${!h1ValuationReady ? "text-red-700" : "text-slate-900"}`}>H1 Method 1 valuation</p>
+                  <p className="text-xs text-slate-500">
+                    FreightCode currently files H1 DE 4/16 as Method 1 (transaction value) only.
+                    {!h1ValuationReady && h1Valuation.reason ? (
+                      <span className="block mt-1 text-red-600">{h1Valuation.reason}</span>
+                    ) : null}
+                    {h1Valuation.confirmationPresent ? (
+                      <span className="block mt-1 text-slate-600">Method 1 conditions confirmed.</span>
                     ) : null}
                   </p>
                 </div>
@@ -562,6 +591,34 @@ export default function SubmitPage() {
                 {isApproving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4 text-green-400" />}
                 {isApproving ? "Recording Approval..." : "Approve Indirect Representation"}
               </button>
+            </div>
+          )}
+          {h1Valuation?.isH1 && h1Valuation.confirmationRequired && !h1Valuation.confirmationPresent && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-amber-800 mb-2">
+                Method 1 confirmation required
+              </h4>
+              <p className="mb-3 text-xs text-amber-900">
+                Consignment value exceeds £20,000 and this filing is not self-represented. Confirm that Method 1 (transaction value) conditions were checked. FreightCode retains this confirmation for audit.
+              </p>
+              {method1ConfirmError && <p className="mb-3 text-xs text-red-700">{method1ConfirmError}</p>}
+              <button
+                type="button"
+                onClick={handleConfirmH1Method1}
+                disabled={isConfirmingMethod1}
+                className="flex h-8 w-full items-center justify-center gap-2 rounded-md bg-black px-3 text-xs font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isConfirmingMethod1 ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4 text-green-400" />}
+                {isConfirmingMethod1 ? "Recording confirmation..." : "Confirm Method 1 conditions checked"}
+              </button>
+            </div>
+          )}
+          {h1Valuation?.isH1 && !h1Valuation.supported && (
+            <div className="rounded-md border border-red-200 bg-red-50 p-4">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-red-800 mb-2">
+                Unsupported valuation method
+              </h4>
+              <p className="text-xs text-red-900">{h1Valuation.reason}</p>
             </div>
           )}
           {error && (
@@ -819,7 +876,7 @@ export default function SubmitPage() {
           </p>
           <button
             onClick={handleDryRun}
-            disabled={!isReady || isSubmitting || isDryRunning}
+            disabled={!isReady || !h1ValuationReady || isSubmitting || isDryRunning}
             className="flex w-full h-8 rounded-md border border-slate-300 bg-white px-4 text-xs font-normal text-slate-800 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
           >
             {isDryRunning ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldCheck className="h-4 w-4 text-blue-600" />}
@@ -827,7 +884,7 @@ export default function SubmitPage() {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!isReady || !dryRunFullyPassed || !representationApprovalReady || !liveConfirmSatisfied || isSubmitting || isDryRunning || isLiveDeclaration}
+            disabled={!isReady || !h1ValuationReady || !dryRunFullyPassed || !representationApprovalReady || !liveConfirmSatisfied || isSubmitting || isDryRunning || isLiveDeclaration}
             className={`flex w-full h-8 rounded-md px-4 text-xs font-normal text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2 ${
               isOrgLiveMode ? "bg-red-700 hover:bg-red-800" : "bg-black hover:bg-slate-800"
             }`}
