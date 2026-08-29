@@ -1,19 +1,27 @@
-# TradeDNA Coding Agent Safety Rules
+# FreightCode — universal safety rules
 
-These 15 rules are mandatory for any AI agent working on this codebase.
+Always applied in Cursor. **Meaning is identical** to `.agents/rules.md` (other agent runtimes). Keep the two files in lockstep.
 
-1.  **No Large Datasets in Convex**: Never store datasets larger than 1,000 rows in Convex. Use Cloudflare R2 pointers.
-2.  **Deterministic Calculations**: All tariff/VAT logic must be hardcoded TS, never AI-generated.
-3.  **AI as Explainer Only**: AI must never invent or override calculated compliance values.
-4.  **Least Privilege Access**: Only access files explicitly required for the task.
-5.  **Human Review Loop**: Present every code modification for review.
-6.  **No Hardcoded Secrets**: Use `.env.local` or Convex Secrets only.
-7.  **Versioned Object Storage**: Use versioned paths (e.g., `v2026-03.json`) for R2 data.
-8.  **Edge-First Fetching**: Large dataset lookups must be <100ms via CDN/Edge.
-9.  **Search via Typesense**: Use Typesense for high-volume searches, not Convex filters.
-10. **Environment Variable Guard**: Do not modify sensitive keys in `.env.local`.
-11. **Sanitize AI Inputs**: Validate and sanitize inputs before feeding into AI prompts.
-12. **Audit Logic**: Update test cases for any tax or compliance logic changes.
-13. **Zero-Trust AI Code**: Treat all AI-suggested code as unverified.
-14. **Document AI Context**: Document system prompts for AI features.
-15. **Architecture Protection**: Flag requests that contradict the core architecture (e.g., JSON in components).
+These are not a product specification. Operating contract: `CLAUDE.md`. HMRC/CDS behaviour: `docs/hmrc/ACTIVE/tdr/AGENT-SPEC.md`.
+
+1. **Task scope.** Only access and modify files the task authorises. Do not edit unrelated files while you are there. Extra issues: report; do not fix unless authorised. Preserve unrelated working-tree changes.
+
+2. **Authority.** Follow `CLAUDE.md` §1. Do not treat current code, tests, stale Markdown, env, or deploy config as a product decision. Do not rewrite intended behaviour to match implementation. Spec vs code: report the conflict; do not guess.
+
+3. **Secrets.** No credentials in source. `.env.local` and Convex secrets only. Do not edit or expose sensitive keys in `.env.local`.
+
+4. **Auth.** Do not weaken authentication or authorisation to make a task pass. Do not add unauthenticated public Convex data access.
+
+5. **Git and deploy.** Do not commit, push, force-push, hard-reset, or deploy unless the user explicitly asks. Do not submit, amend, or cancel HMRC/CDS filings unless the user explicitly authorises it.
+
+6. **Convex size.** Never store more than 1,000 rows in Convex. Use versioned R2 pointers (`v2026-03.json` style). Do not Convex-filter large tables.
+
+7. **Search.** High-volume commodity search is the UK Trade Tariff API (`src/lib/trade-tariff-client.ts`) plus Convex reference tables. Do not add Typesense. A `typesense` dependency in `package.json` is not permission to use it.
+
+8. **Tariff / VAT / duty.** Hardcoded TypeScript only. AI explains calculated values; it must not invent or override them. Sanitize inputs before AI prompts. Document system prompts for AI features.
+
+9. **Compliance tests.** Changes to tax, duty, or other compliance logic must update the matching tests. Verification command names: `AGENTS.md` and `CLAUDE.md` §7.
+
+10. **Unverified AI output.** Treat AI-suggested code as unverified.
+
+11. **Architecture.** If a request contradicts the intended architecture, flag it and stop. Do not invent a new architecture to resolve it.
