@@ -2,8 +2,11 @@
 
 **Single source of truth** for product + engineering work.  
 **HMRC behaviour:** [`AGENT-SPEC.md`](./AGENT-SPEC.md) — this file does not override compliance rules.  
-**Merge gate (HMRC logic):** `npm run test:tdr`  
-**Last updated:** 2026-06-23
+**Merge gate (HMRC logic):** `npm run test:tdr` (`h1` + `b1` + `c1` + `i1` + `tre` + `tdr-dry-run`).  
+PR gate is `.github/workflows/tdr-regression.yml` (also unit, cns, portal, export-controls, consultant, `lint:security`, `tsc`, audit, build). `test:all` does not run b1/c1/i1.  
+**Last updated:** 2026-08-29
+
+**Do first:** remaining hard-code + Markdown repair — [`docs/dev/NEXT-HARDCODE-AND-MD.md`](../../../dev/NEXT-HARDCODE-AND-MD.md).
 
 Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) · [`FINANCIAL-ROADMAP.md`](./FINANCIAL-ROADMAP.md) (duty/variance domain) · [`evidence/LOG.md`](./evidence/LOG.md) (HMRC ops timeline) · [`PRODUCT-PROGRESS-LOG.md`](./PRODUCT-PROGRESS-LOG.md) (ship log)
 
@@ -31,7 +34,9 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 | [`hmrc-operations-runbook.md`](./hmrc-operations-runbook.md) | Support runbook |
 | [`FINANCIAL-ROADMAP.md`](./FINANCIAL-ROADMAP.md) | Duty estimates, variance, reclaim |
 | [`TRE-CSV-IMPORT-PLAN.md`](./TRE-CSV-IMPORT-PLAN.md) | User-facing TRE upload — phased plan |
-| [`../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md`](../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md) | Future: B1 export, I1/C1 simplified — spec + phases |
+| [`EXPORT-COMPLETION-CHECKLIST.md`](./EXPORT-COMPLETION-CHECKLIST.md) | B1 / C1 / I1 — built; CDS clearance still open |
+| [`B1-STATE.md`](./B1-STATE.md) | B1 live state |
+| [`../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md`](../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md) | SUPERSEDED — redirect → EXPORT-COMPLETION-CHECKLIST |
 | [`DELIVERY-PLAN.md`](./DELIVERY-PLAN.md) | SUPERSEDED — redirect → here |
 | [`PRODUCT-PROGRESS-LOG.md`](./PRODUCT-PROGRESS-LOG.md) | Chronological ship log (green ticks per deploy) |
 | [`../../ARCHIVE/plans/hmrc-integration-plan.md`](../../ARCHIVE/plans/hmrc-integration-plan.md) | Archived Phase 3 scaffold — history, not instructions |
@@ -146,7 +151,7 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 
 ## Later / out of scope
 
-- **CDS exports + simplified I1/C1** — see [`../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md`](../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md) + [`../../specs/cds-api/declaration-categories-index.md`](../../specs/cds-api/declaration-categories-index.md)
+- **CDS exports + simplified I1/C1** — built; remaining work is in [`EXPORT-COMPLETION-CHECKLIST.md`](./EXPORT-COMPLETION-CHECKLIST.md). Do not execute [`../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md`](../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md) (SUPERSEDED).
 - CRM, white-label, acquisition targets (separate app)
 - TRE Phase 3+ (R2 bulk, email-forward ingest) — after Phase 1–2 in [`TRE-CSV-IMPORT-PLAN.md`](./TRE-CSV-IMPORT-PLAN.md)
 - Dual HMRC webhook tokens (sandbox + production Hub apps) — optional ops hardening
@@ -163,7 +168,7 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 ## Verify locally
 
 ```bash
-npm run test:tdr          # must pass before merge
+npm run test:tdr          # HMRC logic: h1 + b1 + c1 + i1 + tre + tdr-dry-run
 npm run dev               # sign in → org → dashboard
 ```
 

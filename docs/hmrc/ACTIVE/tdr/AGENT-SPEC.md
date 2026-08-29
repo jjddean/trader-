@@ -1,4 +1,4 @@
-# Freightcode HMRC Agent Spec (Canonical)
+# FreightCode HMRC Agent Spec (Canonical)
 
 **This is the only document that defines HMRC/CDS behaviour for this codebase.**
 
@@ -6,11 +6,13 @@
 
 ## 0. SYSTEM PURPOSE
 
-This codebase implements HMRC CDS customs declaration workflows (H1) with strict compliance across:
+This codebase implements HMRC CDS customs declaration workflows (H1 import, B1 export, C1 simplified export, I1 simplified import) with strict compliance across:
 
-- **TDR** — active execution environment
+- **TDR** — HMRC CDS environment on the sandbox host. Used for Practice / testing / validation / onboarding. Not FreightCode application status.
 - **Trade Test** — archived (read-only reference)
-- **Production** — future (not active)
+- **CDS Live** — HMRC production-host / live-customs target for organisations in Live mode. Supported in the product model. Current operational use and production OAuth validation are not asserted here.
+
+FreightCode is a live production application. That does not set the HMRC CDS target for every organisation.
 
 This system MUST prioritise correctness, determinism, and spec-backed behaviour.
 
@@ -30,25 +32,19 @@ If a rule is not found in (1)–(3), STOP and request source.
 
 ---
 
-## 2. ENVIRONMENT (SINGLE TRUTH)
+## 2. ENVIRONMENT
 
-```
-ACTIVE NOW:          TDR v1.0 Declarations on sandbox
-                     HMRC_ENVIRONMENT=sandbox
-                     NEXT_PUBLIC_HMRC_ENV=tdr
-                     Host: https://test-api.service.hmrc.gov.uk
-                     Accept: application/vnd.hmrc.1.0+xml
+Hosts, Accept headers, OAuth pairing, organisation routing, and current operational status: `docs/hmrc/ACTIVE/tdr/environment-matrix.md`. This file defines HMRC/CDS **behaviour**, not environment state.
 
-PRODUCTION HOST:     https://api.service.hmrc.gov.uk — after SDST grants credentials (G3/G4)
-
-ARCHIVED:            Trade Test v2.0 (read-only — docs/hmrc/ARCHIVE/trade-test/)
-FUTURE:              CDS Live / Production (docs/hmrc/FUTURE/production/)
-```
-
-- TDR is the **only** active execution environment for new work
-- All validation, mapping, and submission logic MUST align to TDR rules
-- Trade Test MUST NOT influence active logic
-- API versions and Accept headers: `docs/hmrc/ACTIVE/tdr/environment-matrix.md`
+- FreightCode application deployment does not determine the CDS target.
+- Organisation HMRC mode is **Practice** or **Live** (organisation-level, not declaration-level).
+- **Practice** uses the TDR + sandbox OAuth pairing.
+- **Live** uses the CDS Live + production OAuth pairing.
+- Do not move an organisation to Live because FreightCode the application is in production.
+- Do not infer production OAuth validation or CDS Live operational use from code, an env-var name, or a production hostname. Those facts live in the environment matrix (currently unverified).
+- Whether every deployment already applies per-organisation routing, or some still use a deployment-wide `HMRC_ENVIRONMENT`, is unresolved — see the environment matrix.
+- Trade Test MUST NOT influence active logic.
+- TDR-specific rules later in this spec (minimal TDR payload, TDR evidence, TDR Accept pairing) apply to TDR / Practice submissions. Do not treat FreightCode as TDR-only. Do not apply those TDR-only constraints to CDS Live unless a mapping or HMRC citation independently requires it.
 
 ---
 
@@ -125,7 +121,7 @@ NO multi-fix bursts. If error count increases → revert → last known working 
 
 ## 7. XML / MAPPER RULES
 
-Before modifying `wco-mapper.ts` or `h1-xml-renderer.ts`:
+Before modifying a mapper or XML renderer (`wco-mapper.ts`, `h1-xml-renderer.ts`, `b1-mapper.ts`, `b1-xml-renderer.ts`, `c1-mapper.ts`, `c1-xml-renderer.ts`, `i1-mapper.ts`, `i1-xml-renderer.ts`):
 
 - Read `docs/hmrc/ACTIVE/tdr/mapping/de-*.md` for the DE being changed
 - Cite spec section + HMRC URL + retrieval date in changes
@@ -203,10 +199,15 @@ This system is NOT: heuristic AI, probabilistic classifier, inference-based.
 |------|------|
 | Environment matrix | `docs/hmrc/ACTIVE/tdr/environment-matrix.md` |
 | DE mapping | `docs/hmrc/ACTIVE/tdr/mapping/` |
+| B1 / C1 / I1 status | `docs/hmrc/ACTIVE/tdr/EXPORT-COMPLETION-CHECKLIST.md` |
+| H1 mapper / renderer | `src/lib/wco-mapper.ts`, `src/lib/h1-xml-renderer.ts` |
+| B1 mapper / renderer | `src/lib/b1-mapper.ts`, `src/lib/b1-xml-renderer.ts` |
+| C1 mapper / renderer | `src/lib/c1-mapper.ts`, `src/lib/c1-xml-renderer.ts` |
+| I1 mapper / renderer | `src/lib/i1-mapper.ts`, `src/lib/i1-xml-renderer.ts` |
 | DMSREJ log | `docs/hmrc/ACTIVE/tdr/errors-handled.md` |
 | HMRC mirrors | `docs/hmrc/specs/` |
 | TT archive | `docs/hmrc/ARCHIVE/trade-test/` |
-| Production (future) | `docs/hmrc/FUTURE/production/` |
+| HMRC production-host / CDS Live cutover material | `docs/hmrc/FUTURE/production/` |
 
 ---
 
