@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
@@ -422,12 +422,9 @@ export default function CoreSchemaPage() {
     setRepHydrated(true);
   }, [representationStatus, repHydrated]);
 
-  const dirty = useMemo(
-    () =>
-      JSON.stringify(formData) !== JSON.stringify(formBaseline) ||
-      JSON.stringify(repForm) !== JSON.stringify(repBaseline),
-    [formData, formBaseline, repForm, repBaseline],
-  );
+  const formDirty = JSON.stringify(formData) !== JSON.stringify(formBaseline);
+  const repDirty = JSON.stringify(repForm) !== JSON.stringify(repBaseline);
+  const dirty = formDirty || repDirty;
 
   function patch<K extends keyof FormData>(key: K, value: FormData[K]) {
     setSaved(false);
@@ -451,6 +448,23 @@ export default function CoreSchemaPage() {
   }
 
   const handleSave = async () => {
+    if (saving) return;
+    const exportCategory = isExportCategory(formData.declarationCategory);
+    const scrubbed = { ...formData };
+    if (exportCategory) {
+      for (const field of FORBIDDEN_ON_EXPORT) scrubbed[field] = "";
+    }
+    const paymentError = validatePaymentFields(
+      scrubbed.paymentMethodCode,
+      requiresDefermentAccount(scrubbed.paymentMethodCode)
+        ? scrubbed.defermentAccountNumber
+        : "",
+    );
+    if (paymentError) {
+      setSaveError(paymentError);
+      return;
+    }
+
     setSaving(true);
     setSaveError(null);
     setSaved(false);
@@ -466,7 +480,6 @@ export default function CoreSchemaPage() {
         validationMessages.push("CNS UCN is required for London Gateway inventory-linked declarations.");
       }
       const dispatch = formData.dispatchCountry.trim().toUpperCase();
-      const exportCategory = isExportCategory(formData.declarationCategory);
       if (exportCategory) {
         const hasEori = Boolean(formData.exporterEori.trim());
         const hasNameAddress =
@@ -489,25 +502,10 @@ export default function CoreSchemaPage() {
         validationMessages.push("Nature of transaction (DE 8/5) is required.");
       }
 
-      const scrubbed = { ...formData };
-      if (exportCategory) {
-        for (const field of FORBIDDEN_ON_EXPORT) scrubbed[field] = "";
-      }
-
-      const paymentError = validatePaymentFields(
-        scrubbed.paymentMethodCode,
-        requiresDefermentAccount(scrubbed.paymentMethodCode)
-          ? scrubbed.defermentAccountNumber
-          : "",
-      );
-      if (paymentError) {
-        setSaveError(paymentError);
-        return;
-      }
-
       const invoiceTotalParsed =
         formData.invoiceTotal.trim() === "" ? null : Number(formData.invoiceTotal);
-      await updateDeclaration({
+      if (formDirty) {
+        await updateDeclaration({
         id,
         eori: formData.eori.trim(),
         declarationType: "H1",
@@ -557,8 +555,9 @@ export default function CoreSchemaPage() {
         containerNumber: formData.containerNumber.trim().toUpperCase(),
         cnsUcn: formData.cnsUcn.trim().toUpperCase(),
       });
+      }
 
-      if (repHydrated) {
+      if (repHydrated && repDirty) {
         const showRepFields = repForm.representationType !== "self";
         const showAuthority = repForm.representationType === "indirect";
         await setRepresentationDetails({
@@ -581,7 +580,6 @@ export default function CoreSchemaPage() {
           authorityValidTo: showAuthority ? parseDateInput(repForm.authorityValidTo) ?? null : null,
         });
         setRepBaseline(repForm);
-        setRepHydrated(false);
       }
 
       setFormData(scrubbed);
@@ -722,7 +720,11 @@ export default function CoreSchemaPage() {
                   setFormData({
                     ...formData,
                     declarationCategory: category,
-                    additionalDeclarationType: isSimplifiedCategory(category) ? "C" : "A",
+                    additionalDeclarationType: isSimplifiedCategory(category)
+                      ? "C"
+                      : isExportCategory(category)
+                        ? "D"
+                        : "A",
                   });
                 }}
               >
@@ -1269,8 +1271,8 @@ export default function CoreSchemaPage() {
               required
             >
               <Select
-                value={formData.dispatchCountry || undefined}
-                onValueChange={(v) => patch("dispatchCountry", v)}
+                value={formData.dispatchCountry || NONE}
+                onValueChange={(v) => patch("dispatchCountry", v === NONE ? "" : v)}
               >
                 <SelectTrigger id="dispatch" className="w-full">
                   <SelectValue placeholder="Select country" />
@@ -1289,8 +1291,8 @@ export default function CoreSchemaPage() {
               required
             >
               <Select
-                value={formData.destinationCountry || undefined}
-                onValueChange={(v) => patch("destinationCountry", v)}
+                value={formData.destinationCountry || NONE}
+                onValueChange={(v) => patch("destinationCountry", v === NONE ? "" : v)}
               >
                 <SelectTrigger id="destination" className="w-full">
                   <SelectValue placeholder="Select country" />
@@ -1303,8 +1305,8 @@ export default function CoreSchemaPage() {
 
             <Field span="md:col-span-4" id="mode" label="Transport mode" de="DE 7/4" required>
               <Select
-                value={formData.transportMode || undefined}
-                onValueChange={(v) => patch("transportMode", v)}
+                value={formData.transportMode || NONE}
+                onValueChange={(v) => patch("transportMode", v === NONE ? "" : v)}
               >
                 <SelectTrigger id="mode" className="w-full">
                   <SelectValue placeholder="Select mode" />
@@ -1327,8 +1329,8 @@ export default function CoreSchemaPage() {
               required
             >
               <Select
-                value={formData.transportIdType || undefined}
-                onValueChange={(v) => patch("transportIdType", v)}
+                value={formData.transportIdType || NONE}
+                onValueChange={(v) => patch("transportIdType", v === NONE ? "" : v)}
               >
                 <SelectTrigger id="idType" className="w-full">
                   <SelectValue placeholder="Select identifier type" />
@@ -1390,7 +1392,7 @@ export default function CoreSchemaPage() {
               label="Location of goods"
               de="DE 5/23"
               required
-              hint="Official HMRC maritime location codes — not a fixed default port."
+              hint="Appendix 16C maritime codes."
             >
               <Select
                 value={locationIdIsKnown ? locationIdUpper : undefined}
@@ -1422,7 +1424,8 @@ export default function CoreSchemaPage() {
                   <>
                     This declaration has code{" "}
                     <code className="font-mono">{formData.locationId.trim()}</code>, which is not in
-                    Appendix 16C. Pick a port above or replace it below, then save.
+                    Appendix 16C. Pick a port above or replace it
+                    below, then save.
                   </>
                 }
               >

@@ -2,7 +2,7 @@
 
 **Purpose:** Track items before independent third-party penetration test and HMRC production credential request.  
 **Baseline review:** [`SECURITY-REVIEW.md`](./SECURITY-REVIEW.md) · **Remediation detail:** [`REMEDIATION-LOG.md`](./REMEDIATION-LOG.md)  
-**Last updated:** 2026-06-15 (housekeeping complete; prep ready for §9)
+**Last updated:** 2026-08-29 (7.3 / 7.4 marked done to match `tdr-regression.yml`)
 
 **Legend:** `[x]` verified · `[~]` fix in repo, needs deploy/retest · `[ ]` open
 
@@ -145,8 +145,8 @@ Security fixes exist locally but **Convex deploys separately** from Next.js. Unt
 |---|------|--------|
 | 7.1 | `npm audit` — resolve critical/high (Clerk, `@clerk/backend`, etc.) | `[x]` | `npm audit fix` + Next 16.2.9, Convex 1.41, overrides — **0 vulns** 15 Jun 2026 |
 | 7.2 | ESLint runs (`eslint.config.mjs` flat config fixed) | `[x]` | Full-repo lint deferred; `npm run lint:security` on auth surfaces |
-| 7.3 | Add `npm run lint:security` + `npm audit --audit-level=high` to CI | `[ ]` | batch B |
-| 7.4 | Typecheck in CI | `[ ]` | batch B |
+| 7.3 | Add `npm run lint:security` + `npm audit --audit-level=high` to CI | `[x]` | `tdr-regression.yml` |
+| 7.4 | Typecheck in CI | `[x]` | `npx tsc --noEmit` in `tdr-regression.yml` |
 
 ---
 
@@ -197,11 +197,11 @@ Book **after** sections 1–6 verified on deployed Convex + Vercel preview.
 
 ```
 1. Book third-party pen test (§9) — scope doc + test accounts (product owner)
-2. Batch B — CI: audit + typecheck + lint:security
+2. Batch B — CI: audit + typecheck + lint:security — **done** (`tdr-regression.yml`)
 3. Batch C — AI rate limits on chat/gir-audit (OAuth client redaction done 2026-06-18)
 ```
 
-**Product backlog (parallel):** [`DELIVERY-PLAN.md`](../DELIVERY-PLAN.md) §1 — DAN + payment method on declaration form.
+**Product backlog (parallel):** [`BACKLOG.md`](../BACKLOG.md). DAN + payment method on the declaration form are shipped.
 
 ---
 

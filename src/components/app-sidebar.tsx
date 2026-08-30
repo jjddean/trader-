@@ -63,6 +63,9 @@ const navItems = [
 
 
 
+const navButton =
+  "flex h-auto w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-normal transition-colors";
+
 export function AppSidebar() {
   const pathname = usePathname();
   const { user: clerkUser } = useUser();
@@ -79,7 +82,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="!h-screen border-r border-slate-200 bg-white [&_[data-sidebar=sidebar]]:bg-white">
-      <SidebarHeader className="flex h-[55px] shrink-0 flex-row items-center border-b border-slate-200 px-6">
+      <SidebarHeader className="flex h-[55px] shrink-0 flex-row items-center border-b border-slate-200 px-4">
         <Link
           href="/dashboard"
           className="flex w-full items-center gap-2 transition-opacity hover:opacity-80"
@@ -92,11 +95,11 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
 
-      <div className="shrink-0 px-4 py-2">
+      <div className="shrink-0 px-2 py-2">
         <SidebarGlobalSearch />
       </div>
 
-      <SidebarContent className="min-h-0 flex-1 overflow-y-auto px-3 pb-1 pt-0">
+      <SidebarContent className="min-h-0 flex-1 overflow-y-auto px-2 pb-1 pt-0">
         <SidebarGroup className="p-0">
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
@@ -122,11 +125,11 @@ export function AppSidebar() {
                         <CollapsibleTrigger asChild>
                           <SidebarMenuButton 
                             className={cn(
-                              "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors",
+                              navButton,
                               isAnyChildActive ? "text-black" : "text-slate-500 hover:bg-slate-100 hover:text-black"
                             )}
                           >
-                            <Icon className={cn("h-3.5 w-3.5", isAnyChildActive ? "text-slate-700" : "text-slate-400")} />
+                            <Icon className={cn("h-4 w-4", isAnyChildActive ? "text-slate-700" : "text-slate-400")} />
                             <span className="flex-1">{item.label}</span>
                             <ChevronRight className="ml-auto h-3 w-3 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                           </SidebarMenuButton>
@@ -141,7 +144,7 @@ export function AppSidebar() {
                                     asChild 
                                     isActive={isSubActive}
                                     className={cn(
-                                      "px-2 py-1 text-xs font-normal",
+                                      "px-2 py-1.5 text-sm font-normal",
                                       isSubActive ? "text-black font-medium" : "text-slate-500 hover:text-black"
                                     )}
                                   >
@@ -171,22 +174,22 @@ export function AppSidebar() {
                       asChild
                       isActive={isActive}
                       className={cn(
-                        "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors",
+                        navButton,
                         isActive
                           ? "bg-slate-100 text-black"
                           : "text-slate-500 hover:bg-slate-100 hover:text-black",
                       )}
                     >
-                      <Link href={(item as any).href} className="flex flex-1 items-center gap-2">
+                      <Link href={(item as any).href} className="flex min-w-0 flex-1 items-center gap-2">
                         <Icon
                           className={cn(
-                            "h-3.5 w-3.5",
+                            "h-4 w-4",
                             isActive ? "text-slate-700" : "text-slate-400",
                           )}
                         />
                         <span className="flex-1">{item.label}</span>
                         {hasBadge && (
-                          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-red-100 text-[10px] font-bold text-red-600">
+                          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-100 px-1 text-[11px] font-bold text-red-600">
                             {reviewCount}
                           </span>
                         )}
@@ -211,14 +214,14 @@ export function AppSidebar() {
                     asChild
                     isActive={pathname.startsWith("/dashboard/admin")}
                     className={cn(
-                      "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors",
+                      navButton,
                       pathname.startsWith("/dashboard/admin")
                         ? "bg-slate-100 text-black"
                         : "text-slate-500 hover:bg-slate-100 hover:text-black",
                     )}
                   >
-                    <Link href="/dashboard/admin" className="flex flex-1 items-center gap-2">
-                      <Shield className={cn("h-3.5 w-3.5", pathname.startsWith("/dashboard/admin") ? "text-slate-700" : "text-slate-400")} />
+                    <Link href="/dashboard/admin" className="flex min-w-0 flex-1 items-center gap-2">
+                      <Shield className={cn("h-4 w-4", pathname.startsWith("/dashboard/admin") ? "text-slate-700" : "text-slate-400")} />
                       <span className="flex-1">Admin Panel</span>
                     </Link>
                   </SidebarMenuButton>
@@ -240,16 +243,16 @@ export function AppSidebar() {
               asChild
               isActive={pathname === "/dashboard/settings"}
               className={cn(
-                "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors",
+                navButton,
                 pathname === "/dashboard/settings"
                   ? "bg-slate-100 text-black"
                   : "text-slate-500 hover:bg-slate-100 hover:text-black",
               )}
             >
-              <Link href="/dashboard/settings" className="flex flex-1 items-center gap-2">
+              <Link href="/dashboard/settings" className="flex min-w-0 flex-1 items-center gap-2">
                 <Settings
                   className={cn(
-                    "h-3.5 w-3.5",
+                    "h-4 w-4",
                     pathname === "/dashboard/settings" ? "text-slate-700" : "text-slate-400",
                   )}
                 />
@@ -261,10 +264,10 @@ export function AppSidebar() {
         <div className="flex min-h-[42px] items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1">
           <SidebarUserButton />
           <div className="flex min-w-0 flex-col">
-            <span className="max-w-[100px] truncate text-xs font-normal text-slate-700">
+            <span className="max-w-[140px] truncate text-sm font-normal text-slate-700">
               {clerkUser?.fullName || "User"}
             </span>
-            <span className="max-w-[100px] truncate text-[10px] text-slate-400">
+            <span className="max-w-[140px] truncate text-xs text-slate-400">
               {isAdmin ? "Admin" : organization?.name ?? "Personal account"}
             </span>
           </div>

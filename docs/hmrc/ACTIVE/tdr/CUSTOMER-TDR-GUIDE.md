@@ -199,7 +199,7 @@ What engineering implements to match this guide. **Not yet complete** unless not
 | 3 | Practice banner | Amber banner on all declaration routes | **Done** — `PracticeModeBanner` in dashboard layout |
 | 4 | Auto practice on sign-up | New org defaults to `practice` | No billing gate |
 | 5 | Live mode toggle | Practice / Live badge updates | **Platform admin only** — Admin → Users & HMRC; `setOrgMode` + audit log |
-| 6 | Settings HMRC connect | Connect / disconnect | DELIVERY-PLAN item 2 |
+| 6 | Settings HMRC connect | Connect / disconnect | Shipped |
 | 7 | Org-scoped declarations | Team sees shared data | Largely done (`orgId` indexes) |
 | 8 | Remove billing block for practice | Dashboard without subscription in practice | Policy decision |
 | 9 | Customer doc link in app | Help → “Practice vs Live” | Points here |

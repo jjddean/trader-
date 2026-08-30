@@ -156,7 +156,7 @@ export default function DeclarationWorkspaceLayout({
                 const isActive = pathname === step.path;
                 const Icon = step.icon;
                 const tabClass = cn(
-                  "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors duration-150",
+                  "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150",
                   isActive
                     ? "bg-white text-black shadow-sm"
                     : "text-slate-500 hover:bg-slate-200/60 hover:text-slate-900",
@@ -166,7 +166,7 @@ export default function DeclarationWorkspaceLayout({
                 if (step.disabled) {
                   return (
                     <span key={step.id} className={tabClass} aria-disabled="true">
-                      <Icon className="h-3.5 w-3.5 text-slate-400" />
+                      <Icon className="h-4 w-4 text-slate-400" />
                       {step.name}
                     </span>
                   );
@@ -180,7 +180,7 @@ export default function DeclarationWorkspaceLayout({
                     aria-current={isActive ? "page" : undefined}
                     className={tabClass}
                   >
-                    <Icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-600" : "text-slate-400")} />
+                    <Icon className={cn("h-4 w-4", isActive ? "text-blue-600" : "text-slate-400")} />
                     {step.name}
                   </Link>
                 );

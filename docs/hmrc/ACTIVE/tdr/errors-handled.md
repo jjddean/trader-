@@ -13,6 +13,8 @@ TT history (archive only): `docs/hmrc/ARCHIVE/trade-test/errors-handled.md`
 | 2026-06-10 20:15 | FC-MQ8IDIYS | 26GB6DTVT5133M7AR0 | 0 | **DMSACC** | TDR v1 sandbox (`Accept: application/vnd.hmrc.1.0+xml`). Advisory CDS13000 only. X-Conversation-ID `c493713d-b599-421c-8283-f182a1e7d275`. Freeze: `evidence/passing-payload.xml`. |
 | 2026-06-11 23:28 | AM-jpyv90jb…-0FIFPK | 26GB6F8QX9AC62SAR0 | 1 | **DMSINV** amend | **CDS12015** @ `42A`/D014 — MRN not amendable (DMSCLE / cleared state). Not payload. Use fresh submit → amend before clearance. |
 | 2026-06-11 23:33 | AM-jpyv90jb…-9GXS8B | 26GB6F8QX9AC62SAR0 | 1 | **DMSINV** amend | Same **CDS12015** — MRN dead; stop retrying this MRN. |
+| 2026-08-28 02:56 | FC-MTCD0MKQ | 26GB9HOIWTCHY31AA3 | 2 | **DMSREJ** | **CDS12070** ×2: `42A/67A/28A/64A/L016` and `42A/03A`. Outbound: TypeCode EXA, DE 5/23 `GBAUDVRDOVDVRGVM` (Name `DVRDOVDVRGVM`), header AdditionalInformation absent, RRS01 not emitted. Item AI `00400` only. |
+| 2026-08-28 19:23 | FC-MTDCAFR8 | 26GB9INSQ1E5HQ9AR4 | 2 | **DMSREJ** | FunctionCode 03. FunctionalReferenceID `b7cae5cd86a9498f9a78bf995c472872`. **CDS12005** ×2: `42A/57B/R123` (`Declaration/Declarant/ID`, DE 3/18) and `42A/67A/74A/R038` (`Declaration/GoodsShipment/Importer/ID`, DE 3/16). ODS: party ID unknown or invalid. Same pointer pair as archived TT FC-MPU9NSCQ family. 74A is Importer, not Consignee (`27A`/`R015`). Outbound XML not in this log. |
 
 ---
 

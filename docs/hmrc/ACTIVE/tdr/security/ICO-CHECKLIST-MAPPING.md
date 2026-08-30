@@ -23,6 +23,6 @@ Mapping to the [ICO security outcomes](https://ico.org.uk/for-organisations/advi
 
 **Gaps (accepted / planned):**
 
-- Full org RBAC (workspace sharing) — [`DELIVERY-PLAN.md`](../DELIVERY-PLAN.md) §3
+- Full org RBAC (workspace sharing) — [`BACKLOG.md`](../BACKLOG.md)
 - Independent third-party pen test — [`PEN-TEST-CHECKLIST.md`](./PEN-TEST-CHECKLIST.md) §9 (booked by product owner)
 - `waitlist.join` — intentional public endpoint; rate limit if abused
