@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { declarationHumanSubtitle } from "../../src/lib/declaration-status-display";
 import {
   shouldApplyNotificationStatus,
   statusFromNotificationType,
@@ -12,6 +13,17 @@ describe("notification status precedence", () => {
     assert.equal(
       shouldApplyNotificationStatus("Accepted", "Cleared"),
       true,
+    );
+  });
+
+  it("subtitle for DMSCLE is Cleared by HMRC, not Accepted", () => {
+    assert.equal(
+      declarationHumanSubtitle("Declaration cleared (DMSCLE)", "Cleared", "success"),
+      "Cleared by HMRC",
+    );
+    assert.equal(
+      declarationHumanSubtitle("Declaration cleared (DMSCLE)", "Accepted", "success"),
+      "Cleared by HMRC",
     );
   });
 

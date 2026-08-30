@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       console.log(`[HMRC-WEBHOOK] Payload length: ${rawPayload.length} bytes`);
     }
 
-    const { notificationType, mrn, errorCodes, fieldErrors, issueDateTime } = parseHmrcNotification(rawPayload);
+    const { notificationType, mrn, errorCodes, fieldErrors, issueDateTime, functionCode } = parseHmrcNotification(rawPayload);
     console.log(`[HMRC-WEBHOOK] Parsed: type=${notificationType}, mrn=${mrn}, errorCodes=${errorCodes.join(",") || "none"}`);
     const idempotencyKey = buildHmrcNotificationIdempotencyKey(rawPayload);
 
@@ -95,6 +95,7 @@ export async function POST(request: Request) {
       mrn,
       conversationId,
       notificationType,
+      functionCode: functionCode || undefined,
       fieldErrors,
       errorCodes,
       rawPayload,

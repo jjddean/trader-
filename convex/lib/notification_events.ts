@@ -10,6 +10,8 @@
  * See docs/notifications/IMPLEMENTATION-PLAN.md §4.
  */
 
+import { dmsTypeFromFunctionCode, presentationForDmsType } from "./hmrc_notification_catalogue";
+
 export type NotificationSeverity = "critical" | "action_required" | "info";
 
 export type NotificationCategory =
@@ -119,6 +121,7 @@ export const NOTIFICATION_EVENTS = {
   // --- declaration (HMRC DMS outcomes, mirrored from the evidence table) ---
   "declaration.received": { category: "declaration", severity: "info", title: "Declaration received by HMRC" },
   "declaration.accepted": { category: "declaration", severity: "info", title: "Declaration accepted" },
+  "declaration.goods_released": { category: "declaration", severity: "info", title: "Goods released" },
   "declaration.cleared": { category: "declaration", severity: "info", title: "Goods cleared" },
   "declaration.rejected": { category: "declaration", severity: "critical", title: "Declaration rejected" },
   "declaration.invalidated": { category: "declaration", severity: "critical", title: "Declaration invalidated" },
@@ -223,26 +226,15 @@ export function categoryDefaultInApp(category: string): boolean {
 /**
  * Legacy `notificationType` spellings seen on stored rows, from parser versions
  * that recorded a raw NameCode or FunctionCode instead of the DMS literal.
- * Mirrors src/lib/notification-labels.ts, which does the same for display.
  */
-const NUMERIC_NAME_TO_DMS: Record<string, string> = {
-  "4": "DMSTAX",
-  "67": "DMSTAX",
-};
-
-const FUNC_PREFIX_TO_DMS: Record<string, string> = {
-  FUNC_01: "DMSACC",
-  FUNC_09: "DMSACC",
-  FUNC_11: "DMSCLE",
-  FUNC_13: "DMSTAX",
-};
-
 export function normalizeDmsType(raw: string | undefined | null): string {
   const type = String(raw ?? "").trim().toUpperCase();
   if (!type) return "UNKNOWN";
   if (type.startsWith("DMS")) return type;
-  if (NUMERIC_NAME_TO_DMS[type]) return NUMERIC_NAME_TO_DMS[type];
-  if (FUNC_PREFIX_TO_DMS[type]) return FUNC_PREFIX_TO_DMS[type];
+  if (type === "4" || type === "67") return "DMSTAX";
+  if (type.startsWith("FUNC_")) {
+    return dmsTypeFromFunctionCode(type.slice(5)) || type;
+  }
   return type;
 }
 
@@ -255,12 +247,18 @@ const DMS_TO_EVENT: Record<string, NotificationEvent> = {
   DMSREJ: "declaration.rejected",
   DMSINV: "declaration.invalidated",
   DMSCTL: "declaration.under_control",
-  DMSROG: "declaration.route_of_goods",
+  DMSROG: "declaration.goods_released",
   DMSDOC: "declaration.docs_requested",
-  DMSREQ: "declaration.docs_requested",
+  DMSREQ: "declaration.response_required",
   DMSQRY: "declaration.query_raised",
   DMSRES: "declaration.response_required",
   DMSTAX: "declaration.tax_assessed",
+  DMSCPI: "declaration.notification",
+  DMSCPR: "declaration.notification",
+  DMSEOG: "declaration.cleared",
+  DMSEXT: "declaration.notification",
+  DMSGER: "declaration.notification",
+  DMSALV: "declaration.under_control",
   DMSNOT: "declaration.notification",
 };
 
@@ -293,7 +291,9 @@ export function eventForNotification(params: {
  * evidence work while the sentence stays readable.
  */
 export function titleForNotification(event: NotificationEvent, notificationType: string | undefined | null): string {
-  const base = NOTIFICATION_EVENTS[event].title;
   const type = normalizeDmsType(notificationType);
+  const presented = presentationForDmsType(type);
+  if (type.startsWith("DMS") && presented.badgeLabel) return presented.badgeLabel;
+  const base = NOTIFICATION_EVENTS[event].title;
   return type.startsWith("DMS") ? `${base} (${type})` : base;
 }

@@ -17,17 +17,15 @@ import {
   resolveDeclarationCdsBadge,
   type CdsBadgeTone,
 } from "../../convex/lib/cds_badge";
+import { presentationForDmsType, resolveHmrcDmsType } from "../../convex/lib/hmrc_notification_catalogue";
 
 export type { CdsBadgeTone };
 export {
   declarationHasAmendmentRejected,
   declarationHasInvalidationAccepted,
   resolveDeclarationCdsBadge,
+  resolveHmrcDmsType,
 };
-
-function isTradeTestClient(): boolean {
-  return (process.env.NEXT_PUBLIC_HMRC_ENV || "sandbox") === "sandbox";
-}
 
 export type NotificationRowContext = DmsNotificationContext;
 
@@ -61,11 +59,8 @@ export function declarationHasAmendStateBlocked(notifications: NotificationRowCo
   return declarationHasAmendStateBlockedCore(notifications);
 }
 
-/** DMSCLE = event on timeline; in Trade Test it is not final clearance proof. */
 export function isDmscleLifecycleOnly(ctx: NotificationRowContext): boolean {
-  if (ctx.notificationType?.toUpperCase() !== "DMSCLE") return false;
-  if (isPostCancelClearanceCore(ctx)) return true;
-  return isTradeTestClient();
+  return isPostCancelClearanceCore(ctx);
 }
 
 export interface TimelineNotificationMeta {
@@ -77,41 +72,67 @@ export interface TimelineNotificationMeta {
   showFieldErrors: boolean;
 }
 
+function toneColor(tone: string): string {
+  if (tone === "success") return "bg-green-500";
+  if (tone === "danger") return "bg-red-500";
+  if (tone === "warning") return "bg-amber-500";
+  return "bg-blue-500";
+}
+
+function toneIcon(tone: string): "success" | "warning" | "danger" | "info" {
+  if (tone === "success") return "success";
+  if (tone === "danger") return "danger";
+  if (tone === "warning") return "warning";
+  return "info";
+}
+
 export function resolveTimelineNotificationMeta(
   ctx: NotificationRowContext,
   defaults: Omit<TimelineNotificationMeta, "normalizedType" | "showFieldErrors"> & { normalizedType: string },
 ): TimelineNotificationMeta {
-  const normalizedType = defaults.normalizedType;
+  const normalizedType = resolveHmrcDmsType({
+    rawPayload: ctx.rawPayload,
+    storedNotificationType: ctx.notificationType || defaults.normalizedType,
+  });
+  const presented = presentationForDmsType(normalizedType);
+  const catalogueDefaults: TimelineNotificationMeta = {
+    title: presented.timelineTitle,
+    detail: presented.detail,
+    color: toneColor(presented.tone),
+    icon: toneIcon(presented.tone),
+    normalizedType,
+    showFieldErrors: false,
+  };
 
-  if (isInvalidationAccepted(ctx)) {
+  const resolvedCtx = { ...ctx, notificationType: normalizedType };
+
+  if (isInvalidationAccepted(resolvedCtx)) {
     return {
-      title: "Declaration invalidated (DMSINV)",
-      detail: "HMRC accepted the cancellation request. The declaration is no longer active.",
-      color: "bg-green-500",
-      icon: "success",
-      normalizedType,
+      ...catalogueDefaults,
+      title: presented.timelineTitle,
       showFieldErrors: false,
     };
   }
 
-  if (isAmendmentAccepted(ctx)) {
+  if (isAmendmentAccepted(resolvedCtx)) {
+    const p = presentationForDmsType("DMSRES");
     return {
-      title: "Amendment accepted (DMSRES)",
-      detail: "HMRC accepted the COR amendment. Version should increment on the declaration.",
-      color: "bg-green-500",
-      icon: "success",
-      normalizedType,
+      title: p.timelineTitle,
+      detail: p.detail,
+      color: toneColor(p.tone),
+      icon: toneIcon(p.tone),
+      normalizedType: "DMSRES",
       showFieldErrors: false,
     };
   }
 
-  if (isAmendmentRejected(ctx)) {
-    const stateBlocked = hasCds12015StateError(ctx);
+  if (isAmendmentRejected(resolvedCtx)) {
+    const stateBlocked = hasCds12015StateError(resolvedCtx);
     return {
-      title: "Amendment rejected (DMSINV)",
+      title: "Amendment rejected (DMSREJ)",
       detail: stateBlocked
-        ? "CDS12015 at Declaration/ID (42A/D014): HMRC will not amend this MRN — declaration is cleared or not in an amendable state. Submit a fresh declaration and amend before DMSCLE."
-        : "HMRC rejected the amendment message. The import declaration remains accepted — fix the change and resubmit amend.",
+        ? "CDS12015 at Declaration/ID (42A/D014): HMRC will not amend this MRN — declaration is cleared or not in an amendable state."
+        : "HMRC rejected the amendment message.",
       color: "bg-red-500",
       icon: "danger",
       normalizedType,
@@ -119,47 +140,10 @@ export function resolveTimelineNotificationMeta(
     };
   }
 
-  if (normalizedType === "DMSINV" && hasAmendLrnInPayload(String(ctx.rawPayload ?? ""))) {
-    return {
-      title: "Amendment response (FC 02)",
-      detail:
-        "HMRC responded to the amend message (no validation errors in payload). Success proof is DMSRES (FC 07) per TT_IM002b — await further notifications.",
-      color: "bg-blue-500",
-      icon: "info",
-      normalizedType,
-      showFieldErrors: false,
-    };
-  }
-
-  if (isCancellationRejected(ctx)) {
+  if (isCancellationRejected(resolvedCtx)) {
     return {
       title: "Cancellation rejected (DMSREJ)",
-      detail: "HMRC rejected the invalidation message. Review error codes and fix the cancel XML.",
-      color: "bg-red-500",
-      icon: "danger",
-      normalizedType,
-      showFieldErrors: true,
-    };
-  }
-
-  if (isDmscleLifecycleOnly(ctx)) {
-    const afterCancel = isPostCancelClearanceCore(ctx);
-    return {
-      title: "Clearance event (DMSCLE)",
-      detail: afterCancel
-        ? "Trade Test lifecycle message after invalidation — not the invalidation outcome."
-        : "Trade Test lifecycle message — not proof the declaration is finally cleared or released.",
-      color: "bg-blue-500",
-      icon: "info",
-      normalizedType,
-      showFieldErrors: false,
-    };
-  }
-
-  if (normalizedType === "DMSINV") {
-    return {
-      title: "Declaration invalid (DMSINV)",
-      detail: "HMRC returned field-level validation errors on the declaration.",
+      detail: "HMRC rejected the invalidation message.",
       color: "bg-red-500",
       icon: "danger",
       normalizedType,
@@ -172,11 +156,9 @@ export function resolveTimelineNotificationMeta(
   const hasErrorCodes = Array.isArray(ctx.errorCodes) && ctx.errorCodes.length > 0;
 
   return {
-    ...defaults,
-    normalizedType,
+    ...catalogueDefaults,
     showFieldErrors:
-      normalizedType === "DMSREJ" ||
-      (normalizedType === "DMSINV" &&
-        (hasFieldErrors || hasErrorCodes || /<(?:[^>]*:)?FunctionalError/i.test(raw))),
+      normalizedType === "DMSREJ" &&
+      (hasFieldErrors || hasErrorCodes || /<(?:[^>]*:)?FunctionalError/i.test(raw)),
   };
 }

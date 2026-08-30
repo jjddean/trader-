@@ -1,25 +1,37 @@
 /**
- * Convex mirror of src/lib/hmrc-notification-parser.ts — keep in sync.
- * Used by scheduled/cron notification pulls (Convex actions cannot import src/).
+ * Parses HMRC DMS notification XML. FunctionCode → DMS type comes only from
+ * convex/lib/hmrc_notification_catalogue.ts (HMRC notifications guide).
  */
 
-const DMS_TYPES = ["DMSCLE", "DMSACC", "DMSREJ", "DMSROG", "DMSINV", "DMSTAX", "DMSCTL", "DMSRES", "DMSRCV", "DMSREQ", "DMSQRY", "DMSDOC", "DMSNOTFN", "DMSSUB", "DMSUB"];
+import {
+  dmsTypeFromFunctionCode,
+  extractFunctionCode,
+  unknownFunctionCodeDmsType,
+} from "./hmrc_notification_catalogue";
 
-const FUNCTION_CODE_MAP: Record<string, string> = {
-  "01": "DMSACC",
-  "02": "DMSINV",
-  "03": "DMSREJ",
-  "04": "DMSROG",
-  "05": "DMSROG",
-  "06": "DMSTAX",
-  "07": "DMSCTL",
-  "08": "DMSRES",
-  "09": "DMSACC",
-  "10": "DMSDOC",
-  "11": "DMSCLE",
-  "13": "DMSTAX",
-  "14": "DMSINV",
-};
+const LEGACY_DMS_TYPES = [
+  "DMSCLE",
+  "DMSACC",
+  "DMSREJ",
+  "DMSROG",
+  "DMSINV",
+  "DMSTAX",
+  "DMSCTL",
+  "DMSRES",
+  "DMSRCV",
+  "DMSREQ",
+  "DMSQRY",
+  "DMSDOC",
+  "DMSCPI",
+  "DMSCPR",
+  "DMSEOG",
+  "DMSEXT",
+  "DMSGER",
+  "DMSALV",
+  "DMSNOTFN",
+  "DMSSUB",
+  "DMSUB",
+];
 
 const NAME_CODE_MAP: Record<string, string> = {
   "4": "DMSTAX",
@@ -28,6 +40,7 @@ const NAME_CODE_MAP: Record<string, string> = {
 
 export interface ParsedNotification {
   notificationType: string;
+  functionCode: string;
   mrn: string;
   errorCodes: string[];
   fieldErrors: Array<{ field: string; code?: string; reason: string }>;
@@ -44,33 +57,28 @@ export function hmrc304ToIso(raw: string | null | undefined): string | undefined
   return Number.isFinite(t) ? iso : undefined;
 }
 
-export function parseHmrcNotification(rawPayload: string): ParsedNotification {
+function notificationTypeFromPayload(rawPayload: string, functionCode: string): string {
+  if (functionCode) {
+    return dmsTypeFromFunctionCode(functionCode) ?? unknownFunctionCodeDmsType(functionCode);
+  }
+
   const upper = rawPayload.toUpperCase();
-  let notificationType = "UNKNOWN";
-  for (const t of DMS_TYPES) {
-    if (upper.includes(t)) { notificationType = t; break; }
+  for (const t of LEGACY_DMS_TYPES) {
+    if (upper.includes(t)) return t;
   }
 
-  const functionCodeMatch = rawPayload.match(
-    /<(?:[^>]*:)?FunctionCode[^>]*>(\d+)<\/(?:[^>]*:)?FunctionCode>/i,
-  );
-  const functionCode = functionCodeMatch?.[1]?.trim() || "";
-
-  if (notificationType === "UNKNOWN") {
-    const m = rawPayload.match(/<(?:[^>]*:)?NameCode[^>]*>([^<]+)<\/(?:[^>]*:)?NameCode>/i);
-    if (m?.[1]) {
-      const code = m[1].trim().toUpperCase();
-      if (/^\d+$/.test(code) && functionCode && FUNCTION_CODE_MAP[functionCode]) {
-        notificationType = FUNCTION_CODE_MAP[functionCode];
-      } else {
-        notificationType = NAME_CODE_MAP[code] || code;
-      }
-    }
+  const m = rawPayload.match(/<(?:[^>]*:)?NameCode[^>]*>([^<]+)<\/(?:[^>]*:)?NameCode>/i);
+  if (m?.[1]) {
+    const code = m[1].trim().toUpperCase();
+    return NAME_CODE_MAP[code] || code;
   }
 
-  if (notificationType === "UNKNOWN" && functionCode) {
-    notificationType = FUNCTION_CODE_MAP[functionCode] || `FUNC_${functionCode}`;
-  }
+  return "UNKNOWN";
+}
+
+export function parseHmrcNotification(rawPayload: string): ParsedNotification {
+  const functionCode = extractFunctionCode(rawPayload);
+  const notificationType = notificationTypeFromPayload(rawPayload, functionCode);
 
   let mrn = "UNKNOWN";
   const idTagMatch = rawPayload.match(/<(?:[^>]*:)?ID[^>]*>([0-9]{2}[A-Za-z]{2}[A-Za-z0-9]{14})<\/(?:[^>]*:)?ID>/i);
@@ -132,5 +140,5 @@ export function parseHmrcNotification(rawPayload: string): ParsedNotification {
   )?.[1];
   const issueDateTime = hmrc304ToIso(issueDateTimeRaw);
 
-  return { notificationType, mrn, errorCodes, fieldErrors, issueDateTime };
+  return { notificationType, functionCode, mrn, errorCodes, fieldErrors, issueDateTime };
 }

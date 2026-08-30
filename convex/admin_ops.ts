@@ -1,9 +1,22 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 import { resolveDeclarationCdsBadge } from "./lib/cds_badge";
+import { resolveHmrcDmsType } from "./lib/hmrc_notification_catalogue";
 import { requireAdmin } from "./lib/user_role";
 
 const NEEDS_ACTION_STATUSES = new Set(["Rejected", "Invalid", "Action Required"]);
+
+function resolvedAdminDmsType(n: {
+  notificationType?: unknown;
+  rawPayload?: unknown;
+  functionCode?: unknown;
+}): string {
+  return resolveHmrcDmsType({
+    rawPayload: typeof n.rawPayload === "string" ? n.rawPayload : null,
+    storedNotificationType: n.notificationType ? String(n.notificationType) : null,
+    functionCode: n.functionCode ? String(n.functionCode) : null,
+  });
+}
 
 function badgeFromStatus(status: string) {
   return resolveDeclarationCdsBadge(status, undefined);
@@ -106,7 +119,7 @@ export const getOverview = query({
       .slice(0, 8)
       .map((n) => ({
         id: n._id,
-        notificationType: n.notificationType ? String(n.notificationType) : "UNKNOWN",
+        notificationType: resolvedAdminDmsType(n),
         mrn: n.mrn ? String(n.mrn) : undefined,
         timestamp: n.timestamp,
       }));
@@ -178,7 +191,7 @@ export const getRecentNotifications = query({
       .slice(0, limit)
       .map((n) => ({
         id: n._id,
-        notificationType: n.notificationType ? String(n.notificationType) : "UNKNOWN",
+        notificationType: resolvedAdminDmsType(n),
         mrn: n.mrn ? String(n.mrn) : undefined,
         declarationId: n.declarationId,
         conversationId: n.conversationId ? String(n.conversationId) : undefined,

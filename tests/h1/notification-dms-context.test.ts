@@ -6,8 +6,10 @@ import {
   hasCds12015StateError,
   isAmendmentRejected,
   isAmendmentAcknowledged,
+  isDmscleLifecycleOnly,
   isImportDmscleEvent,
   isInvalidationAccepted,
+  isSubmitReceipt,
 } from "../../convex/lib/notification_dms_context";
 import { resolveDeclarationCdsBadge } from "../../convex/lib/cds_badge";
 import { replayDeclarationStatus } from "../../convex/lib/replay_declaration_status";
@@ -17,7 +19,7 @@ const originalHmrcEnv = process.env.HMRC_ENVIRONMENT;
 
 const AMEND_REJECT_XML = `
 <Response>
-  <FunctionCode>02</FunctionCode>
+  <FunctionCode>03</FunctionCode>
   <Error><ValidationCode>CDS13000</ValidationCode></Error>
   <Declaration>
     <FunctionalReferenceID>AM-kn7ce59qgf4szvq174agcnm4ns880s39</FunctionalReferenceID>
@@ -26,9 +28,9 @@ const AMEND_REJECT_XML = `
 </Response>`;
 
 describe("notification DMS context", () => {
-  it("treats AM- LRN + CDS13000 as amendment rejected, not cancel", () => {
+  it("treats AM- LRN + DMSREJ (FC 03) as amendment rejected, not cancel", () => {
     const ctx = {
-      notificationType: "DMSINV",
+      notificationType: "DMSREJ",
       rawPayload: AMEND_REJECT_XML,
       errorCodes: ["CDS13000"],
       fieldErrors: [{ field: "42A/67A/68A item 1", reason: "CDS13000", code: "CDS13000" }],
@@ -39,7 +41,7 @@ describe("notification DMS context", () => {
 
   it("does not treat AM- LRN without errors as amendment rejected", () => {
     const ctx = {
-      notificationType: "DMSINV",
+      notificationType: "DMSRCV",
       rawPayload: `
         <Response><FunctionCode>02</FunctionCode>
         <Declaration><FunctionalReferenceID>AM-kn7ce59qgf4szvq174agcnm4ns880s39</FunctionalReferenceID>
@@ -62,14 +64,14 @@ describe("notification DMS context", () => {
       [
         {
           mrn: "26GB6F8QX9AC62SAR0",
-          notificationType: "DMSINV",
+          notificationType: "DMSREJ",
           rawPayload: AMEND_REJECT_XML,
           errorCodes: ["CDS13000"],
           timestamp: "2026-06-11T20:04:22Z",
         },
         {
           mrn: "26GB6F8QX9AC62SAR0",
-          notificationType: "DMSINV",
+          notificationType: "DMSRCV",
           rawPayload: fc02Ack,
           errorCodes: [],
           timestamp: "2026-06-11T21:10:55Z",
@@ -85,7 +87,7 @@ describe("notification DMS context", () => {
       <Declaration><FunctionalReferenceID>AM-jpyv90jbvmt1d2t0ny188fa8r</FunctionalReferenceID>
       <ID>26GB6F8QX9AC62SAR0</ID></Declaration></Response>`;
     const badge = resolveDeclarationCdsBadge("Amendment Processing", [
-      { notificationType: "DMSINV", rawPayload: fc02Ack, errorCodes: [], fieldErrors: [] },
+      { notificationType: "DMSRCV", rawPayload: fc02Ack, errorCodes: [], fieldErrors: [] },
     ]);
     assert.equal(badge.label, "Accepted — amend processing");
     assert.equal(badge.tone, "info");
@@ -95,7 +97,7 @@ describe("notification DMS context", () => {
     assert.equal(
       statusAfterNotification({
         currentStatus: "Accepted",
-        notificationType: "DMSINV",
+        notificationType: "DMSREJ",
         hasResolvedMrn: true,
         isAmendmentRejected: true,
         isAmendmentAccepted: false,
@@ -122,7 +124,7 @@ describe("notification DMS context", () => {
     assert.equal(status, "Amended");
   });
 
-  it("does not promote to Cleared from DMSCLE in sandbox", () => {
+  it("promotes to Cleared from DMSCLE in sandbox", () => {
     process.env.HMRC_ENVIRONMENT = "sandbox";
     assert.equal(
       statusAfterNotification({
@@ -133,14 +135,119 @@ describe("notification DMS context", () => {
         isAmendmentAccepted: false,
         isInvalidationAccepted: false,
       }),
-      "Accepted",
+      "Cleared",
     );
     process.env.HMRC_ENVIRONMENT = originalHmrcEnv;
   });
 
-  it("replays cancel DMSINV from MRN-scoped notification to Invalid", () => {
-    const cancelInv = `
+  it("does not treat import DMSCLE as lifecycle-only in sandbox", () => {
+    process.env.HMRC_ENVIRONMENT = "sandbox";
+    assert.equal(
+      isDmscleLifecycleOnly({
+        notificationType: "DMSCLE",
+        rawPayload: "<Response><FunctionCode>09</FunctionCode></Response>",
+      }),
+      false,
+    );
+    process.env.HMRC_ENVIRONMENT = originalHmrcEnv;
+  });
+
+  it("replays submit FC 02 receipt to Received", () => {
+    const submitReceipt = `
       <Response><FunctionCode>02</FunctionCode>
+      <Declaration><FunctionalReferenceID>FC-MTCZ1U8O</FunctionalReferenceID>
+      <ID>26GB9IAK3PBQ9J8AA6</ID></Declaration></Response>`;
+    const status = replayDeclarationStatus(
+      "Processing",
+      "26GB9IAK3PBQ9J8AA6",
+      [
+        {
+          mrn: "26GB9IAK3PBQ9J8AA6",
+          notificationType: "DMSRCV",
+          rawPayload: submitReceipt,
+          errorCodes: [],
+          timestamp: "2026-08-28T13:12:46Z",
+          originatingOperation: "submit",
+        },
+      ],
+    );
+    assert.equal(status, "Received");
+  });
+
+  it("replays legacy stored DMSINV submit receipt (FC 02 XML) to Received", () => {
+    const submitReceipt = `
+      <Response><FunctionCode>02</FunctionCode>
+      <Declaration><FunctionalReferenceID>FC-MTCC1HGJ</FunctionalReferenceID>
+      <ID>26GB9HNJRDCHXH9AA4</ID></Declaration></Response>`;
+    const status = replayDeclarationStatus(
+      "Processing",
+      "26GB9HNJRDCHXH9AA4",
+      [
+        {
+          mrn: "26GB9HNJRDCHXH9AA4",
+          notificationType: "DMSINV",
+          rawPayload: submitReceipt,
+          errorCodes: [],
+          timestamp: "2026-08-28T12:00:00Z",
+          originatingOperation: "submit",
+        },
+      ],
+    );
+    assert.equal(status, "Received");
+  });
+
+  it("does not treat CNS cancel DMSRCV (FC 02) as cancellation", () => {
+    const cancelReceipt = `
+      <Response><FunctionCode>02</FunctionCode>
+      <Declaration><FunctionalReferenceID>FC-MSUX9NFX</FunctionalReferenceID>
+      <ID>26GB908RYZ3SRUKAR0</ID></Declaration></Response>`;
+    const status = replayDeclarationStatus(
+      "Processing",
+      "26GB908RYZ3SRUKAR0",
+      [
+        {
+          mrn: "26GB908RYZ3SRUKAR0",
+          notificationType: "DMSRCV",
+          rawPayload: cancelReceipt,
+          errorCodes: [],
+          timestamp: "2026-08-15T23:04:14Z",
+          originatingOperation: "cancel",
+        },
+      ],
+    );
+    assert.equal(status, "Received");
+  });
+
+  it("detects submit receipt via isSubmitReceipt", () => {
+    assert.equal(
+      isSubmitReceipt({
+        notificationType: "DMSRCV",
+        rawPayload: "<Declaration><FunctionalReferenceID>FC-MTCZ1U8O</FunctionalReferenceID></Declaration>",
+        originatingOperation: "submit",
+      }),
+      true,
+    );
+    assert.equal(
+      isSubmitReceipt({
+        notificationType: "DMSINV",
+        rawPayload: "<Declaration><FunctionalReferenceID>FC-MTCZ1U8O</FunctionalReferenceID></Declaration>",
+        originatingOperation: "submit",
+      }),
+      false,
+    );
+    assert.equal(
+      isSubmitReceipt({
+        notificationType: "DMSRCV",
+        rawPayload: "<Declaration><FunctionalReferenceID>FC-MSUX9NFX</FunctionalReferenceID></Declaration>",
+        originatingOperation: "cancel",
+      }),
+      false,
+    );
+  });
+
+  it("replays cancel DMSINV (FC 10) from MRN-scoped notification to Cancelled", () => {
+    const cancelInv = `
+      <Response><FunctionCode>10</FunctionCode>
       <Declaration>
         <FunctionalReferenceID>CX-kn73a2vpts1b6j7tsfy7ct7mms832vkx</FunctionalReferenceID>
         <ID>26GB65AQTKWFMT6AR3</ID>
@@ -159,7 +266,7 @@ describe("notification DMS context", () => {
         },
       ],
     );
-    assert.equal(status, "Invalid");
+    assert.equal(status, "Cancelled");
   });
 
   it("detects import DMSCLE as blocking amend state", () => {
@@ -190,7 +297,7 @@ describe("notification DMS context", () => {
       <Pointer><DocumentSectionCode>42A</DocumentSectionCode><TagID>D014</TagID></Pointer></Error>
       <Declaration><FunctionalReferenceID>AM-jpyv90jbvmt1d2t0ny188fa8r-0FIFPK</FunctionalReferenceID><ID>26GB6F8QX9AC62SAR0</ID></Declaration>
       </Response>`;
-    const ctx = { notificationType: "DMSINV", rawPayload: xml, errorCodes: ["CDS12015"] };
+    const ctx = { notificationType: "DMSREJ", rawPayload: xml, errorCodes: ["CDS12015"] };
     assert.equal(hasCds12015StateError(ctx), true);
     assert.equal(isAmendmentRejected(ctx), true);
   });

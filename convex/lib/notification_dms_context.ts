@@ -2,6 +2,7 @@
  * HMRC DMS notification interpretation (shared with src/lib/notification-context.ts).
  * Used by Convex saveWebhook for status authority and by the status timeline UI.
  */
+import { resolveHmrcDmsType } from "./hmrc_notification_catalogue";
 
 export interface DmsNotificationContext {
   notificationType: string;
@@ -15,6 +16,13 @@ export interface DmsNotificationContext {
    * this field existed; predicates fall back to payload inspection there.
    */
   originatingOperation?: string | null;
+}
+
+function resolvedType(ctx: DmsNotificationContext): string {
+  return resolveHmrcDmsType({
+    rawPayload: ctx.rawPayload,
+    storedNotificationType: ctx.notificationType,
+  });
 }
 
 function isCancelOperation(ctx: DmsNotificationContext): boolean {
@@ -51,9 +59,26 @@ function hasValidationErrors(ctx: DmsNotificationContext): boolean {
   return hasFunctionalErrors(rawPayload(ctx));
 }
 
-/** FC 02 / DMSINV with AM- LRN and no validation errors — amend received, not declaration invalid. */
+function isSubmitOperation(ctx: DmsNotificationContext): boolean {
+  return String(ctx.originatingOperation ?? "") === "submit";
+}
+
+/** DMSRCV answering submit — message registered, not legal acceptance. */
+export function isSubmitReceipt(ctx: DmsNotificationContext): boolean {
+  const type = resolvedType(ctx);
+  if (type !== "DMSRCV") return false;
+  if (!isSubmitOperation(ctx)) return false;
+  if (hasValidationErrors(ctx)) return false;
+  const raw = rawPayload(ctx);
+  if (hasAmendLrnInPayload(raw) || hasCancelLrnInPayload(raw) || hasCancellationDateTime(raw)) {
+    return false;
+  }
+  return true;
+}
+
+/** DMSRCV with AM- LRN — amend message registered. */
 export function isAmendmentAcknowledged(ctx: DmsNotificationContext): boolean {
-  if (ctx.notificationType?.toUpperCase() !== "DMSINV") return false;
+  if (resolvedType(ctx) !== "DMSRCV") return false;
   const raw = rawPayload(ctx);
   if (!hasAmendLrnInPayload(raw)) return false;
   if (hasCancelLrnInPayload(raw) || hasCancellationDateTime(raw)) return false;
@@ -62,35 +87,29 @@ export function isAmendmentAcknowledged(ctx: DmsNotificationContext): boolean {
 
 /** Amendment rejected — AM- LRN + validation errors (e.g. CDS13000). AM- alone is not enough. */
 export function isAmendmentRejected(ctx: DmsNotificationContext): boolean {
-  const type = ctx.notificationType?.toUpperCase() || "";
-  if (type !== "DMSINV" && type !== "DMSREJ") return false;
+  const type = resolvedType(ctx);
+  if (type !== "DMSREJ") return false;
   const raw = rawPayload(ctx);
   if (!hasAmendLrnInPayload(raw)) return false;
   if (hasCancelLrnInPayload(raw) || hasCancellationDateTime(raw)) return false;
   return hasValidationErrors(ctx);
 }
 
-/** Amendment accepted — HMRC TT_IM002b success path uses DMSRES (FC 07) with Amendment block. */
+/** Amendment accepted — HMRC DMSRES (FC 07): corrections applied. */
 export function isAmendmentAccepted(ctx: DmsNotificationContext): boolean {
-  const type = ctx.notificationType?.toUpperCase() || "";
+  if (resolvedType(ctx) !== "DMSRES") return false;
   const raw = rawPayload(ctx);
-  if (type === "DMSRES" || /<(?:[^>]*:)?FunctionCode>\s*0?7\s*</i.test(raw)) {
-    return /<(?:[^>]*:)?Amendment/i.test(raw) || hasAmendLrnInPayload(raw);
-  }
-  return false;
+  return /<(?:[^>]*:)?Amendment/i.test(raw) || hasAmendLrnInPayload(raw);
 }
 
-/** Cancel invalidation accepted — CX- LRN or CancellationDateTime, no validation errors. */
+/** HMRC DMSINV (FC 10) — declaration cancelled. FC 02 DMSRCV is not cancellation. */
 export function isInvalidationAccepted(ctx: DmsNotificationContext): boolean {
-  if (ctx.notificationType?.toUpperCase() !== "DMSINV") return false;
+  const type = resolvedType(ctx);
+  if (type !== "DMSINV") return false;
   if (hasValidationErrors(ctx)) return false;
   const raw = rawPayload(ctx);
   if (hasAmendLrnInPayload(raw)) return false;
-  // A clean DMSINV answering a cancel request IS the acceptance. The CX- test
-  // below cannot see that on the CNS route, where resolveFollowUpLrn sends the
-  // original create LRN rather than a minted CX- reference.
-  if (hasKnownOperation(ctx)) return isCancelOperation(ctx);
-  return hasCancelLrnInPayload(raw) || hasCancellationDateTime(raw);
+  return true;
 }
 
 /**
@@ -110,26 +129,24 @@ export function isInvalidationAccepted(ctx: DmsNotificationContext): boolean {
  * do mint CX-. See docs/hmrc/ACTIVE/tdr/errors-handled.md, 2026-08-15.
  */
 export function isCancellationRejected(ctx: DmsNotificationContext): boolean {
-  if (ctx.notificationType?.toUpperCase() !== "DMSREJ") return false;
+  if (resolvedType(ctx) !== "DMSREJ") return false;
   if (hasKnownOperation(ctx)) return isCancelOperation(ctx);
   return hasCancelLrnInPayload(rawPayload(ctx));
 }
 
 export function isPostCancelClearance(ctx: DmsNotificationContext): boolean {
-  if (ctx.notificationType?.toUpperCase() !== "DMSCLE") return false;
+  if (resolvedType(ctx) !== "DMSCLE") return false;
   return hasCancelLrnInPayload(rawPayload(ctx));
 }
 
-/** DMSCLE on timeline only — not final cleared/released state (TT sandbox default). */
+/** Post-cancel DMSCLE only — not a goods-clearance status change. */
 export function isDmscleLifecycleOnly(ctx: DmsNotificationContext): boolean {
-  if (ctx.notificationType?.toUpperCase() !== "DMSCLE") return false;
-  if (isPostCancelClearance(ctx)) return true;
-  return process.env.HMRC_ENVIRONMENT === "sandbox";
+  return isPostCancelClearance(ctx);
 }
 
 /** Import-path DMSCLE (not post-cancel noise). HMRC treats these MRNs as non-amendable (CDS12015). */
 export function isImportDmscleEvent(ctx: DmsNotificationContext): boolean {
-  if (ctx.notificationType?.toUpperCase() !== "DMSCLE") return false;
+  if (resolvedType(ctx) !== "DMSCLE") return false;
   return !isPostCancelClearance(ctx);
 }
 

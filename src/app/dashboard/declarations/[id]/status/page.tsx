@@ -7,13 +7,14 @@ import { useAuth } from "@clerk/nextjs";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { Activity, Clock, CheckCircle2, XCircle, Loader2, ShieldCheck, ShieldAlert, FileText, AlertCircle, RefreshCw, ChevronDown } from "lucide-react";
-import { normalizeNotificationType, getNotificationDisplay } from "@/lib/notification-labels";
+import { getNotificationDisplay } from "@/lib/notification-labels";
 import {
   declarationHasAmendStateBlocked,
   declarationHasImportDmscle,
   declarationHasInvalidationAccepted,
   isInvalidationAccepted,
   resolveDeclarationCdsBadge,
+  resolveHmrcDmsType,
   resolveTimelineNotificationMeta,
   type CdsBadgeTone,
 } from "@/lib/notification-context";
@@ -127,9 +128,9 @@ export default function StatusTimelinePage() {
       setHmrcMessage(
         `${label} OK (${res.status})` +
           (body.conversationId ? ` — conversation ${body.conversationId}` : "") +
-          (label === "Cancel" ? " — await HMRC notification (DMSINV FC 02 = success)" : "") +
+          (label === "Cancel" ? " — await HMRC notification (DMSINV FC 10 = cancelled)" : "") +
           (label === "Amend"
-            ? " — stay on this Status tab; pull notifications for DMSRES or DMSINV"
+            ? " — stay on this Status tab; pull notifications for DMSRCV then DMSRES or DMSREJ"
             : "") +
           (body.saved != null
             ? ` — ${body.saved} notification(s) saved` +
@@ -236,24 +237,6 @@ export default function StatusTimelinePage() {
     );
   }
 
-  const notificationMeta: Record<string, { title: string; color: string; icon: "success" | "warning" | "danger" | "info"; detail: string }> = {
-    DMSUB:  { title: "Declaration received by HMRC (DMSUB)",  color: "bg-blue-500",  icon: "info",    detail: "Declaration has been received and queued by HMRC." },
-    DMSSUB: { title: "Declaration received by HMRC (DMSSUB)", color: "bg-blue-500",  icon: "info",    detail: "Declaration has been received and queued by HMRC." },
-    DMSACC: { title: "Declaration accepted (DMSACC)",          color: "bg-green-500", icon: "success", detail: "Declaration passed initial controls and is accepted." },
-    DMSCLE: { title: "Clearance event (DMSCLE)",      color: "bg-blue-500",  icon: "info",    detail: "HMRC clearance event on the timeline (see label for Trade Test meaning)." },
-    DMSROG: { title: "Route to examine (DMSROG)",              color: "bg-amber-500", icon: "warning", detail: "HMRC routed this declaration for examination. Action required." },
-    DMSREJ: { title: "Declaration rejected (DMSREJ)",          color: "bg-red-500",   icon: "danger",  detail: "HMRC rejected the declaration. Review error codes and amend." },
-    DMSINV: { title: "Declaration invalid (DMSINV)",           color: "bg-red-500",   icon: "danger",  detail: "HMRC returned field-level validation errors." },
-    DMSTAX: { title: "Duty and VAT assessed by HMRC", color: "bg-amber-500", icon: "warning", detail: "HMRC has calculated duty and import VAT for this declaration." },
-    DMSCTL: { title: "Documentary control (DMSCTL)",           color: "bg-amber-500", icon: "warning", detail: "Declaration under documentary control. Documents may be requested." },
-    DMSRES: { title: "Response required (DMSRES)",             color: "bg-amber-500", icon: "warning", detail: "HMRC requires a response before proceeding." },
-    DMSRCV: { title: "Declaration received (DMSRCV)",          color: "bg-blue-500",  icon: "info",    detail: "HMRC confirmed receipt of the declaration." },
-    DMSREQ: { title: "Further information required (DMSREQ)",  color: "bg-amber-500", icon: "warning", detail: "HMRC has requested additional information." },
-    DMSDOC: { title: "Document check (DMSDOC)",                color: "bg-amber-500", icon: "warning", detail: "HMRC is checking supporting documents." },
-    DMSQRY: { title: "Query raised (DMSQRY)",                  color: "bg-amber-500", icon: "warning", detail: "HMRC has raised a query on this declaration." },
-    DMSNOTFN: { title: "General notification (DMSNOTFN)",        color: "bg-blue-500",  icon: "info",    detail: "HMRC sent a general status notification." },
-  };
-
   const notifContext = (notif: {
     rawPayload?: string | null;
     fieldErrors?: unknown;
@@ -263,7 +246,10 @@ export default function StatusTimelinePage() {
     rawPayload: notif.rawPayload ?? undefined,
     fieldErrors: Array.isArray(notif.fieldErrors) ? notif.fieldErrors : undefined,
     errorCodes: Array.isArray(notif.errorCodes) ? notif.errorCodes : undefined,
-    notificationType: notif.notificationType ?? "",
+    notificationType: resolveHmrcDmsType({
+      rawPayload: notif.rawPayload,
+      storedNotificationType: notif.notificationType,
+    }),
   });
 
   const mrnBlockedByClearance = declarationHasImportDmscle((notifications ?? []).map(notifContext));
@@ -282,19 +268,9 @@ export default function StatusTimelinePage() {
     errorCodes?: string[];
     notificationType?: string | null;
   }) => {
-    const type = normalizeNotificationType(notif.notificationType);
-    const preset = notificationMeta[type];
-    if (preset) {
-      return resolveTimelineNotificationMeta(notifContext(notif), {
-        title: preset.title,
-        detail: preset.detail,
-        color: preset.color,
-        icon: preset.icon,
-        normalizedType: type,
-      });
-    }
-    const display = getNotificationDisplay(notif.notificationType);
-    return resolveTimelineNotificationMeta(notifContext(notif), {
+    const ctx = notifContext(notif);
+    const display = getNotificationDisplay(ctx.notificationType);
+    return resolveTimelineNotificationMeta(ctx, {
       title: display.title,
       detail: display.subtitle || "HMRC sent a status update.",
       color:
@@ -313,13 +289,13 @@ export default function StatusTimelinePage() {
             : display.tone === "warning"
               ? "warning"
               : "info",
-      normalizedType: type,
+      normalizedType: ctx.notificationType,
     });
   };
 
   const latestNotif = notifications?.[0];
   const latestCtx = latestNotif ? notifContext(latestNotif) : null;
-  const latestNotificationType = normalizeNotificationType(latestNotif?.notificationType) || "DMSUB";
+  const latestNotificationType = latestCtx?.notificationType || "DMSUB";
   const latestIsInvalidationSuccess = latestCtx ? isInvalidationAccepted(latestCtx) : false;
   const submittedAt =
     (typeof declaration.created === "number" ? declaration.created : undefined)
@@ -894,9 +870,9 @@ export default function StatusTimelinePage() {
                     <div className="rounded-lg border border-amber-100 bg-amber-50 p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <AlertCircle className="h-4 w-4 text-amber-600" />
-                        <h4 className="text-sm font-medium text-amber-900">DMSROG (Route to examine)</h4>
+                        <h4 className="text-sm font-medium text-amber-900">DMSROG (Goods released)</h4>
                       </div>
-                      <p className="text-xs text-amber-800">HMRC may require additional documentation or physical examination of the goods. Action will be required.</p>
+                      <p className="text-xs text-amber-800">The goods can be released. The customs debt is not yet finalised. Distinct from clearance (DMSCLE).</p>
                     </div>
                     <div className="rounded-lg border border-red-100 bg-red-50 p-4">
                       <div className="flex items-center gap-2 mb-2">
@@ -912,29 +888,12 @@ export default function StatusTimelinePage() {
               {latestNotificationType === "DMSROG" && (
                 <>
                   <div className="space-y-4">
-                    <p className="text-sm text-slate-600">HMRC has routed this declaration for further examination.</p>
-                    
-                    <div>
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">What HMRC may request</h4>
-                      <ul className="text-sm text-slate-700 list-disc pl-4 space-y-1">
-                        <li>Commercial invoices</li>
-                        <li>Packing lists</li>
-                        <li>Certificates of origin</li>
-                        <li>Physical inspection at the port</li>
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">How to respond</h4>
-                      <p className="text-sm text-slate-700">
-                        Upload requested documents directly via the <strong>Secure Upload</strong> tab in your declaration toolbar. Include your MRN in all correspondence.
-                      </p>
-                    </div>
-
-                    <div>
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Typical timeframe</h4>
-                      <p className="text-sm text-slate-700">
-                        Standard documentary checks (Route 1) are typically processed within <strong>2-4 hours</strong> of upload. Physical checks (Route 2) can take <strong>24-48 hours</strong>.
+                    <p className="text-sm text-slate-600">
+                      The goods can now be released. This is different from clearance (DMSCLE): the customs debt is not yet finalised.
+                    </p>
+                    <div className="rounded-lg border border-green-100 bg-green-50 p-4">
+                      <p className="text-xs text-green-800">
+                        Physical examination is DMSCTL (FunctionCode 05), not DMSROG (FunctionCode 08).
                       </p>
                     </div>
                   </div>
@@ -948,18 +907,16 @@ export default function StatusTimelinePage() {
                   </p>
                   <div className="rounded-lg border border-green-100 bg-green-50 p-4">
                     <p className="text-xs text-green-800">
-                      Proof is <strong>FunctionCode 02</strong> (DMSINV) with your <strong>CX-</strong> cancel LRN, not FunctionCode 11 (DMSCLE).
+                      Proof is <strong>FunctionCode 10</strong> (DMSINV). FunctionCode 02 is DMSRCV (message registered). FunctionCode 11 is DMSREQ.
                     </p>
                   </div>
                 </div>
               )}
 
-              {!latestIsInvalidationSuccess && (latestNotificationType === "DMSREJ" || latestNotificationType === "DMSINV") && (
+              {!latestIsInvalidationSuccess && latestNotificationType === "DMSREJ" && (
                 <div className="space-y-4">
                   <p className="text-sm text-slate-600">
-                    {latestNotificationType === "DMSINV"
-                      ? "The declaration failed HMRC validation."
-                      : "HMRC rejected this message (declaration or cancellation)."}
+                    HMRC rejected this message (declaration or additional message).
                   </p>
 
                   <div>
@@ -1010,7 +967,7 @@ export default function StatusTimelinePage() {
                         <Activity className="h-4 w-4 text-blue-600" />
                         <h4 className="text-sm font-medium text-blue-900">Awaiting Validations</h4>
                       </div>
-                      <p className="text-xs text-blue-800">The Hub is performing schema validation. You will receive a DMSACC (Accepted) or DMSINV (Invalid) shortly.</p>
+                      <p className="text-xs text-blue-800">The Hub is performing schema validation. Next HMRC notifications are DMSRCV (registered), then DMSACC (legally accepted) or DMSREJ (rejected).</p>
                     </div>
                   </div>
                 </>

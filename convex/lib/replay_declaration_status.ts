@@ -1,9 +1,11 @@
+import { resolveHmrcDmsType } from "./hmrc_notification_catalogue";
 import {
   isAmendmentAccepted,
   isAmendmentAcknowledged,
   isAmendmentRejected,
   isCancellationRejected,
   isInvalidationAccepted,
+  isSubmitReceipt,
   isPostCancelClearance,
 } from "./notification_dms_context";
 import { statusAfterNotification } from "./notification_status";
@@ -19,6 +21,7 @@ export interface NotificationRowForReplay {
   issueDateTime?: string | null;
   /** submit | amend | cancel — which request this notification answers. */
   originatingOperation?: string | null;
+  functionCode?: string | null;
 }
 
 /** HMRC IssueDateTime is authoritative; fall back to local receipt timestamp. */
@@ -41,10 +44,33 @@ export function replayDeclarationStatus(
 
   const ordered = [...scoped].sort((a, b) => replayOrderKey(a) - replayOrderKey(b));
 
+  const hasDmsInv = ordered.some((n) => {
+    const resolvedType = resolveHmrcDmsType({
+      rawPayload: n.rawPayload,
+      storedNotificationType: n.notificationType,
+      functionCode: n.functionCode,
+    });
+    return isInvalidationAccepted({
+      notificationType: resolvedType,
+      rawPayload: n.rawPayload,
+      fieldErrors: n.fieldErrors,
+      errorCodes: n.errorCodes,
+      originatingOperation: n.originatingOperation,
+    });
+  });
+
   let status = storedStatus || "Draft";
+  if (status === "Invalid" && !hasDmsInv) {
+    status = "Processing";
+  }
   for (const n of ordered) {
+    const resolvedType = resolveHmrcDmsType({
+      rawPayload: n.rawPayload,
+      storedNotificationType: n.notificationType,
+      functionCode: n.functionCode,
+    });
     const ctx = {
-      notificationType: String(n.notificationType ?? ""),
+      notificationType: resolvedType,
       rawPayload: n.rawPayload,
       fieldErrors: n.fieldErrors,
       errorCodes: n.errorCodes,
@@ -60,6 +86,7 @@ export function replayDeclarationStatus(
       isAmendmentAcknowledged: isAmendmentAcknowledged(ctx),
       isCancellationRejected: isCancellationRejected(ctx),
       isInvalidationAccepted: isInvalidationAccepted(ctx),
+      isSubmitReceipt: isSubmitReceipt(ctx),
       isPostCancelClearance: isPostCancelClearance(ctx),
     });
   }

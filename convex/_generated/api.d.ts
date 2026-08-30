@@ -73,6 +73,7 @@ import type * as lib_financial_obligations from "../lib/financial_obligations.js
 import type * as lib_financial_variance from "../lib/financial_variance.js";
 import type * as lib_follow_up_claim from "../lib/follow_up_claim.js";
 import type * as lib_h1_valuation from "../lib/h1_valuation.js";
+import type * as lib_hmrc_notification_catalogue from "../lib/hmrc_notification_catalogue.js";
 import type * as lib_hmrc_notification_parser from "../lib/hmrc_notification_parser.js";
 import type * as lib_hmrc_oauth from "../lib/hmrc_oauth.js";
 import type * as lib_hmrc_pull_runtime from "../lib/hmrc_pull_runtime.js";
@@ -199,6 +200,7 @@ declare const fullApi: ApiFromModules<{
   "lib/financial_variance": typeof lib_financial_variance;
   "lib/follow_up_claim": typeof lib_follow_up_claim;
   "lib/h1_valuation": typeof lib_h1_valuation;
+  "lib/hmrc_notification_catalogue": typeof lib_hmrc_notification_catalogue;
   "lib/hmrc_notification_parser": typeof lib_hmrc_notification_parser;
   "lib/hmrc_oauth": typeof lib_hmrc_oauth;
   "lib/hmrc_pull_runtime": typeof lib_hmrc_pull_runtime;

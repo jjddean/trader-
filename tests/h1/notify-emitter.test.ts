@@ -103,9 +103,9 @@ describe("notification event catalogue", () => {
       DMSQRY: "declaration.query_raised",
       DMSRCV: "declaration.received",
       DMSREJ: "declaration.rejected",
-      DMSREQ: "declaration.docs_requested",
+      DMSREQ: "declaration.response_required",
       DMSRES: "declaration.response_required",
-      DMSROG: "declaration.route_of_goods",
+      DMSROG: "declaration.goods_released",
       DMSSUB: "declaration.received",
       DMSTAX: "declaration.tax_assessed",
     };
@@ -124,7 +124,8 @@ describe("notification event catalogue", () => {
   it("normalises legacy numeric and FUNC notification types", () => {
     assert.equal(normalizeDmsType("4"), "DMSTAX");
     assert.equal(normalizeDmsType("67"), "DMSTAX");
-    assert.equal(normalizeDmsType("FUNC_11"), "DMSCLE");
+    assert.equal(normalizeDmsType("FUNC_11"), "DMSREQ");
+    assert.equal(normalizeDmsType("FUNC_09"), "DMSCLE");
     assert.equal(normalizeDmsType("dmsacc"), "DMSACC");
     assert.equal(normalizeDmsType(""), "UNKNOWN");
   });
@@ -150,7 +151,7 @@ describe("notification event catalogue", () => {
   it("keeps the DMS code visible in the title", () => {
     assert.equal(
       titleForNotification("declaration.rejected", "DMSREJ"),
-      "Declaration rejected (DMSREJ)",
+      "Rejected by HMRC (DMSREJ)",
     );
     assert.equal(titleForNotification("declaration.stuck", undefined), "No HMRC response received");
   });

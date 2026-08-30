@@ -49,6 +49,7 @@ import {
 import { followUpClaim } from "./lib/follow_up_claim";
 import { notify } from "./lib/notify";
 import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
+import { isH1DeclarationCategory } from "./lib/h1_valuation";
 
 type EstimateMethod = "tariff_measures" | "historical_fallback" | "hmrc_confirmed";
 
@@ -155,7 +156,8 @@ export function hmrcStatusForDeclaration(decl: any, notifications: any[]) {
   const latestType = notifications[0]?.notificationType;
   if (latestType === "DMSCLE") return { score: 100, status: "Clean" };
   if (latestType === "DMSACC") return { score: 85, status: "Accepted" };
-  if (latestType === "DMSROG") return { score: 60, status: "Action Required" };
+  if (latestType === "DMSRCV") return { score: 50, status: "Received" };
+  if (latestType === "DMSROG") return { score: 80, status: "Released" };
   if (latestType === "DMSREJ") return { score: 0, status: "Action Required" };
   if (latestType === "DMSINV") return { score: 0, status: "Action Required" };
   if (latestType === "DMSUB") return { score: 50, status: "Submitted" };
@@ -167,7 +169,7 @@ export function hmrcStatusForDeclaration(decl: any, notifications: any[]) {
   return { score: 0, status: "Pending" };
 }
 
-const HMRC_CONFIRMED_NOTIFICATION_TYPES = new Set(["DMSCLE", "DMSACC", "DMSROG", "DMSREJ", "DMSINV"]);
+const HMRC_CONFIRMED_NOTIFICATION_TYPES = new Set(["DMSCLE", "DMSACC", "DMSRCV", "DMSROG", "DMSREJ", "DMSINV"]);
 const HMRC_CONFIRMED_DECLARATION_STATUSES = new Set(["Cleared", "Accepted", "Rejected", "Invalid", "Action Required"]);
 
 function isHmrcConfirmedDeclaration(decl: any, notifications: any[]) {
@@ -819,15 +821,6 @@ async function resolveStatusAndBadge(
   };
 }
 
-async function effectiveDeclarationStatus(
-  ctx: Pick<QueryCtx, "db">,
-  declarationId: Id<"declarations">,
-  declaration: DeclarationStatusSource & { conversationId?: string | null },
-): Promise<string> {
-  const { status } = await resolveStatusAndBadge(ctx, declarationId, declaration);
-  return status;
-}
-
 async function recomputeDashboardSummaryByUser(ctx: any, userId: string) {
   const previews = await ctx.db
     .query("declaration_preview")
@@ -901,11 +894,12 @@ async function upsertDeclarationPreviewByDeclaration(
     items: items as Array<Record<string, unknown>>,
   });
 
-  const replayedStatus = await effectiveDeclarationStatus(ctx, declarationId, {
+  const replayed = await resolveStatusAndBadge(ctx, declarationId, {
     status: declaration.status,
     mrn: declaration.mrn,
     conversationId: declaration.conversationId,
   });
+  const replayedStatus = replayed.status;
 
   const financialFields =
     declarationUserId
@@ -947,6 +941,11 @@ async function upsertDeclarationPreviewByDeclaration(
     mrn: declaration.mrn ? String(declaration.mrn) : undefined,
     eori: declaration.eori ? String(declaration.eori) : undefined,
     declarationType: declaration.declarationType ? String(declaration.declarationType) : undefined,
+    declarationCategory: declaration.declarationCategory
+      ? String(declaration.declarationCategory)
+      : undefined,
+    cdsBadgeLabel: replayed.cdsBadgeLabel,
+    cdsBadgeTone: replayed.cdsBadgeTone,
     representationType: declaration.representationType ?? "self",
     completenessReady: completeness.ready,
     missingCount: completeness.missing.length,
@@ -965,6 +964,13 @@ async function upsertDeclarationPreviewByDeclaration(
     }
   } else {
     await ctx.db.insert("declaration_preview", nextPreview);
+  }
+
+  if (String(declaration.status ?? "") !== replayedStatus) {
+    await ctx.db.patch(declarationId, {
+      status: replayedStatus,
+      lastUpdated: Date.now(),
+    });
   }
 
   if (declarationUserId && financialFields.financialSource !== undefined) {
@@ -1959,8 +1965,12 @@ export const updateDeclarationDetails = mutation({
       ...(args.consigneeCountry !== undefined ? { consigneeCountry: args.consigneeCountry } : {}),
       ...(args.carrierEori !== undefined ? { carrierEori: args.carrierEori } : {}),
       ...(args.carrierName !== undefined ? { carrierName: args.carrierName } : {}),
-      ...(args.authorisationHolderEori !== undefined ? { authorisationHolderEori: args.authorisationHolderEori } : {}),
-      ...(args.authorisationCategoryCode !== undefined ? { authorisationCategoryCode: args.authorisationCategoryCode } : {}),
+      ...(args.authorisationHolderEori !== undefined
+        ? { authorisationHolderEori: args.authorisationHolderEori }
+        : {}),
+      ...(args.authorisationCategoryCode !== undefined
+        ? { authorisationCategoryCode: args.authorisationCategoryCode }
+        : {}),
       ...(args.transportChargesMethodOfPayment !== undefined ? { transportChargesMethodOfPayment: args.transportChargesMethodOfPayment } : {}),
       ...(args.exchangeRate !== undefined ? { exchangeRate: args.exchangeRate } : {}),
       ...(args.customsOfficeOfExit !== undefined ? { customsOfficeOfExit: args.customsOfficeOfExit } : {}),
@@ -2038,6 +2048,76 @@ export const backfillTransportAndMode = internalMutation({
     if (args.mode !== undefined) patch.mode = args.mode;
     await ctx.db.patch(args.id, patch);
     return { id: args.id, applied: patch };
+  },
+});
+
+// One-off data fix for the ordinary B1 test row FC-MTC2SF70, which stored CSE
+// after the arrived-export form labelled DE 3/39 as required. LRN is hardcoded
+// so this cannot clear any other declaration.
+export const clearAccidentalCseOnFcMtc2sf70 = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const TARGET_LRN = "FC-MTC2SF70";
+    const submission = await ctx.db
+      .query("submissions")
+      .withIndex("by_lrn", (q) => q.eq("lrn", TARGET_LRN))
+      .first();
+    if (!submission) {
+      throw userError("declaration_not_found", `No submission with LRN ${TARGET_LRN}`);
+    }
+    const existing = await ctx.db.get(submission.declarationId);
+    if (!existing) {
+      throw userError("declaration_not_found", `Declaration ${submission.declarationId} not found`);
+    }
+    const before = {
+      authorisationCategoryCode: String(existing.authorisationCategoryCode ?? ""),
+      authorisationHolderEori: String(existing.authorisationHolderEori ?? ""),
+    };
+    if (!before.authorisationCategoryCode && !before.authorisationHolderEori) {
+      return { id: existing._id, lrn: TARGET_LRN, cleared: false, before };
+    }
+    await ctx.db.patch(existing._id, {
+      authorisationCategoryCode: "",
+      authorisationHolderEori: "",
+      lastUpdated: Date.now(),
+    });
+    await upsertDeclarationPreviewByDeclaration(ctx, existing._id);
+    return { id: existing._id, lrn: TARGET_LRN, cleared: true, before };
+  },
+});
+
+// One-off: FC-MTCANEUD was EXA at ordinary 16C GBAUDVRDOVAPC (CDS12120).
+// Switch DE 1/2 to D. Do not touch CSE, location, or DE 2/3.
+export const setFcMtcaneudPreLodged = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const TARGET_LRN = "FC-MTCANEUD";
+    const submission = await ctx.db
+      .query("submissions")
+      .withIndex("by_lrn", (q) => q.eq("lrn", TARGET_LRN))
+      .first();
+    if (!submission) {
+      throw userError("declaration_not_found", `No submission with LRN ${TARGET_LRN}`);
+    }
+    const existing = await ctx.db.get(submission.declarationId);
+    if (!existing) {
+      throw userError("declaration_not_found", `Declaration ${submission.declarationId} not found`);
+    }
+    const before = {
+      additionalDeclarationType: String(existing.additionalDeclarationType ?? ""),
+      locationId: String(existing.locationId ?? ""),
+      authorisationCategoryCode: String(existing.authorisationCategoryCode ?? ""),
+      authorisationHolderEori: String(existing.authorisationHolderEori ?? ""),
+    };
+    if (before.additionalDeclarationType === "D") {
+      return { id: existing._id, lrn: TARGET_LRN, changed: false, before };
+    }
+    await ctx.db.patch(existing._id, {
+      additionalDeclarationType: "D",
+      lastUpdated: Date.now(),
+    });
+    await upsertDeclarationPreviewByDeclaration(ctx, existing._id);
+    return { id: existing._id, lrn: TARGET_LRN, changed: true, before };
   },
 });
 
@@ -2372,6 +2452,9 @@ export const getDeclarationPreviews = query({
         declarationType: declaration.declarationType
           ? String(declaration.declarationType)
           : undefined,
+        declarationCategory: declaration.declarationCategory
+          ? String(declaration.declarationCategory)
+          : undefined,
         representationType: declaration.representationType ?? "self",
         lastUpdated: Number(
           declaration.lastUpdated || declaration.created || declaration._creationTime || 0,
@@ -2384,11 +2467,20 @@ export const getDeclarationPreviews = query({
     const transportById = new Map(
       declarations.map((d) => [String(d._id), d.submissionTransport ?? undefined]),
     );
+    const categoryById = new Map(
+      declarations.map((d) => [
+        String(d._id),
+        d.declarationCategory ? String(d.declarationCategory) : undefined,
+      ]),
+    );
 
     return [...previews, ...missingPreviews]
       .map((preview) => ({
         ...preview,
         submissionTransport: transportById.get(String(preview.declarationId)),
+        declarationCategory:
+          categoryById.get(String(preview.declarationId)) ||
+          (preview as { declarationCategory?: string }).declarationCategory,
       }))
       .sort((a, b) => b.lastUpdated - a.lastUpdated);
   },
@@ -2646,5 +2738,42 @@ export const getFinancialRecords = query({
       records.push(...buildFinancialRecordsForDeclaration(decl, financials, payment));
     }
     return records;
+  },
+});
+
+export const confirmH1Method1Valuation = mutation({
+  args: {
+    id: v.id("declarations"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw unauthenticatedError();
+
+    const declaration = await ctx.db.get(args.id);
+    if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
+      throw forbiddenError();
+    }
+    if (!isH1DeclarationCategory(declaration)) {
+      throw userError(
+        "h1_method1_confirmation_h1_only",
+        "Method 1 confirmation applies to H1 declarations only.",
+      );
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(args.id, {
+      h1Method1ConfirmedAt: now,
+      h1Method1ConfirmedBy: identity.subject,
+      lastUpdated: now,
+    });
+    await ctx.db.insert("auditLogs", {
+      userId: identity.subject,
+      action: "h1_method1_valuation_confirmed",
+      details: { declarationId: args.id, confirmedAt: now },
+      timestamp: now,
+      archived: false,
+    });
+    await upsertDeclarationPreviewByDeclaration(ctx, args.id);
+    return { ok: true as const, confirmedAt: now };
   },
 });
