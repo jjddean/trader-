@@ -43,6 +43,9 @@ jobs:
       - name: H1 unit tests + golden XML
         run: npm run test:h1
 
+      - name: HMRC supporting evidence regressions
+        run: npm run test:evidence
+
       - name: TRE regressions
         run: npm run test:tre
 

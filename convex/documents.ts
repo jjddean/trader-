@@ -83,10 +83,16 @@ export const trackUpload = mutation({
     declarationId: v.id("declarations"),
     fileName: v.string(),
     fileSize: v.number(),
-    documentType: v.string(),
+    /** Optional: HMRC's DocumentType is optional and may legitimately be absent. */
+    documentType: v.optional(v.string()),
     uploadStatus: v.string(),
     hmrcUploadReference: v.optional(v.string()),
     hmrcConversationId: v.optional(v.string()),
+    /** Position in the HMRC upload group, for correlating outcome notifications. */
+    fileSequenceNo: v.optional(v.number()),
+    fileGroupSize: v.optional(v.number()),
+    /** DE 2/2 StatementCode of the documentary request this file answers. */
+    requestedStatementCode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -110,6 +116,9 @@ export const trackUpload = mutation({
       mrn: declaration.mrn,
       hmrcUploadReference: args.hmrcUploadReference,
       hmrcConversationId: args.hmrcConversationId,
+      fileSequenceNo: args.fileSequenceNo,
+      fileGroupSize: args.fileGroupSize,
+      requestedStatementCode: args.requestedStatementCode,
     });
   }
 });

@@ -1,6 +1,8 @@
 import {
+  buildFileUploadGroupRequestXml,
   buildFileUploadRequestXml,
   parseFileUploadResponse,
+  parseFileUploadResponseGroup,
   type ParsedFileUploadResponse,
 } from "./hmrc-file-upload";
 
@@ -50,4 +52,9 @@ export function parseInitiateResponse(bodyText: string): ParsedFileUploadRespons
   return parseFileUploadResponse(bodyText);
 }
 
-export { buildFileUploadRequestXml, parseFileUploadResponse };
+export {
+  buildFileUploadGroupRequestXml,
+  buildFileUploadRequestXml,
+  parseFileUploadResponse,
+  parseFileUploadResponseGroup,
+};
