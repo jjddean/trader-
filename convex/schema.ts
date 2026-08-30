@@ -303,6 +303,31 @@ export default defineSchema({
     exporterLine: v.optional(v.string()),
     exporterPostcode: v.optional(v.string()),
     exporterEori: v.optional(v.string()),
+    declarationCategory: v.optional(
+      v.union(v.literal("B1"), v.literal("C1"), v.literal("I1")),
+    ),
+    exporterCountry: v.optional(v.string()),
+    consigneeEori: v.optional(v.string()),
+    consigneeName: v.optional(v.string()),
+    consigneeCity: v.optional(v.string()),
+    consigneeLine: v.optional(v.string()),
+    consigneePostcode: v.optional(v.string()),
+    consigneeCountry: v.optional(v.string()),
+    carrierEori: v.optional(v.string()),
+    carrierName: v.optional(v.string()),
+    authorisationHolderEori: v.optional(v.string()),
+    authorisationCategoryCode: v.optional(v.string()),
+    transportChargesMethodOfPayment: v.optional(v.string()),
+    exchangeRate: v.optional(v.string()),
+    customsOfficeOfExit: v.optional(v.string()),
+    countriesOfRouting: v.optional(v.array(v.string())),
+    inlandTransportMode: v.optional(v.string()),
+    departureTransportId: v.optional(v.string()),
+    departureTransportIdType: v.optional(v.string()),
+    borderTransportId: v.optional(v.string()),
+    borderTransportIdType: v.optional(v.string()),
+    borderTransportNationality: v.optional(v.string()),
+    sealNumber: v.optional(v.string()),
     // DE 8/5 — GoodsShipment/TransactionNatureCode (WCOID 103).
     transactionNatureCode: v.optional(v.string()),
     // DE 2/6 — duty deferment account number (optional; surfaced on Financial Records).
@@ -322,6 +347,8 @@ export default defineSchema({
     authorityValidFrom: v.optional(v.number()),
     authorityValidTo: v.optional(v.number()),
     representationUpdatedAt: v.optional(v.number()),
+    h1Method1ConfirmedAt: v.optional(v.number()),
+    h1Method1ConfirmedBy: v.optional(v.string()),
     // The broker's client this declaration is filed for (the represented
     // trader). Optional — self-serve declarations have no separate client.
     clientId: v.optional(v.id("clients")),
@@ -464,6 +491,7 @@ export default defineSchema({
     supplementaryUnitCode: v.optional(v.string()),
     // DE 6/10 — number of packages. Mandatory per Appendix 21A H1.
     packageCount: v.optional(v.number()),
+    statisticalValue: v.optional(v.number()),
     // DE 6/9 — package type code (PK, BX, CT, etc.). Mandatory per Appendix 21A H1.
     packageType: v.optional(v.string()),
   }).index("by_declaration", ["declarationId"]).index("by_owner", ["ownerId"]),
@@ -565,6 +593,7 @@ export default defineSchema({
      * LRN prefixes are not: CNS follow-ups carry the original create LRN.
      */
     originatingOperation: v.optional(v.string()),
+    functionCode: v.optional(v.string()),
     errorCodes: v.optional(v.any()),
     fieldErrors: v.optional(v.any()),
     rawPayload: v.optional(v.any()),
@@ -672,6 +701,9 @@ export default defineSchema({
     mrn: v.optional(v.string()),
     eori: v.optional(v.string()),
     declarationType: v.optional(v.string()),
+    declarationCategory: v.optional(v.string()),
+    cdsBadgeLabel: v.optional(v.string()),
+    cdsBadgeTone: v.optional(v.string()),
     representationType: v.optional(
       v.union(v.literal("self"), v.literal("direct"), v.literal("indirect")),
     ),
