@@ -1,18 +1,9 @@
-# TDR access request (draft for SDST)
+# TDR access request (redirect)
 
-**When:** After `docs/hmrc/ARCHIVE/trade-test/pre-tdr-checklist.md` notification + API rows are complete in Trade Test.
+**Status:** ARCHIVED. Kept as a redirect only.
 
-**Email:** SDSTeam@HMRC.gov.uk (optional: TDRcommunications@hmrc.gov.uk for distribution list)
+This was a draft SDST email for requesting TDR access after Trade Test. It is not a current instruction.
 
-**Attach / link:**
+→ **Archive:** [`../../ARCHIVE/tdr-sdst-request.md`](../../ARCHIVE/tdr-sdst-request.md)
 
-- `docs/hmrc/ARCHIVE/trade-test/evidence/tt-evidence-pack/README.md` index
-- `docs/hmrc/ARCHIVE/trade-test/passing-payload.xml` or HMRC conversation ID for FC-MPYAJ7RN
-- Developer Hub application ID (sandbox + requested TDR app)
-
-**Confirm with SDST before coding TDR:**
-
-- API versions (Runbook slide 10 lists Declarations **1.0** + Pull Notifications **1.0** for TDR vs TT **2.0**)
-- Whether v2.0 Trade Test proof satisfies Pre-TDR without v1 TDR parity
-
-**Do not use TDR for:** performance testing, discovering basic XML mapping errors (Runbook slides 9, 24).
+TDR as an HMRC CDS environment: [`environment-matrix.md`](./environment-matrix.md)

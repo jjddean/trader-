@@ -69,7 +69,6 @@ Status line lives directly under the title: `ACTIVE` | `DONE` | `SUPERSEDED BY <
 |----------|------|
 | `docs/hmrc/ACTIVE/tdr/BACKLOG.md` | Live index for HMRC/TDR product and engineering work. A TDR plan it does not link is not current TDR work. |
 | `docs/hmrc/ACTIVE/tdr/EXPORT-COMPLETION-CHECKLIST.md` | B1 / C1 / I1 completion state (linked from BACKLOG) |
-| `docs/hmrc/ACTIVE/tdr/B1-STATE.md` | B1 live state (linked from BACKLOG) |
 | `docs/export-controls/BUILD-PLAN.md` | Export-controls module plan (ACTIVE; **not** on BACKLOG — see unresolved conflict) |
 | `docs/cns/plan/` | CNS inventory-linked import plan (ACTIVE; CNS launch sequence is also in `AGENTS.md`) |
 
