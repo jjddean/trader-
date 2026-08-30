@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import * as Sentry from "@sentry/nextjs";
 import { AlertTriangle, RefreshCw, Home } from "lucide-react";
 
 export default function GlobalError({
@@ -15,6 +16,7 @@ export default function GlobalError({
     // The only record of this crash. Nothing is shipped to a server-side sink,
     // so the copy below must not promise that it was — and the digest is
     // rendered in production because it is the sole handle a user can quote.
+    Sentry.captureException(error);
     console.error("Caught by Next.js Error Boundary:", error);
   }, [error]);
 

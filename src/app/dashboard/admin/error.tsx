@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import * as Sentry from "@sentry/nextjs";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { userMessageFromError, userErrorCode } from "@/lib/convex-errors";
 
@@ -23,6 +24,7 @@ export default function AdminError({
   reset: () => void;
 }) {
   useEffect(() => {
+    Sentry.captureException(error);
     console.error("Admin area error:", error);
   }, [error]);
 

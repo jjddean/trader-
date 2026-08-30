@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 /**
  * Content-Security-Policy, shipped REPORT-ONLY.
@@ -16,7 +17,7 @@ const CSP_REPORT_ONLY = [
   "style-src 'self' 'unsafe-inline' https://api.mapbox.com",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://*.clerk.accounts.dev https://clerk.freightcode.co.uk https://api.stripe.com https://api.mapbox.com https://events.mapbox.com",
+  "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://*.clerk.accounts.dev https://clerk.freightcode.co.uk https://api.stripe.com https://api.mapbox.com https://events.mapbox.com https://*.ingest.sentry.io https://*.ingest.de.sentry.io",
   "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com",
   "worker-src 'self' blob:",
   "object-src 'none'",
@@ -81,4 +82,11 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG || "freightcode",
+  project: process.env.SENTRY_PROJECT || "javascript-nextjs-z0",
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  tunnelRoute: "/monitoring",
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+});
