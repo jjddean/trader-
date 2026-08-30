@@ -8,6 +8,13 @@ import {
 } from "./payment-method";
 import { resolveCdsTypeCode } from "../../convex/lib/cds_type_code";
 import { resolveH1ValuationMethodCode } from "../../convex/lib/h1_valuation";
+import { resolveH1AdditionalProcedureCode, validateH1AdditionalProcedureCodes } from "./h1-additional-procedure";
+import { resolveH1InvoiceAmount, validateH1InvoiceTotal } from "./h1-invoice-total";
+import { resolveH1PreferenceCode, validateH1PreferenceCodes } from "./h1-preference";
+import { resolveH1ShippingMarks, validateH1ShippingMarks } from "./h1-shipping-marks";
+import { SUPPLEMENTARY_UNIT_CODE_PST, validateSupplementaryUnitRequirement } from "./supplementary-units";
+
+export { commodityRequiresSupplementaryUnit, SUPPLEMENTARY_UNIT_CODE_PST } from "./supplementary-units";
 
 // validateCdsFields was deleted. The submit route already runs evaluateRules
 // from convex/lib/rule_engine.ts before mapping — that is the single source
@@ -58,16 +65,6 @@ export function formatSupplementaryQty(value: unknown): string | null {
   return fixed.replace(/\.?0+$/, "") || "0";
 }
 
-/** UK tariff p/st → measurement unit code NAR (UK Tariff Data Standard). */
-export const SUPPLEMENTARY_UNIT_CODE_PST = "NAR";
-
-/** Commodity codes in active lane that require DE 6/2 per UK Integrated Online Tariff. */
-export const HS_REQUIRES_SUPPLEMENTARY_UNIT = new Set(["8471300000"]);
-
-export function commodityRequiresSupplementaryUnit(commodityCode: unknown): boolean {
-  const normalized = String(commodityCode ?? "").replace(/\D/g, "");
-  return HS_REQUIRES_SUPPLEMENTARY_UNIT.has(normalized);
-}
 
 // Strip ALL whitespace from transport identifiers (DE 7/9). CDS R123 rejects
 // vessel/wagon IDs containing spaces.
@@ -509,9 +506,19 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
   // Sums must come from real item data. No silent fallbacks: a zero-value or
   // zero-mass declaration must FAIL validation upstream, not be papered over
   // with magic 100/1000 placeholders that survive into CDS.
+  const mappingErrors = [
+    ...validateH1PreferenceCodes(items),
+    ...validateH1AdditionalProcedureCodes(items),
+    ...validateH1ShippingMarks(declaration, items),
+    ...validateH1InvoiceTotal(declaration, items),
+    ...validateSupplementaryUnitRequirement(items),
+  ];
+  if (mappingErrors.length) {
+    throw new Error(mappingErrors.join("; "));
+  }
+
   const totalGrossWeight = items.reduce((acc: number, item: any) => acc + (parseFloat(item.grossWeightKg) || 0), 0);
-  const itemValueSum = items.reduce((acc: number, item: any) => acc + (parseFloat(item.valueAmount) || 0), 0);
-  const invoiceTotal = parseFloat(String(declaration.invoiceTotal ?? "")) || itemValueSum;
+  const invoiceAmount = resolveH1InvoiceAmount(declaration, items);
   if (!declaration.eori || !declaration._id) {
     throw new Error("Declaration is missing eori or _id; cannot derive DUCR.");
   }
@@ -559,10 +566,14 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
       DeclarationOfficeID: declaration.presentationOffice || "",
       TotalGrossMassMeasure: formatMass(declaration.totalGrossWeight || totalGrossWeight),
       TotalPackageQuantity: items.reduce((acc: number, item: any) => acc + (parseInt(item.packageCount) || 0), 0),
-      InvoiceAmount: {
-        currencyID: declaration.invoiceCurrency || "",
-        value: formatAmount(invoiceTotal),
-      },
+      ...(invoiceAmount
+        ? {
+            InvoiceAmount: {
+              currencyID: invoiceAmount.currencyID,
+              value: formatAmount(invoiceAmount.value),
+            },
+          }
+        : {}),
       CurrencyExchange: {
         CurrencyTypeCode: declaration.invoiceCurrency || ""
       },
@@ -723,7 +734,7 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
               Classification: commodityClassifications(item.commodityCode || item.hsCode),
               DutyTaxFee: [
                 {
-                  DutyRegimeCode: item.preferenceCode || "100",
+                  DutyRegimeCode: resolveH1PreferenceCode(item, index),
                   TypeCode: "A00",
                   ...dutyTaxFeeMethod,
                 },
@@ -760,8 +771,10 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
             Packaging: [
               {
                 SequenceNumeric: "1",
-                // DE 6/11 — empty element rejected by local preflight + XSD; "N/A" matches lane evidence.
-                MarksNumbersID: String(item.shippingMarks || "").trim() || "N/A",
+                ...((): Record<string, string> => {
+                  const marks = resolveH1ShippingMarks(item, declaration);
+                  return marks ? { MarksNumbersID: marks } : {};
+                })(),
                 QuantityQuantity: item.packageCount || "",
                 TypeCode: item.packageType || ""
               }
@@ -796,13 +809,8 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
                   }]
                 : []),
               ...((() => {
-                const apc = String(item.additionalProcedureCode || "").trim();
-                // DE 1/11 additional procedure code. Include "000" explicitly — HMRC CDS
-                // requires it to declare nil additional procedure for CPC 4000.
-                // Omitting "000" introduces CDS11004 (procedure codes incomplete).
-                if (apc) return [{ CurrentCode: apc }];
-                // No additionalProcedureCode set at all — use "000" for CPC 4000 (nil).
-                return [{ CurrentCode: "000" }];
+                const apc = resolveH1AdditionalProcedureCode(item, index);
+                return [{ CurrentCode: apc }];
               })())
             ]
           };

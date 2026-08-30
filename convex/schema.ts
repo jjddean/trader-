@@ -368,6 +368,8 @@ export default defineSchema({
     authorityValidFrom: v.optional(v.number()),
     authorityValidTo: v.optional(v.number()),
     representationUpdatedAt: v.optional(v.number()),
+    // H1 DE 4/16 Method 1 confirmation. Required when consignment value
+    // exceeds £20,000 and representation is not self. Group 4 DE 4/16.
     h1Method1ConfirmedAt: v.optional(v.number()),
     h1Method1ConfirmedBy: v.optional(v.string()),
     // The broker's client this declaration is filed for (the represented
@@ -615,6 +617,7 @@ export default defineSchema({
      * LRN prefixes are not: CNS follow-ups carry the original create LRN.
      */
     originatingOperation: v.optional(v.string()),
+    /** HMRC Response FunctionCode, when parsed from rawPayload. */
     functionCode: v.optional(v.string()),
     errorCodes: v.optional(v.any()),
     fieldErrors: v.optional(v.any()),

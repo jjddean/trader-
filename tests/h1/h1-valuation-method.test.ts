@@ -82,6 +82,8 @@ function h1Items(overrides: Record<string, unknown> = {}) {
       originCountry: "DE",
       procedureCode: "4000",
       additionalProcedureCode: "000",
+      preferenceCode: "100",
+      requiresSupplementaryUnit: false,
       valueAmount: 5000,
       valueCurrency: "GBP",
       grossWeightKg: 120,

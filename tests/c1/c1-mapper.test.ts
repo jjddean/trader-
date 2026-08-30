@@ -52,6 +52,7 @@ const baseItems: Record<string, unknown>[] = [
     shippingMarks: "ACME-001",
     supplementaryUnitQty: 10,
     supplementaryUnitCode: "NAR",
+    requiresSupplementaryUnit: true,
     additionalDocuments: [{ CategoryCode: "N", TypeCode: "935", StatusCode: "AC", ID: "INV-1" }],
   },
 ];

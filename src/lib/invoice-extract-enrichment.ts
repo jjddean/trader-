@@ -16,6 +16,7 @@ export interface ExtractedInvoiceLine {
   netWeightKg?: unknown;
   supplementaryUnitQty?: unknown;
   quantity?: unknown;
+  requiresSupplementaryUnit?: boolean | null;
   packageCount?: unknown;
   packageType?: string;
   shippingMarks?: string;
@@ -86,10 +87,16 @@ export function enrichExtractedLine(
   if (grossWeightKg) out.grossWeightKg = grossWeightKg;
   if (netWeightKg) out.netWeightKg = netWeightKg;
 
-  const quantity = positiveNumber(line.supplementaryUnitQty ?? line.quantity);
-  if (commodityRequiresSupplementaryUnit(commodityCode) && quantity) {
-    out.supplementaryUnitQty = quantity;
+  const supplementaryUnitQty = positiveNumber(line.supplementaryUnitQty);
+  if (supplementaryUnitQty) {
+    out.supplementaryUnitQty = supplementaryUnitQty;
     out.supplementaryUnitCode = SUPPLEMENTARY_UNIT_CODE_PST;
+  } else if (commodityRequiresSupplementaryUnit(commodityCode, line)) {
+    const quantity = positiveNumber(line.quantity);
+    if (quantity) {
+      out.supplementaryUnitQty = quantity;
+      out.supplementaryUnitCode = SUPPLEMENTARY_UNIT_CODE_PST;
+    }
   }
 
   const procedureCode = String(line.procedureCode ?? "").trim();

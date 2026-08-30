@@ -1,6 +1,11 @@
-import { commodityRequiresSupplementaryUnit, validateOverseasExporter, validateTradeTerms, validateTransactionNatureCode } from "./wco-mapper";
+import { validateOverseasExporter, validateTradeTerms, validateTransactionNatureCode } from "./wco-mapper";
 import { validateGoodsLocationForSubmit } from "./goods-location";
 import { validateGoodsItemSequences } from "./submit-goods-items";
+import { validateH1AdditionalProcedureCodes } from "./h1-additional-procedure";
+import { validateH1InvoiceTotal } from "./h1-invoice-total";
+import { validateH1PreferenceCodes } from "./h1-preference";
+import { validateH1ShippingMarks } from "./h1-shipping-marks";
+import { validateSupplementaryUnitRequirement } from "./supplementary-units";
 
 export const DECLARATION_INCOMPLETE_ERROR = "Declaration incomplete";
 
@@ -16,6 +21,8 @@ type H1SubmitLane = {
   transportId?: string;
   transportIdType?: string;
   invoiceCurrency?: string;
+  invoiceTotal?: number | string;
+  additionalDeclarationType?: string;
   exporterName?: string;
   exporterCity?: string;
   exporterLine?: string;
@@ -29,11 +36,15 @@ type H1SubmitItem = {
   originCountry?: string;
   procedureCode?: string;
   additionalProcedureCode?: string;
+  preferenceCode?: string;
   valueAmount?: number | string;
+  valueCurrency?: string;
   grossWeightKg?: number | string;
   supplementaryUnitQty?: number | string;
+  requiresSupplementaryUnit?: boolean | null;
   packageType?: string;
   packageCount?: number | string;
+  shippingMarks?: string;
 };
 
 export function validateDeclaration(lane: H1SubmitLane, items: H1SubmitItem[]) {
@@ -60,7 +71,6 @@ export function validateDeclaration(lane: H1SubmitLane, items: H1SubmitItem[]) {
     if (!it?.description) errors.push(`Item ${i}: missing description`);
     if (!it?.originCountry) errors.push(`Item ${i}: missing origin (DE 5/15)`);
     if (!it?.procedureCode) errors.push(`Item ${i}: missing CPC (DE 1/10)`);
-    if (!it?.additionalProcedureCode) errors.push(`Item ${i}: missing additional procedure (DE 1/11)`);
     const v = parseFloat(String(it?.valueAmount ?? ""));
     if (!Number.isFinite(v) || v <= 0) errors.push(`Item ${i}: value must be > 0`);
     const g = parseFloat(String(it?.grossWeightKg ?? ""));
@@ -68,13 +78,12 @@ export function validateDeclaration(lane: H1SubmitLane, items: H1SubmitItem[]) {
     if (!it?.packageType) errors.push(`Item ${i}: missing package type (DE 6/9)`);
     const pc = parseInt(String(it?.packageCount ?? ""));
     if (!Number.isFinite(pc) || pc < 1) errors.push(`Item ${i}: package count must be >= 1`);
-    if (commodityRequiresSupplementaryUnit(it?.commodityCode)) {
-      const su = parseFloat(String(it?.supplementaryUnitQty ?? ""));
-      if (!Number.isFinite(su) || su <= 0) {
-        errors.push(`Item ${i}: supplementary units (DE 6/2, p/st) required for commodity ${it.commodityCode}`);
-      }
-    }
   }
+  errors.push(...validateSupplementaryUnitRequirement(items));
+  errors.push(...validateH1PreferenceCodes(items));
+  errors.push(...validateH1AdditionalProcedureCodes(items));
+  errors.push(...validateH1ShippingMarks(lane, items));
+  errors.push(...validateH1InvoiceTotal(lane, items));
   return errors;
 }
 

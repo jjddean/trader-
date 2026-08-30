@@ -43,6 +43,7 @@ const b1Items: Record<string, unknown>[] = [
     packageType: "PK",
     supplementaryUnitQty: 10,
     supplementaryUnitCode: "NAR",
+    requiresSupplementaryUnit: true,
   },
 ];
 
@@ -96,6 +97,7 @@ describe("validateI1SubmitGate — simplified import obligations at the route bo
       shippingMarks: "ACME-001",
       supplementaryUnitQty: 10,
       supplementaryUnitCode: "NAR",
+      requiresSupplementaryUnit: true,
       additionalDocuments: [{ CategoryCode: "N", TypeCode: "935", ID: "INV-1" }],
     },
   ];
@@ -131,8 +133,11 @@ describe("validateI1SubmitGate — simplified import obligations at the route bo
         .some((e) => e.includes("DE 5/23")),
     );
     assert.ok(
-      validateI1SubmitGate(i1Lane, [{ ...i1Items[0], supplementaryUnitQty: 0 }])
-        .some((e) => e.includes("DE 6/2")),
+      validateI1SubmitGate(i1Lane, [{
+        ...i1Items[0],
+        supplementaryUnitQty: 0,
+        requiresSupplementaryUnit: true,
+      }]).some((e) => e.includes("DE 6/2")),
     );
   });
 });
@@ -179,9 +184,25 @@ describe("validateB1SubmitGate — export obligations at the route boundary", ()
     assert.ok(errors.some((e) => e.includes("DE 5/23")));
   });
 
-  it("still enforces DE 6/2 supplementary units for commodities that need them", () => {
-    const errors = validateB1SubmitGate(b1Lane, [{ ...b1Items[0], supplementaryUnitQty: 0 }]);
+  it("still enforces DE 6/2 supplementary units when the tariff requirement is known", () => {
+    const errors = validateB1SubmitGate(b1Lane, [{
+      ...b1Items[0],
+      supplementaryUnitQty: 0,
+      requiresSupplementaryUnit: true,
+    }]);
     assert.ok(errors.some((e) => e.includes("DE 6/2")));
+  });
+
+  it("reports unknown DE 6/2 instead of treating 8471300000 as a hard-coded exception", () => {
+    const { requiresSupplementaryUnit: _flag, ...withoutFlag } = b1Items[0];
+    const unknown = validateB1SubmitGate(b1Lane, [{ ...withoutFlag, supplementaryUnitQty: 0 }]);
+    assert.ok(unknown.some((e) => e.includes("cannot be determined") && e.includes("8471300000")));
+    const knownNotRequired = validateB1SubmitGate(b1Lane, [{
+      ...b1Items[0],
+      requiresSupplementaryUnit: false,
+      supplementaryUnitQty: 0,
+    }]);
+    assert.equal(knownNotRequired.some((e) => e.includes("DE 6/2")), false);
   });
 
   it("rejects import-only fields reaching the export gate", () => {

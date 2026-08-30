@@ -19,7 +19,7 @@ import { validateC1Declaration } from "./c1-mapper";
 import { validateI1Declaration } from "./i1-mapper";
 import { validateGoodsLocationForSubmit } from "./goods-location";
 import { validateGoodsItemSequences } from "./submit-goods-items";
-import { commodityRequiresSupplementaryUnit } from "./wco-mapper";
+import { validateSupplementaryUnitRequirement } from "./supplementary-units";
 
 export type DeclarationCategory = "B1" | "C1" | "I1" | "H1";
 
@@ -64,17 +64,7 @@ function sharedGate(
   if (!Array.isArray(items) || items.length === 0) return errors;
 
   errors.push(...validateGoodsItemSequences(items as never));
-  items.forEach((item, i) => {
-    // DE 6/2 — supplementary units, driven by the commodity, not the category.
-    if (commodityRequiresSupplementaryUnit(item?.commodityCode)) {
-      const su = parseFloat(String(item?.supplementaryUnitQty ?? ""));
-      if (!Number.isFinite(su) || su <= 0) {
-        errors.push(
-          `Item ${i}: supplementary units (DE 6/2, p/st) required for commodity ${String(item.commodityCode)}`,
-        );
-      }
-    }
-  });
+  errors.push(...validateSupplementaryUnitRequirement(items));
   return errors;
 }
 

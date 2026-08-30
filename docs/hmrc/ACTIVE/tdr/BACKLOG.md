@@ -4,9 +4,7 @@
 **HMRC behaviour:** [`AGENT-SPEC.md`](./AGENT-SPEC.md) — this file does not override compliance rules.  
 **Merge gate (HMRC logic):** `npm run test:tdr` (`h1` + `b1` + `c1` + `i1` + `tre` + `tdr-dry-run`).  
 PR gate is `.github/workflows/tdr-regression.yml` (also unit, cns, portal, export-controls, consultant, `lint:security`, `tsc`, audit, build). `test:all` does not run b1/c1/i1.  
-**Last updated:** 2026-08-29
-
-**Do first:** remaining hard-code + Markdown repair — [`docs/dev/NEXT-HARDCODE-AND-MD.md`](../../../dev/NEXT-HARDCODE-AND-MD.md).
+**Last updated:** 2026-08-30
 
 Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) · [`FINANCIAL-ROADMAP.md`](./FINANCIAL-ROADMAP.md) (duty/variance domain) · [`evidence/LOG.md`](./evidence/LOG.md) (HMRC ops timeline) · [`PRODUCT-PROGRESS-LOG.md`](./PRODUCT-PROGRESS-LOG.md) (ship log)
 
@@ -35,7 +33,6 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 | [`FINANCIAL-ROADMAP.md`](./FINANCIAL-ROADMAP.md) | Duty estimates, variance, reclaim |
 | [`TRE-CSV-IMPORT-PLAN.md`](./TRE-CSV-IMPORT-PLAN.md) | User-facing TRE upload — phased plan |
 | [`EXPORT-COMPLETION-CHECKLIST.md`](./EXPORT-COMPLETION-CHECKLIST.md) | B1 / C1 / I1 — built; CDS clearance still open |
-| [`B1-STATE.md`](./B1-STATE.md) | B1 live state |
 | [`../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md`](../../FUTURE/CDS-EXPANSION-BUILD-PLAN.md) | SUPERSEDED — redirect → EXPORT-COMPLETION-CHECKLIST |
 | [`DELIVERY-PLAN.md`](./DELIVERY-PLAN.md) | SUPERSEDED — redirect → here |
 | [`PRODUCT-PROGRESS-LOG.md`](./PRODUCT-PROGRESS-LOG.md) | Chronological ship log (green ticks per deploy) |
@@ -77,6 +74,7 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 - [x] Ops security + backup docs (`security/OPS-*.md`)
 - [x] OAuth tokens redacted from browser queries
 - [x] Item value currency hardcoded GBP in mapper (DE 8/6)
+- [x] H1 silent invents removed (DE 4/17, 1/11, 6/2, 6/11, 4/11) — local, uncommitted — [`h1-operational-invariants.md`](./internal-guidance/h1-operational-invariants.md)
 
 ### Org / onboarding
 - [x] Clerk orgs + `orgId` scoping on declarations, docs, notifications
@@ -86,6 +84,7 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 - [x] Per-org HMRC routing (`org_hmrc_settings`, `resolveHmrcContext`, wired API routes)
 - [x] Connect HMRC in Settings + practice Test User panel
 - [x] Personal → org migration UI (`org_migration`)
+- [x] Hide Personal in org switcher for non-admins (`hidePersonal={dbUser?.role !== "admin"}`)
 
 ### Product / compliance
 - [x] HS lookup + Apply on declaration
@@ -98,6 +97,12 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 - [x] **Reports Accepted status** — customs reports show Accepted from read model
 - [x] **Settings tab stability** — Security tab no longer jumps layout on select
 - [x] **Slate dashboard UI polish** — tables, admin pages, declaration workspace styling
+- [x] Dashboard duty KPIs — home reads `declaration_preview`
+- [x] Declarations list status badges — `resolveDeclarationRowBadge`
+- [x] Practice banner → test-environment guide (`PracticeModeGuideModalLink`)
+- [x] Homepage honesty pass — `landing-page-content.tsx`
+- [x] Variance vs DMSTAX — `financial-estimate.ts` + `pre-clearance-estimate.tsx`
+- [x] B1 / C1 / I1 mappers and `test:tdr` category scripts
 
 ## P0 — next (pilot customers + audit)
 
@@ -105,8 +110,7 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 |---|------|-----------|
 | 1 | **Pilot runbook** | One-page: sign up → Test User → submit → pull notifications |
 | 2 | **Deploy Convex + Vercel sandbox** | `HMRC_ENVIRONMENT=sandbox`, `NEXT_PUBLIC_HMRC_ENV=tdr` on production |
-| 3 | **Legacy migration + hide Personal** | Migrate personal rows; hide Personal in org switcher after migrate |
-| 4 | **Finish multi-item TDR smoke** | 2+ items DMSACC on sandbox (GBP fix landed) |
+| 4 | **Finish multi-item TDR smoke** | 2+ items DMSACC on sandbox |
 
 ---
 
@@ -114,16 +118,11 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 
 | # | Item | Done when |
 |---|------|-----------|
-| 8 | Dashboard duty KPIs | Charts read `declaration_preview` / analytics |
 | 9 | Active lane DE mapping audit | HS 8471300000 lane vs `mapping/` + `passing-payload.xml` |
 | 10 | Playwright smoke | CI: Clerk sign-in → open declaration → dry-run |
 | 11 | Document upload evidence | Full initiate → S3 POST on Vercel; row in `evidence/LOG.md` |
 | 12 | `DEVELOPER-HUB-COMPLIANCE.md` | One-page Hub ToU + fraud headers mapping |
 | 13 | `AI-GOVERNANCE.md` | Scope, prohibitions, pen-test checklist sync |
-| 14 | Declarations list status badges | Accepted / Amended / Cancelled from read model |
-| 15 | Banner link to customer guide | Optional: add `/docs` or guide link on `PracticeModeBanner` |
-| 16 | ~~**TRE CSV import (Phase 1)**~~ | **Done** — see ship log 2026-06-23 (`d6b58cf`) |
-| 17 | ~~**Homepage honesty pass**~~ | Done — `landing-page-content.tsx` aligned to shipped CDS workflow |
 
 ---
 
@@ -144,7 +143,7 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 | # | Item | Status |
 |---|------|--------|
 | F1 | DAN + duty parser + tariff refresh + pre-clearance estimates | Done |
-| F2 | Variance alerts (estimate vs DMSTAX) | Next |
+| F2 | Variance alerts (estimate vs DMSTAX) | Done |
 | F3 | Potential reclaim tracker (C285 flag only) | Pending |
 
 ---
@@ -156,12 +155,6 @@ Related: [`CUSTOMER-TDR-GUIDE.md`](./CUSTOMER-TDR-GUIDE.md) (customer language) 
 - TRE Phase 3+ (R2 bulk, email-forward ingest) — after Phase 1–2 in [`TRE-CSV-IMPORT-PLAN.md`](./TRE-CSV-IMPORT-PLAN.md)
 - Dual HMRC webhook tokens (sandbox + production Hub apps) — optional ops hardening
 - Enterprise SSO beyond Clerk orgs
-
----
-
-## Open decision (Jason)
-
-**Legacy Personal workspace:** migrate personal rows into org once, then hide Personal switcher — **agreed target**. Migration UI exists; run when ready.
 
 ---
 
