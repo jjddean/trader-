@@ -225,4 +225,18 @@ body {
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
   --animate-pulse: pulse var(--duration) ease-out infinite;
+
+  --text-6xs: 0.4375rem; /* 7px */
+  --text-5xs: 0.5rem; /* 8px */
+  --text-4xs: 0.5625rem; /* 9px */
+  --text-3xs: 0.625rem; /* 10px */
+  --text-2xs: 0.6875rem; /* 11px */
+  --text-2sm: 0.8125rem; /* 13px */
+  --text-md: 0.9375rem; /* 15px */
+  --text-base-lg: 1.0625rem; /* 17px */
+  --text-xl-lg: 1.375rem; /* 22px */
+  --text-3xl-sm: 2rem; /* 32px */
+  --text-3xl-md: 2.125rem; /* 34px */
+  --text-4xl-lg: 2.5rem; /* 40px */
+  --text-4xl-xl: 2.75rem; /* 44px */
 }

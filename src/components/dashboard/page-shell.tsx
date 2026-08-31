@@ -114,7 +114,7 @@ export function MetricStrip({
           <p className={ds.metricLabel}>{item.label}</p>
           <p className={ds.metricValue}>{item.value}</p>
           {item.hint ? (
-            <p className="text-muted-foreground mt-1 text-[11px]">{item.hint}</p>
+            <p className="text-muted-foreground mt-1 text-2xs">{item.hint}</p>
           ) : null}
         </div>
       ))}
@@ -254,7 +254,7 @@ export function FinanceBadge({
   children?: React.ReactNode;
 }) {
   return (
-    <Badge className={cn("text-[10px] font-normal", financeBadgeClass(verified), className)}>
+    <Badge className={cn("text-3xs font-normal", financeBadgeClass(verified), className)}>
       {children ?? (verified ? "Verified" : "Meta")}
     </Badge>
   );
