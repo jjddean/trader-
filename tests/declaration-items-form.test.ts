@@ -19,6 +19,7 @@ function row(overrides: Partial<GoodsItemFormRow> = {}): GoodsItemFormRow {
     valueAmount: "1000",
     procedureCode: "4000",
     additionalProcedureCode: "000",
+    preferenceCode: "100",
     grossWeightKg: "12",
     netWeightKg: "10",
     supplementaryUnitQty: "4",
@@ -53,6 +54,11 @@ describe("items form — field errors", () => {
     assert.equal(itemErrors(row({ valueAmount: "n/a" })).valueAmount, "Must be a number.");
     assert.equal(itemErrors(row({ procedureCode: "" })).procedureCode, "Procedure code is required.");
     assert.equal(itemErrors(row({ grossWeightKg: "" })).grossWeightKg, "Gross weight is required.");
+  });
+
+  it("requires a three-digit preference", () => {
+    assert.equal(itemErrors(row({ preferenceCode: "" })).preferenceCode, "Preference is required.");
+    assert.equal(itemErrors(row({ preferenceCode: "10" })).preferenceCode, "Three digits.");
   });
 });
 
@@ -106,6 +112,7 @@ describe("items form — hydrate and AI documents", () => {
         _id: "abcdefghijklmnopqrst",
         description: "Widget",
         originCountry: "cn",
+        preferenceCode: "100",
         additionalDocuments: [
           { CategoryCode: "N", TypeCode: "935", ID: "INV-1" },
           { categoryCode: "N", typeCode: "271", id: "PL-1" },
@@ -115,6 +122,7 @@ describe("items form — hydrate and AI documents", () => {
     );
     assert.equal(mapped.key, "abcdefghijklmnopqrst");
     assert.equal(mapped.originCountry, "CN");
+    assert.equal(mapped.preferenceCode, "100");
     assert.deepEqual(mapped.docs, [
       { code: "N935", ref: "INV-1" },
       { code: "N271", ref: "PL-1" },

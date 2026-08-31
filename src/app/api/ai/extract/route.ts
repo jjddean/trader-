@@ -95,6 +95,7 @@ export async function POST(request: Request) {
           - "valueCurrency": (string, 3-letter currency code, e.g. "USD", "GBP", "EUR")
           - "procedureCode": (string, 4-digit CPC / requested procedure code if stated, otherwise empty string)
           - "additionalProcedureCode": (string, 3-digit additional procedure code if stated, otherwise empty string)
+          - "preferenceCode": (string, 3-digit preference / DE 4/17 if stated, otherwise empty string — do NOT default to 100)
           - "grossWeightKg": (number, gross weight in kilograms if stated for the line item or shipment, otherwise null)
           - "netWeightKg": (number, net weight in kilograms if stated for the line item or shipment, otherwise null)
           - "supplementaryUnitQty": (number, number of items / pieces if stated, otherwise null)

@@ -12,6 +12,7 @@ export interface ExtractedInvoiceLine {
   valueCurrency?: string;
   procedureCode?: string;
   additionalProcedureCode?: string;
+  preferenceCode?: string;
   grossWeightKg?: unknown;
   netWeightKg?: unknown;
   supplementaryUnitQty?: unknown;
@@ -31,12 +32,14 @@ export interface EnrichedGoodsItemPayload {
   originCountry?: string;
   procedureCode?: string;
   additionalProcedureCode?: string;
+  preferenceCode?: string;
   valueAmount?: number;
   valueCurrency?: string;
   grossWeightKg?: number;
   netWeightKg?: number;
   supplementaryUnitQty?: number;
   supplementaryUnitCode?: string;
+  requiresSupplementaryUnit?: boolean;
   packageCount?: number;
   packageType?: string;
   shippingMarks?: string;
@@ -91,18 +94,22 @@ export function enrichExtractedLine(
   if (supplementaryUnitQty) {
     out.supplementaryUnitQty = supplementaryUnitQty;
     out.supplementaryUnitCode = SUPPLEMENTARY_UNIT_CODE_PST;
+    out.requiresSupplementaryUnit = true;
   } else if (commodityRequiresSupplementaryUnit(commodityCode, line)) {
     const quantity = positiveNumber(line.quantity);
     if (quantity) {
       out.supplementaryUnitQty = quantity;
       out.supplementaryUnitCode = SUPPLEMENTARY_UNIT_CODE_PST;
+      out.requiresSupplementaryUnit = true;
     }
   }
 
   const procedureCode = String(line.procedureCode ?? "").trim();
   const additionalProcedureCode = String(line.additionalProcedureCode ?? "").trim();
+  const preferenceCode = String(line.preferenceCode ?? "").trim();
   if (procedureCode) out.procedureCode = procedureCode;
   if (additionalProcedureCode) out.additionalProcedureCode = additionalProcedureCode;
+  if (preferenceCode) out.preferenceCode = preferenceCode;
 
   const packageCount = positiveNumber(line.packageCount);
   const packageType = String(line.packageType ?? "").trim().toUpperCase();

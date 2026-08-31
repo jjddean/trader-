@@ -508,8 +508,11 @@ export default defineSchema({
     additionalDocuments: v.optional(v.any()),
     additionalProcedureCode: v.optional(v.any()),
     shippingMarks: v.optional(v.any()),
+    // DE 4/17 — Preference. Mandatory on H1. Never invented.
+    preferenceCode: v.optional(v.string()),
     // DE 6/2 — supplementary units (TariffQuantity). Required when tariff instructs (e.g. 8471300000 → p/st).
     supplementaryUnitQty: v.optional(v.number()),
+    requiresSupplementaryUnit: v.optional(v.boolean()),
     // Appendix 20 / UK Tariff Data Standard: NAR = number of items (p/st).
     supplementaryUnitCode: v.optional(v.string()),
     // DE 6/10 — number of packages. Mandatory per Appendix 21A H1.

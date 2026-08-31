@@ -23,15 +23,14 @@ import { ApiError, userMessageFromError } from "@/lib/convex-errors";
 import {
   type DocSlot,
   type GoodsItemFormRow as Item,
-  buildExtractedDocuments,
   itemErrors,
   looksLikeConvexId,
   mapGoodsItem,
   parseNumber,
   parsePositiveInteger,
-  parsePositiveNumber,
   slotsToValidDocs,
 } from "@/lib/declaration-items-form";
+import { enrichExtractedLine } from "@/lib/invoice-extract-enrichment";
 import {
   AlertBanner,
   ds,
@@ -50,6 +49,7 @@ const BLANK: Omit<Item, "key"> = {
   valueAmount: "",
   procedureCode: "",
   additionalProcedureCode: "",
+  preferenceCode: "",
   grossWeightKg: "",
   netWeightKg: "",
   supplementaryUnitQty: "",
@@ -242,6 +242,7 @@ export default function GoodsItemsPage() {
     fields.originCountry = r.originCountry.trim().toUpperCase();
     fields.procedureCode = r.procedureCode.trim();
     fields.additionalProcedureCode = r.additionalProcedureCode.trim();
+    fields.preferenceCode = r.preferenceCode.trim();
     fields.shippingMarks = r.shippingMarks.trim();
     fields.packageType = r.packageType.trim().toUpperCase();
 
@@ -258,6 +259,7 @@ export default function GoodsItemsPage() {
     if (supplementaryUnitQty != null) {
       fields.supplementaryUnitQty = supplementaryUnitQty;
       fields.supplementaryUnitCode = "NAR";
+      fields.requiresSupplementaryUnit = true;
     }
     const packageCount = parsePositiveInteger(r.packageCount);
     if (packageCount != null) fields.packageCount = packageCount;
@@ -325,44 +327,12 @@ export default function GoodsItemsPage() {
       if (data.items && Array.isArray(data.items)) {
         for (let i = 0; i < data.items.length; i++) {
           const item = data.items[i] as Record<string, unknown>;
-          const payload: AddItemArgs = {
+          const enriched = enrichExtractedLine(item);
+          await addItem({
             declarationId,
             sequenceNumber: (items?.length || 0) + i + 1,
-          };
-          const cc = String(item.commodityCode || "").trim();
-          const desc = String(item.description || "").trim();
-          const origin = String(item.originCountry || "").trim().toUpperCase();
-          const cpc = String(item.procedureCode || "").trim();
-          const additionalProcedureCode = String(item.additionalProcedureCode || "").trim();
-          const currency = String(item.valueCurrency || "").trim().toUpperCase();
-          const packageType = String(item.packageType || "").trim().toUpperCase();
-          const shippingMarks = String(item.shippingMarks || "").trim();
-          const valueAmount = parsePositiveNumber(item.valueAmount);
-          const grossWeightKg = parsePositiveNumber(item.grossWeightKg);
-          const netWeightKg = parsePositiveNumber(item.netWeightKg);
-          const supplementaryUnitQty = parsePositiveInteger(item.supplementaryUnitQty);
-          const packageCount = parsePositiveInteger(item.packageCount);
-          const additionalDocuments = buildExtractedDocuments(item);
-
-          if (cc) payload.commodityCode = cc;
-          if (desc) payload.description = desc;
-          if (origin) payload.originCountry = origin;
-          if (cpc) payload.procedureCode = cpc;
-          if (additionalProcedureCode) payload.additionalProcedureCode = additionalProcedureCode;
-          if (valueAmount != null) payload.valueAmount = valueAmount;
-          if (currency) payload.valueCurrency = currency;
-          if (grossWeightKg != null) payload.grossWeightKg = grossWeightKg;
-          if (netWeightKg != null) payload.netWeightKg = netWeightKg;
-          if (supplementaryUnitQty != null) {
-            payload.supplementaryUnitQty = supplementaryUnitQty;
-            payload.supplementaryUnitCode = "NAR";
-          }
-          if (packageCount != null) payload.packageCount = packageCount;
-          if (packageType) payload.packageType = packageType;
-          if (shippingMarks) payload.shippingMarks = shippingMarks;
-          if (additionalDocuments.length > 0) payload.additionalDocuments = additionalDocuments;
-
-          await addItem(payload);
+            ...enriched,
+          });
         }
       }
     } catch (err: unknown) {
@@ -616,6 +586,26 @@ export default function GoodsItemsPage() {
                     value={it.additionalProcedureCode}
                     onChange={(e) => patch(it.key, "additionalProcedureCode", e.target.value.toUpperCase())}
                     placeholder="000"
+                    className="font-mono"
+                  />
+                </ItemField>
+
+                <ItemField
+                  span="md:col-span-2"
+                  id={`${it.key}-pref`}
+                  label="Preference"
+                  de="DE 4/17"
+                  required
+                  error={errs.preferenceCode}
+                >
+                  <Input
+                    id={`${it.key}-pref`}
+                    value={it.preferenceCode}
+                    onChange={(e) => patch(it.key, "preferenceCode", e.target.value.replace(/\D/g, "").slice(0, 3))}
+                    onBlur={() => setTouched(true)}
+                    aria-invalid={Boolean(errs.preferenceCode)}
+                    placeholder="e.g. 100"
+                    inputMode="numeric"
                     className="font-mono"
                   />
                 </ItemField>

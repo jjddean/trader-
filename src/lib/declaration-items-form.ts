@@ -1,3 +1,5 @@
+import { isValidH1PreferenceCode } from "@/lib/h1-preference";
+
 export type AdditionalDocumentInput = {
   CategoryCode: string;
   TypeCode: string;
@@ -15,6 +17,7 @@ export type GoodsItemFormRow = {
   valueAmount: string;
   procedureCode: string;
   additionalProcedureCode: string;
+  preferenceCode: string;
   grossWeightKg: string;
   netWeightKg: string;
   supplementaryUnitQty: string;
@@ -39,6 +42,8 @@ export function itemErrors(it: GoodsItemFormRow): Record<string, string> {
   if (!it.valueAmount.trim()) e.valueAmount = "Value is required.";
   else if (Number.isNaN(Number(it.valueAmount))) e.valueAmount = "Must be a number.";
   if (!it.procedureCode.trim()) e.procedureCode = "Procedure code is required.";
+  if (!it.preferenceCode.trim()) e.preferenceCode = "Preference is required.";
+  else if (!isValidH1PreferenceCode(it.preferenceCode)) e.preferenceCode = "Three digits.";
   if (!it.grossWeightKg.trim()) e.grossWeightKg = "Gross weight is required.";
   return e;
 }
@@ -129,6 +134,7 @@ export function mapGoodsItem(raw: Record<string, unknown>, index: number): Goods
     valueAmount: g(raw, "valueAmount"),
     procedureCode: g(raw, "procedureCode"),
     additionalProcedureCode: g(raw, "additionalProcedureCode"),
+    preferenceCode: g(raw, "preferenceCode"),
     grossWeightKg: g(raw, "grossWeightKg"),
     netWeightKg: g(raw, "netWeightKg"),
     supplementaryUnitQty: g(raw, "supplementaryUnitQty"),
