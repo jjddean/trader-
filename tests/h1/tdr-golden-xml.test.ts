@@ -45,15 +45,17 @@ const tdrPassingItems = [
     originCountry: "DE",
     procedureCode: "4000",
     additionalProcedureCode: "000",
+    preferenceCode: "100",
     valueAmount: 5000,
     valueCurrency: "GBP",
     grossWeightKg: 120,
     netWeightKg: 110,
     supplementaryUnitQty: 10,
     supplementaryUnitCode: "NAR",
+    requiresSupplementaryUnit: true,
     packageCount: 1,
     packageType: "PK",
-    shippingMarks: "N/A",
+    shippingMarks: "CARTON-001",
     additionalDocuments: [
       { CategoryCode: "N", TypeCode: "935", StatusCode: "AC", ID: "TEST-INV-2026-0428-001" },
       { CategoryCode: "N", TypeCode: "271", StatusCode: "AC", ID: "TEST-PL-2026-0428-001" },
@@ -100,7 +102,8 @@ describe("TDR v1 golden XML regression", () => {
       xml
         .replace(/<Name>[^<]*<\/Name>/g, "<Name>EXPORTER</Name>")
         .replace(/<CityName>[^<]*<\/CityName>/g, "<CityName>CITY</CityName>")
-        .replace(/<Line>[^<]*<\/Line>/g, "<Line>LINE</Line>");
+        .replace(/<Line>[^<]*<\/Line>/g, "<Line>LINE</Line>")
+        .replace(/<MarksNumbersID>[^<]*<\/MarksNumbersID>/g, "<MarksNumbersID>MARKS</MarksNumbersID>");
 
     assert.equal(
       normalizeExporter(withoutLegacyOffice(generated)),

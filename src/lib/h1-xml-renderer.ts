@@ -1,4 +1,5 @@
 import { xmlEscape } from "./xml-utils";
+import { findOverLengthValues } from "./wco-max-lengths";
 
 type XmlRecord = Record<string, unknown>;
 
@@ -28,25 +29,34 @@ export function validateXmlPreflight(
     has_goods_shipment: xmlPayload.includes("<GoodsShipment>"),
     has_previous_document: xmlPayload.includes("<PreviousDocument>"),
     no_y922: !xmlPayload.includes("<TypeCode>922</TypeCode>"),
-    no_empty_tags: !/<([A-Za-z][\w]*)\s*>\s*<\/\1>/.test(xmlPayload),
-    // N/A is valid in DE 6/11 MarksNumbersID (see trade-test scenario XML evidence).
-    no_placeholders: (() => {
-      const withoutAllowedMarks = xmlPayload.replace(
-        /<MarksNumbersID>N\/A<\/MarksNumbersID>/g,
-        "",
-      );
-      return !/(>\s*N\/A\s*<|>\s*TBD\s*<|>\s*PENDING-|>\s*General goods\s*<)/i.test(withoutAllowedMarks);
-    })(),
+    // Attributes included: every measure carries unitCode and every amount
+    // currencyID, so the original pattern could not see the elements most
+    // likely to be empty. HMRC rejects those as an invalid decimal.
+    no_empty_tags: !/<([A-Za-z][\w]*)(?:\s[^>]*)?>\s*<\/\1>/.test(xmlPayload),
+    no_placeholders: !/(>\s*N\/A\s*<|>\s*TBD\s*<|>\s*PENDING-|>\s*General goods\s*<)/i.test(xmlPayload),
   };
   if (requireAdditionalDocument) {
     checks.has_additional_document = xmlPayload.includes("<AdditionalDocument>");
   }
+  // Schema value lengths. HMRC validates these before CDS reads the
+  // declaration, and rejects the whole message with no notification and no
+  // MRN — so an over-length postcode looks identical to silence.
+  const overLength = findOverLengthValues(xmlPayload);
+  checks.within_schema_lengths = overLength.length === 0;
+
   const failed = Object.entries(checks)
     .filter(([, ok]) => !ok)
-    .map(([key]) => key);
+    .map(([key]) =>
+      key === "within_schema_lengths"
+        ? `within_schema_lengths: ${overLength
+            .map((f) => `${f.element} is ${f.length} characters, schema allows ${f.maxLength} ("${f.value}")`)
+            .join("; ")}`
+        : key,
+    );
   return {
     valid: failed.length === 0,
     failed,
+    overLength,
   };
 }
 
@@ -224,7 +234,14 @@ export function renderH1Xml(payloadInfo: unknown): string {
     <FunctionalReferenceID>${xmlEscape(d.FunctionalReferenceID)}</FunctionalReferenceID>
     <TypeCode>${xmlEscape(d.TypeCode)}</TypeCode>
     <GoodsItemQuantity>${xmlEscape(d.GoodsItemQuantity)}</GoodsItemQuantity>
-    ${String(d.DeclarationOfficeID || "").trim() ? `<DeclarationOfficeID>${xmlEscape(d.DeclarationOfficeID)}</DeclarationOfficeID>\n    ` : ""}<InvoiceAmount currencyID="${xmlEscape(read(d, "InvoiceAmount").currencyID)}">${xmlEscape(read(d, "InvoiceAmount").value)}</InvoiceAmount>
+    ${String(d.DeclarationOfficeID || "").trim() ? `<DeclarationOfficeID>${xmlEscape(d.DeclarationOfficeID)}</DeclarationOfficeID>\n    ` : ""}${(() => {
+      const invoice = read(d, "InvoiceAmount");
+      const invoiceValue = invoice.value == null ? "" : String(invoice.value).trim();
+      const invoiceCurrency = String(invoice.currencyID ?? "").trim();
+      return invoiceValue
+        ? `<InvoiceAmount currencyID="${xmlEscape(invoiceCurrency)}">${xmlEscape(invoiceValue)}</InvoiceAmount>`
+        : "";
+    })()}
     <TotalGrossMassMeasure unitCode="KGM">${xmlEscape(d.TotalGrossMassMeasure)}</TotalGrossMassMeasure>
     <TotalPackageQuantity>${xmlEscape(d.TotalPackageQuantity)}</TotalPackageQuantity>${declarationAdditionalDocsXml}${agentXml}${borderTransportMeansXml}
     <Declarant>
@@ -321,22 +338,18 @@ export function renderH1Xml(payloadInfo: unknown): string {
             <ID>${xmlEscape(classification.ID)}</ID>
             <IdentificationTypeCode>${xmlEscape(classification.IdentificationTypeCode)}</IdentificationTypeCode>
           </Classification>`).join("");
-        // DE 4/3 — Duty Regime Code. "100" = standard MFN (third-country) duty rate.
-        // Mandatory for H1 IMA: absence triggers CDS12070 cascade across GovernmentProcedure,
-        // CustomsValuation, InvoiceLine, and ValuationAdjustment pointers.
+        // DE 4/17 — Duty Regime Code. Emit only the mapped value; do not invent 100.
         const dutyTaxFees = asArray(commodity.DutyTaxFee);
         const primaryDutyTaxFee = dutyTaxFees[0] ?? read(commodity, "DutyTaxFee");
-        const dutyRegimeCode = String(primaryDutyTaxFee.DutyRegimeCode || "100");
         const dutyTaxFeeXml = (dutyTaxFees.length > 0 ? dutyTaxFees : [primaryDutyTaxFee, { TypeCode: "B00" }])
           .map((fee) => {
             const typeCode = String(fee.TypeCode || "").trim();
             if (!typeCode) return "";
+            const regimeCode = String(fee.DutyRegimeCode ?? "").trim();
             const regimeXml =
-              typeCode === "A00" && fee.DutyRegimeCode
-                ? `\n            <DutyRegimeCode>${xmlEscape(String(fee.DutyRegimeCode))}</DutyRegimeCode>`
-                : typeCode === "A00"
-                  ? `\n            <DutyRegimeCode>${xmlEscape(dutyRegimeCode)}</DutyRegimeCode>`
-                  : "";
+              typeCode === "A00" && regimeCode
+                ? `\n            <DutyRegimeCode>${xmlEscape(regimeCode)}</DutyRegimeCode>`
+                : "";
             const methodXml = fee.MethodCode
               ? `\n            <MethodCode>${xmlEscape(String(fee.MethodCode))}</MethodCode>`
               : "";
@@ -354,9 +367,7 @@ export function renderH1Xml(payloadInfo: unknown): string {
           ? `\n          <InvoiceLine><ItemChargeAmount currencyID="${xmlEscape(String(invoiceLineAmt.currencyID || "GBP"))}">${xmlEscape(invoiceLineAmt.value)}</ItemChargeAmount></InvoiceLine>`
           : "";
         const procedures = asArray(item.GovernmentProcedure);
-        const packaging = asArray(item.Packaging)[0]
-          ? asArray(item.Packaging)[0]
-          : { SequenceNumeric: "1", MarksNumbersID: "N/A", QuantityQuantity: "1", TypeCode: "PK" };
+        const packaging = asArray(item.Packaging)[0] ?? {};
         const marksNumbersId = String(packaging.MarksNumbersID || "").trim();
         const marksNumbersXml = marksNumbersId
           ? `\n          <MarksNumbersID>${xmlEscape(marksNumbersId)}</MarksNumbersID>`
@@ -364,6 +375,13 @@ export function renderH1Xml(payloadInfo: unknown): string {
         const origin = read(item, "Origin");
         const originXml = origin.CountryCode
           ? `\n        <Origin>\n          <CountryCode>${xmlEscape(origin.CountryCode)}</CountryCode>\n          <TypeCode>${xmlEscape(origin.TypeCode || "1")}</TypeCode>\n        </Origin>`
+          : "";
+        const valuationMethodCode = String(read(item, "CustomsValuation").MethodCode || "").trim();
+        const customsValuationXml = valuationMethodCode
+          ? `
+        <CustomsValuation>
+          <MethodCode>${xmlEscape(valuationMethodCode)}</MethodCode>
+        </CustomsValuation>`
           : "";
         return `
       <GovernmentAgencyGoodsItem>
@@ -379,10 +397,7 @@ export function renderH1Xml(payloadInfo: unknown): string {
             <GrossMassMeasure unitCode="KGM">${xmlEscape(goodsMeasure.GrossMassMeasure || 0)}</GrossMassMeasure>
             <NetNetWeightMeasure unitCode="KGM">${xmlEscape(goodsMeasure.NetNetWeightMeasure || 0)}</NetNetWeightMeasure>${tariffQtyXml}
           </GoodsMeasure>${invoiceLineXml}
-        </Commodity>
-        <CustomsValuation>
-          <MethodCode>${xmlEscape(read(item, "CustomsValuation").MethodCode || "1")}</MethodCode>
-        </CustomsValuation>
+        </Commodity>${customsValuationXml}
         ${procedures.map((proc) => `
         <GovernmentProcedure>
           <CurrentCode>${xmlEscape(proc.CurrentCode)}</CurrentCode>

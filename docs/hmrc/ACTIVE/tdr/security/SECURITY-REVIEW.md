@@ -32,7 +32,7 @@ Freightcode has **strong HMRC-specific controls**: server-side `fetchHmrc()` pro
 - `src/app/api/hmrc/webhooks/notify/route.ts` — bearer token required; fails closed if token unset
 - HMRC calls exclusively via `src/lib/hmrc-fetch.ts` from API routes (no browser-direct HMRC)
 - `convex/admin_ops.ts`, `convex/admin_subscriptions.ts` — `requireAdmin()` gate
-- TDR CI gate: `.github/workflows/tdr-regression.yml` (unit tests + dry-run + build)
+- TDR CI gate: `.github/workflows/tdr-regression.yml` (audit, tsc, lint:security, unit, h1, b1, c1, i1, tre, cns, portal, export-controls, consultant, tdr-dry-run, build)
 
 ---
 

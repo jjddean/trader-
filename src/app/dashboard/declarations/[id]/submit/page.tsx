@@ -8,20 +8,20 @@ import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import { ShieldCheck, Send, Loader2, AlertTriangle, CheckCircle2, Code2 } from "lucide-react";
 import { mapToCDS_H1 } from "@/lib/wco-mapper";
+import { mapToCDS_B1, validateB1Declaration } from "@/lib/b1-mapper";
+import { mapToCDS_C1, validateC1Declaration } from "@/lib/c1-mapper";
+import { mapToCDS_I1, validateI1Declaration } from "@/lib/i1-mapper";
+import { resolveDeclarationCategory } from "@/lib/submit-category";
 import { generateClientFraudHeaders } from "@/lib/hmrc-fraud-headers";
 import { getHmrcRequirementSetForDeclaration } from "@/lib/utils/document-utils";
+import { resolveSubmitReadiness } from "@/lib/submit-filing-readiness";
+import { resolveH1Valuation } from "../../../../../../convex/lib/h1_valuation";
 import {
   ConvexSessionMissing,
   DeclarationPageSkeleton,
   isConvexSessionMissing,
 } from "@/components/declaration-session-states";
-import type { Doc } from "../../../../../../convex/_generated/dataModel";
-import { userMessageFromError } from "@/lib/convex-errors";
-
-type DocumentRequirementRow = Pick<
-  Doc<"document_requirements">,
-  "status" | "requirementLevel" | "code"
->;
+import { ApiError, userMessageFromError } from "@/lib/convex-errors";
 
 export default function SubmitPage() {
   const { isLoaded, isSignedIn, userId } = useAuth();
@@ -56,6 +56,7 @@ export default function SubmitPage() {
   );
   const upsertRequirementsForDeclaration = useMutation(api.documents.upsertRequirementsForDeclaration);
   const approveIndirectRepresentation = useMutation(api.representation.approveIndirectRepresentation);
+  const confirmH1Method1Valuation = useMutation(api.declarations.confirmH1Method1Valuation);
 
   const hmrcEnvironment = orgHmrc?.hmrcMode === "live" ? "production" : "sandbox";
   const hmrcTokens = useQuery(
@@ -134,6 +135,8 @@ export default function SubmitPage() {
   const [dryRunPassed, setDryRunPassed] = useState(false);
   const [approvalError, setApprovalError] = useState<string | null>(null);
   const [isApproving, setIsApproving] = useState(false);
+  const [method1ConfirmError, setMethod1ConfirmError] = useState<string | null>(null);
+  const [isConfirmingMethod1, setIsConfirmingMethod1] = useState(false);
   const [liveSubmitConfirmed, setLiveSubmitConfirmed] = useState(false);
 
   const readResponsePayload = async (res: Response) => {
@@ -167,23 +170,20 @@ export default function SubmitPage() {
     });
   }, [declarationId, declaration, upsertRequirementsForDeclaration]);
 
-  // Submit gate: rule engine completeness (single source of truth) + persisted doc requirements.
-  const missingBlockingRequirements = (requirements || []).filter(
-    (req: DocumentRequirementRow) =>
-      req.status === "missing" && (req.requirementLevel || "blocking") === "blocking",
-  );
-  const missingAdvisoryRequirements = (requirements || []).filter(
-    (req: DocumentRequirementRow) =>
-      req.status === "missing" && (req.requirementLevel || "blocking") === "advisory",
-  );
-  const missingBlockingCodes = missingBlockingRequirements
-    .map((req: DocumentRequirementRow) => String(req.code || "UNKNOWN"));
-  const missingAdvisoryCodes = missingAdvisoryRequirements
-    .map((req: DocumentRequirementRow) => String(req.code || "UNKNOWN"));
-
-  const completenessReady = completeness?.ready === true;
+  // Filing readiness: rule-engine completeness only.
+  // document_requirements / REQUIRED_DOCS remain a checklist, not a second submit gate.
+  const {
+    isReady,
+    completenessReady,
+    missingBlockingChecklist: missingBlockingRequirements,
+    missingAdvisoryChecklist: missingAdvisoryRequirements,
+    missingBlockingCodes,
+    missingAdvisoryCodes,
+  } = resolveSubmitReadiness({
+    completenessReady: completeness?.ready === true,
+    requirements: requirements || [],
+  });
   const completenessMissing = completeness?.missing ?? [];
-  const isReady = completenessReady && missingBlockingRequirements.length === 0;
   // Org-level Live (production) CDS mode — distinct from declaration *status*.
   const isOrgLiveMode = orgHmrc?.hmrcMode === "live";
   // Live submissions are legally binding; require an explicit confirmation.
@@ -191,6 +191,11 @@ export default function SubmitPage() {
   const representationRequiresApproval = representationStatus?.approvalRequired === true;
   const representationApprovalReady = !representationRequiresApproval
     || (representationStatus?.approved === true && representationStatus?.approvalCurrent === true);
+  const h1Valuation = declaration && items
+    ? resolveH1Valuation(declaration, items)
+    : null;
+  const h1ValuationReady = !h1Valuation?.isH1
+    || (h1Valuation.supported && (!h1Valuation.confirmationRequired || h1Valuation.confirmationPresent));
 
   const ruleEngineBlocked =
     dryRunResult?.localPreflight?.ruleEngine === "blocked"
@@ -215,13 +220,38 @@ export default function SubmitPage() {
     router.replace(`/dashboard/declarations/${declarationId}/status`);
   }, [declaration, declarationId, isLiveDeclaration, router]);
   
-  // Generate the WCO payload for preview (mapper throws if overseas exporter missing).
-  let wcoPayloadPreview: ReturnType<typeof mapToCDS_H1> | null = null;
+  // Generate the WCO payload for preview. The mapper must match the category
+  // the submit route will actually use — previewing an H1 for a B1 declaration
+  // showed a payload that could never be sent, under a caption promising it
+  // was exactly what would be transmitted.
+  const previewCategory = resolveDeclarationCategory(declaration);
+  let wcoPayloadPreview: unknown = null;
+  let previewBlockers: string[] = [];
   if (isReady && declaration && items) {
-    try {
-      wcoPayloadPreview = mapToCDS_H1(declaration, items);
-    } catch {
-      wcoPayloadPreview = null;
+    // The validators are asked directly rather than catching the mapper's
+    // throw: they return the reasons as a list, so nothing has to be recovered
+    // from an error message, and no raw Error text can reach the screen.
+    previewBlockers =
+      previewCategory === "B1"
+        ? validateB1Declaration(declaration, items)
+        : previewCategory === "C1"
+          ? validateC1Declaration(declaration, items)
+          : previewCategory === "I1"
+            ? validateI1Declaration(declaration, items)
+            : [];
+    if (previewBlockers.length === 0) {
+      try {
+        wcoPayloadPreview =
+          previewCategory === "B1"
+            ? mapToCDS_B1(declaration, items)
+            : previewCategory === "C1"
+              ? mapToCDS_C1(declaration, items)
+              : previewCategory === "I1"
+                ? mapToCDS_I1(declaration, items)
+                : mapToCDS_H1(declaration, items);
+      } catch {
+        wcoPayloadPreview = null;
+      }
     }
   }
   const debugGoodsLocation = dryRunResult?.payloadDebug?.goodsShipment?.consignment;
@@ -243,6 +273,17 @@ export default function SubmitPage() {
       setIsApproving(false);
     }
   };
+  const handleConfirmH1Method1 = async () => {
+    setIsConfirmingMethod1(true);
+    setMethod1ConfirmError(null);
+    try {
+      await confirmH1Method1Valuation({ id: declarationId });
+    } catch (err: unknown) {
+      setMethod1ConfirmError(userMessageFromError(err, "Failed to record Method 1 confirmation"));
+    } finally {
+      setIsConfirmingMethod1(false);
+    }
+  };
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setError(null);
@@ -251,11 +292,11 @@ export default function SubmitPage() {
 
     try {
       if (!isAuthenticated) {
-        throw new Error("Convex session not authenticated. Please refresh and sign in again.");
+        throw new ApiError("Convex session not authenticated. Please refresh and sign in again.");
       }
       // 1. Verify OAuth Token Status before attempting
       if (!hmrcTokens || Date.now() > (hmrcTokens.expiresAt ?? 0)) {
-        throw new Error("HMRC Developer Hub OAuth token is missing or expired. Please reconnect in Settings.");
+        throw new ApiError("HMRC Developer Hub OAuth token is missing or expired. Please reconnect in Settings.");
       }
 
       // 2. Call the Next.js API route that handles the actual WCO mapping and POST to HMRC
@@ -279,7 +320,7 @@ export default function SubmitPage() {
       if (!res.ok) {
         console.log("HMRC validation details:", data.details, data.fields);
         if (res.status === 409 && data.code === "SUBMIT_BLOCKED") {
-          throw new Error(
+          throw new ApiError(
             typeof data.error === "string" && data.error
               ? data.error
               : "This declaration is already live with HMRC. Use Amend on the Status page, or create a new declaration.",
@@ -306,7 +347,7 @@ export default function SubmitPage() {
           : data.error
             ? String(data.error)
             : `Request failed (HTTP ${res.status})`;
-        throw new Error(errorMessage);
+        throw new ApiError(errorMessage);
       }
 
       // 3. Advance to Status timeline page to await the MRN webhook
@@ -327,10 +368,10 @@ export default function SubmitPage() {
 
     try {
       if (!isAuthenticated) {
-        throw new Error("Convex session not authenticated. Please refresh and sign in again.");
+        throw new ApiError("Convex session not authenticated. Please refresh and sign in again.");
       }
       if (!hmrcTokens || Date.now() > (hmrcTokens.expiresAt ?? 0)) {
-        throw new Error("HMRC Developer Hub OAuth token is missing or expired. Please reconnect in Settings.");
+        throw new ApiError("HMRC Developer Hub OAuth token is missing or expired. Please reconnect in Settings.");
       }
 
       const fraudHeaders = generateClientFraudHeaders(userId || undefined);
@@ -369,7 +410,10 @@ export default function SubmitPage() {
               .join("\n")
           : "";
         const message = data.message ? `\n${data.message}` : "";
-        throw new Error(`${data.error || "Dry run failed"}${message}${blockingRuleErrors}${missingFields}${failedChecks}${missingHeaders}${fieldErrors}\nHTTP ${res.status}`);
+        // ApiError, not Error: userMessageFromError discards a plain Error and
+        // renders the fallback, which threw away everything assembled above —
+        // a mapping rejection surfaced as a bare "Dry run failed".
+        throw new ApiError(`${data.error || "Dry run failed"}${message}${blockingRuleErrors}${missingFields}${failedChecks}${missingHeaders}${fieldErrors}\nHTTP ${res.status}`);
       }
 
       setDryRunResult(data as DryRunPayload);
@@ -448,7 +492,7 @@ export default function SubmitPage() {
               <div>
                 <p className={`text-sm font-medium ${missingBlockingRequirements.length > 0 ? "text-red-700" : "text-slate-900"}`}>Required Documents (Blocking)</p>
                 <p className="text-xs text-slate-500">
-                  Submit gate is based on persisted declaration requirements.
+                  Document checklist from persisted document_requirements. Does not independently block Dry Run or Submit.
                   {missingBlockingCodes.length > 0 ? ` Missing: ${missingBlockingCodes.join(", ")}` : ""}
                 </p>
               </div>
@@ -479,6 +523,23 @@ export default function SubmitPage() {
                     ) : null}
                     {!representationApprovalReady && representationStatus?.reason ? (
                       <span className="block mt-1 text-red-600">{representationStatus.reason}</span>
+                    ) : null}
+                  </p>
+                </div>
+              </li>
+            )}
+            {h1Valuation?.isH1 && (!h1Valuation.supported || h1Valuation.confirmationRequired) && (
+              <li className="flex items-start gap-3">
+                {!h1ValuationReady ? <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" /> : <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
+                <div>
+                  <p className={`text-sm font-medium ${!h1ValuationReady ? "text-red-700" : "text-slate-900"}`}>H1 Method 1 valuation</p>
+                  <p className="text-xs text-slate-500">
+                    FreightCode currently files H1 DE 4/16 as Method 1 (transaction value) only.
+                    {!h1ValuationReady && h1Valuation.reason ? (
+                      <span className="block mt-1 text-red-600">{h1Valuation.reason}</span>
+                    ) : null}
+                    {h1Valuation.confirmationPresent ? (
+                      <span className="block mt-1 text-slate-600">Method 1 conditions confirmed.</span>
                     ) : null}
                   </p>
                 </div>
@@ -530,6 +591,34 @@ export default function SubmitPage() {
                 {isApproving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4 text-green-400" />}
                 {isApproving ? "Recording Approval..." : "Approve Indirect Representation"}
               </button>
+            </div>
+          )}
+          {h1Valuation?.isH1 && h1Valuation.confirmationRequired && !h1Valuation.confirmationPresent && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-amber-800 mb-2">
+                Method 1 confirmation required
+              </h4>
+              <p className="mb-3 text-xs text-amber-900">
+                Consignment value exceeds £20,000 and this filing is not self-represented. Confirm that Method 1 (transaction value) conditions were checked. FreightCode retains this confirmation for audit.
+              </p>
+              {method1ConfirmError && <p className="mb-3 text-xs text-red-700">{method1ConfirmError}</p>}
+              <button
+                type="button"
+                onClick={handleConfirmH1Method1}
+                disabled={isConfirmingMethod1}
+                className="flex h-8 w-full items-center justify-center gap-2 rounded-md bg-black px-3 text-xs font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isConfirmingMethod1 ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4 text-green-400" />}
+                {isConfirmingMethod1 ? "Recording confirmation..." : "Confirm Method 1 conditions checked"}
+              </button>
+            </div>
+          )}
+          {h1Valuation?.isH1 && !h1Valuation.supported && (
+            <div className="rounded-md border border-red-200 bg-red-50 p-4">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-red-800 mb-2">
+                Unsupported valuation method
+              </h4>
+              <p className="text-xs text-red-900">{h1Valuation.reason}</p>
             </div>
           )}
           {error && (
@@ -718,20 +807,37 @@ export default function SubmitPage() {
             </div>
           )}
 
-          {wcoPayloadPreview && (
+          {(wcoPayloadPreview || previewBlockers.length > 0) && (
             <div className="mt-8 border-t border-slate-100 pt-6">
               <div className="flex items-center gap-2 mb-4">
                 <Code2 className="h-5 w-5 text-blue-500" />
                 <h3 className="text-sm font-semibold text-slate-900">WCO 3.6 Payload Preview</h3>
               </div>
-              <p className="text-xs text-slate-500 mb-4">
-                This is the exact JSON structure that will be transmitted to the HMRC Customs Declarations API.
-              </p>
-              <div className="rounded-md bg-slate-900 p-4 max-h-96 overflow-y-auto w-full">
-                <pre className="text-[10px] text-green-400 font-mono whitespace-pre-wrap break-all">
-                  {JSON.stringify(wcoPayloadPreview, null, 2)}
-                </pre>
-              </div>
+              {wcoPayloadPreview ? (
+                <>
+                  <p className="text-xs text-slate-500 mb-4">
+                    The {previewCategory} data set, built by the same mapper the submit route uses.
+                    This is the JSON structure that will be transmitted to the HMRC Customs
+                    Declarations API.
+                  </p>
+                  <div className="rounded-md bg-slate-900 p-4 max-h-96 overflow-y-auto w-full">
+                    <pre className="text-[10px] text-green-400 font-mono whitespace-pre-wrap break-all">
+                      {JSON.stringify(wcoPayloadPreview, null, 2)}
+                    </pre>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-xs font-semibold text-amber-900">
+                    No {previewCategory} payload can be built from this declaration yet.
+                  </p>
+                  <ul className="mt-2 space-y-1">
+                    {previewBlockers.map((reason, i) => (
+                      <li key={i} className="text-xs text-amber-800">• {reason}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
@@ -770,7 +876,7 @@ export default function SubmitPage() {
           </p>
           <button
             onClick={handleDryRun}
-            disabled={!isReady || isSubmitting || isDryRunning}
+            disabled={!isReady || !h1ValuationReady || isSubmitting || isDryRunning}
             className="flex w-full h-8 rounded-md border border-slate-300 bg-white px-4 text-xs font-normal text-slate-800 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2"
           >
             {isDryRunning ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldCheck className="h-4 w-4 text-blue-600" />}
@@ -778,7 +884,7 @@ export default function SubmitPage() {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!isReady || !dryRunFullyPassed || !representationApprovalReady || !liveConfirmSatisfied || isSubmitting || isDryRunning || isLiveDeclaration}
+            disabled={!isReady || !h1ValuationReady || !dryRunFullyPassed || !representationApprovalReady || !liveConfirmSatisfied || isSubmitting || isDryRunning || isLiveDeclaration}
             className={`flex w-full h-8 rounded-md px-4 text-xs font-normal text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40 items-center justify-center gap-2 ${
               isOrgLiveMode ? "bg-red-700 hover:bg-red-800" : "bg-black hover:bg-slate-800"
             }`}

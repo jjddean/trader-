@@ -3,68 +3,31 @@ import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 import type { Id } from "../../../../../convex/_generated/dataModel";
-import { commodityRequiresSupplementaryUnit, mapToCDS_H1, validateCdsCodeLists, validateOverseasExporter, validateTradeTerms, validateTransactionNatureCode } from "../../../../lib/wco-mapper";
+import { mapToCDS_H1, validateCdsCodeLists } from "../../../../lib/wco-mapper";
 import { fetchHmrc } from "../../../../lib/hmrc-fetch";
 import { declarationsEndpointUrl } from "../../../../lib/hmrc-config";
 import { resolveOrgHmrcRoutingForDeclaration } from "../../../../lib/hmrc-org-routing";
 import { resolveHmrcAccessToken } from "../../../../lib/hmrc-token";
 import { buildPayloadDebugSnapshot, renderH1Xml, validateXmlPreflight } from "../../../../lib/h1-xml-renderer";
-import { validateGoodsLocationForSubmit } from "../../../../lib/goods-location";
-import { validateGoodsItemSequences } from "../../../../lib/submit-goods-items";
+import { mapToCDS_B1 } from "../../../../lib/b1-mapper";
+import { mapToCDS_C1 } from "../../../../lib/c1-mapper";
+import { renderC1Xml } from "../../../../lib/c1-xml-renderer";
+import { mapToCDS_I1 } from "../../../../lib/i1-mapper";
+import { renderI1Xml } from "../../../../lib/i1-xml-renderer";
+import { resolveDeclarationCategory, validateB1SubmitGate, validateC1SubmitGate, validateI1SubmitGate } from "../../../../lib/submit-category";
+import { renderB1Xml } from "../../../../lib/b1-xml-renderer";
 import { logHmrcAudit } from "../../../../lib/audit-log";
 import { readCnsConfig } from "../../../../lib/cns/config";
 import { CnsRoutingError, selectDeclarationTransport } from "../../../../lib/cns/routing";
 import { sendCnsDeclaration } from "../../../../lib/cns/declarations";
 import { INVENTORY_REFERENCE_TYPE_CODE } from "../../../../lib/cns/inventory-xml";
-import { evaluateRules, activeEffects, summarizeFailures, type RuleDefinition, type ScenarioInput } from "../../../../../convex/lib/rule_engine";
+import { evaluateRules, activeEffects, summarizeFailures, scenarioInputFromRecords, type RuleDefinition } from "../../../../../convex/lib/rule_engine";
+import { validateDeclaration, declarationIncompleteResponse } from "../../../../lib/submit-h1-gate";
+import { buildDryRunLocalPreflight } from "../../../../lib/submit-dry-run-preflight";
+import { createTrackedCdsCodeListLookup } from "../../../../lib/submit-code-list-status";
 import { userMessageFromError } from "@/lib/convex-errors";
 import { correlationIdFrom, logOperationFailure, withCorrelation } from "@/lib/correlation";
 
-type SubmitItemInput = {
-  commodityCode?: string;
-  description?: string;
-  originCountry?: string;
-  procedureCode?: string;
-  additionalProcedureCode?: string;
-  valuationMethod?: string;
-  valueAmount?: number | string;
-  grossWeightKg?: number | string;
-  supplementaryUnitQty?: number | string;
-  supplementaryUnitCode?: string;
-  packageType?: string;
-  packageCount?: number | string;
-  preferenceCode?: string;
-  additionalDocuments?: Array<{
-    categoryCode?: string;
-    CategoryCode?: string;
-    typeCode?: string;
-    TypeCode?: string;
-    code?: string;
-  }>;
-};
-
-type SubmitDeclarationInput = {
-  eori?: string;
-  dispatchCountry?: string;
-  destinationCountry?: string;
-  locationId?: string;
-  goodsLocationKind?: string;
-  goodsLocationTypeCode?: string;
-  goodsLocationQualifier?: string;
-  transportMode?: string;
-  transportId?: string;
-  transportIdType?: string;
-  invoiceCurrency?: string;
-  exporterName?: string;
-  exporterCity?: string;
-  exporterLine?: string;
-  exporterPostcode?: string;
-  exporterEori?: string;
-};
-
-// Confirmed required set for WEB_APP_VIA_SERVER (HMRC Fraud Prevention v3.3, Jan 2025)
-// Gov-Client-Local-IPs is NOT in this list — it is not required for WEB_APP_VIA_SERVER
-// and sending 127.0.0.1/private IPs triggers HMRC WAF PAYLOAD_FORBIDDEN.
 const REQUIRED_CLIENT_FRAUD_HEADERS = [
   "gov-client-timezone",
   "gov-client-window-size",
@@ -81,52 +44,6 @@ function validateClientFraudHeaders(headers: Headers) {
     valid: missing.length === 0,
     missing,
   };
-}
-
-// Hard fail-fast on missing required declaration data. Runs before XML build
-// so a 400 returns the exact list of gaps rather than emitting empty tags
-// that would later trip the XML preflight or get rejected by CDS. Each check
-// here corresponds to a field the mapper/route would otherwise emit blank.
-function validateDeclaration(lane: SubmitDeclarationInput, items: SubmitItemInput[]) {
-  const errors: string[] = [];
-  if (!lane?.eori) errors.push("Missing declarant EORI");
-  if (!lane?.dispatchCountry) errors.push("Missing dispatch country (DE 5/14)");
-  if (!lane?.destinationCountry) errors.push("Missing destination country (DE 5/8)");
-  errors.push(...validateGoodsLocationForSubmit(lane || {}));
-  if (!lane?.transportMode) errors.push("Missing transport mode (DE 7/4)");
-  if (!lane?.transportId) errors.push("Missing transport identity (DE 7/9)");
-  if (!lane?.transportIdType) errors.push("Missing transport identity type (DE 7/7)");
-  if (!lane?.invoiceCurrency) errors.push("Missing invoice currency");
-  errors.push(...validateOverseasExporter(lane as Record<string, unknown>));
-  errors.push(...validateTransactionNatureCode(lane as Record<string, unknown>));
-  errors.push(...validateTradeTerms(lane as Record<string, unknown>));
-  if (!Array.isArray(items) || items.length === 0) {
-    errors.push("No goods items");
-    return errors;
-  }
-  errors.push(...validateGoodsItemSequences(items));
-  for (let i = 0; i < items.length; i++) {
-    const it = items[i];
-    if (!it?.commodityCode) errors.push(`Item ${i}: missing commodity code (DE 6/14)`);
-    if (!it?.description) errors.push(`Item ${i}: missing description`);
-    if (!it?.originCountry) errors.push(`Item ${i}: missing origin (DE 5/15)`);
-    if (!it?.procedureCode) errors.push(`Item ${i}: missing CPC (DE 1/10)`);
-    if (!it?.additionalProcedureCode) errors.push(`Item ${i}: missing additional procedure (DE 1/11)`);
-    const v = parseFloat(String(it?.valueAmount ?? ""));
-    if (!Number.isFinite(v) || v <= 0) errors.push(`Item ${i}: value must be > 0`);
-    const g = parseFloat(String(it?.grossWeightKg ?? ""));
-    if (!Number.isFinite(g) || g <= 0) errors.push(`Item ${i}: gross weight must be > 0`);
-    if (!it?.packageType) errors.push(`Item ${i}: missing package type (DE 6/9)`);
-    const pc = parseInt(String(it?.packageCount ?? ""));
-    if (!Number.isFinite(pc) || pc < 1) errors.push(`Item ${i}: package count must be >= 1`);
-    if (commodityRequiresSupplementaryUnit(it?.commodityCode)) {
-      const su = parseFloat(String(it?.supplementaryUnitQty ?? ""));
-      if (!Number.isFinite(su) || su <= 0) {
-        errors.push(`Item ${i}: supplementary units (DE 6/2, p/st) required for commodity ${it.commodityCode}`);
-      }
-    }
-  }
-  return errors;
 }
 
 export async function POST(request: Request) {
@@ -220,12 +137,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No goods items found for declaration" }, { status: 400 });
     }
 
-    const baselineErrors = validateDeclaration(lane, items);
+    // Category decides both the pre-mapper gate and the mapper/renderer pair.
+    // The H1 gate asserts the full import obligation set and must not run on
+    // another category — see src/lib/submit-category.ts.
+    const declarationCategory = resolveDeclarationCategory(lane);
+    const isB1Export = declarationCategory === "B1";
+    const isC1Export = declarationCategory === "C1";
+    const isI1Import = declarationCategory === "I1";
+    const laneRecord = lane as Record<string, unknown>;
+    const itemRecords = items as Record<string, unknown>[];
+    const baselineErrors = isB1Export
+      ? validateB1SubmitGate(laneRecord, itemRecords)
+      : isC1Export
+        ? validateC1SubmitGate(laneRecord, itemRecords)
+        : isI1Import
+          ? validateI1SubmitGate(laneRecord, itemRecords)
+          : validateDeclaration(lane, items);
     if (baselineErrors.length > 0) {
-      return NextResponse.json(
-        { error: "Declaration incomplete", missing: baselineErrors },
-        { status: 400 },
-      );
+      return NextResponse.json(declarationIncompleteResponse(baselineErrors), { status: 400 });
     }
 
     // Transport routing (docs/cns/plan/part-1-repo-map.md §5). Decided here,
@@ -306,34 +235,10 @@ export async function POST(request: Request) {
     // sections complete.
     let ruleResults: ReturnType<typeof evaluateRules> = [];
     let forbiddenDocCodes: string[] = [];
-    const scenarioInput: ScenarioInput = {
-      declaration: {
-        declarationType: lane.declarationType,
-        route: lane.route,
-        dispatchCountry: lane.dispatchCountry,
-        transportMode: (lane as Record<string, unknown>).transportMode as string | undefined,
-        transportId: (lane as Record<string, unknown>).transportId as string | undefined,
-        transportIdType: (lane as Record<string, unknown>).transportIdType as string | undefined,
-        valuationMethod: (lane as Record<string, unknown>).valuationMethod as string | undefined,
-        mode: (lane as Record<string, unknown>).mode as string | undefined,
-        invoiceTotal: (lane as Record<string, unknown>).invoiceTotal as number | string | undefined,
-        exporterEori: (lane as Record<string, unknown>).exporterEori as string | undefined,
-        exporterName: (lane as Record<string, unknown>).exporterName as string | undefined,
-        exporterCity: (lane as Record<string, unknown>).exporterCity as string | undefined,
-        exporterLine: (lane as Record<string, unknown>).exporterLine as string | undefined,
-        exporterPostcode: (lane as Record<string, unknown>).exporterPostcode as string | undefined,
-        transactionNatureCode: (lane as Record<string, unknown>).transactionNatureCode as string | undefined,
-      },
-      items: (items as SubmitItemInput[]).map((i) => ({
-        commodityCode: i.commodityCode,
-        originCountry: i.originCountry,
-        procedureCode: i.procedureCode,
-        additionalProcedureCode: i.additionalProcedureCode,
-        valuationMethod: i.valuationMethod,
-        preferenceCode: i.preferenceCode,
-        additionalDocuments: Array.isArray(i.additionalDocuments) ? i.additionalDocuments : [],
-      })),
-    };
+    const scenarioInput = scenarioInputFromRecords(
+      lane as unknown as Record<string, unknown>,
+      items as unknown as Array<Record<string, unknown>>,
+    );
     try {
       const enabledRules = (await convex.query(api.rule_definitions.listEnabled, {})) as unknown as RuleDefinition[];
       ruleResults = evaluateRules(enabledRules, scenarioInput);
@@ -375,12 +280,23 @@ export async function POST(request: Request) {
 
     let payloadInfo;
     try {
-      payloadInfo = mapToCDS_H1(lane, items, {
-        omitAdditionalDocuments,
-        forbiddenDocCodes,
-        // DE 2/1 Z/MCR inventory reference — CNS route only.
-        ...(transport === "cns_inventory" ? { cnsUcn: routingContext.cnsUcn } : {}),
-      });
+      // Category dispatch. B1/C1 are the export data sets and I1 the simplified
+      // import set; anything else stays on H1. The mappers do not share a
+      // payload shape — see docs/hmrc/specs/cds-api/.
+      //
+      // The CNS inventory reference (DE 2/1 Z/MCR) is an inventory-linked
+      // import concern and is passed on the H1 path only.
+      payloadInfo = isB1Export
+        ? mapToCDS_B1(lane, items, { omitAdditionalDocuments, forbiddenDocCodes })
+        : isC1Export
+          ? mapToCDS_C1(lane, items, { omitAdditionalDocuments, forbiddenDocCodes })
+          : isI1Import
+            ? mapToCDS_I1(lane, items, { omitAdditionalDocuments, forbiddenDocCodes })
+            : mapToCDS_H1(lane, items, {
+                omitAdditionalDocuments,
+                forbiddenDocCodes,
+                ...(transport === "cns_inventory" ? { cnsUcn: routingContext.cnsUcn } : {}),
+              });
     } catch (mappingError: unknown) {
       const message = userMessageFromError(mappingError, "Unknown mapping error");
       return NextResponse.json(
@@ -391,7 +307,6 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    const validationErrors: string[] = [];
 
     // Code-list validation against the seeded HMRC datasets. If the
     // cds_code_lists table is empty (seed not run yet) the lookup returns
@@ -400,20 +315,16 @@ export async function POST(request: Request) {
     // NOTE: this degradation is fail-OPEN. Both "list not seeded" and "lookup
     // errored" let codes through unvalidated — but they are now logged loudly
     // instead of swallowed silently, so a missing seed can't hide unnoticed.
-    const codeListErrors = await validateCdsCodeLists(payloadInfo, items, async (listName, values) => {
-      try {
-        const seeded = await convex.query(api.cds_codes.listCodes, { listName, limit: 1 });
-        if (!seeded || seeded.length === 0) {
-          console.warn(`[SUBMIT] Code list '${listName}' is not seeded — skipping validation for ${values.length} value(s) (fail-open).`);
-          return [];
-        }
-        const result = await convex.query(api.cds_codes.validateCodes, { listName, values });
-        return result?.missing ?? [];
-      } catch (lookupErr) {
-        console.error(`[SUBMIT] Code-list lookup for '${listName}' failed — codes left unvalidated (fail-open):`, lookupErr);
-        return [];
-      }
+    const trackedCodeLists = createTrackedCdsCodeListLookup({
+      listCodes: (listName) => convex.query(api.cds_codes.listCodes, { listName, limit: 1 }),
+      validateCodes: (listName, values) => convex.query(api.cds_codes.validateCodes, { listName, values }),
     });
+    const codeListErrors = await validateCdsCodeLists(
+      payloadInfo,
+      items,
+      trackedCodeLists.lookup,
+      { category: declarationCategory },
+    );
     if (codeListErrors.length > 0) {
       return NextResponse.json(
         {
@@ -425,7 +336,13 @@ export async function POST(request: Request) {
     }
 
     // Convert the JSON payload into the required HMRC XML Envelope
-    const xmlPayload = renderH1Xml(payloadInfo);
+    const xmlPayload = isB1Export
+      ? renderB1Xml(payloadInfo)
+      : isC1Export
+        ? renderC1Xml(payloadInfo)
+        : isI1Import
+          ? renderI1Xml(payloadInfo)
+          : renderH1Xml(payloadInfo);
 
     const xmlPreflight = validateXmlPreflight(xmlPayload, lane.eori || "", {
       requireAdditionalDocument: !omitAdditionalDocuments,
@@ -480,12 +397,11 @@ export async function POST(request: Request) {
               : hmrcContext.declarationsAccept,
           xmlByteLength: new TextEncoder().encode(xmlPayload).length,
         },
-        localPreflight: {
-          fraudHeaders: fraudHeaderValidation.valid ? "pass" : "fail",
-          eoriConsistency: eoriConsistencyPass ? "pass" : "fail",
-          xml: xmlPreflight.valid ? "pass" : "fail",
-          xmlFailedChecks: xmlPreflight.failed.length > 0 ? xmlPreflight.failed : undefined,
-          validationFields: validationErrors.length === 0 ? "pass" : "fail",
+        localPreflight: buildDryRunLocalPreflight({
+          fraudHeadersPass: fraudHeaderValidation.valid,
+          eoriConsistencyPass,
+          xmlPass: xmlPreflight.valid,
+          xmlFailedChecks: xmlPreflight.failed,
           // CNS uses Basic auth, so there is no HMRC token to check on that route.
           token: transport === "cns_inventory" ? "n/a" : token ? "pass" : "fail",
           ruleEngine: ruleResults.length === 0
@@ -495,7 +411,8 @@ export async function POST(request: Request) {
               : ruleResults.some((r) => r.status === "fail")
                 ? "advisory"
                 : "pass",
-        },
+          ...trackedCodeLists.status(),
+        }),
         ruleResults: ruleResults.map((r) => ({
           ruleId: r.ruleId,
           ruleName: r.ruleName,

@@ -9,9 +9,22 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, type QueryCtx } from "./_generated/server";
+import type { Doc, Id } from "./_generated/dataModel";
 import { getActiveOrgId } from "./lib/org_access";
-import { isUrgentSeverity } from "./lib/notification_events";
+import {
+  eventDefinition,
+  eventForNotification,
+  isUrgentSeverity,
+  titleForNotification,
+} from "./lib/notification_events";
+import { resolveHmrcDmsType } from "./lib/hmrc_notification_catalogue";
+import {
+  isAmendmentAccepted,
+  isAmendmentRejected,
+  isCancellationRejected,
+  isInvalidationAccepted,
+} from "./lib/notification_dms_context";
 import { forbiddenError, unauthenticatedError } from "./lib/user_errors";
 
 /** Display caps at "99+", so counting beyond that is wasted work. */
@@ -39,6 +52,51 @@ async function callerScope(ctx: Parameters<typeof getActiveOrgId>[0]) {
   return { userId, orgId: activeOrgId || undefined };
 }
 
+async function presentInboxRow(
+  ctx: QueryCtx,
+  row: Doc<"app_notifications">,
+): Promise<Doc<"app_notifications">> {
+  if (row.sourceTable !== "notifications" || !row.sourceId) return row;
+  const src = await ctx.db.get(row.sourceId as Id<"notifications">);
+  if (!src) return row;
+  const dmsType = resolveHmrcDmsType({
+    rawPayload: typeof src.rawPayload === "string" ? src.rawPayload : null,
+    storedNotificationType: src.notificationType ? String(src.notificationType) : null,
+    functionCode: src.functionCode ? String(src.functionCode) : null,
+  });
+  const dmsCtx = {
+    notificationType: dmsType,
+    rawPayload: typeof src.rawPayload === "string" ? src.rawPayload : null,
+    errorCodes: Array.isArray(src.errorCodes) ? (src.errorCodes as string[]) : undefined,
+    fieldErrors: Array.isArray(src.fieldErrors)
+      ? (src.fieldErrors as Array<{ field: string; reason: string; code?: string }>)
+      : undefined,
+    originatingOperation: src.originatingOperation,
+  };
+  const event = eventForNotification({
+    notificationType: dmsType,
+    isAmendmentAccepted: isAmendmentAccepted(dmsCtx),
+    isAmendmentRejected: isAmendmentRejected(dmsCtx),
+    isCancellationRejected: isCancellationRejected(dmsCtx),
+    isInvalidationAccepted: isInvalidationAccepted(dmsCtx),
+  });
+  const definition = eventDefinition(event);
+  return {
+    ...row,
+    event,
+    category: definition.category,
+    severity: definition.severity,
+    title: titleForNotification(event, dmsType),
+  };
+}
+
+async function presentInboxRows(
+  ctx: QueryCtx,
+  rows: Doc<"app_notifications">[],
+): Promise<Doc<"app_notifications">[]> {
+  return Promise.all(rows.map((row) => presentInboxRow(ctx, row)));
+}
+
 /** Most recent notifications for the panel. */
 export const listRecent = query({
   args: { limit: v.optional(v.number()), filter: v.optional(filterValidator) },
@@ -53,26 +111,32 @@ export const listRecent = query({
     // index. Reading the newest page and filtering afterwards would silently
     // drop urgent rows sitting behind a run of ordinary ones.
     if (filter === "unread" || filter === "urgent") {
-      const unread = await ctx.db
-        .query("app_notifications")
-        .withIndex("by_user_org_read", (q) =>
-          q.eq("userId", scope.userId).eq("orgId", scope.orgId).eq("readAt", undefined),
-        )
-        .order("desc")
-        .take(filter === "unread" ? limit : COUNT_CAP);
+      const unread = await presentInboxRows(
+        ctx,
+        await ctx.db
+          .query("app_notifications")
+          .withIndex("by_user_org_read", (q) =>
+            q.eq("userId", scope.userId).eq("orgId", scope.orgId).eq("readAt", undefined),
+          )
+          .order("desc")
+          .take(filter === "unread" ? limit : COUNT_CAP),
+      );
 
       return filter === "unread"
         ? unread
         : unread.filter((row) => isUrgentSeverity(row.severity)).slice(0, limit);
     }
 
-    return await ctx.db
-      .query("app_notifications")
-      .withIndex("by_user_org_created", (q) =>
-        q.eq("userId", scope.userId).eq("orgId", scope.orgId),
-      )
-      .order("desc")
-      .take(limit);
+    return presentInboxRows(
+      ctx,
+      await ctx.db
+        .query("app_notifications")
+        .withIndex("by_user_org_created", (q) =>
+          q.eq("userId", scope.userId).eq("orgId", scope.orgId),
+        )
+        .order("desc")
+        .take(limit),
+    );
   },
 });
 
@@ -92,17 +156,19 @@ export const counts = query({
       .order("desc")
       .take(COUNT_CAP);
 
-    const unread = await ctx.db
-      .query("app_notifications")
-      .withIndex("by_user_org_read", (q) =>
-        q.eq("userId", scope.userId).eq("orgId", scope.orgId).eq("readAt", undefined),
-      )
-      .take(COUNT_CAP);
+    const unread = await presentInboxRows(
+      ctx,
+      await ctx.db
+        .query("app_notifications")
+        .withIndex("by_user_org_read", (q) =>
+          q.eq("userId", scope.userId).eq("orgId", scope.orgId).eq("readAt", undefined),
+        )
+        .take(COUNT_CAP),
+    );
 
     return {
       all: recent.length,
       unread: unread.length,
-      // Urgent means unread and urgent: a resolved alert should not keep the tab lit.
       urgent: unread.filter((row) => isUrgentSeverity(row.severity)).length,
     };
   },

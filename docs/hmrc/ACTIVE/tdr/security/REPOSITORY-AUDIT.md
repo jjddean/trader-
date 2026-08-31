@@ -4,6 +4,8 @@
 **Auditor:** Automated readiness review (AI-assisted static audit)  
 **Principle:** Controlled engineering — preserve development history; do not fake an empty repo.
 
+**Snapshot only.** Live index is [`../BACKLOG.md`](../BACKLOG.md). Live CI is `.github/workflows/tdr-regression.yml`. Do not execute this file as a task list.
+
 ---
 
 ## Classification key

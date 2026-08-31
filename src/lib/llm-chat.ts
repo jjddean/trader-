@@ -28,7 +28,11 @@ export function getLlmModel(): string {
       "gpt-4o-mini"
     );
   }
-  return process.env.GROQ_MODEL?.trim() || "llama-3.3-70b-versatile";
+  // Groq retired the Llama chat models; the old default returned
+  // model_not_found and surfaced as a 500 from /api/ai/extract. Verified
+  // against the account's own model list on 2026-08-24. Override with
+  // GROQ_MODEL when the catalogue moves again.
+  return process.env.GROQ_MODEL?.trim() || "openai/gpt-oss-120b";
 }
 
 export function getLlmModelVersion(model = getLlmModel()): string {

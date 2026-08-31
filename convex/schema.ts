@@ -303,30 +303,51 @@ export default defineSchema({
     exporterLine: v.optional(v.string()),
     exporterPostcode: v.optional(v.string()),
     exporterEori: v.optional(v.string()),
+    /**
+     * Export declaration category (B1 standard export / re-export, C1 C&F
+     * simplified). Absent means the import family — the H1 path. Obligations:
+     * `docs/hmrc/specs/cds-api/appendix-22a-b1-obligations.md`.
+     */
     declarationCategory: v.optional(
       v.union(v.literal("B1"), v.literal("C1"), v.literal("I1")),
     ),
+    // DE 3/1 country for the export exporter block — on an export the exporter
+    // is the declaring party, so its country is not the dispatch country.
     exporterCountry: v.optional(v.string()),
+    // DE 3/9 + 3/10 — Consignee. The export counterpart of DE 3/15/3/16 Importer.
     consigneeEori: v.optional(v.string()),
     consigneeName: v.optional(v.string()),
     consigneeCity: v.optional(v.string()),
     consigneeLine: v.optional(v.string()),
     consigneePostcode: v.optional(v.string()),
     consigneeCountry: v.optional(v.string()),
+    // DE 3/31 + 3/32 — Carrier (Declaration/Consignment/Carrier).
     carrierEori: v.optional(v.string()),
     carrierName: v.optional(v.string()),
+    // DE 3/39 — holder of the authorisation. Conditional on B1, mandatory on C1.
     authorisationHolderEori: v.optional(v.string()),
     authorisationCategoryCode: v.optional(v.string()),
+    // DE 4/2 — transport charges method of payment.
     transportChargesMethodOfPayment: v.optional(v.string()),
+    // DE 4/15 — exchange rate.
     exchangeRate: v.optional(v.string()),
+    // DE 5/12 — customs office of exit. Mandatory on B1 and C1, no import equivalent.
     customsOfficeOfExit: v.optional(v.string()),
+    // DE 5/18 — countries of routing, in transit order.
     countriesOfRouting: v.optional(v.array(v.string())),
+    // DE 7/5 — inland mode of transport.
     inlandTransportMode: v.optional(v.string()),
+    // DE 7/7 — identity of the means of transport at departure. Export uses
+    // departure identity; ArrivalTransportMeans is import-only.
     departureTransportId: v.optional(v.string()),
     departureTransportIdType: v.optional(v.string()),
+    // DE 7/14 + 7/15 — active means crossing the border, and its nationality.
     borderTransportId: v.optional(v.string()),
     borderTransportIdType: v.optional(v.string()),
     borderTransportNationality: v.optional(v.string()),
+    // DE 7/10 container id is `containerNumber`, declared with the CNS
+    // transport fields below — one field, not two.
+    // DE 7/18 — seal number.
     sealNumber: v.optional(v.string()),
     // DE 8/5 — GoodsShipment/TransactionNatureCode (WCOID 103).
     transactionNatureCode: v.optional(v.string()),
@@ -347,6 +368,8 @@ export default defineSchema({
     authorityValidFrom: v.optional(v.number()),
     authorityValidTo: v.optional(v.number()),
     representationUpdatedAt: v.optional(v.number()),
+    // H1 DE 4/16 Method 1 confirmation. Required when consignment value
+    // exceeds £20,000 and representation is not self. Group 4 DE 4/16.
     h1Method1ConfirmedAt: v.optional(v.number()),
     h1Method1ConfirmedBy: v.optional(v.string()),
     // The broker's client this declaration is filed for (the represented
@@ -485,12 +508,16 @@ export default defineSchema({
     additionalDocuments: v.optional(v.any()),
     additionalProcedureCode: v.optional(v.any()),
     shippingMarks: v.optional(v.any()),
+    // DE 4/17 — Preference. Mandatory on H1. Never invented.
+    preferenceCode: v.optional(v.string()),
     // DE 6/2 — supplementary units (TariffQuantity). Required when tariff instructs (e.g. 8471300000 → p/st).
     supplementaryUnitQty: v.optional(v.number()),
+    requiresSupplementaryUnit: v.optional(v.boolean()),
     // Appendix 20 / UK Tariff Data Standard: NAR = number of items (p/st).
     supplementaryUnitCode: v.optional(v.string()),
     // DE 6/10 — number of packages. Mandatory per Appendix 21A H1.
     packageCount: v.optional(v.number()),
+    // DE 8/6 — statistical value. Conditional on B1 export items.
     statisticalValue: v.optional(v.number()),
     // DE 6/9 — package type code (PK, BX, CT, etc.). Mandatory per Appendix 21A H1.
     packageType: v.optional(v.string()),
@@ -593,6 +620,7 @@ export default defineSchema({
      * LRN prefixes are not: CNS follow-ups carry the original create LRN.
      */
     originatingOperation: v.optional(v.string()),
+    /** HMRC Response FunctionCode, when parsed from rawPayload. */
     functionCode: v.optional(v.string()),
     errorCodes: v.optional(v.any()),
     fieldErrors: v.optional(v.any()),

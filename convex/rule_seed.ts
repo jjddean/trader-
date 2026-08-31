@@ -117,6 +117,19 @@ const RULES: SeedRule[] = [
 
   // -------- Valuation invariants --------
   {
+    ruleId: "H1-VALUATION-METHOD1-ONLY",
+    name: "H1 currently supports valuation Method 1 only",
+    description:
+      "FreightCode H1 files DE 4/16 Method 1 (transaction value) only. SPV/SIV additional procedures E01, E02 and 1SV require Method 4 and are blocked. Represented consignments above £20,000 require an explicit Method 1 confirmation (Group 4 DE 4/16).",
+    severity: "blocking",
+    enabled: true,
+    source: "docs/hmrc/ACTIVE/tdr/mapping/de-4-x-valuation.md; Group 4 completion guide DE 4/16",
+    triggerScope: {},
+    effects: {
+      predicates: [{ name: "H1_VALUATION_FILEABLE" }],
+    },
+  },
+  {
     ruleId: "INV-METHOD1-N935",
     name: "Method 1 valuation requires N935 (commercial invoice)",
     description:

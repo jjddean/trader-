@@ -84,10 +84,12 @@ export default function DeclarationsPage() {
         All HMRC notifications for this declaration appear here in real time:
       </p>
       <ul className="list-disc pl-6 mb-6 space-y-2 text-[15px] text-slate-700">
-        <li><strong>DMSACC</strong> — declaration accepted by CDS</li>
-        <li><strong>DMSROG</strong> — goods registered; may be examined by Border Force</li>
-        <li><strong>DMSCLE</strong> — goods cleared; shipment can be released</li>
-        <li><strong>DMSREJ</strong> — declaration rejected; error detail shown inline</li>
+        <li><strong>DMSRCV</strong> — message registered (not legal acceptance)</li>
+        <li><strong>DMSACC</strong> — declaration legally accepted</li>
+        <li><strong>DMSROG</strong> — goods can be released; customs debt not yet finalised</li>
+        <li><strong>DMSCLE</strong> — declaration cleared; goods can be released</li>
+        <li><strong>DMSINV</strong> — declaration cancelled</li>
+        <li><strong>DMSREJ</strong> — received message rejected</li>
         <li><strong>DMSCTL</strong> — goods selected for physical examination</li>
       </ul>
 

@@ -11,7 +11,7 @@ import type { TreParsePreview } from "@/lib/tre-csv-types";
 import { TRE_FORMAT_LABELS } from "@/lib/tre-csv-types";
 import { parseTreCsv, TRE_IMPORT_MAX_BYTES } from "@/lib/tre-csv-parser";
 import { cn } from "@/lib/utils";
-import { userMessageFromError } from "@/lib/convex-errors";
+import { ApiError, userMessageFromError } from "@/lib/convex-errors";
 
 interface ImportSuccess {
   lineItemsStored: number;
@@ -85,7 +85,7 @@ export function TreImportUpload({ embedded = false }: { embedded?: boolean }) {
       const res = await fetch("/api/tre/import", { method: "POST", body: formData });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(typeof body.error === "string" ? body.error : "Import failed");
+        throw new ApiError(typeof body.error === "string" ? body.error : "Import failed");
       }
 
       setSuccess(body.result as ImportSuccess);

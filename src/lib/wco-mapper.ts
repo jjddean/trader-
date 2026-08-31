@@ -6,6 +6,15 @@ import {
   resolveDeclarationPayment,
   validatePaymentFields,
 } from "./payment-method";
+import { resolveCdsTypeCode } from "../../convex/lib/cds_type_code";
+import { resolveH1ValuationMethodCode } from "../../convex/lib/h1_valuation";
+import { resolveH1AdditionalProcedureCode, validateH1AdditionalProcedureCodes } from "./h1-additional-procedure";
+import { resolveH1InvoiceAmount, validateH1InvoiceTotal } from "./h1-invoice-total";
+import { resolveH1PreferenceCode, validateH1PreferenceCodes } from "./h1-preference";
+import { resolveH1ShippingMarks, validateH1ShippingMarks } from "./h1-shipping-marks";
+import { SUPPLEMENTARY_UNIT_CODE_PST, validateSupplementaryUnitRequirement } from "./supplementary-units";
+
+export { commodityRequiresSupplementaryUnit, SUPPLEMENTARY_UNIT_CODE_PST } from "./supplementary-units";
 
 // validateCdsFields was deleted. The submit route already runs evaluateRules
 // from convex/lib/rule_engine.ts before mapping — that is the single source
@@ -28,13 +37,13 @@ export function mapDeclarationType(type?: string, route?: string): string {
 }
 
 // Format mass measures to 3 decimal places (CDS DE 6/1, 6/5).
-function formatMass(value: unknown): string {
+export function formatMass(value: unknown): string {
   const n = parseFloat(String(value ?? ""));
   return (isFinite(n) && n > 0 ? n : 0).toFixed(3);
 }
 
 // Clamp net to <= gross. CDS rejects when item net mass exceeds declared gross mass.
-function clampNetToGross(net: unknown, gross: unknown): string {
+export function clampNetToGross(net: unknown, gross: unknown): string {
   const g = parseFloat(String(gross ?? ""));
   const n = parseFloat(String(net ?? ""));
   const grossNum = isFinite(g) && g > 0 ? g : 0;
@@ -43,37 +52,27 @@ function clampNetToGross(net: unknown, gross: unknown): string {
 }
 
 // Format monetary amounts to 2 decimal places (CDS DE 4/11, 4/14).
-function formatAmount(value: unknown): string {
+export function formatAmount(value: unknown): string {
   const n = parseFloat(String(value ?? ""));
   return (isFinite(n) && n > 0 ? n : 0).toFixed(2);
 }
 
 // DE 6/2 — supplementary units (n..16,6 per Group 6). Must be > 0 when declared.
-function formatSupplementaryQty(value: unknown): string | null {
+export function formatSupplementaryQty(value: unknown): string | null {
   const n = parseFloat(String(value ?? ""));
   if (!isFinite(n) || n <= 0) return null;
   const fixed = n.toFixed(6);
   return fixed.replace(/\.?0+$/, "") || "0";
 }
 
-/** UK tariff p/st → measurement unit code NAR (UK Tariff Data Standard). */
-export const SUPPLEMENTARY_UNIT_CODE_PST = "NAR";
-
-/** Commodity codes in active lane that require DE 6/2 per UK Integrated Online Tariff. */
-export const HS_REQUIRES_SUPPLEMENTARY_UNIT = new Set(["8471300000"]);
-
-export function commodityRequiresSupplementaryUnit(commodityCode: unknown): boolean {
-  const normalized = String(commodityCode ?? "").replace(/\D/g, "");
-  return HS_REQUIRES_SUPPLEMENTARY_UNIT.has(normalized);
-}
 
 // Strip ALL whitespace from transport identifiers (DE 7/9). CDS R123 rejects
 // vessel/wagon IDs containing spaces.
-function stripTransportId(value: unknown): string {
+export function stripTransportId(value: unknown): string {
   return String(value ?? "").replace(/\s+/g, "");
 }
 
-function commodityClassifications(codeValue: unknown) {
+export function commodityClassifications(codeValue: unknown) {
   const code = String(codeValue || "").replace(/\s+/g, "");
   if (/^\d{10}$/.test(code)) {
     return [
@@ -84,7 +83,7 @@ function commodityClassifications(codeValue: unknown) {
   return code ? [{ ID: code, IdentificationTypeCode: "TSP" }] : [];
 }
 
-function normalizeCountryCode(value: unknown): string {
+export function normalizeCountryCode(value: unknown): string {
   const raw = String(value || "").trim();
   if (!raw) return "";
   const upper = raw.toUpperCase();
@@ -209,9 +208,8 @@ export function resolveTradeTermsLocationId(declaration: {
 /**
  * DE 4/1 — delivery terms code and location.
  *
- * The mapper declares CustomsValuation MethodCode 1 (transaction value), and
- * the Group 4 completion guide requires the delivery terms for method 1. Both
- * halves are therefore mandatory here.
+ * H1 files DE 4/16 Method 1 only (convex/lib/h1_valuation.ts). Group 4
+ * requires delivery terms for method 1. Both halves are therefore mandatory.
  *
  * Without this check a missing incoterm surfaced as the XML preflight failure
  * "no_empty_tags" — technically true (TradeTerms rendered an empty
@@ -261,11 +259,21 @@ const LIST = {
 // Validate every code-list-bound value in the mapper output against the
 // authoritative HMRC datasets. Returns one error per invented/unknown code.
 // Method 1 valuation has a special invariant: it requires N935 on the items.
+export interface CodeListValidationOptions {
+  /**
+   * Which data set is being validated. Only the import lists are seeded, so an
+   * export declaration must not be measured against them.
+   */
+  category?: "H1" | "I1" | "B1" | "C1";
+}
+
 export async function validateCdsCodeLists(
   payloadInfo: any,
   items: any[],
   lookup: CodeListLookup,
+  options: CodeListValidationOptions = {},
 ): Promise<{ field: string; reason: string }[]> {
+  const isExportDataSet = options.category === "B1" || options.category === "C1";
   const errors: { field: string; reason: string }[] = [];
   const decl = payloadInfo?.Declaration ?? {};
   const shipment = decl?.GoodsShipment ?? {};
@@ -357,12 +365,20 @@ export async function validateCdsCodeLists(
           reason: `Requested procedure '${current}' is not in the HMRC government-procedure-types list (DE 1/10 first pair).`,
         });
       }
-      const missingPrevious = await lookup(LIST.previousProcedureCodes, [previous]);
-      if (missingPrevious.length) {
-        errors.push({
-          field: `${fieldPrefix}.procedureCode`,
-          reason: `Previous procedure '${previous}' is not in the HMRC import-previous-procedures list (DE 1/10 second pair).`,
-        });
+      // `previous_procedure_codes` is seeded from HMRC's *import*
+      // previous-procedures file (see convex/actions/cds_codes.ts). Measuring
+      // an export declaration against it rejects valid export procedure codes
+      // — 1040 is a standard permanent export, but "40" is not an import
+      // previous procedure. Skipped until the export list is seeded, matching
+      // how the route already fails open on an unseeded list.
+      if (!isExportDataSet) {
+        const missingPrevious = await lookup(LIST.previousProcedureCodes, [previous]);
+        if (missingPrevious.length) {
+          errors.push({
+            field: `${fieldPrefix}.procedureCode`,
+            reason: `Previous procedure '${previous}' is not in the HMRC import-previous-procedures list (DE 1/10 second pair).`,
+          });
+        }
       }
     }
 
@@ -490,9 +506,19 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
   // Sums must come from real item data. No silent fallbacks: a zero-value or
   // zero-mass declaration must FAIL validation upstream, not be papered over
   // with magic 100/1000 placeholders that survive into CDS.
+  const mappingErrors = [
+    ...validateH1PreferenceCodes(items),
+    ...validateH1AdditionalProcedureCodes(items),
+    ...validateH1ShippingMarks(declaration, items),
+    ...validateH1InvoiceTotal(declaration, items),
+    ...validateSupplementaryUnitRequirement(items),
+  ];
+  if (mappingErrors.length) {
+    throw new Error(mappingErrors.join("; "));
+  }
+
   const totalGrossWeight = items.reduce((acc: number, item: any) => acc + (parseFloat(item.grossWeightKg) || 0), 0);
-  const itemValueSum = items.reduce((acc: number, item: any) => acc + (parseFloat(item.valueAmount) || 0), 0);
-  const invoiceTotal = parseFloat(String(declaration.invoiceTotal ?? "")) || itemValueSum;
+  const invoiceAmount = resolveH1InvoiceAmount(declaration, items);
   if (!declaration.eori || !declaration._id) {
     throw new Error("Declaration is missing eori or _id; cannot derive DUCR.");
   }
@@ -529,23 +555,25 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
   const { dan, mop } = resolveDeclarationPayment(declaration);
   const headerDefermentDocs = dan ? [buildDefermentAdditionalDocument(dan)] : [];
   const dutyTaxFeeMethod = mop ? { MethodCode: mop } : {};
+  const valuationMethodCode = resolveH1ValuationMethodCode(declaration, items);
 
   return {
     Declaration: {
       FunctionCode: "9",
-      TypeCode: mapDeclarationType(
-        declaration.additionalDeclarationType || declaration.declarationType,
-        declaration.route,
-      ),
+      TypeCode: resolveCdsTypeCode(declaration.additionalDeclarationType, declaration.route),
       FunctionalReferenceID: declaration.lrn || `FC-${Date.now().toString(36).toUpperCase()}`,
       GoodsItemQuantity: items.length,
       DeclarationOfficeID: declaration.presentationOffice || "",
       TotalGrossMassMeasure: formatMass(declaration.totalGrossWeight || totalGrossWeight),
       TotalPackageQuantity: items.reduce((acc: number, item: any) => acc + (parseInt(item.packageCount) || 0), 0),
-      InvoiceAmount: {
-        currencyID: declaration.invoiceCurrency || "",
-        value: formatAmount(invoiceTotal),
-      },
+      ...(invoiceAmount
+        ? {
+            InvoiceAmount: {
+              currencyID: invoiceAmount.currencyID,
+              value: formatAmount(invoiceAmount.value),
+            },
+          }
+        : {}),
       CurrencyExchange: {
         CurrencyTypeCode: declaration.invoiceCurrency || ""
       },
@@ -706,7 +734,7 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
               Classification: commodityClassifications(item.commodityCode || item.hsCode),
               DutyTaxFee: [
                 {
-                  DutyRegimeCode: item.preferenceCode || "100",
+                  DutyRegimeCode: resolveH1PreferenceCode(item, index),
                   TypeCode: "A00",
                   ...dutyTaxFeeMethod,
                 },
@@ -736,15 +764,17 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
                 },
               }
             },
-            // DE 4/16 — Customs valuation method. "1" = transaction value of the imported goods.
+            // DE 4/16 — Method 1 only. Value comes from convex/lib/h1_valuation.ts.
             CustomsValuation: {
-              MethodCode: "1",
+              MethodCode: valuationMethodCode,
             },
             Packaging: [
               {
                 SequenceNumeric: "1",
-                // DE 6/11 — empty element rejected by local preflight + XSD; "N/A" matches lane evidence.
-                MarksNumbersID: String(item.shippingMarks || "").trim() || "N/A",
+                ...((): Record<string, string> => {
+                  const marks = resolveH1ShippingMarks(item, declaration);
+                  return marks ? { MarksNumbersID: marks } : {};
+                })(),
                 QuantityQuantity: item.packageCount || "",
                 TypeCode: item.packageType || ""
               }
@@ -779,13 +809,8 @@ export function mapToCDS_H1(declaration: any, items: any[], options: MapOptions 
                   }]
                 : []),
               ...((() => {
-                const apc = String(item.additionalProcedureCode || "").trim();
-                // DE 1/11 additional procedure code. Include "000" explicitly — HMRC CDS
-                // requires it to declare nil additional procedure for CPC 4000.
-                // Omitting "000" introduces CDS11004 (procedure codes incomplete).
-                if (apc) return [{ CurrentCode: apc }];
-                // No additionalProcedureCode set at all — use "000" for CPC 4000 (nil).
-                return [{ CurrentCode: "000" }];
+                const apc = resolveH1AdditionalProcedureCode(item, index);
+                return [{ CurrentCode: apc }];
               })())
             ]
           };

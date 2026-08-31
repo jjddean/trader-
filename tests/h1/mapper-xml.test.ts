@@ -42,6 +42,7 @@ describe("H1 mapper and XML renderer", () => {
       originCountry: "DE",
       procedureCode: "4000",
       additionalProcedureCode: "000",
+      preferenceCode: "100",
       valueAmount: 2500,
       valueCurrency: "GBP",
       grossWeightKg: 120,
@@ -49,6 +50,7 @@ describe("H1 mapper and XML renderer", () => {
       shippingMarks: "CARTON-001",
       packageCount: 10,
       packageType: "CT",
+      requiresSupplementaryUnit: false,
       additionalDocuments: [
         { CategoryCode: "N", TypeCode: "935", ID: "INV-2026-0001" },
       ],
@@ -62,8 +64,8 @@ describe("H1 mapper and XML renderer", () => {
     const item = shipment.GovernmentAgencyGoodsItem[0];
 
     assert.equal(mapped.DeclarationOfficeID, "");
-    assert.equal(mapped.InvoiceAmount.currencyID, "GBP");
-    assert.equal(mapped.InvoiceAmount.value, "2500.00");
+    assert.equal(mapped.InvoiceAmount?.currencyID, "GBP");
+    assert.equal(mapped.InvoiceAmount?.value, "2500.00");
     assert.equal(mapped.BorderTransportMeans.ID, "CSCLGLOBE");
     assert.equal(mapped.BorderTransportMeans.IdentificationTypeCode, "11");
     assert.equal(mapped.BorderTransportMeans.ModeCode, "1");
@@ -143,13 +145,11 @@ describe("H1 mapper and XML renderer", () => {
     assert.match(xml, /<ItemChargeAmount currencyID="GBP">2500\.00<\/ItemChargeAmount>/);
   });
 
-  it("preflight passes when shipping marks are blank (mapper defaults to N/A)", () => {
-    const payload = mapToCDS_H1(declaration, [{ ...items[0], shippingMarks: "" }]);
-    const xml = renderH1Xml(payload);
-    const preflight = validateXmlPreflight(xml, declaration.eori);
-
-    assert.equal(preflight.valid, true);
-    assert.match(xml, /<MarksNumbersID>N\/A<\/MarksNumbersID>/);
+  it("throws when shipping marks are blank instead of inventing N/A", () => {
+    assert.throws(
+      () => mapToCDS_H1(declaration, [{ ...items[0], shippingMarks: "" }]),
+      /missing shipping marks \(DE 6\/11\)/,
+    );
   });
 
   it("emits TariffQuantity (DE 6/2, NAR p/st) when supplementaryUnitQty is set", () => {
@@ -162,6 +162,7 @@ describe("H1 mapper and XML renderer", () => {
         supplementaryUnitCode: "NAR",
         packageCount: 1,
         packageType: "PK",
+        requiresSupplementaryUnit: true,
       },
     ];
     const xml = renderH1Xml(mapToCDS_H1(declaration, laptopItems));
@@ -258,12 +259,15 @@ describe("DE 3/19-3/21 representation", () => {
       originCountry: "DE",
       procedureCode: "4000",
       additionalProcedureCode: "000",
+      preferenceCode: "100",
       valueAmount: 2500,
       valueCurrency: "GBP",
       grossWeightKg: 120,
       netWeightKg: 115,
+      shippingMarks: "CARTON-001",
       packageCount: 10,
       packageType: "CT",
+      requiresSupplementaryUnit: false,
       additionalDocuments: [{ CategoryCode: "N", TypeCode: "935", ID: "INV-2026-0001" }],
     },
   ];

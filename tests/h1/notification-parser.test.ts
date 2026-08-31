@@ -89,7 +89,7 @@ describe("HMRC DMS notification parser", () => {
     ]);
   });
 
-  it("maps FunctionCode 11 to DMSCLE", () => {
+  it("maps FunctionCode 11 to DMSREQ", () => {
     const parsed = parseHmrcNotification(`
       <Response>
         <FunctionCode>11</FunctionCode>
@@ -99,21 +99,16 @@ describe("HMRC DMS notification parser", () => {
         </Declaration>
       </Response>
     `);
-    assert.equal(parsed.notificationType, "DMSCLE");
+    assert.equal(parsed.notificationType, "DMSREQ");
     assert.equal(parsed.mrn, "26GB63M1I0RQFCVAR4");
   });
 
-  it("maps FunctionCode 04 to DMSROG", () => {
+  it("leaves FunctionCode 04 unmapped (not on the HMRC table)", () => {
     const parsed = parseHmrcNotification(`<Response><FunctionCode>04</FunctionCode></Response>`);
-    assert.equal(parsed.notificationType, "DMSROG");
+    assert.equal(parsed.notificationType, "FUNC_04");
   });
 
-  it("maps FunctionCode 07 to DMSCTL", () => {
-    const parsed = parseHmrcNotification(`<Response><FunctionCode>07</FunctionCode></Response>`);
-    assert.equal(parsed.notificationType, "DMSCTL");
-  });
-
-  it("maps FunctionCode 02 to DMSINV", () => {
+  it("maps FunctionCode 02 with FunctionalError to DMSRCV (HMRC: message registered)", () => {
     const parsed = parseHmrcNotification(`
       <Response>
         <FunctionCode>02</FunctionCode>
@@ -123,13 +118,63 @@ describe("HMRC DMS notification parser", () => {
         </FunctionalError>
       </Response>
     `);
-    assert.equal(parsed.notificationType, "DMSINV");
+    assert.equal(parsed.notificationType, "DMSRCV");
+    assert.equal(parsed.functionCode, "02");
     assert.deepEqual(parsed.errorCodes, ["CDS10001"]);
   });
 
-  it("maps FunctionCode 08 to DMSRES", () => {
+  it("maps FunctionCode 02 with MRN and FC- LRN to DMSRCV (submit receipt)", () => {
+    const parsed = parseHmrcNotification(`
+      <_2_1:Response xmlns:_2_1="urn:wco:datamodel:WCO:RES-DMS:2">
+        <_2_1:FunctionCode>02</_2_1:FunctionCode>
+        <_2_1:Declaration>
+          <_2_1:FunctionalReferenceID>FC-MTCZ1U8O</_2_1:FunctionalReferenceID>
+          <_2_1:ID>26GB9IAK3PBQ9J8AA6</_2_1:ID>
+          <_2_1:VersionID>1</_2_1:VersionID>
+        </_2_1:Declaration>
+      </_2_1:Response>
+    `);
+    assert.equal(parsed.notificationType, "DMSRCV");
+    assert.equal(parsed.mrn, "26GB9IAK3PBQ9J8AA6");
+    assert.deepEqual(parsed.errorCodes, []);
+  });
+
+  it("maps FunctionCode 02 with CX- LRN to DMSRCV (not DMSINV)", () => {
+    const parsed = parseHmrcNotification(`
+      <Response>
+        <FunctionCode>02</FunctionCode>
+        <Declaration>
+          <FunctionalReferenceID>CX-kn78tw6ms6bdnjvp4r1mdnz7v188j528</FunctionalReferenceID>
+          <ID>26GB6I2VFHAN3WAAR0</ID>
+        </Declaration>
+      </Response>
+    `);
+    assert.equal(parsed.notificationType, "DMSRCV");
+    assert.equal(parsed.functionCode, "02");
+  });
+
+  it("maps FunctionCode 09 to DMSCLE and 10 to DMSINV", () => {
+    assert.equal(
+      parseHmrcNotification(`<Response><FunctionCode>09</FunctionCode></Response>`).notificationType,
+      "DMSCLE",
+    );
+    assert.equal(
+      parseHmrcNotification(`<Response><FunctionCode>10</FunctionCode></Response>`).notificationType,
+      "DMSINV",
+    );
+    assert.equal(
+      parseHmrcNotification(`<Response><FunctionCode>08</FunctionCode></Response>`).notificationType,
+      "DMSROG",
+    );
+    assert.equal(
+      parseHmrcNotification(`<Response><FunctionCode>07</FunctionCode></Response>`).notificationType,
+      "DMSRES",
+    );
+  });
+
+  it("maps FunctionCode 08 to DMSROG", () => {
     const parsed = parseHmrcNotification(`<Response><FunctionCode>08</FunctionCode></Response>`);
-    assert.equal(parsed.notificationType, "DMSRES");
+    assert.equal(parsed.notificationType, "DMSROG");
   });
 
   it("extracts DMSREJ field-level errors from FunctionalError blocks", () => {

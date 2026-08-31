@@ -321,7 +321,11 @@ function DeclarationsPageContent() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-[0.6875rem] text-slate-600">{dec.eori || "Not set"}</td>
-                      <td className="px-6 py-4 text-[0.6875rem] text-slate-600">{dec.declarationType || "IMD"}</td>
+                      <td className="px-6 py-4 text-[0.6875rem] text-slate-600">
+                        {(dec as { declarationCategory?: string }).declarationCategory ||
+                          dec.declarationType ||
+                          "—"}
+                      </td>
                       <td className="px-6 py-4">
                         <DeclarationStatusBadge tone={tone} label={badgeLabel} />
                       </td>

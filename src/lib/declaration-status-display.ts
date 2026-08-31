@@ -30,7 +30,6 @@ export function resolveDeclarationRowBadge(
 
 /**
  * Human-readable subtitle — no DMS codes (those stay on the status badge only).
- * DMSINV: "Cancelled" when cancel accepted (green); "Action Required" when invalid (red).
  */
 export function declarationHumanSubtitle(
   badgeLabel: string,
@@ -39,18 +38,37 @@ export function declarationHumanSubtitle(
 ): string {
   const normalized = badgeLabel.toLowerCase();
 
-  if (badgeLabel.startsWith("Cancelled") || normalized.startsWith("cancelled")) {
+  if (badgeLabel.startsWith("Cancelled") || normalized.startsWith("cancelled") || status === "Cancelled") {
     return "Cancelled";
   }
 
   if (
+    status === "Received" ||
+    normalized.includes("dmsrcv") ||
+    normalized.startsWith("received")
+  ) {
+    return "Received by HMRC";
+  }
+
+  if (
+    status === "Cleared" ||
+    normalized.includes("dmscle") ||
+    normalized.startsWith("cleared") ||
+    badgeLabel.startsWith("Declaration cleared")
+  ) {
+    return "Cleared by HMRC";
+  }
+
+  if (badgeLabel.startsWith("Invalid")) {
+    return "Action Required";
+  }
+
+  if (
     tone === "danger" ||
-    badgeLabel.startsWith("Invalid") ||
     badgeLabel.startsWith("Rejected") ||
     status === "Inventory Rejected" ||
     status === "Rejected" ||
-    status === "Action Required" ||
-    (status === "Invalid" && tone !== "success")
+    status === "Action Required"
   ) {
     return "Action Required";
   }

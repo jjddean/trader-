@@ -1,6 +1,6 @@
 # Post-TDR backlog (redirect)
 
-**Status:** SUPERSEDED BY [`BACKLOG.md`](./BACKLOG.md). Kept as a redirect only — eight documents still link here.
+**Status:** SUPERSEDED BY [`BACKLOG.md`](./BACKLOG.md). Kept as a redirect only.
 
 **This file is no longer maintained.** Use the single backlog:
 

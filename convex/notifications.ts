@@ -7,6 +7,7 @@ import {
   isAmendmentRejected,
   isCancellationRejected,
   isInvalidationAccepted,
+  isSubmitReceipt,
   isPostCancelClearance,
 } from "./lib/notification_dms_context";
 import { statusAfterNotification } from "./lib/notification_status";
@@ -16,6 +17,7 @@ import { assertIngestSecret } from "./lib/secret_compare";
 import { canAccessDeclaration, orgIdFromDeclaration } from "./lib/org_access";
 import { notify } from "./lib/notify";
 import { eventForNotification, titleForNotification } from "./lib/notification_events";
+import { parseHmrcNotification } from "./lib/hmrc_notification_parser";
 
 const hmrcEnvironment = v.union(v.literal("sandbox"), v.literal("production"));
 
@@ -59,9 +61,18 @@ export const saveWebhook = mutation({
     source: v.optional(v.string()),
     hmrcNotificationId: v.optional(v.string()),
     issueDateTime: v.optional(v.string()),
+    functionCode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     assertIngestSecret(args.ingestSecret);
+
+    const parsed = parseHmrcNotification(args.rawPayload);
+    const notificationType = parsed.notificationType;
+    const functionCode = parsed.functionCode || args.functionCode;
+    const mrn = parsed.mrn !== "UNKNOWN" ? parsed.mrn : args.mrn;
+    const errorCodes = parsed.errorCodes.length > 0 ? parsed.errorCodes : args.errorCodes;
+    const fieldErrors = parsed.fieldErrors.length > 0 ? parsed.fieldErrors : args.fieldErrors;
+    const issueDateTime = parsed.issueDateTime || args.issueDateTime;
 
     // Dedupe by HMRC notificationId first — stable across push/pull channels.
     if (args.hmrcNotificationId) {
@@ -96,11 +107,11 @@ export const saveWebhook = mutation({
     }
 
     // Dedupe by conversationId + type + timestamp
-    if (args.conversationId && args.notificationType && args.timestamp) {
+    if (args.conversationId && notificationType && args.timestamp) {
       const existingByConv = await ctx.db
         .query("notifications")
         .withIndex("by_conv_type_ts", (q) =>
-          q.eq("conversationId", args.conversationId).eq("notificationType", args.notificationType).eq("timestamp", args.timestamp),
+          q.eq("conversationId", args.conversationId).eq("notificationType", notificationType).eq("timestamp", args.timestamp),
         )
         .first();
       if (existingByConv) {
@@ -138,18 +149,19 @@ export const saveWebhook = mutation({
     }
 
     const notificationId = await ctx.db.insert("notifications", {
-      mrn: args.mrn,
+      mrn,
       conversationId: args.conversationId,
       ...(originatingOperation ? { originatingOperation } : {}),
+      ...(functionCode ? { functionCode } : {}),
       environment: args.environment ?? "sandbox",
       idempotencyKey: args.idempotencyKey,
       hmrcNotificationId: args.hmrcNotificationId,
       source: args.source,
       timestamp: args.timestamp,
-      issueDateTime: args.issueDateTime,
-      notificationType: args.notificationType,
-      errorCodes: args.errorCodes || [],
-      fieldErrors: args.fieldErrors || [],
+      issueDateTime,
+      notificationType,
+      errorCodes: errorCodes || [],
+      fieldErrors: fieldErrors || [],
       rawPayload: args.rawPayload,
       processed: false,
     });
@@ -167,16 +179,16 @@ export const saveWebhook = mutation({
     }
 
     // Fall back to MRN lookup (for notifications where conversationId isn't stored yet)
-    if (!declaration && args.mrn && args.mrn !== "UNKNOWN") {
+    if (!declaration && mrn && mrn !== "UNKNOWN") {
       declaration = await ctx.db
         .query("declarations")
-        .withIndex("by_mrn", (q) => q.eq("mrn", args.mrn))
+        .withIndex("by_mrn", (q) => q.eq("mrn", mrn))
         .first();
     }
 
     if (declaration) {
       const declMrn = String(declaration.mrn ?? "").trim();
-      const notifMrn = String(args.mrn ?? "").trim();
+      const notifMrn = String(mrn ?? "").trim();
       // conversationId is the authoritative link after a 202. When the
       // declaration was found that way, a new HMRC-assigned MRN must always be
       // trusted (re-submit assigns a fresh MRN). Only guard MRN-fallback lookups.
@@ -188,52 +200,42 @@ export const saveWebhook = mutation({
         notifMrn !== declMrn;
 
       const hasResolvedMrn =
-        (args.mrn && args.mrn !== "UNKNOWN") ||
+        (mrn && mrn !== "UNKNOWN") ||
         (declaration.mrn && String(declaration.mrn).trim().length > 0);
-      const amendRejected = isAmendmentRejected({
-        notificationType: args.notificationType,
+      const dmsCtx = {
+        notificationType,
         rawPayload: args.rawPayload,
-        fieldErrors: args.fieldErrors,
-        errorCodes: args.errorCodes,
-      });
-      const amendAccepted = isAmendmentAccepted({
-        notificationType: args.notificationType,
-        rawPayload: args.rawPayload,
-        fieldErrors: args.fieldErrors,
-        errorCodes: args.errorCodes,
-      });
-      const amendAcknowledged = isAmendmentAcknowledged({
-        notificationType: args.notificationType,
-        rawPayload: args.rawPayload,
-        fieldErrors: args.fieldErrors,
-        errorCodes: args.errorCodes,
-      });
+        fieldErrors,
+        errorCodes,
+      };
+      const amendRejected = isAmendmentRejected(dmsCtx);
+      const amendAccepted = isAmendmentAccepted(dmsCtx);
+      const amendAcknowledged = isAmendmentAcknowledged(dmsCtx);
       const invAccepted = isInvalidationAccepted({
-        notificationType: args.notificationType,
-        rawPayload: args.rawPayload,
-        fieldErrors: args.fieldErrors,
-        errorCodes: args.errorCodes,
+        ...dmsCtx,
         originatingOperation,
       });
-      const postCancelCle = isPostCancelClearance({
-        notificationType: args.notificationType,
-        rawPayload: args.rawPayload,
+      const submitReceipt = isSubmitReceipt({
+        ...dmsCtx,
+        originatingOperation,
       });
+      const postCancelCle = isPostCancelClearance(dmsCtx);
       const cancelRejected = isCancellationRejected({
-        notificationType: args.notificationType,
+        notificationType,
         rawPayload: args.rawPayload,
         originatingOperation,
       });
       if (!mrnMismatch) {
         const newStatus = statusAfterNotification({
           currentStatus: declaration.status,
-          notificationType: args.notificationType,
+          notificationType,
           hasResolvedMrn,
           isAmendmentRejected: amendRejected,
           isAmendmentAccepted: amendAccepted,
           isAmendmentAcknowledged: amendAcknowledged,
           isCancellationRejected: cancelRejected,
           isInvalidationAccepted: invAccepted,
+          isSubmitReceipt: submitReceipt,
           isPostCancelClearance: postCancelCle,
         });
 
@@ -242,9 +244,8 @@ export const saveWebhook = mutation({
           lastUpdated: Date.now(),
         };
 
-        // Always sync the CDS-assigned MRN back to the declaration when HMRC provides one.
-        if (args.mrn && args.mrn !== "UNKNOWN") {
-          patchObj.mrn = args.mrn;
+        if (mrn && mrn !== "UNKNOWN") {
+          patchObj.mrn = mrn;
         }
 
         await ctx.db.patch(declaration._id, patchObj);
@@ -258,43 +259,38 @@ export const saveWebhook = mutation({
           action: "declaration_status_updated",
           metadata: {
             declarationId: declaration._id,
-            mrn: args.mrn,
+            mrn,
             newStatus: newStatus,
-            notificationType: args.notificationType,
+            notificationType,
+            functionCode,
           },
         });
 
-        // Mirror into the in-app inbox. This row is derived and disposable — the
-        // evidence stays on the `notifications` row inserted above, which this
-        // points back to via sourceId. Emitted only when the correlation held
-        // (no MRN mismatch), so a suspect link never raises a user-facing alert.
         const event = eventForNotification({
-          notificationType: args.notificationType,
+          notificationType,
           isAmendmentAccepted: amendAccepted,
           isAmendmentRejected: amendRejected,
           isCancellationRejected: cancelRejected,
           isInvalidationAccepted: invAccepted,
         });
-        const errorCodes = args.errorCodes ?? [];
+        const codes = errorCodes ?? [];
         await notify(ctx, {
           event,
           userId: declaration.userId,
           orgId: orgIdFromDeclaration(declaration),
-          title: titleForNotification(event, args.notificationType),
-          body: errorCodes.length > 0
-            ? `${declaration.mrn || args.mrn || "Declaration"} — ${errorCodes.slice(0, 3).join(", ")}`
-            : (args.mrn && args.mrn !== "UNKNOWN" ? `MRN ${args.mrn}` : undefined),
+          title: titleForNotification(event, notificationType),
+          body: codes.length > 0
+            ? `${declaration.mrn || mrn || "Declaration"} — ${codes.slice(0, 3).join(", ")}`
+            : (mrn && mrn !== "UNKNOWN" ? `MRN ${mrn}` : undefined),
           href: `/dashboard/declarations/${declaration._id}/status`,
           declarationId: declaration._id,
           sourceTable: "notifications",
           sourceId: notificationId,
-          // One inbox row per evidence row. Guards the backfill in
-          // convex/notifications_backfill.ts against double-writing a mirror.
           dedupeKey: `hmrc:${notificationId}`,
           metadata: {
-            notificationType: args.notificationType,
+            notificationType,
             newStatus,
-            errorCodes: errorCodes.slice(0, 10),
+            errorCodes: codes.slice(0, 10),
           },
         });
       }

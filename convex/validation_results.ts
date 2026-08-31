@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
-import { evaluateRules, type RuleDefinition, type ScenarioInput } from "./lib/rule_engine";
+import { evaluateRules, scenarioInputFromRecords, type RuleDefinition } from "./lib/rule_engine";
 import { canAccessDeclaration, orgIdFromDeclaration } from "./lib/org_access";
 import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
 import { notify } from "./lib/notify";
@@ -60,30 +60,10 @@ export const recompute = mutation({
       .withIndex("by_enabled", (q) => q.eq("enabled", true))
       .collect()) as unknown as RuleDefinition[];
 
-    const input: ScenarioInput = {
-      declaration: {
-        declarationType: decl.declarationType,
-        route: decl.route,
-        dispatchCountry: decl.dispatchCountry,
-        transportMode: (decl as Record<string, unknown>).transportMode as string | undefined,
-        transportId: (decl as Record<string, unknown>).transportId as string | undefined,
-        transportIdType: (decl as Record<string, unknown>).transportIdType as string | undefined,
-        valuationMethod: (decl as Record<string, unknown>).valuationMethod as string | undefined,
-        mode: decl.mode,
-        invoiceTotal: (decl as Record<string, unknown>).invoiceTotal as number | string | undefined,
-      },
-      items: items.map((i) => ({
-        commodityCode: i.commodityCode,
-        originCountry: i.originCountry,
-        procedureCode: i.procedureCode,
-        additionalProcedureCode: i.additionalProcedureCode,
-        valuationMethod: (i as Record<string, unknown>).valuationMethod as string | undefined,
-        // goods_items schema is permissive (v.any() everywhere) — preferenceCode
-        // may not exist as a typed field but can still be present on the row.
-        preferenceCode: (i as Record<string, unknown>).preferenceCode as string | undefined,
-        additionalDocuments: Array.isArray(i.additionalDocuments) ? i.additionalDocuments : [],
-      })),
-    };
+    const input = scenarioInputFromRecords(
+      decl as unknown as Record<string, unknown>,
+      items as unknown as Array<Record<string, unknown>>,
+    );
 
     const results = evaluateRules(rules, input);
 
@@ -168,28 +148,10 @@ export const recomputeForDebug = internalMutation({
       .withIndex("by_enabled", (q) => q.eq("enabled", true))
       .collect()) as unknown as RuleDefinition[];
 
-    const input: ScenarioInput = {
-      declaration: {
-        declarationType: decl.declarationType,
-        route: decl.route,
-        dispatchCountry: decl.dispatchCountry,
-        transportMode: (decl as Record<string, unknown>).transportMode as string | undefined,
-        transportId: (decl as Record<string, unknown>).transportId as string | undefined,
-        transportIdType: (decl as Record<string, unknown>).transportIdType as string | undefined,
-        valuationMethod: (decl as Record<string, unknown>).valuationMethod as string | undefined,
-        mode: decl.mode,
-        invoiceTotal: (decl as Record<string, unknown>).invoiceTotal as number | string | undefined,
-      },
-      items: items.map((i) => ({
-        commodityCode: i.commodityCode,
-        originCountry: i.originCountry,
-        procedureCode: i.procedureCode,
-        additionalProcedureCode: i.additionalProcedureCode,
-        valuationMethod: (i as Record<string, unknown>).valuationMethod as string | undefined,
-        preferenceCode: (i as Record<string, unknown>).preferenceCode as string | undefined,
-        additionalDocuments: Array.isArray(i.additionalDocuments) ? i.additionalDocuments : [],
-      })),
-    };
+    const input = scenarioInputFromRecords(
+      decl as unknown as Record<string, unknown>,
+      items as unknown as Array<Record<string, unknown>>,
+    );
 
     const results = evaluateRules(rules, input);
 

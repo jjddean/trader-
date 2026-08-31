@@ -4,7 +4,7 @@
 
 Validated against HMRC and UK Trade Tariff guidance.
 
-**Prerequisite:** DAN (Duty Deferment Account Number) support — **complete** (see [`DELIVERY-PLAN.md`](./DELIVERY-PLAN.md) §1).
+**Prerequisite:** DAN (Duty Deferment Account Number) support — **complete**.
 
 DAN = DE 2/6 (Deferred Payment) and is required when using deferment payment methods in CDS.
 

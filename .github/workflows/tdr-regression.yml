@@ -43,6 +43,15 @@ jobs:
       - name: H1 unit tests + golden XML
         run: npm run test:h1
 
+      - name: B1 export declaration regressions
+        run: npm run test:b1
+
+      - name: C1 simplified export regressions
+        run: npm run test:c1
+
+      - name: I1 simplified import regressions
+        run: npm run test:i1
+
       - name: HMRC supporting evidence regressions
         run: npm run test:evidence
 

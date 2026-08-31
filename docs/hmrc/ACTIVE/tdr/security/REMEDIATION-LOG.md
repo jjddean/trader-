@@ -1,7 +1,7 @@
 # Remediation Log — HMRC Readiness
 
 **Date opened:** 2026-06-14  
-**Last synced:** 2026-06-15  
+**Last synced:** 2026-08-29 (R-019 marked done to match `tdr-regression.yml`)  
 **Status key:** `open` | `in_progress` | `done` | `wontfix` | `deferred`
 
 Prioritized for external technical review and HMRC production credential request.
@@ -44,14 +44,14 @@ Prioritized for external technical review and HMRC production credential request
 | R-016 | High | `README.md` (root) | Convex export placeholder, not project README | Rewrite with stack, setup, test commands | **done** — `d48d59c` |
 | R-017 | Medium | `.gitignore` | `tmp/` not ignored | Add `/tmp/` | **done** — `d48d59c` |
 | R-018 | Medium | `eslint.config.mjs` | Flat config `overrides` breaks lint | ESLint 9 flat config | **done** — config fixed; full-repo lint deferred; CI runs `npm run lint:security` |
-| R-019 | Medium | `.github/workflows/tdr-regression.yml` | No lint or audit in CI | Add `lint:security` + `npm audit --audit-level=high` + `tsc` | **open** — batch B |
+| R-019 | Medium | `.github/workflows/tdr-regression.yml` | No lint or audit in CI | Add `lint:security` + `npm audit --audit-level=high` + `tsc` | **done** — present in `tdr-regression.yml` |
 | R-020 | Low | `docs/hmrc/README.md` | Security audit docs not indexed | Link to `security/` folder | **done** |
 | R-021 | Low | Privacy / terms routes | Public routes live | https://www.freightcode.co.uk/privacy and `/terms` | **done** |
 | R-022 | Low | `spec/HANDOVER.md` | Empty | Populate with doc index | **done** — 15 Jun 2026 |
 
 ---
 
-## P3 — HMRC ops policies (DELIVERY-PLAN item 7)
+## P3 — HMRC ops policies
 
 | ID | Severity | File(s) | Issue | Recommended action | Status |
 |----|----------|---------|-------|-------------------|--------|

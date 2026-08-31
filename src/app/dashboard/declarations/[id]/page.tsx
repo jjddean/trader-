@@ -1,13 +1,24 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
+import { Loader2 } from "lucide-react";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, Loader2, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CompactCheckbox } from "@/components/ui/compact-checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { countries } from "@/lib/data/countries";
 import {
   inferGoodsLocationKind,
@@ -16,12 +27,7 @@ import {
 } from "@/lib/goods-location";
 import { DeclarationModePromote } from "@/components/declaration-mode-promote";
 import {
-  DeclarationClientPicker,
-  DeclarationRepresentationFields,
-} from "@/components/declaration-representation-panel";
-import {
   ConvexSessionMissing,
-  DeclarationLoadingSpinner,
   isConvexSessionMissing,
 } from "@/components/declaration-session-states";
 import {
@@ -30,6 +36,52 @@ import {
   validatePaymentFields,
 } from "@/lib/payment-method";
 import { userMessageFromError } from "@/lib/convex-errors";
+import { cn } from "@/lib/utils";
+import {
+  AlertBanner,
+  ds,
+  MetricStrip,
+  MutedPanel,
+  PageContainer,
+  PageHeading,
+  PageLoading,
+  PageSection,
+} from "@/components/dashboard/page-shell";
+
+type DeclarationCategoryChoice = "" | "B1" | "C1" | "I1";
+type RepresentationType = "self" | "direct" | "indirect";
+
+const DECLARATION_CATEGORIES: { value: DeclarationCategoryChoice; label: string }[] = [
+  { value: "", label: "H1 — full import declaration" },
+  { value: "I1", label: "I1 C&F — simplified import (regular use)" },
+  { value: "B1", label: "B1 — standard export / re-export" },
+  { value: "C1", label: "C1 C&F — simplified export (regular use)" },
+];
+
+function isExportCategory(category: DeclarationCategoryChoice): boolean {
+  return category === "B1" || category === "C1";
+}
+
+function isSimplifiedCategory(category: DeclarationCategoryChoice): boolean {
+  return category === "I1" || category === "C1";
+}
+
+const ARRIVAL_BY_CATEGORY = {
+  standard: [
+    { value: "A", label: "A — arrived" },
+    { value: "D", label: "D — pre-lodged" },
+  ],
+  simplified: [
+    { value: "C", label: "C — simplified, arrived" },
+    { value: "F", label: "F — simplified, pre-lodged" },
+  ],
+} as const;
+
+const ROUTES = [
+  { value: "Route 1", label: "Route 1 (Documentary Check)" },
+  { value: "Route 2", label: "Route 2 (Physical Exam)" },
+  { value: "Route 6", label: "Route 6 (Direct Clearance)" },
+];
 
 const TRANSPORT_MODE_OPTIONS = [
   { value: "1", label: "1 — Sea" },
@@ -51,6 +103,138 @@ const TRANSPORT_ID_TYPE_OPTIONS = [
   { value: "41", label: "41 — Registration of aircraft" },
 ] as const;
 
+const REPRESENTATION_TYPES = [
+  { value: "self", label: "Self — declarant is the importer" },
+  { value: "direct", label: "Direct — broker acts for importer (DE 3/21 = 2)" },
+  { value: "indirect", label: "Indirect — broker is declarant (DE 3/21 = 3)" },
+] as const;
+
+const INCOTERMS = ["EXW", "FCA", "FAS", "FOB", "CFR", "CIF", "CPT", "CIP", "DAP", "DPU", "DDP"];
+const NONE = "__none__";
+const LONDON_GATEWAY = "GBAULGPLGPLGP1";
+
+const PORT_LOCATION_OPTIONS = Object.entries(KNOWN_APPENDIX_16C_CODES)
+  .map(([code, name]) => ({ code, name }))
+  .sort((a, b) => a.name.localeCompare(b.name));
+
+const FORBIDDEN_ON_EXPORT = [
+  "importerEori",
+  "incoterms",
+  "incotermLocation",
+  "defermentAccountNumber",
+  "paymentMethodCode",
+] as const;
+
+interface FormData {
+  eori: string;
+  declarationType: string;
+  additionalDeclarationType: string;
+  route: string;
+  dispatchCountry: string;
+  transportMode: string;
+  transportId: string;
+  transportIdType: string;
+  destinationCountry: string;
+  importerEori: string;
+  invoiceCurrency: string;
+  invoiceTotal: string;
+  incoterms: string;
+  incotermLocation: string;
+  goodsLocationKind: GoodsLocationKind | "";
+  locationId: string;
+  presentationOffice: string;
+  exporterEori: string;
+  exporterCountry: string;
+  exporterName: string;
+  exporterCity: string;
+  exporterLine: string;
+  exporterPostcode: string;
+  transactionNatureCode: string;
+  paymentMethodCode: string;
+  defermentAccountNumber: string;
+  declarationCategory: DeclarationCategoryChoice;
+  customsOfficeOfExit: string;
+  authorisationHolderEori: string;
+  authorisationCategoryCode: string;
+  consigneeEori: string;
+  consigneeName: string;
+  consigneeCity: string;
+  consigneeLine: string;
+  consigneePostcode: string;
+  consigneeCountry: string;
+  sealNumber: string;
+  containerNumber: string;
+  cnsUcn: string;
+}
+
+interface RepresentationForm {
+  representationType: RepresentationType;
+  representativeEori: string;
+  representativeName: string;
+  representativeAddressLine: string;
+  representativeCity: string;
+  representativePostcode: string;
+  representativeCountry: string;
+  authorityVerified: boolean;
+  authorityValidFrom: string;
+  authorityValidTo: string;
+}
+
+const EMPTY_FORM: FormData = {
+  eori: "",
+  declarationType: "H1",
+  additionalDeclarationType: "A",
+  route: "Route 1",
+  dispatchCountry: "",
+  transportMode: "",
+  transportId: "",
+  transportIdType: "",
+  destinationCountry: "",
+  importerEori: "",
+  invoiceCurrency: "",
+  invoiceTotal: "",
+  incoterms: "",
+  incotermLocation: "",
+  goodsLocationKind: "",
+  locationId: "",
+  presentationOffice: "",
+  exporterEori: "",
+  exporterCountry: "",
+  exporterName: "",
+  exporterCity: "",
+  exporterLine: "",
+  exporterPostcode: "",
+  transactionNatureCode: "",
+  paymentMethodCode: "",
+  defermentAccountNumber: "",
+  declarationCategory: "",
+  customsOfficeOfExit: "",
+  authorisationHolderEori: "",
+  authorisationCategoryCode: "",
+  consigneeEori: "",
+  consigneeName: "",
+  consigneeCity: "",
+  consigneeLine: "",
+  consigneePostcode: "",
+  consigneeCountry: "",
+  sealNumber: "",
+  containerNumber: "",
+  cnsUcn: "",
+};
+
+const EMPTY_REP: RepresentationForm = {
+  representationType: "self",
+  representativeEori: "",
+  representativeName: "",
+  representativeAddressLine: "",
+  representativeCity: "",
+  representativePostcode: "",
+  representativeCountry: "",
+  authorityVerified: false,
+  authorityValidFrom: "",
+  authorityValidTo: "",
+};
+
 function normalizeTransportIdType(value: unknown): string {
   if (value == null || value === "") return "";
   const raw = String(value).trim();
@@ -65,73 +249,111 @@ function normalizeTransportMode(value: unknown): string {
   return code ?? raw;
 }
 
-const selectFieldClassName =
-  "w-full rounded-md border border-slate-200 bg-white p-2.5 text-sm outline-none transition-colors focus:border-blue-500";
+function dateInputValue(ms: number | undefined | null): string {
+  if (!ms || !Number.isFinite(ms)) return "";
+  return new Date(ms).toISOString().slice(0, 10);
+}
 
-// DE 5/23 — the Appendix 16C maritime list, sorted by port name for the picker.
-// Selecting an entry is what sets goodsLocationKind, so the two fields can no
-// longer drift apart (the old free-text code + separate method dropdown could).
-const PORT_LOCATION_OPTIONS = Object.entries(KNOWN_APPENDIX_16C_CODES)
-  .map(([code, name]) => ({ code, name }))
-  .sort((a, b) => a.name.localeCompare(b.name));
+function parseDateInput(value: string): number | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const parsed = Date.parse(`${trimmed}T00:00:00.000Z`);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function Field({
+  span,
+  id,
+  label,
+  de,
+  required,
+  error,
+  hint,
+  children,
+}: {
+  span: string;
+  id: string;
+  label: string;
+  de?: string;
+  required?: boolean;
+  error?: string | null;
+  hint?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={cn("col-span-12 min-w-0 space-y-2", span)}>
+      <Label
+        htmlFor={id}
+        className={cn(ds.sectionLabel, "flex min-h-6 w-full items-start justify-between leading-4")}
+      >
+        <span>{label}</span>
+        {de || required ? (
+          <span className="flex shrink-0 items-center gap-1">
+            {de ? (
+              <span className="font-mono text-[10px] font-normal normal-case tracking-normal">{de}</span>
+            ) : null}
+            {required ? <span className="text-destructive">*</span> : null}
+          </span>
+        ) : null}
+      </Label>
+      {children}
+      {error ? (
+        <p className="text-destructive text-xs break-words">{error}</p>
+      ) : hint ? (
+        <p className="text-muted-foreground text-xs break-words">{hint}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function fieldGrid(children: React.ReactNode) {
+  return <div className="grid grid-cols-12 gap-x-4 gap-y-5">{children}</div>;
+}
 
 export default function CoreSchemaPage() {
   const { isLoaded, isSignedIn } = useAuth();
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const params = useParams<{ id: string }>();
   const id = params?.id as Id<"declarations">;
+  const ready = isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && id;
 
-  const declaration = useQuery(
-    api.declarations.getLane,
-    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && id ? { id } : "skip",
-  );
+  const declaration = useQuery(api.declarations.getLane, ready ? { id } : "skip");
   const updateDeclaration = useMutation(api.declarations.updateDeclarationDetails);
-
   const completeness = useQuery(
     api.declaration_completeness.getStatus,
-    isLoaded && isSignedIn && !isConvexAuthLoading && isAuthenticated && id ? { declarationId: id } : "skip",
+    ready ? { declarationId: id } : "skip",
   );
+  const clients = useQuery(api.clients.list, ready ? { includeArchived: false } : "skip");
+  const setClient = useMutation(api.clients.setClient);
+  const representationStatus = useQuery(
+    api.representation.getStatus,
+    ready ? { declarationId: id } : "skip",
+  );
+  const setRepresentationDetails = useMutation(api.representation.setRepresentationDetails);
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [clientBusy, setClientBusy] = useState(false);
+  const [clientError, setClientError] = useState<string | null>(null);
   const hydratedVersionRef = useRef<string | null>(null);
-  const [formData, setFormData] = useState({
-    eori: "",
-    declarationType: "H1",
-    additionalDeclarationType: "A",
-    route: "Route 1",
-    dispatchCountry: "",
-    transportMode: "",
-    transportId: "",
-    transportIdType: "",
-    destinationCountry: "",
-    importerEori: "",
-    invoiceCurrency: "",
-    invoiceTotal: "",
-    incoterms: "",
-    incotermLocation: "",
-    goodsLocationKind: "" as GoodsLocationKind | "",
-    locationId: "",
-    presentationOffice: "",
-    exporterName: "",
-    exporterCity: "",
-    exporterLine: "",
-    exporterPostcode: "",
-    transactionNatureCode: "",
-    paymentMethodCode: "",
-    defermentAccountNumber: "",
-    containerNumber: "",
-    cnsUcn: "",
-  });
+  const [formData, setFormData] = useState<FormData>(EMPTY_FORM);
+  const [formBaseline, setFormBaseline] = useState<FormData>(EMPTY_FORM);
+  const [repForm, setRepForm] = useState<RepresentationForm>(EMPTY_REP);
+  const [repBaseline, setRepBaseline] = useState<RepresentationForm>(EMPTY_REP);
+  const [repHydrated, setRepHydrated] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    setRepHydrated(false);
+  }, [id]);
+
+  useEffect(() => {
     if (!declaration || !id) return;
     const version = `${id}:${String(declaration.lastUpdated ?? declaration._creationTime ?? "")}`;
     if (hydratedVersionRef.current === version) return;
     hydratedVersionRef.current = version;
     const d = declaration as Record<string, unknown>;
-    setFormData({
+    const next: FormData = {
       eori: (d.eori as string) || "",
       declarationType: "H1",
       additionalDeclarationType: (d.additionalDeclarationType as string) || "A",
@@ -146,6 +368,17 @@ export default function CoreSchemaPage() {
       invoiceTotal: d.invoiceTotal != null ? String(d.invoiceTotal) : "",
       incoterms: (d.incoterms as string) || "",
       incotermLocation: (d.incotermLocation as string) || "",
+      declarationCategory: ((d.declarationCategory as string) || "") as DeclarationCategoryChoice,
+      customsOfficeOfExit: (d.customsOfficeOfExit as string) || "",
+      authorisationHolderEori: (d.authorisationHolderEori as string) || "",
+      authorisationCategoryCode: (d.authorisationCategoryCode as string) || "",
+      consigneeEori: (d.consigneeEori as string) || "",
+      consigneeName: (d.consigneeName as string) || "",
+      consigneeCity: (d.consigneeCity as string) || "",
+      consigneeLine: (d.consigneeLine as string) || "",
+      consigneePostcode: (d.consigneePostcode as string) || "",
+      consigneeCountry: (d.consigneeCountry as string) || "",
+      sealNumber: (d.sealNumber as string) || "",
       goodsLocationKind:
         inferGoodsLocationKind({
           goodsLocationKind: d.goodsLocationKind,
@@ -153,6 +386,8 @@ export default function CoreSchemaPage() {
         }) || "",
       locationId: (d.locationId as string) || "",
       presentationOffice: (d.presentationOffice as string) || "",
+      exporterEori: (d.exporterEori as string) || "",
+      exporterCountry: (d.exporterCountry as string) || "",
       exporterName: (d.exporterName as string) || "",
       exporterCity: (d.exporterCity as string) || "",
       exporterLine: (d.exporterLine as string) || "",
@@ -162,14 +397,77 @@ export default function CoreSchemaPage() {
       defermentAccountNumber: (d.defermentAccountNumber as string) || "",
       containerNumber: (d.containerNumber as string) || "",
       cnsUcn: (d.cnsUcn as string) || "",
-    });
+    };
+    setFormData(next);
+    setFormBaseline(next);
   }, [declaration, id]);
 
-  const handleSave = async (e?: React.FormEvent) => {
-    e?.preventDefault();
+  useEffect(() => {
+    if (!representationStatus || repHydrated) return;
+    const rep = representationStatus.representation;
+    const next: RepresentationForm = {
+      representationType: (rep.representationType as RepresentationType) || "self",
+      representativeEori: rep.representativeEori || "",
+      representativeName: rep.representativeName || "",
+      representativeAddressLine: rep.representativeAddressLine || "",
+      representativeCity: rep.representativeCity || "",
+      representativePostcode: rep.representativePostcode || "",
+      representativeCountry: rep.representativeCountry || "",
+      authorityVerified: rep.authorityVerified ?? false,
+      authorityValidFrom: dateInputValue(rep.authorityValidFrom),
+      authorityValidTo: dateInputValue(rep.authorityValidTo),
+    };
+    setRepForm(next);
+    setRepBaseline(next);
+    setRepHydrated(true);
+  }, [representationStatus, repHydrated]);
+
+  const formDirty = JSON.stringify(formData) !== JSON.stringify(formBaseline);
+  const repDirty = JSON.stringify(repForm) !== JSON.stringify(repBaseline);
+  const dirty = formDirty || repDirty;
+
+  function patch<K extends keyof FormData>(key: K, value: FormData[K]) {
+    setSaved(false);
+    setSaveError(null);
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function handleClientChange(value: string) {
+    setClientBusy(true);
+    setClientError(null);
+    try {
+      await setClient({
+        declarationId: id,
+        clientId: value === NONE ? null : value,
+      });
+    } catch (err) {
+      setClientError(userMessageFromError(err, "Failed to link client"));
+    } finally {
+      setClientBusy(false);
+    }
+  }
+
+  const handleSave = async () => {
+    if (saving) return;
+    const exportCategory = isExportCategory(formData.declarationCategory);
+    const scrubbed = { ...formData };
+    if (exportCategory) {
+      for (const field of FORBIDDEN_ON_EXPORT) scrubbed[field] = "";
+    }
+    const paymentError = validatePaymentFields(
+      scrubbed.paymentMethodCode,
+      requiresDefermentAccount(scrubbed.paymentMethodCode)
+        ? scrubbed.defermentAccountNumber
+        : "",
+    );
+    if (paymentError) {
+      setSaveError(paymentError);
+      return;
+    }
+
     setSaving(true);
     setSaveError(null);
-    setSaveSuccess(false);
+    setSaved(false);
     try {
       const validationMessages: string[] = [];
       if (!formData.transportIdType.trim()) {
@@ -178,11 +476,21 @@ export default function CoreSchemaPage() {
       if (!formData.transportMode.trim()) {
         validationMessages.push("Transport Mode (DE 7/4) is required.");
       }
-      if (formData.locationId.trim().toUpperCase() === "GBAULGPLGPLGP1" && !formData.cnsUcn.trim()) {
+      if (formData.locationId.trim().toUpperCase() === LONDON_GATEWAY && !formData.cnsUcn.trim()) {
         validationMessages.push("CNS UCN is required for London Gateway inventory-linked declarations.");
       }
       const dispatch = formData.dispatchCountry.trim().toUpperCase();
-      if (dispatch && dispatch !== "GB" && dispatch !== "XI") {
+      if (exportCategory) {
+        const hasEori = Boolean(formData.exporterEori.trim());
+        const hasNameAddress =
+          Boolean(formData.exporterName.trim()) &&
+          Boolean(formData.exporterCity.trim()) &&
+          Boolean(formData.exporterLine.trim()) &&
+          Boolean(formData.exporterPostcode.trim());
+        if (!hasEori && !hasNameAddress) {
+          validationMessages.push("Exporter EORI (DE 3/2) or name and address (DE 3/1) is required.");
+        }
+      } else if (dispatch && dispatch !== "GB" && dispatch !== "XI") {
         if (!formData.exporterName.trim()) {
           validationMessages.push("Exporter name (DE 3/1) is required for overseas dispatch.");
         }
@@ -193,23 +501,14 @@ export default function CoreSchemaPage() {
       if (!formData.transactionNatureCode.trim()) {
         validationMessages.push("Nature of transaction (DE 8/5) is required.");
       }
-      const paymentError = validatePaymentFields(
-        formData.paymentMethodCode,
-        requiresDefermentAccount(formData.paymentMethodCode)
-          ? formData.defermentAccountNumber
-          : "",
-      );
-      if (paymentError) {
-        setSaveError(paymentError);
-        return;
-      }
-      const invoiceTotalParsed = formData.invoiceTotal.trim() === ""
-        ? null
-        : Number(formData.invoiceTotal);
-      await updateDeclaration({
+
+      const invoiceTotalParsed =
+        formData.invoiceTotal.trim() === "" ? null : Number(formData.invoiceTotal);
+      if (formDirty) {
+        await updateDeclaration({
         id,
         eori: formData.eori.trim(),
-        declarationType: formData.declarationType,
+        declarationType: "H1",
         additionalDeclarationType: formData.additionalDeclarationType,
         route: formData.route,
         dispatchCountry: formData.dispatchCountry,
@@ -217,39 +516,80 @@ export default function CoreSchemaPage() {
         transportId: formData.transportId.trim(),
         transportIdType: normalizeTransportIdType(formData.transportIdType),
         destinationCountry: formData.destinationCountry,
-        importerEori: formData.importerEori.trim(),
+        importerEori: scrubbed.importerEori.trim(),
         invoiceCurrency: formData.invoiceCurrency.trim().toUpperCase(),
-        invoiceTotal: invoiceTotalParsed === null || Number.isFinite(invoiceTotalParsed) ? invoiceTotalParsed : null,
-        incoterms: formData.incoterms.trim().toUpperCase(),
-        incotermLocation: formData.incotermLocation.trim(),
-        // Fall back to inferring from the code itself. Sending undefined makes
-        // the mutation skip the field entirely, so an unset kind could never be
-        // persisted even when the code alone identified the location.
+        invoiceTotal:
+          invoiceTotalParsed === null || Number.isFinite(invoiceTotalParsed)
+            ? invoiceTotalParsed
+            : null,
+        incoterms: scrubbed.incoterms.trim().toUpperCase(),
+        incotermLocation: scrubbed.incotermLocation.trim(),
         goodsLocationKind:
           formData.goodsLocationKind ||
           inferGoodsLocationKind({ locationId: formData.locationId }) ||
           undefined,
         locationId: formData.locationId.trim() || String(declaration?.locationId ?? "").trim(),
         presentationOffice: formData.presentationOffice.trim(),
+        exporterEori: formData.exporterEori.trim().toUpperCase(),
+        exporterCountry: formData.exporterCountry,
         exporterName: formData.exporterName.trim(),
         exporterCity: formData.exporterCity.trim(),
         exporterLine: formData.exporterLine.trim(),
         exporterPostcode: formData.exporterPostcode.trim(),
         transactionNatureCode: formData.transactionNatureCode.trim(),
-        paymentMethodCode: formData.paymentMethodCode.trim().toUpperCase() || undefined,
-        defermentAccountNumber: requiresDefermentAccount(formData.paymentMethodCode)
-          ? formData.defermentAccountNumber.replace(/\D/g, "")
+        declarationCategory: formData.declarationCategory || undefined,
+        customsOfficeOfExit: formData.customsOfficeOfExit.trim().toUpperCase(),
+        authorisationHolderEori: formData.authorisationHolderEori.trim().toUpperCase(),
+        authorisationCategoryCode: formData.authorisationCategoryCode.trim().toUpperCase(),
+        consigneeEori: formData.consigneeEori.trim().toUpperCase(),
+        consigneeName: formData.consigneeName.trim(),
+        consigneeCity: formData.consigneeCity.trim(),
+        consigneeLine: formData.consigneeLine.trim(),
+        consigneePostcode: formData.consigneePostcode.trim(),
+        consigneeCountry: formData.consigneeCountry,
+        sealNumber: formData.sealNumber.trim(),
+        paymentMethodCode: scrubbed.paymentMethodCode.trim().toUpperCase() || undefined,
+        defermentAccountNumber: requiresDefermentAccount(scrubbed.paymentMethodCode)
+          ? scrubbed.defermentAccountNumber.replace(/\D/g, "")
           : undefined,
         containerNumber: formData.containerNumber.trim().toUpperCase(),
         cnsUcn: formData.cnsUcn.trim().toUpperCase(),
       });
+      }
+
+      if (repHydrated && repDirty) {
+        const showRepFields = repForm.representationType !== "self";
+        const showAuthority = repForm.representationType === "indirect";
+        await setRepresentationDetails({
+          declarationId: id,
+          representationType: repForm.representationType,
+          representativeEori: showRepFields ? repForm.representativeEori.trim() || null : null,
+          representativeName: showRepFields ? repForm.representativeName.trim() || null : null,
+          representativeAddressLine: showRepFields
+            ? repForm.representativeAddressLine.trim() || null
+            : null,
+          representativeCity: showRepFields ? repForm.representativeCity.trim() || null : null,
+          representativePostcode: showRepFields
+            ? repForm.representativePostcode.trim() || null
+            : null,
+          representativeCountry: showRepFields
+            ? repForm.representativeCountry.trim().toUpperCase() || null
+            : null,
+          authorityVerified: showAuthority ? repForm.authorityVerified : false,
+          authorityValidFrom: showAuthority ? parseDateInput(repForm.authorityValidFrom) ?? null : null,
+          authorityValidTo: showAuthority ? parseDateInput(repForm.authorityValidTo) ?? null : null,
+        });
+        setRepBaseline(repForm);
+      }
+
+      setFormData(scrubbed);
+      setFormBaseline(scrubbed);
       if (validationMessages.length > 0) {
         setSaveError(`Saved draft. Still blocking: ${validationMessages[0]}`);
       } else {
-        setSaveSuccess(true);
+        setSaved(true);
       }
     } catch (e) {
-      console.error("Failed to save core schema", e);
       setSaveError(userMessageFromError(e, "Failed to save core details"));
     } finally {
       setSaving(false);
@@ -257,7 +597,7 @@ export default function CoreSchemaPage() {
   };
 
   if (!isLoaded) {
-    return <DeclarationLoadingSpinner />;
+    return <PageLoading label="Loading declaration" />;
   }
 
   if (isConvexSessionMissing(isLoaded, Boolean(isSignedIn), isConvexAuthLoading, isAuthenticated)) {
@@ -265,41 +605,87 @@ export default function CoreSchemaPage() {
   }
 
   if (isSignedIn && isAuthenticated && declaration === undefined) {
-    return <DeclarationLoadingSpinner />;
+    return <PageLoading label="Loading declaration" />;
   }
 
   if (!declaration) {
     return (
-      <div className="flex justify-center py-12">
-        <p className="text-sm text-slate-500">Declaration not found.</p>
-      </div>
+      <PageContainer className="px-0 lg:px-0">
+        <AlertBanner>Declaration not found or you do not have access.</AlertBanner>
+      </PageContainer>
     );
   }
 
+  const exportSet = isExportCategory(formData.declarationCategory);
+  const simplified = isSimplifiedCategory(formData.declarationCategory);
+  const showAuthorisation =
+    simplified || (exportSet && formData.additionalDeclarationType === "A");
+  const arrivalOptions = ARRIVAL_BY_CATEGORY[simplified ? "simplified" : "standard"];
+  const showRepFields = repForm.representationType !== "self";
+  const showAuthority = repForm.representationType === "indirect";
   const locationIdUpper = (
     formData.locationId.trim() || String(declaration.locationId ?? "").trim()
   ).toUpperCase();
   const locationIdIsKnown = Boolean(locationIdUpper && KNOWN_APPENDIX_16C_CODES[locationIdUpper]);
+  const linkedClientId = declaration.clientId ? String(declaration.clientId) : undefined;
+  const blocking: Array<{ ruleId: string; field: string; reason: string }> =
+    completeness?.missing ?? [];
+  const incotermOptions =
+    formData.incoterms && !INCOTERMS.includes(formData.incoterms)
+      ? [formData.incoterms, ...INCOTERMS]
+      : INCOTERMS;
+  const overseasDispatch =
+    Boolean(formData.dispatchCountry) &&
+    formData.dispatchCountry !== "GB" &&
+    formData.dispatchCountry !== "XI";
+
+  const countryOptions = countries.map((c) => (
+    <SelectItem key={c.code} value={c.code}>
+      {c.code} — {c.name}
+    </SelectItem>
+  ));
 
   return (
-    <form onSubmit={handleSave} className="space-y-6">
-      <div>
-        <h2 className="text-lg font-medium text-slate-900">Core Declaration Details</h2>
-        <p className="mt-1 text-xs text-slate-500">
-          Enter the core details for this CDS import declaration.
-        </p>
-      </div>
+    <PageContainer className="px-0 lg:px-0">
+      <PageHeading
+        title="Core declaration details"
+        description="Enter the core details for this CDS declaration."
+      />
 
-      {/* Live completeness panel — derived from rule engine. */}
-      {completeness && completeness.missing.length > 0 && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
-          <div className="mb-2 text-xs font-semibold text-amber-900">
-            {completeness.missing.length} blocking issue{completeness.missing.length === 1 ? "" : "s"} from rule engine
-          </div>
-          <ul className="space-y-1 text-[11px] text-amber-900/90">
-            {completeness.missing.map((m, i) => (
+      <MetricStrip
+        items={[
+          {
+            label: "Data set",
+            value: formData.declarationCategory || "H1",
+            hint: exportSet ? "Export data set" : "Import data set",
+          },
+          {
+            label: "Arrival status",
+            value: formData.additionalDeclarationType || "—",
+            hint: "DE 1/2",
+          },
+          {
+            label: "Route",
+            value: formData.route.replace(/^Route\s+/i, "") || "—",
+            hint: "CDS routing",
+          },
+          {
+            label: "Blocking issues",
+            value: blocking.length,
+            hint: blocking.length ? "From rule engine" : "Rule engine clear",
+          },
+        ]}
+      />
+
+      {blocking.length > 0 && (
+        <AlertBanner variant="destructive">
+          <span className="font-semibold">
+            {blocking.length} blocking issue{blocking.length === 1 ? "" : "s"} from rule engine
+          </span>
+          <ul className="mt-2 space-y-1">
+            {blocking.map((m, i) => (
               <li key={`${m.ruleId}-${i}`} className="flex gap-2">
-                <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-[10px]">{m.field}</code>
+                <code className="font-mono">{m.field}</code>
                 <span>{m.reason}</span>
               </li>
             ))}
@@ -307,218 +693,716 @@ export default function CoreSchemaPage() {
           <DeclarationModePromote
             declarationId={id}
             declarationMode={(declaration as { mode?: string }).mode}
-            missing={completeness.missing}
+            missing={blocking}
           />
-        </div>
+        </AlertBanner>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-white">
-        <div className="p-6 space-y-6">
-
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-
-            {/* EORI Number — DE 3/18 declarant. A-mandatory per Appendix 21A. */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
-                Declarant EORI (DE 3/18)
-                <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.eori}
-                onChange={(e) => setFormData({ ...formData, eori: e.target.value })}
-                placeholder="e.g. GB123456789000"
-                className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
-              />
-              <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                <Info className="h-3 w-3" />
-                Must match your HMRC Developer Hub credentials.
-              </p>
-            </div>
-
-            {/* Importer EORI — DE 3/16. A-mandatory per Appendix 21A. */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
-                Importer EORI (DE 3/16)
-                <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.importerEori}
-                onChange={(e) => setFormData({ ...formData, importerEori: e.target.value })}
-                placeholder="e.g. GB123456789000"
-                className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
-              />
-              <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                <Info className="h-3 w-3" />
-                The UK importer&apos;s EORI. Same as declarant when self-representing.
-              </p>
-            </div>
-
-            {/* Declaration Category */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
-                Declaration Category
-                <span className="text-red-500">*</span>
-              </label>
-              <Select value={formData.declarationType} onValueChange={(v) => setFormData({ ...formData, declarationType: v })}>
-                <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+      <PageSection title="Declaration" description="Data set, arrival status and customs routing.">
+        {fieldGrid(
+          <>
+            <Field
+              span="md:col-span-6"
+              id="category"
+              label="Declaration category"
+              hint={
+                exportSet
+                  ? "Export data set — importer, preference and valuation fields are not declared."
+                  : "Import data set."
+              }
+            >
+              <Select
+                value={formData.declarationCategory || "H1"}
+                onValueChange={(v) => {
+                  const category = (v === "H1" ? "" : v) as DeclarationCategoryChoice;
+                  setSaved(false);
+                  setSaveError(null);
+                  setFormData({
+                    ...formData,
+                    declarationCategory: category,
+                    additionalDeclarationType: isSimplifiedCategory(category)
+                      ? "C"
+                      : isExportCategory(category)
+                        ? "D"
+                        : "A",
+                  });
+                }}
+              >
+                <SelectTrigger id="category" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent position="popper">
-                  <SelectItem value="H1">H1 (Release for Free Circulation)</SelectItem>
+                  {DECLARATION_CATEGORIES.map((c) => (
+                    <SelectItem key={c.value || "H1"} value={c.value || "H1"}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-            </div>
+            </Field>
 
-            {/* Routing */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
-                Arrival status (DE 1/2)
-                <span className="text-red-500">*</span>
-              </label>
+            <Field
+              span="md:col-span-3"
+              id="arrival"
+              label="Arrival status"
+              de="DE 1/2"
+              required
+              hint={simplified ? "Simplified sets accept C or F." : undefined}
+            >
               <Select
                 value={formData.additionalDeclarationType}
-                onValueChange={(v) => setFormData({ ...formData, additionalDeclarationType: v })}
+                onValueChange={(v) => patch("additionalDeclarationType", v)}
               >
-                <SelectTrigger className={selectFieldClassName}><SelectValue /></SelectTrigger>
-                <SelectContent position="popper">
-                  <SelectItem value="A">Arrived declaration</SelectItem>
-                  <SelectItem value="D">Pre-lodged — goods not yet arrived</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Routing */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Customs Routing
-              </label>
-              <Select value={formData.route} onValueChange={(v) => setFormData({ ...formData, route: v })}>
-                <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
+                <SelectTrigger id="arrival" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent position="popper">
-                  <SelectItem value="Route 1">Route 1 (Documentary Check)</SelectItem>
-                  <SelectItem value="Route 2">Route 2 (Physical Exam)</SelectItem>
-                  <SelectItem value="Route 6">Route 6 (Direct Clearance)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Dispatch Country — DE 5/14. A-mandatory per Appendix 21A. */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
-                Dispatch Country (DE 5/14)
-                <span className="text-red-500">*</span>
-              </label>
-              <Select value={formData.dispatchCountry} onValueChange={(v) => setFormData({ ...formData, dispatchCountry: v })}>
-                <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
-                  <SelectValue placeholder="Country goods shipped FROM" />
-                </SelectTrigger>
-                <SelectContent position="popper" className="max-h-[300px]">
-                  {countries.map((c) => (
-                    <SelectItem key={c.code} value={c.code} className="text-xs">{c.name} ({c.code})</SelectItem>
+                  {arrivalOptions.map((a) => (
+                    <SelectItem key={a.value} value={a.value}>
+                      {a.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                <Info className="h-3 w-3" />
-                Country goods were shipped FROM — never GB for a third-country import.
-              </p>
-            </div>
+            </Field>
 
-            <DeclarationClientPicker declarationId={id} />
+            <Field span="md:col-span-3" id="route" label="Customs routing">
+              <Select value={formData.route} onValueChange={(v) => patch("route", v)}>
+                <SelectTrigger id="route" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  {ROUTES.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          </>,
+        )}
+      </PageSection>
 
-            {formData.dispatchCountry && formData.dispatchCountry !== "GB" && formData.dispatchCountry !== "XI" && (
-              <div className="md:col-span-2 space-y-3 rounded-md border border-slate-200 bg-slate-50/80 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-700">
-                  Overseas exporter (DE 3/1) — required when dispatch ≠ GB/XI
-                </p>
-                <p className="text-[11px] text-slate-600">
-                  Use the foreign seller on the commercial invoice — legal name and registered address in the dispatch country (not your UK importer details).
-                </p>
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div className="space-y-1 md:col-span-2">
-                    <label className="text-xs font-medium text-slate-600">Exporter name</label>
-                    <input
-                      type="text"
-                      className="w-full rounded-md border border-slate-200 p-2.5 text-sm"
-                      value={formData.exporterName}
-                      onChange={(e) => setFormData({ ...formData, exporterName: e.target.value })}
-                      placeholder="e.g. Acme Export GmbH"
-                    />
-                  </div>
-                  <div className="space-y-1 md:col-span-2">
-                    <label className="text-xs font-medium text-slate-600">Address line</label>
-                    <input
-                      type="text"
-                      className="w-full rounded-md border border-slate-200 p-2.5 text-sm"
-                      value={formData.exporterLine}
-                      onChange={(e) => setFormData({ ...formData, exporterLine: e.target.value })}
-                      placeholder="e.g. 1 Hafenstrasse"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-600">City</label>
-                    <input
-                      type="text"
-                      className="w-full rounded-md border border-slate-200 p-2.5 text-sm"
-                      value={formData.exporterCity}
-                      onChange={(e) => setFormData({ ...formData, exporterCity: e.target.value })}
-                      placeholder="e.g. Hamburg"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-600">Postcode</label>
-                    <input
-                      type="text"
-                      className="w-full rounded-md border border-slate-200 p-2.5 text-sm"
-                      value={formData.exporterPostcode}
-                      onChange={(e) => setFormData({ ...formData, exporterPostcode: e.target.value })}
-                      placeholder="e.g. 20095"
-                    />
-                  </div>
-                </div>
-              </div>
+      {showAuthorisation && (
+        <PageSection
+          title={simplified ? "Simplified authorisation" : "Authorisation"}
+          description={
+            simplified
+              ? "Mandatory on both simplified data sets."
+              : "Required on an arrived export."
+          }
+        >
+          {fieldGrid(
+            <>
+              <Field
+                span="md:col-span-6"
+                id="authHolder"
+                label="Authorisation holder"
+                de="DE 3/39"
+                required
+                hint="EORI holding the SDP or EIDR authorisation."
+              >
+                <Input
+                  id="authHolder"
+                  value={formData.authorisationHolderEori}
+                  onChange={(e) => patch("authorisationHolderEori", e.target.value.toUpperCase())}
+                  placeholder="GB123456789000"
+                  className="font-mono"
+                />
+              </Field>
+              <Field span="md:col-span-6" id="authType" label="Authorisation type code">
+                <Input
+                  id="authType"
+                  value={formData.authorisationCategoryCode}
+                  onChange={(e) => patch("authorisationCategoryCode", e.target.value.toUpperCase())}
+                  placeholder="SDE"
+                  className="font-mono"
+                />
+              </Field>
+            </>,
+          )}
+        </PageSection>
+      )}
+
+      <PageSection title="Parties" description="Who is declaring, and on whose behalf.">
+        {fieldGrid(
+          <>
+            <Field
+              span="md:col-span-6"
+              id="eori"
+              label="Declarant EORI"
+              de="DE 3/18"
+              required
+              hint="Must match your HMRC Developer Hub credentials."
+            >
+              <Input
+                id="eori"
+                value={formData.eori}
+                onChange={(e) => patch("eori", e.target.value.toUpperCase())}
+                placeholder="GB123456789000"
+                className="font-mono"
+              />
+            </Field>
+
+            {!exportSet && (
+              <Field
+                span="md:col-span-6"
+                id="importerEori"
+                label="Importer EORI"
+                de="DE 3/16"
+                required
+                hint="Same as declarant when self-representing."
+              >
+                <Input
+                  id="importerEori"
+                  value={formData.importerEori}
+                  onChange={(e) => patch("importerEori", e.target.value.toUpperCase())}
+                  placeholder="GB123456789000"
+                  className="font-mono"
+                />
+              </Field>
             )}
 
-            {/* Destination Country — DE 5/8. A-mandatory per Appendix 21A. */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
-                Destination Country (DE 5/8)
-                <span className="text-red-500">*</span>
-              </label>
-              <Select value={formData.destinationCountry} onValueChange={(v) => setFormData({ ...formData, destinationCountry: v })}>
-                <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
-                  <SelectValue placeholder="Country goods shipped TO" />
+            {exportSet && (
+              <Field
+                span="md:col-span-6"
+                id="exit"
+                label="Customs office of exit"
+                de="DE 5/12"
+                required
+                hint="Office where the goods leave the UK."
+              >
+                <Input
+                  id="exit"
+                  value={formData.customsOfficeOfExit}
+                  onChange={(e) => patch("customsOfficeOfExit", e.target.value.toUpperCase())}
+                  placeholder="GB000060"
+                  className="font-mono"
+                />
+              </Field>
+            )}
+
+            <Field
+              span="md:col-span-6"
+              id="client"
+              label="Client (filed on behalf of)"
+              error={clientError}
+              hint={
+                <>
+                  Association only — manage in{" "}
+                  <Link href="/dashboard/clients" className="underline underline-offset-2">
+                    Clients
+                  </Link>
+                  .
+                </>
+              }
+            >
+              {clients === undefined ? (
+                <div className="text-muted-foreground flex h-9 items-center gap-2 text-xs">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Loading…
+                </div>
+              ) : (
+                <Select
+                  value={linkedClientId ?? NONE}
+                  onValueChange={(v) => void handleClientChange(v)}
+                  disabled={clientBusy}
+                >
+                  <SelectTrigger id="client" className="w-full">
+                    <SelectValue placeholder="No client linked" />
+                  </SelectTrigger>
+                  <SelectContent position="popper">
+                    <SelectItem value={NONE}>No client linked</SelectItem>
+                    {clients.map((client) => (
+                      <SelectItem key={client._id} value={client._id}>
+                        {client.name}
+                        {client.eori ? ` · ${client.eori}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </Field>
+          </>,
+        )}
+      </PageSection>
+
+      <PageSection title="Consignee" description="Party the goods are consigned to.">
+        {fieldGrid(
+          <>
+            <Field span="md:col-span-4" id="consigneeEori" label="EORI / ID" de="DE 3/10">
+              <Input
+                id="consigneeEori"
+                value={formData.consigneeEori}
+                onChange={(e) => patch("consigneeEori", e.target.value.toUpperCase())}
+                placeholder="Optional"
+                className="font-mono"
+              />
+            </Field>
+            <Field
+              span="md:col-span-8"
+              id="consigneeName"
+              label="Name"
+              de="DE 3/9"
+              required={exportSet}
+            >
+              <Input
+                id="consigneeName"
+                value={formData.consigneeName}
+                onChange={(e) => patch("consigneeName", e.target.value)}
+                placeholder={exportSet ? "Required on export" : "Optional"}
+              />
+            </Field>
+            <Field span="md:col-span-5" id="consigneeLine" label="Address line">
+              <Input
+                id="consigneeLine"
+                value={formData.consigneeLine}
+                onChange={(e) => patch("consigneeLine", e.target.value)}
+              />
+            </Field>
+            <Field span="md:col-span-3" id="consigneeCity" label="City">
+              <Input
+                id="consigneeCity"
+                value={formData.consigneeCity}
+                onChange={(e) => patch("consigneeCity", e.target.value)}
+              />
+            </Field>
+            <Field span="md:col-span-2" id="consigneePostcode" label="Postcode">
+              <Input
+                id="consigneePostcode"
+                value={formData.consigneePostcode}
+                onChange={(e) => patch("consigneePostcode", e.target.value.toUpperCase())}
+                className="font-mono"
+              />
+            </Field>
+            <Field span="md:col-span-2" id="consigneeCountry" label="Country">
+              <Select
+                value={formData.consigneeCountry || NONE}
+                onValueChange={(v) => patch("consigneeCountry", v === NONE ? "" : v)}
+              >
+                <SelectTrigger id="consigneeCountry" className="w-full">
+                  <SelectValue placeholder="—" />
                 </SelectTrigger>
                 <SelectContent position="popper" className="max-h-[300px]">
-                  {countries.map((c) => (
-                    <SelectItem key={c.code} value={c.code} className="text-xs">{c.name} ({c.code})</SelectItem>
+                  <SelectItem value={NONE}>Not declared</SelectItem>
+                  {countryOptions}
+                </SelectContent>
+              </Select>
+            </Field>
+          </>,
+        )}
+      </PageSection>
+
+      <PageSection
+        title="Exporter"
+        description={
+          exportSet
+            ? "The party sending the goods out of the UK. A GB or XI EORI is enough on its own — give name and address only where the exporter holds no EORI."
+            : "Required when dispatch is not GB or XI. Use the foreign seller on the commercial invoice — legal name and registered address in the dispatch country, not your UK importer details."
+        }
+      >
+        {fieldGrid(
+          <>
+            {exportSet && (
+              <Field span="md:col-span-6" id="exporterEori" label="Exporter EORI" de="DE 3/2">
+                <Input
+                  id="exporterEori"
+                  value={formData.exporterEori}
+                  onChange={(e) => patch("exporterEori", e.target.value.toUpperCase())}
+                  placeholder="GB123456789000"
+                  className="font-mono"
+                />
+              </Field>
+            )}
+            <Field
+              span="md:col-span-6"
+              id="exporterName"
+              label="Exporter name"
+              de="DE 3/1"
+              required={exportSet ? false : overseasDispatch}
+            >
+              <Input
+                id="exporterName"
+                value={formData.exporterName}
+                onChange={(e) => patch("exporterName", e.target.value)}
+                placeholder={exportSet ? "Only needed without an EORI" : "e.g. Acme Export GmbH"}
+              />
+            </Field>
+            <Field span="md:col-span-6" id="exporterLine" label="Address line">
+              <Input
+                id="exporterLine"
+                value={formData.exporterLine}
+                onChange={(e) => patch("exporterLine", e.target.value)}
+                placeholder={exportSet ? undefined : "e.g. 1 Hafenstrasse"}
+              />
+            </Field>
+            <Field span="md:col-span-3" id="exporterCity" label="City">
+              <Input
+                id="exporterCity"
+                value={formData.exporterCity}
+                onChange={(e) => patch("exporterCity", e.target.value)}
+                placeholder={exportSet ? undefined : "e.g. Hamburg"}
+              />
+            </Field>
+            <Field span="md:col-span-3" id="exporterPostcode" label="Postcode">
+              <Input
+                id="exporterPostcode"
+                value={formData.exporterPostcode}
+                onChange={(e) => patch("exporterPostcode", e.target.value.toUpperCase())}
+                className="font-mono"
+              />
+            </Field>
+          </>,
+        )}
+      </PageSection>
+
+      <PageSection
+        title="Representation"
+        description="Indirect representation requires internal approval before submission."
+      >
+        {representationStatus === undefined ? (
+          <div className="text-muted-foreground flex items-center gap-2 text-xs">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Loading representation…
+          </div>
+        ) : (
+          <>
+            {fieldGrid(
+              <>
+                <Field span="md:col-span-4" id="repType" label="Representation" de="DE 3/21">
+                  <Select
+                    value={repForm.representationType}
+                    onValueChange={(v) => {
+                      setSaved(false);
+                      setSaveError(null);
+                      setRepForm((prev) => ({
+                        ...prev,
+                        representationType: v as RepresentationType,
+                      }));
+                    }}
+                  >
+                    <SelectTrigger id="repType" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent position="popper">
+                      {REPRESENTATION_TYPES.map((r) => (
+                        <SelectItem key={r.value} value={r.value}>
+                          {r.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                {showRepFields && (
+                  <>
+                    <Field
+                      span="md:col-span-4"
+                      id="repEori"
+                      label="Representative EORI"
+                      de="DE 3/19"
+                      required
+                    >
+                      <Input
+                        id="repEori"
+                        value={repForm.representativeEori}
+                        onChange={(e) => {
+                          setSaved(false);
+                          setSaveError(null);
+                          setRepForm({ ...repForm, representativeEori: e.target.value.toUpperCase() });
+                        }}
+                        placeholder="GB123456789000"
+                        className="font-mono"
+                      />
+                    </Field>
+                    <Field span="md:col-span-4" id="repName" label="Representative name" de="DE 3/19">
+                      <Input
+                        id="repName"
+                        value={repForm.representativeName}
+                        onChange={(e) => {
+                          setSaved(false);
+                          setSaveError(null);
+                          setRepForm({ ...repForm, representativeName: e.target.value });
+                        }}
+                      />
+                    </Field>
+                    <Field
+                      span="md:col-span-12"
+                      id="repAddress"
+                      label="Representative address"
+                      de="DE 3/19"
+                    >
+                      <Input
+                        id="repAddress"
+                        value={repForm.representativeAddressLine}
+                        onChange={(e) => {
+                          setSaved(false);
+                          setSaveError(null);
+                          setRepForm({ ...repForm, representativeAddressLine: e.target.value });
+                        }}
+                        placeholder="Address line"
+                      />
+                    </Field>
+                    <Field span="md:col-span-4" id="repCity" label="City">
+                      <Input
+                        id="repCity"
+                        value={repForm.representativeCity}
+                        onChange={(e) => {
+                          setSaved(false);
+                          setSaveError(null);
+                          setRepForm({ ...repForm, representativeCity: e.target.value });
+                        }}
+                      />
+                    </Field>
+                    <Field span="md:col-span-4" id="repPostcode" label="Postcode">
+                      <Input
+                        id="repPostcode"
+                        value={repForm.representativePostcode}
+                        onChange={(e) => {
+                          setSaved(false);
+                          setSaveError(null);
+                          setRepForm({ ...repForm, representativePostcode: e.target.value });
+                        }}
+                      />
+                    </Field>
+                    <Field span="md:col-span-4" id="repCountry" label="Country">
+                      <Select
+                        value={repForm.representativeCountry || NONE}
+                        onValueChange={(v) => {
+                          setSaved(false);
+                          setSaveError(null);
+                          setRepForm({
+                            ...repForm,
+                            representativeCountry: v === NONE ? "" : v,
+                          });
+                        }}
+                      >
+                        <SelectTrigger id="repCountry" className="w-full">
+                          <SelectValue placeholder="Country" />
+                        </SelectTrigger>
+                        <SelectContent position="popper" className="max-h-[300px]">
+                          <SelectItem value={NONE}>Select country</SelectItem>
+                          {countries.map((c) => (
+                            <SelectItem key={c.code} value={c.code}>
+                              {c.name} ({c.code})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  </>
+                )}
+              </>,
+            )}
+            {showAuthority && (
+              <MutedPanel className="mt-4 space-y-3">
+                <p className="text-xs font-medium">Authority documents (indirect)</p>
+                <label className="flex items-center gap-2 text-xs">
+                  <CompactCheckbox
+                    border="amber"
+                    checked={repForm.authorityVerified}
+                    onChange={(e) => {
+                      setSaved(false);
+                      setSaveError(null);
+                      setRepForm({ ...repForm, authorityVerified: e.target.checked });
+                    }}
+                  />
+                  Authority documents verified
+                </label>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Field span="" id="authFrom" label="Valid from">
+                    <Input
+                      id="authFrom"
+                      type="date"
+                      value={repForm.authorityValidFrom}
+                      onChange={(e) => {
+                        setSaved(false);
+                        setSaveError(null);
+                        setRepForm({ ...repForm, authorityValidFrom: e.target.value });
+                      }}
+                    />
+                  </Field>
+                  <Field span="" id="authTo" label="Valid to">
+                    <Input
+                      id="authTo"
+                      type="date"
+                      value={repForm.authorityValidTo}
+                      onChange={(e) => {
+                        setSaved(false);
+                        setSaveError(null);
+                        setRepForm({ ...repForm, authorityValidTo: e.target.value });
+                      }}
+                    />
+                  </Field>
+                </div>
+                {representationStatus?.approvalRequired && (
+                  <p
+                    className={cn(
+                      "text-xs",
+                      representationStatus?.approvalCurrent
+                        ? "text-emerald-700"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {representationStatus?.approvalCurrent
+                      ? "Approved — submit unlocked."
+                      : representationStatus?.reason ??
+                        "Internal approval required on Submit tab before HMRC submission."}
+                  </p>
+                )}
+              </MutedPanel>
+            )}
+          </>
+        )}
+      </PageSection>
+
+      <PageSection
+        title="Routing and transport"
+        description="Countries, mode and conveyance identity."
+      >
+        {fieldGrid(
+          <>
+            <Field
+              span="md:col-span-6"
+              id="dispatch"
+              label="Dispatch country"
+              de="DE 5/14"
+              required
+            >
+              <Select
+                value={formData.dispatchCountry || NONE}
+                onValueChange={(v) => patch("dispatchCountry", v === NONE ? "" : v)}
+              >
+                <SelectTrigger id="dispatch" className="w-full">
+                  <SelectValue placeholder="Select country" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="max-h-[300px]">
+                  {countryOptions}
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <Field
+              span="md:col-span-6"
+              id="destination"
+              label="Destination country"
+              de="DE 5/8"
+              required
+            >
+              <Select
+                value={formData.destinationCountry || NONE}
+                onValueChange={(v) => patch("destinationCountry", v === NONE ? "" : v)}
+              >
+                <SelectTrigger id="destination" className="w-full">
+                  <SelectValue placeholder="Select country" />
+                </SelectTrigger>
+                <SelectContent position="popper" className="max-h-[300px]">
+                  {countryOptions}
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <Field span="md:col-span-4" id="mode" label="Transport mode" de="DE 7/4" required>
+              <Select
+                value={formData.transportMode || NONE}
+                onValueChange={(v) => patch("transportMode", v === NONE ? "" : v)}
+              >
+                <SelectTrigger id="mode" className="w-full">
+                  <SelectValue placeholder="Select mode" />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  {TRANSPORT_MODE_OPTIONS.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>
+                      {m.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </Field>
 
-            {/* DE 5/23 — one picker sets both the code and the kind, so the
-                method can't be left unset while a code is present. Port mode
-                splits the Appendix 16C code into XML: chars 1–2 →
-                Address.CountryCode, char 3 → TypeCode, char 4 →
-                Address.TypeCode, remainder → Name (see
-                docs/hmrc/ACTIVE/tdr/mapping/de-5-23-goods-location.md). */}
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
-                Location of goods (DE 5/23)
-                <span className="text-red-500">*</span>
-              </label>
+            <Field
+              span="md:col-span-4"
+              id="idType"
+              label="Identification type"
+              de="DE 7/9"
+              required
+            >
               <Select
-                value={locationIdIsKnown ? locationIdUpper : ""}
-                onValueChange={(code) =>
-                  setFormData({ ...formData, locationId: code, goodsLocationKind: "port" })
-                }
+                value={formData.transportIdType || NONE}
+                onValueChange={(v) => patch("transportIdType", v === NONE ? "" : v)}
               >
-                <SelectTrigger className={selectFieldClassName}>
+                <SelectTrigger id="idType" className="w-full">
+                  <SelectValue placeholder="Select identifier type" />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  {TRANSPORT_ID_TYPE_OPTIONS.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <Field span="md:col-span-4" id="transportId" label="Identification" de="DE 7/9" required>
+              <Input
+                id="transportId"
+                value={formData.transportId}
+                onChange={(e) => patch("transportId", e.target.value)}
+                placeholder="Vessel, flight or registration"
+                className="font-mono"
+              />
+            </Field>
+
+            <Field
+              span="md:col-span-6"
+              id="container"
+              label="Container number"
+              de="DE 7/10"
+              hint="Shown for operator verification against the CNS inventory record."
+            >
+              <Input
+                id="container"
+                value={formData.containerNumber}
+                onChange={(e) => patch("containerNumber", e.target.value.toUpperCase())}
+                placeholder="MSCU1234567"
+                className="font-mono"
+              />
+            </Field>
+
+            <Field span="md:col-span-6" id="seal" label="Seal number" de="DE 7/18">
+              <Input
+                id="seal"
+                value={formData.sealNumber}
+                onChange={(e) => patch("sealNumber", e.target.value)}
+                className="font-mono"
+              />
+            </Field>
+          </>,
+        )}
+      </PageSection>
+
+      <PageSection title="Goods location" description="Where the goods are presented to customs.">
+        {fieldGrid(
+          <>
+            <Field
+              span="md:col-span-8"
+              id="locationId"
+              label="Location of goods"
+              de="DE 5/23"
+              required
+              hint="Appendix 16C maritime codes."
+            >
+              <Select
+                value={locationIdIsKnown ? locationIdUpper : undefined}
+                onValueChange={(code) => {
+                  setSaved(false);
+                  setSaveError(null);
+                  setFormData({ ...formData, locationId: code, goodsLocationKind: "port" });
+                }}
+              >
+                <SelectTrigger id="locationId" className="w-full">
                   <SelectValue placeholder="Select maritime port or wharf (Appendix 16C)" />
                 </SelectTrigger>
                 <SelectContent position="popper" className="max-h-[300px]">
@@ -529,324 +1413,271 @@ export default function CoreSchemaPage() {
                   ))}
                 </SelectContent>
               </Select>
-              {locationIdUpper && !locationIdIsKnown && (
-                <div className="space-y-1.5 rounded-md border border-amber-200 bg-amber-50/80 p-3">
-                  <p className="text-[11px] text-amber-900">
-                    This declaration has code <code className="font-mono">{formData.locationId.trim()}</code>, which
-                    is not in Appendix 16C. Pick a port above or replace it below, then save.
-                  </p>
-                  <input
-                    type="text"
-                    value={formData.locationId}
-                    onChange={(e) => {
-                      const next = e.target.value.toUpperCase();
-                      setFormData({
-                        ...formData,
-                        locationId: next,
-                        goodsLocationKind:
-                          inferGoodsLocationKind({ locationId: next, goodsLocationKind: "port" }) || "",
-                      });
-                    }}
-                    className="w-full rounded-md border border-amber-200 bg-white p-2 text-sm font-mono outline-none focus:border-blue-500"
-                  />
-                </div>
-              )}
-              <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                <Info className="h-3 w-3" />
-                Official HMRC maritime location codes — not a fixed default port.
-              </p>
-            </div>
+            </Field>
 
-            {locationIdUpper === "GBAULGPLGPLGP1" && (
-              <div className="md:col-span-2 grid gap-4 rounded-md border border-blue-200 bg-blue-50/50 p-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    CNS UCN <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    value={formData.cnsUcn || String(declaration.cnsUcn ?? "")}
-                    onChange={(e) => setFormData({ ...formData, cnsUcn: e.target.value.toUpperCase() })}
-                    placeholder="LGP100DPS00100"
-                    className={`${selectFieldClassName} font-mono`}
-                  />
-                  <p className="text-[10px] text-slate-500">Inventory reference used to link the declaration at London Gateway.</p>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    Container number
-                  </label>
-                  <input
-                    value={formData.containerNumber || String(declaration.containerNumber ?? "")}
-                    onChange={(e) => setFormData({ ...formData, containerNumber: e.target.value.toUpperCase() })}
-                    placeholder="TDRY1234567"
-                    className={`${selectFieldClassName} font-mono`}
-                  />
-                  <p className="text-[10px] text-slate-500">Shown for operator verification against the CNS inventory record.</p>
-                </div>
-              </div>
-            )}
-
-            {/* Presentation Office — DE 5/26. Conditional per Appendix 21A. */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Customs Office of Presentation (DE 5/26)
-              </label>
-              <input
-                type="text"
-                value={formData.presentationOffice}
-                onChange={(e) => setFormData({ ...formData, presentationOffice: e.target.value })}
-                placeholder="e.g. GBLON004 (only if presented elsewhere than 5/23)"
-                className="w-full rounded-md border border-slate-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500"
-              />
-              <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                <Info className="h-3 w-3" />
-                Conditional — required only when goods aren&apos;t at the goods location.
-              </p>
-            </div>
-
-            {/* Invoice currency — DE 4/11 currency. A-mandatory per Appendix 21A. */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
-                Invoice Currency (DE 4/11)
-                <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.invoiceCurrency}
-                onChange={(e) => setFormData({ ...formData, invoiceCurrency: e.target.value.toUpperCase() })}
-                placeholder="ISO 4217 code, e.g. GBP"
-                className="w-full rounded-md border border-slate-200 p-2.5 text-sm font-mono outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
-              />
-            </div>
-
-            {/* Invoice total — DE 4/11. A-mandatory per Appendix 21A. */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Invoice Total (DE 4/11)
-              </label>
-              <input
-                type="number"
-                min="0.01"
-                step="0.01"
-                value={formData.invoiceTotal}
-                onChange={(e) => setFormData({ ...formData, invoiceTotal: e.target.value })}
-                placeholder="If empty, mapper sums from items"
-                className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
-              />
-              <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                <Info className="h-3 w-3" />
-                Optional override — leave blank to derive from goods item values.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Incoterms (DE 4/1)
-              </label>
-              <input
-                type="text"
-                value={formData.incoterms}
-                onChange={(e) => setFormData({ ...formData, incoterms: e.target.value.toUpperCase() })}
-                placeholder="e.g. CIF"
-                className="w-full rounded-md border border-slate-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Incoterm location (DE 4/1)
-              </label>
-              <input
-                type="text"
-                value={formData.incotermLocation}
-                onChange={(e) => setFormData({ ...formData, incotermLocation: e.target.value })}
-                placeholder="e.g. Felixstowe or GBFXT"
-                className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500"
-              />
-              <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                <Info className="h-3 w-3" />
-                Required with CIF for method-1 valuation. Mapper sends GB + place (e.g. Felixstowe → GBFELIXSTOWE) per Group 4.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
-                Nature of Transaction (DE 8/5)
-                <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.transactionNatureCode}
-                onChange={(e) => setFormData({ ...formData, transactionNatureCode: e.target.value })}
-                placeholder="e.g. 11"
-                className="w-full rounded-md border border-slate-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
-              />
-              <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                <Info className="h-3 w-3" />
-                WCOID 103 — GoodsShipment/TransactionNatureCode. Trade Test passing baseline uses 11.
-              </p>
-            </div>
-
-          </div>
-
-          <div className="border-t border-slate-100 pt-6">
-            <h3 className="text-sm font-medium text-slate-900">Duty payment</h3>
-            <p className="mt-1 text-[11px] text-slate-500">
-              DE 4/8 method of payment and DE 2/6 deferment account. Required when paying via deferment (MOP E or R).
-            </p>
-            <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Method of payment (DE 4/8)
-                </label>
-                <Select
-                  value={formData.paymentMethodCode || "__none__"}
-                  onValueChange={(v) =>
+            {locationIdUpper && !locationIdIsKnown && (
+              <Field
+                span="md:col-span-8"
+                id="locationIdUnknown"
+                label="Location ID"
+                hint={
+                  <>
+                    This declaration has code{" "}
+                    <code className="font-mono">{formData.locationId.trim()}</code>, which is not in
+                    Appendix 16C. Pick a port above or replace it
+                    below, then save.
+                  </>
+                }
+              >
+                <Input
+                  id="locationIdUnknown"
+                  value={formData.locationId}
+                  onChange={(e) => {
+                    const next = e.target.value.toUpperCase();
+                    setSaved(false);
+                    setSaveError(null);
                     setFormData({
                       ...formData,
-                      paymentMethodCode: v === "__none__" ? "" : v,
-                      defermentAccountNumber:
-                        v === "E" || v === "R" ? formData.defermentAccountNumber : "",
-                    })
-                  }
+                      locationId: next,
+                      goodsLocationKind:
+                        inferGoodsLocationKind({ locationId: next, goodsLocationKind: "port" }) ||
+                        "",
+                    });
+                  }}
+                  className="font-mono"
+                />
+              </Field>
+            )}
+
+            <Field
+              span="md:col-span-4"
+              id="presentation"
+              label="Office of presentation"
+              de="DE 5/26"
+              hint="Conditional — required only when goods are not at the goods location."
+            >
+              <Input
+                id="presentation"
+                value={formData.presentationOffice}
+                onChange={(e) => patch("presentationOffice", e.target.value.toUpperCase())}
+                placeholder="e.g. GBLON004 (only if presented elsewhere)"
+                className="font-mono"
+              />
+            </Field>
+
+            {locationIdUpper === LONDON_GATEWAY && (
+              <Field
+                span="md:col-span-6"
+                id="cns"
+                label="CNS UCN"
+                required
+                hint="Inventory reference used to link the declaration at London Gateway."
+              >
+                <Input
+                  id="cns"
+                  value={formData.cnsUcn || String(declaration.cnsUcn ?? "")}
+                  onChange={(e) => patch("cnsUcn", e.target.value.toUpperCase())}
+                  placeholder="LGP100DPS00100"
+                  className="font-mono"
+                />
+              </Field>
+            )}
+          </>,
+        )}
+      </PageSection>
+
+      <PageSection title="Valuation" description="Invoice, delivery terms and transaction nature.">
+        {fieldGrid(
+          <>
+            <Field
+              span="md:col-span-3"
+              id="currency"
+              label="Invoice currency"
+              de="DE 4/11"
+              required
+            >
+              <Input
+                id="currency"
+                value={formData.invoiceCurrency}
+                onChange={(e) => patch("invoiceCurrency", e.target.value.toUpperCase())}
+                placeholder="GBP"
+                className="font-mono"
+              />
+            </Field>
+
+            <Field
+              span="md:col-span-3"
+              id="total"
+              label="Invoice total"
+              de="DE 4/11"
+              hint="Optional override — leave blank to derive from goods item values."
+            >
+              <Input
+                id="total"
+                value={formData.invoiceTotal}
+                onChange={(e) => patch("invoiceTotal", e.target.value)}
+                inputMode="decimal"
+                placeholder="If empty, mapper sums from items"
+                className="text-right font-mono"
+              />
+            </Field>
+
+            {!exportSet && (
+              <Field span="md:col-span-3" id="incoterms" label="Incoterms" de="DE 4/1">
+                <Select
+                  value={formData.incoterms || NONE}
+                  onValueChange={(v) => patch("incoterms", v === NONE ? "" : v)}
                 >
-                  <SelectTrigger className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500">
-                    <SelectValue placeholder="Select method" />
+                  <SelectTrigger id="incoterms" className="w-full">
+                    <SelectValue placeholder="—" />
                   </SelectTrigger>
                   <SelectContent position="popper">
-                    {PAYMENT_METHOD_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value || "__none__"} value={opt.value || "__none__"}>
-                        {opt.label}
+                    <SelectItem value={NONE}>Not declared</SelectItem>
+                    {incotermOptions.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </Field>
+            )}
 
-              {requiresDefermentAccount(formData.paymentMethodCode) && (
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
-                    Deferment account (DE 2/6)
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="\d{7}"
-                    maxLength={7}
-                    required
-                    value={formData.defermentAccountNumber}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        defermentAccountNumber: e.target.value.replace(/\D/g, "").slice(0, 7),
-                      })
-                    }
-                    placeholder="7-digit DAN"
-                    className="w-full rounded-md border border-slate-200 p-2.5 font-mono text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
-                  />
-                  <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                    <Info className="h-3 w-3" />
-                    HMRC deferment account number (1DAN). Stored on your declaration only — not logged in audit output.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <DeclarationRepresentationFields declarationId={id} />
-
-          <div className="border-t border-slate-100 pt-6">
-            <h3 className="text-sm font-medium text-slate-900">Transport Identity</h3>
-            <p className="mt-1 text-[11px] text-slate-500">
-              DE 7/4 (mode), DE 7/7 / 7/9 (border / arrival means). CDS rejects mismatched or stale values — use the actual vessel/IMO/wagon/vehicle/flight identifier for this consignment.
-            </p>
-            <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-3">
-              <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
-                  Transport Mode (DE 7/4)
-                  <span className="text-red-500">*</span>
-                </label>
-                <select
-                  required
-                  value={formData.transportMode}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, transportMode: e.target.value }))}
-                  className={selectFieldClassName}
-                >
-                  <option value="" disabled>
-                    Select mode
-                  </option>
-                  {TRANSPORT_MODE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
-                  Identification Type (DE 7/9)
-                  <span className="text-red-500">*</span>
-                </label>
-                <select
-                  required
-                  value={formData.transportIdType}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, transportIdType: e.target.value }))}
-                  className={selectFieldClassName}
-                >
-                  <option value="" disabled>
-                    Select identifier type
-                  </option>
-                  {TRANSPORT_ID_TYPE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex justify-between">
-                  Identification (DE 7/9)
-                  <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.transportId}
-                  onChange={(e) => setFormData({ ...formData, transportId: e.target.value })}
-                  placeholder="e.g. IMO9395044, vessel name, vehicle reg"
-                  className="w-full rounded-md border border-slate-200 p-2.5 text-sm outline-none transition-colors focus:border-blue-500 invalid:border-red-300 invalid:bg-red-50"
+            {!exportSet && (
+              <Field
+                span="md:col-span-3"
+                id="incotermLocation"
+                label="Incoterm location"
+                de="DE 4/1"
+                hint="Required with CIF for method-1 valuation. Mapper sends GB + place (e.g. Felixstowe → GBFELIXSTOWE) per Group 4."
+              >
+                <Input
+                  id="incotermLocation"
+                  value={formData.incotermLocation}
+                  onChange={(e) => patch("incotermLocation", e.target.value)}
+                  placeholder="e.g. Felixstowe or GBFXT"
+                  className="font-mono"
                 />
-                <p className="text-[10px] text-slate-400 flex items-center gap-1">
-                  <Info className="h-3 w-3" />
-                  Real identifier for this consignment. Don&apos;t carry over a value from a previous declaration.
-                </p>
-              </div>
-            </div>
-          </div>
+              </Field>
+            )}
 
-        </div>
+            <Field
+              span="md:col-span-3"
+              id="nature"
+              label="Nature of transaction"
+              de="DE 8/5"
+              required
+              hint="WCOID 103 — GoodsShipment/TransactionNatureCode. Trade Test passing baseline uses 11."
+            >
+              <Input
+                id="nature"
+                value={formData.transactionNatureCode}
+                onChange={(e) =>
+                  patch("transactionNatureCode", e.target.value.replace(/\D/g, "").slice(0, 2))
+                }
+                inputMode="numeric"
+                placeholder="11"
+                className="font-mono"
+              />
+            </Field>
+          </>,
+        )}
+      </PageSection>
 
-        <div className="border-t border-slate-100 bg-slate-50/50 p-4 px-6 flex items-center justify-end gap-3">
-          {saveError && (
-            <p className="mr-auto text-xs text-red-600">{saveError}</p>
-          )}
-          {saveSuccess && !saveError && (
-            <p className="mr-auto text-xs text-green-700">Core details saved.</p>
-          )}
-          <button
-            type="submit"
-            disabled={saving}
-            className="flex h-9 items-center gap-2 rounded-md bg-black px-4 text-xs font-medium text-white transition-opacity hover:bg-slate-800 disabled:opacity-50"
+      <PageSection title="Duty payment" description="Method of payment and deferment account.">
+        {fieldGrid(
+          <>
+            <Field span="md:col-span-6" id="payment" label="Payment method" de="DE 4/8">
+              <Select
+                value={formData.paymentMethodCode || NONE}
+                onValueChange={(v) => {
+                  const next = v === NONE ? "" : v;
+                  setSaved(false);
+                  setSaveError(null);
+                  setFormData({
+                    ...formData,
+                    paymentMethodCode: next,
+                    defermentAccountNumber:
+                      next === "E" || next === "R" ? formData.defermentAccountNumber : "",
+                  });
+                }}
+              >
+                <SelectTrigger id="payment" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  {PAYMENT_METHOD_OPTIONS.map((m) => (
+                    <SelectItem key={m.value || NONE} value={m.value || NONE}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+
+            {requiresDefermentAccount(formData.paymentMethodCode) && (
+              <Field
+                span="md:col-span-6"
+                id="deferment"
+                label="Deferment account"
+                de="DE 2/6"
+                required
+              >
+                <Input
+                  id="deferment"
+                  value={formData.defermentAccountNumber}
+                  onChange={(e) =>
+                    patch(
+                      "defermentAccountNumber",
+                      e.target.value.replace(/\D/g, "").slice(0, 7),
+                    )
+                  }
+                  inputMode="numeric"
+                  maxLength={7}
+                  placeholder="7-digit DAN"
+                  className="font-mono"
+                />
+              </Field>
+            )}
+          </>,
+        )}
+      </PageSection>
+
+      <MutedPanel className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-3 bg-card">
+        <span className={saveError ? "text-destructive" : "text-muted-foreground"}>
+          {saveError
+            ? saveError
+            : saved && !dirty
+              ? "Core details saved."
+              : dirty
+                ? "Unsaved changes"
+                : "Save writes these fields to the declaration."}
+        </span>
+        <span className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setFormData(formBaseline);
+              setRepForm(repBaseline);
+              setSaveError(null);
+              setSaved(false);
+            }}
+            disabled={!dirty || saving}
           >
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-            Save Core Details
-          </button>
-        </div>
-      </div>
-    </form>
+            Discard
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => void handleSave()}
+            disabled={!dirty || saving}
+          >
+            {saving ? "Saving…" : "Save core details"}
+          </Button>
+        </span>
+      </MutedPanel>
+    </PageContainer>
   );
 }

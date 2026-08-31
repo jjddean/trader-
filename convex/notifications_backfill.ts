@@ -18,6 +18,7 @@
 
 import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { orgIdFromDeclaration } from "./lib/org_access";
 import {
@@ -25,6 +26,16 @@ import {
   eventForNotification,
   titleForNotification,
 } from "./lib/notification_events";
+import {
+  extractFunctionCode,
+  resolveHmrcDmsType,
+} from "./lib/hmrc_notification_catalogue";
+import {
+  isAmendmentAccepted,
+  isAmendmentRejected,
+  isCancellationRejected,
+  isInvalidationAccepted,
+} from "./lib/notification_dms_context";
 
 export const backfillMirrorRows = internalMutation({
   args: {
@@ -112,6 +123,126 @@ export const backfillMirrorRows = internalMutation({
     return {
       scanned: page.page.length,
       created,
+      skipped,
+      isDone: page.isDone,
+      cursor: page.isDone ? null : page.continueCursor,
+    };
+  },
+});
+
+/** Rewrite derived DMS labels from XML FunctionCode. Skip rows with no FunctionCode. */
+export const persistFromFunctionCode = internalMutation({
+  args: {
+    cursor: v.optional(v.union(v.string(), v.null())),
+    batchSize: v.optional(v.number()),
+  },
+  returns: v.object({
+    scanned: v.number(),
+    patchedNotifications: v.number(),
+    patchedInbox: v.number(),
+    rebuiltPreviews: v.number(),
+    skipped: v.number(),
+    isDone: v.boolean(),
+    cursor: v.union(v.string(), v.null()),
+  }),
+  handler: async (ctx, args) => {
+    const numItems = Math.min(Math.max(args.batchSize ?? 50, 1), 200);
+    const page = await ctx.db
+      .query("notifications")
+      .order("desc")
+      .paginate({ cursor: args.cursor ?? null, numItems });
+
+    let patchedNotifications = 0;
+    let patchedInbox = 0;
+    let skipped = 0;
+    const declarationIds = new Set<string>();
+
+    for (const row of page.page) {
+      const raw = typeof row.rawPayload === "string" ? row.rawPayload : "";
+      const functionCode = extractFunctionCode(raw) || (row.functionCode ? String(row.functionCode) : "");
+      if (!functionCode) {
+        skipped += 1;
+        continue;
+      }
+      const dmsType = resolveHmrcDmsType({
+        rawPayload: raw,
+        storedNotificationType: row.notificationType ? String(row.notificationType) : null,
+        functionCode,
+      });
+      const storedType = String(row.notificationType ?? "").trim().toUpperCase();
+      const storedFc = row.functionCode ? String(row.functionCode) : "";
+      if (storedType !== dmsType || storedFc !== functionCode) {
+        await ctx.db.patch(row._id, {
+          notificationType: dmsType,
+          functionCode,
+        });
+        patchedNotifications += 1;
+      }
+
+      if (row.declarationId) {
+        const declarationId = row.declarationId as Id<"declarations">;
+        declarationIds.add(String(declarationId));
+        const inbox = await ctx.db
+          .query("app_notifications")
+          .withIndex("by_declaration", (q) => q.eq("declarationId", declarationId))
+          .take(50);
+        const dmsCtx = {
+          notificationType: dmsType,
+          rawPayload: raw,
+          errorCodes: Array.isArray(row.errorCodes) ? (row.errorCodes as string[]) : undefined,
+          fieldErrors: Array.isArray(row.fieldErrors)
+            ? (row.fieldErrors as Array<{ field: string; reason: string; code?: string }>)
+            : undefined,
+          originatingOperation: row.originatingOperation,
+        };
+        const event = eventForNotification({
+          notificationType: dmsType,
+          isAmendmentAccepted: isAmendmentAccepted(dmsCtx),
+          isAmendmentRejected: isAmendmentRejected(dmsCtx),
+          isCancellationRejected: isCancellationRejected(dmsCtx),
+          isInvalidationAccepted: isInvalidationAccepted(dmsCtx),
+        });
+        const definition = eventDefinition(event);
+        const title = titleForNotification(event, dmsType);
+        for (const inboxRow of inbox) {
+          if (String(inboxRow.sourceId ?? "") !== String(row._id)) continue;
+          if (
+            inboxRow.title === title &&
+            inboxRow.event === event &&
+            inboxRow.severity === definition.severity
+          ) {
+            continue;
+          }
+          await ctx.db.patch(inboxRow._id, {
+            event,
+            category: definition.category,
+            severity: definition.severity,
+            title,
+            metadata: {
+              ...(typeof inboxRow.metadata === "object" && inboxRow.metadata
+                ? inboxRow.metadata
+                : {}),
+              notificationType: dmsType,
+            },
+          });
+          patchedInbox += 1;
+        }
+      }
+    }
+
+    let rebuiltPreviews = 0;
+    for (const id of declarationIds) {
+      await ctx.runMutation(internal.declarations.upsertDeclarationPreview, {
+        declarationId: id as Id<"declarations">,
+      });
+      rebuiltPreviews += 1;
+    }
+
+    return {
+      scanned: page.page.length,
+      patchedNotifications,
+      patchedInbox,
+      rebuiltPreviews,
       skipped,
       isDone: page.isDone,
       cursor: page.isDone ? null : page.continueCursor,

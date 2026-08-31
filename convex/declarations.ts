@@ -49,6 +49,7 @@ import {
 import { followUpClaim } from "./lib/follow_up_claim";
 import { notify } from "./lib/notify";
 import { forbiddenError, unauthenticatedError, userError } from "./lib/user_errors";
+import { isH1DeclarationCategory } from "./lib/h1_valuation";
 
 type EstimateMethod = "tariff_measures" | "historical_fallback" | "hmrc_confirmed";
 
@@ -155,7 +156,8 @@ export function hmrcStatusForDeclaration(decl: any, notifications: any[]) {
   const latestType = notifications[0]?.notificationType;
   if (latestType === "DMSCLE") return { score: 100, status: "Clean" };
   if (latestType === "DMSACC") return { score: 85, status: "Accepted" };
-  if (latestType === "DMSROG") return { score: 60, status: "Action Required" };
+  if (latestType === "DMSRCV") return { score: 50, status: "Received" };
+  if (latestType === "DMSROG") return { score: 80, status: "Released" };
   if (latestType === "DMSREJ") return { score: 0, status: "Action Required" };
   if (latestType === "DMSINV") return { score: 0, status: "Action Required" };
   if (latestType === "DMSUB") return { score: 50, status: "Submitted" };
@@ -167,7 +169,7 @@ export function hmrcStatusForDeclaration(decl: any, notifications: any[]) {
   return { score: 0, status: "Pending" };
 }
 
-const HMRC_CONFIRMED_NOTIFICATION_TYPES = new Set(["DMSCLE", "DMSACC", "DMSROG", "DMSREJ", "DMSINV"]);
+const HMRC_CONFIRMED_NOTIFICATION_TYPES = new Set(["DMSCLE", "DMSACC", "DMSRCV", "DMSROG", "DMSREJ", "DMSINV"]);
 const HMRC_CONFIRMED_DECLARATION_STATUSES = new Set(["Cleared", "Accepted", "Rejected", "Invalid", "Action Required"]);
 
 function isHmrcConfirmedDeclaration(decl: any, notifications: any[]) {
@@ -819,15 +821,6 @@ async function resolveStatusAndBadge(
   };
 }
 
-async function effectiveDeclarationStatus(
-  ctx: Pick<QueryCtx, "db">,
-  declarationId: Id<"declarations">,
-  declaration: DeclarationStatusSource & { conversationId?: string | null },
-): Promise<string> {
-  const { status } = await resolveStatusAndBadge(ctx, declarationId, declaration);
-  return status;
-}
-
 async function recomputeDashboardSummaryByUser(ctx: any, userId: string) {
   const previews = await ctx.db
     .query("declaration_preview")
@@ -901,11 +894,12 @@ async function upsertDeclarationPreviewByDeclaration(
     items: items as Array<Record<string, unknown>>,
   });
 
-  const replayedStatus = await effectiveDeclarationStatus(ctx, declarationId, {
+  const replayed = await resolveStatusAndBadge(ctx, declarationId, {
     status: declaration.status,
     mrn: declaration.mrn,
     conversationId: declaration.conversationId,
   });
+  const replayedStatus = replayed.status;
 
   const financialFields =
     declarationUserId
@@ -947,6 +941,11 @@ async function upsertDeclarationPreviewByDeclaration(
     mrn: declaration.mrn ? String(declaration.mrn) : undefined,
     eori: declaration.eori ? String(declaration.eori) : undefined,
     declarationType: declaration.declarationType ? String(declaration.declarationType) : undefined,
+    declarationCategory: declaration.declarationCategory
+      ? String(declaration.declarationCategory)
+      : undefined,
+    cdsBadgeLabel: replayed.cdsBadgeLabel,
+    cdsBadgeTone: replayed.cdsBadgeTone,
     representationType: declaration.representationType ?? "self",
     completenessReady: completeness.ready,
     missingCount: completeness.missing.length,
@@ -965,6 +964,13 @@ async function upsertDeclarationPreviewByDeclaration(
     }
   } else {
     await ctx.db.insert("declaration_preview", nextPreview);
+  }
+
+  if (String(declaration.status ?? "") !== replayedStatus) {
+    await ctx.db.patch(declarationId, {
+      status: replayedStatus,
+      lastUpdated: Date.now(),
+    });
   }
 
   if (declarationUserId && financialFields.financialSource !== undefined) {
@@ -1789,6 +1795,45 @@ export const updateDeclarationDetails = mutation({
     transactionNatureCode: v.optional(v.string()),
     defermentAccountNumber: v.optional(v.string()),
     paymentMethodCode: v.optional(v.string()),
+    /**
+     * Declaration category. Absent keeps the H1 full import data set.
+     * Obligations per category live under docs/hmrc/specs/cds-api/.
+     */
+    declarationCategory: v.optional(
+      v.union(v.literal("B1"), v.literal("C1"), v.literal("I1")),
+    ),
+    // DE 3/1 — exporter country (export categories declare their own) and
+    // DE 3/2 EORI. The Name/City/Line/Postcode args are declared above.
+    exporterCountry: v.optional(v.string()),
+    exporterEori: v.optional(v.string()),
+    // DE 3/9 + 3/10 — Consignee (export counterpart of Importer).
+    consigneeEori: v.optional(v.string()),
+    consigneeName: v.optional(v.string()),
+    consigneeCity: v.optional(v.string()),
+    consigneeLine: v.optional(v.string()),
+    consigneePostcode: v.optional(v.string()),
+    consigneeCountry: v.optional(v.string()),
+    // DE 3/31 + 3/32 — Carrier.
+    carrierEori: v.optional(v.string()),
+    carrierName: v.optional(v.string()),
+    // DE 3/39 — holder of the authorisation (mandatory on C1 and I1).
+    authorisationHolderEori: v.optional(v.string()),
+    authorisationCategoryCode: v.optional(v.string()),
+    // DE 4/2 and DE 4/15.
+    transportChargesMethodOfPayment: v.optional(v.string()),
+    exchangeRate: v.optional(v.string()),
+    // DE 5/12 — customs office of exit (mandatory on B1 and C1).
+    customsOfficeOfExit: v.optional(v.string()),
+    // DE 5/18 — countries of routing.
+    countriesOfRouting: v.optional(v.array(v.string())),
+    // DE 7/5, 7/7, 7/10, 7/14, 7/15, 7/18.
+    inlandTransportMode: v.optional(v.string()),
+    departureTransportId: v.optional(v.string()),
+    departureTransportIdType: v.optional(v.string()),
+    borderTransportId: v.optional(v.string()),
+    borderTransportIdType: v.optional(v.string()),
+    borderTransportNationality: v.optional(v.string()),
+    sealNumber: v.optional(v.string()),
     // DE 7/10 container id, and the CNS inventory reference (UCN) for
     // inventory-linked locations.
     containerNumber: v.optional(v.string()),
@@ -1810,6 +1855,24 @@ export const updateDeclarationDetails = mutation({
       throw userError("declaration_filed", editBlockedMessage(existing.status));
     }
 
+    // `route` on this table carries HMRC's document-check route ("Route 1")
+    // for dashboard-created rows, not a trade direction, so it cannot be used
+    // to police the category. Only a value that explicitly contradicts the
+    // category is rejected.
+    const category = args.declarationCategory;
+    if (category) {
+      const routeValue = String(args.route ?? "").trim().toLowerCase();
+      const expected = category === "I1" ? "import" : "export";
+      const contradicts =
+        (routeValue === "import" || routeValue === "export") && routeValue !== expected;
+      if (contradicts) {
+        throw userError(
+          "category_route_mismatch",
+          `Declaration category ${category} is a ${expected} data set, but the route is set to "${routeValue}".`,
+        );
+      }
+    }
+
     const mop = String(args.paymentMethodCode ?? "").trim().toUpperCase();
     const danDigits = String(args.defermentAccountNumber ?? "").replace(/\D/g, "");
     const dan = danDigits.length === 7 ? danDigits : "";
@@ -1824,6 +1887,53 @@ export const updateDeclarationDetails = mutation({
     if (String(args.defermentAccountNumber ?? "").trim() && !dan) {
       throw userError("deferment_account_number_must_be_exactly", "Deferment account number must be exactly 7 digits (DE 2/6).");
     }
+
+    // Data elements each category forbids. Kept in step with the mappers'
+    // IMPORT_ONLY_FIELDS / NOT_ON_C1_FIELDS / H1_ONLY_FIELDS lists — the
+    // mapper throws when any are present, so a value left behind by a category
+    // switch makes the declaration unsubmittable with nothing on the form to
+    // explain why. Cleared on save rather than merely rejected at submit.
+    const FORBIDDEN_BY_CATEGORY: Record<string, string[]> = {
+      B1: [
+        "importerEori",
+        "incoterms",
+        "incotermLocation",
+        "defermentAccountNumber",
+        "paymentMethodCode",
+        "valuationMethod",
+        "preferenceCode",
+      ],
+      C1: [
+        "importerEori",
+        "incoterms",
+        "incotermLocation",
+        "defermentAccountNumber",
+        "paymentMethodCode",
+        "valuationMethod",
+        "preferenceCode",
+        "transactionNatureCode",
+        "exchangeRate",
+        "inlandTransportMode",
+        "departureTransportId",
+        "borderTransportNationality",
+      ],
+      I1: [
+        "transactionNatureCode",
+        "exchangeRate",
+        "inlandTransportMode",
+        "sellerName",
+        "sellerEori",
+        "buyerName",
+        "buyerEori",
+      ],
+    };
+    // Cleared unconditionally, not only where the stored record already held a
+    // value: the form keeps its state when a field is hidden by a category
+    // switch, so a value typed before the switch is still submitted and would
+    // otherwise be written through to a declaration that forbids it.
+    const clearedByCategory = Object.fromEntries(
+      (FORBIDDEN_BY_CATEGORY[String(category ?? "")] ?? []).map((field) => [field, undefined]),
+    );
 
     await ctx.db.patch(args.id, {
       eori: args.eori,
@@ -1844,6 +1954,35 @@ export const updateDeclarationDetails = mutation({
       ...(args.invoiceTotal !== undefined ? { invoiceTotal: args.invoiceTotal } : {}),
       ...(args.incoterms !== undefined ? { incoterms: args.incoterms } : {}),
       ...(args.incotermLocation !== undefined ? { incotermLocation: args.incotermLocation } : {}),
+      ...(args.declarationCategory !== undefined ? { declarationCategory: args.declarationCategory } : {}),
+      ...(args.exporterCountry !== undefined ? { exporterCountry: args.exporterCountry } : {}),
+      ...(args.exporterEori !== undefined ? { exporterEori: args.exporterEori } : {}),
+      ...(args.consigneeEori !== undefined ? { consigneeEori: args.consigneeEori } : {}),
+      ...(args.consigneeName !== undefined ? { consigneeName: args.consigneeName } : {}),
+      ...(args.consigneeCity !== undefined ? { consigneeCity: args.consigneeCity } : {}),
+      ...(args.consigneeLine !== undefined ? { consigneeLine: args.consigneeLine } : {}),
+      ...(args.consigneePostcode !== undefined ? { consigneePostcode: args.consigneePostcode } : {}),
+      ...(args.consigneeCountry !== undefined ? { consigneeCountry: args.consigneeCountry } : {}),
+      ...(args.carrierEori !== undefined ? { carrierEori: args.carrierEori } : {}),
+      ...(args.carrierName !== undefined ? { carrierName: args.carrierName } : {}),
+      ...(args.authorisationHolderEori !== undefined
+        ? { authorisationHolderEori: args.authorisationHolderEori }
+        : {}),
+      ...(args.authorisationCategoryCode !== undefined
+        ? { authorisationCategoryCode: args.authorisationCategoryCode }
+        : {}),
+      ...(args.transportChargesMethodOfPayment !== undefined ? { transportChargesMethodOfPayment: args.transportChargesMethodOfPayment } : {}),
+      ...(args.exchangeRate !== undefined ? { exchangeRate: args.exchangeRate } : {}),
+      ...(args.customsOfficeOfExit !== undefined ? { customsOfficeOfExit: args.customsOfficeOfExit } : {}),
+      ...(args.countriesOfRouting !== undefined ? { countriesOfRouting: args.countriesOfRouting } : {}),
+      ...(args.inlandTransportMode !== undefined ? { inlandTransportMode: args.inlandTransportMode } : {}),
+      ...(args.departureTransportId !== undefined ? { departureTransportId: args.departureTransportId } : {}),
+      ...(args.departureTransportIdType !== undefined ? { departureTransportIdType: args.departureTransportIdType } : {}),
+      ...(args.borderTransportId !== undefined ? { borderTransportId: args.borderTransportId } : {}),
+      ...(args.borderTransportIdType !== undefined ? { borderTransportIdType: args.borderTransportIdType } : {}),
+      ...(args.borderTransportNationality !== undefined ? { borderTransportNationality: args.borderTransportNationality } : {}),
+      ...(args.containerNumber !== undefined ? { containerNumber: args.containerNumber } : {}),
+      ...(args.sealNumber !== undefined ? { sealNumber: args.sealNumber } : {}),
       ...(args.transportMode !== undefined ? { transportMode: args.transportMode } : {}),
       ...(args.transportId !== undefined ? { transportId: args.transportId } : {}),
       ...(args.transportIdType !== undefined ? { transportIdType: args.transportIdType } : {}),
@@ -1860,6 +1999,8 @@ export const updateDeclarationDetails = mutation({
         : {}),
       ...(args.containerNumber !== undefined ? { containerNumber: args.containerNumber.trim() || undefined } : {}),
       ...(args.cnsUcn !== undefined ? { cnsUcn: args.cnsUcn.trim().toUpperCase() || undefined } : {}),
+      // Last, so it wins over any forbidden value the form still submitted.
+      ...clearedByCategory,
       lastUpdated: Date.now(),
     });
     await upsertDeclarationPreviewByDeclaration(ctx, args.id);
@@ -1907,6 +2048,76 @@ export const backfillTransportAndMode = internalMutation({
     if (args.mode !== undefined) patch.mode = args.mode;
     await ctx.db.patch(args.id, patch);
     return { id: args.id, applied: patch };
+  },
+});
+
+// One-off data fix for the ordinary B1 test row FC-MTC2SF70, which stored CSE
+// after the arrived-export form labelled DE 3/39 as required. LRN is hardcoded
+// so this cannot clear any other declaration.
+export const clearAccidentalCseOnFcMtc2sf70 = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const TARGET_LRN = "FC-MTC2SF70";
+    const submission = await ctx.db
+      .query("submissions")
+      .withIndex("by_lrn", (q) => q.eq("lrn", TARGET_LRN))
+      .first();
+    if (!submission) {
+      throw userError("declaration_not_found", `No submission with LRN ${TARGET_LRN}`);
+    }
+    const existing = await ctx.db.get(submission.declarationId);
+    if (!existing) {
+      throw userError("declaration_not_found", `Declaration ${submission.declarationId} not found`);
+    }
+    const before = {
+      authorisationCategoryCode: String(existing.authorisationCategoryCode ?? ""),
+      authorisationHolderEori: String(existing.authorisationHolderEori ?? ""),
+    };
+    if (!before.authorisationCategoryCode && !before.authorisationHolderEori) {
+      return { id: existing._id, lrn: TARGET_LRN, cleared: false, before };
+    }
+    await ctx.db.patch(existing._id, {
+      authorisationCategoryCode: "",
+      authorisationHolderEori: "",
+      lastUpdated: Date.now(),
+    });
+    await upsertDeclarationPreviewByDeclaration(ctx, existing._id);
+    return { id: existing._id, lrn: TARGET_LRN, cleared: true, before };
+  },
+});
+
+// One-off: FC-MTCANEUD was EXA at ordinary 16C GBAUDVRDOVAPC (CDS12120).
+// Switch DE 1/2 to D. Do not touch CSE, location, or DE 2/3.
+export const setFcMtcaneudPreLodged = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const TARGET_LRN = "FC-MTCANEUD";
+    const submission = await ctx.db
+      .query("submissions")
+      .withIndex("by_lrn", (q) => q.eq("lrn", TARGET_LRN))
+      .first();
+    if (!submission) {
+      throw userError("declaration_not_found", `No submission with LRN ${TARGET_LRN}`);
+    }
+    const existing = await ctx.db.get(submission.declarationId);
+    if (!existing) {
+      throw userError("declaration_not_found", `Declaration ${submission.declarationId} not found`);
+    }
+    const before = {
+      additionalDeclarationType: String(existing.additionalDeclarationType ?? ""),
+      locationId: String(existing.locationId ?? ""),
+      authorisationCategoryCode: String(existing.authorisationCategoryCode ?? ""),
+      authorisationHolderEori: String(existing.authorisationHolderEori ?? ""),
+    };
+    if (before.additionalDeclarationType === "D") {
+      return { id: existing._id, lrn: TARGET_LRN, changed: false, before };
+    }
+    await ctx.db.patch(existing._id, {
+      additionalDeclarationType: "D",
+      lastUpdated: Date.now(),
+    });
+    await upsertDeclarationPreviewByDeclaration(ctx, existing._id);
+    return { id: existing._id, lrn: TARGET_LRN, changed: true, before };
   },
 });
 
@@ -2241,6 +2452,9 @@ export const getDeclarationPreviews = query({
         declarationType: declaration.declarationType
           ? String(declaration.declarationType)
           : undefined,
+        declarationCategory: declaration.declarationCategory
+          ? String(declaration.declarationCategory)
+          : undefined,
         representationType: declaration.representationType ?? "self",
         lastUpdated: Number(
           declaration.lastUpdated || declaration.created || declaration._creationTime || 0,
@@ -2253,11 +2467,20 @@ export const getDeclarationPreviews = query({
     const transportById = new Map(
       declarations.map((d) => [String(d._id), d.submissionTransport ?? undefined]),
     );
+    const categoryById = new Map(
+      declarations.map((d) => [
+        String(d._id),
+        d.declarationCategory ? String(d.declarationCategory) : undefined,
+      ]),
+    );
 
     return [...previews, ...missingPreviews]
       .map((preview) => ({
         ...preview,
         submissionTransport: transportById.get(String(preview.declarationId)),
+        declarationCategory:
+          categoryById.get(String(preview.declarationId)) ||
+          (preview as { declarationCategory?: string }).declarationCategory,
       }))
       .sort((a, b) => b.lastUpdated - a.lastUpdated);
   },
@@ -2515,5 +2738,42 @@ export const getFinancialRecords = query({
       records.push(...buildFinancialRecordsForDeclaration(decl, financials, payment));
     }
     return records;
+  },
+});
+
+export const confirmH1Method1Valuation = mutation({
+  args: {
+    id: v.id("declarations"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw unauthenticatedError();
+
+    const declaration = await ctx.db.get(args.id);
+    if (!declaration || !(await canAccessDeclaration(ctx, identity.subject, declaration))) {
+      throw forbiddenError();
+    }
+    if (!isH1DeclarationCategory(declaration)) {
+      throw userError(
+        "h1_method1_confirmation_h1_only",
+        "Method 1 confirmation applies to H1 declarations only.",
+      );
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(args.id, {
+      h1Method1ConfirmedAt: now,
+      h1Method1ConfirmedBy: identity.subject,
+      lastUpdated: now,
+    });
+    await ctx.db.insert("auditLogs", {
+      userId: identity.subject,
+      action: "h1_method1_valuation_confirmed",
+      details: { declarationId: args.id, confirmedAt: now },
+      timestamp: now,
+      archived: false,
+    });
+    await upsertDeclarationPreviewByDeclaration(ctx, args.id);
+    return { ok: true as const, confirmedAt: now };
   },
 });

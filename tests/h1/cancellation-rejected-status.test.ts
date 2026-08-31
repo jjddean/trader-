@@ -163,11 +163,8 @@ describe("rejected cancellation", () => {
   });
 });
 
-describe("accepted cancellation (FC 02 DMSINV, CNS route)", () => {
-  // Declaration B, 2026-08-15 23:04:14. Cancel accepted. The CNS route sends the
-  // ORIGINAL create LRN (FC-…), so no CX- appears and payload inspection alone
-  // read this as a validation failure — shown to the operator in red.
-  const ACCEPTED_CANCEL = `<Response>
+describe("accepted cancellation (HMRC FC 10 DMSINV)", () => {
+  const REGISTERED_CANCEL_FC02 = `<Response>
       <FunctionCode>02</FunctionCode>
       <Declaration>
         <FunctionalReferenceID>FC-MSUX9NFX</FunctionalReferenceID>
@@ -175,40 +172,59 @@ describe("accepted cancellation (FC 02 DMSINV, CNS route)", () => {
       </Declaration>
     </Response>`;
 
-  it("payload alone misses it on the CNS route", () => {
+  const CANCELLED_FC10 = `<Response>
+      <FunctionCode>10</FunctionCode>
+      <Declaration>
+        <FunctionalReferenceID>FC-MSUX9NFX</FunctionalReferenceID>
+        <ID>26GB908RYZ3SRUKAR0</ID>
+      </Declaration>
+    </Response>`;
+
+  it("FC 02 is DMSRCV even when stored as DMSINV", () => {
     assert.equal(
-      isInvalidationAccepted({ notificationType: "DMSINV", rawPayload: ACCEPTED_CANCEL }),
+      isInvalidationAccepted({ notificationType: "DMSINV", rawPayload: REGISTERED_CANCEL_FC02 }),
       false,
     );
   });
 
-  it("is recognised once the originating operation is known", () => {
+  it("FC 02 DMSRCV answering cancel is not cancellation complete", () => {
+    assert.equal(
+      isInvalidationAccepted({
+        notificationType: "DMSRCV",
+        rawPayload: REGISTERED_CANCEL_FC02,
+        originatingOperation: "cancel",
+      }),
+      false,
+    );
+  });
+
+  it("FC 10 DMSINV is cancellation complete", () => {
     assert.equal(
       isInvalidationAccepted({
         notificationType: "DMSINV",
-        rawPayload: ACCEPTED_CANCEL,
+        rawPayload: CANCELLED_FC10,
         originatingOperation: "cancel",
       }),
       true,
     );
   });
 
-  it("a clean DMSINV answering a submit is not a cancellation acceptance", () => {
+  it("FC 02 answering submit is not cancellation", () => {
     assert.equal(
       isInvalidationAccepted({
         notificationType: "DMSINV",
-        rawPayload: ACCEPTED_CANCEL,
+        rawPayload: REGISTERED_CANCEL_FC02,
         originatingOperation: "submit",
       }),
       false,
     );
   });
 
-  it("validation errors still beat the operation", () => {
+  it("validation errors on DMSINV are not cancellation complete", () => {
     assert.equal(
       isInvalidationAccepted({
         notificationType: "DMSINV",
-        rawPayload: ACCEPTED_CANCEL,
+        rawPayload: CANCELLED_FC10,
         originatingOperation: "cancel",
         errorCodes: ["CDS12015"],
       }),
@@ -216,7 +232,7 @@ describe("accepted cancellation (FC 02 DMSINV, CNS route)", () => {
     );
   });
 
-  it("direct-HMRC rows with a CX- LRN still work without the operation", () => {
+  it("stored DMSINV with CX- LRN and no FunctionCode is cancellation", () => {
     assert.equal(
       isInvalidationAccepted({
         notificationType: "DMSINV",

@@ -50,7 +50,7 @@ export function AdminSidebar() {
 
   return (
     <Sidebar className="!h-screen border-r border-slate-200 bg-white [&_[data-sidebar=sidebar]]:bg-white">
-      <SidebarHeader className="flex h-[55px] flex-row items-center border-b border-slate-200 px-6">
+      <SidebarHeader className="flex h-[55px] flex-row items-center border-b border-slate-200 px-4">
         <Link href="/dashboard/admin" className="flex w-full items-center gap-2 text-black transition-opacity hover:opacity-80">
           <div className="flex items-baseline whitespace-nowrap text-[#020817] leading-none">
             <span className="text-lg font-bold tracking-tight">freight</span>
@@ -74,14 +74,14 @@ export function AdminSidebar() {
                     asChild
                     isActive={isActive(item.href, item.exact)}
                     className={cn(
-                      "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors",
+                      "flex h-auto w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-normal transition-colors",
                       isActive(item.href, item.exact)
                         ? "bg-slate-100 text-black"
                         : "text-slate-500 hover:bg-slate-100 hover:text-black",
                     )}
                   >
                     <Link href={item.href} className="flex flex-1 items-center gap-2">
-                      <item.icon className={cn("h-3.5 w-3.5", isActive(item.href, item.exact) ? "text-slate-700" : "text-slate-400")} />
+                      <item.icon className={cn("h-4 w-4", isActive(item.href, item.exact) ? "text-slate-700" : "text-slate-400")} />
                       <span className="flex-1">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -103,14 +103,14 @@ export function AdminSidebar() {
                     asChild
                     isActive={isActive(item.href)}
                     className={cn(
-                      "flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal transition-colors",
+                      "flex h-auto w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-normal transition-colors",
                       isActive(item.href)
                         ? "bg-slate-100 text-black"
                         : "text-slate-500 hover:bg-slate-100 hover:text-black",
                     )}
                   >
                     <Link href={item.href} className="flex flex-1 items-center gap-2">
-                      <item.icon className={cn("h-3.5 w-3.5", isActive(item.href) ? "text-slate-700" : "text-slate-400")} />
+                      <item.icon className={cn("h-4 w-4", isActive(item.href) ? "text-slate-700" : "text-slate-400")} />
                       <span className="flex-1">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -127,9 +127,9 @@ export function AdminSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
               <SidebarMenuItem>
-                <SidebarMenuButton asChild className="flex h-auto w-full items-center gap-2 rounded-md px-3 py-1 text-xs font-normal text-slate-500 hover:bg-slate-100 hover:text-black">
+                <SidebarMenuButton asChild className="flex h-auto w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-normal text-slate-500 hover:bg-slate-100 hover:text-black">
                   <Link href="/dashboard" className="flex flex-1 items-center gap-2">
-                    <ChevronLeft className="h-3.5 w-3.5 text-slate-400" />
+                    <ChevronLeft className="h-4 w-4 text-slate-400" />
                     <span className="flex-1">Back to Dashboard</span>
                   </Link>
                 </SidebarMenuButton>

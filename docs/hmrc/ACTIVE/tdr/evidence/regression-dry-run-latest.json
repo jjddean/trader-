@@ -1,11 +1,11 @@
 {
-  "timestamp": "2026-08-16T23:51:06.599Z",
+  "timestamp": "2026-08-30T18:14:46.016Z",
   "mode": "DRY_RUN_ONLY",
   "submitEnabled": false,
   "endpoint": "https://test-api.service.hmrc.gov.uk/customs/declarations",
   "checks": {
     "token_present": false,
-    "client_id_present": true,
+    "client_id_present": false,
     "content_type_is_xml": true,
     "xml_has_metadata_root": true,
     "xml_has_declaration": true,
@@ -25,8 +25,10 @@
     "environment_is_sandbox": true,
     "endpoint_matches_host": true
   },
-  "failed": [],
-  "readyToSubmit": true,
+  "failed": [
+    "client_id_present"
+  ],
+  "readyToSubmit": false,
   "lane": {
     "hs": "8471300000",
     "cpc": "4000 000",

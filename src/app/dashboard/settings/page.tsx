@@ -12,7 +12,7 @@ import { planBadgeClass } from "@/lib/stripe-plans";
 import { isSyntheticStripeCustomerId } from "@/lib/stripe-customer";
 import { PracticeSandboxTestUser } from "@/components/practice-sandbox-test-user";
 import { compactProfileModalAppearance } from "@/lib/clerk-compact";
-import { userMessageFromError } from "@/lib/convex-errors";
+import { ApiError, userMessageFromError } from "@/lib/convex-errors";
 
 export default function SettingsPage() {
   return (
@@ -121,7 +121,7 @@ function SettingsPageContent() {
       const res = await fetch("/api/account/export");
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(typeof body.error === "string" ? body.error : "Export failed");
+        throw new ApiError(typeof body.error === "string" ? body.error : "Export failed");
       }
       const blob = await res.blob();
       const disposition = res.headers.get("Content-Disposition") || "";

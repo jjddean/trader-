@@ -6,6 +6,11 @@ These rules protect the current HMRC CDS H1 submission path from accidental clea
 
 - Do not synthesize declaration defaults that hide missing source data.
 - Do not infer CPC or additional procedure codes from unrelated fields.
+- Do not invent preference `100` (DE 4/17). Missing preference fails. Explicit `100` is a real code and may emit.
+- Do not invent additional procedure `000` (DE 1/11). Missing APC fails. Explicit `000` is a real code; it is forbidden with a 53-series CPC. Do not add a fabricated CPC↔APC matrix.
+- Do not infer DE 6/2 from a hard-coded HS list. Requirement is `required` / `not_required` / `unknown` from `requiresSupplementaryUnit`. `unknown` fails; it is not `not_required`.
+- Do not invent shipping marks `N/A` (DE 6/11) or fabricate package quantity / type. Use real marks or HMRC-prescribed values (`Unpackaged` / `Loose Bulk` / `Break Bulk`). Omit only where the category rules allow (GB supplementary Y/Z).
+- Do not fill DE 4/11 from the DE 4/14 item sum. Blank omits the element. A supplied total must equal the item sum. Numeric `0` is a real value.
 - Do not silently substitute invoice currency, destination country, dispatch country, importer EORI, declarant EORI, presentation office, goods location, Incoterms, or Incoterm location.
 - Do not generate placeholder package blocks when package data is missing.
 - Do not auto-create additional documents to make a declaration appear complete.

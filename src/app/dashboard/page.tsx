@@ -563,9 +563,7 @@ function RecentDeclarations({
                         decl.status === "Invalid" ? (
                         <span className="inline-flex items-center gap-1 rounded-md bg-red-100 px-2 py-0.5 text-[0.625rem] font-medium text-red-700">
                           <ShieldAlert className="h-3 w-3" />
-                          {decl.status === "Invalid"
-                            ? "Invalid (DMSINV)"
-                            : decl.status}
+                          {decl.status}
                         </span>
                       ) : decl.status === "Draft" ? (
                         <span className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[0.625rem] font-medium text-gray-700">

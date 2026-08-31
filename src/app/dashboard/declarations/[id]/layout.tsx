@@ -23,6 +23,12 @@ import {
 } from "@/lib/declaration-status-display";
 import { PreClearanceEstimate } from "@/components/pre-clearance-estimate";
 
+/** B1 and C1 file against the export data sets, which carry no A00 or B00. */
+function isExportCategory(declaration: { declarationCategory?: unknown } | null | undefined): boolean {
+  const category = String(declaration?.declarationCategory ?? "").trim().toUpperCase();
+  return category === "B1" || category === "C1";
+}
+
 export default function DeclarationWorkspaceLayout({
   children,
 }: {
@@ -150,7 +156,7 @@ export default function DeclarationWorkspaceLayout({
                 const isActive = pathname === step.path;
                 const Icon = step.icon;
                 const tabClass = cn(
-                  "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-colors duration-150",
+                  "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150",
                   isActive
                     ? "bg-white text-black shadow-sm"
                     : "text-slate-500 hover:bg-slate-200/60 hover:text-slate-900",
@@ -160,7 +166,7 @@ export default function DeclarationWorkspaceLayout({
                 if (step.disabled) {
                   return (
                     <span key={step.id} className={tabClass} aria-disabled="true">
-                      <Icon className="h-3.5 w-3.5 text-slate-400" />
+                      <Icon className="h-4 w-4 text-slate-400" />
                       {step.name}
                     </span>
                   );
@@ -174,14 +180,18 @@ export default function DeclarationWorkspaceLayout({
                     aria-current={isActive ? "page" : undefined}
                     className={tabClass}
                   >
-                    <Icon className={cn("h-3.5 w-3.5", isActive ? "text-blue-600" : "text-slate-400")} />
+                    <Icon className={cn("h-4 w-4", isActive ? "text-blue-600" : "text-slate-400")} />
                     {step.name}
                   </Link>
                 );
               })}
             </nav>
 
-            {estimateReady && financialEstimate && (
+            {/* Import duty (A00) and import VAT (B00) do not arise on an export
+                declaration — B1 and C1 emit no DutyTaxFee at all — so showing a
+                pre-clearance cost estimate against one states a liability that
+                does not exist. */}
+            {estimateReady && financialEstimate && !isExportCategory(resolvedDeclaration) && (
               <PreClearanceEstimate compact {...financialEstimate} />
             )}
           </div>

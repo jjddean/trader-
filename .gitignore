@@ -84,6 +84,7 @@ cloudagent/.xdg/
 
 # secrets — never commit any .env variant
 .env*
+.env.sentry-build-plugin
 
 # generated CDS XML dumps from ad-hoc runs (the frozen evidence lives in
 # docs/hmrc/ACTIVE/tdr/evidence/ per AGENT-SPEC §8, and stays tracked)
